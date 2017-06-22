@@ -5,6 +5,7 @@ $APPLICATION->SetTitle("Каталог");
 
 <div class="row cl">                  
   <div class="ct__leftbar">
+
      <div class="cat filter open">
         <a href="#" class="name" onclick="return false"><div class="cube"><span></span><span></span></div>Фильтр</a>
         <ul class="cat-ul">

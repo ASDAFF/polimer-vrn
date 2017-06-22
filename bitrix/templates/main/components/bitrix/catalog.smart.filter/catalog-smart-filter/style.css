@@ -141,18 +141,19 @@ COLOR
 }
 .bx-filter .bx-ui-slider-track {
 	position: relative;
-	height: 7px;
+	height: 5px;
+	top: 25px;
 	/*background: #d8e9f0;/* COLOR */
 }
 .bx-filter .bx-ui-slider-part {
 	position: absolute;
-	top: -6px;
-	width: 1px;
-	height: 17px;
-	background: #a2bfc7;
+	top: -1px;
+	/* width: 1px; */
+	/* height: 17px; */
+	/* background: #a2bfc7; */
 }
 .bx-filter .bx-ui-slider-part.p1 {
-	left: -1px;
+	left: 5px;
 }
 .bx-filter .bx-ui-slider-part.p2 {
 	left: 25%;
@@ -164,7 +165,7 @@ COLOR
 	left: 75%;
 }
 .bx-filter .bx-ui-slider-part.p5 {
-	right: -1px;
+	right: 15px;
 }
 .bx-filter .bx-ui-slider-part span {
 	font-size: 11px;
@@ -205,11 +206,11 @@ COLOR
 }
 .bx-filter .bx-ui-slider-pricebar-vn {
 	z-index: 70;
-	/*background: #a8dff3;/* COLOR */
+	background: #ced5d9;
 }
 .bx-filter .bx-ui-slider-pricebar-v {
 	z-index: 80;
-	/*background: #499fd8;/* COLOR */
+	background: #0060BF;
 }
 .bx-filter .bx-ui-slider-handle {
 	position: absolute;
@@ -231,16 +232,20 @@ COLOR
 	cursor: grabbing;
 }
 .bx-filter .bx-ui-slider-handle.left {
-	left: 0;
-	margin-left: -21px;
-	/* COLOR */
-	/*background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAARCAYAAADUryzEAAAArUlEQVQ4y6WSQQ6FMAhEXbjyXwzOpBdx5bXKbYRWLFSJ2m8ysVHfzGA7DH9cuKVfNwwM40ZzZzJlmE3WTjjNfF9Fn2EwMH5pUGYWOJ3w6wZ4wDKz6rUBumQPPxrUmT0IxuxpqxYLQ7MOG5TaHtbk1iza5+VauW5dfdcYSDKcMLkP7wxdA5sMQWV/BkwDTY7mtAfHjpJ/Ihj4DoIgXZ9J+siaimi6rimLgSw87qod+1BRTwMJRYoAAAAASUVORK5CIIA=) no-repeat right top;*/
+	top: 10px;
+	width: 0;
+	height: 0;
+	border-style: solid;
+	border-width: 0 5px 5px 5px;
+	border-color: transparent transparent #0053a6 transparent;
 }
 .bx-filter .bx-ui-slider-handle.right {
-	right: 0;
-	margin-right: -21px;
-	/* COLOR */
-	/*background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAARCAYAAADUryzEAAAAq0lEQVQ4y6WSQRKDIAxFXXSlF0vOZC+SlddKblMUUhKCraIzX9Ahj58PE268TE8e3GSFJ5BUTDskaRl1QFk8BsHs4BCMQMruVEe+l4kWglFu5yLEZKDFXyeXIFoEpg3z738mJTzXhncj75+QtqjnJENO2sG4I1VXDtR3ogv7O1dHxV10gi75EGILiE78RRKy33AOq07i+Us4kRamkOPGptesQjeXIjZjO+fXB+hjUU/S3Z+WAAAAAElFTkSuQmCC) no-repeat left top;*/
+	top: 10px;
+	width: 0;
+	height: 0;
+	border-style: solid;
+	border-width: 0 5px 5px 5px;
+	border-color: transparent transparent #0053a6 transparent;
 }
 
 /*

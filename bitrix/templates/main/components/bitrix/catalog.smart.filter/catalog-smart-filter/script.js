@@ -217,7 +217,7 @@ JCSmartFilter.prototype.postHandler = function (result, fromCache)
 
 				if (this.viewMode == "VERTICAL")
 				{
-					curProp = BX.findChild(BX.findParent(this.curFilterinput, {'class':'bx-filter-parameters-box'}), {'class':'bx-filter-container-modef'}, true, false);
+					curProp = BX.findChild(BX.findParent(this.curFilterinput, {'class':'cat-li'}), {'class':'bx-filter-container-modef'}, true, false);
 					curProp.appendChild(modef);
 				}
 
@@ -442,7 +442,6 @@ BX.Iblock.SmartFilter = (function()
 			this.rightSlider = BX(arParams.rightSlider);
 			this.tracker = BX(arParams.tracker);
 			this.trackerWrap = BX(arParams.trackerWrap);
-
 			this.minInput = BX(arParams.minInputId);
 			this.maxInput = BX(arParams.maxInputId);
 
@@ -727,6 +726,7 @@ BX.Iblock.SmartFilter = (function()
 		var pageX = this.getPageX(event);
 
 		var trackerXCoord = this.getXCoord(this.trackerWrap);
+
 		var rightEdge = this.trackerWrap.offsetWidth;
 
 		var newLeft = pageX - trackerXCoord;
