@@ -407,9 +407,12 @@ JCSmartFilter.prototype.hideFilterProps = function(element)
 
 JCSmartFilter.prototype.showDropDownPopup = function(element, popupId)
 {
-	var contentNode = element.querySelector('[data-role="dropdownContent"]');
+
+	//var contentNode = element.querySelector('[data-role="dropdownContent"]');
+	var contentNode = $('[data-role="dropdownContent"]',element).get(0);
+
 	this.popups["smartFilterDropDown"+popupId] = BX.PopupWindowManager.create("smartFilterDropDown"+popupId, element, {
-		autoHide: true,
+		autoHide: false ,
 		offsetLeft: 0,
 		offsetTop: 3,
 		overlay : false,
@@ -423,12 +426,15 @@ JCSmartFilter.prototype.showDropDownPopup = function(element, popupId)
 JCSmartFilter.prototype.selectDropDownItem = function(element, controlId)
 {
 	this.keyup(BX(controlId));
-
+	var contentNode = $(element).parents().get(2);
+	$(contentNode).css('display','none').get(0);
 	var wrapContainer = BX.findParent(BX(controlId), {className:"bx-filter-select-container"}, false);
 
 	var currentOption = wrapContainer.querySelector('[data-role="currentOption"]');
 	currentOption.innerHTML = element.innerHTML;
 	BX.PopupWindowManager.getCurrentPopup().close();
+
+	$('.bx-filter-select-block',wrapContainer).append(contentNode);
 };
 
 BX.namespace("BX.Iblock.SmartFilter");

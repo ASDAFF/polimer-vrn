@@ -160,6 +160,9 @@ $this->addExternalCss("/bitrix/css/main/font-awesome.css");
 
 
 
+
+
+
 				//not prices
 				foreach($arResult["ITEMS"] as $key=>$arItem)
 				{
@@ -177,30 +180,16 @@ $this->addExternalCss("/bitrix/css/main/font-awesome.css");
 					)
 						continue;
 					?>
-					<div class="<?if ($arParams["FILTER_VIEW_MODE"] == "HORIZONTAL"):?>col-sm-6 col-md-4<?else:?>col-lg-12<?endif?> bx-filter-parameters-box <?if ($arItem["DISPLAY_EXPANDED"]== "Y"):?>bx-active<?endif?>">
-						<span class="bx-filter-container-modef"></span>
-						<div class="bx-filter-parameters-box-title" onclick="smartFilter.hideFilterProps(this)">
-							<span class="bx-filter-parameters-box-hint"><?=$arItem["NAME"]?>
-								<?if ($arItem["FILTER_HINT"] <> ""):?>
-									<i id="item_title_hint_<?echo $arItem["ID"]?>" class="fa fa-question-circle"></i>
-									<script type="text/javascript">
-										new top.BX.CHint({
-											parent: top.BX("item_title_hint_<?echo $arItem["ID"]?>"),
-											show_timeout: 10,
-											hide_timeout: 200,
-											dx: 2,
-											preventHide: true,
-											min_width: 250,
-											hint: '<?= CUtil::JSEscape($arItem["FILTER_HINT"])?>'
-										});
-									</script>
-								<?endif?>
-								<i data-role="prop_angle" class="fa fa-angle-<?if ($arItem["DISPLAY_EXPANDED"]== "Y"):?>up<?else:?>down<?endif?>"></i>
-							</span>
-						</div>
 
-						<div class="bx-filter-block" data-role="bx_filter_block">
-							<div class="bx-filter-parameters-box-container">
+
+
+
+					<li class="cat-li li-open">
+						<span class="bx-filter-container-modef"></span>
+						<a href="#" class="title" onclick="return false"><?=$arItem["NAME"]?></a>
+
+
+						<div class="inner" data-role="bx_filter_block">
 							<?
 							$arCur = current($arItem["VALUES"]);
 							switch ($arItem["DISPLAY_TYPE"])
@@ -387,6 +376,7 @@ $this->addExternalCss("/bitrix/css/main/font-awesome.css");
 									break;
 								case "P"://DROPDOWN
 									$checkedItemExist = false;
+
 									?>
 									<div class="bx-filter-select-container">
 										<div class="bx-filter-select-block" onclick="smartFilter.showDropDownPopup(this, '<?=CUtil::JSEscape($key)?>')">
@@ -606,41 +596,35 @@ $this->addExternalCss("/bitrix/css/main/font-awesome.css");
 									break;
 								default://CHECKBOXES
 									?>
+							<div class="checkboxes cl">
 									<?foreach($arItem["VALUES"] as $val => $ar):?>
-										<div class="checkbox">
-											<label data-role="label_<?=$ar["CONTROL_ID"]?>" class="bx-filter-param-label <? echo $ar["DISABLED"] ? 'disabled': '' ?>" for="<? echo $ar["CONTROL_ID"] ?>">
-												<span class="bx-filter-input-checkbox">
-													<input
-														type="checkbox"
-														value="<? echo $ar["HTML_VALUE"] ?>"
-														name="<? echo $ar["CONTROL_NAME"] ?>"
-														id="<? echo $ar["CONTROL_ID"] ?>"
-														<? echo $ar["CHECKED"]? 'checked="checked"': '' ?>
-														onclick="smartFilter.click(this)"
+											<div class="item">
+												<input
+													type="checkbox"
+													value="<? echo $ar["HTML_VALUE"] ?>"
+													name="<? echo $ar["CONTROL_NAME"] ?>"
+													id="<? echo $ar["CONTROL_ID"] ?>"
+													<? echo $ar["CHECKED"]? 'checked="checked"': '' ?>
+													onclick="smartFilter.click(this)"
 													/>
-													<span class="bx-filter-param-text" title="<?=$ar["VALUE"];?>"><?=$ar["VALUE"];?><?
-													if ($arParams["DISPLAY_ELEMENT_COUNT"] !== "N" && isset($ar["ELEMENT_COUNT"])):
-														?>&nbsp;(<span data-role="count_<?=$ar["CONTROL_ID"]?>"><? echo $ar["ELEMENT_COUNT"]; ?></span>)<?
-													endif;?></span>
-												</span>
-											</label>
-										</div>
+												<label for="<? echo $ar["CONTROL_ID"] ?>"><?=$ar["VALUE"];?></label>
+											</div>
 									<?endforeach;?>
+							</div>
 							<?
 							}
 							?>
-							</div>
-							<div style="clear: both"></div>
 						</div>
-					</div>
+					</li>
 				<?
 				}
 				?>
-			</div><!--//row-->
+			</div>
+			<!--//row-->
 			<div class="row">
 				<div class="col-xs-12 bx-filter-button-box">
 					<div class="bx-filter-block">
-						<div class="bx-filter-parameters-box-container">
+						<div class="bx-filter-parameters-box-container" style="display: none">
 							<input
 								class="btn btn-themes"
 								type="submit"

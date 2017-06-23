@@ -258,9 +258,11 @@ COLOR
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
-	height: 35px;
+	height: 30px;
+	width: 196px;
 	border-radius: 3px;
 	border: 1px solid #ccd5db;
+	font: italic 12px/20px 'Fira Sans', sans-serif;
 }
 .bx-retina .bx-filter .bx-filter-select-container {
 	border-style: solid;
@@ -289,7 +291,7 @@ COLOR
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 	width: 100%;
-	height: 33px;
+	height: 28px;
 	margin: 0;
 	padding: 0 33px 0 10px;
 	border: none;
@@ -298,10 +300,10 @@ COLOR
 }
 .bx-filter .bx-filter-select-text {
 	font-size: 15px;
-	line-height: 33px;
+	line-height: 29px;
 	overflow: hidden;
 	max-width: 100%;
-	height: 33px;
+	height: 29px;
 	cursor: pointer;
 	vertical-align: middle;
 	white-space: nowrap;
@@ -316,12 +318,12 @@ COLOR
 }
 .bx-filter .bx-filter-select-arrow {
 	position: absolute;
-	top: 0;
-	right: 0;
-	width: 34px;
-	height: 33px;
+	top: 11px;
+	right: 0px;
+	width: 22px;
+	height: 30px;
 	cursor: pointer;
-	background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAcAAAAECAYAAABCxiV9AAAAG0lEQVQY02OYOXPmf1yYAQRwSsAATglkBch8ADy7LKHqFrgoAAAAAElFTkSuQmCC') no-repeat center;
+	background: url(img/selectmenu.png) no-repeat;
 }
 /*
 *	Select popup
@@ -704,7 +706,9 @@ COLOR
 	left: 97%;
 }
 .bx-filter .bx-filter-popup-result.left {
-	right:97%;
+	right:95%;
+	top:45%;
+	text-align: center;
 }
 .bx-filter-horizontal .bx-filter-popup-result{
 	display: inline-block;
@@ -716,6 +720,7 @@ COLOR
 .bx-filter .bx-filter-popup-result a {
 	color: #0073a3;
 	line-height: 10px;
+	border-bottom: 0px solid #0464bb;
 }
 .bx-filter .bx-filter-popup-result a:hover {
 	text-decoration: none;
