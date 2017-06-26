@@ -155,7 +155,10 @@ $this->setFrameMode(true);
 			$intSectionID = 0;
 
 
-			?>
+$arSelect = Array("ID");
+$arFilter = Array("IBLOCK_ID"=> $arParams['IBLOCK_ID'],"SECTION_CODE" => $arResult['VARIABLES']['SECTION_CODE'], "ACTIVE"=>"Y");
+$res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
+if($ob = $res->GetNextElement()):?>
 
 <div class="row cl">
 	<div class="ct__leftbar">
@@ -472,7 +475,7 @@ $this->setFrameMode(true);
 	</div>
 </div>
 
-
+<? endif; ?>
 
 
 

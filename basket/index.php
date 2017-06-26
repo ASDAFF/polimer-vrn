@@ -2,6 +2,7 @@
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("Корзина");
 ?>
+
 <div class="basket">
    <a href="#" class="check">Проверка наличия на складе</a>
    <h1>Корзина</h1>

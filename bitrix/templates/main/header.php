@@ -21,6 +21,16 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 	<head>
 		<title><?$APPLICATION->ShowTitle()?></title>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
+		<!-- JavaScript -->
+		<script src="//cdn.jsdelivr.net/alertifyjs/1.10.0/alertify.min.js"></script>
+		<!-- CSS -->
+		<link rel="stylesheet" href="//cdn.jsdelivr.net/alertifyjs/1.10.0/css/alertify.min.css"/>
+		<!-- Default theme -->
+		<link rel="stylesheet" href="//cdn.jsdelivr.net/alertifyjs/1.10.0/css/themes/default.min.css"/>
+
+
+
+
 		<?
 		$APPLICATION->ShowHead();
 
@@ -45,6 +55,7 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 		Asset::getInstance()->addCss(SITE_TEMPLATE_PATH.'/css/jquery.fancybox.min.css');
 		Asset::getInstance()->addCss(SITE_TEMPLATE_PATH.'/css/social-likes_classic.css');
 
+
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/jquery.min.js');
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/vendor.min.js');
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/slick.min.js');
@@ -54,7 +65,10 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/jquery.kinetic.min.js');
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/common.min.js');
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/social-likes.min.js');
+
+		Asset::getInstance()->addJs('/js/function.js');
 		?>
+
 
 		<!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
 		<!--[if lt IE 9]>
@@ -318,10 +332,25 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 						</form>
 					</div><!--end::header__search-->
 					<a href="/personal/" class="header__account">Личный кабинет</a>
-					<a href="/basket/" class="header__cart cart">
-						<span class="cart__number">2</span>
-						<span class="cart__sum"><span class="cart__sum--numbers">129 000</span> руб</span>
-					</a>
+
+						<?$APPLICATION->IncludeComponent("bitrix:sale.basket.basket.line", "basket.small", Array(
+							"HIDE_ON_BASKET_PAGES" => "Y",	// Не показывать на страницах корзины и оформления заказа
+							"PATH_TO_BASKET" => SITE_DIR."personal/cart/",	// Страница корзины
+							"PATH_TO_ORDER" => SITE_DIR."personal/order/",	// Страница оформления заказа
+							"PATH_TO_PERSONAL" => SITE_DIR."personal/",	// Страница персонального раздела
+							"PATH_TO_PROFILE" => SITE_DIR."personal/",	// Страница профиля
+							"PATH_TO_REGISTER" => SITE_DIR."login/",	// Страница регистрации
+							"POSITION_FIXED" => "N",	// Отображать корзину поверх шаблона
+							"SHOW_AUTHOR" => "N",	// Добавить возможность авторизации
+							"SHOW_EMPTY_VALUES" => "Y",	// Выводить нулевые значения в пустой корзине
+							"SHOW_NUM_PRODUCTS" => "Y",	// Показывать количество товаров
+							"SHOW_PERSONAL_LINK" => "Y",	// Отображать персональный раздел
+							"SHOW_PRODUCTS" => "N",	// Показывать список товаров
+							"SHOW_TOTAL_PRICE" => "Y",	// Показывать общую сумму по товарам
+						),
+							false
+						);?>
+
 					</div><!--end::wr-->
 				</div><!--end::header__bottom-->
 			</header>

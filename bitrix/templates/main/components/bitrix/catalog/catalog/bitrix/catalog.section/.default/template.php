@@ -17,7 +17,7 @@ if (!empty($arResult['ITEMS']))
 
 
 	<div class="ct__content">
-		<h1>Модели круглой классической формы</h1>
+		<h1><?=$arResult['NAME']?></h1>
 
 		<div class="products_roll">
 			<div class="pr_header cl">
@@ -75,7 +75,7 @@ if (!empty($arResult['ITEMS']))
 
 				<? foreach ($arResult['ITEMS'] as $key => $arItem): ?>
 
-					<div class="item">
+					<div class="item" id="product_<?=$arItem['ID']?>">
 						<div class="hover">
 							<div class="inner">
 								<div class="compare">
@@ -85,24 +85,70 @@ if (!empty($arResult['ITEMS']))
 									</label>
 								</div>
 								<div class="close"></div>
-								<a href="/catalog/section/detail/" class="pic">
+								<a href="<?=$arItem['DETAIL_PAGE_URL']?>" class="pic">
                        <span>
-                          <img src="<?=SITE_TEMPLATE_PATH?>/img/card/item1/current.png" alt="">
+                          <img src="<?=$arItem['PREVIEW_PICTURE']['SRC']?>" alt="">
                        </span>
 								</a>
-								<a href="/catalog/section/detail/" class="title"><?=$arItem['NAME']?></a>
-								<div class="cost"><span>6 700</span> Руб.</div>
-								<div class="quantity">
+								<a href="<?=$arItem['DETAIL_PAGE_URL']?>" class="title"><?=$arItem['NAME']?></a>
+								<div class="cost">
+									<span>
+										<?
+										$ar_res = CPrice::GetBasePrice($arItem['ID']);
+										echo $ar_res['PRICE'];
+										?>
+									</span> Руб.</div>
+								<? if($ar_res['PRODUCT_QUANTITY'] > 0): ?>
+								<div class="quantity" id="count_<?=$arItem['ID']?>">
 									<a class="minus na" href="#"></a>
 									<input type="text" value="1"/>
 									<a class="plus" href="#"></a>
 								</div>
-								<div class="cost_total"><span>17 700</span> Руб.</div>
+									<script>
+
+											$('#count_<?=$arItem['ID']?> > .minus').click(function(){
+												var count_val = $(this).parent().find('input').val();
+												if(count_val < 2){
+													$(this).addClass('na');
+													$(this).parent().find('input').val(1);
+												}else{
+													var val = parseInt($(this).parent().find('input').val()) - 1;
+													var cost = parseFloat($('#product_<?=$arItem['ID']?> .cost > span').text());
+													var cost_total = cost*val;
+													$('#product_<?=$arItem['ID']?> .cost_total > span').text(cost_total.toFixed(2));
+													$(this).parent().find('input').val(val);
+													$(this).parent().find('.plus').removeClass('na');
+
+												}
+												return false;
+											});
+											$('#count_<?=$arItem['ID']?> > .plus').click(function(){
+												var count_val = $(this).parent().find('input').val();
+
+												if(count_val < <?=$ar_res['PRODUCT_QUANTITY']?>){
+													var val = parseInt($(this).parent().find('input').val()) + 1;
+													var cost = parseFloat($('#product_<?=$arItem['ID']?> .cost > span').text());
+													var cost_total = cost*val;
+													$('#product_<?=$arItem['ID']?> .cost_total > span').text(cost_total.toFixed(2));
+													$(this).parent().find('input').val(val);
+													$(this).parent().find('.minus').removeClass('na');
+												}else{
+													$(this).addClass('na');
+													$(this).parent().find('input').val(<?=$ar_res['PRODUCT_QUANTITY']?>);
+												}
+												return false;
+											});
+
+									</script>
+								<div class="cost_total"><span><?=$ar_res['PRICE'];?></span> Руб.</div>
 								<a href="#" class="add2cart" onclick="return false">
 									<span class="txt1">В корзину</span>
-									<span class="txt2">Добавить в корзину</span>
+									<span class="txt2" onclick="addToBasket2(<?=$arItem['ID']?>, $('#count_<?=$arItem['ID']?> input').val());">Добавить в корзину</span>
 								</a>
+
 								<div class="instock">Товар в наличии</div>
+								<? endif; ?>
+
 							</div>
 						</div>
 					</div>
