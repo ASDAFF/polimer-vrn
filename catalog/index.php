@@ -21,7 +21,7 @@ $APPLICATION->SetTitle("ИНЖЕНЕРНАЯ САНТЕХНИКА (ОТОПЛЕ�
 		"CACHE_FILTER" => "N",
 		"CACHE_GROUPS" => "Y",
 		"CACHE_TIME" => "36000000",
-		"CACHE_TYPE" => "A",
+		"CACHE_TYPE" => "N",
 		"COMMON_ADD_TO_BASKET_ACTION" => "",
 		"COMMON_SHOW_CLOSE_POPUP" => "N",
 		"CONVERT_CURRENCY" => "Y",
