@@ -41,12 +41,13 @@ if ($normalCount > 0)
 			</div>
 		</div>
 
+
 		<div class="options">
-			<a href="#" class="clear_basket">Очистить корзину</a>
+			<a href="javascript:void(0)" onclick="deleteBasket()" class="clear_basket">Очистить корзину</a>
 			<a href="/catalog/" class="continue_shopping">Продолжить покупки</a>
 			<div class="promo cl">
-				<a href="#" class="apply">Применить</a>
-				<input type="text">
+				<a class="apply bx_bt_button bx_big" href="javascript:void(0)" onclick="setCupon()" title="Нажмите для применения нового купона">Применить</a>
+				<input type="text" id="coupon" name="COUPON" value="">
 				<span>Активировать промокод:</span>
 			</div>
 			<a href="/check-out/step2.php" class="checkout_wr">Оформить заказ без регистрации</a>
@@ -55,7 +56,8 @@ if ($normalCount > 0)
 				<div class="t-row t-sale cl">
 					<div class="line"></div>
 					<div class="name">Общая скидка:</div>
-					<div class="value"><span>0</span> р.</div>
+					<div class="value"><span><?=$arResult['DISCOUNT_PRICE_ALL']?></span> р.</div>
+
 				</div>
 				<div class="t-row cl t-quan">
 					<div class="line"></div>

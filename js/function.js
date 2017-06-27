@@ -29,6 +29,34 @@ function addToBasket2(idel, quantity) {
     return _result;
 }
 
+function setCupon(){
+    var numCupon = $('#coupon').val();
+    if(numCupon){
+        $.ajax({
+            type: "GET",
+            url: "/ajax/set_cupon.php?cupon="+numCupon,
+            success: function(msg){
+                if(msg)
+                {
+                    console.log(msg);
+                    UpdateBigBasket();
+                    alertify.success("Купон активирован!");
+                }
+                else
+                {
+                    alertify.error("Купон не найден");
+                }
+            }
+        });
+    }else{
+        alertify.error('Введите номер купона!');
+        return false;
+    }
+
+}
+
+
+
 function basketPlus(max,count,id){
     var increm = count+1;
     if(increm > max){
@@ -85,4 +113,23 @@ function UpdateBigBasket(){
             }
         }
     });
+}
+
+function deleteBasket(){
+    $.ajax({
+        type: "GET",
+        url: "/ajax/delete_all_basket.php",
+        data:"",
+        success: function(msg){
+            if(msg!="error")
+            {
+                UpdateBigBasket();
+            }
+            else
+            {
+                alertify.error("Произошла ошибка. Попробуйте повторить запрос позже");
+            }
+        }
+    });
+    return false;
 }
