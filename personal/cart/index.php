@@ -1,7 +1,9 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("Корзина");
-?><?$APPLICATION->IncludeComponent("bitrix:sale.basket.basket", "basket-new", Array(
+?>
+
+<?$APPLICATION->IncludeComponent("bitrix:sale.basket.basket", "basket-new", Array(
 	"COUNT_DISCOUNT_4_ALL_QUANTITY" => "N",	// Рассчитывать скидку для каждой позиции (на все количество товара)
 		"COLUMNS_LIST" => array(	// Выводимые колонки
 			0 => "NAME",
@@ -47,4 +49,7 @@ $APPLICATION->SetTitle("Корзина");
 		"GIFTS_HIDE_NOT_AVAILABLE" => "N",	// Не отображать товары, которых нет на складах
 	),
 	false
-);?><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+);?>
+
+
+<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
