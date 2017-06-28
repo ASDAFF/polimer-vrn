@@ -139,14 +139,16 @@ if (!empty($arResult['ITEMS']))
 												return false;
 											});
 
+
+
 									</script>
 								<div class="cost_total"><span><?=$ar_res['PRICE'];?></span> Руб.</div>
-								<a href="#" class="add2cart" onclick="return false">
+								<a href="javascript:void(0)" class="add2cart">
 									<span class="txt1">В корзину</span>
 									<span class="txt2" onclick="addToBasket2(<?=$arItem['ID']?>, $('#count_<?=$arItem['ID']?> input').val());">Добавить в корзину</span>
 								</a>
-
 								<div class="instock">Товар в наличии</div>
+
 								<? endif; ?>
 
 							</div>

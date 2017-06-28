@@ -9,7 +9,6 @@ function replaseBasketTop() {
     })
 }
 function addToBasket2(idel, quantity) {
-
     $href = "/ajax/add.php?id="+idel;
     var _result = true;
     $.ajax({
@@ -133,3 +132,5 @@ function deleteBasket(){
     });
     return false;
 }
+
+
