@@ -3,30 +3,34 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("Контакты");
 ?>
 
-<?$APPLICATION->IncludeComponent("bitrix:catalog.section.list", "contacts", Array(
-    "ADD_SECTIONS_CHAIN" => "Y",	// Включать раздел в цепочку навигации
-    "CACHE_GROUPS" => "Y",	// Учитывать права доступа
-    "CACHE_TIME" => "36000000",	// Время кеширования (сек.)
-    "CACHE_TYPE" => "A",	// Тип кеширования
-    "COUNT_ELEMENTS" => "Y",	// Показывать количество элементов в разделе
-    "IBLOCK_ID" => "8",	// Инфоблок
-    "IBLOCK_TYPE" => "contact",	// Тип инфоблока
-    "SECTION_CODE" => "",	// Код раздела
-    "SECTION_FIELDS" => array(	// Поля разделов
-        0 => "",
-        1 => "",
-    ),
-    "SECTION_ID" => $_REQUEST["SECTION_ID"],	// ID раздела
-    "SECTION_URL" => "",	// URL, ведущий на страницу с содержимым раздела
-    "SECTION_USER_FIELDS" => array(	// Свойства разделов
-        0 => "",
-        1 => "",
-    ),
-    "SHOW_PARENT_NAME" => "Y",	// Показывать название раздела
-    "TOP_DEPTH" => "2",	// Максимальная отображаемая глубина разделов
-    "VIEW_MODE" => "LINE",	// Вид списка подразделов
-),
-    false
+<?$APPLICATION->IncludeComponent(
+	"bitrix:catalog.section.list", 
+	"contacts", 
+	array(
+		"ADD_SECTIONS_CHAIN" => "Y",
+		"CACHE_GROUPS" => "Y",
+		"CACHE_TIME" => "36000000",
+		"CACHE_TYPE" => "N",
+		"COUNT_ELEMENTS" => "Y",
+		"IBLOCK_ID" => "8",
+		"IBLOCK_TYPE" => "contact",
+		"SECTION_CODE" => "",
+		"SECTION_FIELDS" => array(
+			0 => "",
+			1 => "",
+		),
+		"SECTION_ID" => $_REQUEST["SECTION_ID"],
+		"SECTION_URL" => "",
+		"SECTION_USER_FIELDS" => array(
+			0 => "",
+			1 => "",
+		),
+		"SHOW_PARENT_NAME" => "Y",
+		"TOP_DEPTH" => "2",
+		"VIEW_MODE" => "LINE",
+		"COMPONENT_TEMPLATE" => "contacts"
+	),
+	false
 );?>
 
    <div class="co__heads cl">

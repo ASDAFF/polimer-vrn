@@ -28,9 +28,6 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 		<!-- Default theme -->
 		<link rel="stylesheet" href="//cdn.jsdelivr.net/alertifyjs/1.10.0/css/themes/default.min.css"/>
 
-
-
-
 		<?
 		$APPLICATION->ShowHead();
 
