@@ -2,7 +2,7 @@
 /**
  * Bitrix Framework
  * @package bitrix
- * @subpackage bitrix24
+ * @subpackage im
  * @copyright 2001-2016 Bitrix
  */
 
@@ -17,9 +17,6 @@ class Command
 {
 	const CACHE_TTL = 31536000;
 	const CACHE_PATH = '/bx/im/command/';
-
-	const CACHE_TOKEN_TTL = 86400;
-	const CACHE_TOKEN_PATH = '/bx/im/token/';
 
 	public static function register(array $fields)
 	{
@@ -248,10 +245,6 @@ class Command
 		}
 
 		$update = Array();
-		if (isset($updateFields['COMMAND']) && !empty($updateFields['COMMAND']))
-		{
-			$update['COMMAND'] = $updateFields['COMMAND'];
-		}
 		if (isset($updateFields['CLASS']) && !empty($updateFields['CLASS']))
 		{
 			$update['CLASS'] = $updateFields['CLASS'];
@@ -328,19 +321,33 @@ class Command
 		unset($messageFields['NOTIFY_MODULE']);
 		unset($messageFields['URL_PREVIEW']);
 
+		$count = 0;
+		$executed = Array();
 		foreach ($commandList as $params)
 		{
 			if (!$params['MODULE_ID'] || !\Bitrix\Main\Loader::includeModule($params['MODULE_ID']))
 			{
 				continue;
 			}
+			$hash = md5($params['EXEC_PARAMS'].$params['COMMAND_ID']);
+			if ($executed[$hash])
+			{
+				continue;
+			}
+			$executed[$hash] = true;
+			
+			if ($count >= 10)
+			{
+				break;
+			}
+			$count++;
 
 			if ($params['BOT_ID'] > 0)
 			{
-				self::addAccessToken($params['BOT_ID'], $messageFields['DIALOG_ID']);
+				Bot\Token::add($params['BOT_ID'], $messageFields['DIALOG_ID']);
 				if ($messageFields['MESSAGE_TYPE'] == IM_MESSAGE_PRIVATE)
 				{
-					self::addAccessToken($params['BOT_ID'], $messageFields['TO_USER_ID']);
+					Bot\Token::add($params['BOT_ID'], $messageFields['TO_USER_ID']);
 				}
 			}
 
@@ -359,6 +366,7 @@ class Command
 
 				call_user_func_array(array($params["CLASS"], $params["METHOD_COMMAND_ADD"]), Array($messageId, $messageFields));
 			}
+			
 		}
 		unset($messageFields['COMMAND']);
 		unset($messageFields['COMMAND_ID']);
@@ -370,11 +378,6 @@ class Command
 			ExecuteModuleEventEx($event, Array($commandList, $messageId, $messageFields));
 		}
 
-		return true;
-	}
-
-	public static function commandExecute($dialogId, $messageId, $bodId, $command, $commandParams)
-	{
 		return true;
 	}
 
@@ -433,7 +436,7 @@ class Command
 		if ($botId > 0)
 		{
 			$grantAccess = false;
-			if (self::hasAccessToken($botId, $messageFields['DIALOG_ID']))
+			if (Bot\Token::isActive($botId, $messageFields['DIALOG_ID']))
 			{
 				$grantAccess = true;
 			}
@@ -614,8 +617,13 @@ class Command
 		$isExtranet = \Bitrix\Im\User::getInstance($messageFields['FROM_USER_ID'])->isExtranet();
 
 		$commands = self::getListCache();
+		$bots = Bot::getListCache();
 		foreach ($commands as $value)
 		{
+			if ($messageFields['CHAT_ENTITY_TYPE'] == 'LIVECHAT' || $messageFields['CHAT_ENTITY_TYPE'] == 'LINES' && $bots[$value['BOT_ID']]['OPENLINE'] != 'Y')
+			{
+				continue;
+			}
 			if ($value['COMMAND'] == $command)
 			{
 				if ($value['EXTRANET_SUPPORT'] == 'N' && $isExtranet)
@@ -657,6 +665,8 @@ class Command
 			Array('COMMAND' => '>>', 'TITLE' => Loc::getMessage("COMMAND_DEF_QUOTE_TITLE"), 'PARAMS' => Loc::getMessage("COMMAND_DEF_QUOTE_PARAMS"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y'),
 			Array('COMMAND' => 'rename', 'TITLE' => Loc::getMessage("COMMAND_DEF_RENAME_TITLE"), 'PARAMS' => Loc::getMessage("COMMAND_DEF_RENAME_PARAMS"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y', 'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_CHAT"), 'CONTEXT' => 'chat'),
 			Array('COMMAND' => 'webrtcDebug', 'TITLE' => Loc::getMessage("COMMAND_DEF_WD_TITLE"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y', 'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_DEBUG"), 'CONTEXT' => 'call'),
+			Array('COMMAND' => 'startTrackStatus', 'TITLE' => Loc::getMessage("COMMAND_DEF_STTS_TITLE"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y', 'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_DIALOG"), 'CONTEXT' => 'user'),
+			Array('COMMAND' => 'stopTrackStatus', 'TITLE' => Loc::getMessage("COMMAND_DEF_SPTS_TITLE"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y', 'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_DIALOG"), 'CONTEXT' => 'user'),
 		);
 
 		$imCommands = Array();
@@ -702,7 +712,7 @@ class Command
 	public static function getListCache($lang = LANGUAGE_ID)
 	{
 		$cache = \Bitrix\Main\Data\Cache::createInstance();
-		if($cache->initCache(self::CACHE_TTL, 'list_v3_'.$lang, self::CACHE_PATH))
+		if($cache->initCache(self::CACHE_TTL, 'list_v4_'.$lang, self::CACHE_PATH))
 		{
 			$result = $cache->getVars();
 		}
@@ -888,119 +898,7 @@ class Command
 
 		return $result;
 	}
-
-
-	/* tmp methods */
-	private static function hasAccessToken($botId, $dialogId)
-	{
-		if ($botId == $dialogId)
-			return true;
-
-		$date = new \Bitrix\Main\Type\DateTime();
-
-		$result = self::getAccessTokenCache($botId);
-		return $result && $result[$dialogId] && $result[$dialogId]['DATE_EXPIRE'] >= $date->getTimestamp();
-	}
-
-	public static function addAccessToken($botId, $dialogId)
-	{
-		return self::getAccessToken($botId, $dialogId, true);
-	}
-
-	public static function getAccessToken($botId, $dialogId, $prolong = false)
-	{
-		if ($botId == $dialogId)
-			return false;
-
-		$result = self::getAccessTokenCache($botId);
-
-		$date = new \Bitrix\Main\Type\DateTime();
-		if (!$result[$dialogId] || $result[$dialogId]['DATE_EXPIRE'] < $date->getTimestamp())
-		{
-			$cache = \Bitrix\Main\Data\Cache::createInstance();
-			$cache->clean('token_'.$botId, self::CACHE_TOKEN_PATH);
-
-			$orm = \Bitrix\Im\Model\BotTokenTable::add(Array(
-				'DATE_EXPIRE' => $date->add('10 MINUTES'),
-				'BOT_ID' => $botId,
-				'DIALOG_ID' => $dialogId
-			));
-			if ($orm->getId() <= 0)
-			{
-				return false;
-			}
-			$addResult = $orm->getData();
-
-			$result[$dialogId] = Array(
-				'ID' => $orm->getId(),
-				'TOKEN' => '',
-				'DIALOG_ID' => $addResult['DIALOG_ID'],
-				'DATE_EXPIRE' => $addResult['DATE_EXPIRE']->getTimestamp()
-			);
-		}
-		else if ($prolong)
-		{
-			$date = new \Bitrix\Main\Type\DateTime();
-			$orm = \Bitrix\Im\Model\BotTokenTable::update($result[$dialogId]['ID'], Array(
-				'DATE_EXPIRE' => $date->add('10 MINUTES')
-			));
-			if ($orm->isSuccess())
-			{
-				$addResult = $orm->getData();
-				$result[$dialogId]['DATE_EXPIRE'] = $addResult['DATE_EXPIRE']->getTimestamp();
-
-				$cache = \Bitrix\Main\Data\Cache::createInstance();
-				$cache->initCache(self::CACHE_TOKEN_TTL, 'token_'.$botId, self::CACHE_TOKEN_PATH);
-				$cache->startDataCache();
-				$cache->endDataCache($result);
-			}
-		}
-
-		return $result[$dialogId];
-	}
-
-	private static function getAccessTokenCache($botId)
-	{
-		$cache = \Bitrix\Main\Data\Cache::createInstance();
-		if($cache->initCache(self::CACHE_TOKEN_TTL, 'token_'.$botId, self::CACHE_TOKEN_PATH))
-		{
-			$result = $cache->getVars();
-		}
-		else
-		{
-			$result = Array();
-			$orm = \Bitrix\Im\Model\BotTokenTable::getList(Array(
-				'filter' => array(
-					'>DATE_EXPIRE' => new \Bitrix\Main\Type\DateTime(),
-					'=BOT_ID' => $botId
-				),
-			));
-			while ($token = $orm->fetch())
-			{
-				$result[$token['DIALOG_ID']] = Array(
-					'ID' => $token['ID'],
-					'TOKEN' => $token['TOKEN'],
-					'DIALOG_ID' => $token['DIALOG_ID'],
-					'DATE_EXPIRE' => is_object($token['DATE_EXPIRE'])? $token['DATE_EXPIRE']->getTimestamp(): 0
-				);
-				if ($token['TOKEN'])
-				{
-					$result[$token['TOKEN']] = Array(
-						'ID' => $token['ID'],
-						'TOKEN' => $token['TOKEN'],
-						'DIALOG_ID' => $token['DIALOG_ID'],
-						'DATE_EXPIRE' => is_object($token['DATE_EXPIRE'])? $token['DATE_EXPIRE']->getTimestamp(): 0
-					);
-				}
-			}
-
-			$cache->startDataCache();
-			$cache->endDataCache($result);
-		}
-
-		return $result;
-	}
-
+	
 	public static function clearCache()
 	{
 		$cache = \Bitrix\Main\Data\Cache::createInstance();

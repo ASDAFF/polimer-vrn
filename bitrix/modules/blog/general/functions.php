@@ -5,76 +5,34 @@ class blogTextParser extends CTextParser
 	public $bPublic = false;
 	public $pathToUserEntityId = false;
 	public $pathToUserEntityType = false;
+	public $smilesGallery = 0;
+	
+	private $arImages = array();
+	
+	public $showedImages = array();
+	
+//	max sizes for show image in popup
+	const IMAGE_MAX_SHOWING_WIDTH = 1000;
+	const IMAGE_MAX_SHOWING_HEIGHT = 1000;
 
-	function blogTextParser($strLang = False, $pathToSmile = false, $arParams = array())
+	public function __construct($strLang = False, $pathToSmile = false, $arParams = array())
 	{
-		$this->CTextParser();
+		parent::__construct();
 		global $CACHE_MANAGER;
 		if ($strLang===False)
 			$strLang = LANGUAGE_ID;
 
-		if(strlen($pathToSmile) <= 0)
-			$pathToSmile = "/bitrix/images/blog/smile/";
-		$this->pathToSmile = $pathToSmile;
-		$this->imageWidth = COption::GetOptionString("blog", "image_max_width", 600);
-		$this->imageHeight = COption::GetOptionString("blog", "image_max_height", 1000);
+		$this->imageWidth = \Bitrix\Blog\Util::getImageMaxWidth();
+		$this->imageHeight = \Bitrix\Blog\Util::getImageMaxHeight();
 		$this->showedImages = array();
 		$this->ajaxPage = $GLOBALS["APPLICATION"]->GetCurPageParam("", array("bxajaxid", "logout"));
 		$this->blogImageSizeEvents = GetModuleEvents("blog", "BlogImageSize", true);
 		$this->arUserfields = array();
 		$this->bPublic = (is_array($arParams) && $arParams["bPublic"]);
-
-		$arSmiles = array();
-
-		$this->smiles = array();
-		if($CACHE_MANAGER->Read(60*60*24*365, "b_blog_smile"))
-		{
-			$arSmiles = $CACHE_MANAGER->Get("b_blog_smile");
-		}
-		else
-		{
-			$db_res = CBlogSmile::GetList(array("SORT" => "ASC"), array("SMILE_TYPE" => "S"/*, "LANG_LID" => $strLang*/), false, false, Array("LANG_LID", "ID", "IMAGE", "DESCRIPTION", "TYPING", "SMILE_TYPE", "SORT"));
-			while ($res = $db_res->Fetch())
-			{
-				$tok = strtok($res["TYPING"], " ");
-				while ($tok)
-				{
-					$arSmiles[$res["LANG_LID"]][] = array(
-										"TYPING" => $tok,
-										"IMAGE"  => stripslashes($res["IMAGE"]),
-										"DESCRIPTION" => stripslashes($res["NAME"]));
-					$tok = strtok(" ");
-				}
-			}
-
-			function sortlen($a, $b) 
-			{
-				if (strlen($a["TYPING"]) == strlen($b["TYPING"]))
-					return 0;
-
-				return (strlen($a["TYPING"]) > strlen($b["TYPING"])) ? -1 : 1;
-			}
-
-			if(!empty($arSmiles))
-			{
-				foreach ($arSmiles as $LID => $arSmilesLID)
-				{
-					uasort($arSmilesLID, 'sortlen');
-					$arSmiles[$LID] = $arSmilesLID;
-				}
-			}
-
-			$CACHE_MANAGER->Set("b_blog_smile", $arSmiles);
-		}
-		$this->smiles = $arSmiles[$strLang];
-
-		if (empty($this->smiles))
-		{
-			$this->pathToSmile = '';
-		}
+		$this->smilesGallery = \COption::GetOptionInt("blog", "smile_gallery_id", 0);
 	}
 
-	function convert($text, $bPreview = True, $arImages = array(), $allow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y", "TABLE" => "Y", "CUT_ANCHOR" => "N", "SHORT_ANCHOR" => "N"), $arParams = Array())
+	public function convert($text, $bPreview = True, $arImages = array(), $allow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y", "TABLE" => "Y", "CUT_ANCHOR" => "N", "SHORT_ANCHOR" => "N"), $arParams = Array())
 	{
 		if(!is_array($arParams) && strlen($arParams) > 0)
 			$type = $arParams;
@@ -137,7 +95,7 @@ class blogTextParser extends CTextParser
 		return trim($text);
 	}
 
-	function ParserCut(&$text, &$obj)
+	public function ParserCut(&$text, &$obj)
 	{
 		if ($obj->bPreview)
 		{
@@ -149,20 +107,20 @@ class blogTextParser extends CTextParser
 			$text = preg_replace("#<cut[\s]*(/>|>)#is", "[cut]", $text);
 		}
 	}
-	function ParserCutAfter(&$text, &$obj)
+	public function ParserCutAfter(&$text, &$obj)
 	{
 		if (!$obj->bPreview)
 		{
 			$text = preg_replace("#\[cut[\s]*(/\]|\])#is", "<a name=\"cut\"></a>", $text);
 		}
 	}
-
-	function ParserBlogImageBefore(&$text, &$obj)
+	
+	public function ParserBlogImageBefore(&$text, &$obj = null)
 	{
 		$text = preg_replace("/\[img([^\]]*)id\s*=\s*([0-9]+)([^\]]*)\]/is".BX_UTF_PCRE_MODIFIER, "[imag id=\\1 \\2 \\3]", $text);
 	}
-
-	function ParserBlogImage(&$text, &$obj)
+	
+	public function ParserBlogImage(&$text, &$obj)
 	{
 		if(is_callable(array($obj, 'convert_blog_image')))
 		{
@@ -174,17 +132,17 @@ class blogTextParser extends CTextParser
 		}
 	}
 
-	function convertBlogImage($matches)
+	private function convertBlogImage($matches)
 	{
 		return $this->convert_blog_image($matches[1], $matches[2], $matches[3]);
 	}
 
-	function convertBlogImageMail($matches)
+	private function convertBlogImageMail($matches)
 	{
 		return $this->convert_blog_image('', $matches[2], '', 'mail');
 	}
 
-	function ParserTag(&$text, &$obj)
+	public function ParserTag(&$text, &$obj)
 	{
 		if($obj->allow["TAG"] != "N" && is_callable(array($obj, 'convert_blog_tag')))
 		{
@@ -196,83 +154,38 @@ class blogTextParser extends CTextParser
 		}
 	}
 
-	function convertBlogTag($matches)
+	private function convertBlogTag($matches)
 	{
 		return $this->convert_blog_tag($matches[1]);
 	}
 
-	function convert_blog_tag($name = "")
+	private function convert_blog_tag($name = "")
 	{
 		if(strlen($name) <= 0)
 			return;
 		return "TAG [".$name."]";
 	}
-
-	function convert4mail($text, $arImages = Array())
+	
+	function convert4im($text, $arImages = Array())
 	{
-		$text = Trim($text);
-		if (strlen($text)<=0) return "";
-		$arPattern = array();
-		$arReplace = array();
-
-		$arPattern[] = "/\[(code|quote)(.*?)\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "\n>================== \\1 ===================\n";
-
-		$arPattern[] = "/\[\/(code|quote)(.*?)\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "\n>===========================================\n";
-
-		$arPattern[] = "/\<WBR[\s\/]?\>/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "";
-
-		$arPattern[] = "/^(\r|\n)+?(.*)$/";
-		$arReplace[] = "\\2";
-
-		$arPattern[] = "/\[b\](.+?)\[\/b\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "\\1";
-
-		$arPattern[] = "/\[i\](.+?)\[\/i\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "\\1";
-
-		$arPattern[] = "/\[u\](.+?)\[\/u\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "_\\1_";
-
-		$arPattern[] = "/\[s\](.+?)\[\/s\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "_\\1_";
-
-		$arPattern[] = "/\[(\/?)(color|font|size|left|right|center)([^\]]*)\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "";
-
-		$arPattern[] = "/\[url\](\S+?)\[\/url\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "(URL: \\1)";
-
-		$arPattern[] = "/\[url\s*=\s*(\S+?)\s*\](.*?)\[\/url\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "\\2 (URL: \\1)";
-
-		$arPattern[] = "/\[img([^\]]*)\](.+?)\[\/img\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "(IMAGE: \\2)";
-
-		$arPattern[] = "/\[video([^\]]*)\](.+?)\[\/video[\s]*\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "(VIDEO: \\2)";
-
-		$arPattern[] = "/\[(\/?)list\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "\n";
-
-		$arPattern[] = "/\[table\](.*?)\[\/table\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "\\1\n";
-		$arPattern[] = "/\[tr\](.*?)\[\/tr\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "\\1\n";
-		$arPattern[] = "/\[td\](.*?)\[\/td\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "\\1\t";
-
-		$arPattern[] = "/\[user([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "\\2";
-
-		$arPattern[] = "/\[DOCUMENT([^\]]*)\]/is".BX_UTF_PCRE_MODIFIER;
-		$arReplace[] = "";
+		$text = preg_replace(
+			array(
+				"/\[(\/?)(code|quote)([^\]]*)\]/is".BX_UTF_PCRE_MODIFIER,
+				"/\\[url\\s*=\\s*(\\S+?)\\s*\\](.*?)\\[\\/url\\]/is".BX_UTF_PCRE_MODIFIER
+			),
+			array(
+				"",
+				"\\1"
+			),
+			$text
+		);
 		
-
-		$text = preg_replace($arPattern, $arReplace, $text);
-		$text = str_replace("&shy;", "", $text);
+		return $this->convert4mail($text, $arImages);
+	}
+	
+	public function convert4mail($text, $arImages = Array())
+	{
+		$text = parent::convert4mail($text);
 
 		$serverName = ((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
 		if (strlen($serverName) <=0)
@@ -290,12 +203,12 @@ class blogTextParser extends CTextParser
 		return $text;
 	}
 
-	function convert_blog_image($p1 = "", $imageId = "", $p2 = "", $type = "html")
+	private function convert_blog_image($p1 = "", $imageId = "", $p2 = "", $type = "html")
 	{
 		$imageId = IntVal($imageId);
 		if($imageId <= 0)
 			return;
-
+		
 		$res = "";
 		if(IntVal($this->arImages[$imageId]) > 0)
 		{
@@ -310,8 +223,7 @@ class blogTextParser extends CTextParser
 							$strImage = $this->serverName.$db_img_arr["SRC"];
 						else
 							$strImage = $db_img_arr["SRC"];
-						$sourceImage = $strImage;
-
+						
 						$strPar = "";
 						preg_match("/width\=([0-9]+)/is".BX_UTF_PCRE_MODIFIER, $p1, $width);
 						preg_match("/height\=([0-9]+)/is".BX_UTF_PCRE_MODIFIER, $p1, $height);
@@ -349,8 +261,15 @@ class blogTextParser extends CTextParser
 							$width = $arFileTmp["width"];
 							$height = $arFileTmp["height"];
 						}
+						
+						$sourceImage = $this->serverName."/bitrix/components/bitrix/blog/show_file.php?fid=".$imageId;
+//						if original size bigger than limits - need resize
+						if($db_img_arr["WIDTH"] > blogTextParser::IMAGE_MAX_SHOWING_WIDTH)
+							$sourceImage .= "&width=".blogTextParser::IMAGE_MAX_SHOWING_WIDTH;
+						if($db_img_arr["HEIGHT"] > blogTextParser::IMAGE_MAX_SHOWING_HEIGHT)
+							$sourceImage .= "&height=".blogTextParser::IMAGE_MAX_SHOWING_HEIGHT;
 
-						$strPar = ' width="'.$width.'" height="'.$height.'"';
+						$strPar = 'style=" width:'.$width.'px; height:'.$height.'px;"';
 						$strImage = preg_replace("'(?<!:)/+'s", "/", $strImage);
 						$sourceImage = preg_replace("'(?<!:)/+'s", "/", $sourceImage);
 
@@ -399,12 +318,17 @@ class blogTextParser extends CTextParser
 						$width = $this->imageWidth;
 					if($height > $this->imageHeight)
 						$height = $this->imageHeight;
-
+					
+					$db_img_arr = CFile::GetFileArray($this->arImages[$imageId]);
+					
 					$strImage = $this->serverName."/bitrix/components/bitrix/blog/show_file.php?fid=".$imageId."&width=".$width."&height=".$height;
 					$sourceImage = $this->serverName."/bitrix/components/bitrix/blog/show_file.php?fid=".$imageId;
-
-					$db_img_arr = CFile::GetFileArray($this->arImages[$imageId]);
-
+//					if original size bigger than limits - need resize
+					if($db_img_arr["WIDTH"] > blogTextParser::IMAGE_MAX_SHOWING_WIDTH)
+						$sourceImage .= "&width=".blogTextParser::IMAGE_MAX_SHOWING_WIDTH;
+					if($db_img_arr["HEIGHT"] > blogTextParser::IMAGE_MAX_SHOWING_HEIGHT)
+						$sourceImage .= "&height=".blogTextParser::IMAGE_MAX_SHOWING_HEIGHT;
+					
 					CFile::ScaleImage($db_img_arr["WIDTH"], $db_img_arr["HEIGHT"], Array("width" => $width, "height" => $height), BX_RESIZE_IMAGE_PROPORTIONAL, $bNeedCreatePicture, $arSourceSize, $arDestinationSize);
 
 					if ($this->isSonetLog)
@@ -437,7 +361,7 @@ class blogTextParser extends CTextParser
 		return $res;
 	}
 
-	function convert_to_rss($text, $arImages = Array(), $arAllow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y", "TABLE" => "Y", "CUT_ANCHOR" => "N"), $bPreview = true, $arParams = Array())
+	public function convert_to_rss($text, $arImages = Array(), $arAllow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y", "TABLE" => "Y", "CUT_ANCHOR" => "N"), $bPreview = true, $arParams = Array())
 	{
 		$arParams["type"] = "rss";
 		$text = $this->convert($text, $bPreview, $arImages, $arAllow, $arParams);
@@ -574,6 +498,32 @@ class blogTextParser extends CTextParser
 
 		return $res;
 	}
+	
+	public static function GetEditorToolbar($arParams)
+	{
+//		dbg: this is wrong
+//		todo: allowVideo in settings
+		$result = Array(
+			"Bold", "Italic", "Underline", "Strike", "ForeColor",
+			"FontList", "FontSizeList", "RemoveFormat", "Quote", "Code",
+			"CreateLink",
+			"Image",
+			"Table",
+			"Justify",
+			"InsertOrderedList",
+			"InsertUnorderedList",
+			"SmileList",
+			"Source",
+			"UploadImage",
+			(($arParams["allowVideo"] == "Y") ? "InputVideo" : ""),
+//			"MentionUser",
+		);
+
+		if (LANGUAGE_ID == 'ru')
+			$result[] = 'Translit';
+		
+		return $result;
+	}
 }
 class CBlogTools
 {
@@ -657,7 +607,7 @@ class CBlogTools
 	function blogUFfileEdit($arResult, $arParams)
 	{
 		$result = false;
-		if (strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_POST_DOC') === 0 || strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_COMMENT_DOC') === 0)
+		if (strpos($arParams['arUserField']['FIELD_NAME'], CBlogPost::UF_NAME) === 0 || strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_COMMENT_DOC') === 0)
 		{
 			$componentParams = array(
 				'INPUT_NAME' => $arParams["arUserField"]["FIELD_NAME"],
@@ -679,7 +629,7 @@ class CBlogTools
 	function blogUFfileShow($arResult, $arParams)
 	{
 		$result = false;
-		if ($arParams['arUserField']['FIELD_NAME'] == 'UF_BLOG_POST_DOC' || strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_COMMENT_DOC') === 0)
+		if ($arParams['arUserField']['FIELD_NAME'] == CBlogPost::UF_NAME || strpos($arParams['arUserField']['FIELD_NAME'], 'UF_BLOG_COMMENT_DOC') === 0)
 		{
 			if (sizeof($arResult['VALUE']) > 0)
 			{

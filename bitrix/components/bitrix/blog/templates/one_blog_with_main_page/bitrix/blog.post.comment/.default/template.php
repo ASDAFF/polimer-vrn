@@ -360,9 +360,9 @@ else
 							?><div style="border:1px solid red"><?
 								$commentPreview = Array(
 										"ID" => "preview",
-										"TitleFormated" => htmlspecialcharsEx($_POST["subject"]),
-										"TextFormated" => $_POST["commentFormated"],
-										"AuthorName" => $User["NAME"],
+										"TitleFormated" => htmlspecialcharsbx($_POST["subject"]),
+										"TextFormated" => htmlspecialcharsbx($_POST["commentFormated"]),
+										"AuthorName" => htmlspecialcharsbx($User["NAME"]),
 										"DATE_CREATE" => GetMessage("B_B_MS_PREVIEW_TITLE"),
 									);
 								ShowComment($commentPreview, ($level+1), 30, $canModerate, $User, $use_captcha, $bCanUserComment, $errorComment, $arParams);
@@ -458,9 +458,9 @@ else
 			?><div style="border:1px solid red"><?
 				$commentPreview = Array(
 						"ID" => "preview",
-						"TitleFormated" => htmlspecialcharsEx($_POST["subject"]),
-						"TextFormated" => $_POST["commentFormated"],
-						"AuthorName" => $arResult["User"]["NAME"],
+						"TitleFormated" => htmlspecialcharsbx($_POST["subject"]),
+						"TextFormated" => htmlspecialcharsbx($_POST["commentFormated"]),
+						"AuthorName" => htmlspecialcharsbx($arResult["User"]["NAME"]),
 						"DATE_CREATE" => GetMessage("B_B_MS_PREVIEW_TITLE"),
 					);
 				ShowComment($commentPreview, 0, 30, false, $arResult["User"], $arResult["use_captcha"], $arResult["CanUserComment"], false, $arParams);
@@ -521,9 +521,9 @@ else
 			?><div style="border:1px solid red"><?
 				$commentPreview = Array(
 						"ID" => "preview",
-						"TitleFormated" => htmlspecialcharsEx($_POST["subject"]),
-						"TextFormated" => $_POST["commentFormated"],
-						"AuthorName" => $arResult["User"]["NAME"],
+						"TitleFormated" => htmlspecialcharsbx($_POST["subject"]),
+						"TextFormated" => htmlspecialcharsbx($_POST["commentFormated"]),
+						"AuthorName" => htmlspecialcharsbx($arResult["User"]["NAME"]),
 						"DATE_CREATE" => GetMessage("B_B_MS_PREVIEW_TITLE"),
 					);
 				ShowComment($commentPreview, 0, 30, false, $arResult["User"], $arResult["use_captcha"], $arResult["CanUserComment"], $arResult["COMMENT_ERROR"], $arParams);

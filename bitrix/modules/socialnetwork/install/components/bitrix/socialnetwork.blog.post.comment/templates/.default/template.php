@@ -1,4 +1,7 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Blog\Item;
+
 /**
  * @var array $arParams
  * @var array $arResult
@@ -15,27 +18,28 @@ if(!empty($arResult["FATAL_MESSAGE"]))
 }
 else if($arResult["imageUploadFrame"] == "Y")
 {
-?>
-<script type="text/javascript">
-	<?if(!empty($arResult["Image"])):?>
-	if(!top.arImagesId) { top.arImagesId = []; }
-	if(!top.arImagesSrc) { top.arImagesSrc = []; }
-	top.arImagesId.push('<?=$arResult["Image"]["ID"]?>');
-	top.arImagesSrc.push('<?=CUtil::JSEscape($arResult["Image"]["SRC"])?>');
-	top.bxBlogImageId = '<?=$arResult["Image"]["ID"]?>';
-	top.bxBlogImageIdWidth = '<?=CUtil::JSEscape($arResult["Image"]["WIDTH"])?>';
-	top.bxBlogImageIdSrc = '<?=CUtil::JSEscape($arResult["Image"]["SRC"])?>';
-	<?elseif(strlen($arResult["ERROR_MESSAGE"]) > 0):?>
-	top.bxBlogImageError = '<?=CUtil::JSEscape($arResult["ERROR_MESSAGE"])?>';
-	<?endif;?>
-</script>
-<?
-die();
+	?>
+	<script type="text/javascript">
+		<?if(!empty($arResult["Image"])):?>
+			if(!top.arImagesId) { top.arImagesId = []; }
+			if(!top.arImagesSrc) { top.arImagesSrc = []; }
+			top.arImagesId.push('<?=$arResult["Image"]["ID"]?>');
+			top.arImagesSrc.push('<?=CUtil::JSEscape($arResult["Image"]["SRC"])?>');
+			top.bxBlogImageId = '<?=$arResult["Image"]["ID"]?>';
+			top.bxBlogImageIdWidth = '<?=CUtil::JSEscape($arResult["Image"]["WIDTH"])?>';
+			top.bxBlogImageIdSrc = '<?=CUtil::JSEscape($arResult["Image"]["SRC"])?>';
+		<?elseif(strlen($arResult["ERROR_MESSAGE"]) > 0):?>
+			top.bxBlogImageError = '<?=CUtil::JSEscape($arResult["ERROR_MESSAGE"])?>';
+		<?endif;?>
+	</script>
+	<?
+	die();
 }
 
 $rights = "N";
 if (
-	CSocNetUser::IsCurrentUserModuleAdmin() 
+	$arResult["Perm"] >= Item\Permissions::FULL
+	|| CSocNetUser::IsCurrentUserModuleAdmin()
 	||$APPLICATION->GetGroupRight("blog") >= "W"
 )
 {
@@ -50,7 +54,11 @@ else if (
 }
 else if (!IsModuleInstalled("intranet"))
 {
-	$rights = ($arResult["Perm"] < BLOG_PERMS_FULL ? "OWNLAST" : "ALL");
+	$rights = (
+		$arResult["Perm"] < Item\Permissions::FULL
+			? "OWNLAST"
+			: "ALL"
+	);
 }
 $eventHandlerID = AddEventHandler('main', 'system.field.view.file', Array('CBlogTools', 'blogUFfileShow'));
 $arResult["OUTPUT_LIST"] = $APPLICATION->IncludeComponent(
@@ -68,7 +76,7 @@ $arResult["OUTPUT_LIST"] = $APPLICATION->IncludeComponent(
 			"MODERATE" => ($arResult["Perm"] >= BLOG_PERMS_MODERATE ? "Y" : "N"),
 			"EDIT" => $rights,
 			"DELETE" => $rights,
-			"CREATETASK" => (IsModuleInstalled("tasks") ? "Y" : "N")
+			"CREATETASK" => ($arResult["bTasksAvailable"] ? "Y" : "N")
 		),
 		"VISIBLE_RECORDS_COUNT" => (
 			$arResult["newCount"] > $arParams["PAGE_SIZE"]
@@ -96,7 +104,7 @@ $arResult["OUTPUT_LIST"] = $APPLICATION->IncludeComponent(
 			array($arParams["ID"], $arParams["ID"], "#ID#", ""),
 			$arResult["urlToDelete"]
 		),
-		"AUTHOR_URL" => ($arParams["bPublicPage"] ? "javascript:void(0);" : $arParams["PATH_TO_USER"]),
+		"AUTHOR_URL" => ($arParams["bPublicPage"] ? "" : $arParams["PATH_TO_USER"]),
 
 		"AVATAR_SIZE" => $arParams["AVATAR_SIZE_COMMENT"],
 		"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
@@ -160,8 +168,10 @@ if ($arResult["CanUserComment"])
 		top.postFollow<?=$arParams["ID"]?> = postFollow<?=$arParams["ID"]?> = '<?=$arParams["FOLLOW"]?>';
 	</script>
 	<?
-	if ( empty($_REQUEST["bxajaxid"]) && empty($_REQUEST["logajax"]) ||
-		($_REQUEST["RELOAD"] == "Y" && !(empty($_REQUEST["bxajaxid"]) && empty($_REQUEST["logajax"])) )
+	if (
+		(empty($_REQUEST["bxajaxid"]) && empty($_REQUEST["logajax"]))
+		|| ($_REQUEST["RELOAD"] == "Y" && !(empty($_REQUEST["bxajaxid"]) && empty($_REQUEST["logajax"])))
+		|| (isset($_REQUEST["noblog"]) && $_REQUEST["noblog"] == "Y")
 	)
 	{
 		include_once(__DIR__."/script.php");

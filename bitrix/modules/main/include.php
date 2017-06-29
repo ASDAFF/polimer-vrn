@@ -98,7 +98,7 @@ if(!defined("BX_COMP_MANAGED_CACHE") && COption::GetOptionString("main", "compon
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/filter_tools.php");
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/ajax_tools.php");
 
-/*ZDUyZmZOTU1Y2UzOGI5YWQ5NGRkNGQxYTAyYWVmZTEzOGJjYzU=*/$GLOBALS['____1888209192']= array(base64_decode(''.'ZGVmaW'.'5l'));if(!function_exists(__NAMESPACE__.'\\___1522967039')){function ___1522967039($_182529810){static $_558320411= false; if($_558320411 == false) $_558320411=array('R'.'U5DT0'.'RF',''.'WQ==');return base64_decode($_558320411[$_182529810]);}};class CBXFeatures{ public static function IsFeatureEnabled($_1392722256){ return true;} public static function IsFeatureEditable($_1392722256){ return true;} public static function SetFeatureEnabled($_1392722256, $_836852849= true){} public static function SaveFeaturesSettings($_43637686, $_1379625501){} public static function GetFeaturesList(){ return array();} public static function InitiateEditionsSettings($_524165032){} public static function ModifyFeaturesSettings($_524165032, $_1976075153){} public static function IsFeatureInstalled($_1392722256){ return true;}} $GLOBALS['____1888209192'][0](___1522967039(0), ___1522967039(1));/**/			//Do not remove this
+/*ZDUyZmZMzY1MGQ1YzcwYjczZWI3MDE2NmZmYzczN2RkOTk0ZjQ=*/$GLOBALS['____1964030743']= array(base64_decode(''.'ZGVmaW5l'));if(!function_exists(__NAMESPACE__.'\\___448926265')){function ___448926265($_1034083094){static $_1089944915= false; if($_1089944915 == false) $_1089944915=array('R'.'U5DT0RF','WQ==');return base64_decode($_1089944915[$_1034083094]);}};class CBXFeatures{ public static function IsFeatureEnabled($_1992464854){ return true;} public static function IsFeatureEditable($_1992464854){ return true;} public static function SetFeatureEnabled($_1992464854, $_1950504345= true){} public static function SaveFeaturesSettings($_2015504667, $_16148398){} public static function GetFeaturesList(){ return array();} public static function InitiateEditionsSettings($_589013913){} public static function ModifyFeaturesSettings($_589013913, $_1932864448){} public static function IsFeatureInstalled($_1992464854){ return true;}} $GLOBALS['____1964030743'][0](___448926265(0), ___448926265(1));/**/			//Do not remove this
 
 //component 2.0 template engines
 $GLOBALS["arCustomTemplateEngines"] = array();
@@ -179,6 +179,19 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/general/ur
 		"CHTMLPagesCache" => "classes/general/cache_html.php",
 		"CFileUploader" => "classes/general/uploader.php",
 		"LPA" => "classes/general/lpa.php",
+		"CAdminFilter" => "interface/admin_filter.php",
+		"CAdminList" => "interface/admin_list.php",
+		"CAdminListRow" => "interface/admin_list.php",
+		"CAdminTabControl" => "interface/admin_tabcontrol.php",
+		"CAdminForm" => "interface/admin_form.php",
+		"CAdminFormSettings" => "interface/admin_form.php",
+		"CAdminTabControlDrag" => "interface/admin_tabcontrol_drag.php",
+		"CAdminDraggableBlockEngine" => "interface/admin_tabcontrol_drag.php",
+		"CJSPopup" => "interface/jspopup.php",
+		"CJSPopupOnPage" => "interface/jspopup.php",
+		"CAdminCalendar" => "interface/admin_calendar.php",
+		"CAdminViewTabControl" => "interface/admin_viewtabcontrol.php",
+		"CAdminTabEngine" => "interface/admin_tabengine.php",
 	)
 );
 
@@ -194,38 +207,6 @@ if(file_exists(($_fname = $_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/class
 	$US_HOST_PROCESS_MAIN = False;
 	include($_fname);
 }
-
-$GLOBALS["APPLICATION"]->AddJSKernelInfo(
-	'main',
-	array(
-		'/bitrix/js/main/core/core.js', '/bitrix/js/main/core/core_ajax.js', '/bitrix/js/main/json/json2.min.js',
-		'/bitrix/js/main/core/core_ls.js', '/bitrix/js/main/core/core_popup.js', '/bitrix/js/main/core/core_tooltip.js',
-		'/bitrix/js/main/core/core_date.js','/bitrix/js/main/core/core_timer.js', '/bitrix/js/main/core/core_fx.js',
-		'/bitrix/js/main/core/core_window.js', '/bitrix/js/main/core/core_autosave.js', '/bitrix/js/main/rating_like.js',
-		'/bitrix/js/main/session.js', '/bitrix/js/main/dd.js', '/bitrix/js/main/utils.js',
-		'/bitrix/js/main/core/core_dd.js', '/bitrix/js/main/core/core_webrtc.js'
-	)
-);
-
-
-$GLOBALS["APPLICATION"]->AddCSSKernelInfo(
-	'main',
-	array(
-		'/bitrix/js/main/core/css/core.css', '/bitrix/js/main/core/css/core_popup.css',
-		'/bitrix/js/main/core/css/core_tooltip.css', '/bitrix/js/main/core/css/core_date.css'
-	)
-);
-
-//Park core uploader
-$GLOBALS["APPLICATION"]->AddJSKernelInfo(
-	'coreuploader',
-	array(
-		'/bitrix/js/main/core/core_uploader/common.js',
-		'/bitrix/js/main/core/core_uploader/uploader.js',
-		'/bitrix/js/main/core/core_uploader/file.js',
-		'/bitrix/js/main/core/core_uploader/queue.js',
-	)
-);
 
 if(file_exists(($_fname = $_SERVER["DOCUMENT_ROOT"]."/bitrix/init.php")))
 	include_once($_fname);
@@ -250,16 +231,9 @@ if((!(defined("STATISTIC_ONLY") && STATISTIC_ONLY && substr($GLOBALS["APPLICATIO
 if(COption::GetOptionString("main", "set_p3p_header", "Y")=="Y")
 	header("P3P: policyref=\"/bitrix/p3p.xml\", CP=\"NON DSP COR CUR ADM DEV PSA PSD OUR UNR BUS UNI COM NAV INT DEM STA\"");
 
-//licence key
-$LICENSE_KEY = "";
-if(file_exists(($_fname = $_SERVER["DOCUMENT_ROOT"].BX_ROOT."/license_key.php")))
-	include($_fname);
-if($LICENSE_KEY == "" || strtoupper($LICENSE_KEY) == "DEMO")
-	define("LICENSE_KEY", "DEMO");
-else
-	define("LICENSE_KEY", $LICENSE_KEY);
-
 header("X-Powered-CMS: Bitrix Site Manager (".(LICENSE_KEY == "DEMO"? "DEMO" : md5("BITRIX".LICENSE_KEY."LICENCE")).")");
+if (COption::GetOptionString("main", "update_devsrv", "") == "Y")
+	header("X-DevSrv-CMS: Bitrix");
 
 define("BX_CRONTAB_SUPPORT", defined("BX_CRONTAB"));
 
@@ -328,7 +302,7 @@ if(
 	||
 	(
 		//session manually expired, e.g. in $User->LoginHitByHash
-		isSessionExpired()
+	isSessionExpired()
 	)
 )
 {
@@ -446,11 +420,11 @@ if(!defined("NOT_CHECK_PERMISSIONS") || NOT_CHECK_PERMISSIONS!==true)
 			}
 			elseif($_REQUEST["TYPE"] == "SEND_PWD")
 			{
-				$arAuthResult = CUser::SendPassword($_REQUEST["USER_LOGIN"], $_REQUEST["USER_EMAIL"], $USER_LID);
+				$arAuthResult = CUser::SendPassword($_REQUEST["USER_LOGIN"], $_REQUEST["USER_EMAIL"], $USER_LID, $_REQUEST["captcha_word"], $_REQUEST["captcha_sid"]);
 			}
 			elseif($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST["TYPE"] == "CHANGE_PWD")
 			{
-				$arAuthResult = $GLOBALS["USER"]->ChangePassword($_REQUEST["USER_LOGIN"], $_REQUEST["USER_CHECKWORD"], $_REQUEST["USER_PASSWORD"], $_REQUEST["USER_CONFIRM_PASSWORD"], $USER_LID);
+				$arAuthResult = $GLOBALS["USER"]->ChangePassword($_REQUEST["USER_LOGIN"], $_REQUEST["USER_CHECKWORD"], $_REQUEST["USER_PASSWORD"], $_REQUEST["USER_CONFIRM_PASSWORD"], $USER_LID, $_REQUEST["captcha_word"], $_REQUEST["captcha_sid"]);
 			}
 			elseif(COption::GetOptionString("main", "new_user_registration", "N") == "Y" && $_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST["TYPE"] == "REGISTRATION" && (!defined("ADMIN_SECTION") || ADMIN_SECTION!==true))
 			{

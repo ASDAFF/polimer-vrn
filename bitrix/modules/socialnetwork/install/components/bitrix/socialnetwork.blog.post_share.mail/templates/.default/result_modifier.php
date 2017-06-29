@@ -92,7 +92,7 @@ if (
 					}
 				}
 
-				$arResult["COMMENTS"][$commentKey]["POST_TEXT_FORMATTED"] = \Bitrix\Socialnetwork\ComponentHelper::convertMailDiskFileBBCode($arResult["COMMENTS"][$commentKey]["POST_TEXT_FORMATTED"], $arComment["ATTACHMENTS"]);
+				$arResult["COMMENTS"][$commentKey]["POST_TEXT_FORMATTED"] = \Bitrix\Socialnetwork\ComponentHelper::convertMailDiskFileBBCode($arResult["COMMENTS"][$commentKey]["POST_TEXT_FORMATTED"], $arResult["COMMENTS"][$commentKey]["ATTACHMENTS"]);
 			}
 		}
 	}

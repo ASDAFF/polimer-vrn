@@ -19,22 +19,28 @@ $arUrlRewrite = array(
 		"PATH" => "/desktop_app/router.php",
 	),
 	array(
+		"CONDITION" => "#^/stssync/calendar/#",
+		"RULE" => "",
+		"ID" => "bitrix:stssync.server",
+		"PATH" => "/bitrix/services/stssync/calendar/index.php",
+	),
+	array(
 		"CONDITION" => "#^/personal/order/#",
 		"RULE" => "",
 		"ID" => "bitrix:sale.personal.order",
 		"PATH" => "/personal/order/index.php",
 	),
 	array(
-		"CONDITION" => "#^/articles/#",
-		"RULE" => "",
-		"ID" => "bitrix:news",
-		"PATH" => "/articles/index.php",
-	),
-	array(
 		"CONDITION" => "#^/personal/#",
 		"RULE" => "",
 		"ID" => "bitrix:sale.personal.section",
 		"PATH" => "/personal/index.php",
+	),
+	array(
+		"CONDITION" => "#^/articles/#",
+		"RULE" => "",
+		"ID" => "bitrix:news",
+		"PATH" => "/articles/index.php",
 	),
 	array(
 		"CONDITION" => "#^/catalog/#",

@@ -187,7 +187,7 @@ if(!empty($arProfile) && !empty($arUser))
 
 	$arFilterProps = array("PERSON_TYPE_ID" => $PERSON_TYPE, "ACTIVE" => "Y", "USER_PROPS" => "Y", "UTIL" => "N");
 
-	$tabControl->AddViewField("CODE_USER", GetMessage("BUYER_PE_USER").":", "[<a href=\"/bitrix/admin/user_edit.php?ID=".$arUser["ID"]."&lang=".LANGUAGE_ID."\">".$arUser["ID"]."</a>] (".$arUser["LOGIN"].") ".$userFIO);
+	$tabControl->AddViewField("CODE_USER", GetMessage("BUYER_PE_USER").":", "[<a href=\"/bitrix/admin/user_edit.php?ID=".$arUser["ID"]."&lang=".LANGUAGE_ID."\">".$arUser["ID"]."</a>] (".htmlspecialcharsEx($arUser["LOGIN"]).") ".htmlspecialcharsEx($userFIO));
 	$tabControl->AddEditField("CODE_PROFILE_NAME", GetMessage("BUYER_PE_PROFILE_NAME").":", false, array("size"=>30, "maxlength"=>255), htmlspecialcharsEx($profileName));
 
 	$propertyGroupID = "";

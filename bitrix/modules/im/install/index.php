@@ -85,6 +85,11 @@ class im extends CModule
 		}
 
 		CModule::IncludeModule("im");
+		
+		if(CIMMessenger::IsMysqlDb() && $DB->Query("CREATE fulltext index IXF_IM_MESS_1 on b_im_message (MESSAGE)", true))
+		{
+			\Bitrix\Im\Model\MessageTable::getEntity()->enableFullTextIndex("MESSAGE");
+		}
 
 		if (CIMConvert::ConvertCount() > 0)
 		{
@@ -96,12 +101,13 @@ class im extends CModule
 			));
 			CAgent::AddAgent("CIMConvert::UndeliveredMessageAgent();", "im", "N", 20, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+20, "FULL"));
 		}
-
-		CIMChat::InstallGeneralChat();
-
+		
+		$this->InstallTemplateRules();
 		$this->InstallEvents();
 		$this->InstallUserFields();
 
+		CIMChat::InstallGeneralChat();
+		
 		return true;
 	}
 
@@ -128,53 +134,7 @@ class im extends CModule
 				"ID" => "bitrix:im.router",
 				"PATH" => "/desktop_app/router.php",
 			));
-
-			$default_site_id = CSite::GetDefSite();
-			if ($default_site_id)
-			{
-				$desktopAppFound = false;
-				$arAppTempalate = Array(
-					"SORT" => 1,
-					"CONDITION" => "CSite::InDir('/desktop_app/')",
-					"TEMPLATE" => "desktop_app"
-				);
-
-				$pubAppFound = false;
-				$arPubTempalate = Array(
-					"SORT" => 100,
-					"CONDITION" => 'preg_match("#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#", $GLOBALS[\'APPLICATION\']->GetCurPage(0))',
-					"TEMPLATE" => "pub"
-				);
-
-				$arFields = Array("TEMPLATE"=>Array());
-				$dbTemplates = CSite::GetTemplateList($default_site_id);
-				while($template = $dbTemplates->Fetch())
-				{
-					if ($template["CONDITION"] == "CSite::InDir('/desktop_app/')")
-					{
-						$desktopAppFound = true;
-						$template = $arAppTempalate;
-					}
-					else if ($template["CONDITION"] == 'preg_match("#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#", $APPLICATION->GetCurPage(0))')
-					{
-						$pubAppFound = true;
-						$template = $arPubTempalate;
-					}
-					$arFields["TEMPLATE"][] = array(
-						"SORT" => $template['SORT'],
-						"CONDITION" => $template['CONDITION'],
-						"TEMPLATE" => $template['TEMPLATE'],
-					);
-				}
-				if (!$desktopAppFound)
-					$arFields["TEMPLATE"][] = $arAppTempalate;
-				if (!$pubAppFound)
-					$arFields["TEMPLATE"][] = $arPubTempalate;
-
-				$obSite = new CSite;
-				$arFields["LID"] = $default_site_id;
-				$obSite->Update($default_site_id, $arFields);
-			}
+			
 			$GLOBALS["APPLICATION"]->SetFileAccessPermission('/desktop_app/', array("*" => "R"));
 			$GLOBALS["APPLICATION"]->SetFileAccessPermission('/online/', array("*" => "R"));
 		}
@@ -192,42 +152,104 @@ class im extends CModule
 
 		return true;
 	}
+	
+	function InstallTemplateRules()
+	{
+		if (
+			file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/templates/pub/")
+			&& !file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/pub/")
+		)
+		{
+			CopyDirFiles(
+				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/templates/pub/",
+				$_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/pub/",
+				$rewrite = true,
+				$recursive = true,
+				$delete_after_copy = false
+			);
+		}
+		
+		$default_site_id = CSite::GetDefSite();
+		if ($default_site_id)
+		{
+			$desktopAppFound = false;
+			$arAppTempalate = Array(
+				"SORT" => 1,
+				"CONDITION" => "CSite::InDir('/desktop_app/')",
+				"TEMPLATE" => "desktop_app"
+			);
+
+			$pubAppFound = false;
+			$arPubTempalate = Array(
+				"SORT" => 100,
+				"CONDITION" => 'preg_match("#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#", $GLOBALS[\'APPLICATION\']->GetCurPage(0))',
+				"TEMPLATE" => "pub"
+			);
+
+			$arFields = Array("TEMPLATE"=>Array());
+			$dbTemplates = CSite::GetTemplateList($default_site_id);
+			while($template = $dbTemplates->Fetch())
+			{
+				if ($template["CONDITION"] == "CSite::InDir('/desktop_app/')")
+				{
+					$desktopAppFound = true;
+					$template = $arAppTempalate;
+				}
+				else if ($template["CONDITION"] == 'preg_match("#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#", $GLOBALS[\'APPLICATION\']->GetCurPage(0))')
+				{
+					$pubAppFound = true;
+					$template = $arPubTempalate;
+				}
+				$arFields["TEMPLATE"][] = array(
+					"SORT" => $template['SORT'],
+					"CONDITION" => $template['CONDITION'],
+					"TEMPLATE" => $template['TEMPLATE'],
+				);
+			}
+			if (!$desktopAppFound)
+				$arFields["TEMPLATE"][] = $arAppTempalate;
+			if (!$pubAppFound)
+				$arFields["TEMPLATE"][] = $arPubTempalate;
+
+			$obSite = new CSite;
+			$arFields["LID"] = $default_site_id;
+			$obSite->Update($default_site_id, $arFields);
+		}
+
+		return true;
+	}
 
 	function InstallUserFields()
 	{
 		$arFields = array();
 		$arFields['ENTITY_ID'] = 'USER';
 		$arFields['FIELD_NAME'] = 'UF_IM_SEARCH';
-
-		$res = CUserTypeEntity::GetList(Array(), Array('ENTITY_ID' => $arFields['ENTITY_ID'], 'FIELD_NAME' => $arFields['FIELD_NAME']));
-		if (!$res->Fetch())
+		
+		$rs = CUserTypeEntity::GetList(array(), array(
+			"ENTITY_ID" => $arFields["ENTITY_ID"],
+			"FIELD_NAME" => $arFields["FIELD_NAME"],
+		));
+		if(!$rs->Fetch())
 		{
-			$rs = CUserTypeEntity::GetList(array(), array(
-				"ENTITY_ID" => $arFields["ENTITY_ID"],
-				"FIELD_NAME" => $arFields["FIELD_NAME"],
-			));
-			if(!$rs->Fetch())
+			$arMess['IM_UF_NAME_SEARCH'] = 'IM: users can find';
+
+			$arFields['USER_TYPE_ID'] = 'string';
+			$arFields['EDIT_IN_LIST'] = 'N';
+			$arFields['SHOW_IN_LIST'] = 'N';
+			$arFields['MULTIPLE'] = 'N';
+
+			$arFields['EDIT_FORM_LABEL'][LANGUAGE_ID] = $arMess['IM_UF_NAME_SEARCH'];
+			$arFields['LIST_COLUMN_LABEL'][LANGUAGE_ID] = $arMess['IM_UF_NAME_SEARCH'];
+			$arFields['LIST_FILTER_LABEL'][LANGUAGE_ID] = $arMess['IM_UF_NAME_SEARCH'];
+			if (LANGUAGE_ID != 'en')
 			{
-				$arMess['IM_UF_NAME_SEARCH'] = 'IM: users can find';
-
-				$arFields['USER_TYPE_ID'] = 'string';
-				$arFields['EDIT_IN_LIST'] = 'N';
-				$arFields['SHOW_IN_LIST'] = 'N';
-				$arFields['MULTIPLE'] = 'N';
-
-				$arFields['EDIT_FORM_LABEL'][LANGUAGE_ID] = $arMess['IM_UF_NAME_SEARCH'];
-				$arFields['LIST_COLUMN_LABEL'][LANGUAGE_ID] = $arMess['IM_UF_NAME_SEARCH'];
-				$arFields['LIST_FILTER_LABEL'][LANGUAGE_ID] = $arMess['IM_UF_NAME_SEARCH'];
-				if (LANGUAGE_ID != 'en')
-				{
-					$arFields['EDIT_FORM_LABEL']['en'] = $arMess['IM_UF_NAME_SEARCH'];
-					$arFields['LIST_COLUMN_LABEL']['en'] = $arMess['IM_UF_NAME_SEARCH'];
-					$arFields['LIST_FILTER_LABEL']['en'] = $arMess['IM_UF_NAME_SEARCH'];
-				}
-
-				$CUserTypeEntity = new CUserTypeEntity();
-				$CUserTypeEntity->Add($arFields);
+				$arFields['EDIT_FORM_LABEL']['en'] = $arMess['IM_UF_NAME_SEARCH'];
+				$arFields['LIST_COLUMN_LABEL']['en'] = $arMess['IM_UF_NAME_SEARCH'];
+				$arFields['LIST_FILTER_LABEL']['en'] = $arMess['IM_UF_NAME_SEARCH'];
 			}
+
+			$CUserTypeEntity = new CUserTypeEntity();
+			$CUserTypeEntity->Add($arFields);
 		}
 	}
 
@@ -242,6 +264,7 @@ class im extends CModule
 		elseif($step==2)
 		{
 			$this->UnInstallDB(array("savedata" => $_REQUEST["savedata"]));
+			
 			if(!isset($_REQUEST["saveemails"]) || $_REQUEST["saveemails"] != "Y")
 				$this->UnInstallEvents();
 
@@ -277,7 +300,7 @@ class im extends CModule
 		CAgent::RemoveAgent("CIMMail::MailNotifyAgent();", "im");
 		CAgent::RemoveAgent("CIMMail::MailMessageAgent();", "im");
 		CAgent::RemoveAgent("CIMDisk::RemoveTmpFileAgent();", "im");
-		CAgent::RemoveAgent("\Bitrix\\Im\\Bot::deleteExpiredTokenAgent();", "im");
+		CAgent::RemoveAgent("\\Bitrix\\Im\\Bot::deleteExpiredTokenAgent();", "im");
 		UnRegisterModuleDependences("im", "OnGetNotifySchema", "im", "CIMNotifySchema", "OnGetNotifySchema");
 		UnRegisterModuleDependences("perfmon", "OnGetTableSchema", "im", "CIMTableSchema", "OnGetTableSchema");
 		UnRegisterModuleDependences('main', 'OnAddRatingVote', 'im', 'CIMEvent', 'OnAddRatingVote');
@@ -313,7 +336,9 @@ class im extends CModule
 	function UnInstallEvents()
 	{
 		global $DB;
+		
 		include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/events/del_events.php");
+		
 		return true;
 	}
 

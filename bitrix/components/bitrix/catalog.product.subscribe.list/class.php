@@ -100,6 +100,7 @@ class CatalogProductsSubscribeListComponent extends \CCatalogViewedProductsCompo
 				$listIblockId[$item['ITEM_ID']] = $item['IBLOCK_ID'];
 			}
 
+			$params['NEED_VALUES'] = array();
 			foreach($listIblockId as $itemId => $iblockId)
 			{
 				$sku = CCatalogSKU::getInfoByProductIBlock($iblockId);
@@ -113,15 +114,22 @@ class CatalogProductsSubscribeListComponent extends \CCatalogViewedProductsCompo
 					$parent = CCatalogSKU::getProductList($itemId);
 					if(!empty($parent))
 					{
-						$offerSku = CCatalogSKU::getInfoByOfferIBlock($iblockId);
-						if(!empty($offerSku) && is_array($offerSku))
-						{
-							$this->prepareItemData($parent[$itemId]['ID'], $offerSku, $params, $itemId);
-							$params['SHOW_PRODUCTS'][$parent[$itemId]['IBLOCK_ID']] = true;
-						}
-						if(!in_array($parent[$itemId]['ID'], $this->listProductId))
-							$this->listProductId[] = $parent[$itemId]['ID'];
+						$parentItemId = $parent[$itemId]['ID'];
+						$parentIblockId = $parent[$itemId]['IBLOCK_ID'];
 					}
+					else
+					{
+						$parentItemId = $itemId;
+						$parentIblockId = $iblockId;
+					}
+					$offerSku = CCatalogSKU::getInfoByOfferIBlock($iblockId);
+					if(!empty($offerSku) && is_array($offerSku))
+					{
+						$this->prepareItemData($parentItemId, $offerSku, $params, $itemId);
+						$params['SHOW_PRODUCTS'][$parentIblockId] = true;
+					}
+					if(!in_array($parentItemId, $this->listProductId))
+						$this->listProductId[] = $parentItemId;
 				}
 			}
 
@@ -160,6 +168,8 @@ class CatalogProductsSubscribeListComponent extends \CCatalogViewedProductsCompo
 	{
 		$offersTreeProps = array();
 		$propertyValue = array();
+		if (!array_key_exists($itemId, $params['NEED_VALUES']))
+			$params['NEED_VALUES'][$itemId] = array();
 		$codeList = $this->getPropertyCodeList($sku);
 		$offersList = CCatalogSKU::getOffersList($itemId, 0,
 			array('ACTIVE' => 'Y'), array(), array('CODE' => $codeList));
@@ -179,7 +189,15 @@ class CatalogProductsSubscribeListComponent extends \CCatalogViewedProductsCompo
 						$propertyValue[$propertiesCode] = array();
 
 					if(!in_array($properties['VALUE'],$propertyValue[$propertiesCode]))
+					{
+						if (!array_key_exists($properties['ID'], $params['NEED_VALUES'][$itemId]))
+							$params['NEED_VALUES'][$itemId][$properties['ID']] = array();
+						$valueId = ($properties['PROPERTY_TYPE'] == \Bitrix\Iblock\PropertyTable::TYPE_LIST
+							? $properties['VALUE_ENUM_ID'] : $properties['VALUE']
+						);
+						$params['NEED_VALUES'][$itemId][$properties['ID']][$valueId] = $valueId;
 						$propertyValue[$propertiesCode][] = $properties['VALUE'];
+					}
 
 					$offersTreeProps[] = $propertiesCode;
 				}

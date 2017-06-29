@@ -28,7 +28,7 @@ ShowMessage($arParams["~AUTH_RESULT"]);
 	<p><?echo GetMessage("AUTH_EMAIL_WILL_BE_SENT")?></p>
 <?endif?>
 <noindex>
-<form method="post" action="<?=$arResult["AUTH_URL"]?>" name="bform">
+<form method="post" action="<?=$arResult["AUTH_URL"]?>" name="bform" enctype="multipart/form-data">
 <?
 if (strlen($arResult["BACKURL"]) > 0)
 {

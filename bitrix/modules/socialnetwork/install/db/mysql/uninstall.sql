@@ -26,3 +26,4 @@ DROP TABLE if exists b_sonet_log_counter;
 DROP TABLE if exists b_sonet_log_favorites;
 DROP TABLE if exists b_sonet_subscription;
 DROP TABLE if exists b_sonet_log_view;
+DROP TABLE if exists b_sonet_log_index;

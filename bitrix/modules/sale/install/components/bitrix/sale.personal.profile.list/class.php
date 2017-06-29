@@ -44,14 +44,16 @@ class PersonalProfileList extends CBitrixComponent
 	public function executeComponent()
 	{
 		global $APPLICATION, $USER;
-		
+
+		Loc::loadMessages(__FILE__);
+
 		$this->setFrameMode(false);
 
 		$this->checkRequiredModules();
 
 		if (!$USER->IsAuthorized())
 		{
-			$APPLICATION->AuthForm(GetMessage("SALE_ACCESS_DENIED"));
+			$APPLICATION->AuthForm(GetMessage("SALE_ACCESS_DENIED"), false, false, 'N', false);
 		}
 
 		if($this->arParams["SET_TITLE"] == 'Y')

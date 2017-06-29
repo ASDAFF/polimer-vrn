@@ -91,8 +91,15 @@
 				</table>
 				<div class="block_change_store">
 					<div><b><?=Loc::getMessage('SALE_SSC_STORE_EXPORT')?>:</b></div>
-					<div id="store_name<?=$arParams["INDEX"]?>"><?=$arResult["STORES"][$arDefaultStore["ID"]]['TITLE']?></div>
-					<span id="change_store<?=$arParams["INDEX"]?>" class="change_store"><?=Loc::getMessage('SALE_SSC_CHANGE')?></span>
+					<div id="store_name<?=$arParams["INDEX"]?>"><?=htmlspecialcharsbx($arResult["STORES"][$arDefaultStore["ID"]]['TITLE'])?></div>
+					<?
+					if ($arParams["FORM"] !== "view")
+					{
+						?>
+						<span id="change_store<?=$arParams["INDEX"]?>" class="change_store"><?=Loc::getMessage('SALE_SSC_CHANGE')?></span>
+						<?
+					}
+					?>
 				</div>
 			</div>
 
@@ -130,7 +137,7 @@
 
 		var obStoreName = BX('store_name<?=$arParams["INDEX"]?>');
 		if (obStoreName)
-			BX.html(obStoreName, store['TITLE']);
+			BX.html(obStoreName, BX.util.htmlspecialchars(store['TITLE']));
 		if (parseFloat(store["GPS_N"]) > 0 && parseFloat(store["GPS_S"]) > 0)
 		{
 			if (window.GLOBAL_arMapObjects[objName])

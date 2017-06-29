@@ -78,8 +78,7 @@ if (!empty($arResult['ITEMS']))
 					$arParams['OFFER_TREE_PROPS'][$itemId],
 					array('PICT' => $arEmptyPreview, 'NAME' => '-')
 				);
-				$needValues = array();
-				CIBlockPriceTools::getTreePropertyValues($skuPropList[$itemId], $needValues);
+				CIBlockPriceTools::getTreePropertyValues($skuPropList[$itemId], $arParams['NEED_VALUES'][$itemId]);
 
 				$skuPropIds[$itemId] = array_keys($skuPropList[$itemId]);
 				if (!empty($skuPropIds[$arItem['ID']]))

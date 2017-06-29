@@ -15,6 +15,8 @@ BX.Sale.Admin.OrderEditPage =
 	adminTabControlId: "",
 	discountRefreshTimeoutId: 0,
 	autoPriceChange: true,
+	runningCheckTimeout: {},
+	tailsLoaded: false,
 
 	getForm: function()
 	{
@@ -45,14 +47,30 @@ BX.Sale.Admin.OrderEditPage =
 			BX.removeClass(block, 'adm-detail-tabs-block-pin');
 			pinObj.title = BX.message("SALE_ORDEREDIT_UNFIX");
 			BX.Fix(block, {type: 'top'});
-
-			// Table tabs switch off
-			window[this.adminTabControlId].ToggleFix('top', false);
-			//window[this.adminTabControlId].ToggleFix('bottom', false);
 		}
 
 		isFixed = !isFixed;
 		BX.userOptions.save('sale_admin', 'sale_order_edit', 'fix_'+blockObjId, (isFixed ? 'Y': 'N'));
+	},
+
+	setFixHashCorrection: function()
+	{
+		BX.bind(window, 'hashchange',function ()
+		{
+			var scroll = 0;
+
+			if(BX.adminPanel && BX.adminPanel.isFixed())
+			{
+				var pos = BX.pos(BX.adminPanel.panel.parentElement);
+				scroll += pos.height;
+			}
+
+			if(BX.FixOffsets && BX.FixOffsets.top)
+				scroll += BX.FixOffsets.top;
+
+			if(scroll > 0)
+				window.scrollBy(0, -scroll);
+		});
 	},
 
 	disableSavingButtons: function(disable)
@@ -107,6 +125,7 @@ BX.Sale.Admin.OrderEditPage =
 			this.ajaxRequests.cancelOrder(orderId, canceled, BX("FORM_REASON_CANCELED").value)
 		);
 	},
+
 
 	getElementValue: function(elementId)
 	{
@@ -172,7 +191,7 @@ BX.Sale.Admin.OrderEditPage =
 
 	callFieldsUpdaters: function(orderData)
 	{
-		var ordered = ["DISCOUNTS_LIST", "DELIVERY_PRICE"],
+		var ordered = ["DISCOUNTS_LIST", "DELIVERY_PRICE", "PROPERTIES_ARRAY", "BUYER_PROFILES_LIST","BUYER_PROFILES_DATA"],
 			orderedDone = {};
 
 		for(var i = 0, l = ordered.length-1; i<=l; i++)
@@ -295,6 +314,9 @@ BX.Sale.Admin.OrderEditPage =
 
 	blockForm: function()
 	{
+		if(BX("sale-adm-order-form-blocker"))
+			return;
+
 		document.body.appendChild(this.createFormBlocker());
 	},
 
@@ -316,14 +338,18 @@ BX.Sale.Admin.OrderEditPage =
 
 	setStatus: function(statusId)
 	{
-		BX("STATUS_ID").value = statusId;
+		var statusNode = BX("STATUS_ID");
+
+		if(statusNode)
+			statusNode.value = statusId;
 	},
 
 	desktopMakeCall: function(phone)
 	{
+		var isMobile = BX.browser.IsMobile();
 		BX.Sale.Admin.OrderEditPage.desktopRunningCheck(
-			function(){ location.href = 'bx://callto/phone/'+phone; },
-			function(){ location.href = 'tel:'+phone; }
+			function(){ location.href = 'bx://callto/phone/' + encodeURIComponent(phone); },
+			function(){ location.href = (isMobile ? 'tel:' : 'callto:') + encodeURIComponent(phone); }
 		);
 	},
 
@@ -339,43 +365,36 @@ BX.Sale.Admin.OrderEditPage =
 		}
 
 		var dateCheck = (+new Date());
-
-		if(typeof(BXIM) == 'undefined' || BXIM.desktop.ready() || !BXIM.desktopStatus || BXIM.desktopVersion < 18)
-		{
-			failureCallback(false, dateCheck);
-			return false;
-		}
-		else if(BXIM.desktopVersion < 35)
-		{
-			successCallback(true, dateCheck);
-			return true;
-		}
-
+		//Don't work for linux
+		var checkUrl = "http://127.0.0.1:20141/";
 		var checkElement = BX.create("img", {
 			attrs : {
-				"src" : this.checkUrl+"icon.png?"+dateCheck,
-				"data-id": dateCheck
+				"src" : checkUrl+"icon.png?"+dateCheck,
+				"data-id": dateCheck,
+				"style": "position:absolute; left: -100px; opacity: 0; width: 1px; height: 1px"
 			},
 			props : {className : "bx-messenger-out-of-view"},
 			events : {
 				"error" : function () {
 					var checkId = this.getAttribute('data-id');
 					failureCallback(false, checkId);
-					clearTimeout(BX.desktopUtils.runningCheckTimeout[checkId]);
+					clearTimeout(BX.Sale.Admin.OrderEditPage.runningCheckTimeout[checkId]);
 					BX.remove(this);
 				},
 				"load" : function () {
 					var checkId = this.getAttribute('data-id');
 					successCallback(true, checkId);
-					clearTimeout(BX.desktopUtils.runningCheckTimeout[checkId]);
+					clearTimeout(BX.Sale.Admin.OrderEditPage.runningCheckTimeout[checkId]);
 					BX.remove(this);
 				}
 			}
 		});
+
 		document.body.appendChild(checkElement);
-		this.runningCheckTimeout[dateCheck] = setTimeout(function(){
+
+		BX.Sale.Admin.OrderEditPage.runningCheckTimeout[dateCheck] = setTimeout(function(){
 			failureCallback(false, dateCheck);
-			clearTimeout(BX.desktopUtils.runningCheckTimeout[dateCheck]);
+			clearTimeout(BX.Sale.Admin.OrderEditPage.runningCheckTimeout[dateCheck]);
 			BX.remove(this);
 		}, 500);
 
@@ -431,7 +450,14 @@ BX.Sale.Admin.OrderEditPage =
 			})
 		);
 
-		form.submit();
+		if(BX.Sale.Admin.OrderEditPage.tailsLoaded)
+		{
+			form.submit();
+		}
+		else
+		{
+			BX.addCustomEvent('onAfterSaleOrderTailsLoaded', function(){ form.submit(); });
+		}
 	},
 
 	onOrderCopy: function(params)
@@ -452,32 +478,34 @@ BX.Sale.Admin.OrderEditPage =
 	 */
 	createDiscountsNode: function(itemCode, itemType, itemDiscounts, discountsList, mode)
 	{
-		var discountsNode = null,
-			i,
-			l,
-			discountId;
+		var discountsNode = null, i, l, discountId;
 
 		if(itemDiscounts && discountsList && discountsList.DISCOUNT_LIST)
 		{
-			discountsNode = BX.create('table');
+			l = itemDiscounts.length;
 
-			for(i = 0, l = itemDiscounts.length; i<l; i++)
+			if(l > 0)
 			{
-				if(!itemDiscounts[i])
-					continue;
+				discountsNode = BX.create('table');
 
-				discountId = itemDiscounts[i].DISCOUNT_ID;
-
-				if(discountsList.DISCOUNT_LIST[discountId])
+				for(i = 0, l; i<l; i++)
 				{
-					this.addDiscountItemRow(
-						itemCode,
-						itemType,
-						itemDiscounts[i],
-						discountsList.DISCOUNT_LIST[discountId],
-						discountsNode,
-						mode
-					);
+					if(!itemDiscounts[i])
+						continue;
+
+					discountId = itemDiscounts[i].DISCOUNT_ID;
+
+					if(discountsList.DISCOUNT_LIST[discountId])
+					{
+						this.addDiscountItemRow(
+							itemCode,
+							itemType,
+							itemDiscounts[i],
+							discountsList.DISCOUNT_LIST[discountId],
+							discountsNode,
+							mode
+						);
+					}
 				}
 			}
 		}
@@ -590,7 +618,7 @@ BX.Sale.Admin.OrderEditPage =
 								href: discountParams.EDIT_PAGE_URL,
 								className: "adm-s-detail-content-sale-link"
 							},
-							html: discountParams.NAME
+							html: BX.util.htmlspecialchars(discountParams.NAME)
 						})
 					]
 				})
@@ -602,7 +630,7 @@ BX.Sale.Admin.OrderEditPage =
 				BX.create('td',{
 					children: [
 						BX.create('span',{
-							html: discountParams.NAME
+							html: BX.util.htmlspecialchars(discountParams.NAME)
 						})
 					]
 				})
@@ -735,6 +763,20 @@ BX.Sale.Admin.OrderEditPage =
 		);
 	},
 
+	onMarkerCloseClick: function(markerId, orderId, blockId, entityId, forEntity)
+	{
+		BX.Sale.Admin.OrderAjaxer.sendRequest(
+			this.ajaxRequests.deleteMarker(markerId, orderId, blockId, entityId, forEntity)
+		);
+	},
+
+	onMarkerFixErrorClick: function(markerId, orderId, blockId, entityId, forEntity)
+	{
+		BX.Sale.Admin.OrderAjaxer.sendRequest(
+			this.ajaxRequests.fixMarker(markerId, orderId, blockId, entityId, forEntity)
+		);
+	},
+
 	refreshDiscounts: function()
 	{
 		if(this.discountRefreshTimeoutId > 0)
@@ -756,6 +798,18 @@ BX.Sale.Admin.OrderEditPage =
 		);
 	},
 
+	enableFormButtons: function (formId)
+	{
+		var applyButt = BX.findChild(BX(formId), {tag: 'input', attribute: {name: 'apply', type: 'submit'}}, true),
+			saveButt = BX.findChild(BX(formId), {tag: 'input', attribute: {name: 'save', type: 'submit'}}, true);
+
+		if(applyButt)
+			applyButt.disabled = false;
+
+		if(saveButt)
+			saveButt.disabled = false;
+	},
+
 	/* Ajax request templates */
 	ajaxRequests: {
 		addProductToBasket: function(productId, quantity, replaceBasketCode, columns, customPrice)
@@ -773,6 +827,19 @@ BX.Sale.Admin.OrderEditPage =
 				postData.customPrice = customPrice;
 
 			return BX.Sale.Admin.OrderAjaxer.refreshOrderData.modifyParams(postData);
+		},
+
+		getProductIdBySkuProps: function(params)
+		{
+			return {
+				action: "getProductIdBySkuProps",
+				productId: params.productId,
+				iBlockId: params.iBlockId,
+				skuProps: params.skuProps,
+				skuOrder: params.skuOrder,
+				changedSkuId: params.changedSkuId,
+				callback: params.callback
+			};
 		},
 
 		cancelOrder: function(orderId, canceled, comment)
@@ -941,8 +1008,151 @@ BX.Sale.Admin.OrderEditPage =
 					{
 						BX.debug("Can't order view tails");
 					}
+
+					BX.Sale.Admin.OrderEditPage.tailsLoaded = true;
+					BX.onCustomEvent("onAfterSaleOrderTailsLoaded", [result]);
 				}
 			};
+		},
+
+		deleteMarker: function(markerId, orderId, blockId, entityId, forEntity)
+		{
+			return {
+				action: "deleteMarker",
+				markerId: markerId,
+				orderId: orderId,
+				entityId: entityId,
+				forEntity: forEntity ? 'Y': 'N',
+				callback: function(result)
+				{
+					BX.Sale.Admin.OrderEditPage.unBlockForm();
+
+					if(result && !result.ERROR)
+					{
+						if (result.WARNING && result.WARNING.length > 0)
+						{
+							BX.Sale.Admin.OrderEditPage.showDialog(result.WARNING);
+						}
+						else
+						{
+							BX(blockId).style.display = 'none';
+						}
+
+						if(typeof result.MARKERS != 'undefined')
+						{
+							var node = BX('sale-adm-order-problem-block');
+							if(node)
+								node.innerHTML = result.MARKERS;
+						}
+					}
+					else if(result && result.ERROR)
+					{
+						BX.Sale.Admin.OrderEditPage.showDialog(BX.message("SALE_ORDEREDIT_UNMARK_ERROR") + ": "+result.ERROR);
+					}
+					else
+					{
+						BX.debug(BX.message("SALE_ORDEREDIT_UNMARK_ERROR"));
+					}
+				}
+			};
+		},
+
+		fixMarker: function(markerId, orderId, blockId, entityId, forEntity)
+		{
+			return {
+				action: "fixMarker",
+				markerId: markerId,
+				orderId: orderId,
+				entityId: entityId,
+				forEntity: forEntity ? 'Y': 'N',
+				callback: function(result)
+				{
+					BX.Sale.Admin.OrderEditPage.unBlockForm();
+
+					if(result && !result.ERROR)
+					{
+						if (result.WARNING && result.WARNING.length > 0)
+						{
+							BX.Sale.Admin.OrderEditPage.showDialog(result.WARNING);
+						}
+						else
+						{
+							BX(blockId).style.display = 'none';
+						}
+
+						if(typeof result.MARKERS != 'undefined')
+						{
+							var node = BX('sale-adm-order-problem-block');
+							if(node)
+								node.innerHTML = result.MARKERS;
+						}
+
+					}
+					else if(result && result.ERROR)
+					{
+						BX.Sale.Admin.OrderEditPage.showDialog(BX.message("SALE_ORDEREDIT_UNMARK_ERROR") + ": "+result.ERROR);
+					}
+					else
+					{
+						BX.debug(BX.message("SALE_ORDEREDIT_UNMARK_ERROR"));
+					}
+				}
+			};
+		}
+	},
+
+	fastNavigation: {
+
+		lastMarkedItemId: null,
+
+		onClickItem: function(formId, tabId, locationHash)
+		{
+			eval(formId+'.SelectTab(\''+tabId+'\')');
+			setTimeout(function(){	window.location.hash = locationHash; }, 600);
+		},
+
+		markItem: function()
+		{
+			if(!BX.Sale.Admin.OrderEditPage.fastNavigation.isFixed())
+				return;
+
+			var magicOffset = 100;
+			var	scrollTop = BX.GetWindowScrollPos().scrollTop + BX.FixOffsets.top + magicOffset,
+				anchors = BX.findChildren(BX('adm-workarea'), { className: "adm-sale-fastnav-anchor"}, true),
+				lastMarkedItemIdChanged = false;
+
+			for(var i in anchors)
+			{
+				if(!anchors.hasOwnProperty(i))
+					continue;
+
+				var pos = BX.pos(anchors[i].nextElementSibling);
+
+				if(pos.top <= scrollTop && pos.bottom >= scrollTop)
+				{
+					if(this.lastMarkedItemId != anchors[i].id)
+					{
+						BX.addClass(BX('nav_'+anchors[i].id), 'selected');
+						this.lastMarkedItemId = anchors[i].id;
+						lastMarkedItemIdChanged = true;
+					}
+				}
+				else
+				{
+					if(lastMarkedItemIdChanged || this.lastMarkedItemId == anchors[i].id)
+					{
+						BX.removeClass(BX('nav_'+anchors[i].id), 'selected');
+
+						if(this.lastMarkedItemId == anchors[i].id)
+							this.lastMarkedItemId = null;
+					}
+				}
+			}
+		},
+
+		isFixed: function()
+		{
+			return !BX.hasClass('sale-order-edit-block-fast-nav', 'adm-detail-tabs-block-pin');
 		}
 	}
 };

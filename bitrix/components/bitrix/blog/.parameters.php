@@ -343,15 +343,15 @@ $arComponentParameters = array(
 				"PARENT" => "VISUAL",
 			),
 		"IMAGE_MAX_WIDTH" => Array(
-				"NAME" => GetMessage("BPC_IMAGE_MAX_WIDTH"),
+				"NAME" => GetMessage("BPC_IMAGE_MAX_WIDTH").' ('.GetMessage("BPC_IMAGE_MAX_SIZES_TEXT").' '.COption::GetOptionString('blog', 'image_max_width').')',
 				"TYPE" => "STRING",
-				"DEFAULT" => 800,
+				"DEFAULT" => COption::GetOptionString('blog', 'image_max_width'),
 				"PARENT" => "VISUAL",
 			),		
 		"IMAGE_MAX_HEIGHT" => Array(
-				"NAME" => GetMessage("BPC_IMAGE_MAX_HEIGHT"),
+				"NAME" => GetMessage("BPC_IMAGE_MAX_HEIGHT").' ('.GetMessage("BPC_IMAGE_MAX_SIZES_TEXT").' '.COption::GetOptionString('blog', 'image_max_height').')',
 				"TYPE" => "STRING",
-				"DEFAULT" => 800,
+				"DEFAULT" => COption::GetOptionString('blog', 'image_max_height'),
 				"PARENT" => "VISUAL",
 			),
 		"EDITOR_RESIZABLE" => Array(

@@ -39,4 +39,6 @@ $MESS["SALE_DSE_CHOOSE_GROUP_SAVE"] = "Copy";
 $MESS["SALE_SDL_ALLOW_EDIT_SHIPMENT"] = "Allow editable partial shipments";
 $MESS["SALE_SDL_SITES"] = "Sites";
 $MESS["SALE_SDL_FILTER_SITE"] = "Site";
+$MESS["SALE_SDL_MARKETPLACE_ADD_NEW"] = "Install from Marketplace";
+$MESS["SALE_SDL_MARKETPLACE_ADD_NEW_ALT"] = "Click to install from Marketplace";
 ?>

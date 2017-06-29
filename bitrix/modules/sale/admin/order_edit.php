@@ -76,19 +76,40 @@ if ($boolLocked)
 	);
 }
 
-$allowedStatusesView = array();
 $order = Bitrix\Sale\Order::load($_REQUEST["ID"]);
-
-if($order)
-	$allowedStatusesView = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('view'));
-
-if(!$order || !in_array($order->getField("STATUS_ID"), $allowedStatusesView))
+if(!$order)
 	LocalRedirect("/bitrix/admin/sale_order.php?lang=".LANGUAGE_ID.GetFilterParams("filter_", false));
 
 $allowedStatusesUpdate = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
 
 if(!in_array($order->getField("STATUS_ID"), $allowedStatusesUpdate))
 	LocalRedirect("/bitrix/admin/sale_order_view.php?ID=".$ID."&lang=".LANGUAGE_ID.GetFilterParams("filter_"));
+
+$isUserResponsible = false;
+$isAllowCompany = false;
+
+if ($saleModulePermissions == 'P')
+{
+	$userCompanyList = array();
+	$groups = $USER->GetUserGroupArray();
+
+	$userCompanyList = \Bitrix\Sale\Services\Company\Manager::getUserCompanyList($USER->GetID());
+
+	if ($order->getField('RESPONSIBLE_ID') == $USER->GetID())
+	{
+		$isUserResponsible = true;
+	}
+
+	if (in_array($order->getField('COMPANY_ID'), $userCompanyList))
+	{
+		$isAllowCompany = true;
+	}
+
+	if (!$isUserResponsible && !$isAllowCompany)
+	{
+		LocalRedirect("/bitrix/admin/sale_order.php?lang=".LANGUAGE_ID.GetFilterParams("filter_", false));
+	}
+}
 
 $userId = isset($_POST["USER_ID"]) ? intval($_POST["USER_ID"]) : $order->getUserId();
 
@@ -110,17 +131,22 @@ $isNeedFieldsRestore = $_SERVER["REQUEST_METHOD"] == "POST" && !$isSavingOperati
 
 //save order params
 if (($isSavingOperation || $isNeedFieldsRestore || $isRefreshDataAndSaveOperation)
-	&& $saleModulePermissions >= "U"
+	&& ($saleModulePermissions >= "U" || ($saleModulePermissions == "P" && ($isAllowCompany === true || $isUserResponsible === true)))
 	&& check_bitrix_sessid()
 	&& $result->isSuccess()
 )
 {
-	if($isSavingOperation || $isRefreshDataAndSaveOperation)
-		$order = OrderEdit::editOrderByFormData($_POST, $order, $USER->GetID(), true, $_FILES, $result);
-
-	if(($isSavingOperation || $isRefreshDataAndSaveOperation) && $result->isSuccess())
+	if(($isSavingOperation || $isRefreshDataAndSaveOperation))
 	{
-		if($order)
+		if($isSavingOperation)
+			OrderEdit::$isTrustProductFormData = true;
+
+		$res = OrderEdit::editOrderByFormData($_POST, $order, $USER->GetID(), true, $_FILES, $result);
+
+		if($res)
+			$order = $res;
+
+		if($res)
 		{
 			if (!$customTabber->Check())
 			{
@@ -159,7 +185,7 @@ if (($isSavingOperation || $isNeedFieldsRestore || $isRefreshDataAndSaveOperatio
 				if (!($basket = $order->getBasket()))
 					throw new \Bitrix\Main\ObjectNotFoundException('Entity "Basket" not found');
 
-				$res = $basket->refreshData(array('PRICE', 'QUANTITY', 'COUPONS'));
+				$res = $basket->refreshData(array('PRICE', 'COUPONS'));
 
 				if(!$res->isSuccess())
 					$result->addErrors($res->getErrors());
@@ -236,7 +262,7 @@ if (($isSavingOperation || $isNeedFieldsRestore || $isRefreshDataAndSaveOperatio
 		}
 		else
 		{
-			$result->addError(new \Bitrix\Main\Error("Can't update order!"));
+			$result->addError(new \Bitrix\Main\Error(Loc::getMessage('SOE_ORDER_UPDATE_ERROR')));
 		}
 	}
 }
@@ -279,12 +305,6 @@ $aMenu[] = array(
 	"TEXT" => Loc::getMessage("SOE_ORDER_VIEW"),
 	"TITLE"=> Loc::getMessage("SOE_ORDER_VIEW_TITLE"),
 	"LINK" => "/bitrix/admin/sale_order_view.php?ID=".$ID."&lang=".LANGUAGE_ID.GetFilterParams("filter_")
-);
-
-$aMenu[] = array(
-	"TEXT" => Loc::getMessage("SOE_ORDER_REFRESH"),
-	"TITLE"=> Loc::getMessage("SOE_ORDER_REFRESH_TITLE"),
-	"LINK" => "javascript:if(confirm('".GetMessageJS("SOE_ORDER_REFRESH_CONFIRM")."')) BX.Sale.Admin.OrderEditPage.onRefreshOrderDataAndSave();"
 );
 
 $arSysLangs = array();
@@ -364,11 +384,28 @@ $aMenu[] = array(
 	"MENU" => $arReports
 );
 
-$aMenu[] = array(
+$actionMenu = array();
+
+$actionMenu[] = array(
+	"TEXT" => Loc::getMessage("SOE_ORDER_REFRESH"),
+	"TITLE"=> Loc::getMessage("SOE_ORDER_REFRESH_TITLE"),
+	"LINK" => "javascript:if(confirm('".GetMessageJS("SOE_ORDER_REFRESH_CONFIRM")."')) BX.Sale.Admin.OrderEditPage.onRefreshOrderDataAndSave();"
+);
+
+$actionMenu[] = array(
 	"TEXT" => Loc::getMessage("NEWO_ORDER_DELETE"),
 	"TITLE"=> Loc::getMessage("NEWO_ORDER_DELETE_TITLE"),
 	"LINK" => "javascript:if(confirm('".GetMessageJS("NEWO_CONFIRM_DEL_MESSAGE")."')) window.location='sale_order.php?ID=".$ID."&action=delete&lang=".LANGUAGE_ID."&".bitrix_sessid_get().urlencode(GetFilterParams("filter_"))."'"
 );
+
+if(!empty($actionMenu))
+{
+	$aMenu[] = array(
+		"TEXT" => Loc::getMessage("SOE_TO_ACTION"),
+		"TITLE"=> Loc::getMessage("SOE_TO_ACTION_TITLE"),
+		"MENU" => $actionMenu
+	);
+}
 
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
@@ -382,17 +419,6 @@ $defaultBlocksOrder = array(
 	"additional",
 	"basket"
 );
-
-$fastNavItems = array();
-
-foreach($defaultBlocksOrder as $item)
-	$fastNavItems[$item] = Loc::getMessage("SALE_BLOCK_TITLE_".toUpper($item));
-
-foreach($customDraggableBlocks->getBlocksBrief() as $blockId => $blockParams)
-{
-	$defaultBlocksOrder[] = $blockId;
-	$fastNavItems[$blockId] = $blockParams['TITLE'];
-}
 
 // errors
 $message = "";
@@ -441,15 +467,19 @@ echo Blocks\OrderShipment::getScripts();
 echo $orderBasket->getScripts($defTails);
 echo $customDraggableBlocks->getScripts();
 
-// navigation
-echo OrderEdit::getFastNavigationHtml($fastNavItems);
+// navigation socket
+?><div id="sale-order-edit-block-fast-nav-socket"></div><?
 
 // yellow block with brief
 echo Blocks\OrderInfo::getView($order, $orderBasket);
 
 // Problem block
-if($order->getField("MARKED") == "Y" )
-	echo OrderEdit::getProblemBlockHtml($order->getField("REASON_MARKED"), $order->getId());
+?><div id="sale-adm-order-problem-block"><?
+	if($order->getField("MARKED") == "Y")
+	{
+		echo Blocks\OrderMarker::getView($order->getId());
+	}
+	?></div><?
 
 $aTabs = array(
 	array("DIV" => "tab_order", "TAB" => Loc::getMessage("SALE_TAB_ORDER"), "SHOW_WRAP" => "N", "IS_DRAGGABLE" => "Y"),
@@ -465,6 +495,18 @@ $tabControl->Begin();
 //TAB order --
 $tabControl->BeginNextTab();
 $blocksOrder = $tabControl->getCurrentTabBlocksOrder($defaultBlocksOrder);
+
+$fastNavItems = array();
+
+foreach($blocksOrder as $item)
+	$fastNavItems[$item] = Loc::getMessage("SALE_BLOCK_TITLE_".toUpper($item));
+
+foreach($customDraggableBlocks->getBlocksBrief() as $blockId => $blockParams)
+{
+	$defaultBlocksOrder[] = $blockId;
+	$fastNavItems[$blockId] = $blockParams['TITLE'];
+	$blocksOrder[] = $blockId;
+}
 ?>
 <tr><td>
 	<input type="hidden" id="ID" name="ID" value="<?=$ID?>">
@@ -477,7 +519,7 @@ $blocksOrder = $tabControl->getCurrentTabBlocksOrder($defaultBlocksOrder);
 		<?
 		foreach ($blocksOrder as $blockCode)
 		{
-			echo '<a id="'.$blockCode.'"></a>';
+			echo '<a id="'.$blockCode.'" class="adm-sale-fastnav-anchor"></a>';
 			$tabControl->DraggableBlockBegin($fastNavItems[$blockCode], $blockCode);
 
 			switch ($blockCode)
@@ -565,7 +607,7 @@ $tabControl->EndTab();
 
 $tabControl->Buttons(
 	array(
-		"disabled" => $boolLocked,
+		"disabled" => true, //while tails are not loaded.
 		"back_url" => "/bitrix/admin/sale_order_edit.php?lang=".LANGUAGE_ID."&unlock=Y&target=list&ID=".$ID.GetFilterParams("filter_"))
 );
 
@@ -577,6 +619,8 @@ $tabControl->End();
 	<?=$orderBasket->getSettingsDialogContent();?>
 </div>
 
+<div style="display: none;"><?=OrderEdit::getFastNavigationHtml($fastNavItems, $formId, 'tab_order');?></div>
+
 <?if(!$result->isSuccess() || $isNeedFieldsRestore):?>
 	<script type="text/javascript">
 		BX.ready( function(){
@@ -586,6 +630,7 @@ $tabControl->End();
 					));
 				?>
 			);
+			BX.Sale.Admin.OrderEditPage.enableFormButtons('sale_order_edit_form');
 		});
 	</script>
 <?else:?>
@@ -594,6 +639,17 @@ $tabControl->End();
 			BX.Sale.Admin.OrderAjaxer.sendRequest(
 				BX.Sale.Admin.OrderEditPage.ajaxRequests.getOrderTails("<?=$order->getId()?>", "edit", "<?=$basketPrefix?>"),
 				true
+			);
+
+			BX.addCustomEvent('onAfterSaleOrderTailsLoaded', function(){
+				BX.Sale.Admin.OrderEditPage.enableFormButtons('sale_order_edit_form');
+			});
+
+			BX.Sale.Admin.OrderEditPage.setFixHashCorrection();
+
+			//place navigation data to navigation socket
+			BX('sale-order-edit-block-fast-nav-socket').appendChild(
+				BX('sale-order-edit-block-fast-nav')
 			);
 		});
 	</script>

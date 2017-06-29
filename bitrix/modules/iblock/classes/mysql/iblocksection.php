@@ -13,11 +13,27 @@ class CIBlockSection extends CAllIBlockSection
 
 		if(isset($arFilter["IBLOCK_ID"]) && $arFilter["IBLOCK_ID"] > 0)
 		{
+			$userFieldsSelect = $arSelect;
+			if (is_array($userFieldsSelect) && !in_array("UF_*", $userFieldsSelect))
+			{
+				if (!empty($arOrder) && is_array($arOrder))
+				{
+					foreach (array_keys($arOrder) as $userFieldName)
+					{
+						if (!in_array($userFieldName, $userFieldsSelect))
+							$userFieldsSelect[] = $userFieldName;
+					}
+					unset($userFieldName);
+				}
+			}
+
 			$obUserFieldsSql = new CUserTypeSQL;
 			$obUserFieldsSql->SetEntity("IBLOCK_".$arFilter["IBLOCK_ID"]."_SECTION", "BS.ID");
-			$obUserFieldsSql->SetSelect($arSelect);
+			$obUserFieldsSql->SetSelect($userFieldsSelect);
 			$obUserFieldsSql->SetFilter($arFilter);
 			$obUserFieldsSql->SetOrder($arOrder);
+
+			unset($userFieldsSelect);
 		}
 		else
 		{
@@ -217,6 +233,11 @@ class CIBlockSection extends CAllIBlockSection
 					$arSqlOrder[$by] = " BS.CODE ".$order." ";
 					$additionalSelect["CODE"] = $arFields["CODE"]." AS CODE";
 					break;
+				case "external_id":
+				case "xml_id":
+					$arSqlOrder[$by] = " BS.XML_ID ".$order." ";
+					$additionalSelect["XML_ID"] = $arFields["XML_ID"]." AS XML_ID";
+					break;
 				case "active":
 					$arSqlOrder[$by] = " BS.ACTIVE ".$order." ";
 					$additionalSelect["ACTIVE"] = $arFields["ACTIVE"]." AS ACTIVE";
@@ -258,7 +279,7 @@ class CIBlockSection extends CAllIBlockSection
 					{
 						$by = "timestamp_x";
 						$arSqlOrder[$by] = " BS.TIMESTAMP_X ".$order." ";
-						$additionalSelect["TIMESTAMP_X"] = $arFields["TIMESTAMP_X"]." AS TIMESTAMP_X";
+						$additionalSelect["TIMESTAMP_X_SORT"] = "BS.TIMESTAMP_X AS TSX_TMP";
 					}
 			}
 		}

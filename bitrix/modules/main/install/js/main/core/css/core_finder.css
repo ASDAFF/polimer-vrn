@@ -1,7 +1,7 @@
 .bx-finder-box { position: relative; }
 .bx-finder-box.bx-finder-box-vertical{}
 .bx-lm-box {
-	min-width: 650px !important;
+	min-width: 665px !important;
 	max-height: 400px;
 	min-height: 250px;
 	overflow: auto;
@@ -24,7 +24,7 @@
 	padding-left:16px;
 	padding-top:44px;
 	float:right;
-	width:200px;
+	width:215px;
 }
 .bx-finder-box.bx-finder-box-vertical .bx-finder-box-tabs:after{
 	position:absolute;
@@ -109,19 +109,15 @@
 }
 
 .bx-finder-box-tabs-content {
-	margin: 7px 0 0 0;
+	margin: 7px 0 0;
 	height: 315px;
 	overflow:auto;
 	position:relative;
-	background-color: #FFFFFF;
+	background-color: #FFF;
 	z-index: 100;
 }
-.bx-finder-box.bx-finder-box-vertical .bx-finder-box-tabs-content {
-	height: auto;
-}
-.bx-finder-box.bx-finder-box-vertical .popup-window-hr {
-	display: none;
-}
+.bx-finder-box.bx-finder-box-vertical .bx-finder-box-tabs-content {height: auto;}
+.bx-finder-box.bx-finder-box-vertical .popup-window-hr { display: none;}
 .bx-finder-box-tabs-content .bx-finder-box-tabs-content-search { overflow:visible; }
 .bx-finder-box-tab-content { display: none; }
 .bx-finder-box-tab-content-selected { display: block;}
@@ -151,7 +147,7 @@
 }
 
 .bx-finder-box-search-waiter-text {
-	color: #CCCCCC;
+	color: #CCC;
 	font-style: italic;
 	font-size: 13px;
 	vertical-align: middle;
@@ -204,6 +200,23 @@
 .bx-finder-box-selected-item-text {font: normal normal normal 12px/normal Arial, Helvetica, sans-serif; display:inline-block; text-decoration: none; overflow: hidden; padding: 0 0 0 4px;  color: #000; width: 164px;}
 .bx-finder-workgroup-avatar {  background: url(/bitrix/js/main/core/images/finder-sprite.png) no-repeat 0 -30px;  height: 24px;  width: 24px; }
 
+.bx-finder-box-button {
+	background-color: #3bc8f5;
+	border-color: #3bc8f5;
+	border-radius: 19px;
+	color: #fff;
+	opacity: 1;
+	padding: 4px 12px;
+	text-decoration: none;
+	cursor: pointer;
+	display: inline-block;
+	font: 12px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	transition: opacity .3s ease 0s;
+	overflow: hidden;
+	margin-left: 6px;
+	margin-top: 12px;
+}
+
 .bx-finder-box-item-t2 {
 	display: inline-block;
 	vertical-align: top;
@@ -219,10 +232,9 @@
 }
 .bx-finder-box-item-t2-text {
 	font: normal normal normal 12px/normal Arial, Helvetica, sans-serif;
-	padding:3px 5px;
+	padding:3px 0 5px 3px;
 	float: left;
 	width: 145px;
-	padding-right: 0;
 }
 .bx-finder-box-item-t2-left { margin: 0 3px 0 0;}
 .bx-finder-box-item-t2:hover { background: #f7f7f7; }
@@ -233,7 +245,7 @@
 	display:inline-block;
 	cursor: pointer;
 	position: relative;
-	margin: 0 0 3px 0;
+	margin: 0 0 3px;
 	padding: 2px 0;
 	text-decoration: none;
 	vertical-align: top;
@@ -248,7 +260,7 @@
 .bx-finder-box-item-t3-selected { background-color: #f0f0f0; }
 
 
-.bx-finder-box-item-t5 { display:inline-block;  width: 167px; cursor: pointer; position: relative; margin: 0 0 3px 0; padding: 2px 0; text-decoration: none; vertical-align: top;}
+.bx-finder-box-item-t5 { display:inline-block;  width: 167px; cursor: pointer; position: relative; margin: 0 0 3px; padding: 2px 0; text-decoration: none; vertical-align: top;}
 .bx-finder-box-item-t5-avatar { display: block; float: left ; vertical-align: top; width: 24px; height: 24px;  background: url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat 0 -664px;  margin-left: 4px; margin-top: 0; }
 .bx-finder-box-item-t5-info { display: block; float: left; padding: 0; margin: 0 0 0 7px; width: 130px; overflow: hidden}
 .bx-finder-box-item-t5-name { font: normal normal normal 12px/normal Arial, Helvetica, sans-serif; color:#000; }
@@ -257,7 +269,7 @@
 .bx-finder-box-item-t5-hover { background-color: #f7f7f7; }
 .bx-finder-box-item-t5-selected  { background-color: #f0f0f0;  }
 
-.bx-finder-box-item-t6 { display:inline-block; cursor: pointer; position: relative; margin: 0 0 3px 0; padding: 2px 0; text-decoration: none; vertical-align: top;}
+.bx-finder-box-item-t6 { display:inline-block; cursor: pointer; position: relative; margin: 0 0 3px; padding: 2px 0; text-decoration: none; vertical-align: top;}
 .bx-finder-box-item-t6-avatar { display: block; float: left ; vertical-align: top; width: 24px; height: 24px;  background: url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat 0 -664px;  margin-left: 4px; margin-top: 3px; }
 .bx-finder-box-item-t6-info { display: block; float: left; padding: 2px 0; margin: 0 0 0 7px; width: 396px; overflow: hidden}
 .bx-finder-box-item-t6-name { font: normal normal normal 12px/normal Arial, Helvetica, sans-serif; color:#000; }
@@ -267,7 +279,7 @@
 .bx-finder-box-item-t6-hover { background-color: #f0f0f0; }
 .bx-finder-box-item-t6:hover .bx-finder-box-item-t6-icon { background: url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat -19px -469px; }
 .bx-finder-box-item-t6-selected:hover .bx-finder-box-item-t6-icon { background: url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat -20px -578px; }
-.bx-finder-box-item-t6-selected .bx-finder-box-item-t6-name { color: #666666; }
+.bx-finder-box-item-t6-selected .bx-finder-box-item-t6-name { color: #666; }
 
 .bx-finder-box-item-t7 {
 	position: relative;
@@ -282,22 +294,20 @@
 	word-wrap: break-word;
 	border-radius: 4px;
 	cursor: pointer;
-	-webkit-box-sizing: border-box;
-	   -moz-box-sizing: border-box;
-			box-sizing: border-box;
-	-webkit-transition: background-color 0.2s linear;
-			transition: background-color 0.2s linear;
+	box-sizing: border-box;
+	transition: background-color 0.2s linear;
 }
+
 .bx-lm-box .bx-finder-box-item-t3,
- .bx-lm-box .bx-finder-box-item-t5,
- .bx-lm-box .bx-finder-box-item-t7,
- .bx-lm-box-tab-content-department .bx-finder-company-department-employee {
-	 border: none;
-	 min-height: 34px;
-	 padding: 3px 0;
+.bx-lm-box .bx-finder-box-item-t5,
+.bx-lm-box .bx-finder-box-item-t7,
+.bx-lm-box-tab-content-department .bx-finder-company-department-employee {
+	border: none;
+	min-height: 34px;
+	padding: 3px 0;
 
 	 -webkit-transition: background-color 0.2s linear;
-	 transition: background-color 0.2s linear;
+	transition: background-color 0.2s linear;
  }
 .bx-finder-box-item-t7-avatar {
 	display: block;
@@ -331,7 +341,6 @@
 	display: inline-block;
 	vertical-align: middle;
 	padding: 0 0 0 0;
-	margin: 0 0 0 33px;
 	font: normal normal normal 12px/normal Arial, Helvetica, sans-serif;
 	color:#000;
 }
@@ -358,15 +367,95 @@
 .bx-finder-box-item-t7-desc { font: normal normal normal 11px/normal Arial, Helvetica, sans-serif; color: #b2b2b2; line-height:11px; }
 .bx-finder-box-item-t7-desc-mode .bx-finder-box-item-t7-info { padding-top: 2px; }
 .bx-finder-box-item-t7-desc-mode .bx-finder-box-item-t7-desc { white-space: nowrap; }
-.bx-finder-box-item-t7-desc-mode .bx-finder-box-item-t7-name { white-space: nowrap; }
-.bx-finder-box-item-t7-desc-mode .bx-finder-box-item-t7-space { display: none; }
 
+/*==== bx-finder-v2 ====*/
+.bx-finder-popup.bx-finder-v2 .bx-finder-box-item-t7 {
+	position: relative;
+	display: inline-block;
+	overflow: hidden;
+	box-sizing: border-box;
+	margin: 0 1% 3px;
+	padding: 0;
+	min-height: 30px;
+	width: 48%;
+	border-radius: 4px;
+	vertical-align: top;
+	text-decoration: none;
+	word-wrap: break-word;
+	cursor: pointer;
+	transition: background-color 0.2s linear;
+}
+
+.bx-finder-popup.bx-finder-v2 .bx-finder-box-item-t7:hover,
+.bx-finder-popup.bx-finder-v2 .bx-finder-box-item-t7.bx-finder-box-item-t7-hover {
+	background:#d5f1fc;
+	border-radius: 2px;
+}
+
+.bx-finder-popup.bx-finder-v2 .bx-finder-box-item-t7-avatar {
+	position: absolute;
+	top: 3px;
+	left: 4px;
+	display: block;
+	margin: 0;
+	width: 30px;
+	height: 30px;
+	border-radius: 50%;
+	background: url(/bitrix/js/main/core/images/finder_sprite.min.svg?10) no-repeat center 2px #535c6a;
+}
+
+.bx-finder-popup.bx-finder-v2 .bx-lm-element-groups .bx-finder-box-item-t7-avatar,
+.bx-finder-popup.bx-finder-v2 .bx-lm-element-sonetgroup .bx-finder-box-item-t7-avatar,
+.bx-finder-popup.bx-finder-v2 .bx-lm-element-department .bx-finder-box-item-t7-avatar { background-position: center -28px }
+
+.bx-finder-popup.bx-finder-v2 .bx-finder-box-item-t7-avatarless .bx-finder-box-item-t7-avatar { display: none; }
+
+.bx-finder-popup.bx-finder-v2 .bx-finder-box-item-t7-info {
+	position: absolute;
+	top: 50%;
+	right: 3px;
+	left: 40px;
+	display: block;
+	margin: 0;
+	padding: 0;
+	vertical-align: middle;
+	font: 12px/normal Arial, Helvetica, sans-serif;
+	-webkit-transform: translateY(-50%);
+	-moz-transform: translateY(-50%);
+	-ms-transform: translateY(-50%);
+	-o-transform: translateY(-50%);
+	transform: translateY(-50%);
+}
+.bx-finder-popup.bx-finder-v2 .bx-finder-box-item-t7-avatarless .bx-finder-box-item-t7-info {
+	margin: 0;
+	left: 6px;
+}
+
+.bx-finder-popup.bx-finder-v2 .bx-finder-box-item-t7-name {
+	display: block;
+	overflow: hidden;
+	max-width: 100%;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font: bold 13px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.bx-finder-popup.bx-finder-v2 .bx-finder-box-item-t7-desc {
+	display: block;
+	overflow: hidden;
+	max-width: 100%;
+	color: #b2b2b2;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font: 400 11px/11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+/**/
 
 .bx-finder-box-tab-note { font-style: italic; display:inline-block; margin: 0 0 0 5px;}
 
 .bx-finder-company-structure { padding: 0 0 0 3px; }
 .bx-finder-company-department-check { display: block;  padding: 10px 0 0; text-decoration:none; outline: none;  }
-.bx-finder-company-department-check-first { padding: 3px 0 0 0;}
+.bx-finder-company-department-check-first { padding: 3px 0 0;}
 .bx-finder-company-department-check-inner { padding-left: 2px; display: block; overflow:hidden; cursor:pointer;  -moz-user-select: -moz-none; -khtml-user-select: none; -webkit-user-select: none; user-select: none;}
 
 .bx-finder-company-department-check-arrow { float: left; width:16px; height: 17px; background: url(/bitrix/js/main/core/images/finder-sprite.png) no-repeat -16px -6px;}
@@ -379,7 +468,7 @@
 
 .bx-finder-company-department:first-child { padding-top: 3px; }
 .bx-finder-company-department { display: block; padding: 10px 0 0; text-decoration:none; }
-.bx-finder-company-department-first { padding: 3px 0 0 0;}
+.bx-finder-company-department-first { padding: 3px 0 0;}
 .bx-finder-company-department-inner { outline: none; text-decoration: none; padding-left: 2px; display: inline-block; overflow:hidden; cursor:pointer;  -moz-user-select: -moz-none; -khtml-user-select: none; -webkit-user-select: none; user-select: none;}
 
 .bx-finder-company-department-arrow { display:inline-block; float: left; width:16px; height: 17px; background: url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat -16px -175px;}
@@ -391,7 +480,7 @@
 .bx-finder-company-department-children-opened { display: block; border-left: 1px solid #F0F0F0;}
 .bx-finder-box-item-t4 .bx-finder-company-department-children-opened { display: block; margin-left: 4px; padding: 0 0 11px 7px;}
 
-.bx-finder-company-department-employees { margin: 0 0 0 -10px; padding: 5px 0 0 0;}
+.bx-finder-company-department-employees { margin: 0 0 0 -10px; padding: 5px 0 0;}
 .bx-finder-company-department-employee {
 	display:block;
 	height: 30px;
@@ -428,12 +517,21 @@
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 	display: table;
-	margin: 10px 0 0 0;
+	margin: 10px 0 0;
 	padding: 6px 20px 0 10px;
 	width: 100%;
 }
 
 .bx-finder-search-block .feed-add-destination-inp {
+	background: #fff;
+	border: none;
+	color: #555;
+	display: inline-block;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	height: 30px;
+	min-width: 108px;
+	outline: none;
+	vertical-align: middle;
 	margin: 0;
 	padding: 2px 0;
 	font-size: 14px;
@@ -442,7 +540,7 @@
 .bx-finder-search-block-cell {
 	border: 1px solid #e7e7e7;
 	display: table-cell;
-	padding: 0 10px 0 10px;
+	padding: 0 10px;
 	width: 450px;
 }
 
@@ -479,4 +577,8 @@
 
 .bx-feed-email-checkbox {
 	vertical-align: middle;
+}
+
+.bx-finder-popup {
+	padding: 10px 0 10px 10px;
 }

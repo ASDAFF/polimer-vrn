@@ -123,9 +123,7 @@ class Asset
 		$this->targetList['KERNEL']['JS_LIST']['KERNEL_main'] = array();
 
 		$this->target = &$this->targetList['TEMPLATE'];
-
-		$ieVersion = IsIE();
-		$this->isIE = ($ieVersion !== false && $ieVersion < 10);
+		$this->isIE = false;
 		$this->documentRoot = Main\Loader::getDocumentRoot();
 	}
 
@@ -171,7 +169,7 @@ class Asset
 			$bGzip = (
 				Option::get('main','compres_css_js_files', 'N') == 'Y'
 				&& extension_loaded('zlib')
-				&& function_exists('gzcompress')
+				&& function_exists('gzopen')
 			);
 		}
 		return $bGzip;
@@ -602,7 +600,7 @@ class Asset
 		$res = '';
 		if($location == AssetLocation::AFTER_CSS && \CJSCore::IsCoreLoaded())
 		{
-			$res = "<script type=\"text/javascript\">if(!window.BX)window.BX={message:function(mess){if(typeof mess=='object') for(var i in mess) BX.message[i]=mess[i]; return true;}};</script>\n";
+			$res = "<script type=\"text/javascript\">if(!window.BX)window.BX={};if(!window.BX.message)window.BX.message=function(mess){if(typeof mess=='object') for(var i in mess) BX.message[i]=mess[i]; return true;};</script>\n";
 		}
 
 		if(isset($this->strings[$location]))
@@ -1765,7 +1763,7 @@ class Asset
 
 			if(!empty($assetList))
 			{
-				$res .= '<script type="text/javascript">'."BX.setJSList(['".implode("','", $assetList)."']); </script>\n";
+				$res .= '<script type="text/javascript">'."BX.setJSList(['".implode("','", array_map(array($this, "getAssetPath"), $assetList))."']); </script>\n";
 			}
 		}
 
@@ -1786,7 +1784,7 @@ class Asset
 
 			if(!empty($assetList))
 			{
-				$res .= '<script type="text/javascript">'."BX.setCSSList(['".implode("','", $assetList)."']); </script>\n";
+				$res .= '<script type="text/javascript">'."BX.setCSSList(['".implode("','", array_map(array($this, "getAssetPath"), $assetList))."']); </script>\n";
 			}
 		}
 		return $res;

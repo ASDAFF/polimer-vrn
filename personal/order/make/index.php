@@ -1,28 +1,32 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("Заказы");
-?><?$APPLICATION->IncludeComponent("bitrix:sale.order.ajax", "", array(
-	"PAY_FROM_ACCOUNT" => "Y",
-	"COUNT_DELIVERY_TAX" => "N",
-	"COUNT_DISCOUNT_4_ALL_QUANTITY" => "N",
-	"ONLY_FULL_PAY_FROM_ACCOUNT" => "N",
-	"ALLOW_AUTO_REGISTER" => "Y",
-	"SEND_NEW_USER_NOTIFY" => "Y",
-	"DELIVERY_NO_AJAX" => "N",
-	"TEMPLATE_LOCATION" => "popup",
-	"PROP_1" => array(
-	),
-	"PATH_TO_BASKET" => "/personal/cart/",
-	"PATH_TO_PERSONAL" => "/personal/order/",
-	"PATH_TO_PAYMENT" => "/personal/order/payment/",
-	"PATH_TO_ORDER" => "/personal/order/make/",
-	"SET_TITLE" => "Y" ,
-	"SHOW_ACCOUNT_NUMBER" => "Y",
-	"DELIVERY_NO_SESSION" => "Y",
-	"COMPATIBLE_MODE" => "N",
-	"BASKET_POSITION" => "before",
-	"BASKET_IMAGES_SCALING" => "adaptive",
-	"SERVICES_IMAGES_SCALING" => "adaptive"
+?><?$APPLICATION->IncludeComponent(
+	"nbrains:sale.order.full", 
+	"make-order", 
+	array(
+		"ALLOW_PAY_FROM_ACCOUNT" => "Y",
+		"CITY_OUT_LOCATION" => "Y",
+		"COUNT_DELIVERY_TAX" => "N",
+		"COUNT_DISCOUNT_4_ALL_QUANTITY" => "Y",
+		"DELIVERY_NO_SESSION" => "N",
+		"ONLY_FULL_PAY_FROM_ACCOUNT" => "N",
+		"PATH_TO_AUTH" => "/auth.php",
+		"PATH_TO_BASKET" => "basket.php",
+		"PATH_TO_PAYMENT" => "payment.php",
+		"PATH_TO_PERSONAL" => "index.php",
+		"PRICE_VAT_INCLUDE" => "Y",
+		"PRICE_VAT_SHOW_VALUE" => "Y",
+		"PROP_1" => array(
+		),
+		"PROP_2" => array(
+		),
+		"SEND_NEW_USER_NOTIFY" => "Y",
+		"SET_TITLE" => "Y",
+		"SHOW_AJAX_DELIVERY_LINK" => "Y",
+		"SHOW_MENU" => "Y",
+		"USE_AJAX_LOCATIONS" => "Y",
+		"COMPONENT_TEMPLATE" => "make-order"
 	),
 	false
 );?><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

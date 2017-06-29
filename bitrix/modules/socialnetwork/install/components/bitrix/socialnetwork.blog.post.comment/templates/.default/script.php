@@ -2,21 +2,6 @@
 if(!$arResult["CanUserComment"])
 	return;
 
-$arSmiles = array();
-if(!empty($arResult["Smiles"]))
-{
-	foreach($arResult["Smiles"] as $arSmile)
-	{
-		$arSmiles[] = array(
-			'name' => $arSmile["~LANG_NAME"],
-			'path' => "/bitrix/images/blog/smile/".$arSmile["IMAGE"],
-			'code' => str_replace("\\\\","\\",$arSmile["TYPE"]),
-			'codes' => str_replace("\\\\","\\",$arSmile["TYPING"]),
-			'width' => $arSmile["IMAGE_WIDTH"],
-			'height' => $arSmile["IMAGE_HEIGHT"],
-		);
-	}
-}
 $rand = randString(4);
 $formParams = Array(
 	"FORM_ID" => "blogCommentForm".$rand,
@@ -64,7 +49,7 @@ $formParams = Array(
 		"SHOW" => "N",
 		"POSTFIX" => "file"
 	),
-	"SMILES" => Array("VALUE" => $arSmiles),
+	"SMILES" => COption::GetOptionInt("blog", "smile_gallery_id", 0),
 	"LHE" => array(
 		"documentCSS" => "body {color:#434343;}",
 		"ctrlEnterHandler" => "__submit".$rand,

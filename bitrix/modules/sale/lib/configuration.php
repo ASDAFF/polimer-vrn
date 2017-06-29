@@ -162,4 +162,13 @@ class Configuration
 	{
 		return ((string)Config\Option::get('catalog', 'enable_reservation') == 'Y');
 	}
+
+	/**
+	 * Tells if allowed to calculate discount on basket separately.
+	 * @return bool
+	 */
+	public static function isAllowedSeparatelyDiscountCalculation()
+	{
+		return Config\Option::get('sale', 'discount_separately_calculation') === 'Y';
+	}
 }

@@ -23,6 +23,7 @@ $MESS["SUP_SUBT_LICENCE"] = "Лицензионное соглашение";
 $MESS["SUP_SUBT_LICENCE_HINT"] = "Перед использованием системы обновлений вы должны принять новое лицензионное соглашение";
 $MESS["SUP_SUBT_LICENCE_BUTTON"] = "Открыть лицензионное соглашение";
 $MESS["SUP_SUBT_AGREE"] = "Я принимаю лицензионное соглашение";
+$MESS["SUP_SUBT_AGREE_PRIVACY"] = "Я ознакомился с <a href=\"http://marketplace.1c-bitrix.ru/about/privacy.php\" target=\"_blank\">Условиями о конфиденциальности</a> и согласен с ними";
 $MESS["SUP_APPLY"] = "Применить";
 $MESS["SUP_SUBT_ERROR_LICENCE"] = "Ошибка принятия лицензии";
 $MESS["SUP_SUBK_KEY"] = "Ввод лицензионного ключа";

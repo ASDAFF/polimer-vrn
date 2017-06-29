@@ -10,3 +10,7 @@ DROP TABLE if exists b_im_bot_token;
 DROP TABLE if exists b_im_command;
 DROP TABLE if exists b_im_command_lang;
 DROP TABLE if exists b_im_alias;
+DROP TABLE if exists b_im_external_avatar;
+DROP TABLE if exists b_im_message_favorite;
+DROP TABLE if exists b_im_app;
+DROP TABLE if exists b_im_app_lang;

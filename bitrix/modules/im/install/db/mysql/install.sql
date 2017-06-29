@@ -1,5 +1,6 @@
 CREATE TABLE b_im_chat(
 	ID int(18) not null auto_increment,
+	PARENT_ID int(18) null DEFAULT 0,
 	TITLE varchar(255) null,
 	DESCRIPTION text null,
 	COLOR varchar(255) null,
@@ -7,20 +8,23 @@ CREATE TABLE b_im_chat(
 	EXTRANET char(1) null,
 	AUTHOR_ID int(18) not null,
 	AVATAR int(18) null,
+	PIN_MESSAGE_ID int(18) null DEFAULT 0,
 	CALL_TYPE smallint(1) DEFAULT 0,
 	CALL_NUMBER varchar(20) NULL,
 	ENTITY_TYPE varchar(50) NULL,
-  ENTITY_ID varchar(50) NULL,
+  ENTITY_ID varchar(255) NULL,
 	ENTITY_DATA_1 varchar(255) null,
 	ENTITY_DATA_2 varchar(255) null,
 	ENTITY_DATA_3 varchar(255) null,
 	DISK_FOLDER_ID int(18) null,
 	LAST_MESSAGE_ID int(18) null,
+	DATE_CREATE datetime null,
 	PRIMARY KEY (ID),
 	KEY IX_IM_CHAT_1 (AUTHOR_ID),
 	KEY IX_IM_CHAT_2 (ENTITY_TYPE, ENTITY_ID, AUTHOR_ID),
 	KEY IX_IM_CHAT_3 (CALL_NUMBER, AUTHOR_ID),
-	KEY IX_IM_CHAT_4 (TYPE)
+	KEY IX_IM_CHAT_4 (TYPE),
+	KEY IX_IM_CHAT_5 (PARENT_ID)
 );
 
 CREATE TABLE b_im_message(
@@ -46,7 +50,8 @@ CREATE TABLE b_im_message(
 	KEY IX_IM_MESS_4 (CHAT_ID, NOTIFY_READ),
 	KEY IX_IM_MESS_5 (CHAT_ID, DATE_CREATE),
 	KEY IX_IM_MESS_6 (AUTHOR_ID),
-	KEY IX_IM_MESS_7 (CHAT_ID, ID)
+	KEY IX_IM_MESS_7 (CHAT_ID, ID),
+	KEY IX_IM_MESS_8 (NOTIFY_TYPE, DATE_CREATE)
 );
 
 CREATE TABLE b_im_message_param
@@ -59,6 +64,18 @@ CREATE TABLE b_im_message_param
 	UNIQUE KEY pk_b_im_message_param (ID),
 	KEY IX_B_IM_MESSAGE_PARAM_1 (MESSAGE_ID, PARAM_NAME),
 	KEY IX_B_IM_MESSAGE_PARAM_2 (PARAM_NAME, PARAM_VALUE(50), MESSAGE_ID)
+);
+
+CREATE TABLE b_im_message_favorite
+(
+	ID int(18) not null auto_increment,
+	USER_ID int(18) not null,
+	CHAT_ID INT(11) NOT NULL,
+	MESSAGE_ID INT(11) NOT NULL,
+	DATE_CREATE datetime not null,
+	UNIQUE KEY pk_b_im_message_favorite (ID),
+	KEY IX_B_IM_MESSAGE_FAVORITE_1 (USER_ID, DATE_CREATE DESC),
+	KEY IX_B_IM_MESSAGE_FAVORITE_2 (CHAT_ID, DATE_CREATE DESC)
 );
 
 CREATE TABLE b_im_status
@@ -89,6 +106,7 @@ CREATE TABLE b_im_relation (
 	STATUS smallint(1) DEFAULT 0,
 	CALL_STATUS smallint(1) DEFAULT 0,
 	NOTIFY_BLOCK char(1) DEFAULT 'N',
+	MANAGER char(1) DEFAULT 'N',
 	PRIMARY KEY (ID),
 	KEY IX_IM_REL_1 (CHAT_ID),
 	KEY IX_IM_REL_2 (USER_ID, MESSAGE_TYPE, STATUS),
@@ -113,14 +131,21 @@ CREATE TABLE b_im_bot(
 	CODE VARCHAR(50) not null,
 	TYPE char(1) default 'B' not null,
 	CLASS VARCHAR(255),
+	LANG VARCHAR(50) default '',
 	METHOD_BOT_DELETE VARCHAR(255),
 	METHOD_MESSAGE_ADD VARCHAR(255),
+	METHOD_MESSAGE_UPDATE VARCHAR(255),
+	METHOD_MESSAGE_DELETE VARCHAR(255),
 	METHOD_WELCOME_MESSAGE VARCHAR(255),
+	TEXT_PRIVATE_WELCOME_MESSAGE text,
+	TEXT_CHAT_WELCOME_MESSAGE text,
 	COUNT_COMMAND int(18) DEFAULT 0,
 	COUNT_MESSAGE int(18) DEFAULT 0,
 	COUNT_CHAT int(18) DEFAULT 0,
 	COUNT_USER int(18)  DEFAULT 0,
 	APP_ID varchar(128) NULL,
+	VERIFIED char(1) DEFAULT 'N',
+	OPENLINE char(1) DEFAULT 'N',
 	PRIMARY KEY PK_B_IM_BOT (BOT_ID)
 );
 
@@ -172,6 +197,40 @@ CREATE TABLE b_im_command_lang
 	UNIQUE UX_B_IM_COMMAND_LANG (COMMAND_ID, LANGUAGE_ID)
 );
 
+CREATE TABLE b_im_app(
+	ID int(18) not null auto_increment,
+	MODULE_ID VARCHAR(50) not null,
+	BOT_ID int(18) default 0,
+	APP_ID varchar(128) NULL,
+	CODE varchar(255) not null,
+	HASH varchar(32) NULL,
+	REGISTERED varchar(32) default 'N',
+	ICON_FILE_ID int(18) null,
+	CONTEXT varchar(128) NULL,
+	IFRAME varchar(255) null,
+	IFRAME_WIDTH int(18) null,
+	IFRAME_HEIGHT int(18) null,
+	JS varchar(255) null,
+	HIDDEN char(1) default 'N',
+	EXTRANET_SUPPORT char(1) default 'N',
+	CLASS VARCHAR(255) null,
+	METHOD_LANG_GET VARCHAR(255) null,
+	PRIMARY KEY PK_B_IM_APP (ID),
+	KEY IX_IM_APP_1 (BOT_ID)
+);
+
+CREATE TABLE b_im_app_lang
+(
+	ID int(18) not null auto_increment,
+	APP_ID int(18) not null,
+	LANGUAGE_ID char(2) not null,
+	TITLE varchar(255) null,
+	DESCRIPTION varchar(255) null,
+	COPYRIGHT varchar(255) null,
+	PRIMARY KEY PK_B_APP_LANG (ID),
+	UNIQUE UX_B_APP_LANG (APP_ID, LANGUAGE_ID)
+);
+
 CREATE TABLE b_im_alias
 (
 	ID int(18) not null auto_increment,
@@ -180,4 +239,13 @@ CREATE TABLE b_im_alias
 	ENTITY_ID varchar(255) not null,
 	PRIMARY KEY PK_B_IM_ALIAS (ID),
 	UNIQUE UX_B_IM_ALIAS (ALIAS)
+);
+
+CREATE TABLE b_im_external_avatar
+(
+	ID int(11) NOT NULL auto_increment,
+	LINK_MD5 varchar(32) NOT NULL,
+	AVATAR_ID int(11) NOT NULL,
+	PRIMARY KEY PK_B_IM_EXTERNAL_AVATAR (ID),
+	KEY IX_IMOL_NA_1 (LINK_MD5)
 );

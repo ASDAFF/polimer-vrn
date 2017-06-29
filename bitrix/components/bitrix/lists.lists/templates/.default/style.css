@@ -20,13 +20,30 @@
 	text-decoration: underline;
 }
 .bp-bx-application-icon {
-	position: relative;
+	position: absolute;
 	width: 55px;
 	height: 55px;
 	border-radius: 50%;
 	margin-right: 13px;
-	float: left;
 	background: #fff;
+	display: block;
+	overflow: hidden;
+	left: 15px;
+	top: 50%;
+	margin-top: -27.5px;
+}
+.bp-bx-application-title-wrapper {
+	display: block;
+	position: absolute;
+	left: 75px;
+	top: 50%;
+	-webkit-transform: translateY(-50%);
+	-moz-transform: translateY(-50%);
+	-ms-transform: translateY(-50%);
+	-o-transform: translateY(-50%);
+	transform: translateY(-50%);
+	right: 5px;
+	max-height: 55px;
 }
 .bp-bx-application-icon img {
 	position: absolute;
@@ -41,33 +58,24 @@
 	font-weight: bold;
 	line-height: 36px;
 	overflow: hidden;
-	display: table;
 	height: 36px;
+	display: block;
 }
 .bp-bx-application-title .bx-lists-application-link {
 	line-height: 18px;
 	vertical-align: middle;
 	color: #000;
-	display: table-cell;
+	display: block;
 }
 
 .bp-bx-application-check {
-	position: absolute;
-	bottom: 0px;
-	left: 70px;
-	height: 34px;
-	line-height: 34px;
 	vertical-align: middle;
-	z-index: 2;
 }
 
 .bp-bx-application-check label {
-	display: inline-block;
 	vertical-align: middle;
 	font-size: 11px;
-	color: rgba(0,0,0,0.5);
-	width: 155px;
-	padding-left: 30px;
+	color: #000;
 }
 
 .bp-bx-application-check label:hover, .bp-bx-application-check input:checked + label {
@@ -75,11 +83,8 @@
 }
 
 .bp-bx-application-check input {
-	margin: auto;
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	left: 15px;
+	line-height: 16px;
+	vertical-align: middle;
 }
 
 .bx-lists-alert {
@@ -133,6 +138,5 @@
 	max-height: 36px;
 	overflow: hidden;
 	position: relative;
-	display: inline-block;
-	width: 150px;
+	display: block;
 }

@@ -175,7 +175,7 @@
 
 .bx-help-nav-fixed {
 	left: auto;
-	right: 0px;
+	right: 0;
 	position: fixed;
 }
 
@@ -213,6 +213,9 @@
 	height: 52px;
 }
 
+.bx-help-nav-fixed.bx-help-nav-wrap .bx-help-top-title {
+	margin: 0 17px 0 0;
+}
 
 .bx-help-center {
 	text-align: center;
@@ -250,6 +253,10 @@
 
 	-webkit-transition: opacity 0.3s linear;
 	transition: opacity 0.3s linear;
+}
+
+.bx-help-nav-fixed .bx-help-nav {
+	margin: 0 17px 0 0;
 }
 
 .bx-help-nav-show .bx-help-nav {

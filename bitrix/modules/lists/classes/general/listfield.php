@@ -1,6 +1,9 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\NotSupportedException;
+
 abstract class CListField
 {
 	/** @var int */
@@ -257,6 +260,7 @@ class CListElementField extends CListField
 	public function GetArray()
 	{
 		return array(
+			"FIELD_ID" => $this->_field_id,
 			"SORT" => $this->_sort,
 			"NAME" => $this->_label,
 			"IS_REQUIRED" => $this->_iblock_field["IS_REQUIRED"],
@@ -416,6 +420,7 @@ class CListPropertyField extends CListField
 		if(is_array($this->_property))
 		{
 			return array(
+				"FIELD_ID" => $this->_field_id,
 				"SORT" => $this->_sort,
 				"NAME" => $this->_property["NAME"],
 				"IS_REQUIRED" => $this->_property["IS_REQUIRED"],
@@ -484,6 +489,11 @@ class CListPropertyField extends CListField
 
 		if(is_array($this->_property) && !CListFieldTypeList::IsField($newType))
 		{
+			if (self::existPropertyCode($this->_iblock_id, $arFields["CODE"], $this->_property["ID"]))
+			{
+				throw new NotSupportedException(GetMessage("LIST_PROPERTY_FIELD_DUPLICATE_CODE"));
+			}
+
 			foreach($this->GetArray() as $id => $val)
 				if(array_key_exists($id, $arFields) && $id != "IBLOCK_ID")
 					$this->_property[$id] = $arFields[$id];
@@ -518,6 +528,10 @@ class CListPropertyField extends CListField
 	{
 		if($iblock_id > 0)
 		{
+			if (self::existPropertyCode($iblock_id, $arFields["CODE"]))
+			{
+				throw new NotSupportedException(GetMessage("LIST_PROPERTY_FIELD_DUPLICATE_CODE"));
+			}
 			$property_id = intval($arFields["ID"]);
 			if($property_id > 0)
 			{
@@ -547,6 +561,31 @@ class CListPropertyField extends CListField
 			}
 		}
 		return null;
+	}
+
+	private static function existPropertyCode($iblockId, $code, $propertyId = 0)
+	{
+		$iblockId = intval($iblockId);
+		if (!$iblockId)
+		{
+			throw new ArgumentException("Required parameter \"iblockId\" is missing.");
+		}
+		if (empty($code))
+		{
+			return false;
+		}
+
+		$queryObject = \CIBlockProperty::getList(array(), array("IBLOCK_ID" => $iblockId, "CODE" => $code));
+		$property = $queryObject->fetch();
+
+		if (!empty($property) && is_array($property))
+		{
+			return $property["ID"] != $propertyId;
+		}
+		else
+		{
+			return false;
+		}
 	}
 }
 ?>

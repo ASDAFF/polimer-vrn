@@ -1,4 +1,8 @@
 <?php
+use Bitrix\Main\Localization\Loc,
+	Bitrix\Main\Loader,
+	Bitrix\Currency;
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 
 /** Check CSRF Token */
@@ -7,10 +11,7 @@ if (!check_bitrix_sessid())
 	die("Provided security token is invalid!");
 }
 
-use Bitrix\Currency,
-	Bitrix\Main\Localization\Loc;
-
-if (!CModule::IncludeModule("catalog"))
+if (!Loader::includeModule('catalog'))
 {
 	die('catalog module is not included!');
 }
@@ -34,7 +35,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 	<table style="width:100%;padding-bottom: 15px;">
 		<tr>
 			<td style="width:25.5%; padding-left:10px">
-				<input id = "initialPriceTypeCheckbox" type="checkbox">
+				<input id="initialPriceTypeCheckbox" type="checkbox">
 				<label class="inactive-element" id="initialPriceTypeLabel" for="initialPriceTypeSelect">
 					<?=Loc::getMessage("IBLIST_CHPRICE_TABLE_INITIAL_PRICE_TYPE")?>
 				</label>
@@ -54,7 +55,10 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 							}
 
 							?> value=<?=$priceTypeElement['ID']?> >
-								<?=CUtil::JSEscape(htmlspecialcharsbx($priceTypeElement['NAME_LANG']))?>
+								<?
+									$priceTypeName = (strlen($priceTypeElement['NAME_LANG'])) ? $priceTypeElement['NAME_LANG'] : $priceTypeElement['NAME'];
+								?>
+								<?=htmlspecialcharsbx($priceTypeName)?>
 							</option>
 							<?
 						}
@@ -106,7 +110,10 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 									echo('selected');
 								}
 								?> value=<?=$priceTypeElement['ID']?>>
-									<?=CUtil::JSEscape(htmlspecialcharsbx($priceTypeElement['NAME_LANG']))?>
+									<?
+									$priceTypeName = (strlen($priceTypeElement['NAME_LANG'])) ? $priceTypeElement['NAME_LANG'] : $priceTypeElement['NAME'];
+									?>
+									<?=htmlspecialcharsbx($priceTypeName)?>
 								</option>
 								<?
 							}
@@ -130,7 +137,6 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 						<select id="tableUnitsSelect" class="adm-select" style="width: 169px;">
 							<option selected value="percent">%</option>
 							<option value="multiple"><?=Loc::getMessage("IBLIST_CHPRICE_TABLE_UNIT_MULTYPLE")?></option>
-
 							<?
 							foreach ($currenciesList as $currencyCode => $currencyElement)
 							{
@@ -138,12 +144,12 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 								<option
 									<?
 										if ( isset($_SESSION['CHANGE_PRICE_PARAMS']['UNITS'])
-											&& ($_SESSION['CHANGE_PRICE_PARAMS']['UNITS'] === strtolower($currencyCode)) )
+											&& ($_SESSION['CHANGE_PRICE_PARAMS']['UNITS'] === $currencyCode) )
 										{
 											echo('selected');
 										}
-									?> value=<?=strtolower($currencyCode)?>>
-									<?=$currencyElement?>
+									?> value=<?=htmlspecialcharsbx($currencyCode); ?>>
+									<?=htmlspecialcharsbx($currencyElement)?>
 								</option>
 								<?
 							}
@@ -287,4 +293,4 @@ $javascriptParams = CUtil::PhpToJSObject($javascriptParams);
 	iblockChangeScript.init(<?=$javascriptParams?>);
 </script>
 <?
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");?>
+require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

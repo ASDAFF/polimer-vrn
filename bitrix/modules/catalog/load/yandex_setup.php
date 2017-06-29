@@ -44,6 +44,8 @@ if (($ACTION == 'EXPORT_EDIT' || $ACTION == 'EXPORT_COPY') && $STEP == 1)
 		$filterAvalable = $arOldSetupVars['FILTER_AVAILABLE'];
 	if (isset($arOldSetupVars['DISABLE_REFERERS']))
 		$disableReferers = $arOldSetupVars['DISABLE_REFERERS'];
+	if (isset($arOldSetupVars['MAX_EXECUTION_TIME']))
+		$maxExecutionTime = $arOldSetupVars['MAX_EXECUTION_TIME'];
 }
 
 if ($STEP > 1)
@@ -432,6 +434,17 @@ if ($STEP == 1)
 		<input type="hidden" name="DISABLE_REFERERS" value="N">
 		<input type="checkbox" name="DISABLE_REFERERS" value="Y"<? echo ($disableReferers == 'Y' ? ' checked' : ''); ?>
 	</td>
+</tr><?
+	$maxExecutionTime = (isset($maxExecutionTime) ? (int)$maxExecutionTime : 0);
+?><tr>
+	<td width="40%"><?=GetMessage('CAT_MAX_EXECUTION_TIME');?></td>
+	<td width="60%">
+		<input type="text" name="MAX_EXECUTION_TIME" size="40" value="<?=$maxExecutionTime; ?>">
+	</td>
+</tr>
+<tr>
+	<td width="40%" style="padding-top: 0;">&nbsp;</td>
+	<td width="60%" style="padding-top: 0;"><small><?=GetMessage("CAT_MAX_EXECUTION_TIME_NOTE");?></small></td>
 </tr>
 <tr>
 	<td width="40%"><?echo GetMessage("CET_SERVER_NAME");?></td>
@@ -490,7 +503,7 @@ if (2 > $STEP)
 	<input type="hidden" name="ACT_FILE" value="<?echo htmlspecialcharsbx($_REQUEST["ACT_FILE"]) ?>">
 	<input type="hidden" name="ACTION" value="<?echo htmlspecialcharsbx($ACTION) ?>">
 	<input type="hidden" name="STEP" value="<?echo intval($STEP) + 1 ?>">
-	<input type="hidden" name="SETUP_FIELDS_LIST" value="V,IBLOCK_ID,SETUP_SERVER_NAME,SETUP_FILE_NAME,XML_DATA,USE_HTTPS,FILTER_AVAILABLE,DISABLE_REFERERS">
+	<input type="hidden" name="SETUP_FIELDS_LIST" value="V,IBLOCK_ID,SETUP_SERVER_NAME,SETUP_FILE_NAME,XML_DATA,USE_HTTPS,FILTER_AVAILABLE,DISABLE_REFERERS,MAX_EXECUTION_TIME">
 	<input type="submit" value="<?echo ($ACTION=="EXPORT")?GetMessage("CET_EXPORT"):GetMessage("CET_SAVE")?>"><?
 }
 

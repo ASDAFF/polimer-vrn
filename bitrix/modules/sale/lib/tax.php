@@ -9,13 +9,9 @@
 namespace Bitrix\Sale;
 
 
-use Bitrix\Main\ArgumentNullException;
-use Bitrix\Main\Entity\EntityError;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\Sale;
+use Bitrix\Main;
 
-Loc::loadMessages(__FILE__);
+Main\Localization\Loc::loadMessages(__FILE__);
 
 class Tax
 {
@@ -37,7 +33,9 @@ class Tax
 	/** @var bool  */
 	protected $isClone = false;
 
-
+	/**
+	 * Tax constructor.
+	 */
 	protected function __construct()
 	{
 
@@ -51,6 +49,28 @@ class Tax
 		if ($this->list === null)
 		{
 			$this->list = $this->loadList();
+		}
+
+		$event = new Main\Event('sale', EventActions::EVENT_ON_TAX_GET_LIST, array(
+			'ENTITY' => $this,
+			'VALUES' => $this->list,
+		));
+		$event->send();
+
+		if ($event->getResults())
+		{
+			/** @var Main\EventResult $evenResult */
+			foreach($event->getResults() as $eventResult)
+			{
+				if($eventResult->getType() == Main\EventResult::SUCCESS)
+				{
+					$eventResultData = $eventResult->getParameters();
+					if (!empty($eventResultData['VALUES']))
+					{
+						$this->list = $eventResultData['VALUES'];
+					}
+				}
+			}
 		}
 
 		return $this->list;
@@ -79,7 +99,7 @@ class Tax
 	 * Calculation of taxes
 	 *
 	 * @return Result
-	 * @throws ObjectNotFoundException
+	 * @throws Main\ObjectNotFoundException
 	 */
 	public function calculate()
 	{
@@ -89,13 +109,13 @@ class Tax
 		/** @var Order $order */
 		if (!$order = $this->getOrder())
 		{
-			throw new ObjectNotFoundException('Entity "Order" not found');
+			throw new Main\ObjectNotFoundException('Entity "Order" not found');
 		}
 
 		/** @var Basket $basket */
 		if (!$basket = $order->getBasket())
 		{
-			throw new ObjectNotFoundException('Entity "Basket" not found');
+			throw new Main\ObjectNotFoundException('Entity "Basket" not found');
 		}
 
 		$taxResult = array();
@@ -178,7 +198,7 @@ class Tax
 
 	/**
 	 * @return Result
-	 * @throws ObjectNotFoundException
+	 * @throws Main\ObjectNotFoundException
 	 */
 	public function calculateDelivery()
 	{
@@ -190,7 +210,7 @@ class Tax
 		/** @var Order $order */
 		if (!$order = $this->getOrder())
 		{
-			throw new ObjectNotFoundException('Entity "Order" not found');
+			throw new Main\ObjectNotFoundException('Entity "Order" not found');
 		}
 		
 		if ($order->getId() > 0 || (!empty($this->list) && is_array($this->list)))
@@ -207,7 +227,7 @@ class Tax
 		/** @var Basket $basket */
 		if (!$basket = $order->getBasket())
 		{
-			throw new ObjectNotFoundException('Entity "Basket" not found');
+			throw new Main\ObjectNotFoundException('Entity "Basket" not found');
 		}
 
 		$fields = array(
@@ -388,7 +408,7 @@ class Tax
 
 	/**
 	 * @return Result
-	 * @throws ObjectNotFoundException
+	 * @throws Main\ObjectNotFoundException
 	 */
 	public function save()
 	{
@@ -397,7 +417,7 @@ class Tax
 		/** @var Order $order */
 		if (!$order = $this->getOrder())
 		{
-			throw new ObjectNotFoundException('Entity "Order" not found');
+			throw new Main\ObjectNotFoundException('Entity "Order" not found');
 		}
 
 		//DoSaveOrderTax
@@ -407,7 +427,7 @@ class Tax
 		{
 			foreach ($errors as $error)
 			{
-				$result->addError(new EntityError($error));
+				$result->addError(new Main\Entity\EntityError($error));
 			}
 		}
 
@@ -422,7 +442,8 @@ class Tax
 
 	/**
 	 * @param OrderBase $order
-	 * @return array|null
+	 *
+	 * @return Tax
 	 */
 	public static function load(OrderBase $order)
 	{
@@ -431,7 +452,7 @@ class Tax
 
 		if ($order->getId() > 0)
 		{
-			$tax->list = $tax->loadList($order);
+			$tax->getTaxList();
 		}
 		else
 		{
@@ -470,6 +491,11 @@ class Tax
 	{
 		$this->list = array();
 	}
+
+	public function resetAvailableTaxList()
+	{
+		$this->availableList = null;
+	}
 	/**
 	 *
 	 */
@@ -477,6 +503,7 @@ class Tax
 	{
 		$result = new Result();
 		$this->resetTaxList();
+		$this->resetAvailableTaxList();
 
 		/** @var Result $r */
 		$r = $this->calculate();
@@ -590,7 +617,7 @@ class Tax
 		else
 		{
 			$availableList[] = array(
-				"NAME" => Loc::getMessage("SOA_VAT"),
+				"NAME" => Main\Localization\Loc::getMessage("SOA_VAT"),
 				"IS_PERCENT" => "Y",
 				"VALUE" => $order->getVatRate() * 100,
 				"VALUE_FORMATED" => "(".($order->getVatRate() * 100)."%, ".GetMessage("SOA_VAT_INCLUDED").")",

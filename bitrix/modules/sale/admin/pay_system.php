@@ -271,6 +271,17 @@ $lAdmin->AddGroupActionTable(
 			"ICON" => "btn_new"
 		),
 	);
+	/** @global CUser $USER */
+	global $USER;
+	if($USER->CanDoOperation("install_updates"))
+	{
+		$aContext[] = array(
+			"TEXT" => GetMessage("SPSAN_MARKETPLACE_ADD_NEW"),
+			"TITLE" => GetMessage("SPSAN_MARKETPLACE_ADD_NEW_ALT"),
+			"LINK" => "update_system_market.php?category=35&lang=".LANG,
+			"ICON" => "btn"
+		);
+	}
 	$lAdmin->AddAdminContextMenu($aContext);
 }
 

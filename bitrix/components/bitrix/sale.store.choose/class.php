@@ -90,7 +90,7 @@ class CSaleStoreChooseComponent extends CBitrixComponent
 			if (strlen($storeParams["GPS_S"]) > 0)
 				$arLocationTmp["LON"] = $storeParams["GPS_S"];
 			if (strlen($storeParams["TITLE"]) > 0)
-				$arLocationTmp["TEXT"] = $storeParams["TITLE"]."\r\n".$storeParams["DESCRIPTION"];
+				$arLocationTmp["TEXT"] = htmlspecialcharsbx($storeParams["TITLE"]."\r\n".$storeParams["DESCRIPTION"]);
 			$arStoreLocation["PLACEMARKS"][] = $arLocationTmp;
 		}
 		$this->arResult["LOCATION"] = serialize($arStoreLocation);

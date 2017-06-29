@@ -95,6 +95,7 @@ CREATE TABLE b_event_message
 	FIELD2_VALUE varchar(255),
 	SITE_TEMPLATE_ID varchar(255) DEFAULT NULL,
 	ADDITIONAL_FIELD text NULL,
+	LANGUAGE_ID char(2) NULL,
 	PRIMARY KEY (ID),
 	INDEX ix_b_event_message_name (EVENT_NAME(50))
 );
@@ -125,6 +126,7 @@ CREATE TABLE b_event
 	DATE_EXEC datetime,
 	SUCCESS_EXEC char(1) not null default 'N',
 	DUPLICATE char(1) not null default 'Y',
+	LANGUAGE_ID char(2) NULL,
 	PRIMARY KEY (ID),
 	INDEX ix_success (SUCCESS_EXEC),
 	INDEX ix_b_event_date_exec (DATE_EXEC)
@@ -951,6 +953,7 @@ CREATE TABLE b_admin_notify
 	MESSAGE text,
 	ENABLE_CLOSE char(1) NULL default 'Y',
 	PUBLIC_SECTION char(1) NOT NULL default 'N',
+	NOTIFY_TYPE char(1) NOT NULL default 'M',
 	PRIMARY KEY (ID),
 	KEY IX_AD_TAG (TAG)
 );
@@ -1100,4 +1103,14 @@ CREATE TABLE b_urlpreview_route
 	PARAMETERS mediumtext,
 	PRIMARY KEY (ID),
 	UNIQUE KEY UX_URLPREVIEW_ROUTE_ROUTE (ROUTE)
+);
+
+CREATE TABLE b_geoip_handlers
+(
+  ID INT(11) NOT NULL AUTO_INCREMENT,
+  SORT INT(10) not null default 100,
+  ACTIVE CHAR(1) NOT NULL DEFAULT 'Y',
+  CLASS_NAME VARCHAR(255) NOT NULL,
+  CONFIG text NULL,
+  PRIMARY KEY (ID)
 );

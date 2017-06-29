@@ -342,7 +342,7 @@ class CSocNetLogFollow
 		}
 	}
 
-	function GetExactValueByRating($user_id, $rating_type_id, $rating_entity_id)
+	public static function GetExactValueByRating($user_id, $rating_type_id, $rating_entity_id)
 	{
 		global $DB;
 
@@ -551,7 +551,7 @@ class CSocNetLogFollow
 		return $res;
 	}
 
-	function checkAutoUnfollow($traffic_cnt, $traffic_avg, $userId = false)
+	public static function checkAutoUnfollow($traffic_cnt, $traffic_avg, $userId = false)
 	{
 		global $USER;
 

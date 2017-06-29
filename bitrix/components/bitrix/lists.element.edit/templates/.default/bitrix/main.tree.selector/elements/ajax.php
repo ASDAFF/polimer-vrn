@@ -239,7 +239,7 @@ document.getElementById('<?echo $win_id?>').__object.InitControl('bx_emp_search_
 				$arSectionList[] = $opened_section;
 
 ?>
-document.getElementById('<?echo $win_id?>').__object.LoadSection('<?echo $opened_section?>', true);
+document.getElementById('<?echo $win_id?>').__object.LoadSection('<?echo intval($opened_section)?>', true);
 <?
 				$opened_section = $arSections[$opened_section]['IBLOCK_SECTION_ID'];
 			}

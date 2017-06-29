@@ -24,6 +24,8 @@ CREATE TABLE b_sender_contact_list
 	LIST_ID	int(11) NOT NULL,
 	UNIQUE UK_SENDER_CONTACT_LIST (CONTACT_ID,LIST_ID)
 );
+CREATE INDEX IX_SENDER_CONTACT_LIST_LST_ID on b_sender_contact_list(LIST_ID);
+
 CREATE TABLE b_sender_group
 (
   ID		int(11)		NOT NULL auto_increment,
@@ -38,7 +40,7 @@ CREATE TABLE b_sender_group_connector
 (
   GROUP_ID int(11) NOT NULL,
   NAME		VARCHAR(100)	NULL,
-  ENDPOINT		VARCHAR(2000)	NULL,
+  ENDPOINT	LONGTEXT	NULL,
   ADDRESS_COUNT	INT(11)		DEFAULT 0 NOT NULL
 );
 CREATE INDEX IX_SENDER_GROUP_CONNECTOR on b_sender_group_connector(GROUP_ID);
@@ -72,6 +74,7 @@ CREATE TABLE b_sender_mailing_chain
   TIME_SHIFT int(11) default 0 NOT NULL,
   LAST_EXECUTED	datetime	NULL,
   AUTO_SEND_TIME	datetime	NULL,
+	TITLE varchar(255) null,
 	EMAIL_FROM varchar(255) not null,
 	SUBJECT varchar(255),
 	MESSAGE longtext,
@@ -143,8 +146,8 @@ CREATE TABLE b_sender_posting_recipient
   IS_UNSUB  char(1) DEFAULT 'N' NOT NULL,
 	PRIMARY KEY (ID)
 );
-CREATE INDEX IX_SENDER_POSTING_RECIP_STATUS on b_sender_posting_recipient(STATUS, POSTING_ID);
 CREATE INDEX IX_SENDER_POSTING_RECIP_EMAIL on b_sender_posting_recipient(EMAIL);
+CREATE INDEX IX_SENDER_POSTING_RECIP_1 on b_sender_posting_recipient(POSTING_ID, STATUS);
 
 CREATE TABLE b_sender_posting_read
 (
@@ -167,6 +170,7 @@ CREATE TABLE b_sender_posting_click
   PRIMARY KEY (ID)
 );
 CREATE INDEX IX_SENDER_POSTING_CLICK on b_sender_posting_click(POSTING_ID, RECIPIENT_ID);
+CREATE INDEX IX_SENDER_POSTING_CLICK_RCPID on b_sender_posting_click(RECIPIENT_ID);
 
 CREATE TABLE b_sender_posting_unsub
 (

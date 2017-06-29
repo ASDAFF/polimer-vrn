@@ -277,37 +277,52 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && check_bitrix_sessid())
 
 		if(!$strError)
 		{
-			if($arResult["FIELD_ID"])
+			try
 			{
-				unset($arField["TYPE"]);
-				$arResult["FIELD_ID"] = $obList->UpdateField($arResult["FIELD_ID"], $arField);
-			}
-			else
-			{
-				$arResult["FIELD_ID"] = $obList->AddField($arField);
-			}
+				if ($arResult["FIELD_ID"])
+				{
+					unset($arField["TYPE"]);
+					$arResult["FIELD_ID"] = $obList->UpdateField($arResult["FIELD_ID"], $arField);
+				}
+				else
+				{
+					$arResult["FIELD_ID"] = $obList->AddField($arField);
+				}
 
-			//Clear components cache
-			$CACHE_MANAGER->ClearByTag("lists_list_".$arIBlock["ID"]);
+				//Clear components cache
+				$CACHE_MANAGER->ClearByTag("lists_list_".$arIBlock["ID"]);
 
-			$tab_name = $arResult["FORM_ID"]."_active_tab";
+				$tab_name = $arResult["FORM_ID"]."_active_tab";
 
-			//And go to proper page
-			if(isset($_POST["save"]))
-				LocalRedirect($arResult["~LIST_FIELDS_URL"]);
-			elseif($arResult["FIELD_ID"])
-				LocalRedirect(
-					CHTTP::urlAddParams(str_replace(
+				$obList->actualizeDocumentAdminPage(str_replace(
+					array("#list_id#", "#group_id#"),
+					array($arResult["IBLOCK_ID"], $arParams["SOCNET_GROUP_ID"]), $arParams["LIST_ELEMENT_URL"]));
+
+				//And go to proper page
+				if (isset($_POST["save"]))
+					LocalRedirect($arResult["~LIST_FIELDS_URL"]);
+				elseif ($arResult["FIELD_ID"])
+					LocalRedirect(
+						CHTTP::urlAddParams(str_replace(
 							array("#list_id#", "#field_id#", "#group_id#"),
 							array($arResult["IBLOCK_ID"], $arResult["FIELD_ID"], $arParams["SOCNET_GROUP_ID"]),
 							$arParams["~LIST_FIELD_EDIT_URL"]
 						),
-						array($tab_name => $_POST[$tab_name]),
-						array("skip_empty" => true, "encode" => true)
-					)
-				);
-			else
-				LocalRedirect($arResult["~LIST_FIELDS_URL"]);
+							array($tab_name => $_POST[$tab_name]),
+							array("skip_empty" => true, "encode" => true)
+						)
+					);
+				else
+					LocalRedirect($arResult["~LIST_FIELDS_URL"]);
+			}
+			catch (Bitrix\Main\SystemException $exception)
+			{
+				ShowError($exception->getMessage());
+				if (!$arResult["FIELD_ID"])
+				{
+					$bVarsFromForm = true;
+				}
+			}
 		}
 		else
 		{

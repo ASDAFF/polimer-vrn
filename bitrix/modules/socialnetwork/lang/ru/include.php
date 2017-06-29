@@ -8,6 +8,7 @@ $MESS["SONET_FEATURES_calendar"] = "Календарь";
 $MESS["SONET_FEATURES_files"] = "Диск";
 $MESS["SONET_FEATURES_tasks"] = "Задачи";
 $MESS["SONET_FEATURES_search"] = "Поиск";
+$MESS["SONET_FEATURES_chat"] = "Чат";
 $MESS["SONET_FEATURES_forum_full"] = "Кто может управлять форумом";
 $MESS["SONET_FEATURES_forum_newtopic"] = "Кто может создавать новые темы";
 $MESS["SONET_FEATURES_forum_answer"] = "Кто может создавать сообщения";
@@ -42,6 +43,7 @@ $MESS["SONET_FEATURES_blog_moderate_comment"] = "Кто может модери�
 $MESS["SONET_FEATURES_blog_full_comment"] = "Кто может управлять комментариями";
 $MESS["SONET_FEATURES_tasks_view"] = "Кто может просматривать свои задачи";
 $MESS["SONET_FEATURES_tasks_view_all"] = "Кто может просматривать все задачи";
+$MESS["SONET_FEATURES_tasks_sort"] = "Кто может сортировать и перемещать задачи";
 $MESS["SONET_FEATURES_tasks_create_tasks"] = "Кто может создавать задачи";
 $MESS["SONET_FEATURES_tasks_edit_tasks"] = "Кто может изменять все задачи";
 $MESS["SONET_FEATURES_tasks_delete_tasks"] = "Кто может удалять все задачи";
@@ -129,7 +131,4 @@ $MESS["SONET_INSTALL_LOG_PRESET_WORK"] = "Дела";
 $MESS["SONET_INSTALL_LOG_PRESET_MY"] = "Моё";
 $MESS["SONET_INSTALL_LOG_PRESET_BIZPROC"] = "Бизнес-процессы";
 $MESS["SONET_INSTALL_LOG_PRESET_EXTRANET"] = "Экстранет";
-
-
-LM_INVITE_EMAIL_USER_BUTTON_OK
 ?>
