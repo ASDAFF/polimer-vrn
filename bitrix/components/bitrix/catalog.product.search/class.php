@@ -1308,7 +1308,7 @@ class ProductSearchComponent extends \CBitrixComponent
 		if (!empty($_REQUEST['QUERY']))
 		{
 			$arFilter['QUERY'] = $_REQUEST['QUERY'];
-			$arSearchedIds = $arSearchedSectionIds = array(0);
+			$arSearchedIds = $arSearchedSectionIds = array();
 
 			if (preg_match('#^[0-9\s]+$#', $_REQUEST['QUERY']))
 			{
@@ -1351,8 +1351,11 @@ class ProductSearchComponent extends \CBitrixComponent
 			}
 			else
 			{
+				if (!empty($arSearchedIds))
+					$arFilter['ID'] = $arSearchedIds;
+				else
+					$arFilter['NAME'] = $_REQUEST['QUERY'];
 				$arSearchedIds = $arSearchedSectionIds = null;
-				$arFilter['NAME'] = $_REQUEST['QUERY'];
 			}
 		}
 		if (sizeof($arSubQuery) > 1)
@@ -1365,11 +1368,11 @@ class ProductSearchComponent extends \CBitrixComponent
 			}
 			$arFilter['ID'] = is_array($arSearchedIds) ? array_intersect($arFilteredIds, $arSearchedIds) : $arFilteredIds;
 		}
-		elseif ($arSearchedIds)
+		elseif (!empty($arSearchedIds))
 		{
 			$arFilter['ID'] = $arSearchedIds;
 		}
-		if ($arSearchedSectionIds)
+		if (!empty($arSearchedSectionIds))
 			$arFilter['S_ID'] = $arSearchedSectionIds;
 
 		unset($arFilter['PARAM1'], $arFilter['PARAM2'],$arFilter['PARAMS']);

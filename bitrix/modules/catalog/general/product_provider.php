@@ -341,7 +341,7 @@ class CCatalogProductProvider implements IBXSaleProductProvider
 				"HEIGHT" => $arCatalogProduct["HEIGHT"],
 				"LENGTH" => $arCatalogProduct["LENGTH"]
 			)),
-			"TYPE" => ($arCatalogProduct["TYPE"] == CCatalogProduct::TYPE_SET ? CCatalogProductSet::TYPE_SET : null),
+			"TYPE" => ($arCatalogProduct["TYPE"] == Catalog\ProductTable::TYPE_SET ? CCatalogProductSet::TYPE_SET : null),
 			"VAT_INCLUDED" => "Y",
 			"MEASURE_ID" => $arCatalogProduct['MEASURE'],
 			"MEASURE_NAME" => $arCatalogProduct['MEASURE_NAME'],
@@ -464,8 +464,9 @@ class CCatalogProductProvider implements IBXSaleProductProvider
 			$arResult['PRODUCT_PRICE_ID'] = $arPrice['PRICE']['ID'];
 			$arResult['NOTES'] = $arPrice['PRICE']['CATALOG_GROUP_NAME'];
 			$arResult['VAT_RATE'] = $arPrice['PRICE']['VAT_RATE'];
-			$arResult['DISCOUNT_NAME'] = '';
-			$arResult['DISCOUNT_COUPON'] = '';
+			$arResult['DISCOUNT_NAME'] = null;
+			$arResult['DISCOUNT_COUPON'] = null;
+			$arResult['DISCOUNT_VALUE'] = null;
 			$arResult['DISCOUNT_LIST'] = array();
 
 			if (empty($arPrice['RESULT_PRICE']) || !is_array($arPrice['RESULT_PRICE']))
@@ -476,10 +477,11 @@ class CCatalogProductProvider implements IBXSaleProductProvider
 			$arResult['PRICE'] = $arPrice['RESULT_PRICE']['DISCOUNT_PRICE'];
 			$arResult['CURRENCY'] = $arPrice['RESULT_PRICE']['CURRENCY'];
 			$arResult['DISCOUNT_PRICE'] = $arPrice['RESULT_PRICE']['DISCOUNT'];
-			if (isset($arPrice['RESULT_PRICE']['PERCENT']))
-				$arResult['DISCOUNT_VALUE'] = ($arPrice['RESULT_PRICE']['PERCENT'] > 0 ? $arPrice['RESULT_PRICE']['PERCENT'].'%' : 0);
-			else
-				$arResult['DISCOUNT_VALUE'] = $arPrice['RESULT_PRICE']['DISCOUNT_VALUE'];
+			if ($arParams['CHECK_DISCOUNT'] == 'Y')
+			{
+				if (isset($arPrice['RESULT_PRICE']['PERCENT']))
+					$arResult['DISCOUNT_VALUE'] = ($arPrice['RESULT_PRICE']['PERCENT'] > 0 ? $arPrice['RESULT_PRICE']['PERCENT'] . '%' : null);
+			}
 
 			if (!empty($arDiscountList))
 				$arResult['DISCOUNT_LIST'] = $arDiscountList;
@@ -789,10 +791,10 @@ class CCatalogProductProvider implements IBXSaleProductProvider
 			"DETAIL_PAGE_URL" => $arProduct['~DETAIL_PAGE_URL'],
 			"NOTES" => $arPrice["PRICE"]["CATALOG_GROUP_NAME"],
 			"DISCOUNT_PRICE" => $arPrice['RESULT_PRICE']['DISCOUNT'],
-			"TYPE" => ($arCatalogProduct["TYPE"] == CCatalogProduct::TYPE_SET ? CCatalogProductSet::TYPE_SET : null),
-			"DISCOUNT_VALUE" => ($arPrice['RESULT_PRICE']['PERCENT'] > 0 ? $arPrice['RESULT_PRICE']['PERCENT'].'%' : 0),
-			"DISCOUNT_NAME" => '',
-			"DISCOUNT_COUPON" => '',
+			"TYPE" => ($arCatalogProduct["TYPE"] == Catalog\ProductTable::TYPE_SET ? CCatalogProductSet::TYPE_SET : null),
+			"DISCOUNT_VALUE" => ($arPrice['RESULT_PRICE']['PERCENT'] > 0 ? $arPrice['RESULT_PRICE']['PERCENT'].'%' : null),
+			"DISCOUNT_NAME" => null,
+			"DISCOUNT_COUPON" => null,
 			"DISCOUNT_LIST" => array()
 		);
 

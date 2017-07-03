@@ -86,6 +86,7 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0)
 
 	$arCurrentUserGroups = $GLOBALS["USER"]->GetUserGroupArray();
 	$arCurrentUserGroups[] = "user_".$GLOBALS["USER"]->GetID();
+	$arCurrentUserGroups = array_merge($arCurrentUserGroups, CBPHelper::getUserExtendedGroups($GLOBALS["USER"]->GetID()));
 
 	$ks = array_keys($arCurrentUserGroups);
 	foreach ($ks as $k)

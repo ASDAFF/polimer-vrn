@@ -53,50 +53,52 @@ if (typeof BX.Bizproc.doInlineTask === 'undefined')
 				+ (useIframe ? '&IFRAME=Y' : ''),
 			onsuccess: function (HTML)
 			{
+				if (scope)
+				{
+					scope.__waiting = false;
+					BX.removeClass(scope, 'bp-button-wait');
+				}
+				var wrapper = BX.create('div', {
+					style: {width: '800px'}
+				});
+				wrapper.innerHTML = HTML;
+
+				var title = '', titleNode = BX.findChild(wrapper, {className: 'bp-popup-title'}, true);
+				if (titleNode)
+				{
+					title = titleNode.textContent;
+					BX.remove(titleNode);
+				}
+
+				BX.Bizproc.taskPopupInstance = new BX.PopupWindow("bp-task-popup-" + taskId + Math.round(Math.random() * 100000), null, {
+					content: wrapper,
+					closeIcon: true,
+					titleBar: title,
+					contentColor: 'white',
+					contentNoPaddings : true,
+					zIndex: -100,
+					offsetLeft: 0,
+					offsetTop: 0,
+					closeByEsc: true,
+					draggable: {restrict: false},
+					overlay: {backgroundColor: 'black', opacity: 30},
+					events: {
+						onPopupClose: function (popup)
+						{
+							popup.destroy();
+							if (BX.Bizproc.delegationPopup)
+								BX.Bizproc.delegationPopup.destroy();
+							BX.Bizproc.delegationPopup = null;
+						}
+					}
+
+				});
+				// BX.Bizproc.taskPopupInstance.show();
+				BX.Bizproc.taskPopupCallback = callback;
+
 				BX.load(['/bitrix/components/bitrix/bizproc.task/templates/.default/style.css'], function()
 				{
-					if (scope)
-					{
-						scope.__waiting = false;
-						BX.removeClass(scope, 'bp-button-wait');
-					}
-					var wrapper = BX.create('div', {
-						style: {width: '800px'}
-					});
-					wrapper.innerHTML = HTML;
-
-					var title = '', titleNode = BX.findChild(wrapper, {className: 'bp-popup-title'}, true);
-					if (titleNode)
-					{
-						title = titleNode.textContent;
-						BX.remove(titleNode);
-					}
-
-					BX.Bizproc.taskPopupInstance = new BX.PopupWindow("bp-task-popup-" + taskId + Math.round(Math.random() * 100000), null, {
-						content: wrapper,
-						closeIcon: true,
-						titleBar: title,
-						contentColor: 'white',
-						contentNoPaddings : true,
-						zIndex: -100,
-						offsetLeft: 0,
-						offsetTop: 0,
-						closeByEsc: true,
-						draggable: {restrict: false},
-						overlay: {backgroundColor: 'black', opacity: 30},
-						events: {
-							onPopupClose: function (popup)
-							{
-								popup.destroy();
-								if (BX.Bizproc.delegationPopup)
-									BX.Bizproc.delegationPopup.destroy();
-								BX.Bizproc.delegationPopup = null;
-							}
-						}
-
-					});
 					BX.Bizproc.taskPopupInstance.show();
-					BX.Bizproc.taskPopupCallback = callback;
 				});
 			}
 		});

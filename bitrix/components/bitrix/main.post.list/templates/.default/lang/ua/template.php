@@ -21,4 +21,5 @@ $MESS["BPC_MES_CREATE_TASK"] = "Створити завдання";
 $MESS["MPL_ERROR_OCCURRED"] = "Виникла помилка";
 $MESS["MPL_CLOSE"] = "Закрити";
 $MESS["MPL_LINK_COPIED"] = "Посилання скопійовано";
+$MESS["B_B_MS_LINK2"] = "Скопіювати посилання";
 ?>

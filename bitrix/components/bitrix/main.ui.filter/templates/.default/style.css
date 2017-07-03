@@ -180,11 +180,6 @@
 	cursor: default;
 }
 
-.main-ui-square.main-ui-square-selected {
-	-webkit-box-shadow: inset 0 0 0 2px #3BB4E3;
-	box-shadow: inset 0 0 0 2px #3BB4E3;
-}
-
 .main-ui-item-pin {}
 
 .main-ui-item-pin .main-ui-filter-sidebar-item-text-container,
@@ -200,37 +195,6 @@
 /* END OF STATES */
 
 /* ICONS */
-.main-ui-item-icon-block {
-	position: absolute;
-	top: 0;
-	right: 3px;
-	display: -webkit-box;
-	display: -ms-flexbox;
-	display: flex;
-	-webkit-box-pack: center;
-	-ms-flex-pack: center;
-	justify-content: center;
-	padding: 0 5px;
-	height: 39px;
-	width: 60px;
-	box-sizing: border-box;
-}
-
-.main-ui-item-icon {
-	position: absolute;
-	right: 0;
-	top: 0;
-	width: 20px;
-	height: 38px;
-	-webkit-transition: opacity .3s ease;
-	transition: opacity .3s ease;
-	opacity: .3;
-	cursor: pointer;
-}
-
-.main-ui-item-icon:hover {
-	opacity: 1;
-}
 
 .main-ui-filter-field-inline-row .main-ui-item-icon-container {
 	position: relative;
@@ -728,27 +692,8 @@ select::-ms-expand {
 	transform: translate3d(0px, 0px, 0px);
 }
 
-.main-ui-control-field .main-ui-square-delete,
-.main-ui-control-field .main-ui-control-value-delete {
-	top: 21px;
-}
-
-.main-ui-control-field .main-ui-item-icon,
-.main-ui-control-field-group .main-ui-item-icon {
-	top: 54%;
-	 -webkit-transform: translate(0,-50%);
-	 transform: translate(0,-50%);
-}
-
 .main-ui-control-field-group .main-ui-control-value-delete {
 	top: 1px;
-}
-
-.main-ui-control-field .main-ui-item-icon.main-ui-square-delete,
-.main-ui-control-field-group .main-ui-item-icon.main-ui-square-delete {
-	top: 0;
-	-webkit-transform: none;
-	transform: none;
 }
 
 .main-ui-control-field .main-ui-filter-icon-grab,
@@ -764,40 +709,6 @@ select::-ms-expand {
 .main-ui-control-field:hover .main-ui-filter-icon-grab:hover,
 .main-ui-control-field-group:hover .main-ui-filter-icon-grab:hover {
 	opacity: 1;
-}
-
-.main-ui-control.main-ui-select,
-.main-ui-control.main-ui-multi-select {
-	padding: 3px 32px 3px 3px;
-	height: auto;
-	min-height: 38px;
-	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNSIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI1IDE2Ij4gIDxwb2x5Z29uIGZpbGw9IiM1MzVDNjkiIGZpbGwtcnVsZT0iZXZlbm9kZCIgcG9pbnRzPSIzLjU0NiA3LjQyNSAzLjU0NiAxLjYwNyAxLjYwNyAxLjYwNyAxLjYwNyA4LjM5NCAxLjYwNyA5LjM2NCA5LjM2NCA5LjM2NCA5LjM2NCA3LjQyNSIgdHJhbnNmb3JtPSJyb3RhdGUoLTQ1IDkuOSAxLjY1NykiLz48L3N2Zz4=);
-	background-repeat: no-repeat;
-	background-position: right center;
-	color: #535c69;
-	box-sizing: border-box;
-	-moz-appearance: none;
-	-webkit-appearance: none;
-	appearance: none;
-}
-
-.main-ui-control.main-ui-multi-select {
-	display: table;
-	padding-bottom: 0;
-}
-
-.main-ui-control.main-ui-select {
-	height: 38px;
-}
-
-.main-ui-select-name {
-	display: inline-block;
-	max-width: 450px;
-	line-height: 38px;
-	vertical-align: middle;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
 }
 
 .main-ui-control-field-group .main-ui-select-name {
@@ -838,121 +749,6 @@ select::-ms-expand {
 	z-index: 1;
 }
 
-.main-ui-select-inner {
-	padding: 6px;
-	margin: 1px 0 0 0;
-	-webkit-box-shadow: 0 6px 21px 0 rgba(0,0,0,0.15);
-	-moz-box-shadow: 0 6px 21px 0 rgba(0,0,0,0.15);
-	box-shadow: 0 6px 21px 0 rgba(0,0,0,0.15);
-}
-
-.main-ui-select-inner-item {
-	padding: 0 6px 0 3px;
-	height: 33px;
-	margin: 0 0 3px 0;
-	font: 14px/33px "Helvetica Neue", Arial, Helvetica, sans-serif;
-	color: #80868e;
-	-webkit-transition: background .3s;
-	transition: background .3s;
-	cursor: pointer;
-}
-
-.main-ui-select-inner-item:last-child {
-	margin: 0;
-}
-
-.main-ui-select-inner-item:hover {
-	background: #f3f6f8;
-}
-
-.main-ui-select-inner-item.color1 {
-	background: #d5f8fc;
-	cursor: default;
-}
-
-.main-ui-select-inner-item.color2 {
-	background: #f0f7ca;
-	cursor: default;
-}
-
-.popup-multiselect-content {
-	padding: 6px;
-}
-
-.popup-select-content {
-	overflow: hidden;
-	padding: 6px 0;
-}
-
-.popup-select-content .main-ui-select-inner-item {
-	border-bottom: 3px solid #fff;
-}
-
-.popup-multiselect-content .main-ui-select-inner-item {
-	margin: 0;
-	padding: 0;
-}
-
-.popup-multiselect-content .main-ui-select-inner-item:last-child,
-.popup-select-content .main-ui-select-inner-item:last-child {
-	margin: 0;
-	border-bottom: 0;
-}
-
-.main-ui-square-container {
-	display: block;
-}
-
-.main-ui-square {
-	position: relative;
-	display: inline-block;
-	float: left;
-	padding: 0 30px 0 13px;
-	margin: 0 3px 3px 0;
-	height: 30px;
-	border-radius: 2px;
-	background: #bcedfc;
-	font: 15px/30px "Helvetica Neue", Arial, Helvetica, sans-serif;
-	vertical-align: middle;
-	-webkit-transition: background 0.2s linear;
-	transition: background 0.2s linear;
-	z-index: 2;
-}
-
-.main-ui-square-item {
-	display: inline-block;
-	max-width: 250px;
-	color: #333;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.main-ui-square-delete {
-	height: 30px;
-	width: 25px;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2010%2010%22%3E%3Cpath%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.065%203.682L2.377.994%201.01%202.362%203.696%205.05.99%207.757l1.368%201.37%202.708-2.71%202.7%202.703%201.37-1.368-2.702-2.7%202.682-2.684L7.748%201%205.065%203.682z%22/%3E%3C/svg%3E');
-	background-repeat: no-repeat;
-	background-position: center;
-}
-
-.main-ui-square-search {
-	display: inline-block;
-	padding: 0 0 0 5px;
-	height: 30px;
-	float: left;
-}
-
-.main-ui-square-search-item {
-	width: 1px;
-	padding: 0;
-	height: 30px;
-	border: none;
-	font: 15px/30px "Helvetica Neue", Arial, Helvetica, sans-serif;
-	box-sizing: border-box;
-	letter-spacing: 10px;
-}
-
 .main-ui-number {
 	padding: 0 27px 0 10px;
 }
@@ -979,23 +775,6 @@ select::-ms-expand {
 	opacity: .4;
 }
 
-.main-ui-select .main-ui-control-value-delete,
-.main-ui-multi-select .main-ui-control-value-delete {
-	right: 25px;
-	top: 50%;
-	height: -webkit-calc(100% - 2px);
-	height: calc(100% - 2px);
-	-webkit-transform: translate(0,-50%);
-	transform: translate(0,-50%);
-}
-
-.main-ui-multi-select .main-ui-control-value-delete-item,
-.main-ui-select .main-ui-control-value-delete-item {
-	top: 50%;
-	-webkit-transform: translate(0,-50%);
-	transform: translate(0,-50%);
-}
-
 .main-ui-control-entity + .main-ui-control-value-delete {
 	bottom: 16px;
 	height: auto;
@@ -1006,38 +785,10 @@ select::-ms-expand {
 	transform: translate3d(0, -50%, 0);
 }
 
-.main-ui-select .main-ui-select-name {
-	padding: 0 0 0 5px;
-	line-height: 31px;
-}
-
 .main-ui-filter-field-inline-inner .main-ui-select-name {
 	line-height: 38px;
 }
 
-.main-ui-select-inner-label {
-	display: inline-block;
-	height: 33px;
-	line-height: 33px;
-}
-
-.main-ui-select-inner-label:before {
-	content: '';
-	display: inline-block;
-	margin: 0 8px 2px 4px;
-	height: 15px;
-	width: 18px;
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214%22%20height%3D%2214%22%20viewBox%3D%220%200%2014%2014%22%3E%3Crect%20width%3D%2213%22%20height%3D%2213%22%20x%3D%22.5%22%20y%3D%22.5%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20stroke%3D%22%23C6CDD3%22%20rx%3D%222%22/%3E%3C/svg%3E');
-	background-repeat: no-repeat;
-	background-position: center;
-	vertical-align: middle;
-}
-
-.main-ui-checked .main-ui-select-inner-label:before {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2217%22%20height%3D%2215%22%20viewBox%3D%220%200%2017%2015%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Crect%20width%3D%2213%22%20height%3D%2213%22%20x%3D%22.5%22%20y%3D%221.125%22%20fill%3D%22%23FFF%22%20stroke%3D%22%23259EC6%22%20rx%3D%222%22/%3E%3Cpath%20fill%3D%22%23259EC6%22%20d%3D%22M7.53%208.487l-3.775-3.6-1.25%201.368%204.94%205.01.075-.074.286.335%208.694-10.4L15.094%200%207.53%208.487z%22/%3E%3C/g%3E%3C/svg%3E');
-	background-repeat: no-repeat;
-	background-position: 2px 0;
-}
 /* END OF NEW BASIC CONTROLS */
 
 .main-ui-item-pin:not(.main-ui-filter-edit) > .main-ui-filter-icon-pin {
@@ -1046,6 +797,7 @@ select::-ms-expand {
 
 .main-ui-item-pin:not(.main-ui-filter-edit) .main-ui-filter-sidebar-item-text-container > .main-ui-filter-icon-pin {
 	display: block;
+	top: -7px;
 }
 
 .main-ui-item-pin:not(.main-ui-filter-edit):hover .main-ui-filter-sidebar-item-text-container > .main-ui-filter-icon-pin {

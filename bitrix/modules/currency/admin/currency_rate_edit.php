@@ -195,7 +195,7 @@ if ($ID > 0)
 </tr>
 <tr class="adm-detail-required-field">
 	<td><?echo GetMessage("curr_rates_rate_cnt")?>: <span class="required" style="vertical-align: super; font-size: smaller;">1</span></td>
-	<td><input type="text" id="RATE_CNT" name="RATE_CNT" value="<?=(int)$currencyRate['RATE_CNT']; ?>" size="5"></td>
+	<td><input type="text" id="RATE_CNT" name="RATE_CNT" value="<?=htmlspecialcharsbx($currencyRate['RATE_CNT']); ?>" size="5"></td>
 </tr>
 <tr class="adm-detail-required-field">
 	<td><?echo GetMessage("curr_rates_rate")?>: <span class="required" style="vertical-align: super; font-size: smaller;">1</span></td>

@@ -13,14 +13,6 @@ $response = new \Bitrix\Main\HttpResponse(\Bitrix\Main\Application::getInstance(
 $response->addHeader("Content-Type", "application/json");
 
 global $USER;
-if (!$USER->IsAuthorized())
-{
-	$response->flush(Web\Json::encode(array(
-			"error" => "Not authorized"
-	)));
-
-	die();
-}
 
 $request = Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 $request->addFilter(new Web\PostDecodeFilter);

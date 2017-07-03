@@ -14,15 +14,17 @@ BX.namespace("BX.Kanban");
  * @param {object} [options.events]
  * @param {string} [options.itemType]
  * @param {string} [options.columnType]
- * @param {bool} [options.canAddColumn]
- * @param {bool} [options.canEditColumn]
- * @param {bool} [options.canSortColumn]
- * @param {bool} [options.canRemoveColumn]
- * @param {bool} [options.canAddItem]
- * @param {bool} [options.canSortItem]
+ * @param {boolean} [options.canAddColumn]
+ * @param {boolean} [options.canEditColumn]
+ * @param {boolean} [options.canSortColumn]
+ * @param {boolean} [options.canRemoveColumn]
+ * @param {boolean} [options.canAddItem]
+ * @param {boolean} [options.canSortItem]
  * @param {string} [options.dropZoneType]
+ * @param {number} [options.dropZoneTimeout]
  * @param {string} [options.bgColor]
  * @param {object} [options.data] Custom Data For Grid
+ * @param {object} [options.messages] Custom Messages For Grid
  * @constructor
  */
 BX.Kanban.Grid = function(options)
@@ -48,18 +50,20 @@ BX.Kanban.Grid = function(options)
 		gridContainer: null,
 		earLeft: null,
 		earRight: null,
-		dropzone: null,
-		emptyStub: null
+		emptyStub: null,
+		loader: null
 	};
 
 	this.itemType = this.getItemType(options.itemType);
 	this.columnType = this.getColumnType(options.columnType);
-	this.dropZoneType = this.getDropZoneType(options.dropZoneType);
+
+	this.messages = BX.type.isPlainObject(options.messages) ? options.messages : Object.create(null);
 
 	this.columns = Object.create(null);
 	this.columnsOrder = [];
+
+	/** @type {Object.<string, BX.Kanban.Item>} */
 	this.items = Object.create(null);
-	this.dropzones = Object.create(null);
 
 	this.data = BX.type.isPlainObject(options.data) ? options.data : Object.create(null);
 	this.bgColor = BX.Kanban.Utils.isValidColor(options.bgColor) ? options.bgColor : "ffffff";
@@ -80,6 +84,11 @@ BX.Kanban.Grid = function(options)
 	/** @private **/
 	this.canSortItem = false;
 
+	this.dropZoneArea = new BX.Kanban.DropZoneArea(this, {
+		dropZoneType: options.dropZoneType,
+		dropZoneTimeout: options.dropZoneTimeout
+	});
+
 	this.data = Object.create(null);
 	this.setData(options.data);
 
@@ -91,7 +100,7 @@ BX.Kanban.Grid = function(options)
 		{
 			if (options.events.hasOwnProperty(eventName))
 			{
-				BX.addCustomEvent(this, "Kanban.Grid:" + eventName, options.events[eventName]);
+				BX.addCustomEvent(this, eventName, options.events[eventName]);
 			}
 		}
 	}
@@ -328,34 +337,52 @@ BX.Kanban.Grid.prototype =
 
 	/**
 	 *
-	 * @param {object} options
-	 * @returns {BX.Kanban.DropZone|null}
+	 * @param {BX.Kanban.Item|string|number} item
+	 * @returns {boolean}
 	 */
-	addDropZone: function(options)
+	hideItem: function(item)
 	{
-		options = options || {};
-
-		if (this.getDropZone(options.id) !== null)
+		item = this.getItem(item);
+		if (!item || !item.isVisible())
 		{
-			return null;
+			return false;
 		}
 
-		var dropZoneType = this.getDropZoneType(options.type);
-		var dropZone = new dropZoneType(options);
-		if (! dropZone instanceof BX.Kanban.DropZone)
+		item.setOptions({ visible: false });
+
+		if (item.isCountable())
 		{
-			throw new Error("DropZone type must be an instance of BX.Kanban.DropZone");
+			item.getColumn().decrementTotal();
 		}
 
-		dropZone.setGrid(this);
-		this.dropzones[dropZone.getId()] = dropZone;
+		item.getColumn().render();
 
-		return dropZone;
+		return true;
 	},
 
-	updateDropZone: function(dropZone, options)
+	/**
+	 *
+	 * @param {BX.Kanban.Item|string|number} item
+	 * @returns {boolean}
+	 */
+	unhideItem: function(item)
 	{
+		item = this.getItem(item);
+		if (!item || item.isVisible())
+		{
+			return false;
+		}
 
+		item.setOptions({ visible: true });
+
+		if (item.isCountable())
+		{
+			item.getColumn().incrementTotal();
+		}
+
+		item.getColumn().render();
+
+		return true;
 	},
 
 	/**
@@ -428,26 +455,11 @@ BX.Kanban.Grid.prototype =
 
 	/**
 	 *
-	 * @returns {BX.Kanban.Item[]}
+	 * @returns {Object.<string, BX.Kanban.Item>}
 	 */
 	getItems: function()
 	{
 		return this.items;
-	},
-
-	/**
-	 *
-	 * @param {string|number} dropId
-	 * @returns {BX.Kanban.DropZone}
-	 */
-	getDropZone: function(dropId)
-	{
-		return this.dropzones[dropId] ? this.dropzones[dropId] : null;
-	},
-
-	getDropZones: function()
-	{
-		return this.dropzones;
 	},
 
 	/**
@@ -484,18 +496,11 @@ BX.Kanban.Grid.prototype =
 
 	/**
 	 *
-	 * @param {string} [className]
-	 * @returns {BX.Kanban.DropZone}
+	 * @returns {BX.Kanban.DropZoneArea}
 	 */
-	getDropZoneType: function(className)
+	getDropZoneArea: function()
 	{
-		var classFn = BX.Kanban.Utils.getClass(className);
-		if (BX.type.isFunction(classFn) && classFn instanceof BX.Kanban.DropZone)
-		{
-			return classFn;
-		}
-
-		return this.columnType || BX.Kanban.DropZone;
+		return this.dropZoneArea;
 	},
 
 	/**
@@ -534,8 +539,7 @@ BX.Kanban.Grid.prototype =
 	 * @param {object} json
 	 * @param {BX.Kanban.Column[]} [json.columns]
 	 * @param {BX.Kanban.Item[]} [json.items]
-	 * @param {BX.Kanban.DropZone[]} [json.dropzones]
-	 * @param {object} [json.events]
+	 * @param {BX.Kanban.DropZone[]} [json.dropZones]
 	 */
 	loadData: function(json)
 	{
@@ -585,19 +589,18 @@ BX.Kanban.Grid.prototype =
 			}, this);
 		}
 
-		if (BX.type.isArray(json.dropzones))
+		if (BX.type.isArray(json.dropZones))
 		{
-			json.dropzones.forEach(function(dropzone) {
+			json.dropZones.forEach(function(dropzone) {
 
-				if (dropzone && BX.Kanban.Utils.isValidId(dropzone.id) && this.getDropZone(dropzone.id))
+				if (dropzone && BX.Kanban.Utils.isValidId(dropzone.id) && this.getDropZoneArea().getDropZone(dropzone.id))
 				{
-					this.updateDropZone(dropzone.id.id, dropzone.id);
+					this.getDropZoneArea().updateDropZone(dropzone.id, dropzone);
 				}
 				else
 				{
-					this.addDropZone(dropzone);
+					this.getDropZoneArea().addDropZone(dropzone);
 				}
-
 
 			}, this);
 		}
@@ -626,13 +629,14 @@ BX.Kanban.Grid.prototype =
 		this.getGridContainer().appendChild(docFragment);
 
 		var dropZoneItems = document.createDocumentFragment();
-		for (var dropId in this.dropzones)
+		var dropZones = this.getDropZoneArea().getDropZones();
+		for (i = 0; i < dropZones.length; i++)
 		{
-			dropZoneItems.appendChild(this.dropzones[dropId].render());
+			dropZoneItems.appendChild(dropZones[i].render());
 		}
 
-		BX.cleanNode(this.getDropZoneContainer());
-		this.getDropZoneContainer().appendChild(dropZoneItems);
+		BX.cleanNode(this.getDropZoneArea().getContainer());
+		this.getDropZoneArea().getContainer().appendChild(dropZoneItems);
 
 		if (!this.isRendered())
 		{
@@ -662,13 +666,15 @@ BX.Kanban.Grid.prototype =
 		innerContainer.appendChild(this.getEmptyStub());
 		innerContainer.appendChild(this.getLeftEar());
 		innerContainer.appendChild(this.getRightEar());
+		innerContainer.appendChild(this.getDropZoneArea().getContainer());
+		innerContainer.appendChild(this.getLoader());
 		innerContainer.appendChild(this.getGridContainer());
 
 		var outerContainer = this.getOuterContainer();
 		outerContainer.appendChild(innerContainer);
 
 		this.renderTo.appendChild(this.getOuterContainer());
-		document.body.appendChild(this.getDropZoneContainer());
+
 
 		BX.bind(window, "resize", this.adjustLayout.bind(this));
 		BX.bind(window, "scroll", this.adjustHeight.bind(this));
@@ -816,26 +822,6 @@ BX.Kanban.Grid.prototype =
 	 *
 	 * @returns {Element}
 	 */
-	getDropZoneContainer: function()
-	{
-		if (this.layout.dropzone)
-		{
-			return this.layout.dropzone;
-		}
-
-		this.layout.dropzone = BX.create("div", {
-			attrs: {
-				className: "main-kanban-dropzone-area"
-			}
-		});
-
-		return this.layout.dropzone;
-	},
-
-	/**
-	 *
-	 * @returns {Element}
-	 */
 	getEmptyStub: function()
 	{
 		if (this.layout.emptyStub)
@@ -862,7 +848,7 @@ BX.Kanban.Grid.prototype =
 							attrs: {
 								className: "main-kanban-no-data-text"
 							},
-							text: BX.message("MAIN_KANBAN_NO_DATA")
+							text: this.getMessage("NO_DATA")
 						})
 					]
 				})
@@ -872,12 +858,31 @@ BX.Kanban.Grid.prototype =
 		return this.layout.emptyStub;
 	},
 
+	getLoader: function()
+	{
+		if (this.layout.loader)
+		{
+			return this.layout.loader;
+		}
+
+		this.layout.loader = BX.create("div", {
+			props: {
+				className: "main-kanban-loader-container"
+			},
+			html:
+			'<svg class="main-kanban-loader-circular" viewBox="25 25 50 50">' +
+				'<circle class="main-kanban-loader-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/>' +
+			'</svg>'
+		});
+
+		return this.layout.loader;
+	},
+
 	adjustLayout: function()
 	{
 		this.adjustWidth();
 		this.adjustHeight();
 		this.adjustEars();
-		this.adjustDropZoneArea();
 	},
 
 	adjustEars: function()
@@ -925,16 +930,21 @@ BX.Kanban.Grid.prototype =
 		}
 	},
 
-	adjustDropZoneArea: function()
-	{
-		var rectArea = BX.pos(this.getOuterContainer());
-		this.getDropZoneContainer().style.width = rectArea.width + "px";
-		this.getDropZoneContainer().style.left = rectArea.left + "px";
-	},
-
 	adjustEmptyStub: function()
 	{
-		var isVisible = BX.Kanban.Utils.isEmptyObject(this.getItems());
+		var isVisible = true;
+
+		var items = this.getItems();
+		for (var itemId in items)
+		{
+			var item = items[itemId];
+			if (item.isVisible())
+			{
+				isVisible = false;
+				break;
+			}
+		}
+
 		this.getInnerContainer().classList[isVisible ? "add" : "remove"]("main-kanban-no-data-mode");
 	},
 
@@ -997,7 +1007,7 @@ BX.Kanban.Grid.prototype =
 
 	/**
 	 *
-	 * @returns {bool}
+	 * @returns {boolean}
 	 */
 	canAddColumns: function()
 	{
@@ -1006,7 +1016,7 @@ BX.Kanban.Grid.prototype =
 
 	/**
 	 *
-	 * @returns {bool}
+	 * @returns {boolean}
 	 */
 	canEditColumns: function()
 	{
@@ -1015,7 +1025,7 @@ BX.Kanban.Grid.prototype =
 
 	/**
 	 *
-	 * @returns {bool}
+	 * @returns {boolean}
 	 */
 	canSortColumns: function()
 	{
@@ -1024,7 +1034,7 @@ BX.Kanban.Grid.prototype =
 
 	/**
 	 *
-	 * @returns {bool}
+	 * @returns {boolean}
 	 */
 	canRemoveColumns: function()
 	{
@@ -1033,7 +1043,7 @@ BX.Kanban.Grid.prototype =
 
 	/**
 	 *
-	 * @returns {bool}
+	 * @returns {boolean}
 	 */
 	canAddItems: function()
 	{
@@ -1042,7 +1052,7 @@ BX.Kanban.Grid.prototype =
 
 	/**
 	 *
-	 * @returns {bool}
+	 * @returns {boolean}
 	 */
 	canSortItems: function()
 	{
@@ -1131,12 +1141,17 @@ BX.Kanban.Grid.prototype =
 		this.getColumns().forEach(function(/*BX.Kanban.Column*/column) {
 			column.enableDropping();
 		});
+
+		this.getDropZoneArea().emptyAll();
+		this.getDropZoneArea().show();
 	},
 
 	onItemDragStop: function(item)
 	{
 		this.resetDragMode();
+		this.getDropZoneArea().hide();
 
+		//@see onItemDragEnd
 		// var items = this.getItems();
 		// for (var itemId in items)
 		// {
@@ -1196,8 +1211,92 @@ BX.Kanban.Grid.prototype =
 	fadeIn: function()
 	{
 		this.getOuterContainer().classList.remove("main-kanban-faded");
+	},
+
+	getMessage: function(messageId)
+	{
+		return messageId in this.messages ? this.messages[messageId] : BX.message("MAIN_KANBAN_" + messageId);
 	}
 };
 
+BX.Kanban.DragEvent = function(options)
+{
+	this.item = null;
+	this.targetColumn = null;
+	this.targetItem = null;
+	this.action = true;
+};
+
+BX.Kanban.DragEvent.prototype =
+{
+	allowAction: function()
+	{
+		this.action = true;
+	},
+
+	denyAction: function()
+	{
+		this.action = false;
+	},
+
+	isActionAllowed: function()
+	{
+		return this.action;
+	},
+
+	/**
+	 *
+	 * @param {BX.Kanban.Item} item
+	 */
+	setItem: function(item)
+	{
+		this.item = item;
+	},
+
+	/**
+	 *
+	 * @returns {BX.Kanban.Item}
+	 */
+	getItem: function()
+	{
+		return this.item;
+	},
+
+	/**
+	 *
+	 * @param {BX.Kanban.Item} item
+	 */
+	setTargetItem: function(item)
+	{
+		this.targetItem = item;
+	},
+
+	/**
+	 *
+	 * @returns {BX.Kanban.Item}
+	 */
+	getTargetItem: function()
+	{
+		return this.targetItem;
+	},
+
+	/**
+	 *
+	 * @param {BX.Kanban.Column} targetColumn
+	 */
+	setTargetColumn: function(targetColumn)
+	{
+		this.targetColumn = targetColumn;
+	},
+
+	/**
+	 *
+	 * @returns {BX.Kanban.Column}
+	 */
+	getTargetColumn: function()
+	{
+		return this.targetColumn;
+	}
+};
 
 })();

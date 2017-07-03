@@ -29,7 +29,7 @@ IncludeModuleLangFile(__FILE__);
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/backup.php");
 $strBXError = '';
 $bGzip = function_exists('gzcompress');
-$bMcrypt = function_exists('mcrypt_encrypt');
+$bMcrypt = function_exists('mcrypt_encrypt') || function_exists('openssl_encrypt');
 $bHash = function_exists('hash');
 $bBitrixCloud = $bMcrypt && $bHash;
 if (!CModule::IncludeModule('bitrixcloud'))

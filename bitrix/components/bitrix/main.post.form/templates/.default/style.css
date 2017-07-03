@@ -244,7 +244,7 @@
 	-moz-box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
 	-webkit-box-shadow: 0 0 2px rgba(0, 0, 0, 0.3);
 	box-shadow: 0 0 2px rgba(137, 137, 137, 0.3);
-	display: inline-block;
+	display: block;
 	text-align: center;
 	padding: 4px;
 	position: relative;
@@ -266,6 +266,17 @@
 	top: 1px;
 	right: 1px;
 	width: 22px;
+}
+
+.feed-add-photo-block .feed-add-post-del-but {
+	background-color: #fff;
+	background-position: 8px -19px;
+	cursor: pointer;
+	right: 0;
+	top: 0;
+	height: 20px;
+	position: absolute;
+	width: 20px;
 }
 
 .feed-add-photo-block .feed-add-close-icon:hover {
@@ -389,7 +400,8 @@
 	margin-bottom: 0;
 }
 
-.feed-add-close-icon {
+.feed-add-close-icon,
+.feed-add-post-del-but {
 	background: url("images/sprite_mpf_5.png") no-repeat 9px -17px;
 	cursor: pointer;
 	height: 25px;

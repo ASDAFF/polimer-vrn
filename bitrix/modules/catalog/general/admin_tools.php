@@ -778,7 +778,8 @@ class CCatalogAdminProductSetEdit
 						'QUANTITY' => '',
 						'DISCOUNT_PERCENT' => '',
 						'SORT' => 100,
-						'NEW_ITEM' => true
+						'NEW_ITEM' => true,
+						'EMPTY_ITEM' => true
 					);
 				}
 				break;
@@ -789,7 +790,8 @@ class CCatalogAdminProductSetEdit
 						'ITEM_ID' => '',
 						'QUANTITY' => '',
 						'SORT' => 100,
-						'NEW_ITEM' => true
+						'NEW_ITEM' => true,
+						'EMPTY_ITEM' => true
 					);
 				}
 				break;
@@ -1008,13 +1010,18 @@ class CCatalogAdminProductSetEdit
 				$arOneSet['ITEMS'],
 				array(
 					'NEW_ITEM' => SORT_ASC,
+					'EMPTY_ITEM' => SORT_ASC,
 					'SORT' => array(SORT_NUMERIC, SORT_ASC),
 					'ITEM_ID' => array(SORT_NUMERIC, SORT_ASC)
 				),
 				array(
-					'NEW_ITEM' => function($newItem)
+					'NEW_ITEM' => function($value)
 					{
-						return !is_null($newItem);
+						return !is_null($value);
+					},
+					'EMPTY_ITEM' => function($value)
+					{
+						return !is_null($value);
 					}
 				),
 				null,

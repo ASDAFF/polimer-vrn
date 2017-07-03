@@ -25,3 +25,4 @@ $MESS['SALE_CASHBOX_ATOL_VALIDATE_E_INN'] = 'Не указан ИНН орган
 $MESS['SALE_CASHBOX_ATOL_VALIDATE_E_ADDRESS'] = 'Не указан адрес места расчетов';
 $MESS['SALE_CASHBOX_ATOL_REQUEST_TOKEN_ERROR'] = 'Ошибка при получении токена';
 $MESS['SALE_CASHBOX_ATOL_CHECK_REG_ERROR'] = 'Ошибка при регистрации чека';
+$MESS['SALE_CASHBOX_ATOL_ERR_EMPTY_PHONE_EMAIL'] = 'АТОЛ.Онлайн: невалидные данные. Не указан ни телефон, ни email покупателя.';

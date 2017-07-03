@@ -2812,6 +2812,11 @@ window.BxInsertMention = function (params)
 			editor.textareaView.WrapWith(false, false, "[USER=" + item.entityId + "]" + item.name + "[/USER]" + (bNeedComa ? ', ' : ' '));
 		}
 
+		if (params.fireAddEvent === true)
+		{
+			BX.onCustomEvent(window, 'onMentionAdd', [ item ]);
+		}
+
 		delete BX.SocNetLogDestination.obItemsSelected[window['BXSocNetLogDestinationFormNameMent' + formID]][item.id];
 		window['BXfpdStopMent' + formID]();
 		MPFMention["text"] = '';
@@ -2833,7 +2838,7 @@ window.MPFMentionInit = function(formId, params)
 
 	window["departmentRelation"] = params["items"]["departmentRelation"]; // for calendar - do not remove
 
-	if (params["initDestination"] === true)
+	if (params.initDestination === true)
 	{
 		window.BXSocNetLogDestinationFormName = 'destination' + ('' + new Date().getTime()).substr(6);
 		window.BXSocNetLogDestinationDisableBackspace = null;
@@ -2917,6 +2922,21 @@ window.MPFMentionInit = function(formId, params)
 			BX.SocNetLogDestination.openDialog(window.BXSocNetLogDestinationFormName);
 			return BX.PreventDefault(e);
 		});
+
+		BX.addCustomEvent(window, "onMentionAdd", function(item) {
+			if (!BX.type.isPlainObject(BX.SocNetLogDestination.obItems[window.BXSocNetLogDestinationFormName]['users'][item.id]))
+			{
+				BX.SocNetLogDestination.obItems[window.BXSocNetLogDestinationFormName]['users'][item.id] = item;
+			}
+			BX.addCustomEvent(window, 'BX.SocNetLogDestination:onBeforeSelectItemFocus', function(sender) {
+				if (sender.id == window.BXSocNetLogDestinationFormName)
+				{
+					sender.blockFocus = true;
+				}
+			});
+			BX.SocNetLogDestination.selectItem(window.BXSocNetLogDestinationFormName, null, null, item.id, 'users', false);
+		});
+
 		if (params["itemsHidden"])
 		{
 			for (var ii in params["itemsHidden"])
@@ -2947,7 +2967,13 @@ window.MPFMentionInit = function(formId, params)
 	}
 	window["BXfpdSelectCallbackMent" + formId] = function(item, type, search)
 	{
-		window.BxInsertMention({item: item, type: type, formID: formId, editorId: params["editorId"]});
+		window.BxInsertMention({
+			item: item,
+			type: type,
+			formID: formId,
+			editorId: params.editorId,
+			fireAddEvent: params.initDestination
+		});
 	};
 
 	window["BXfpdStopMent" + formId] = function ()
@@ -3048,7 +3074,7 @@ window.MPFMentionInit = function(formId, params)
 			department : {},
 			groups : {}
 		},
-		itemsSelected : params["itemsSelected"],
+		itemsSelected : {},
 		destSort: (typeof params["mentionDestSort"] != 'undefined' && params["mentionDestSort"] ? params["mentionDestSort"] : {}),
 		departmentSelectDisable : true,
 		obWindowClass : 'bx-lm-mention',

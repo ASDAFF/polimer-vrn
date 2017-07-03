@@ -7,6 +7,7 @@
  */
 namespace Bitrix\Main\Service\GeoIp;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\EventResult;
@@ -284,14 +285,13 @@ final class Manager
 	private static function getCookie($ip)
 	{
 		$name = self::getCookieName($ip);
+		$cookieData = Application::getInstance()->getContext()->getRequest()->getCookieRaw($name);
 
-		if(!isset($_COOKIE[$name]))
+		if(!$cookieData)
 			return false;
 
-		$cookieData = $_COOKIE[$name];
-
 		if(function_exists('gzdecode'))
-			$cookieData = @\gzdecode($_COOKIE[$name]);
+			$cookieData = @\gzdecode($cookieData);
 
 		if(!$cookieData)
 			return false;
@@ -483,10 +483,11 @@ final class Manager
 	public static function getRealIp()
 	{
 		$ip = false;
+		$xForwarded = Application::getInstance()->getContext()->getServer()->get('HTTP_X_FORWARDED_FOR');
 
-		if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+		if (!empty($xForwarded))
 		{
-			$ips = explode (", ", $_SERVER['HTTP_X_FORWARDED_FOR']);
+			$ips = explode (", ", $xForwarded);
 			$fCount = count($ips);
 
 			for ($i = 0; $i < $fCount; $i++)
@@ -499,7 +500,12 @@ final class Manager
 			}
 		}
 
-		return ($ip ? $ip : $_SERVER['REMOTE_ADDR']);
+		if(!$ip)
+		{
+			$ip = trim(Application::getInstance()->getContext()->getRequest()->getRemoteAddress());
+		}
+
+		return $ip;
 	}
 
 	/**

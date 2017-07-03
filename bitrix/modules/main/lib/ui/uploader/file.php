@@ -834,7 +834,12 @@ class File
 			}
 
 			$utfName = \CHTTP::urnEncode($attachment_name, "UTF-8");
-			$translitName = \CUtil::translit($attachment_name, LANGUAGE_ID, array("max_len"=>1024, "safe_chars"=>".", "replace_space" => '-'));
+			$translitName = \CUtil::translit($attachment_name, LANGUAGE_ID, array(
+				"max_len" => 1024,
+				"safe_chars" => ".",
+				"replace_space" => '-',
+				"change_case" => false,
+			));
 
 			//Disable zlib for old versions of php <= 5.3.0
 			//it has broken Content-Length handling

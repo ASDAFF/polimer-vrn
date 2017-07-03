@@ -465,7 +465,7 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0)
 		$gridOptions->GetNavParams(),
 		$arSelectFields
 	);
-	while ($arRecord = $dbRecordsList->fetch())
+	while ($arRecord = $dbRecordsList->GetNext())
 	{
 		$arKeys = array_keys($arRecord);
 		foreach ($arKeys as $key)

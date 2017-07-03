@@ -175,7 +175,8 @@ class CTextParser
 			return mb_orig_strpos($s, $a);
 		return strpos($s, $a);
 	}
-	function convertText($text)
+
+	public function convertText($text)
 	{
 		if (!is_string($text) || strlen($text) <= 0)
 			return "";
@@ -183,6 +184,8 @@ class CTextParser
 		$text = preg_replace(array("#([?&;])PHPSESSID=([0-9a-zA-Z]{32})#is", "/\\x{00A0}/".BX_UTF_PCRE_MODIFIER), array("\\1PHPSESSID1=", " "), $text);
 
 		$this->serverName = "";
+		$this->defended_urls = array();
+
 		if($this->type == "rss")
 		{
 			$dbSite = CSite::GetByID(SITE_ID);
@@ -1502,11 +1505,9 @@ class CTextParser
 
 	function pre_convert_anchor_tag($url, $text = "", $str = "")
 	{
-		$c = count($this->defended_urls);
-		$tag = "<\x18#".$c.">";
 		if (stripos($str, "[url") !== 0)
 		{
-			$this->defended_urls[$tag] = $str;
+			$url = $str;
 		}
 		else if(strlen($text) > 0)
 		{
@@ -1515,19 +1516,30 @@ class CTextParser
 				"/(?<=^|[".$word_separator."]|\\s)(?<!\\[nomodify\\]|<nomodify>)((".$this->getAnchorSchemes()."):\\/\\/[._:a-z0-9@-].*?)(?=[\\s'\"{}\\[\\]]|&quot;|\$)/is".BX_UTF_PCRE_MODIFIER,
 				"\\1", $text
 			);
-			$this->defended_urls[$tag] = "[url=".$url."]".$text."[/url]";
+			$url = "[url=".$url."]".$text."[/url]";
 		}
 		else
 		{
-			$this->defended_urls[$tag] = "[url]".$url."[/url]";
+			$url = "[url]".$url."[/url]";
 		}
-		return $tag;
+
+		if(isset($this->defended_urls[$url]))
+		{
+			return $this->defended_urls[$url];
+		}
+		else
+		{
+			$tag = "<\x18#".count($this->defended_urls).">";
+			$this->defended_urls[$url] = $tag;
+
+			return $tag;
+		}
 	}
 
 	function post_convert_anchor_tag($str)
 	{
 		if (!empty($this->defended_urls))
-			return str_replace(array_reverse(array_keys($this->defended_urls)), array_reverse(array_values($this->defended_urls)), $str);
+			return str_replace(array_reverse(array_values($this->defended_urls)), array_reverse(array_keys($this->defended_urls)), $str);
 		else
 			return $str;
 	}
@@ -1640,7 +1652,7 @@ class CTextParser
 
 		$arPattern[] = "/\\<(\\/?)(code|font|color|video)(.*?)\\>/is".BX_UTF_PCRE_MODIFIER;
 		$arReplace[] = "";
-		$arPattern[] = "/\\[(\\/?)(b|i|u|s|list|code|quote|size|font|color|url|img|video|td|tr|table|file|document id|disk file id|user|left|right|center|justify|\\*)(.*?)\\]/is".BX_UTF_PCRE_MODIFIER;
+		$arPattern[] = "/\\[(\\/?)(p|b|i|u|s|list|code|quote|size|font|color|url|img|video|td|tr|table|file|document id|disk file id|user|left|right|center|justify|\\*)(.*?)\\]/is".BX_UTF_PCRE_MODIFIER;
 		$arReplace[] = "";
 
 		return preg_replace($arPattern, $arReplace, $text);

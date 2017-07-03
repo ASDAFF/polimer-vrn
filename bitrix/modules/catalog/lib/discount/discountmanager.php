@@ -378,21 +378,22 @@ class DiscountManager
 		switch ($discount['TYPE'])
 		{
 			case Catalog\DiscountTable::VALUE_TYPE_PERCENT:
-				$discountValue = roundEx(((
-					$getPercentFromBasePrice
-					? $basePrice
-					: $product['PRICE']
-					)*$discount['VALUE'])/100,
-					CATALOG_VALUE_PRECISION
+				$discount['VALUE'] = -$discount['VALUE'];
+				$discountValue = self::roundValue(
+					((
+						$getPercentFromBasePrice
+							? $basePrice
+							: $product['PRICE']
+						)*$discount['VALUE'])/100,
+					$product['CURRENCY']
 				);
 				if (isset($discount['MAX_VALUE']) && $discount['MAX_VALUE'] > 0)
 				{
-					if ($discountValue > $discount['MAX_VALUE'])
-						$discountValue = $discount['MAX_VALUE'];
+					if ($discountValue + $discount['MAX_VALUE'] <= 0)
+						$discountValue = -$discount['MAX_VALUE'];
 				}
-				$discountValue = roundEx($discountValue, CATALOG_VALUE_PRECISION);
-				$product['PRICE'] -= $discountValue;
-				$product['DISCOUNT_PRICE'] += $discountValue;
+				$product['PRICE'] += $discountValue;
+				$product['DISCOUNT_PRICE'] -= $discountValue;
 				if (!empty($product['DISCOUNT_RESULT']))
 				{
 					$product['DISCOUNT_RESULT']['BASKET'][0]['RESULT_VALUE'] = (string)abs($discountValue);
@@ -401,12 +402,12 @@ class DiscountManager
 				unset($discountValue);
 				break;
 			case Catalog\DiscountTable::VALUE_TYPE_FIX:
-				$discount['VALUE'] = roundEx($discount['VALUE'], CATALOG_VALUE_PRECISION);
+				$discount['VALUE'] = self::roundValue($discount['VALUE'], $product['CURRENCY']);
 				$product['PRICE'] -= $discount['VALUE'];
 				$product['DISCOUNT_PRICE'] += $discount['VALUE'];
 				break;
 			case Catalog\DiscountTable::VALUE_TYPE_SALE:
-				$discount['VALUE'] = roundEx($discount['VALUE'], CATALOG_VALUE_PRECISION);
+				$discount['VALUE'] = self::roundValue($discount['VALUE'], $product['CURRENCY']);
 				$product['DISCOUNT_PRICE'] += ($product['PRICE'] - $discount['VALUE']);
 				$product['PRICE'] = $discount['VALUE'];
 				break;
@@ -1323,7 +1324,7 @@ class DiscountManager
 			foreach ($fields as $key => $alias)
 			{
 				if ($element[$key] instanceof Main\Type\DateTime)
-					$productData[$element['ID']][$alias] = $element[$key]->toString();
+					$productData[$element['ID']][$alias] = $element[$key]->getTimestamp();
 				else
 					$productData[$element['ID']][$alias] = $element[$key];
 			}
@@ -1609,6 +1610,23 @@ class DiscountManager
 		}
 
 		$entityData['priceData'] = $priceData;
+	}
+
+	/**
+	 * Rounded catalog discount value.
+	 *
+	 * @param float|int $value Value.
+	 * @param string $currency Currency.
+	 * @return float
+	 */
+	protected static function roundValue($value, $currency)
+	{
+		if (self::$saleIncluded === null)
+			self::$saleIncluded = Loader::includeModule('sale');
+		if (self::$saleIncluded)
+			return Sale\Discount\Actions::roundValue($value, $currency);
+		else
+			return roundEx($value, CATALOG_VALUE_PRECISION);
 	}
 
 	private static function getPriceDataByPriceId($priceId)

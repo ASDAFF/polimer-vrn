@@ -33,7 +33,7 @@ if ($hash)
 if ($accessDenied)
 {
 	if (Cashbox\Manager::DEBUG_MODE === true)
-		Cashbox\Internals\CashboxErrLogTable::add(array('MESSAGE' => '403 Forbidden', 'DATE_CREATE' => new Main\Type\DateTime()));
+		Cashbox\Internals\CashboxErrLogTable::add(array('MESSAGE' => '403 Forbidden', 'DATE_INSERT' => new Main\Type\DateTime()));
 
 	CHTTP::SetStatus("403 Forbidden");
 	$APPLICATION->FinalActions();
@@ -48,7 +48,7 @@ $json = file_get_contents('php://input');
 if ($json)
 {
 	if (Cashbox\Manager::DEBUG_MODE === true)
-		Cashbox\Internals\CashboxErrLogTable::add(array('MESSAGE' => $json, 'DATE_CREATE' => new Main\Type\DateTime()));
+		Cashbox\Internals\CashboxErrLogTable::add(array('MESSAGE' => $json, 'DATE_INSERT' => new Main\Type\DateTime()));
 
 	$data = Main\Web\Json::decode($json);
 }
@@ -130,7 +130,7 @@ if (isset($data['kkm']) && count($data['kkm']) > 0)
 		else
 		{
 			if (Cashbox\Manager::DEBUG_MODE === true)
-				Cashbox\Internals\CashboxErrLogTable::add(array('MESSAGE' => 'enable cashbox does not find', 'DATE_CREATE' => new Main\Type\DateTime()));
+				Cashbox\Internals\CashboxErrLogTable::add(array('MESSAGE' => 'enable cashbox does not find', 'DATE_INSERT' => new Main\Type\DateTime()));
 			$error = true;
 		}
 	}
@@ -138,7 +138,7 @@ if (isset($data['kkm']) && count($data['kkm']) > 0)
 else
 {
 	if (Cashbox\Manager::DEBUG_MODE === true)
-		Cashbox\Internals\CashboxErrLogTable::add(array('MESSAGE' => 'empty kkm list', 'DATE_CREATE' => new Main\Type\DateTime()));
+		Cashbox\Internals\CashboxErrLogTable::add(array('MESSAGE' => 'empty kkm list', 'DATE_INSERT' => new Main\Type\DateTime()));
 	$error = true;
 }
 

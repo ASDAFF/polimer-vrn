@@ -286,7 +286,8 @@ class Base
 		$index = isset($field['Index']) ? $field['Index'] : null;
 		if ($index !== null)
 		{
-			$name .= '[n'.$index.']';
+			$prefix = strpos($index, 'n') === 0 ? '' : 'n';
+			$name .= '['.$prefix.$index.']';
 		}
 		return $name;
 	}

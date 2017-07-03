@@ -1049,8 +1049,6 @@ class CBPVirtualDocument
 
 	function GetList($arOrder = array("SORT" => "ASC"), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields=array())
 	{
-		global $USER;
-
 		$arFilter["SHOW_NEW"] = "Y";
 		$arFilter["ACTIVE"] = "Y";
 

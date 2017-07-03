@@ -37,7 +37,7 @@ if (strlen($arCurrentValues["mail_message_type"]) <= 0)
 	<td width="60%">
 		<select name="mail_message_type">
 			<option value="plain"<?= $arCurrentValues["mail_message_type"] == "plain" ? " selected" : "" ?>><?= GetMessage("BPMA_PD_TEXT") ?></option>
-			<option value="html"<?= $arCurrentValues["mail_message_type"] == "html" ? " selected" : "" ?>>Html</option>
+			<option value="html"<?= $arCurrentValues["mail_message_type"] == "html" ? " selected" : "" ?>>HTML</option>
 		</select>
 	</td>
 </tr>
@@ -70,6 +70,12 @@ if (strlen($arCurrentValues["mail_message_type"]) <= 0)
 			?>
 		</select><br>
 		<?=CBPDocument::ShowParameterField("string", 'mail_site_x', $arCurrentValues['mail_site'], Array('size'=> 20))?>
+	</td>
+</tr>
+<tr>
+	<td align="right" width="40%"><?= GetMessage("BPMA_PD_FILE") ?>:<br><?= GetMessage("BPMA_PD_FILE_DESCRIPTION") ?></td>
+	<td width="60%">
+		<?=CBPDocument::ShowParameterField("file", 'file', $arCurrentValues['file'], array('size'=> 20))?>
 	</td>
 </tr>
 <tr>

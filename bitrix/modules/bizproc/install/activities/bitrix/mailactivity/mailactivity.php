@@ -22,6 +22,7 @@ class CBPMailActivity
 			"DirrectMail" => "Y",
 			"MailSite" => null,
 			"MailSeparator" => static::DEFAULT_SEPARATOR,
+			"File" => null,
 		);
 	}
 
@@ -189,8 +190,12 @@ class CBPMailActivity
 				"MESSAGE" => CBPHelper::ConvertTextForMail($this->MailText),
 			);
 
+			$files = (array)$this->ParseValue($this->getRawProperty('File'), 'file');
+			$files = array_filter($files);
+
+			$eventName = ($this->MailMessageType == "html") ? "BIZPROC_HTML_MAIL_TEMPLATE" : "BIZPROC_MAIL_TEMPLATE";
 			$event = new CEvent;
-			$event->Send("BIZPROC_MAIL_TEMPLATE", $siteId, $arFields, "N");
+			$event->Send($eventName, $siteId, $arFields, "N", '', $files);
 		}
 
 		return CBPActivityExecutionStatus::Closed;
@@ -274,6 +279,7 @@ class CBPMailActivity
 			"DirrectMail" => "dirrect_mail",
 			"MailSite" => "mail_site",
 			'MailSeparator' => 'mail_separator',
+			'File' => 'file',
 		);
 
 		if (!is_array($arWorkflowParameters))
@@ -335,9 +341,6 @@ class CBPMailActivity
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$arErrors)
 	{
 		$arErrors = array();
-
-		$runtime = CBPRuntime::GetRuntime();
-
 		$arMap = array(
 			"mail_user_from" => "MailUserFrom",
 			"mail_user_to" => "MailUserTo",
@@ -347,7 +350,8 @@ class CBPMailActivity
 			"mail_charset" => "MailCharset",
 			"dirrect_mail" => "DirrectMail",
 			"mail_site" => "MailSite",
-			'mail_separator' => 'MailSeparator'
+			'mail_separator' => 'MailSeparator',
+			'file' => 'File',
 		);
 
 		$arProperties = array();
@@ -395,4 +399,3 @@ class CBPMailActivity
 		return null;
 	}
 }
-?>

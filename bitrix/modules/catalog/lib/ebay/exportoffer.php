@@ -16,6 +16,7 @@ class ExportOffer implements \Iterator
 	protected $arSections = array();
 	protected $arIblock;
 	protected $startPosition = null;
+	protected $includeSubsections = true;
 	protected $intMaxSectionID = 0;
 	protected $arSectionIDs = array();
 
@@ -44,6 +45,8 @@ class ExportOffer implements \Iterator
 		$this->arSections = $this->getSections($params["PRODUCT_GROUPS"]);
 		if(isset($params["START_POSITION"]) && $params["START_POSITION"])
 			$this->startPosition = $params["START_POSITION"];
+		if(isset($params["INCLUDE_SUBSECTION"]))
+			$this->includeSubsections = $params["INCLUDE_SUBSECTION"];
 
 		$this->bAllSections = in_array(0, $this->arSections) ? true : false;
 		$availGroups = $this->getAvailGroups();
@@ -124,7 +127,7 @@ class ExportOffer implements \Iterator
 
 		if (!$this->bAllSections && !empty($this->arSections))
 		{
-			$filter["INCLUDE_SUBSECTIONS"] = "Y";
+			$filter["INCLUDE_SUBSECTIONS"] = $this->includeSubsections ? "Y" : "N";
 			$filter["SECTION_ID"] = $this->arSections;
 		}
 		

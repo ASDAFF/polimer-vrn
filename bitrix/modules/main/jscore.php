@@ -184,6 +184,7 @@ $arJSCoreConfig = array(
 	),
 	'ui_select' => array(
 		'js' => $pathJS.'/core_ui_select.js',
+		'css' => $pathCSS.'/core_ui_select.css',
 		'rel' => array('popup')
 	),
 	'ui_date' => array(
@@ -214,6 +215,7 @@ $arJSCoreConfig = array(
 			'/bitrix/js/main/kanban/grid.js',
 			'/bitrix/js/main/kanban/column.js',
 			'/bitrix/js/main/kanban/item.js',
+			'/bitrix/js/main/kanban/dropzone-area.js',
 			'/bitrix/js/main/kanban/dropzone.js',
 			'/bitrix/js/main/kanban/utils.js'
 		),

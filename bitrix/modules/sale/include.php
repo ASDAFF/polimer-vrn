@@ -227,6 +227,8 @@ CModule::AddAutoloadClasses(
 		"Bitrix\\Sale\\SenderEventHandler" => "lib/senderconnector.php",
 		"Bitrix\\Sale\\SenderConnectorBuyer" => "lib/senderconnector.php",
 
+		"\\Bitrix\\Sale\\UserConsent" => "lib/userconsent.php",
+
 		"\\Bitrix\\Sale\\Product2ProductTable" => "lib/internals/product2product_old.php",
 		"\\Bitrix\\Sale\\Internals\\Product2ProductTable" => "lib/internals/product2product.php",
 

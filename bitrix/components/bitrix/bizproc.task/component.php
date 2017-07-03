@@ -44,7 +44,6 @@ if ($arParams["USER_ID"] != $currentUserId)
 		ShowError(GetMessage("BPAT_NO_ACCESS"));
 		return false;
 	}
-	$arResult["ShowMode"] = "Success";
 	$arResult['ReadOnly'] = true;
 }
 
@@ -211,7 +210,7 @@ if (empty($arResult['TASK']['DOCUMENT_NAME']))
 	$arResult['TASK']['DOCUMENT_NAME'] = htmlspecialcharsbx($documentService->getDocumentName($arResult['TASK']['PARAMETERS']['DOCUMENT_ID']));
 }
 
-if ($arResult["ShowMode"] != "Success")
+if ($arResult["ShowMode"] != "Success" && !$arResult['ReadOnly'])
 {
 	try
 	{

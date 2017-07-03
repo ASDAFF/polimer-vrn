@@ -45,7 +45,18 @@ class CCatalogMeasureRatioAll
 			if (!isset($clearFields['RATIO']))
 				$clearFields['RATIO'] = 1;
 			if (!isset($clearFields['IS_DEFAULT']))
-				$clearFields['IS_DEFAULT'] = 'N';
+			{
+				$row = null;
+				if ((int)$clearFields['PRODUCT_ID'] > 0)
+				{
+					$row = Catalog\MeasureRatioTable::getList(array(
+						'select' => array('ID'),
+						'filter' => array('=PRODUCT_ID' => $clearFields['PRODUCT_ID'], '=IS_DEFAULT' => 'Y')
+					))->fetch();
+				}
+				$clearFields['IS_DEFAULT'] = (!empty($row) ? 'N' : 'Y');
+				unset($row);
+			}
 		}
 		if (isset($clearFields['PRODUCT_ID']))
 		{

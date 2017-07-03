@@ -18,7 +18,7 @@ $json = file_get_contents('php://input');
 if ($json)
 {
 	if (Cashbox\Manager::DEBUG_MODE === true)
-		Cashbox\Internals\CashboxErrLogTable::add(array('MESSAGE' => $json, 'DATE_CREATE' => new Main\Type\DateTime()));
+		Cashbox\Internals\CashboxErrLogTable::add(array('MESSAGE' => $json, 'DATE_INSERT' => new Main\Type\DateTime()));
 
 	$data = Main\Web\Json::decode($json);
 }

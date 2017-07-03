@@ -221,7 +221,14 @@ BX.Helper =
 
 		this.popupNode = BX.create('div', {
 			children: [
-				this.frameNode,
+				BX.create('div', {
+					children: [
+						this.frameNode
+					],
+					attrs: {
+						className: 'bx-help-inner'
+					}
+				}),
 				this.topBar,
 				this.popupLoader
 			],

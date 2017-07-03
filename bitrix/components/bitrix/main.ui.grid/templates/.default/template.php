@@ -76,16 +76,16 @@ $displayedCount = count(
 			?></div><?
 			?><div class="popup-window-buttons"><?
 				?><span class="main-grid-settings-window-buttons-wrapper"><?
-					?><span class="popup-window-button popup-window-button-link main-grid-settings-window-actions-item-reset" id="<?=$arParams["GRID_ID"]?>-grid-settings-reset-button"><?=Loc::getMessage("interface_grid_restore_to_default")?></span><?
+					?><span class="main-grid-settings-window-actions-item-button main-grid-settings-window-actions-item-reset" id="<?=$arParams["GRID_ID"]?>-grid-settings-reset-button"><?=Loc::getMessage("interface_grid_restore_to_default")?></span><?
 					if ($USER->CanDoOperation("edit_other_settings")) :
-					?><span class="popup-window-button-link main-grid-settings-window-for-all popup-window-button">
+					?><span class="main-grid-settings-window-actions-item-button main-grid-settings-window-for-all">
 						<input name="grid-settings-window-for-all" type="checkbox" id="<?=$arParams["GRID_ID"]?>-main-grid-settings-window-for-all-checkbox" class="main-grid-settings-window-for-all-checkbox">
 						<label for="<?=$arParams["GRID_ID"]?>-main-grid-settings-window-for-all-checkbox" class="main-grid-settings-window-for-all-label"><?=Loc::getMessage("interface_grid_settings_for_all_label")?></label><?
 					?></span><?
 					endif;
 				?></span><?
-				?><span class="popup-window-button webform-small-button-blue webform-small-button" id="<?=$arParams["GRID_ID"]?>-grid-settings-apply-button"><?=Loc::getMessage("interface_grid_apply_settings")?></span><?
-				?><span class="popup-window-button popup-window-button-link" id="<?=$arParams["GRID_ID"]?>-grid-settings-cancel-button"><?=Loc::getMessage("interface_grid_cancel_settings")?></span><?
+				?><span class="main-grid-settings-window-actions-item-button webform-small-button" id="<?=$arParams["GRID_ID"]?>-grid-settings-apply-button"><?=Loc::getMessage("interface_grid_apply_settings")?></span><?
+				?><span class="main-grid-settings-window-actions-item-button webform-small-button webform-small-button-transparent" id="<?=$arParams["GRID_ID"]?>-grid-settings-cancel-button"><?=Loc::getMessage("interface_grid_cancel_settings")?></span><?
 			?></div><?
 		?></div><?
 		?><div class="main-grid-wrapper<?=!$arParams["ALLOW_HORIZONTAL_SCROLL"] ? " main-grid-full" : "" ?>"><?
@@ -169,8 +169,9 @@ $displayedCount = count(
 								?></tr><?
 							else:
 							 	foreach($arParams['ROWS'] as $key => $arRow):
-								$rowClasses = isset($arRow['columnClasses']) && is_array($arRow['columnClasses'])
+									$rowClasses = isset($arRow['columnClasses']) && is_array($arRow['columnClasses'])
 										? $arRow['columnClasses'] : array();
+									$collapseRow = false;
 								if (!empty($arRow["custom"])) :
 									$lastCollapseGroup = $arRow["expand"] === false ? $arRow["group_id"] : null;
 									?><tr class="main-grid-row main-grid-row-body main-grid-row-custom<?=$arRow["not_count"] ? " main-grid-not-count" : ""?><?=$arRow["draggable"] === false ? " main-grid-row-drag-disabled" : ""?><?=$arRow["expand"] ? " main-grid-row-expand" : ""?>"<?=$arRow["attrs_string"]?> data-id="<?=$arRow["id"]?>"><?

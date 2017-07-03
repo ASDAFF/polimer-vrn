@@ -229,6 +229,11 @@
 			if (this.parentId === null)
 			{
 				this.parentId = BX.data(this.getNode(), 'parent-id');
+
+				if (typeof this.parentId !== 'undefined' && this.parentId !== null)
+				{
+					this.parentId = this.parentId.toString();
+				}
 			}
 
 			return this.parentId;
@@ -293,10 +298,11 @@
 
 		/**
 		 * Sets parent id
-		 * @param {*} id
+		 * @param {string|number} id
 		 */
 		setParentId: function(id)
 		{
+			id = id.toString();
 			var dataset = this.getDataset();
 			dataset['parentId'] = id;
 		},
@@ -438,6 +444,8 @@
 
 		update: function(data, url, callback)
 		{
+			data = !!data ? data : '';
+
 			var action = this.parent.getUserOptions().getAction('GRID_UPDATE_ROW');
 			var depth = this.getDepth();
 			var id = this.getId();
@@ -485,6 +493,8 @@
 
 		remove: function(data, url, callback)
 		{
+			data = !!data ? data : '';
+
 			var action = this.parent.getUserOptions().getAction('GRID_DELETE_ROW');
 			var depth = this.getDepth();
 			var id = this.getId();
@@ -665,12 +675,12 @@
 
 		getId: function()
 		{
-			return BX.data(this.getNode(), 'id');
+			return (BX.data(this.getNode(), 'id')).toString();
 		},
 
 		getGroupId: function()
 		{
-			return BX.data(this.getNode(), 'group-id');
+			return (BX.data(this.getNode(), 'group-id')).toString();
 		},
 
 		getObserver: function()

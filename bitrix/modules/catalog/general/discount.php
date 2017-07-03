@@ -1060,8 +1060,12 @@ class CAllCatalogDiscount
 		if($priceRow)
 		{
 			$basketItem->setField('PRODUCT_PRICE_ID', $priceRow['ID']);
+			$basketItem->setField('BASE_PRICE', $priceRow['PRICE']);
 			$basketItem->setField('PRICE', $priceRow['PRICE']);
+			$basketItem->setField('DISCOUNT_PRICE', 0);
 			$basketItem->setField('CURRENCY', $priceRow['CURRENCY']);
+			$basketItem->setField('CAN_BUY', 'Y');
+			$basketItem->setField('DELAY', 'N');
 		}
 
 		if($isRenewal)
@@ -1077,6 +1081,11 @@ class CAllCatalogDiscount
 		{
 			$discount = \Bitrix\Sale\Discount::buildFromBasket($basket, new Context\UserGroup($userGroups));
 		}
+
+		$discount->setBasketItemData(
+			$basketItem->getBasketCode(),
+			array('PRICE_TYPE_ID' => (int)$priceRow['CATALOG_GROUP_ID'])
+		);
 
 		$discount->setExecuteModuleFilter(array('all', 'catalog'));
 		$discount->calculate();

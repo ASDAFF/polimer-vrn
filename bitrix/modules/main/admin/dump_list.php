@@ -15,7 +15,7 @@ IncludeModuleLangFile(dirname(__FILE__).'/dump.php');
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/backup.php");
 $strBXError = '';
-$bMcrypt = function_exists('mcrypt_encrypt');
+$bMcrypt = function_exists('mcrypt_encrypt') || function_exists('openssl_encrypt');
 $bBitrixCloud = $bMcrypt && CModule::IncludeModule('bitrixcloud') && CModule::IncludeModule('clouds');
 
 if (function_exists('mb_internal_encoding'))

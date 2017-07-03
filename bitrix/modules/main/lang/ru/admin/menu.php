@@ -127,4 +127,5 @@ $MESS["MAIN_MENU_COMPOSITE_ALT"] = "Управление режимом";
 $MESS["MAIN_MENU_HTTPS"] = "Настройка HTTPS";
 $MESS["MAIN_MENU_HTTPS_ALT"] = "Настройка HTTPS-соединения для Вашего сайта";
 $MESS["MAIN_MENU_GEOIP_HANDLERS"] = "Геолокация";
+$MESS["MAIN_MENU_USER_CONSENT"] = "Соглашения";
 ?>

@@ -622,15 +622,8 @@ class CBPRestActivity
 
 	private static function checkAdminPermissions()
 	{
-		global $USER;
-		if (!isset($USER)
-			|| !is_object($USER)
-			|| (!$USER->isAdmin() && !(Loader::includeModule('bitrix24') && \CBitrix24::isPortalAdmin($USER->getID())))
-		)
-		{
-			return false;
-		}
-		return true;
+		$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
+		return $user->isAdmin();
 	}
 
 	public static function generateToken($workflowId, $activityName, $eventId)

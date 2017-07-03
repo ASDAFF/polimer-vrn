@@ -3,15 +3,15 @@
 namespace Bitrix\Main\UI\Filter;
 
 
-use Bitrix\Main\Type;
+use Bitrix\Main\Type as MainType;
 
 
 class DateTime
 {
-	/** @var Type\Date */
+	/** @var MainType\Date */
 	protected static $date;
 
-	/** @var Type\DateTime */
+	/** @var MainType\DateTime */
 	protected static $dateTime;
 
 	/** @var ?number */
@@ -28,11 +28,11 @@ class DateTime
 
 		if (empty(static::$timestamp))
 		{
-			static::$date = new Type\Date();
+			static::$date = new MainType\Date();
 			static::$timestamp = static::$date->getTimestamp();
 		}
 
-		static::$dateTime = Type\DateTime::createFromTimestamp(static::$timestamp);
+		static::$dateTime = MainType\DateTime::createFromTimestamp(static::$timestamp);
 	}
 
 
@@ -73,7 +73,7 @@ class DateTime
 	public function quarterStart()
 	{
 		$startDate = Quarter::getStartDate($this->quarter(), $this->year());
-		return Type\DateTime::createFromTimestamp(MakeTimeStamp($startDate))->toString();
+		return MainType\DateTime::createFromTimestamp(MakeTimeStamp($startDate))->toString();
 	}
 
 
@@ -84,7 +84,7 @@ class DateTime
 	public function quarterEnd()
 	{
 		$endDate = Quarter::getEndDate($this->quarter(), $this->year());
-		return Type\DateTime::createFromTimestamp(MakeTimeStamp($endDate))->add("1 days - 1 second")->toString();
+		return MainType\DateTime::createFromTimestamp(MakeTimeStamp($endDate))->add("1 days - 1 second")->toString();
 	}
 
 
@@ -95,7 +95,7 @@ class DateTime
 	 */
 	public function offset($offset)
 	{
-		$date = Type\DateTime::createFromTimestamp(static::$timestamp);
+		$date = MainType\DateTime::createFromTimestamp(static::$timestamp);
 		return $date->add($offset)->toString();
 	}
 

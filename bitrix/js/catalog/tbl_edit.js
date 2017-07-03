@@ -211,6 +211,7 @@ JCCatTblEditExt.prototype.showDialog = function()
 
 	if (this.dialog !== null)
 		this.dialog = null;
+	BX.removeCustomEvent(this.eventId, BX.proxy(this.onSave, this));
 	this.dialog = new BX.CAdminDialog({
 		content_url: '/bitrix/admin/cat_product_search_dialog.php?lang='+BX.message('LANGUAGE_ID')+'&caller=sets&event='+this.eventId,
 		height: Math.max(500, window.innerHeight-400),
@@ -250,7 +251,9 @@ JCCatTblEditExt.prototype.onSave = function(params)
 			measure.innerHTML = BX.util.htmlspecialchars(' * '+ params.measureRatio + ' ' + params.measure)
 		}
 	}
-	this.dialog.Close();
+
+	if (!!this.dialog)
+		this.dialog.Close();
 	this.dialog = null;
 	this.itemId = '';
 };

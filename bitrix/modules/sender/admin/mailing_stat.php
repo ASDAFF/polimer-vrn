@@ -85,6 +85,7 @@ if($action == 'get_template' && $chainId)
 elseif ($action == 'get_read_by_time')
 {
 	$mailingStat = Statistics::create()->filter('chainId', $chainId);
+	$mailingStat->setCacheTtl(0);
 	echo Json::encode(array(
 		'recommendedTime' => $mailingStat->getRecommendedSendTime(),
 		'readingByTimeList' => $mailingStat->getReadingByDayTime(),
@@ -101,6 +102,7 @@ elseif($postingId)
 	}
 
 	$mailingStat = Statistics::create()->filter('mailingId', $mailingId);
+	$mailingStat->setCacheTtl(0);
 	$arResult['CHAIN_LIST'] = $mailingStat->getChainList(7);
 	$arResult['EFFICIENCY'] = $mailingStat->getEfficiency();
 	$mailingCounters = $mailingStat->getCounters();

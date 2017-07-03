@@ -734,7 +734,7 @@ class CPasswordStorage
 
 	function Init()
 	{
-		if (!function_exists('mcrypt_encrypt'))
+		if (!function_exists('mcrypt_encrypt') && !function_exists('openssl_encrypt'))
 			return false;
 		return true;
 	}
@@ -758,7 +758,14 @@ class CPasswordStorage
 		if (!self::Init())
 			return false;
 
-		$temporary_cache = $strVal ? mcrypt_encrypt(MCRYPT_BLOWFISH, self::getEncryptKey(), self::SIGN.$strVal, MCRYPT_MODE_ECB, pack("a8",self::getEncryptKey())) : '';
+		$temporary_cache = '';
+		if ($strVal)
+		{
+			if (function_exists('openssl_encrypt'))
+				$temporary_cache = openssl_encrypt(self::SIGN.$strVal, 'BF-ECB', self::getEncryptKey(), OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
+			else
+				$temporary_cache = mcrypt_encrypt(MCRYPT_BLOWFISH, self::getEncryptKey(), self::SIGN.$strVal, MCRYPT_MODE_ECB, pack("a8",self::getEncryptKey()));
+		}
 		return COption::SetOptionString('main', $strName, base64_encode($temporary_cache));
 	}
 
@@ -768,7 +775,10 @@ class CPasswordStorage
 			return false;
 
 		$temporary_cache = base64_decode(COption::GetOptionString('main', $strName, ''));
-		$pass = mcrypt_decrypt(MCRYPT_BLOWFISH, self::getEncryptKey(), $temporary_cache, MCRYPT_MODE_ECB, pack("a8",self::getEncryptKey()));
+		if (function_exists('openssl_decrypt'))
+			$pass = openssl_decrypt($temporary_cache, 'BF-ECB', self::getEncryptKey(), OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
+		else
+			$pass = mcrypt_decrypt(MCRYPT_BLOWFISH, self::getEncryptKey(), $temporary_cache, MCRYPT_MODE_ECB, pack("a8",self::getEncryptKey()));
 		if (CTar::substr($pass, 0, 6) == self::SIGN)
 			return str_replace("\x0","",CTar::substr($pass, 6));
 		return false;
@@ -833,7 +843,12 @@ class CTar
 				$key = $this->getEncryptKey();
 				$this->BlockHeader = $this->Block = 1;
 
-				if (!$key || self::substr($str, 0, 256) != mcrypt_decrypt(MCRYPT_BLOWFISH, $key, $data['enc'], MCRYPT_MODE_ECB, pack("a8",$key)))
+				if (!$key
+					||
+					function_exists('openssl_decrypt') && self::substr($str, 0, 256) != openssl_decrypt($data['enc'], 'BF-ECB', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING)
+					||
+					function_exists('mcrypt_decrypt') && self::substr($str, 0, 256) != mcrypt_decrypt(MCRYPT_BLOWFISH, $key, $data['enc'], MCRYPT_MODE_ECB, pack("a8",$key))
+				)
 					return $this->Error('Invalid encryption key', 'ENC_KEY');
 			}
 		}
@@ -848,7 +863,12 @@ class CTar
 			if ($str === '' && $this->openNext($bIgnoreOpenNextError))
 				$str = $this->gzip ? gzread($this->res, $this->BufferSize) : fread($this->res, $this->BufferSize);
 			if ($str !== '' && $key = $this->getEncryptKey())
-				$str = mcrypt_decrypt(MCRYPT_BLOWFISH, $key, $str, MCRYPT_MODE_ECB, pack("a8",$key));
+			{
+				if (function_exists('openssl_decrypt'))
+					$str = openssl_decrypt($str, 'BF-ECB', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
+				else
+					$str = mcrypt_decrypt(MCRYPT_BLOWFISH, $key, $str, MCRYPT_MODE_ECB, pack("a8",$key));
+			}
 			$this->Buffer = $str;
 		}
 
@@ -1132,7 +1152,10 @@ class CTar
 		if ($res && $this->Block == 0 && ($key = $this->getEncryptKey())) // запишем служебный заголовок для зашифрованного архива
 		{
 			$enc = pack("a100a90a10a56",md5(uniqid(rand(), true)), self::BX_SIGNATURE, "1.0", "");
-			$enc .= mcrypt_encrypt(MCRYPT_BLOWFISH, $key, $enc, MCRYPT_MODE_ECB, pack("a8",$key));
+			if (function_exists('openssl_encrypt'))
+				$enc .= openssl_encrypt($enc, 'BF-ECB', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
+			else
+				$enc .= mcrypt_encrypt(MCRYPT_BLOWFISH, $key, $enc, MCRYPT_MODE_ECB, pack("a8",$key));
 			if (!($this->gzip ? gzwrite($this->res, $enc) : fwrite($this->res, $enc)))
 				return $this->Error('Error writing to file');
 			$this->Block = 1;
@@ -1204,7 +1227,12 @@ class CTar
 		$this->Buffer = '';
 
 		if ($key = $this->getEncryptKey())
-			$str = mcrypt_encrypt(MCRYPT_BLOWFISH, $key, $str, MCRYPT_MODE_ECB, pack("a8",$key));
+		{
+			if (function_exists('openssl_encrypt'))
+				$str = openssl_encrypt($str, 'BF-ECB', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
+			else
+				$str = mcrypt_encrypt(MCRYPT_BLOWFISH, $key, $str, MCRYPT_MODE_ECB, pack("a8",$key));
+		}
 
 		return $this->gzip ? gzwrite($this->res, $str) : fwrite($this->res, $str);
 	}
@@ -1306,8 +1334,8 @@ class CTar
 		if (is_dir($file))
 			return $this->Error('File is directory: '.$file);
 
-		if ($this->EncryptKey && !function_exists('mcrypt_encrypt'))
-			return $this->Error('Function &quot;mcrypt_encrypt&quot; is not available');
+		if ($this->EncryptKey && !function_exists('mcrypt_encrypt') && !function_exists('openssl_encrypt'))
+			return $this->Error('Function mcrypt_encrypt/openssl_encrypt is not available');
 		
 		if ($mode == 'r' && !file_exists($file))
 			return $this->Error('File does not exist: '.$file);

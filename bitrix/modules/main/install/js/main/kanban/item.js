@@ -44,6 +44,7 @@ BX.Kanban.Item = function(options)
 	this.droppable = true;
 
 	this.countable = true;
+	this.visible = true;
 
 	this.data = Object.create(null);
 
@@ -119,6 +120,7 @@ BX.Kanban.Item.prototype =
 		this.droppable = BX.type.isBoolean(options.droppable) ? options.droppable : this.droppable;
 		this.draggable = BX.type.isBoolean(options.draggable) ? options.draggable : this.draggable;
 		this.countable = BX.type.isBoolean(options.countable) ? options.countable : this.countable;
+		this.visible = BX.type.isBoolean(options.visible) ? options.visible : this.visible;
 	},
 
 	getData: function()
@@ -137,6 +139,11 @@ BX.Kanban.Item.prototype =
 	isCountable: function()
 	{
 		return this.countable;
+	},
+
+	isVisible: function()
+	{
+		return this.visible;
 	},
 
 	getGridData: function()
@@ -424,7 +431,16 @@ BX.Kanban.Item.prototype =
 		this.hideDragTarget();
 		var draggableItem = this.getGrid().getItemByElement(itemNode);
 
-		BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onItemDragDrop", [draggableItem, this.getColumn(), this]);
+		var event = new BX.Kanban.DragEvent();
+		event.setItem(draggableItem);
+		event.setTargetColumn(this.getColumn());
+		event.setTargetItem(this);
+
+		BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onBeforeItemMoved", [event]);
+		if (!event.isActionAllowed())
+		{
+			return;
+		}
 
 		var success = this.getGrid().moveItem(draggableItem, this.getColumn(), this);
 		if (success)
@@ -572,7 +588,7 @@ BX.Kanban.DraftItem.prototype = {
 		this.draftTextArea = BX.create("textarea", {
 			attrs: {
 				className: "main-kanban-item-draft-textarea",
-				placeholder: BX.message("MAIN_KANBAN_TITLE_PLACEHOLDER")
+				placeholder: this.getGrid().getMessage("ITEM_TITLE_PLACEHOLDER")
 			},
 			events: {
 				blur: this.handleDraftTextAreaBlur.bind(this),

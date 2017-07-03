@@ -15,4 +15,13 @@ $MESS["MAIN_UI_FILTER__RESET_LINK"] = "Повернути за замовчув�
 $MESS["MAIN_UI_FILTER__CONFIRM_RESET_APPLY"] = "Продовжити";
 $MESS["MAIN_UI_FILTER__CONFIRM_RESET_CANCEL"] = "Скасувати";
 $MESS["MAIN_UI_FILTER__RESTORE_PRESET"] = "Відновити фільтр";
+$MESS["MAIN_UI_FILTER__RESTORE_FIELDS"] = "Повернути поля за замовчуванням";
+$MESS["MAIN_UI_FILTER__PLACEHOLDER"] = "Фільтр";
+$MESS["MAIN_UI_FILTER__IS_SET_AS_DEFAULT_PRESET"] = "Призначений фільтром за замовчуванням";
+$MESS["MAIN_UI_FILTER__SET_AS_DEFAULT_PRESET"] = "Призначити фільтром за замовчуванням";
+$MESS["MAIN_UI_FILTER__EDIT_PRESET_TITLE"] = "Змінити назву фільтра";
+$MESS["MAIN_UI_FILTER__REMOVE_PRESET"] = "Видалити фільтр";
+$MESS["MAIN_UI_FILTER__DRAG_TITLE"] = "Потягніть, щоб відсортувати список збережених фільтрів";
+$MESS["MAIN_UI_FILTER__FILTER_SETTINGS_TITLE"] = "Встановити фільтр";
+$MESS["MAIN_UI_FILTER__CONFIRM_APPLY_FOR_ALL_CHECKBOX"] = "Для всіх";
 ?>

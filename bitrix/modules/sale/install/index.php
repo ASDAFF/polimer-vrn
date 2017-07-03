@@ -146,6 +146,9 @@ Class sale extends CModule
 		RegisterModuleDependences("main", "OnEventLogGetAuditTypes", "sale", "CSaleYMHandler", 'OnEventLogGetAuditTypes');
 		RegisterModuleDependences("main", "OnEventLogGetAuditTypes", "sale", "CSalePaySystemAction", 'OnEventLogGetAuditTypes');
 
+		RegisterModuleDependences("main", "OnUserConsentProviderList", "sale", "\\Bitrix\\Sale\\UserConsent", "onProviderList");
+		RegisterModuleDependences("main", "OnUserConsentDataProviderList", "sale", "\\Bitrix\\Sale\\UserConsent", "onDataProviderList");
+
 		RegisterModuleDependences("currency", "OnBeforeCurrencyDelete", "sale", "CSaleOrder", "OnBeforeCurrencyDelete");
 		RegisterModuleDependences("currency", "OnBeforeCurrencyDelete", "sale", "CSaleLang", "OnBeforeCurrencyDelete");
 		RegisterModuleDependences("currency", "OnModuleUnInstall", "sale", "", "CurrencyModuleUnInstallSale");
@@ -425,6 +428,9 @@ Class sale extends CModule
 
 		UnRegisterModuleDependences("main", "OnEventLogGetAuditTypes", "sale", "CSaleYMHandler", 'OnEventLogGetAuditTypes');
 		UnRegisterModuleDependences("main", "OnEventLogGetAuditTypes", "sale", "CSalePaySystemAction", 'OnEventLogGetAuditTypes');
+
+		UnRegisterModuleDependences("main", "OnUserConsentProviderList", "sale", "\\Bitrix\\Sale\\UserConsent", "onProviderList");
+		UnRegisterModuleDependences("main", "OnUserConsentDataProviderList", "sale", "\\Bitrix\\Sale\\UserConsent", "onDataProviderList");
 
 		UnRegisterModuleDependences('sale', 'OnGetBusinessValueGroups', 'sale', '\Bitrix\Sale\PaySystem\Manager', 'getBusValueGroups');
 		UnRegisterModuleDependences('sale', 'OnGetBusinessValueConsumers', 'sale', '\Bitrix\Sale\PaySystem\Manager', 'getConsumersList');

@@ -1116,29 +1116,54 @@ class CBPWorkflowTemplateUser
 {
 	const CurrentUser = "CurrentUser";
 
+	private $userId = 0;
 	private $isAdmin = false;
+	private $fullName = '';
 
 	public function __construct($userId = null)
 	{
+		$this->userId = 0;
 		$this->isAdmin = false;
+		$this->fullName = '';
 
 		if (is_int($userId))
 		{
 			$userGroups = CUser::GetUserGroup($userId);
+			$this->userId = (int)$userId;
 			$this->isAdmin = in_array(1, $userGroups);
 		}
-		elseif ($userId == self::CurrentUser)
+		elseif ($userId === self::CurrentUser)
 		{
 			global $USER;
-
-			if ($USER->IsAuthorized())
-				$this->isAdmin = $USER->IsAdmin();
+			if (is_object($USER) && $USER->IsAuthorized())
+			{
+				$this->userId = (int)$USER->GetID();
+				$this->isAdmin = (
+					$USER->IsAdmin()
+					|| CModule::IncludeModule('bitrix24') && CBitrix24::IsPortalAdmin($USER->GetID())
+				);
+				$this->fullName = $USER->GetFullName();
+			}
 		}
 	}
 
-	public function IsAdmin()
+	public function getId()
+	{
+		return $this->userId;
+	}
+
+	public function getBizprocId()
+	{
+		return $this->userId > 0 ? 'user_'.$this->userId : null;
+	}
+
+	public function isAdmin()
 	{
 		return $this->isAdmin;
 	}
+
+	public function getFullName()
+	{
+		return $this->fullName;
+	}
 }
-?>

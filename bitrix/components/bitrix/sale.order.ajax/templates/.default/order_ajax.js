@@ -68,6 +68,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		timeOut: {},
 		isMobile: BX.browser.IsMobile(),
 		isHttps: window.location.protocol == "https:",
+		orderSaveAllowed: false,
 
 		/**
 		 * Initialization of sale.order.ajax component js
@@ -147,6 +148,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			if (this.params.USE_ENHANCED_ECOMMERCE === 'Y')
 			{
 				this.setAnalyticsDataLayer('checkout');
+			}
+
+			if (this.params.USER_CONSENT === 'Y')
+			{
+				this.initUserConsent();
 			}
 		},
 
@@ -333,7 +339,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 
 			if (!redirected)
+			{
 				this.endLoader();
+				this.disallowOrderSave();
+			}
 		},
 
 		/**
@@ -1220,7 +1229,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		bindEvents: function()
 		{
-			BX.bind(this.orderSaveBlockNode.querySelector('a'), 'click', BX.proxy(this.clickOrderSaveAction, this));
+			BX.bind(this.orderSaveBlockNode.querySelector('[data-save-button]'), 'click', BX.proxy(this.clickOrderSaveAction, this));
 			BX.bind(window, 'scroll', BX.proxy(this.totalBlockScrollCheck, this));
 			BX.bind(window, 'resize', BX.throttle(function(){
 				this.totalBlockResizeCheck();
@@ -1633,11 +1642,28 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		{
 			if (this.isValidForm())
 			{
-				this.reachGoal('order');
-				this.sendRequest('saveOrderAjax');
+				this.allowOrderSave();
+
+				if (this.params.USER_CONSENT === 'Y')
+				{
+					BX.onCustomEvent('bx-soa-order-save', []);
+				}
+				else
+				{
+					this.doSaveAction();
+				}
 			}
 
 			return BX.PreventDefault(event);
+		},
+
+		doSaveAction: function()
+		{
+			if (this.isOrderSaveAllowed())
+			{
+				this.reachGoal('order');
+				this.sendRequest('saveOrderAjax');
+			}
 		},
 
 		/**
@@ -8062,6 +8088,30 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			window[this.params.DATA_LAYER_NAME] = window[this.params.DATA_LAYER_NAME] || [];
 			window[this.params.DATA_LAYER_NAME].push(info);
+		},
+
+		isOrderSaveAllowed: function()
+		{
+			return this.orderSaveAllowed === true;
+		},
+
+		allowOrderSave: function()
+		{
+			this.orderSaveAllowed = true;
+		},
+
+		disallowOrderSave: function()
+		{
+			this.orderSaveAllowed = false;
+		},
+
+		initUserConsent: function()
+		{
+			BX.ready(BX.delegate(function(){
+				var control = BX.UserConsent.load(this.orderBlockNode);
+				BX.addCustomEvent(control, BX.UserConsent.events.save, BX.proxy(this.doSaveAction, this));
+				BX.addCustomEvent(control, BX.UserConsent.events.refused, BX.proxy(this.disallowOrderSave, this));
+			}, this));
 		}
 	};
 })();

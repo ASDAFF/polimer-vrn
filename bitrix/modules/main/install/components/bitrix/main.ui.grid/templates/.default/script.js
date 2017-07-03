@@ -110,7 +110,7 @@
 			this.initArguments = [].slice.call(arguments);
 			this.container = BX(containerId);
 
-			if (BX.Main.grid.isNeedResourcesReady(this.container))
+			if (!BX.browser.IsSafari() && BX.Main.grid.isNeedResourcesReady(this.container))
 			{
 				BX.bind(this.container, 'animationend', BX.proxy(this._onResourcesReady, this));
 			}

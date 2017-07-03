@@ -324,76 +324,79 @@ class CMainUiFilter extends CBitrixComponent
 		return array_key_exists($field["NAME"], $presetFields) ? $presetFields[$field["NAME"]] : "";
 	}
 
-	protected function preparePresetFields(Array $presetRows = array(), Array $presetFields = array())
+	protected function preparePresetFields($presetRows = array(), $presetFields = array())
 	{
 		$result = array();
 
-		foreach ($presetRows as $rowKey => $rowName)
+		if (is_array($presetRows) && is_array($presetFields))
 		{
-			$field = $this->getField($rowName);
-
-			if (empty($field))
+			foreach ($presetRows as $rowKey => $rowName)
 			{
-				continue;
-			}
+				$field = $this->getField($rowName);
 
-			$value = array_key_exists($rowName, $presetFields) ? $presetFields[$rowName] : "";
-
-			switch ($field["TYPE"])
-			{
-				case Type::SELECT :
+				if (empty($field))
 				{
-					if (!empty($value) && is_array($value))
+					continue;
+				}
+
+				$value = array_key_exists($rowName, $presetFields) ? $presetFields[$rowName] : "";
+
+				switch ($field["TYPE"])
+				{
+					case Type::SELECT :
 					{
-						$values = array_values($value);
-						$value = $values[0];
+						if (!empty($value) && is_array($value))
+						{
+							$values = array_values($value);
+							$value = $values[0];
+						}
+
+						$field["VALUE"] = self::prepareSelectValue($field["ITEMS"], $value);
+						break;
 					}
 
-					$field["VALUE"] = self::prepareSelectValue($field["ITEMS"], $value);
-					break;
+					case Type::MULTI_SELECT :
+					{
+						$value = is_array($value) ? $value : array();
+						$field["VALUE"] = self::prepareMultiselectValue($field["ITEMS"], $value);
+						break;
+					}
+
+					case Type::DATE :
+					{
+						$field["SUB_TYPE"] = self::prepareSubtype($field, $presetFields, "_datesel");
+						$field["VALUES"] = self::prepareValue($field, $presetFields, "_datesel");
+						break;
+					}
+
+					case Type::NUMBER :
+					{
+						$field["SUB_TYPE"] = self::prepareSubtype($field, $presetFields, "_numsel");
+						$field["VALUES"] = self::prepareValue($field, $presetFields, "_numsel");
+						break;
+					}
+
+					case Type::CUSTOM_ENTITY :
+					{
+						$field["VALUES"] = self::prepareCustomEntityValue($field, $presetFields);
+						break;
+					}
+
+					case Type::CUSTOM :
+					{
+						$field["_VALUE"] = self::prepareCustomValue($field, $presetFields);
+						break;
+					}
+
+					case Type::STRING :
+					{
+						$field["VALUE"] = $value;
+						break;
+					}
 				}
 
-				case Type::MULTI_SELECT :
-				{
-					$value = is_array($value) ? $value : array();
-					$field["VALUE"] = self::prepareMultiselectValue($field["ITEMS"], $value);
-					break;
-				}
-
-				case Type::DATE :
-				{
-					$field["SUB_TYPE"] = self::prepareSubtype($field, $presetFields, "_datesel");
-					$field["VALUES"] = self::prepareValue($field, $presetFields, "_datesel");
-					break;
-				}
-
-				case Type::NUMBER :
-				{
-					$field["SUB_TYPE"] = self::prepareSubtype($field, $presetFields, "_numsel");
-					$field["VALUES"] = self::prepareValue($field, $presetFields, "_numsel");
-					break;
-				}
-
-				case Type::CUSTOM_ENTITY :
-				{
-					$field["VALUES"] = self::prepareCustomEntityValue($field, $presetFields);
-					break;
-				}
-
-				case Type::CUSTOM :
-				{
-					$field["_VALUE"] = self::prepareCustomValue($field, $presetFields);
-					break;
-				}
-
-				case Type::STRING :
-				{
-					$field["VALUE"] = $value;
-					break;
-				}
+				$result[] = $field;
 			}
-
-			$result[] = $field;
 		}
 
 		return $result;

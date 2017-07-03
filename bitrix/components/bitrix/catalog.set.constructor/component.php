@@ -140,14 +140,18 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 		$this->abortResultCache();
 		return;
 	}
+
 	Main\Type\Collection::sortByColumn($currentSet['ITEMS'], array('SORT' => SORT_ASC), '', null, true);
+
 	$arSetItemsID = array($arResult['ELEMENT_ID']);
+	$productQuantity = array();
 	foreach ($currentSet['ITEMS'] as $index => $item)
 	{
-		$arSetItemsID[] = $item['ITEM_ID'];
-		if (!isset($productLink[$item['ITEM_ID']]))
-			$productLink[$item['ITEM_ID']] = array();
-		$productLink[$item['ITEM_ID']][] = $index;
+		$id = $item['ITEM_ID'];
+		$arSetItemsID[] = $id;
+		$productLink[$id] = $index;
+		$productQuantity[$id] = $item['QUANTITY'];
+		unset($id);
 	}
 	unset($index, $item);
 
@@ -166,13 +170,16 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 		'CATALOG_AVAILABLE',
 		'CATALOG_MEASURE'
 	);
-	$arResult["PRICES"] = CIBlockPriceTools::GetCatalogPrices($arResult['PRODUCT_IBLOCK_ID'], $arParams["PRICE_CODE"]);
-	foreach($arResult["PRICES"] as $key => $value)
-	{
-		if (!$value['CAN_VIEW'] && !$value['CAN_BUY'])
-			continue;
-		$select[] = $value["SELECT"];
-	}
+	$filter = array(
+		'ID' => $arSetItemsID,
+		'IBLOCK_LID' => SITE_ID,
+		'ACTIVE_DATE' => 'Y',
+		'ACTIVE' => 'Y',
+		'CHECK_PERMISSIONS' => 'Y',
+		'MIN_PERMISSION' => 'R'
+	);
+	$arResult['PRICES'] = \CIBlockPriceTools::GetCatalogPrices($arResult['PRODUCT_IBLOCK_ID'], $arParams['PRICE_CODE']);
+	$allowPriceTypes = \CIBlockPriceTools::GetAllowCatalogPrices($arResult['PRICES']);
 
 	$arResult["SET_ITEMS"]["DEFAULT"] = array();
 	$arResult["SET_ITEMS"]["OTHER"] = array();
@@ -183,7 +190,10 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 	$arResult['ITEMS_RATIO'] = array_fill_keys($arSetItemsID, 1);
 	$ratioResult = Catalog\ProductTable::getCurrentRatioWithMeasure($arSetItemsID);
 	foreach ($ratioResult as $ratioProduct => $ratioData)
+	{
 		$arResult['ITEMS_RATIO'][$ratioProduct] = $ratioData['RATIO'];
+		$productQuantity[$ratioProduct] *= $ratioData['RATIO'];
+	}
 	unset($ratioProduct, $ratioData);
 
 	$tagIblockList = array();
@@ -196,14 +206,7 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 	$offerList = array();
 	$itemsIterator = CIBlockElement::GetList(
 		array(),
-		array(
-			'ID' => $arSetItemsID,
-			'IBLOCK_LID' => SITE_ID,
-			'ACTIVE_DATE' => 'Y',
-			'ACTIVE' => 'Y',
-			'CHECK_PERMISSIONS' => 'Y',
-			'MIN_PERMISSION' => 'R'
-		),
+		$filter,
 		false,
 		false,
 		$select
@@ -294,6 +297,57 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 		$tagIblockList[$item['IBLOCK_ID']] = $item['IBLOCK_ID'];
 	unset($item);
 
+	if (!empty($allowPriceTypes))
+	{
+		$prices = array();
+		$iterator = Catalog\PriceTable::getList(array(
+			'select' => array(
+				'ID', 'PRODUCT_ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY',
+				'QUANTITY_FROM', 'QUANTITY_TO',
+				'EXTRA_ID'
+			),
+			'filter' => array('@PRODUCT_ID' => array_keys($itemsList), '@CATALOG_GROUP_ID' => $allowPriceTypes),
+			'order' => array('PRODUCT_ID' => 'ASC', 'CATALOG_GROUP_ID' => 'ASC')
+		));
+		while ($row = $iterator->fetch())
+		{
+			$id = (int)$row['PRODUCT_ID'];
+			$rawPrice = array();
+			if ($row['QUANTITY_FROM'] !== null || $row['QUANTITY_TO'] !== null)
+			{
+				if (
+					($row['QUANTITY_FROM'] === null || (int)$row['QUANTITY_FROM'] <= $productQuantity[$id])
+					&& ($row['QUANTITY_TO'] === null || (int)$row['QUANTITY_TO'] >= $productQuantity[$id])
+				)
+					$rawPrice = $row;
+			}
+			else
+			{
+				$rawPrice = $row;
+			}
+			if (!empty($rawPrice))
+			{
+				$priceType = $rawPrice['CATALOG_GROUP_ID'];
+				$itemsList[$id]['CATALOG_PRICE_ID_'.$priceType] = $rawPrice['ID'];
+				$itemsList[$id]['~CATALOG_PRICE_ID_'.$priceType] = $rawPrice['ID'];
+				$itemsList[$id]['CATALOG_PRICE_'.$priceType] = $rawPrice['PRICE'];
+				$itemsList[$id]['~CATALOG_PRICE_'.$priceType] = $rawPrice['PRICE'];
+				$itemsList[$id]['CATALOG_CURRENCY_'.$priceType] = $rawPrice['CURRENCY'];
+				$itemsList[$id]['~CATALOG_CURRENCY_'.$priceType] = $rawPrice['CURRENCY'];
+				$itemsList[$id]['CATALOG_QUANTITY_FROM_'.$priceType] = $rawPrice['QUANTITY_FROM'];
+				$itemsList[$id]['~CATALOG_QUANTITY_FROM_'.$priceType] = $rawPrice['QUANTITY_FROM'];
+				$itemsList[$id]['CATALOG_QUANTITY_TO_'.$priceType] = $rawPrice['QUANTITY_TO'];
+				$itemsList[$id]['~CATALOG_QUANTITY_TO_'.$priceType] = $rawPrice['QUANTITY_TO'];
+				$itemsList[$id]['CATALOG_EXTRA_ID_'.$priceType] = $rawPrice['EXTRA_ID'];
+				$itemsList[$id]['~CATALOG_EXTRA_ID_'.$priceType] = $rawPrice['EXTRA_ID'];
+				unset($priceType);
+			}
+			unset($rawPrice, $id);
+		}
+		unset($row, $iterator);
+
+	}
+
 	foreach ($itemsList as $item)
 	{
 		$priceList = CIBlockPriceTools::GetItemPrices(
@@ -332,10 +386,10 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 			$item
 		);
 
-		if (!empty($productLink[$item['ID']]))
+		if (isset($productLink[$item['ID']]))
 		{
-			foreach ($productLink[$item['ID']] as &$index)
-				$currentSet['ITEMS'][$index]['ITEM_DATA'] = $item;
+			$index = $productLink[$item['ID']];
+			$currentSet['ITEMS'][$index]['ITEM_DATA'] = $item;
 			unset($index);
 		}
 		elseif ($item['ID'] == $arResult['ELEMENT_ID'])

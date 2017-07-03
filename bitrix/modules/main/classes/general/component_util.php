@@ -779,6 +779,46 @@ class CComponentUtil
 					"ADDITIONAL_VALUES" => "N"
 				);
 			}
+			elseif ($arParamKeys[$i] == "USER_CONSENT")
+			{
+				$arComponentParameters["GROUPS"]["USER_CONSENT"] = array(
+					"NAME" => GetMessage("COMP_GROUP_USER_CONSENT"),
+					"SORT" => 350
+				);
+
+				$arComponentParameters["PARAMETERS"]["USER_CONSENT"] = array(
+					"PARENT" => "USER_CONSENT",
+					"NAME" => GetMessage("COMP_PROP_USER_CONSENT_USE"),
+					"TYPE" => "CHECKBOX",
+					"DEFAULT" => "N",
+					"ADDITIONAL_VALUES" => "N"
+				);
+
+				$arComponentParameters["PARAMETERS"]["USER_CONSENT_ID"] = array(
+					"PARENT" => "USER_CONSENT",
+					"NAME" => GetMessage("COMP_PROP_USER_CONSENT_ID"),
+					"TYPE" => "LIST",
+					"VALUES" => array_merge(array(GetMessage("COMP_PROP_USER_CONSENT_ID_DEF")), \Bitrix\Main\UserConsent\Agreement::getActiveList()),
+					"MULTIPLE" => "N",
+					"DEFAULT" => "",
+				);
+
+				$arComponentParameters["PARAMETERS"]["USER_CONSENT_IS_CHECKED"] = array(
+					"PARENT" => "USER_CONSENT",
+					"NAME" => GetMessage("COMP_PROP_USER_CONSENT_IS_CHECKED"),
+					"TYPE" => "CHECKBOX",
+					"DEFAULT" => "Y",
+					"ADDITIONAL_VALUES" => "N"
+				);
+
+				$arComponentParameters["PARAMETERS"]["USER_CONSENT_IS_LOADED"] = array(
+					"PARENT" => "USER_CONSENT",
+					"NAME" => GetMessage("COMP_PROP_USER_CONSENT_IS_LOADED"),
+					"TYPE" => "CHECKBOX",
+					"DEFAULT" => "N",
+					"ADDITIONAL_VALUES" => "N"
+				);
+			}
 			else
 			{
 				$parent = $arComponentParameters["PARAMETERS"][$arParamKeys[$i]]["PARENT"];

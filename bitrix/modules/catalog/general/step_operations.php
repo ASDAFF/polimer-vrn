@@ -347,7 +347,7 @@ class CCatalogProductAvailable extends CCatalogStepOperations
 					'BX_STEP_OPERATION_CATALOG_TITLE',
 					array(
 						'#ID#' => $this->iblockData['IBLOCK_ID'],
-						'#NAME#' => CIBlock::GetArrayByID($this->iblockData['IBLOCK_ID'], 'NAME')
+						'#NAME#' => htmlspecialcharsbx(CIBlock::GetArrayByID($this->iblockData['IBLOCK_ID'], 'NAME'))
 					)
 				);
 				break;
@@ -356,7 +356,7 @@ class CCatalogProductAvailable extends CCatalogStepOperations
 					'BX_STEP_OPERATION_OFFERS_TITLE',
 					array(
 						'#ID#' => $this->iblockData['PRODUCT_IBLOCK_ID'],
-						'#NAME#' => CIBlock::GetArrayByID($this->iblockData['PRODUCT_IBLOCK_ID'], 'NAME')
+						'#NAME#' => htmlspecialcharsbx(CIBlock::GetArrayByID($this->iblockData['PRODUCT_IBLOCK_ID'], 'NAME'))
 					)
 				);
 				break;
@@ -366,7 +366,7 @@ class CCatalogProductAvailable extends CCatalogStepOperations
 					'BX_STEP_OPERATION_CATALOG_TITLE',
 					array(
 						'#ID#' => $this->iblockData['PRODUCT_IBLOCK_ID'],
-						'#NAME#' => CIBlock::GetArrayByID($this->iblockData['PRODUCT_IBLOCK_ID'], 'NAME')
+						'#NAME#' => htmlspecialcharsbx(CIBlock::GetArrayByID($this->iblockData['PRODUCT_IBLOCK_ID'], 'NAME'))
 					)
 				);
 				break;

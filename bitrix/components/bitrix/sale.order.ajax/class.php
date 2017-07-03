@@ -2810,6 +2810,26 @@ class SaleOrderAjax extends \CBitrixComponent
 	}
 
 	/**
+	 * Set order total prices data from order object to $this->arResult
+	 */
+	protected function obtainUserConsentInfo()
+	{
+		$propertyNames = array();
+
+		$propertyIterator = Sale\Internals\OrderPropsTable::getList(array(
+			'select' => array('NAME'),
+			'filter' => array('ACTIVE' => 'Y', 'UTIL' => 'N'),
+			'order' => array('SORT' => 'ASC', 'ID' => 'ASC')
+		));
+		while ($property = $propertyIterator->fetch())
+		{
+			$propertyNames[] = $property['NAME'];
+		}
+
+		$this->arResult['USER_CONSENT_PROPERTY_DATA'] = $propertyNames;
+	}
+
+	/**
 	 * Returns true if current property is valid for selected payment & delivery
 	 *
 	 * @param $property
@@ -4541,6 +4561,11 @@ class SaleOrderAjax extends \CBitrixComponent
 		$this->obtainTaxes();
 		$this->obtainTotal();
 
+		if ($this->arParams['USER_CONSENT'] === 'Y')
+		{
+			$this->obtainUserConsentInfo();
+		}
+
 		$this->getJsDataResult();
 
 		if ($this->arParams['COMPATIBLE_MODE'] == 'Y')
@@ -5409,6 +5434,13 @@ class SaleOrderAjax extends \CBitrixComponent
 		{
 			$arResult["ORDER_ID"] = $res->getId();
 			$arResult["ACCOUNT_NUMBER"] = $this->order->getField('ACCOUNT_NUMBER');
+
+			if ($this->arParams['USER_CONSENT'] === 'Y')
+			{
+				Main\UserConsent\Consent::addByContext(
+					$this->arParams['USER_CONSENT_ID'], 'sale/order', $arResult['ORDER_ID']
+				);
+			}
 			//TODO: change this code to api method
 			if (!empty($_SESSION['SALE_USER_BASKET_PRICE']))
 				unset($_SESSION['SALE_USER_BASKET_PRICE']);

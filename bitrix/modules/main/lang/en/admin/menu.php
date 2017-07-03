@@ -127,4 +127,5 @@ $MESS["MAIN_MENU_COMPOSITE_ALT"] = "Manage composite mode";
 $MESS["MAIN_MENU_HTTPS"] = "HTTPS Configuration";
 $MESS["MAIN_MENU_HTTPS_ALT"] = "Website HTTPS Configuration";
 $MESS["MAIN_MENU_GEOIP_HANDLERS"] = "Geolocation";
+$MESS["MAIN_MENU_USER_CONSENT"] = "Consents";
 ?>

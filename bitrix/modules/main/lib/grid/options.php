@@ -9,6 +9,51 @@ namespace Bitrix\Main\Grid;
  */
 class Options extends \CGridOptions
 {
+	/** @var string */
+	protected $id;
+
+
+	/**
+	 * Options constructor.
+	 *
+	 * @param $gridId $arParams["GRID_ID"]
+	 * @param array $filterPresets
+	 */
+	public function __construct($gridId, array $filterPresets = array())
+	{
+		$this->id = $gridId;
+		parent::__construct($gridId, $filterPresets);
+
+		if (!static::isAuthorized() &&
+			isset($_SESSION["main.ui.grid.options"][$this->id]) &&
+			is_array($_SESSION["main.ui.grid.options"][$this->id]) &&
+			!empty($_SESSION["main.ui.grid.options"][$this->id]))
+		{
+			$this->all_options = $_SESSION["main.ui.grid.options"][$this->id];
+		}
+	}
+
+
+	/**
+	 * Gets grid id
+	 * @return string $arParams["GRID_ID"]
+	 */
+	public function getId()
+	{
+		return $this->id;
+	}
+
+
+	/**
+	 * Gets $USER object
+	 * @return \CUser
+	 */
+	protected static function getUser()
+	{
+		global $USER;
+		return $USER;
+	}
+
 
 	/**
 	 * Sets width of grid columns
@@ -71,7 +116,7 @@ class Options extends \CGridOptions
 	 */
 	public function setExpandedRows($ids = array())
 	{
-		$_SESSION["main.ui.grid"][$this->grid_id]["expanded_rows"] = $ids;
+		$_SESSION["main.ui.grid"][$this->getId()]["expanded_rows"] = $ids;
 	}
 
 
@@ -81,7 +126,7 @@ class Options extends \CGridOptions
 	 */
 	public function getExpandedRows()
 	{
-		return $_SESSION["main.ui.grid"][$this->grid_id]["expanded_rows"];
+		return $_SESSION["main.ui.grid"][$this->getId()]["expanded_rows"];
 	}
 
 
@@ -91,7 +136,7 @@ class Options extends \CGridOptions
 	 */
 	public function setCollapsedGroups($ids = array())
 	{
-		$_SESSION["main.ui.grid"][$this->grid_id]["collapsed_groups"] = is_array($ids) ? $ids : array();
+		$_SESSION["main.ui.grid"][$this->getId()]["collapsed_groups"] = is_array($ids) ? $ids : array();
 	}
 
 
@@ -101,7 +146,7 @@ class Options extends \CGridOptions
 	 */
 	public function getCollapsedGroups()
 	{
-		return $_SESSION["main.ui.grid"][$this->grid_id]["collapsed_groups"];
+		return $_SESSION["main.ui.grid"][$this->getId()]["collapsed_groups"];
 	}
 
 
@@ -111,11 +156,12 @@ class Options extends \CGridOptions
 	 */
 	public function resetView($viewId)
 	{
+		$gridId = $this->getId();
 		$this->all_options["views"][$viewId] = array();
-		unset($_SESSION["main.interface.grid"][$this->grid_id]);
-		unset($_SESSION["main.ui.grid"][$this->grid_id]);
+		unset($_SESSION["main.interface.grid"][$gridId]);
+		unset($_SESSION["main.ui.grid"][$gridId]);
 		$this->Save();
-		parent::__construct($this->grid_id);
+		parent::__construct($gridId);
 	}
 
 
@@ -125,11 +171,12 @@ class Options extends \CGridOptions
 	 */
 	public function deleteView($viewId)
 	{
+		$gridId = $this->getId();
 		unset($this->all_options["views"][$viewId]);
-		unset($_SESSION["main.interface.grid"][$this->grid_id]);
-		unset($_SESSION["main.ui.grid"][$this->grid_id]);
+		unset($_SESSION["main.interface.grid"][$gridId]);
+		unset($_SESSION["main.ui.grid"][$gridId]);
 		$this->Save();
-		parent::__construct($this->grid_id);
+		parent::__construct($gridId);
 	}
 
 
@@ -178,6 +225,45 @@ class Options extends \CGridOptions
 		}
 
 		return $result;
+	}
+
+
+	/**
+	 * Gets current user id
+	 * @return int
+	 */
+	protected static function getUserId()
+	{
+		$userId = static::getUser()->getID();
+		return is_scalar($userId) ? (int) $userId : 0;
+	}
+
+
+	/**
+	 * Checks that current user is authorized
+	 * @return bool
+	 */
+	protected static function isAuthorized()
+	{
+		return static::getUser()->isAuthorized();
+	}
+
+
+	/**
+	 * Saves all options
+	 */
+	public function save()
+	{
+		$gridId = $this->getId();
+
+		if (static::getUser()->isAuthorized())
+		{
+			\CUserOptions::setOption("main.interface.grid", $gridId, $this->all_options);
+		}
+		else
+		{
+			$_SESSION["main.ui.grid.options"][$gridId] = $this->all_options;
+		}
 	}
 
 }

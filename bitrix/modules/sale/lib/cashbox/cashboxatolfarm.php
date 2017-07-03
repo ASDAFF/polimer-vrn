@@ -26,7 +26,6 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 	 */
 	public function buildCheckQuery(Check $check)
 	{
-
 		$data = $check->getDataForCheck();
 
 		/** @var Main\Type\DateTime $dateTime */
@@ -53,7 +52,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 			),
 			'receipt' => array(
 				'attributes' => array(
-					'email' => $data['client_email'],
+					'email' => $data['client_email'] ?: '',
 					'phone' => $phone,
 					'sno' => $this->getValueFromSettings('TAX', 'SNO'),
 				),
@@ -221,6 +220,11 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 		}
 
 		$checkQuery = static::buildCheckQuery($check);
+		$validateResult = $this->validate($checkQuery);
+		if (!$validateResult->isSuccess())
+		{
+			return $validateResult;
+		}
 
 		$checkTypeMap = $this->getCheckTypeMap();
 		$checkType = $checkTypeMap[$check::getType()];
@@ -273,6 +277,22 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 		}
 
 		return $printResult;
+	}
+
+	/**
+	 * @param array $checkData
+	 * @return Result
+	 */
+	private function validate(array $checkData)
+	{
+		$result = new Result();
+
+		if ($checkData['receipt']['attributes']['email'] === '' && $checkData['receipt']['attributes']['phone'] === '')
+		{
+			$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_CASHBOX_ATOL_ERR_EMPTY_PHONE_EMAIL')));
+		}
+
+		return $result;
 	}
 
 	/**
@@ -521,14 +541,6 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 	 */
 	protected static function getErrorType($errorCode)
 	{
-		$errors = array(-3800, -3803, -3804, -3805, -3816, -3807, -3896, -3897);
-		if (in_array($errorCode, $errors))
-			return Errors\Error::TYPE;
-
-		$warnings = array();
-		if (in_array($errorCode, $warnings))
-			return Errors\Warning::TYPE;
-
-		return null;
+		return Errors\Error::TYPE;
 	}
 }

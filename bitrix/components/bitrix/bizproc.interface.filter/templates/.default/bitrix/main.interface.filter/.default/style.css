@@ -643,3 +643,20 @@
 .bp-filter-popup-item .popup-window-hr {}
 
 .bp-main-wrap-flat .bx-filter-tabs-block {padding-left: 9px;}
+.bizproc-user-search-filter-clean {
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	display: inline-block;
+	width: 11px;
+	height: 11px;
+	background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 17 17"><polygon fill="#535C69" fill-rule="evenodd" points="9.486 7.485 9.486 2.485 7.486 2.485 7.486 7.485 2.486 7.485 2.486 9.485 7.486 9.485 7.486 14.485 9.486 14.485 9.486 9.485 14.486 9.485 14.486 7.485" transform="rotate(45 8.486 8.485)"/></svg>') center center no-repeat;
+	-webkit-transition: opacity .3s ease;
+	-moz-transition: opacity .3s ease;
+	transition: opacity .3s ease;
+	cursor: pointer;
+	opacity: .5;
+}
+.bizproc-user-search-filter-clean:hover {
+	opacity: 1;
+}

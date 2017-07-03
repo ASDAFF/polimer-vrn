@@ -6,6 +6,7 @@ class CBPRequestInformationActivity
 	implements IBPEventActivity, IBPActivityExternalEventListener
 {
 	const ACTIVITY = 'RequestInformationActivity';
+	const CONTROLS_PREFIX = 'bpriact_';
 
 	private $taskId = 0;
 	private $taskUsers = array();
@@ -312,12 +313,12 @@ class CBPRequestInformationActivity
 				if ($arRequest === null)
 					$realValue = $parameter["Default"];
 				else
-					$realValue = $arRequest[$parameter["Name"]];
+					$realValue = $arRequest[static::CONTROLS_PREFIX.$parameter["Name"]];
 
 				$form .= $documentService->GetFieldInputControl(
 					$arTask["PARAMETERS"]["DOCUMENT_TYPE"],
 					$parameter,
-					array("task_form1", $parameter["Name"]),
+					array("task_form1", static::CONTROLS_PREFIX.$parameter["Name"]),
 					$realValue,
 					false,
 					true
@@ -335,13 +336,14 @@ class CBPRequestInformationActivity
 				$required = '<span style="color: red">*</span>';
 			}
 
+			$commentText = $arRequest ? $arRequest['task_comment'] : '';
 			$form .=
 				'<tr><td valign="top" width="30%" align="right" class="bizproc-field-name">'
 					.(strlen($arTask["PARAMETERS"]["CommentLabelMessage"]) > 0 ? $arTask["PARAMETERS"]["CommentLabelMessage"] : GetMessage("BPRIA_ACT_COMMENT"))
 					.$required
 				.':</td>'.
 				'<td valign="top" width="70%" class="bizproc-field-value">'.
-				'<textarea rows="3" cols="50" name="task_comment"></textarea>'.
+				'<textarea rows="3" cols="50" name="task_comment">'.htmlspecialcharsbx($commentText).'</textarea>'.
 				'</td></tr>';
 		}
 
@@ -419,7 +421,7 @@ class CBPRequestInformationActivity
 				$result[$parameter["Name"]] = $documentService->GetFieldInputValue(
 					$task["PARAMETERS"]["DOCUMENT_TYPE"],
 					$parameter,
-					$parameter["Name"],
+					static::CONTROLS_PREFIX.$parameter["Name"],
 					$request,
 					$arErrorsTmp
 				);

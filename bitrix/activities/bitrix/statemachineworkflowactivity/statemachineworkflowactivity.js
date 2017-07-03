@@ -51,7 +51,17 @@ StateMachineWorkflowActivity = function()
 		ob.__l = [];
 		ob.StatusArrows = [];
 		ob.FindSetState(false, ob);
-		var ar = ob.StatusArrows;
+		var ar = [], arUnsorted = ob.StatusArrows, pairId, paired = {};
+		for(i=0; i<arUnsorted.length; i++)
+		{
+			pairId = arUnsorted[i][0] + '|' + arUnsorted[i][1];
+			if (!(pairId in paired))
+			{
+				paired[pairId] = true;
+				ar.push(arUnsorted[i]);
+			}
+		}
+
 		for(i=0; i<ar.length; i++)
 		{
 			var from = ActGetRealPos(document.getElementById(ar[i][0]));

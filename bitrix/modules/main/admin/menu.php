@@ -329,6 +329,12 @@ if($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('manage
 			"more_url" => array("geoip_handler_edit.php"),
 			"title" => GetMessage('MAIN_MENU_GEOIP_HANDLERS'),
 		);
+		$settingsItems[] = array(
+			"text" => GetMessage('MAIN_MENU_USER_CONSENT'),
+			"url" => "agreement_admin.php?lang=".LANGUAGE_ID,
+			"more_url" => array("agreement_edit.php", "agreement_consents.php"),
+			"title" => GetMessage('MAIN_MENU_USER_CONSENT'),
+		);
 	}
 
 	if($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('edit_own_profile'))

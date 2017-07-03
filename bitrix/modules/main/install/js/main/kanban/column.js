@@ -91,6 +91,14 @@ BX.Kanban.Column.prototype =
 		return this.id;
 	},
 
+	/**
+	 *
+	 * @param {object} options
+	 * @param {string} [options.name]
+	 * @param {string} [options.color]
+	 * @param {object} [options.data]
+	 * @param {number} [options.total]
+	 */
 	setOptions: function(options)
 	{
 		if (!options)
@@ -201,61 +209,112 @@ BX.Kanban.Column.prototype =
 	getItemsCount: function()
 	{
 		return this.items.reduce(function(count, /*BX.Kanban.Item*/ item) {
-			return item.isCountable() ? count + 1 : count;
+			return item.isCountable() && item.isVisible() ? count + 1 : count;
 		}, 0);
 	},
 
 	/**
 	 *
+	 * @param {boolean} [onlyVisible=true]
 	 * @returns {BX.Kanban.Item|null}
 	 */
-	getFirstItem: function()
+	getFirstItem: function(onlyVisible)
 	{
 		var items = this.getItems();
 
-		return items[0] ? items[0] : null;
+		for (var i = 0; i < items.length; i++)
+		{
+			var item = items[i];
+
+			if (item.isVisible() || onlyVisible === false)
+			{
+				return item;
+			}
+		}
+
+		return null;
 	},
 
 	/**
 	 *
+	 * @param {boolean} [onlyVisible=true]
 	 * @returns {BX.Kanban.Item|null}
 	 */
-	getLastItem: function()
+	getLastItem: function(onlyVisible)
 	{
 		var items = this.getItems();
-		var count = this.getItemsCount();
 
-		return count > 0 ? items[count - 1] : null;
+		for (var i = items.length - 1; i >= 0; i--)
+		{
+			var item = items[i];
+			if (item.isVisible() || onlyVisible === false)
+			{
+				return item;
+			}
+		}
+
+		return null;
 	},
 
 	/**
 	 *
 	 * @param {BX.Kanban.Item|string|number} currentItem
+	 * @param {boolean} [onlyVisible=true]
 	 * @returns {BX.Kanban.Item|null}
 	 */
-	getNextItemSibling: function(currentItem)
+	getNextItemSibling: function(currentItem, onlyVisible)
 	{
 		currentItem  = this.getGrid().getItem(currentItem);
 
 		var items = this.getItems();
 		var itemIndex = BX.util.array_search(currentItem, items);
 
-		return itemIndex !== -1 && items[itemIndex + 1] ? items[itemIndex + 1] : null;
+		if (itemIndex === -1 || !items[itemIndex + 1])
+		{
+			return null;
+		}
+
+		for (var i = itemIndex + 1; i < items.length; i++)
+		{
+			var item = items[i];
+
+			if (item.isVisible() || onlyVisible === false)
+			{
+				return item;
+			}
+		}
+
+		return null;
 	},
 
 	/**
 	 *
 	 * @param {BX.Kanban.Item|string|number} currentItem
+	 * @param {boolean} [onlyVisible=true]
 	 * @returns {BX.Kanban.Item|null}
 	 */
-	getPreviousItemSibling: function(currentItem)
+	getPreviousItemSibling: function(currentItem, onlyVisible)
 	{
 		currentItem  = this.getGrid().getItem(currentItem);
 
 		var items = this.getItems();
 		var itemIndex = BX.util.array_search(currentItem, items);
 
-		return itemIndex > 0 && items[itemIndex - 1] ? items[itemIndex - 1] : null;
+		if (itemIndex === -1 || !items[itemIndex - 1])
+		{
+			return null;
+		}
+
+		for (var i = itemIndex - 1; i >= 0; i--)
+		{
+			var item = items[i];
+			if (item.isVisible() || onlyVisible === false)
+			{
+				return item;
+			}
+		}
+
+		return null;
 	},
 
 	/**
@@ -278,7 +337,7 @@ BX.Kanban.Column.prototype =
 
 		if (found)
 		{
-			if (itemToRemove.isCountable())
+			if (itemToRemove.isCountable() && itemToRemove.isVisible())
 			{
 				this.decrementTotal();
 			}
@@ -431,11 +490,6 @@ BX.Kanban.Column.prototype =
 	 */
 	render: function()
 	{
-		var columnContainer = this.getContainer();
-		// columnContainer.style.maxWidth = (this.getGrid().renderTo.offsetWidth / 2) + "px";
-		columnContainer.classList[!this.getItems().length ? "add" : "remove"]("main-kanban-column-empty");
-		columnContainer.classList[this.isDroppable() ? "add" : "remove"]("main-kanban-column-droppable");
-
 		var title = this.getTitleContainer();
 		BX.cleanNode(title);
 		title.appendChild(this.renderTitle());
@@ -455,11 +509,26 @@ BX.Kanban.Column.prototype =
 		}
 
 		BX.cleanNode(this.layout.items);
+		var isEmptyColumn = true;
+		var items = document.createDocumentFragment();
 		for (var i = 0; i < this.items.length; i++)
 		{
 			var item = this.items[i];
-			this.layout.items.appendChild(item.renderLayout());
+			if (item.isVisible())
+			{
+				isEmptyColumn = false;
+				items.appendChild(item.renderLayout());
+			}
 		}
+
+		if (!isEmptyColumn)
+		{
+			this.layout.items.appendChild(items);
+		}
+
+		var columnContainer = this.getContainer();
+		columnContainer.classList[isEmptyColumn ? "add" : "remove"]("main-kanban-column-empty");
+		columnContainer.classList[this.isDroppable() ? "add" : "remove"]("main-kanban-column-droppable");
 
 		if (this.getGrid().isRendered())
 		{
@@ -580,6 +649,10 @@ BX.Kanban.Column.prototype =
 		})
 	},
 
+	/**
+	 *
+	 * @returns {Element}
+	 */
 	getEditButton: function()
 	{
 		if (this.layout.editButton)
@@ -655,7 +728,7 @@ BX.Kanban.Column.prototype =
 			attrs: {
 				className: "main-kanban-column-title-input-edit",
 				type: "text",
-				placeholder: BX.message("MAIN_KANBAN_TITLE_PLACEHOLDER")
+				placeholder: this.getGrid().getMessage("COLUMN_TITLE_PLACEHOLDER")
 			},
 			events: {
 				blur: this.handleTextBoxBlur.bind(this),
@@ -811,8 +884,8 @@ BX.Kanban.Column.prototype =
 			"main-kanban-confirm-" + BX.util.getRandomString(5),
 			null,
 			{
-				titleBar: BX.message("MAIN_KANBAN_REMOVE_COLUMN_CONFIRM_TITLE"),
-				content: BX.message("MAIN_KANBAN_REMOVE_COLUMN_CONFIRM_DESC"),
+				titleBar: this.getGrid().getMessage("REMOVE_COLUMN_CONFIRM_TITLE"),
+				content: this.getGrid().getMessage("REMOVE_COLUMN_CONFIRM_DESC"),
 				width: 400,
 				autoHide: false,
 				overlay: true,
@@ -821,7 +894,7 @@ BX.Kanban.Column.prototype =
 				draggable : { restrict : true},
 				buttons: [
 					new BX.PopupWindowButton({
-						text: BX.message("MAIN_KANBAN_REMOVE_BUTTON"),
+						text: this.getGrid().getMessage("REMOVE_BUTTON"),
 						id: "main-kanban-confirm-remove-button",
 						className: "popup-window-button-create",
 						events: {
@@ -829,7 +902,7 @@ BX.Kanban.Column.prototype =
 						}
 					}),
 					new BX.PopupWindowButtonLink({
-						text: BX.message("MAIN_KANBAN_CANCEL_BUTTON"),
+						text: this.getGrid().getMessage("CANCEL_BUTTON"),
 						className: "popup-window-button-link-cancel",
 						events: {
 							click: function() {
@@ -937,7 +1010,7 @@ BX.Kanban.Column.prototype =
 
 	handleAddItemButtonClick: function(event)
 	{
-		BX.Kanban.DraftItem.addToColumn(this, this.getFirstItem());
+		BX.Kanban.DraftItem.addToColumn(this, this.getFirstItem(false));
 	},
 
 	/**
@@ -1257,6 +1330,16 @@ BX.Kanban.Column.prototype =
 		this.hideDragTarget();
 		var draggableItem = this.getGrid().getItemByElement(itemNode);
 
+		var event = new BX.Kanban.DragEvent();
+		event.setItem(draggableItem);
+		event.setTargetColumn(this);
+
+		BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onBeforeItemMoved", [event]);
+		if (!event.isActionAllowed())
+		{
+			return;
+		}
+
 		var success = this.getGrid().moveItem(draggableItem, this);
 		if (success)
 		{
@@ -1301,7 +1384,7 @@ BX.Kanban.Column.prototype =
 		for (var columnIndex in columns)
 		{
 			var column = columns[columnIndex];
-			if (column === this)
+			if (column === this || !column.isSortable())
 			{
 				continue;
 			}
@@ -1462,7 +1545,7 @@ BX.Kanban.DraftColumn.prototype = {
 		var title = BX.util.trim(this.getTitleTextBox().value);
 		if (!title.length)
 		{
-			title = BX.message("MAIN_KANBAN_TITLE_PLACEHOLDER");
+			title = this.getGrid().getMessage("COLUMN_TITLE_PLACEHOLDER");
 		}
 
 		this.setName(title);

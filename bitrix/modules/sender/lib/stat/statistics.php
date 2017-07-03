@@ -29,7 +29,7 @@ class Statistics
 	protected $filter;
 
 	/** @var integer */
-	protected $cacheTtl = 0;
+	protected $cacheTtl = 3600;
 
 	/** @var array */
 	protected $counters = null;
@@ -729,7 +729,7 @@ class Statistics
 		$listDb = MailingChainTable::getList(array(
 			'select' => array('CREATED_BY'),
 			'group' => array('CREATED_BY'),
-			'limit' => 20,
+			'limit' => 100,
 			'cache' => array('ttl' => $this->getCacheTtl(), 'cache_joins' => true)
 		));
 		$userList = array();

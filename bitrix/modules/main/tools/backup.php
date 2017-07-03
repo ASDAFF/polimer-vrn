@@ -122,7 +122,7 @@ if (function_exists('mb_internal_encoding'))
 	mb_internal_encoding('ISO-8859-1');
 
 $bGzip = function_exists('gzcompress');
-$bMcrypt = function_exists('mcrypt_encrypt');
+$bMcrypt = function_exists('mcrypt_encrypt') || function_exists('openssl_encrypt');
 $bBitrixCloud = $bMcrypt && CModule::IncludeModule('bitrixcloud') && CModule::IncludeModule('clouds');
 
 $arParams = array(

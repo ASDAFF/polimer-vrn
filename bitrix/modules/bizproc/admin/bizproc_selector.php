@@ -387,28 +387,20 @@ _RecFindParams($arWorkflowTemplate, $arFilter, $arReturns);
 				<option value="" style="background-color: #eeeeff"><?echo GetMessage("BIZPROC_SEL_USERS_TAB_USERS")?></option>
 				<?
 				global $DB;
-				$cnt = count($arUsers);
+				$cnt = max(2000, count($arUsers));
 				$mcnt = 500;
 				$i = 0;
 				while ($i < $cnt)
 				{
-					$str = "SELECT ID, LOGIN, NAME, LAST_NAME, SECOND_NAME, EMAIL, EXTERNAL_AUTH_ID FROM b_user WHERE ID IN (0";
+					$str = "SELECT ID, LOGIN, NAME, LAST_NAME, SECOND_NAME, EMAIL FROM b_user WHERE ID IN (0";
 					$cnt1 = min($cnt, $i + $mcnt);
 					for ($j = $i; $j < $cnt1; $j++)
 						$str .= ", ".IntVal($arUsers[$j]);
 					$i += $mcnt;
-					$str .= ") AND ACTIVE='Y' ORDER BY LAST_NAME, EMAIL, ID";
+					$str .= ") AND ACTIVE='Y' AND (EXTERNAL_AUTH_ID IS NULL OR EXTERNAL_AUTH_ID='') ORDER BY LAST_NAME, EMAIL, ID";
 					$dbuser = $DB->Query($str);
 					while($user = $dbuser->fetch())
 					{
-						if (
-								$user['EXTERNAL_AUTH_ID'] == 'replica'
-								|| $user['EXTERNAL_AUTH_ID'] == 'email'
-								|| $user['EXTERNAL_AUTH_ID'] == 'imconnector'
-								|| $user['EXTERNAL_AUTH_ID'] == 'bot'
-						)
-							continue;
-
 						$n = CUser::FormatName(str_replace(",","", COption::GetOptionString("bizproc", "name_template", CSite::GetNameFormat(false), SITE_ID)), $user, true, true);
 						?>
 						<option value="<?= $n ?> [<?=(int)$user['ID']?>]; "><?=$n?> &lt;<?=htmlspecialcharsbx($user['EMAIL'])?>&gt; [<?=(int)$user['ID']?>]</option>

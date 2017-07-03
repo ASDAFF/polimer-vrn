@@ -188,6 +188,11 @@
 			padding:10px 0;
 			font-size: 13px;
 		}
+
+		.bxBlockContentImageGroup {
+			white-space: -moz-pre-space;
+		}
+
 		/**/
 		.mail-grid{
 			/*outline: 1px dashed #0083D1;*/

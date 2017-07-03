@@ -1015,11 +1015,9 @@
 			});
 			panels.push({
 				text : '<span id="record-popup-' + ENTITY_XML_ID + '-' + ID + '-link-text">' + BX.message("B_B_MS_LINK") + '</span>' +
-					'<span class="comment-menu-link-icon-wrap">' +
+					'<span id="record-popup-' + ENTITY_XML_ID + '-' + ID + '-link-icon-animate" class="comment-menu-link-icon-wrap">' +
 						'<span class="comment-menu-link-icon" id="record-popup-' + ENTITY_XML_ID + '-' + ID + '-link-icon-done" style="display: none;">' +
-							'<svg class="comment-menu-link-icon-check" viewBox="0 -3 15 15">' +
-								'<polyline id="record-popup-' + ENTITY_XML_ID + '-' + ID + '-link-icon-animate" points="2,5 5,8 11,2" class="comment-menu-link-icon-polyline-path"/>' +
-							'</svg>' +
+
 						'</span>' +
 					'</span>',
 				onclick : function() {
@@ -1045,7 +1043,7 @@
 						)
 						{
 							menuItemIconDone.style.display = 'inline-block';
-							BX.removeClass(BX(id + '-icon-animate'), 'comment-menu-link-icon-animate-stroke');
+							BX.removeClass(BX(id + '-icon-animate'), 'comment-menu-link-icon-animate');
 
 							BX.adjust(BX(id + '-text'), {
 								attrs: {
@@ -1054,7 +1052,7 @@
 							});
 
 							setTimeout(function() {
-								BX.addClass(BX(id + '-icon-animate'), 'comment-menu-link-icon-animate-stroke');
+								BX.addClass(BX(id + '-icon-animate'), 'comment-menu-link-icon-animate');
 							}, 1);
 
 							setTimeout(function() {

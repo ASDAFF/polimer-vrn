@@ -625,7 +625,7 @@ class CAutoCheck
 		$arCount = 0;
 		$arResult = array();
 		$arResult["STATUS"] = false;
-		$bMcrypt = function_exists('mcrypt_encrypt');
+		$bMcrypt = function_exists('mcrypt_encrypt') || function_exists('openssl_encrypt');
 		$bBitrixCloud = $bMcrypt && CModule::IncludeModule('bitrixcloud') && CModule::IncludeModule('clouds');
 
 		$site = CSite::GetSiteByFullPath(DOCUMENT_ROOT);

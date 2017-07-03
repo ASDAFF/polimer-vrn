@@ -29,15 +29,20 @@ class RestService extends \IRestService
 
 	public static function onRestServiceBuildDescription()
 	{
-		if (!\CBPRuntime::isFeatureEnabled())
-			return false;
-
-		return array(
-			static::SCOPE => array(
+		$map = array();
+		if (\CBPRuntime::isFeatureEnabled())
+		{
+			$map = array(
 				'bizproc.activity.add' => array(__CLASS__, 'addActivity'),
 				'bizproc.activity.delete' => array(__CLASS__, 'deleteActivity'),
 				'bizproc.activity.log' => array(__CLASS__, 'writeActivityLog'),
 				'bizproc.activity.list' => array(__CLASS__, 'getActivityList'),
+
+				'bizproc.event.send' => array(__CLASS__, 'sendEvent'),
+
+				'bizproc.task.list' =>  array(__CLASS__, 'getTaskList'),
+
+				'bizproc.workflow.instances' => array(__CLASS__, 'getWorkflowInstances'),
 
 				'bizproc.robot.add' => array(__CLASS__, 'addRobot'),
 				'bizproc.robot.delete' => array(__CLASS__, 'deleteRobot'),
@@ -46,14 +51,25 @@ class RestService extends \IRestService
 				'bizproc.provider.add' => array(__CLASS__, 'addProvider'),
 				'bizproc.provider.delete' => array(__CLASS__, 'deleteProvider'),
 				'bizproc.provider.list' => array(__CLASS__, 'getProviderList'),
-				
-				'bizproc.event.send' => array(__CLASS__, 'sendEvent'),
-				
-				'bizproc.task.list' =>  array(__CLASS__, 'getTaskList'),
+			);
+		}
+		elseif (
+			\CBPRuntime::isFeatureEnabled('crm_automation_lead')
+			|| \CBPRuntime::isFeatureEnabled('crm_automation_deal')
+		)
+		{
+			$map = array(
+				'bizproc.robot.add' => array(__CLASS__, 'addRobot'),
+				'bizproc.robot.delete' => array(__CLASS__, 'deleteRobot'),
+				'bizproc.robot.list' => array(__CLASS__, 'getRobotList'),
 
-				'bizproc.workflow.instances' => array(__CLASS__, 'getWorkflowInstances')
-			),
-		);
+				'bizproc.provider.add' => array(__CLASS__, 'addProvider'),
+				'bizproc.provider.delete' => array(__CLASS__, 'deleteProvider'),
+				'bizproc.provider.list' => array(__CLASS__, 'getProviderList'),
+			);
+		}
+
+		return $map ? array(static::SCOPE => $map) : false;
 	}
 
 	/**

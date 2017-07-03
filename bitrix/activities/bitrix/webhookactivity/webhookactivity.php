@@ -35,6 +35,14 @@ class CBPWebHookActivity
 				&& ($handlerData['scheme'] == 'http' || $handlerData['scheme'] == 'https')
 			)
 			{
+				if (isset($handlerData['path']) && $handlerData['path'] !== '/')
+				{
+					$handler = str_replace($handlerData['path'], CHTTP::urnEncode($handlerData['path']), $handler);
+				}
+				if (isset($handlerData['query']))
+				{
+					$handler = str_replace($handlerData['query'], CHTTP::urnEncode($handlerData['query']), $handler);
+				}
 
 				$queryItems = array(
 					Sqs::queryItem(

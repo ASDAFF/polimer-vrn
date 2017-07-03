@@ -411,38 +411,38 @@ class CUserTypeString
 	 * <li>на регулярное выражение (если задано в настройках).
 	 * </ul>
 	 * @param array $arUserField Массив описывающий поле.
-	 * @param array $value значение для проверки на валидность
+	 * @param string $value значение для проверки на валидность
 	 * @return array массив массивов ("id","text") ошибок.
 	 * @static
 	 */
 	function CheckFields($arUserField, $value)
 	{
 		$aMsg = array();
-		if(strlen($value)<$arUserField["SETTINGS"]["MIN_LENGTH"])
+		if($value <> '' && strlen($value) < $arUserField["SETTINGS"]["MIN_LENGTH"])
 		{
 			$aMsg[] = array(
 				"id" => $arUserField["FIELD_NAME"],
 				"text" => GetMessage("USER_TYPE_STRING_MIN_LEGTH_ERROR",
 					array(
-						"#FIELD_NAME#"=>$arUserField["EDIT_FORM_LABEL"],
+						"#FIELD_NAME#"=>($arUserField["EDIT_FORM_LABEL"] <> ''? $arUserField["EDIT_FORM_LABEL"] : $arUserField["FIELD_NAME"]),
 						"#MIN_LENGTH#"=>$arUserField["SETTINGS"]["MIN_LENGTH"]
 					)
 				),
 			);
 		}
-		if($arUserField["SETTINGS"]["MAX_LENGTH"]>0 && strlen($value)>$arUserField["SETTINGS"]["MAX_LENGTH"])
+		if($arUserField["SETTINGS"]["MAX_LENGTH"] > 0 && strlen($value) > $arUserField["SETTINGS"]["MAX_LENGTH"])
 		{
 			$aMsg[] = array(
 				"id" => $arUserField["FIELD_NAME"],
 				"text" => GetMessage("USER_TYPE_STRING_MAX_LEGTH_ERROR",
 					array(
-						"#FIELD_NAME#"=>$arUserField["EDIT_FORM_LABEL"],
+						"#FIELD_NAME#"=>($arUserField["EDIT_FORM_LABEL"] <> ''? $arUserField["EDIT_FORM_LABEL"] : $arUserField["FIELD_NAME"]),
 						"#MAX_LENGTH#"=>$arUserField["SETTINGS"]["MAX_LENGTH"]
 					)
 				),
 			);
 		}
-		if(strlen($arUserField["SETTINGS"]["REGEXP"])>0 && !preg_match($arUserField["SETTINGS"]["REGEXP"], $value))
+		if($arUserField["SETTINGS"]["REGEXP"] <> '' && !preg_match($arUserField["SETTINGS"]["REGEXP"], $value))
 		{
 			$aMsg[] = array(
 				"id" => $arUserField["FIELD_NAME"],
@@ -450,7 +450,7 @@ class CUserTypeString
 						$arUserField["ERROR_MESSAGE"]:
 						GetMessage("USER_TYPE_STRING_REGEXP_ERROR",
 						array(
-							"#FIELD_NAME#"=>$arUserField["EDIT_FORM_LABEL"],
+							"#FIELD_NAME#"=>($arUserField["EDIT_FORM_LABEL"] <> ''? $arUserField["EDIT_FORM_LABEL"] : $arUserField["FIELD_NAME"]),
 						)
 					)
 				),

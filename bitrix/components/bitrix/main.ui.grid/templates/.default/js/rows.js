@@ -250,8 +250,8 @@
 		 */
 		getById: function(id)
 		{
+			id = id.toString();
 			var rows = this.getBodyChild();
-
 			var row = rows.filter(function(current) {
 				return current.getId() === id;
 			});
@@ -394,6 +394,8 @@
 				return result;
 			}
 
+			parentId = parentId.toString();
+
 			function getByParentId(parentId)
 			{
 				self.getBodyChild().forEach(function(row) {
@@ -418,6 +420,8 @@
 			{
 				return result;
 			}
+
+			groupId = groupId.toString();
 
 			function getByParentId(groupId)
 			{

@@ -132,9 +132,8 @@ class CBPSocNetMessageActivity
 		if (!array_key_exists("MessageText", $arTestProperties) || strlen($arTestProperties["MessageText"]) <= 0)
 			$arErrors[] = array("code" => "NotExist", "parameter" => "MessageText", "message" => GetMessage("BPSNMA_EMPTY_MESSAGE"));
 
-		global $USER;
 		$from = array_key_exists("MessageUserFrom", $arTestProperties) ? $arTestProperties["MessageUserFrom"] : null;
-		if ($from != "user_".$USER->GetID() && !$USER->IsAdmin() && !(CModule::IncludeModule("bitrix24") && CBitrix24::IsPortalAdmin($USER->GetID())))
+		if ($user && $from !== $user->getBizprocId() && !$user->isAdmin())
 			$arErrors[] = array("code" => "NotExist", "parameter" => "MessageUserFrom", "message" => GetMessage("BPSNMA_EMPTY_FROM"));
 
 		return array_merge($arErrors, parent::ValidateProperties($arTestProperties, $user));
@@ -142,7 +141,6 @@ class CBPSocNetMessageActivity
 
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = "")
 	{
-		global $USER;
 		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
 			'documentType' => $documentType,
 			'activityName' => $activityName,
@@ -152,11 +150,8 @@ class CBPSocNetMessageActivity
 			'currentValues' => $arCurrentValues
 		));
 
-		$fromDefault = 'user_'.$USER->GetID();
-		if ($USER->IsAdmin() || CModule::IncludeModule("bitrix24") && CBitrix24::IsPortalAdmin($USER->GetID()))
-		{
-			$fromDefault = null;
-		}
+		$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
+		$fromDefault = $user->isAdmin() ? null : $user->getBizprocId();
 
 		$dialog->setMap(array(
 			'MessageUserFrom' => array(
@@ -178,6 +173,10 @@ class CBPSocNetMessageActivity
 				'Type' => 'text',
 				'Required' => true
 			)
+		));
+
+		$dialog->setRuntimeData(array(
+			'user' => $user
 		));
 
 		return $dialog;
@@ -202,8 +201,8 @@ class CBPSocNetMessageActivity
 			$arProperties[$value] = (string)$arCurrentValues[$key];
 		}
 
-		global $USER;
-		if ($USER->IsAdmin() || (CModule::IncludeModule("bitrix24") && CBitrix24::IsPortalAdmin($USER->GetID())))
+		$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
+		if ($user->isAdmin())
 		{
 			if (empty($arCurrentValues["message_user_from"]))
 				$arProperties["MessageUserFrom"] = null;
@@ -216,14 +215,14 @@ class CBPSocNetMessageActivity
 		}
 		else
 		{
-			$arProperties["MessageUserFrom"] = "user_".$USER->GetID();
+			$arProperties["MessageUserFrom"] = $user->getBizprocId();
 		}
 
 		$arProperties["MessageUserTo"] = CBPHelper::UsersStringToArray($arCurrentValues["message_user_to"], $documentType, $arErrors);
 		if (count($arErrors) > 0)
 			return false;
 
-		$arErrors = self::ValidateProperties($arProperties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
+		$arErrors = self::ValidateProperties($arProperties, $user);
 		if (count($arErrors) > 0)
 			return false;
 

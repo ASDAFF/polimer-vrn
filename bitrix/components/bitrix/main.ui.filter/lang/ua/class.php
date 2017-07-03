@@ -27,4 +27,14 @@ $MESS["MAIN_UI_FILTER__PLACEHOLDER_WITH_FILTER"] = "пошук";
 $MESS["MAIN_UI_FILTER__NOT_SET"] = "Не вказаний";
 $MESS["MAIN_UI_FILTER__DATE_PLACEHOLDER"] = "дд.мм.рррр";
 $MESS["MAIN_UI_FILTER__QUARTER"] = "Квартал";
+$MESS["MAIN_UI_FILTER__PLACEHOLDER"] = "Фільтр";
+$MESS["MAIN_UI_FILTER__IS_SET_AS_DEFAULT_PRESET"] = "Призначений фільтром за замовчуванням";
+$MESS["MAIN_UI_FILTER__SET_AS_DEFAULT_PRESET"] = "Призначити фільтром за замовчуванням";
+$MESS["MAIN_UI_FILTER__EDIT_PRESET_TITLE"] = "Змінити назву фільтра";
+$MESS["MAIN_UI_FILTER__REMOVE_PRESET"] = "Выдалити фільтр";
+$MESS["MAIN_UI_FILTER__DRAG_TITLE"] = "Потягніть, щоб відсортувати список збережених фільтрів";
+$MESS["MAIN_UI_FILTER__DRAG_FIELD_TITLE"] = "Потягніть, щоб відсортувати список полів";
+$MESS["MAIN_UI_FILTER__REMOVE_FIELD"] = "Приховати поле";
+$MESS["MAIN_UI_FILTER__CONFIRM_MESSAGE_FOR_ALL"] = "Це дія збереже налаштування фільтру для всіх користувачів. <br>Будуть змінені збережені фільтри та набір полів.";
+$MESS["MAIN_UI_FILTER__CONFIRM_APPLY_FOR_ALL"] = "Зберегти для всіх";
 ?>

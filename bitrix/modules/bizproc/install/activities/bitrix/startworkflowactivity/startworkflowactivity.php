@@ -355,15 +355,8 @@ class CBPStartWorkflowActivity
 
 	private static function checkAdminPermissions()
 	{
-		global $USER;
-		if (!isset($USER)
-				|| !is_object($USER)
-				|| (!$USER->isAdmin() && !(CModule::includeModule('bitrix24') && \CBitrix24::isPortalAdmin($USER->getID())))
-		)
-		{
-			return false;
-		}
-		return true;
+		$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
+		return $user->isAdmin();
 	}
 
 	private static function getTypesList($entityId)

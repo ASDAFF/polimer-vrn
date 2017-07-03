@@ -67,19 +67,19 @@ else
 	?>
 		<tr>
 			<td align="right" valign="top" width="50%"><?= GetMessage("BPABL_NAME") ?>:</td>
-			<td width="50%" valign="top"><?= $arWorkflowState["TEMPLATE_NAME"] ?></td>
+			<td width="50%" valign="top"><?= htmlspecialcharsbx($arWorkflowState["TEMPLATE_NAME"]) ?></td>
 		</tr>
 		<tr>
 			<td align="right" valign="top" width="50%"><?= GetMessage("BPABL_DESCRIPTION") ?>:</td>
-			<td width="50%" valign="top"><?= $arWorkflowState["TEMPLATE_DESCRIPTION"] ?></td>
+			<td width="50%" valign="top"><?= htmlspecialcharsbx($arWorkflowState["TEMPLATE_DESCRIPTION"]) ?></td>
 		</tr>
 		<tr>
 			<td align="right" valign="top" width="50%"><?= GetMessage("BPABL_ID") ?>:</td>
-			<td width="50%" valign="top"><?= $arWorkflowState["ID"] ?></td>
+			<td width="50%" valign="top"><?= htmlspecialcharsbx($arWorkflowState["ID"]) ?></td>
 		</tr>
 		<tr>
 			<td width="40%"><?= GetMessage("BPABL_STATE_MODIFIED") ?>:</td>
-			<td width="60%"><?= $arWorkflowState["STATE_MODIFIED"] ?></td>
+			<td width="60%"><?= htmlspecialcharsbx($arWorkflowState["STATE_MODIFIED"]) ?></td>
 		</tr>
 		<tr>
 			<td align="right" valign="top" width="50%"><?= GetMessage("BPABL_STATE_NAME") ?>:</td>
@@ -87,9 +87,9 @@ else
 			if (strlen($arWorkflowState["STATE_NAME"]) > 0)
 			{
 				if (strlen($arWorkflowState["STATE_TITLE"]) > 0)
-					echo $arWorkflowState["STATE_TITLE"]." (".$arWorkflowState["STATE_NAME"].")";
+					echo htmlspecialcharsbx($arWorkflowState["STATE_TITLE"])." (".htmlspecialcharsbx($arWorkflowState["STATE_NAME"]).")";
 				else
-					echo $arWorkflowState["STATE_NAME"];
+					echo htmlspecialcharsbx($arWorkflowState["STATE_NAME"]);
 			}
 			else
 			{

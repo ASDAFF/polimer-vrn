@@ -3011,7 +3011,7 @@ class ComponentHelper
 			return;
 		}
 
-		$select = array('ID', 'EXTERNAL_AUTH_ID', 'UF_USER_CRM_ENTITY');
+		$select = array('ID', 'EXTERNAL_AUTH_ID');
 		if (ModuleManager::isModuleInstalled('crm'))
 		{
 			$select[] = 'UF_USER_CRM_ENTITY';

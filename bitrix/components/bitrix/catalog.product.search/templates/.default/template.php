@@ -701,13 +701,13 @@ else
 		<?
 		if (sizeof($arResult['IBLOCKS']) > 1):
 			$iblockMenu = array(array(
-				'TEXT' => '<b>'.GetMessage('SPS_CHOOSE_CATALOG').':</b>',
+				'HTML' => '<b>'.GetMessage('SPS_CHOOSE_CATALOG').':</b>',
 				'CLOSE_ON_CLICK' => false
 			), array('SEPARATOR' => true));
 			foreach ($arResult['IBLOCKS'] as $arIblock)
 			{
 				$iblockMenu[] = array(
-					'TEXT' => '<span class="psd-catalog-menu-name" title="'.htmlspecialcharsbx($arIblock['NAME']).'">'.htmlspecialcharsEx($arIblock['NAME']).'</span><span class="psd-catalog-menu-lid" title="'.htmlspecialcharsbx($arIblock['SITE_NAME']).'">'.htmlspecialcharsbx($arIblock['SITE_NAME']).'</span>',
+					'HTML' => '<span class="psd-catalog-menu-name" title="'.htmlspecialcharsbx($arIblock['NAME']).'">'.htmlspecialcharsEx($arIblock['NAME']).'</span><span class="psd-catalog-menu-lid" title="'.htmlspecialcharsbx($arIblock['SITE_NAME']).'">'.htmlspecialcharsbx($arIblock['SITE_NAME']).'</span>',
 					'ONCLICK' => $tableId.'_helper.onIblockChange('.(int)$arIblock['ID'].',\''.CUtil::JSEscape($arIblock['NAME']).'\')',
 				);
 			}

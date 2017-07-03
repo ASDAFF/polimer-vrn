@@ -123,4 +123,13 @@ $MESS["interface_grid_filter_no_data"] = "Нічого не знайдено";
 $MESS["interface_grid_restore_to_default"] = "Повернути налаштування за замовчуванням";
 $MESS["interface_grid_settings_close"] = "Закрити";
 $MESS["interface_grid_settings_confirm_message"] = "Це дія змінить розміри, порядок, кількість і назви колонок, також змінить сортування";
+$MESS["interface_grid_apply_settings"] = "Застосувати";
+$MESS["interface_grid_cancel_settings"] = "Скасувати";
+$MESS["interface_grid_all_selected"] = "Відмічені всі записи";
+$MESS["interface_grid_settings_for_all_label"] = "Для всіх";
+$MESS["interface_grid_settings_for_all_confirm_message"] = "Застосувати надаштування для всіх користувачів";
+$MESS["interface_grid_settings_for_all_apply"] = "Застосувати";
+$MESS["interface_grid_settings_for_all_cancel"] = "Скасувати";
+$MESS["interface_grid_settings_select_all_columns"] = "Вибрати всі";
+$MESS["interface_grid_settings_unselect_all_columns"] = "Відмінити всі";
 ?>

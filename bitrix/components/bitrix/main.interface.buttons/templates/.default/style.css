@@ -78,6 +78,7 @@
     height: 65px;
     font: 15px/65px "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
     color: #545c6a;
+	outline: none;
 	text-decoration: none;
     -webkit-transition: color .3s ease;
     transition: color .3s ease;
@@ -87,6 +88,13 @@
     -khtml-user-drag: none;
     -webkit-user-drag: none;
     text-transform: none;
+	-webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+.main-buttons-item:focus,
+.main-buttons-item:focus .main-buttons-item-link,
+.main-buttons-item-link:focus {
+	outline: none;
 }
 
 .main-buttons-item-link:hover {

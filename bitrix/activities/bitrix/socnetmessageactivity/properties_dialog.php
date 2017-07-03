@@ -1,19 +1,17 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 ?>
-
 <tr>
 	<td align="right" width="40%"><?= GetMessage("BPSNMA_PD_FROM") ?>:</td>
 	<td width="60%">
 		<?
-		global $USER;
-		if ($USER->IsAdmin() || (CModule::IncludeModule("bitrix24") && CBitrix24::IsPortalAdmin($USER->GetID())))
+		if ($user->isAdmin())
 		{
 			echo CBPDocument::ShowParameterField("user", 'message_user_from', $arCurrentValues['message_user_from'], Array('rows'=> 1));
 		}
 		else
 		{
-			echo $USER->GetFullName();
+			echo $user->getFullName();
 		}
 		?>
 	</td>

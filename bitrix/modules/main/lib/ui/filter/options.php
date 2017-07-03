@@ -40,7 +40,7 @@ class Options
 
 		if (!empty($commonPresetsId) && is_string($commonPresetsId))
 		{
-			$this->commonPresets = $this->fetchCommonPresets($commonPresetsId);
+			$this->commonPresets = static::fetchCommonPresets($commonPresetsId);
 			$this->useCommonPresets = true;
 			$this->commonPresetsId = $commonPresetsId;
 			$this->options["filters"] = $this->commonPresets["filters"];
@@ -232,18 +232,18 @@ class Options
 	 * @param string $id Common presets id $arParams["COMMON_PRESETS_ID"]
 	 * @return array|bool
 	 */
-	public function fetchCommonPresets($id)
+	public static function fetchCommonPresets($id)
 	{
 		global $USER;
 
 		if ($USER->isAuthorized() ||
-			(!$USER->isAuthorized() && !isset($_SESSION["main.ui.filter.presets"][$this->getId()]["options"])))
+			(!$USER->isAuthorized() && !isset($_SESSION["main.ui.filter.presets"][$id])))
 		{
 			$options = \CUserOptions::getOption("main.ui.filter.presets", $id, array(), self::getUserId());
 		}
 		else
 		{
-			$options = $_SESSION["main.ui.filter.presets"][$this->getId()]["options"];
+			$options = $_SESSION["main.ui.filter.presets"][$id];
 		}
 
 		return $options;
@@ -699,7 +699,7 @@ class Options
 			}
 			else
 			{
-				$_SESSION["main.ui.filter.presets"][$this->getId()]["options"] = $this->options;
+				$_SESSION["main.ui.filter.presets"][$this->getCommonPresetsId()] = $presets;
 			}
 		}
 
@@ -887,8 +887,8 @@ class Options
 			if ($currentPreset)
 			{
 				$request = $this->getRequest();
-				$isApplyFilter = ($request->get("apply_filter") == "Y");
-				$isClearFilter = ($request->get("clear_filter") == "Y");
+				$isApplyFilter = (strtoupper($request->get("apply_filter")) == "Y");
+				$isClearFilter = (strtoupper($request->get("clear_filter")) == "Y");
 
 				if (($useRequest && ($isApplyFilter || $isClearFilter)) || $useRequest === false)
 				{

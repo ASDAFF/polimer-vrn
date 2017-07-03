@@ -18,7 +18,7 @@ if (empty($arResult['DOCUMENT_ICON']))
 	});
 </script>
 <?if ($arParams['POPUP']):?>
-<div class="bp-popup-title"><?=$arResult["WORKFLOW_TEMPLATE_NAME"]?></div>
+<div class="bp-popup-title"><?=htmlspecialcharsbx($arResult["WORKFLOW_TEMPLATE_NAME"])?></div>
 <div class="bp-popup">
 <?endif?>
 <div class="bp-task-page bp-lent <?if (empty($arResult["TASK"]['STARTED_BY_PHOTO_SRC'])):?>no-photo<?endif?>">
