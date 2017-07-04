@@ -2,7 +2,7 @@
 <?
 if (!$USER->IsAuthorized())
 {
-	echo ShowError($arResult["ERROR_MESSAGE"]);	
+	echo ShowError($arResult["ERROR_MESSAGE"]);
 	include($_SERVER["DOCUMENT_ROOT"].$templateFolder."/auth.php");
 }
 else
