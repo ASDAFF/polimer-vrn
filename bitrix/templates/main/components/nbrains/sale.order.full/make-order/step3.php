@@ -33,6 +33,7 @@
 					<?
 						foreach ($arDelivery["PROFILES"] as $profile_id => $arProfile)
 						{
+
 							?>
 					<tr>
 						<td width="20" nowrap="nowrap">&nbsp;</td>
@@ -72,6 +73,8 @@
 				</tr>
 				<?
 					else:
+
+
 ?>
 					<tr>
 						<td valign="top" width="0%">

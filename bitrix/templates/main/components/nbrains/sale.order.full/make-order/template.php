@@ -2,7 +2,7 @@
 <?
 if (!$USER->IsAuthorized())
 {
-	echo ShowError($arResult["ERROR_MESSAGE"]);
+	echo ShowError($arResult["ERROR_MESSAGE"]);	
 	include($_SERVER["DOCUMENT_ROOT"].$templateFolder."/auth.php");
 }
 else
@@ -12,13 +12,12 @@ else
 			<?=bitrix_sessid_post()?>
 	<?endif;?>
 
-	<table width="100%" border="0">
+
 	<?
 	if($arParams["SHOW_MENU"] == "Y")
 	{
 		?>		
-		<tr>
-			<td>
+
 			<?if ($arResult["CurrentStep"] < 6):?>
 				
 				<?
@@ -57,13 +56,11 @@ else
 				?>
 				
 			<?endif;?>
-			</td>
-		</tr>
+
 		<?
 	}
 	?>
-	<tr>
-		<td><br />
+
 			<? echo ShowError($arResult["ERROR_MESSAGE"]); 
 			if ($arResult["CurrentStep"] == 1)
 				include($_SERVER["DOCUMENT_ROOT"].$templateFolder."/step1.php");
@@ -78,9 +75,7 @@ else
 			elseif ($arResult["CurrentStep"] >= 6)
 				include($_SERVER["DOCUMENT_ROOT"].$templateFolder."/step6.php");
 			?>
-		</td>
-	</tr>
-	</table>
+
 
 
 	<?if ($arResult["CurrentStep"] > 0 && $arResult["CurrentStep"] <= 7):?>

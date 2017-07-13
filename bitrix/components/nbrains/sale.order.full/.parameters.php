@@ -9,6 +9,7 @@ $arYesNo = Array(
 $arComponentParameters = Array(
 	"PARAMETERS" => Array(
 		"PATH_TO_BASKET" => Array(
+			"USER_CONSENT" => Array(),
 			"NAME" => GetMessage("SOF_PATH_TO_BASKET"),
 			"TYPE" => "STRING",
 			"MULTIPLE" => "N",

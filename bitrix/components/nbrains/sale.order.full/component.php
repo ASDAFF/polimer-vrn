@@ -67,6 +67,7 @@ $allCurrency = CSaleLang::GetLangCurrency(SITE_ID);
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && ($arParams["DELIVERY_NO_SESSION"] == "N" || check_bitrix_sessid()))
 {
+
 	foreach($_POST as $k => $v)
 	{
 		if(!is_array($v))
@@ -90,6 +91,14 @@ $arResult["SKIP_SECOND_STEP"] = (($arResult["POST"]["SKIP_SECOND_STEP"] == "Y") 
 $arResult["SKIP_THIRD_STEP"] = (($arResult["POST"]["SKIP_THIRD_STEP"] == "Y") ? "Y" : "N");
 $arResult["SKIP_FORTH_STEP"] = (($arResult["POST"]["SKIP_FORTH_STEP"] == "Y") ? "Y" : "N");
 
+global $USER;
+$rsUser = CUser::GetByID($USER->GetID());
+$arUser = $rsUser->Fetch();
+if($arUser['WORK_DEPARTMENT']){
+	$arResult["POST"]["PERSON_TYPE"] = $arUser['WORK_DEPARTMENT'];
+	$arResult["CurrentStep"] = 2;
+}
+
 if(strlen($arResult["POST"]["PERSON_TYPE"])>0)
 	$arResult["PERSON_TYPE"] = IntVal($arResult["POST"]["PERSON_TYPE"]);
 if(strlen($arResult["POST"]["PROFILE_ID"])>0)
@@ -108,11 +117,13 @@ if(strlen($arResult["POST"]["PROFILE_ID"])>0)
 }
 if(strlen($arResult["POST"]["DELIVERY_ID"])>0)
 {
+
 	if (strpos($arResult["POST"]["DELIVERY_ID"], ":") === false)
 		$arResult["DELIVERY_ID"] = IntVal($arResult["POST"]["DELIVERY_ID"]);
 	else
 		$arResult["DELIVERY_ID"] = explode(":", $arResult["POST"]["DELIVERY_ID"]);
 }
+
 if(strlen($arResult["POST"]["PAY_SYSTEM_ID"])>0)
 	$arResult["PAY_SYSTEM_ID"] = IntVal($arResult["POST"]["PAY_SYSTEM_ID"]);
 if(strlen($arResult["POST"]["PAY_CURRENT_ACCOUNT"])>0)
@@ -123,6 +134,7 @@ if(strlen($arResult["POST"]["TAX_EXEMPT"])>0)
 	$arResult["TAX_EXEMPT"] = $arResult["POST"]["TAX_EXEMPT"];
 if(strlen($arResult["POST"]["ORDER_DESCRIPTION"])>0)
 	$arResult["ORDER_DESCRIPTION"] = trim($arResult["POST"]["ORDER_DESCRIPTION"]);
+
 
 if ($_REQUEST["CurrentStep"] == 7 || ($_SERVER["REQUEST_METHOD"] == "POST" && ($arParams["DELIVERY_NO_SESSION"] == "N" || check_bitrix_sessid())))
 {
@@ -135,7 +147,9 @@ if ($_REQUEST["CurrentStep"] == 7 || ($_SERVER["REQUEST_METHOD"] == "POST" && ($
 	elseif(IntVal($arResult["POST"]["CurrentStep"])>0)
 		$CurrentStepTmp = IntVal($arResult["POST"]["CurrentStep"]);
 }
-
+if($arResult["DELIVERY_ID"] and !$arResult["POST"]['PAY_SYSTEM_ID']){
+	$arResult["CurrentStep"] = 4;
+}
 
 $arResult["BACK"] = (($arResult["POST"]["BACK"] == "Y") ? "Y" : "");
 
@@ -159,6 +173,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && strlen($_REQUEST["backButton"]) > 0 
 if ($arResult["CurrentStep"] <= 0)
 	$arResult["CurrentStep"] = 1;
 $arResult["ERROR_MESSAGE"] = "";
+
+$dbOrderProps = CSaleOrderPropsValue::GetList(
+	array("SORT" => "ASC"),
+	array("CODE" => array("PHONE"))
+);
+foreach($dbOrderProps->arResult as $phprop){
+	if(!empty($arResult["POST"]["ORDER_PROP_$phprop[ORDER_PROPS_ID]"])){
+		$proend = $arResult["POST"]["ORDER_PROP_$phprop[ORDER_PROPS_ID]"];
+		$update_prop_user = new CUser;
+		$update_prop_user->Update($USER->GetID(), array("WORK_PHONE" => $proend));
+		break;
+	}
+}
+
+
 
 /*******************************************************************************/
 /*****************  ACTION  ****************************************************/
@@ -289,13 +318,10 @@ if (!$USER->IsAuthorized())
 
 			if (strlen($arResult["ERROR_MESSAGE"]) <= 0)
 			{
-				//var_dump($arResult["POST"]["WORK_DEPARTMENT"]);
-				//die();
-
 				$arAuthResult = $USER->Register($arResult["POST"]["~NEW_LOGIN"], $arResult["POST"]["~NEW_NAME"], $arResult["POST"]["~NEW_LAST_NAME"], $arResult["POST"]["~NEW_PASSWORD"], $arResult["POST"]["~NEW_PASSWORD_CONFIRM"], $arResult["POST"]["~NEW_EMAIL"], LANG, $arResult["POST"]["~captcha_word"], $arResult["POST"]["~captcha_sid"]);
 
 				$update_prop_user = new CUser;
-				$update_prop_user->Update($arAuthResult['ID'], array("WORK_DEPARTMENT" => $arResult["POST"]["WORK_DEPARTMENT"], "WORK_PHONE" => $arResult["POST"]["WORK_PHONE"], "WORK_POSITION" => $arResult["POST"]["WORK_POSITION"]));
+				$update_prop_user->Update($arAuthResult['ID'], array("WORK_DEPARTMENT" => $arResult["POST"]["PERSON_TYPE"], "WORK_PHONE" => $arResult["POST"]["WORK_PHONE"], "WORK_POSITION" => $arResult["POST"]["WORK_POSITION"]));
 
 				if ($arAuthResult != False && $arAuthResult["TYPE"] == "ERROR")
 					$arResult["ERROR_MESSAGE"] .= GetMessage("STOF_ERROR_REG").((strlen($arAuthResult["MESSAGE"]) > 0) ? ": ".$arAuthResult["MESSAGE"] : ".<br />" );
@@ -314,6 +340,20 @@ if (!$USER->IsAuthorized())
 				}
 			}
 		}
+	}
+
+	$arResult["PERSON_TYPE_INFO"] = Array();
+	$dbPersonType = CSalePersonType::GetList(
+		array("SORT" => "ASC", "NAME" => "ASC"),
+		array("LID" => SITE_ID, "ACTIVE" => "Y")
+	);
+	$bFirst = True;
+	while ($arPersonType = $dbPersonType->GetNext())
+	{
+		if (IntVal($arResult["POST"]["PERSON_TYPE"]) == IntVal($arPersonType["ID"]) || IntVal($arResult["POST"]["PERSON_TYPE"]) <= 0 && $bFirst)
+			$arPersonType["CHECKED"] = "Y";
+		$arResult["PERSON_TYPE_INFO"][] = $arPersonType;
+		$bFirst = False;
 	}
 }
 else
@@ -1133,8 +1173,6 @@ if ($USER->IsAuthorized())
 	}
 	if ($arResult["CurrentStep"] == 3)
 	{
-		if (IntVal($arResult["DELIVERY_LOCATION"]) > 0)
-		{
 			// if your custom services needs something else, ex. cart content, you may put it here or get it from your services using API
 			$arFilter = array(
 				"COMPABILITY" => array(
@@ -1218,12 +1256,8 @@ if ($USER->IsAuthorized())
 				$arResult["CurrentStep"] = 4;
 				$arResult["DELIVERY_ID"] = $curOneDelivery;
 			}
-		}
-		else
-		{
-			$arResult["SKIP_THIRD_STEP"] = "Y";
-			$arResult["CurrentStep"] = 4;
-		}
+
+
 	}
 	if ($arResult["CurrentStep"] == 4)
 	{
@@ -1664,6 +1698,115 @@ if ($USER->IsAuthorized())
 					$_SESSION["ORDER_EVENTS"][] = $e;
 			}
 		}
+
+
+			$arResult["DELIVERY"] = Array();
+
+			$deliv = $arResult["DELIVERY_ID"];
+			if(is_array($arResult["DELIVERY_ID"]))
+				$deliv = $arResult["DELIVERY_ID"][0].":".$arResult["DELIVERY_ID"][1];
+
+			$dbDelivery = CSaleDelivery::GetList(
+				array("SORT"=>"ASC", "NAME"=>"ASC"),
+				array(
+					"LID" => SITE_ID,
+					"+<=WEIGHT_FROM" => $arResult["ORDER_WEIGHT"],
+					"+>=WEIGHT_TO" => $arResult["ORDER_WEIGHT"],
+					"+<=ORDER_PRICE_FROM" => $arResult["ORDER_PRICE"],
+					"+>=ORDER_PRICE_TO" => $arResult["ORDER_PRICE"],
+					"ACTIVE" => "Y",
+					"LOCATION" => $arResult["DELIVERY_LOCATION"]
+				)
+			);
+
+			$bFirst = True;
+			while ($arDelivery = $dbDelivery->GetNext())
+			{
+				$arDelivery["FIELD_NAME"] = "DELIVERY_ID";
+				if (IntVal($arResult["DELIVERY_ID"]) == IntVal($arDelivery["ID"])
+					|| IntVal($arResult["DELIVERY_ID"]) <= 0 && $bFirst)
+					$arDelivery["CHECKED"] = "Y";
+				if (IntVal($arDelivery["PERIOD_FROM"]) > 0 || IntVal($arDelivery["PERIOD_TO"]) > 0)
+				{
+					$arDelivery["PERIOD_TEXT"] = GetMessage("SALE_DELIV_PERIOD");
+					if (IntVal($arDelivery["PERIOD_FROM"]) > 0)
+						$arDelivery["PERIOD_TEXT"] .= " ".GetMessage("SALE_FROM")." ".IntVal($arDelivery["PERIOD_FROM"]);
+					if (IntVal($arDelivery["PERIOD_TO"]) > 0)
+						$arDelivery["PERIOD_TEXT"] .= " ".GetMessage("SALE_TO")." ".IntVal($arDelivery["PERIOD_TO"]);
+					if ($arDelivery["PERIOD_TYPE"] == "H")
+						$arDelivery["PERIOD_TEXT"] .= " ".GetMessage("SALE_PER_HOUR")." ";
+					elseif ($arDelivery["PERIOD_TYPE"]=="M")
+						$arDelivery["PERIOD_TEXT"] .= " ".GetMessage("SALE_PER_MONTH")." ";
+					else
+						$arDelivery["PERIOD_TEXT"] .= " ".GetMessage("SALE_PER_DAY")." ";
+				}
+				$arDelivery["PRICE_FORMATED"] = SaleFormatCurrency($arDelivery["PRICE"], $arDelivery["CURRENCY"]);
+				$arResult["DELIVERY"][] = $arDelivery;
+				$bFirst = false;
+			}
+
+			if (is_array($arDeliveryServicesList))
+			{
+				$bFirst = true;
+				foreach ($arDeliveryServicesList as $arDeliveryInfo)
+				{
+					$delivery_id = $arDeliveryInfo["SID"];
+
+					if (!is_array($arDeliveryInfo) || !is_array($arDeliveryInfo["PROFILES"])) continue;
+
+					foreach ($arDeliveryInfo["PROFILES"] as $profile_id => $arDeliveryProfile)
+					{
+						$arProfile = array(
+							"SID" => $profile_id,
+							"TITLE" => $arDeliveryProfile["TITLE"],
+							"DESCRIPTION" => $arDeliveryProfile["DESCRIPTION"],
+							//"CHECKED" => $bFirst ? "Y" : "N",
+							"FIELD_NAME" => "DELIVERY_ID",
+						);
+
+						if ($arResult['DELIVERY_ID'])
+							if(strpos($deliv, ":") !== false &&
+								$deliv == $delivery_id.":".$profile_id
+								|| empty($arResult["DELIVERY_ID"]) && $bFirst
+							)
+								$arProfile["CHECKED"] = "Y";
+
+						if (!is_array($arResult["DELIVERY"][$delivery_id]))
+						{
+							$arResult["DELIVERY"][$delivery_id] = array(
+								"SID" => $delivery_id,
+								"TITLE" => $arDeliveryInfo["NAME"],
+								"DESCRIPTION" => $arDeliveryInfo["DESCRIPTION"],
+								"PROFILES" => array(),
+							);
+						}
+
+						$arResult["DELIVERY"][$delivery_id]["PROFILES"][$profile_id] = $arProfile;
+
+						$bFirst = false;
+					}
+				}
+			}
+
+			if(CModule::IncludeModule("statistic"))
+			{
+				$event1 = "eStore";
+				$event2 = "Step4_3";
+				$event3 = "";
+
+				foreach($arProductsInBasket as $ar_prod)
+				{
+					$event3 .= $ar_prod["PRODUCT_ID"].", ";
+				}
+				$e = $event1."/".$event2."/".$event3;
+
+				if(!is_array($_SESSION["ORDER_EVENTS"]) || (is_array($_SESSION["ORDER_EVENTS"]) && !in_array($e, $_SESSION["ORDER_EVENTS"]))) // check for event in session
+				{
+					CStatistic::Set_Event($event1, $event2, $event3);
+					$_SESSION["ORDER_EVENTS"][] = $e;
+				}
+			}
+
 	}
 	//------------------ STEP 3 ----------------------------------------------
 	elseif ($arResult["CurrentStep"] == 3)

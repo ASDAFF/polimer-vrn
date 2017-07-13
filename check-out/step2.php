@@ -20,6 +20,7 @@ $APPLICATION->SetTitle("Оформление заказа");
       <a href="#" class="meth active"><div class="inner">Доставка <br class="translate">по адресу<span>сегодня, <br class="translate">бесплатно</span></div></a>
       <a href="#" class="meth"><div class="inner"><div class="txt-main">Доставка транспортной компанией</div><div class="txt-mobile">Транспортная<br>компания</div><span>в удобное <br class="translate">для вас время</span></div></a>
    </div>
+
    <div class="methods_detail">
       <div class="group">
          <div class="line">

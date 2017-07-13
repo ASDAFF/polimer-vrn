@@ -7,7 +7,3 @@ function ChangeGenerate(val)
 
 	try{document.order_reg_form.NEW_LOGIN.focus();}catch(e){}
 }
-
-
-
-

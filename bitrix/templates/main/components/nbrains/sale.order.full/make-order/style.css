@@ -43,3 +43,17 @@ table.sale_order_full_table td img {
 	margin-right:5px;
 }
 .sof-req{color:red;}
+
+textarea{
+	top: 0;
+	right: 0;
+	width: 100%;
+	height: 100%;
+	border: 1px solid #CED5D9;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	outline: none;
+	padding: 10px 20px;
+	text-align: left;
+	color: #333;
+}

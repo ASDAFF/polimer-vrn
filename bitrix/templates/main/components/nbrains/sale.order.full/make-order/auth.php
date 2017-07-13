@@ -51,6 +51,9 @@
 		</div>
 	</div>
 
+
+
+
 	<div class="column">
 		<div class="title">Регистрация на сайте</div>
 		<a href="#" class="back2enter">Авторизация</a>
@@ -61,14 +64,17 @@
 
 		<div class="form_registration">
 			<div class="face_type">
-				<label>
-					<input type="radio" name="WORK_DEPARTMENT" value="1" checked >
-					<span><?echo GetMessage("STOF_WORK_DEPARTMENT_F")?></span>
-				</label>
-				<label>
-					<input type="radio" name="WORK_DEPARTMENT" value="2">
-					<span><?echo GetMessage("STOF_WORK_DEPARTMENT_U")?></span>
-				</label>
+				<?
+				foreach($arResult["PERSON_TYPE_INFO"] as $v)
+				{
+					?>
+					<label>
+						<input type="radio" id="PERSON_TYPE_<?= $v["ID"] ?>" name="PERSON_TYPE" value="<?= $v["ID"] ?>" <?if ($v["CHECKED"]=="Y") echo " checked";?> >
+						<span><?= $v["NAME"] ?></span>
+					</label>
+					<?
+				}
+				?>
 			</div>
 			<div class="line"><span><?echo GetMessage("STOF_LASTNAME")?></span>
 				<input type="text" name="NEW_LAST_NAME" size="40" value="<?=$arResult["POST"]["NEW_LAST_NAME"]?>">
@@ -79,14 +85,16 @@
 			<div class="line"><span>E-mail</span>
 				<input type="text" name="NEW_EMAIL" size="40" value="<?=$arResult["POST"]["NEW_EMAIL"]?>">
 			</div>
+			<!--
 			<div class="line">
 				<span>Телефон</span>
 				<span class="se7en">+7</span>
 				<input type="text" maxlength="3" class="phone_code">
 				<input type="text" class="phone_number">
 				<span class="tip">Введите 10 цифр, например 987 123 45 67</span>
-				<input type="hidden" name="WORK_PHONE" size="40" value="<?=$arResult["POST"]["WORK_PHONE"]?>">
+				<input type="hidden" name="WORK_PHONE" size="40" value="<?//=$arResult["POST"]["WORK_PHONE"]?>">
 			</div>
+			-->
 
 			<div class="line"><span><?echo GetMessage("STOF_LOGIN")?></span>
 				<input type="text" name="NEW_LOGIN" size="30" value="<?=$arResult["POST"]["NEW_LOGIN"]?>">

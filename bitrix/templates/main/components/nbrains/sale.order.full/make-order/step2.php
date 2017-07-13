@@ -6,39 +6,12 @@ if (!function_exists('PrintPropsForm'))
 	{
 		if (!empty($arSource))
 		{
-			if (strlen($PRINT_TITLE) > 0)
-			{
-				?>
-				<b><?= $PRINT_TITLE ?></b><br /><br />
-				<?
-			}
-			?>
-			<table class="sale_order_full_table">
-			<?
+
+
 			foreach($arSource as $arProperties)
 			{
-				if($arProperties["SHOW_GROUP_NAME"] == "Y")
-				{
-					?>
-					<tr>
-						<td colspan="2" align="center">
-							<b><?= $arProperties["GROUP_NAME"] ?></b>
-						</td>
-					</tr>
-					<?
-				}
-				?>
-				<tr>
-					<td align="right" valign="top">
-						<?= $arProperties["NAME"] ?>:<?
-						if($arProperties["REQUIED_FORMATED"]=="Y")
-						{
-							?><span class="sof-req">*</span><?
-						}
-						?>
-					</td>
-					<td>
-						<?
+
+
 						if($arProperties["TYPE"] == "CHECKBOX")
 						{
 							?>
@@ -48,7 +21,12 @@ if (!function_exists('PrintPropsForm'))
 						elseif($arProperties["TYPE"] == "TEXT")
 						{
 							?>
+					<div class="line">
+						<span><?=$arProperties["NAME"]; if($arProperties["REQUIED_FORMATED"]=="Y"){print "*";}?></span>
+						<div class="inp">
 							<input type="text" maxlength="250" size="<?=$arProperties["SIZE1"]?>" value="<?=$arProperties["VALUE"]?>" name="<?=$arProperties["FIELD_NAME"]?>">
+						</div>
+					</div>
 							<?
 						}
 						elseif($arProperties["TYPE"] == "SELECT")
@@ -84,7 +62,13 @@ if (!function_exists('PrintPropsForm'))
 						elseif ($arProperties["TYPE"] == "TEXTAREA")
 						{
 							?>
-							<textarea rows="<?=$arProperties["SIZE2"]?>" cols="<?=$arProperties["SIZE1"]?>" name="<?=$arProperties["FIELD_NAME"]?>"><?=$arProperties["VALUE"]?></textarea>
+							<div class="line">
+								<span><?=$arProperties["NAME"]; if($arProperties["REQUIED_FORMATED"]=="Y"){print "*";}?></span>
+								<div class="tex">
+									<textarea rows="<?=$arProperties["SIZE2"]?>" cols="<?=$arProperties["SIZE1"]?>" name="<?=$arProperties["FIELD_NAME"]?>"><?=$arProperties["VALUE"]?></textarea>
+								</div>
+							</div>
+
 							<?
 						}
 						elseif ($arProperties["TYPE"] == "LOCATION")
@@ -150,109 +134,62 @@ if (!function_exists('PrintPropsForm'))
 						}
 						?>
 
-					</td>
-				</tr>
+
 				<?
 			}
-			?>
-			</table>
-			<?
+
 			return true;
 		}
 		return false;
 	}
 }
 ?>
-<br />
-<table border="0" cellspacing="0" cellpadding="5">
-	<tr>
-		<td valign="top" width="60%" align="right"><input type="submit" name="contButton" value="<?= GetMessage("SALE_CONTINUE")?> &gt;&gt;"></td>
-		<td valign="top" width="5%" rowspan="3">&nbsp;</td>
-		<td valign="top" width="35%" rowspan="3">
-			<?echo GetMessage("STOF_CORRECT_NOTE")?><br /><br />
-			<?echo GetMessage("STOF_PRIVATE_NOTES")?>
-		</td>
-	</tr>
-	<tr>
-		<td valign="top" width="60%">
+
+<div class="or__back2shopping">
+	<a href="#">Вернуться к покупкам</a>
+</div>
+<div class="or__stages cl">
+	<div class="stage s1 active"><span>1</span><div class="text">Контактная <br>информация</div></div>
+	<div class="stage s2"><span>2</span><div class="text">Cпособ <br>получения</div></div>
+	<div class="stage s3"><span>3</span><div class="text">Способ <br>оплаты</div></div>
+	<div class="stage s4"><span>4</span><div class="text">Подтверждение <br>заказа</div></div>
+</div>
+
+<div class="or__content cl s2">
+
+	<div class="title">Выберите удобный способ получения заказа</div>
+	<div class="methods cl">
+		<?foreach($arResult["DELIVERY"] as $arDelivery):?>
+		<a href="#" class="meth <?if ($arDelivery["CHECKED"]=="Y") echo "active";?>">
+			<div class="inner">
+				<?=$arDelivery['NAME']?><span><?=$arDelivery['DESCRIPTION']?></span>
+			</div>
+			<input style="display:none" type="radio" class="<?if ($arDelivery["CHECKED"]=="Y") echo "active";?>" id="ID_DELIERY_ID_<?= $arDelivery["ID"] ?>" name="<?=$arDelivery["FIELD_NAME"]?>" value="<?= $arDelivery["ID"] ?>" <?if ($arDelivery["CHECKED"]=="Y") echo "checked";?>>
+		</a>
+		<?endforeach;?>
+	</div>
+
+	<div class="methods_detail">
 			<?
 			$bPropsPrinted = PrintPropsForm($arResult["PRINT_PROPS_FORM"]["USER_PROPS_N"], GetMessage("SALE_INFO2ORDER"), $arParams);
 
 			if(!empty($arResult["USER_PROFILES"]))
 			{
-				if ($bPropsPrinted)
-					echo "<br /><br />";
-				?>
-				<b><?echo GetMessage("STOF_PROFILES")?></b><br /><br />
-				<table class="sale_order_full_table">
-					<tr>
-						<td colspan="2">
-							<?= GetMessage("SALE_PROFILES_PROMT")?>:
-							<script language="JavaScript">
-							function SetContact(enabled)
-							{
-								if(enabled)
-									document.getElementById('sof-prof-div').style.display="block";
-								else
-									document.getElementById('sof-prof-div').style.display="none";
-							}
-							</script>
-						</td>
-					</tr>
-					<?
-					foreach($arResult["USER_PROFILES"] as $arUserProfiles)
-					{
-						?>
-						<tr>
-							<td valign="top" width="0%">
-								<input type="radio" name="PROFILE_ID" id="ID_PROFILE_ID_<?= $arUserProfiles["ID"] ?>" value="<?= $arUserProfiles["ID"];?>"<?if ($arUserProfiles["CHECKED"]=="Y") echo " checked";?> onClick="SetContact(false)">
-							</td>
-							<td valign="top" width="100%">
-								<label for="ID_PROFILE_ID_<?= $arUserProfiles["ID"] ?>">
-								<b><?=$arUserProfiles["NAME"]?></b><br />
-								<table>
-								<?
-								foreach($arUserProfiles["USER_PROPS_VALUES"] as $arUserPropsValues)
-								{
 
-									if (strlen($arUserPropsValues["VALUE_FORMATED"]) > 0)
-									{
-										?>
-										<tr>
-											<td><?=$arResult["PRINT_PROPS_FORM"]["USER_PROPS_Y"][$arUserPropsValues["ORDER_PROPS_ID"]]["NAME"]?>:</td>
-											<td><?=$arUserPropsValues["VALUE_FORMATED"]?></td>
-										</tr>
-										<?
-									}
-								}
-								?>
-								</table>
-								</label>
-							</td>
-						</tr>
-						<?
-					}
-					?>
-					<tr>
-						<td width="0%">
-							<input type="radio" name="PROFILE_ID" id="ID_PROFILE_ID_0" value="0"<?if ($arResult["PROFILE_ID"]=="0") echo " checked";?> onClick="SetContact(true)">
-						</td>
-						<td width="100%"><b><label for="ID_PROFILE_ID_0"><?echo GetMessage("SALE_NEW_PROFILE")?></label></b><br /></td>
-					</tr>
-				</table>
-				<?
 			}
 			else
 			{
 				?><input type="hidden" name="PROFILE_ID" value="0"><?
 			}
 			?>
-			<br /><br />
-			<div id="sof-prof-div">
+
+
+									<div class="group">
 			<?
 			PrintPropsForm($arResult["PRINT_PROPS_FORM"]["USER_PROPS_Y"], GetMessage("SALE_NEW_PROFILE_TITLE"), $arParams);
 			?>
-			</div>
+									</div>
+
 			<?
 			if ($arResult["USER_PROFILES_TO_FILL"]=="Y")
 			{
@@ -263,18 +200,20 @@ if (!function_exists('PrintPropsForm'))
 				<?
 			}
 			?>
-		</td>
-	</tr>
-	<tr>
-		<td valign="top" width="60%" align="right">
-		<?if(!($arResult["SKIP_FIRST_STEP"] == "Y"))
-		{
-			?>
-			<input type="submit" name="backButton" value="&lt;&lt; <?echo GetMessage("SALE_BACK_BUTTON")?>">
-			<?
-		}
-		?>
-			<input type="submit" name="contButton" value="<?= GetMessage("SALE_CONTINUE")?> &gt;&gt;">
-		</td>
-	</tr>
-</table>
+
+
+
+
+
+									<div class="controls cl">
+										<?if(!($arResult["SKIP_FIRST_STEP"] == "Y"))
+										{
+											?>
+											<input type="submit" class="control prev" name="backButton" value="<?echo GetMessage("SALE_BACK_BUTTON")?>">
+											<?
+										}
+										?>
+										<input type="submit" name="contButton" class="control next" value="<?= GetMessage("SALE_CONTINUE")?>">
+									</div>
+	</div>
+</div>
