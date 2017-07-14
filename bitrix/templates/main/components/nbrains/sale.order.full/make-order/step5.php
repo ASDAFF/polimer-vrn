@@ -1,9 +1,8 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 
 
-<div class="or__back2shopping">
-	<a href="#">Вернуться к покупкам</a>
-</div>
+
+
 <div class="or__stages cl">
 	<div class="stage s1 complite"><span>1</span><div class="text">Контактная <br>информация</div></div>
 	<div class="stage s2 complite"><span>2</span><div class="text">Cпособ <br>получения</div></div>

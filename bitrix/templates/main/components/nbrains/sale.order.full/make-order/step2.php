@@ -145,12 +145,10 @@ if (!function_exists('PrintPropsForm'))
 }
 ?>
 
-<div class="or__back2shopping">
-	<a href="#">Вернуться к покупкам</a>
-</div>
+
 <div class="or__stages cl">
-	<div class="stage s1 active"><span>1</span><div class="text">Контактная <br>информация</div></div>
-	<div class="stage s2"><span>2</span><div class="text">Cпособ <br>получения</div></div>
+	<div class="stage s1"><span>1</span><div class="text">Контактная <br>информация</div></div>
+	<div class="stage s2 active"><span>2</span><div class="text">Cпособ <br>получения</div></div>
 	<div class="stage s3"><span>3</span><div class="text">Способ <br>оплаты</div></div>
 	<div class="stage s4"><span>4</span><div class="text">Подтверждение <br>заказа</div></div>
 </div>
@@ -206,14 +204,7 @@ if (!function_exists('PrintPropsForm'))
 
 
 									<div class="controls cl">
-										<?if(!($arResult["SKIP_FIRST_STEP"] == "Y"))
-										{
-											?>
-											<input type="submit" class="control prev" name="backButton" value="<?echo GetMessage("SALE_BACK_BUTTON")?>">
-											<?
-										}
-										?>
-										<input type="submit" name="contButton" class="control next" value="<?= GetMessage("SALE_CONTINUE")?>">
+										<input type="submit" style="padding-left: 75px;" name="contButton" class="control next" value="<?= GetMessage("SALE_CONTINUE")?>">
 									</div>
 	</div>
 </div>

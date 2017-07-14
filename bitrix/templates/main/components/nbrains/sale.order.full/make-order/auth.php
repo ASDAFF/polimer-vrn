@@ -2,10 +2,18 @@
 
 
 
-
-<div class="or__back2shopping">
-	<a href="/basket/">Вернуться к покупкам</a>
-</div>
+<?
+$cntBasketItems = CSaleBasket::GetList(
+	array(),
+	array(
+		"FUSER_ID" => CSaleBasket::GetBasketUserID(),
+		"LID" => SITE_ID,
+		"ORDER_ID" => "NULL"
+	),
+	array()
+);
+if($cntBasketItems > 0):
+?>
 
 <div class="or__stages cl">
 	<div class="stage s1 active"><span>1</span><div class="text">Контактная <br>информация</div></div>
@@ -14,6 +22,7 @@
 	<div class="stage s4"><span>4</span><div class="text">Подтверждение <br>заказа</div></div>
 </div>
 
+<? endif; ?>
 
 <div class="or__content cl s1">
 	<div class="column">
@@ -136,6 +145,7 @@
 					<span>Я &mdash; представитель юридического лица или ИП</span>
 				</label>
 			</div>
+
 			<input type="submit" class="registrate" value="<?echo GetMessage("STOF_NEXT_STEP")?>">
 			<input type="hidden" name="do_register" value="Y">
 

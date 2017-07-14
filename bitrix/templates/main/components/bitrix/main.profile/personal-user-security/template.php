@@ -26,8 +26,9 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 				<h1 class="h1-lk">Личный кабинет</h1>
 				<div class="welcome">
 					Добро пожаловать,
-					<span class="username">Иван И.</span>
-					<span class="usermail">ivanoivanivanovich@gmail.com</span>
+					<? global $USER; ?>
+					<span class="username"><? echo $USER->GetFullName(); ?></span>
+					<span class="usermail"><? echo $USER->GetEmail(); ?></span>
 				</div>
 				<div class="block-menu cl">
 					<a href="/personal/orders-list.php" class="menu-item ph">История<br>заказов</a>

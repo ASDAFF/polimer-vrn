@@ -328,7 +328,7 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 							<button type="submit" class="search__btn"></button>
 						</form>
 					</div><!--end::header__search-->
-					<a href="/personal/" class="header__account">Личный кабинет</a>
+					<a href="<?if ($USER->IsAuthorized()){?>/personal/orders-list.php<?}else{?>/personal/order/make/<?}?>" class="header__account">Личный кабинет</a>
 
 						<?$APPLICATION->IncludeComponent("bitrix:sale.basket.basket.line", "basket.small", Array(
 							"HIDE_ON_BASKET_PAGES" => "Y",	// Не показывать на страницах корзины и оформления заказа

@@ -1,7 +1,7 @@
 <? if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die(); ?>
 
 <div class="lk_block cl">
-   <a href="/" class="exit">Выйти</a>
+   <a href="?logout=yes" class="exit">Выйти</a>
    <div class="lk_leftbar">
       <a href="#" class="lk_sandwich">
          <span></span>
@@ -11,8 +11,9 @@
       <h1 class="h1-lk">Личный кабинет</h1>
       <div class="welcome">
          Добро пожаловать,
-         <span class="username">Иван И.</span>
-         <span class="usermail">ivanoivanivanovich@gmail.com</span>
+         <? global $USER; ?>
+         <span class="username"><? echo $USER->GetFullName(); ?></span>
+         <span class="usermail"><? echo $USER->GetEmail(); ?></span>
       </div>
       <div class="block-menu cl">
          <a href="/personal/orders-list.php" class="menu-item ph active">История<br>заказов</a>
@@ -88,7 +89,7 @@
             <div class="goods">Состав заказа:
                <ol>
                   <? foreach ($arOrder['BASKET_ITEMS'] as $arItem): ?>
-                  <li><a href="<?=$arItem['PRODUCT']['DETAIL_PAGE_URL']?>"><?=$arItem['NAME']?></a> - <span><?=$arItem['QUANTITY']?> <?=$arItem['MEASURE_NAME']?></span></li>
+                  <li><a href="<?=$arItem['DETAIL_PAGE_URL']?>"><?=$arItem['NAME']?></a> - <span><?=$arItem['QUANTITY']?> <?=$arItem['MEASURE_NAME']?></span></li>
                   <? endforeach; ?>
 
                </ol>
