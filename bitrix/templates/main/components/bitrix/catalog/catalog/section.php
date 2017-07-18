@@ -14,6 +14,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 
 $this->setFrameMode(true);
+
 ?>
 
 
@@ -104,7 +105,11 @@ $this->setFrameMode(true);
 			?>
 
 
-			<?$APPLICATION->IncludeComponent(
+			<?
+
+
+
+			$sectionID = $APPLICATION->IncludeComponent(
 				"bitrix:catalog.section.list",
 				"",
 				array(
@@ -125,7 +130,24 @@ $this->setFrameMode(true);
 				),
 				$component,
 				array("HIDE_ICONS" => "Y")
-			);?><?
+			);
+			$arFilter = array('IBLOCK_ID' => $arParams["IBLOCK_ID"],"CODE" => $arResult['VARIABLES']['SECTION_CODE']);
+			$rsSect = CIBlockSection::GetList(Array("SORT"=>"ASC"),$arFilter,false, array('UF_BROWSER_TITLE'));
+			if ($arSect = $rsSect->GetNext())
+			{
+				if($arSect['UF_BROWSER_TITLE']){
+					$APPLICATION->SetTitle( $arSect['UF_BROWSER_TITLE'] );
+				}else{
+					$APPLICATION->SetTitle( $arSect['NAME'] );
+				}
+
+			}
+
+
+
+			?>
+
+<?
 			if($arParams["USE_COMPARE"]=="Y")
 			{
 				?><?$APPLICATION->IncludeComponent(

@@ -17,7 +17,8 @@ $this->addExternalCss("/bitrix/css/main/bootstrap.css");
 ?>
 
 
-<?$APPLICATION->IncludeComponent(
+<?
+$sectionId = $APPLICATION->IncludeComponent(
 	"bitrix:catalog.section.list",
 	"",
 	array(
@@ -37,6 +38,7 @@ $this->addExternalCss("/bitrix/css/main/bootstrap.css");
 	$component,
 	array("HIDE_ICONS" => "Y")
 );
+
 ?>
 
 
