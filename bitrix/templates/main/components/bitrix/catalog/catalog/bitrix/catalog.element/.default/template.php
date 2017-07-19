@@ -12,13 +12,13 @@
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
 
-var_dump();
+//var_dump($arResult);
 ?>
 
 <div class="prod_card cl">
    <div class="pc__prod-info">
       <h1><?=$arResult['NAME']?></h1>
-      <div class="pc__code">Код товара: <span>13515348</span></div>
+      <div class="pc__code">Код товара: <span><?=$arResult['PROPERTIES']['CML2_ARTICLE']['VALUE']?></span></div>
 
       <div class="cl">
          <div class="pc__prod-gallery cl">
@@ -60,12 +60,12 @@ var_dump();
                </div>
                <div class="quantity">
                   <a class="minus na" href="#"></a>
-                  <input type="text" value="1"/>
+                  <input type="text" value="1" id="count_product"/>
                   <a class="plus" href="#"></a>
                </div>
             </div>
 
-            <a href="#" class="add2cart">Добавить в корзину</a>
+            <a href="javascript:void(0)" class="add2cart" onclick="addToBasket2(<?=$arResult['ID']?>, $('#count_product').val());">Добавить в корзину</a>
             <a href="#" class="bb_btn show-popup" data-id="oneclick"><span>Купить<br>в один клик</span></a>
             <a href="#" class="bb_btn spec_help show-popup" data-id="specialist"><span>Помощь<br>специалиста</span></a>
          </div>
@@ -75,7 +75,7 @@ var_dump();
          <div class="t-list cl">
             <a href="#"><span>Описание</span></a>
             <a href="#"><span>Технические характеристики</span></a>
-            <a href="#"><span>Отзывы (<span class="count">23</span>)</span></a>
+            <a href="#"><span>Отзывы </span></a>
             <a href="#" class="active"><span>Наличие в магазинах</span></a>
          </div>
          <div class="t-content">
@@ -112,124 +112,83 @@ var_dump();
                </div>
             </div>
             <div class="tab tab_fed">
-               <a href="#" class="mtb" onclick="return false">Отзывы (<div class="count">23</div>)</a>
+               <a href="#" class="mtb" onclick="return false">Отзывы</a>
                <div class="content">
-                  <div class="comment">
-                     <div class="item main">
-                        <div class="title">Иванов Иван</div>
-                        <div class="date">15.05.2017</div>
-                        <div class="txt">Настенный газовый двухконтурный котел CIAO 24 предназначен для отопления и горячего водоснабжения помещений различного назначения. Котёл CIAO c открытой камерой сгорания. Благодаря небольшим габаритам и хорошему соотношению цена/качество, котлы CIAO широко используются в многоэтажных домах с поквартирным теплоснабжением.</div>
-                     </div>
-                     <div class="item positive">
-                        <div class="title">Достоинства</div>
-                        <div class="txt">Благодаря небольшим габаритам и хорошему соотношению цена/качество, котлы CIAO широко используются в многоэтажных домах с поквартирным теплоснабжением.</div>
-                     </div>
-                     <div class="item negative">
-                        <div class="title">Недостатки</div>
-                        <div class="txt">Благодаря небольшим габаритам и хорошему соотношению цена/качество, котлы CIAO широко используются в многоэтажных домах с поквартирным теплоснабжением.</div>
-                     </div>
-                  </div>
-                  <div class="comment">
-                     <div class="item main">
-                        <div class="title">Иванов Иван</div>
-                        <div class="date">15.05.2017</div>
-                        <div class="txt">Настенный газовый двухконтурный котел CIAO 24 предназначен для отопления и горячего водоснабжения помещений различного назначения. Котёл CIAO c открытой камерой сгорания. Благодаря небольшим габаритам и хорошему соотношению цена/качество, котлы CIAO широко используются в многоэтажных домах с поквартирным теплоснабжением.</div>
-                     </div>
-                     <div class="item positive">
-                        <div class="title">Достоинства</div>
-                        <div class="txt">Благодаря небольшим габаритам и хорошему соотношению цена/качество, котлы CIAO широко используются в многоэтажных домах с поквартирным теплоснабжением.</div>
-                     </div>
-                     <div class="item negative">
-                        <div class="title">Недостатки</div>
-                        <div class="txt">Благодаря небольшим габаритам и хорошему соотношению цена/качество, котлы CIAO широко используются в многоэтажных домах с поквартирным теплоснабжением.</div>
-                     </div>
-                  </div>
+
+
+                  <?$APPLICATION->IncludeComponent("bitrix:forum.topic.reviews", "reviews", Array(
+                      "AJAX_POST" => "Y",	// Р�СЃРїРѕР»СЊР·РѕРІР°С‚СЊ AJAX РІ РґРёР°Р»РѕРіР°С…
+                      "CACHE_TIME" => "0",	// Р’СЂРµРјСЏ РєРµС€РёСЂРѕРІР°РЅРёСЏ (СЃРµРє.)
+                      "CACHE_TYPE" => "A",	// РўРёРї РєРµС€РёСЂРѕРІР°РЅРёСЏ
+                      "DATE_TIME_FORMAT" => "d.m.Y H:i:s",	// Р¤РѕСЂРјР°С‚ РїРѕРєР°Р·Р° РґР°С‚С‹ Рё РІСЂРµРјРµРЅРё
+                      "EDITOR_CODE_DEFAULT" => "Y",	// РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РїРѕРєР°Р·С‹РІР°С‚СЊ РЅРµРІРёР·СѓР°Р»СЊРЅС‹Р№ СЂРµР¶РёРј СЂРµРґР°РєС‚РѕСЂР°
+                      "ELEMENT_ID" => $arResult['ID'],	// ID СЌР»РµРјРµРЅС‚Р°
+                      "FILES_COUNT" => "2",	// РњР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ С„Р°Р№Р»РѕРІ, РїСЂРёРєСЂРµРїР»РµРЅРЅС‹С… Рє РѕРґРЅРѕРјСѓ СЃРѕРѕР±С‰РµРЅРёСЋ
+                      "FORUM_ID" => "1",	// ID С„РѕСЂСѓРјР° РґР»СЏ РѕС‚Р·С‹РІРѕРІ
+                      "IBLOCK_ID" => "11",	// РљРѕРґ РёРЅС„РѕСЂРјР°С†РёРѕРЅРЅРѕРіРѕ Р±Р»РѕРєР°
+                      "IBLOCK_TYPE" => "1c_catalog",	// РўРёРї РёРЅС„РѕСЂРјР°С†РёРѕРЅРЅРѕРіРѕ Р±Р»РѕРєР° (РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РґР»СЏ РїСЂРѕРІРµСЂРєРё)
+                      "MESSAGES_PER_PAGE" => "10",	// РљРѕР»РёС‡РµСЃС‚РІРѕ СЃРѕРѕР±С‰РµРЅРёР№ РЅР° РѕРґРЅРѕР№ СЃС‚СЂР°РЅРёС†Рµ
+                      "NAME_TEMPLATE" => "",	// Р¤РѕСЂРјР°С‚ РёРјРµРЅРё
+                      "PAGE_NAVIGATION_TEMPLATE" => "",	// РќР°Р·РІР°РЅРёРµ С€Р°Р±Р»РѕРЅР° РґР»СЏ РІС‹РІРѕРґР° РїРѕСЃС‚СЂР°РЅРёС‡РЅРѕР№ РЅР°РІРёРіР°С†РёРё
+                      "PREORDER" => "N",	// Р’С‹РІРѕРґРёС‚СЊ СЃРѕРѕР±С‰РµРЅРёСЏ РІ РїСЂСЏРјРѕРј РїРѕСЂСЏРґРєРµ
+                      "RATING_TYPE" => "",	// Р’РёРґ РєРЅРѕРїРѕРє СЂРµР№С‚РёРЅРіР°
+                      "SHOW_AVATAR" => "N",	// РџРѕРєР°Р·С‹РІР°С‚СЊ Р°РІР°С‚Р°СЂС‹ РїРѕР»СЊР·РѕРІР°С‚РµР»РµР№
+                      "SHOW_LINK_TO_FORUM" => "N",	// РџРѕРєР°Р·Р°С‚СЊ СЃСЃС‹Р»РєСѓ РЅР° С„РѕСЂСѓРј
+                      "SHOW_MINIMIZED" => "N",	// РЎРІРѕСЂР°С‡РёРІР°С‚СЊ С„РѕСЂРјСѓ РґРѕР±Р°РІР»РµРЅРёСЏ РѕС‚Р·С‹РІР°
+                      "SHOW_RATING" => "N",	// Р’РєР»СЋС‡РёС‚СЊ СЂРµР№С‚РёРЅРі
+                      "URL_TEMPLATES_DETAIL" => "",	// РЎС‚СЂР°РЅРёС†Р° СЌР»РµРјРµРЅС‚Р° РёРЅС„РѕР±Р»РѕРєР°
+                      "URL_TEMPLATES_PROFILE_VIEW" => "",	// РЎС‚СЂР°РЅРёС†Р° РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ
+                      "URL_TEMPLATES_READ" => "",	// РЎС‚СЂР°РЅРёС†Р° С‡С‚РµРЅРёСЏ С‚РµРјС‹ С„РѕСЂСѓРјР°
+                      "USE_CAPTCHA" => "N",	// Р�СЃРїРѕР»СЊР·РѕРІР°С‚СЊ CAPTCHA
+                      "COMPONENT_TEMPLATE" => ".default",
+                      "SHOW_SUBSCRIBE" => "N"
+                  ),
+                      false
+                  );?>
+
+
                </div>
             </div>
             <div class="tab tab_nal active">
                <a href="#" class="mtb" onclick="return false">Наличие в магазинах</a>
                <div class="content">
-                  <div class="tab-row cl head">
-                     <div class="tab-cell">Адрес \ Телефон</div>
-                     <div class="tab-cell">Наличие</div>
-                     <div class="tab-cell">Забрать</div>
-                     <div class="tab-cell">Режим работы</div>
-                  </div>
-                  <div class="tab-row cl">
-                     <div class="tab-cell"><div class="mtn">Адрес \ Телефон</div>г. Воронеж, Ильюшина, д.10А <span>+7 (473) 237-35-55</span> e-mail: <a href="#">info@polimer-vrn.ru</a></div>
-                     <div class="tab-cell">
-                        <div class="mtn">Наличие</div>
-                        <div class="qbar cl">
-                           <span class="green"></span>
-                           <span class="green"></span>
-                           <span class="green"></span>
-                           <span class="green"></span>
-                           <span class="green"></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                        </div>
-                        <div class="q">Много</div>
-                     </div>
-                     <div class="tab-cell">
-                        <div class="mtn">Забрать</div>
-                        <div class="when">Сегодня</div>
-                        <div class="time"></div>
-                     </div>
-                     <div class="tab-cell"><div class="mtn">Режим работы</div>с 8:00 до 17:00 (пн-пт)<br>с 8:30 до 16:30 (сб)<br>воскресенье - <span>выходной</span></div>
-                  </div>
-                  <div class="tab-row cl">
-                     <div class="tab-cell"><div class="mtn">Адрес \ Телефон</div>г. Воронеж, Ильюшина, д.10А <span>+7 (473) 237-35-55</span> e-mail: <a href="#">info@polimer-vrn.ru</a></div>
-                     <div class="tab-cell">
-                        <div class="mtn">Наличие</div>
-                        <div class="qbar cl">
-                           <span class="yellow"></span>
-                           <span class="yellow"></span>
-                           <span class="yellow"></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                        </div>
-                        <div class="q">Мало</div>
-                     </div>
-                     <div class="tab-cell">
-                        <div class="mtn">Забрать</div>
-                        <div class="when">Завтра</div>
-                        <div class="time">после 14:00</div>
-                     </div>
-                     <div class="tab-cell"><div class="mtn">Режим работы</div>с 8:00 до 17:00 (пн-пт)<br>с 8:30 до 16:30 (сб)<br>воскресенье - <span>выходной</span></div>
-                  </div>
-                  <div class="tab-row cl">
-                     <div class="tab-cell"><div class="mtn">Адрес \ Телефон</div>г. Воронеж, Ильюшина, д.10А <span>+7 (473) 237-35-55</span> e-mail: <a href="#">info@polimer-vrn.ru</a></div>
-                     <div class="tab-cell">
-                        <div class="mtn">Наличие</div>
-                        <div class="qbar cl">
-                           <span class="red"></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                           <span></span>
-                        </div>
-                        <div class="q">1 шт.</div>
-                     </div>
-                     <div class="tab-cell">
-                        <div class="mtn">Забрать</div>
-                        <div class="when">Завтра</div>
-                        <div class="time">после 14:00</div>
-                     </div>
-                     <div class="tab-cell"><div class="mtn">Режим работы</div>с 8:00 до 17:00 (пн-пт)<br>с 8:30 до 16:30 (сб)<br>воскресенье - <span>выходной</span></div>
-                  </div>
+                  <?$APPLICATION->IncludeComponent("bitrix:catalog.store.amount", "store", Array(
+                      "CACHE_TIME" => "36000",	// Р’СЂРµРјСЏ РєРµС€РёСЂРѕРІР°РЅРёСЏ (СЃРµРє.)
+                      "CACHE_TYPE" => "N",	// РўРёРї РєРµС€РёСЂРѕРІР°РЅРёСЏ
+                      "ELEMENT_CODE" => "",	// РљРѕРґ С‚РѕРІР°СЂР°
+                      "ELEMENT_ID" => $arResult['ID'],	// РўРѕРІР°СЂ
+                      "FIELDS" => array(	// РџРѕР»СЏ
+                          0 => "TITLE",
+                          1 => "ADDRESS",
+                          2 => "DESCRIPTION",
+                          3 => "PHONE",
+                          4 => "EMAIL",
+                          5 => "IMAGE_ID",
+                          6 => "COORDINATES",
+                          7 => "SCHEDULE",
+                          8 => "",
+                      ),
+                      "IBLOCK_ID" => "11",	// Р�РЅС„РѕР±Р»РѕРє
+                      "IBLOCK_TYPE" => "1c_catalog",	// РўРёРї РёРЅС„РѕР±Р»РѕРєР°
+                      "MAIN_TITLE" => "",	// Р—Р°РіРѕР»РѕРІРѕРє
+                      "MIN_AMOUNT" => "0",
+                      "OFFER_ID" => "",	// РўРѕСЂРіРѕРІРѕРµ РїСЂРµРґР»РѕР¶РµРЅРёРµ
+                      "SHOW_EMPTY_STORE" => "Y",	// РћС‚РѕР±СЂР°Р¶Р°С‚СЊ СЃРєР»Р°Рґ РїСЂРё РѕС‚СЃСѓС‚СЃС‚РІРёРё РЅР° РЅРµРј С‚РѕРІР°СЂР°
+                      "SHOW_GENERAL_STORE_INFORMATION" => "N",	// РџРѕРєР°Р·С‹РІР°С‚СЊ РѕР±С‰СѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ РїРѕ СЃРєР»Р°РґР°Рј
+                      "STORES" => array(	// РЎРєР»Р°РґС‹
+                          0 => "1",
+                          1 => "2",
+                          2 => "",
+                      ),
+                      "STORE_PATH" => "",	// URL РЅР° СЃС‚СЂР°РЅРёС†Сѓ, РіРґРµ Р±СѓРґРµС‚ РїРѕРєР°Р·Р°РЅР° РґРµС‚Р°Р»СЊРЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ СЃРєР»Р°РґРµ
+                      "USER_FIELDS" => array(	// РЎРІРѕР№СЃС‚РІР°
+                          0 => "",
+                          1 => "",
+                      ),
+                      "USE_MIN_AMOUNT" => "Y",	// РџРѕРєР°Р·С‹РІР°С‚СЊ РІРјРµСЃС‚Рѕ С‚РѕС‡РЅРѕРіРѕ РєРѕР»РёС‡РµСЃС‚РІР° РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕСЃС‚Рё
+                  ),
+                      false
+                  );?>
                </div>
             </div>
          </div>

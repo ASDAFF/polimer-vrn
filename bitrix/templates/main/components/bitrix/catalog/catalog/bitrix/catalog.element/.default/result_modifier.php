@@ -611,3 +611,10 @@ if ($arResult['MODULES']['currency'])
 		unset($currencyFormat, $currency, $currencyIterator);
 	}
 }
+if($arResult['PROPERTIES']['MORE_PHOTO']['VALUE']){
+	array_unshift($arResult['PROPERTIES']['MORE_PHOTO']['VALUE'], $arResult['DETAIL_PICTURE']['ID']);
+}else{
+	$arResult['PROPERTIES']['MORE_PHOTO']['VALUE'] = array($arResult['DETAIL_PICTURE']['ID']);
+}
+
+

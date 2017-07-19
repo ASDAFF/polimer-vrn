@@ -132,7 +132,7 @@ $this->setFrameMode(true);
 				array("HIDE_ICONS" => "Y")
 			);
 			$arFilter = array('IBLOCK_ID' => $arParams["IBLOCK_ID"],"CODE" => $arResult['VARIABLES']['SECTION_CODE']);
-			$rsSect = CIBlockSection::GetList(Array("SORT"=>"ASC"),$arFilter,false, array('UF_BROWSER_TITLE'));
+			$rsSect = CIBlockSection::GetList(Array("SORT"=>"ASC"),$arFilter,false, array('UF_BROWSER_TITLE','UF_KEYWORDS','UF_META_DESCRIPTION'));
 			if ($arSect = $rsSect->GetNext())
 			{
 				if($arSect['UF_BROWSER_TITLE']){
@@ -140,7 +140,16 @@ $this->setFrameMode(true);
 				}else{
 					$APPLICATION->SetTitle( $arSect['NAME'] );
 				}
-
+				if ($arSect['UF_KEYWORDS']) {
+					$APPLICATION->SetPageProperty ( "keywords", $arSect['UF_KEYWORDS'] );
+				}else{
+					$APPLICATION->SetPageProperty ( "keywords", "" );
+				}
+				if ($arSect['UF_META_DESCRIPTION']) {
+					$APPLICATION->SetPageProperty ( "description", $arSect['UF_META_DESCRIPTION'] );
+				}else{
+					$APPLICATION->SetPageProperty ( "description", "" );
+				}
 			}
 
 
