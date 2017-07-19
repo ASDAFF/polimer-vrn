@@ -81,6 +81,8 @@
 				</footer>
 			</div><!--end::wr-->
      	</div><!--end::container-->
+
+
      	<div class="popup" id="mailus">
      		<a href="#" class="close">&nbsp;</a>
      		<div class="title">Написать письмо</div>

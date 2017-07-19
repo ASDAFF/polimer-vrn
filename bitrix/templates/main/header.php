@@ -63,6 +63,7 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/common.min.js');
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/social-likes.min.js');
 
+		Asset::getInstance()->addJs('/js/readmore.js');
 		Asset::getInstance()->addJs('/js/function.js');
 		?>
 
