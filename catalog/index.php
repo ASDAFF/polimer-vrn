@@ -718,10 +718,19 @@ $APPLICATION->SetTitle("Каталог");
 	),
 	false
 );?>
+
+<? if($APPLICATION -> GetCurDir() == '/catalog/'):?>
 <div class="catalog-sections-text">
-	<h1></h1>
-	<p>
-		<br>
-	</p>
+	<?$APPLICATION->IncludeComponent(
+		"bitrix:main.include",
+		"",
+		Array(
+			"AREA_FILE_SHOW" => "file",
+			"AREA_FILE_SUFFIX" => "inc",
+			"EDIT_TEMPLATE" => "",
+			"PATH" => "/include/catalog-text.php"
+		)
+	);?>
 </div>
+<? endif; ?>
  <br><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

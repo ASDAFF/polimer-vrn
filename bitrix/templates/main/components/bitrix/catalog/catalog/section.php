@@ -150,9 +150,12 @@ $this->setFrameMode(true);
 				}else{
 					$APPLICATION->SetPageProperty ( "description", "" );
 				}
+				?>
+				<div class="catalog-sections-text">
+					<?=$arSect['DESCRIPTION']?>
+				</div>
+				<?
 			}
-
-
 
 			?>
 
