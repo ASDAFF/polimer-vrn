@@ -17,7 +17,7 @@ if (!empty($arResult['ITEMS']))
 
 
 	<div class="ct__content">
-		<h1><?=$arResult['NAME']?></h1>
+		<div class="h1"><?=$arResult['NAME']?></div>
 
 		<div class="products_roll">
 			<div class="pr_header cl">
@@ -178,7 +178,7 @@ if (!empty($arResult['ITEMS']))
 			</div>
 		</div><!--end::products_roll-->
 
-		<h2>Вы смотрели</h2>
+		<div class="h2">Вы смотрели</div>
 		<div class="slider_product" id="mp__product__action">
 			<div>
 				<div class="product">
