@@ -720,7 +720,7 @@ $APPLICATION->SetTitle("Каталог");
 );?>
 
 <? if($APPLICATION -> GetCurDir() == '/catalog/'):?>
-<div class="catalog-sections-text">
+<div class="catalog-sections-text" style="margin-top: 60px">
 	<?$APPLICATION->IncludeComponent(
 		"bitrix:main.include",
 		"",
