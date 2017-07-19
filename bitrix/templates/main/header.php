@@ -219,166 +219,103 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 				<div class="header__bottom">
 					<div class="wr cl">
 						<div class="header__catalog cl">
-							<a href="/catalog/root.php" class="catalog__trigger">
-								<span class="i1"></span>
-								<span class="i2"></span>
-								<span class="i3"></span>
-							</a>
-
-							<a href="/catalog/root.php"  class="catalog__name">Каталог товаров</a>
-
-							<div class="catalog-sections-menu">
-								<div class="wr">
-									<ul class="first-sections">
-										<li>
-											<a href="/catalog/">
-												<img src="<?=SITE_TEMPLATE_PATH?>/img/category_1.png" width="90" height="65" alt="Инженерная сантехника" />
-												Инженерная<br />сантехника
-											</a>
-											<div class="subsections">
-												<ul>
-													<li><a class="dd" href="#">+</a><a href="/catalog/section/" class="title">Котельное оборудование</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/section/" class="title">Радиаторы отопления, арматура</a></li>
-													<li >
-														<a class="dd" href="#">+</a><a href="#" class="title" onclick="return false">Баки расширительные</a>
-														<ul class="inner">
-															<li><a href="#">Водонагреватели электрические</a></li>
-															<li><a href="#">Модели классической круглой формы</a></li>
-															<li><a href="#">Модели плоской формы</a></li>
-															<li><a href="#">Компактные малоемкостные модели</a></li>
-															<li><a href="#">Проточные</a></li>
-															<li><a href="#">Запасные части для водонагревателей</a></li>
-														</ul>
-													</li>
-												</ul>
-												<ul>
-													<li><a class="dd" href="#">+</a><a href="/catalog/section/" class="title">Измерительные приборы</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/section/" class="title">Бойлеры лапаны, регуляторы давления</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/section/" class="title">Коллекторные системы</a></li>
-												</ul>
-												<ul>
-													<li><a class="dd" href="#">+</a><a href="/catalog/section/" class="title">Подводка гибкая (вода, газ)</a></li>
-													<li><a class="dd" href="#">+</a><a ></a><a href="/catalog/section/" class="title">Счётчики воды и газа</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/section/" class="title">Сварочные аппараты</a></li>
-												</ul>
-											</div>
-										</li>
-										<li>
-											<a href="/catalog/">
-												<img src="<?=SITE_TEMPLATE_PATH?>/img/category_2.png" width="90" height="65" alt="Строительные материалы" />
-												Строительные<br />материалы
-											</a>
-											<div class="subsections">
-												<ul>
-													<li><a class="dd" href="#">+</a><a href="/catalog/section/" class="title">Котельное оборудование</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/section/" class="title">Радиаторы отопления, арматура</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/section/" class="title">Трубы и фитинги</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/section/" class="title">Насосное оборудование</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/section/" class="title">Краны шаровые, вентили</a></li>
-													<li >
-														<a class="dd" href="#">+</a><a href="#" class="title" onclick="return false">Баки расширительные</a>
-														<ul class="inner">
-															<li><a href="#">Водонагреватели электрические</a></li>
-															<li><a href="#">Модели классической круглой формы</a></li>
-															<li><a href="#">Модели плоской формы</a></li>
-															<li><a href="#">Компактные малоемкостные модели</a></li>
-															<li><a href="#">Проточные</a></li>
-															<li><a href="#">Запасные части для водонагревателей</a></li>
-														</ul>
-													</li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Задвижки и затворы</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Баки пластиковые для воды</a></li>
-												</ul>
-												<ul>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Измерительные приборы</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Бойлеры лапаны, регуляторы давления</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Коллекторные системы</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Оборудование Danfoss, Esbe</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Сантехника</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Воздухоотводчики</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Люки смотровых колодцев</a></li>
-												</ul>
-												<ul>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Подводка гибкая (вода, газ)</a></li>
-													<li><a class="dd" href="#">+</a><a ></a><a href="/catalog/" class="title">Счётчики воды и газа</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Сварочные аппараты</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Теплоизоляция</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">Сопутствующие материалы</a></li>
-													<li><a class="dd" href="#">+</a><a href="/catalog/" class="title">РАСПРОДАЖА</a></li>
-												</ul>
-											</div>
-										</li>
-									</ul>
-								</div>
-							</div>
+							<?$APPLICATION->IncludeComponent(
+	"bitrix:catalog.section.list", 
+	"top-menu-catalog", 
+	array(
+		"ADD_SECTIONS_CHAIN" => "Y",
+		"CACHE_GROUPS" => "Y",
+		"CACHE_TIME" => "36000000",
+		"CACHE_TYPE" => "A",
+		"COUNT_ELEMENTS" => "Y",
+		"IBLOCK_ID" => "11",
+		"IBLOCK_TYPE" => "1c_catalog",
+		"SECTION_CODE" => "",
+		"SECTION_FIELDS" => array(
+			0 => "",
+			1 => "",
+		),
+		"SECTION_ID" => $_REQUEST["SECTION_ID"],
+		"SECTION_URL" => "",
+		"SECTION_USER_FIELDS" => array(
+			0 => "",
+			1 => "",
+		),
+		"SHOW_PARENT_NAME" => "Y",
+		"TOP_DEPTH" => "3",
+		"VIEW_MODE" => "LINE",
+		"COMPONENT_TEMPLATE" => "top-menu-catalog"
+	),
+	false
+);?>
 						</div>
 					<div class="header__action">
 
 						<?$APPLICATION->IncludeComponent(
-	"bitrix:news.list", 
-	"last-sale", 
-	array(
-		"ACTIVE_DATE_FORMAT" => "d.m.Y",
-		"ADD_SECTIONS_CHAIN" => "Y",
-		"AJAX_MODE" => "N",
-		"AJAX_OPTION_ADDITIONAL" => "",
-		"AJAX_OPTION_HISTORY" => "N",
-		"AJAX_OPTION_JUMP" => "N",
-		"AJAX_OPTION_STYLE" => "Y",
-		"CACHE_FILTER" => "N",
-		"CACHE_GROUPS" => "Y",
-		"CACHE_TIME" => "36000000",
-		"CACHE_TYPE" => "A",
-		"CHECK_DATES" => "Y",
-		"DETAIL_URL" => "",
-		"DISPLAY_BOTTOM_PAGER" => "Y",
-		"DISPLAY_DATE" => "Y",
-		"DISPLAY_NAME" => "Y",
-		"DISPLAY_PICTURE" => "Y",
-		"DISPLAY_PREVIEW_TEXT" => "Y",
-		"DISPLAY_TOP_PAGER" => "N",
-		"FIELD_CODE" => array(
-			0 => "",
-			1 => "",
-		),
-		"FILTER_NAME" => "",
-		"HIDE_LINK_WHEN_NO_DETAIL" => "N",
-		"IBLOCK_ID" => "3",
-		"IBLOCK_TYPE" => "news",
-		"INCLUDE_IBLOCK_INTO_CHAIN" => "Y",
-		"INCLUDE_SUBSECTIONS" => "Y",
-		"MESSAGE_404" => "",
-		"NEWS_COUNT" => "5",
-		"PAGER_BASE_LINK_ENABLE" => "N",
-		"PAGER_DESC_NUMBERING" => "N",
-		"PAGER_DESC_NUMBERING_CACHE_TIME" => "36000",
-		"PAGER_SHOW_ALL" => "N",
-		"PAGER_SHOW_ALWAYS" => "N",
-		"PAGER_TEMPLATE" => ".default",
-		"PAGER_TITLE" => "Акции",
-		"PARENT_SECTION" => "",
-		"PARENT_SECTION_CODE" => "",
-		"PREVIEW_TRUNCATE_LEN" => "",
-		"PROPERTY_CODE" => array(
-			0 => "",
-			1 => "",
-		),
-		"SET_BROWSER_TITLE" => "Y",
-		"SET_LAST_MODIFIED" => "N",
-		"SET_META_DESCRIPTION" => "Y",
-		"SET_META_KEYWORDS" => "Y",
-		"SET_STATUS_404" => "N",
-		"SET_TITLE" => "Y",
-		"SHOW_404" => "N",
-		"SORT_BY1" => "ACTIVE_FROM",
-		"SORT_BY2" => "SORT",
-		"SORT_ORDER1" => "DESC",
-		"SORT_ORDER2" => "ASC",
-		"STRICT_SECTION_CHECK" => "N",
-		"COMPONENT_TEMPLATE" => "last-sale"
-	),
-	false
-);?>
+						"bitrix:news.list",
+						"last-sale",
+						array(
+							"ACTIVE_DATE_FORMAT" => "d.m.Y",
+							"ADD_SECTIONS_CHAIN" => "Y",
+							"AJAX_MODE" => "N",
+							"AJAX_OPTION_ADDITIONAL" => "",
+							"AJAX_OPTION_HISTORY" => "N",
+							"AJAX_OPTION_JUMP" => "N",
+							"AJAX_OPTION_STYLE" => "Y",
+							"CACHE_FILTER" => "N",
+							"CACHE_GROUPS" => "Y",
+							"CACHE_TIME" => "36000000",
+							"CACHE_TYPE" => "A",
+							"CHECK_DATES" => "Y",
+							"DETAIL_URL" => "",
+							"DISPLAY_BOTTOM_PAGER" => "Y",
+							"DISPLAY_DATE" => "Y",
+							"DISPLAY_NAME" => "Y",
+							"DISPLAY_PICTURE" => "Y",
+							"DISPLAY_PREVIEW_TEXT" => "Y",
+							"DISPLAY_TOP_PAGER" => "N",
+							"FIELD_CODE" => array(
+								0 => "",
+								1 => "",
+							),
+							"FILTER_NAME" => "",
+							"HIDE_LINK_WHEN_NO_DETAIL" => "N",
+							"IBLOCK_ID" => "3",
+							"IBLOCK_TYPE" => "news",
+							"INCLUDE_IBLOCK_INTO_CHAIN" => "Y",
+							"INCLUDE_SUBSECTIONS" => "Y",
+							"MESSAGE_404" => "",
+							"NEWS_COUNT" => "5",
+							"PAGER_BASE_LINK_ENABLE" => "N",
+							"PAGER_DESC_NUMBERING" => "N",
+							"PAGER_DESC_NUMBERING_CACHE_TIME" => "36000",
+							"PAGER_SHOW_ALL" => "N",
+							"PAGER_SHOW_ALWAYS" => "N",
+							"PAGER_TEMPLATE" => ".default",
+							"PAGER_TITLE" => "Акции",
+							"PARENT_SECTION" => "",
+							"PARENT_SECTION_CODE" => "",
+							"PREVIEW_TRUNCATE_LEN" => "",
+							"PROPERTY_CODE" => array(
+								0 => "",
+								1 => "",
+							),
+							"SET_BROWSER_TITLE" => "Y",
+							"SET_LAST_MODIFIED" => "N",
+							"SET_META_DESCRIPTION" => "Y",
+							"SET_META_KEYWORDS" => "Y",
+							"SET_STATUS_404" => "N",
+							"SET_TITLE" => "Y",
+							"SHOW_404" => "N",
+							"SORT_BY1" => "ACTIVE_FROM",
+							"SORT_BY2" => "SORT",
+							"SORT_ORDER1" => "DESC",
+							"SORT_ORDER2" => "ASC",
+							"STRICT_SECTION_CHECK" => "N",
+							"COMPONENT_TEMPLATE" => "last-sale"
+						),
+						false
+					);?>
 
 					</div>
 					<div class="header__search">

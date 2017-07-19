@@ -291,117 +291,37 @@ if($ob = $res->GetNextElement()):?>
 
 		<?endif?>
 
+		<?$APPLICATION->IncludeComponent("bitrix:catalog.section.list", "catalog-menu", Array(
+			"ADD_SECTIONS_CHAIN" => "Y",	// Р’РєР»СЋС‡Р°С‚СЊ СЂР°Р·РґРµР» РІ С†РµРїРѕС‡РєСѓ РЅР°РІРёРіР°С†РёРё
+			"CACHE_GROUPS" => "Y",	// РЈС‡РёС‚С‹РІР°С‚СЊ РїСЂР°РІР° РґРѕСЃС‚СѓРїР°
+			"CACHE_TIME" => "36000000",	// Р’СЂРµРјСЏ РєРµС€РёСЂРѕРІР°РЅРёСЏ (СЃРµРє.)
+			"CACHE_TYPE" => "A",	// РўРёРї РєРµС€РёСЂРѕРІР°РЅРёСЏ
+			"COUNT_ELEMENTS" => "Y",	// РџРѕРєР°Р·С‹РІР°С‚СЊ РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РІ СЂР°Р·РґРµР»Рµ
+			"IBLOCK_ID" => "11",	// Р�РЅС„РѕР±Р»РѕРє
+			"IBLOCK_TYPE" => "1c_catalog",	// РўРёРї РёРЅС„РѕР±Р»РѕРєР°
+			"SECTION_CODE" => "",	// РљРѕРґ СЂР°Р·РґРµР»Р°
+			"SECTION_FIELDS" => array(	// РџРѕР»СЏ СЂР°Р·РґРµР»РѕРІ
+				0 => "",
+				1 => "",
+			),
+			"SECTION_ID" => $_REQUEST["SECTION_ID"],	// ID СЂР°Р·РґРµР»Р°
+			"SECTION_URL" => "",	// URL, РІРµРґСѓС‰РёР№ РЅР° СЃС‚СЂР°РЅРёС†Сѓ СЃ СЃРѕРґРµСЂР¶РёРјС‹Рј СЂР°Р·РґРµР»Р°
+			"SECTION_USER_FIELDS" => array(	// РЎРІРѕР№СЃС‚РІР° СЂР°Р·РґРµР»РѕРІ
+				0 => "",
+				1 => "",
+			),
+			"SHOW_PARENT_NAME" => "Y",	// РџРѕРєР°Р·С‹РІР°С‚СЊ РЅР°Р·РІР°РЅРёРµ СЂР°Р·РґРµР»Р°
+			"TOP_DEPTH" => "3",	// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ РѕС‚РѕР±СЂР°Р¶Р°РµРјР°СЏ РіР»СѓР±РёРЅР° СЂР°Р·РґРµР»РѕРІ
+			"VIEW_MODE" => "LINE",	// Р’РёРґ СЃРїРёСЃРєР° РїРѕРґСЂР°Р·РґРµР»РѕРІ
+		),
+			false
+		);?>
 
-
-		<div class="cat insan open">
-			<a href="#" class="name" onclick="return false"><div class="cube"><span></span><span></span></div>Инженерная сантехника</a>
-			<ul class="cat-ul">
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Котельное оборудование</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Радиаторы отопления, арматура</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Трубы и фитинги</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Насосное оборудование</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Краны шаровые, вентили</a>
-				</li>
-				<li class="cat-li li-open">
-					<a href="#" class="title" onclick="return false">
-						<div class="cube"><span></span><span></span></div>Баки расширительные</a>
-					<div class="inner">
-						<a href="#" class="list-item">Водонагреватели электрические</a>
-						<a href="#" class="list-item">Модели классической круглой формы</a>
-						<a href="#" class="list-item">Модели плоской формы</a>
-						<a href="#" class="list-item">Компактные малоемкостные модели</a>
-						<a href="#" class="list-item">Проточные</a>
-						<a href="#" class="list-item">Запасные части для водонагревателей</a>
-					</div>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Задвижки и затворы</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Баки пластиковые для воды</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Измерительные приборы</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Бойлеры</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Клапаны, регуляторы давления</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Коллекторные системы</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Оборудование Danfoss, Esbe</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Сантехника</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Воздухоотводчики</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Люки смотровых колодцев</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Подводка гибкая (вода, газ)</a>
-				</li>
-				<li class="cat-li"><a ></a>
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Счётчики воды и газа</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Сварочные аппараты</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Теплоизоляция</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>Сопутствующие материалы</a>
-				</li>
-				<li class="cat-li">
-					<a href="/catalog/" class="title">
-						<div class="cube"><span></span><span></span></div>РАСПРОДАЖА</a>
-				</li>
-			</ul>
-		</div>
-
-		<div class="cat stroima">
-			<a href="#" class="name" onclick="return false"><div class="cube"><span></span><span></span></div>Строительные материалы</a>
-		</div>
 
 		<div class="cat pricel">
-			<a href="#" class="name" onclick="return false"><div class="cube"><span></span><span></span></div>Прайс-листы</a>
+			<a href="/price/" class="name"><div class="cube"><span></span><span></span></div>Прайс-листы</a>
 		</div>
+
 	</div>
 
 	<?$intSectionID = $APPLICATION->IncludeComponent(
