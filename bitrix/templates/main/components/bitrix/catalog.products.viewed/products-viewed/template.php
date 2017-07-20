@@ -137,7 +137,7 @@ $areaIds = array();
 			<div>
 				<div class="product ">
 					<a href="<?=$item['DETAIL_PAGE_URL']?>">
-						<img src="<?=$item['PREVIEW_PICTURE']['SRC']?>" alt="<?=$item['NAME']?>" width="132" height="110" style="height: 110px;width: 132px" class="img">
+						<img src="<?=$item['PREVIEW_PICTURE']['SRC']?>" alt="<?=$item['NAME']?>" width="132" height="110" style="height: 120px;width: 132px" class="img">
 					</a>
 					<a href="<?=$item['DETAIL_PAGE_URL']?>" class="name"><?=$item['NAME']?></a>
 					<div class="price">
