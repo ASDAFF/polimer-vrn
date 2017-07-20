@@ -98,7 +98,7 @@ if (!empty($arResult['ITEMS']))
 										echo $ar_res['DISCOUNT_PRICE'];
 										?>
 									</span> Руб.</div>
-								<? if($ar_res['PRODUCT_QUANTITY'] > 0): ?>
+								<? if($arItem['CATALOG_QUANTITY'] > 0): ?>
 								<div class="quantity" id="count_<?=$arItem['ID']?>">
 									<a class="minus na" href="#"></a>
 									<input type="text" value="1"/>
@@ -125,7 +125,7 @@ if (!empty($arResult['ITEMS']))
 											$('#count_<?=$arItem['ID']?> > .plus').click(function(){
 												var count_val = $(this).parent().find('input').val();
 
-												if(count_val < <?=$ar_res['PRODUCT_QUANTITY']?>){
+												if(count_val < <?=$arItem['CATALOG_QUANTITY']?>){
 													var val = parseInt($(this).parent().find('input').val()) + 1;
 													var cost = parseFloat($('#product_<?=$arItem['ID']?> .cost > span').text());
 													var cost_total = cost*val;
@@ -134,7 +134,7 @@ if (!empty($arResult['ITEMS']))
 													$(this).parent().find('.minus').removeClass('na');
 												}else{
 													$(this).addClass('na');
-													$(this).parent().find('input').val(<?=$ar_res['PRODUCT_QUANTITY']?>);
+													$(this).parent().find('input').val(<?=$arItem['CATALOG_QUANTITY']?>);
 												}
 												return false;
 											});
@@ -142,7 +142,7 @@ if (!empty($arResult['ITEMS']))
 
 
 									</script>
-								<div class="cost_total"><span><?=$ar_res['PRICE'];?></span> Руб.</div>
+								<div class="cost_total"><span><?=$ar_res['DISCOUNT_PRICE'];?></span> Руб.</div>
 								<a href="javascript:void(0)" class="add2cart">
 									<span class="txt1">В корзину</span>
 									<span class="txt2" onclick="addToBasket2(<?=$arItem['ID']?>, $('#count_<?=$arItem['ID']?> input').val());">Добавить в корзину</span>
