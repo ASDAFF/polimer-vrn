@@ -107,6 +107,9 @@ $this->setFrameMode(true);
 
 			<?
 
+			$arFilter = array('IBLOCK_ID' => $arParams["IBLOCK_ID"],"CODE" => $arResult['VARIABLES']['SECTION_CODE']);
+			$rsSect = CIBlockSection::GetList(Array("SORT"=>"ASC"),$arFilter,false, array('UF_BROWSER_TITLE','UF_KEYWORDS','UF_META_DESCRIPTION'));
+			$arSect = $rsSect->GetNext();
 
 
 			$sectionID = $APPLICATION->IncludeComponent(
@@ -114,6 +117,7 @@ $this->setFrameMode(true);
 				"",
 				array(
 					"IBLOCK_TYPE" => $arParams["IBLOCK_TYPE"],
+					"PARENT_DESC" => $arSect['DESCRIPTION'],
 					"IBLOCK_ID" => $arParams["IBLOCK_ID"],
 					"SECTION_ID" => $arResult["VARIABLES"]["SECTION_ID"],
 					"SECTION_CODE" => $arResult["VARIABLES"]["SECTION_CODE"],
@@ -131,10 +135,9 @@ $this->setFrameMode(true);
 				$component,
 				array("HIDE_ICONS" => "Y")
 			);
-			$arFilter = array('IBLOCK_ID' => $arParams["IBLOCK_ID"],"CODE" => $arResult['VARIABLES']['SECTION_CODE']);
-			$rsSect = CIBlockSection::GetList(Array("SORT"=>"ASC"),$arFilter,false, array('UF_BROWSER_TITLE','UF_KEYWORDS','UF_META_DESCRIPTION'));
-			if ($arSect = $rsSect->GetNext())
-			{
+
+
+
 				if($arSect['UF_BROWSER_TITLE']){
 					$APPLICATION->SetTitle( $arSect['UF_BROWSER_TITLE'] );
 				}else{
@@ -150,12 +153,8 @@ $this->setFrameMode(true);
 				}else{
 					$APPLICATION->SetPageProperty ( "description", "" );
 				}
-				?>
-				<div class="catalog-sections-text">
-					<?=$arSect['DESCRIPTION']?>
-				</div>
-				<?
-			}
+
+
 
 			?>
 
@@ -362,7 +361,7 @@ if($ob = $res->GetNextElement()):?>
 			"PRICE_CODE" => $arParams["PRICE_CODE"],
 			"USE_PRICE_COUNT" => $arParams["USE_PRICE_COUNT"],
 			"SHOW_PRICE_COUNT" => $arParams["SHOW_PRICE_COUNT"],
-
+			"PARENT_DESC" => $arSect['DESCRIPTION'],
 			"PRICE_VAT_INCLUDE" => $arParams["PRICE_VAT_INCLUDE"],
 			"USE_PRODUCT_QUANTITY" => $arParams['USE_PRODUCT_QUANTITY'],
 			"ADD_PROPERTIES_TO_BASKET" => (isset($arParams["ADD_PROPERTIES_TO_BASKET"]) ? $arParams["ADD_PROPERTIES_TO_BASKET"] : ''),

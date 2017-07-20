@@ -17,7 +17,7 @@ $this->setFrameMode(true);
 	<div class="content__title"><?=$arParams["PAGER_TITLE"]?></div>
 	<?foreach($arResult["ITEMS"] as $arItem):?>
 	<div class="blogitem">
-		<a href="#" class="name"><?echo $arItem["NAME"]?></a>
+		<a href="<?=$arItem['DETAIL_PAGE_URL']?>" class="name"><?echo $arItem["NAME"]?></a>
 		<p class="text">
 			<?if($arParams["DISPLAY_PREVIEW_TEXT"]!="N" && $arItem["PREVIEW_TEXT"]):?>
 				<?echo $arItem["PREVIEW_TEXT"];?>

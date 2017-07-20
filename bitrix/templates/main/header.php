@@ -252,70 +252,70 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 					<div class="header__action">
 
 						<?$APPLICATION->IncludeComponent(
-						"bitrix:news.list",
-						"last-sale",
-						array(
-							"ACTIVE_DATE_FORMAT" => "d.m.Y",
-							"ADD_SECTIONS_CHAIN" => "Y",
-							"AJAX_MODE" => "N",
-							"AJAX_OPTION_ADDITIONAL" => "",
-							"AJAX_OPTION_HISTORY" => "N",
-							"AJAX_OPTION_JUMP" => "N",
-							"AJAX_OPTION_STYLE" => "Y",
-							"CACHE_FILTER" => "N",
-							"CACHE_GROUPS" => "Y",
-							"CACHE_TIME" => "36000000",
-							"CACHE_TYPE" => "A",
-							"CHECK_DATES" => "Y",
-							"DETAIL_URL" => "",
-							"DISPLAY_BOTTOM_PAGER" => "Y",
-							"DISPLAY_DATE" => "Y",
-							"DISPLAY_NAME" => "Y",
-							"DISPLAY_PICTURE" => "Y",
-							"DISPLAY_PREVIEW_TEXT" => "Y",
-							"DISPLAY_TOP_PAGER" => "N",
-							"FIELD_CODE" => array(
-								0 => "",
-								1 => "",
-							),
-							"FILTER_NAME" => "",
-							"HIDE_LINK_WHEN_NO_DETAIL" => "N",
-							"IBLOCK_ID" => "3",
-							"IBLOCK_TYPE" => "news",
-							"INCLUDE_IBLOCK_INTO_CHAIN" => "Y",
-							"INCLUDE_SUBSECTIONS" => "Y",
-							"MESSAGE_404" => "",
-							"NEWS_COUNT" => "5",
-							"PAGER_BASE_LINK_ENABLE" => "N",
-							"PAGER_DESC_NUMBERING" => "N",
-							"PAGER_DESC_NUMBERING_CACHE_TIME" => "36000",
-							"PAGER_SHOW_ALL" => "N",
-							"PAGER_SHOW_ALWAYS" => "N",
-							"PAGER_TEMPLATE" => ".default",
-							"PAGER_TITLE" => "Акции",
-							"PARENT_SECTION" => "",
-							"PARENT_SECTION_CODE" => "",
-							"PREVIEW_TRUNCATE_LEN" => "",
-							"PROPERTY_CODE" => array(
-								0 => "",
-								1 => "",
-							),
-							"SET_BROWSER_TITLE" => "Y",
-							"SET_LAST_MODIFIED" => "N",
-							"SET_META_DESCRIPTION" => "Y",
-							"SET_META_KEYWORDS" => "Y",
-							"SET_STATUS_404" => "N",
-							"SET_TITLE" => "Y",
-							"SHOW_404" => "N",
-							"SORT_BY1" => "ACTIVE_FROM",
-							"SORT_BY2" => "SORT",
-							"SORT_ORDER1" => "DESC",
-							"SORT_ORDER2" => "ASC",
-							"STRICT_SECTION_CHECK" => "N",
-							"COMPONENT_TEMPLATE" => "last-sale"
-						),
-						false
-					);?>
+	"bitrix:news.list", 
+	"last-sale", 
+	array(
+		"ACTIVE_DATE_FORMAT" => "d.m.Y",
+		"ADD_SECTIONS_CHAIN" => "N",
+		"AJAX_MODE" => "N",
+		"AJAX_OPTION_ADDITIONAL" => "",
+		"AJAX_OPTION_HISTORY" => "N",
+		"AJAX_OPTION_JUMP" => "N",
+		"AJAX_OPTION_STYLE" => "Y",
+		"CACHE_FILTER" => "N",
+		"CACHE_GROUPS" => "Y",
+		"CACHE_TIME" => "36000000",
+		"CACHE_TYPE" => "A",
+		"CHECK_DATES" => "Y",
+		"DETAIL_URL" => "",
+		"DISPLAY_BOTTOM_PAGER" => "Y",
+		"DISPLAY_DATE" => "Y",
+		"DISPLAY_NAME" => "Y",
+		"DISPLAY_PICTURE" => "Y",
+		"DISPLAY_PREVIEW_TEXT" => "Y",
+		"DISPLAY_TOP_PAGER" => "N",
+		"FIELD_CODE" => array(
+			0 => "",
+			1 => "",
+		),
+		"FILTER_NAME" => "",
+		"HIDE_LINK_WHEN_NO_DETAIL" => "N",
+		"IBLOCK_ID" => "3",
+		"IBLOCK_TYPE" => "news",
+		"INCLUDE_IBLOCK_INTO_CHAIN" => "N",
+		"INCLUDE_SUBSECTIONS" => "Y",
+		"MESSAGE_404" => "",
+		"NEWS_COUNT" => "5",
+		"PAGER_BASE_LINK_ENABLE" => "N",
+		"PAGER_DESC_NUMBERING" => "N",
+		"PAGER_DESC_NUMBERING_CACHE_TIME" => "36000",
+		"PAGER_SHOW_ALL" => "N",
+		"PAGER_SHOW_ALWAYS" => "N",
+		"PAGER_TEMPLATE" => ".default",
+		"PAGER_TITLE" => "Акции",
+		"PARENT_SECTION" => "",
+		"PARENT_SECTION_CODE" => "",
+		"PREVIEW_TRUNCATE_LEN" => "",
+		"PROPERTY_CODE" => array(
+			0 => "",
+			1 => "",
+		),
+		"SET_BROWSER_TITLE" => "N",
+		"SET_LAST_MODIFIED" => "N",
+		"SET_META_DESCRIPTION" => "N",
+		"SET_META_KEYWORDS" => "N",
+		"SET_STATUS_404" => "N",
+		"SET_TITLE" => "N",
+		"SHOW_404" => "N",
+		"SORT_BY1" => "ACTIVE_FROM",
+		"SORT_BY2" => "SORT",
+		"SORT_ORDER1" => "DESC",
+		"SORT_ORDER2" => "ASC",
+		"STRICT_SECTION_CHECK" => "N",
+		"COMPONENT_TEMPLATE" => "last-sale"
+	),
+	false
+);?>
 
 					</div>
 					<div class="header__search">
@@ -348,12 +348,15 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 				</div><!--end::header__bottom-->
 			</header>
 			<?if(!$is_main){?>
-			<div class="breadcrumbs cl">
-	            <div class="wr">
-	               <a href="#">Главная</a>
-	               <span>Контакты</span>
-	            </div>
-	         </div><!--end::breadcrumbs-->
+
+			<?$APPLICATION->IncludeComponent("bitrix:breadcrumb", "breadcrumb", Array(
+				"PATH" => "",	// РџСѓС‚СЊ, РґР»СЏ РєРѕС‚РѕСЂРѕРіРѕ Р±СѓРґРµС‚ РїРѕСЃС‚СЂРѕРµРЅР° РЅР°РІРёРіР°С†РёРѕРЅРЅР°СЏ С†РµРїРѕС‡РєР° (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ, С‚РµРєСѓС‰РёР№ РїСѓС‚СЊ)
+				"SITE_ID" => "s1",	// CР°Р№С‚ (СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚СЃСЏ РІ СЃР»СѓС‡Р°Рµ РјРЅРѕРіРѕСЃР°Р№С‚РѕРІРѕР№ РІРµСЂСЃРёРё, РєРѕРіРґР° DOCUMENT_ROOT Сѓ СЃР°Р№С‚РѕРІ СЂР°Р·РЅС‹Р№)
+				"START_FROM" => "0",	// РќРѕРјРµСЂ РїСѓРЅРєС‚Р°, РЅР°С‡РёРЅР°СЏ СЃ РєРѕС‚РѕСЂРѕРіРѕ Р±СѓРґРµС‚ РїРѕСЃС‚СЂРѕРµРЅР° РЅР°РІРёРіР°С†РёРѕРЅРЅР°СЏ С†РµРїРѕС‡РєР°
+			),
+				false
+			);?>
+
 	         <?}?>
 			<?if($is_main){?>
 	        <div class="mp__banners cl">

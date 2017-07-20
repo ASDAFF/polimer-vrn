@@ -40,6 +40,7 @@ $arViewStyles = array(
 );
 $arCurView = $arViewStyles[$arParams['VIEW_MODE']];
 ?>
+<?if($arResult['SECTIONS']):?>
 <div class="catalog-sections-list cl">
 	<?foreach ($arResult['SECTIONS'] as &$arSection):?>
 
@@ -52,3 +53,7 @@ $arCurView = $arViewStyles[$arParams['VIEW_MODE']];
 </div>
 <!--end::catalog-sections-->
 
+<div class="catalog-sections-text">
+	<?=htmlspecialchars_decode($arParams['PARENT_DESC'])?>
+</div>
+<? endif; ?>

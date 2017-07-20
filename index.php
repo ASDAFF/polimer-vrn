@@ -24,257 +24,64 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 		</li>
 	</ul>
 	<ul class="tabslist cl">
-		<li class="maincategory maincategory--1 cl">
-			<span class="img"></span>
-			<span class="name">Инженерная<br/> сантехника</span>
-		</li>
-		<li class="maincategory maincategory--2 cl">
-			<span class="img"></span>
-			<span class="name">Cтроительные<br/> полимеры</span>
-		</li>
+
+		<?
+		$arFilter = array('IBLOCK_ID' => 11,'DEPTH_LEVEL' => 1,"ACTIVE" => "Y");
+		$rsSect = CIBlockSection::GetList(array('left_margin' => 'asc'),$arFilter);
+		$inc = 1;
+		$arrIdSection = array();
+		while ($arSect = $rsSect->GetNext())
+		{
+			$arrIdSection[] = $arSect['ID'];
+			?>
+			<li class="maincategory maincategory--<?=$inc?> cl">
+				<span class="img"></span>
+				<span class="name"><?=$arSect['NAME'];?></span>
+			</li>
+			<?
+			$inc++;
+		}
+		?>
 		<li class="maincategory maincategory--3 cl">
 			<span class="img"></span>
 			<span class="name">Прайс-листы</span>
 		</li>
 	</ul>
    	<div class="tablist_content">
-      	<div class="tabitem">
-			<div class="row cl category__line category__line--1">
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat1.jpg" alt="Котельное оборудование" width="140" height="120" class="img">
-						<span class="name">Котельное<br/>оборудование</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat2.jpg" alt="Радиаторы отопления" width="140" height="120" class="img">
-						<span class="name">Радиаторы отопления</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat3.jpg" alt="Трубы и фитинги" width="140" height="120" class="img">
-						<span class="name">Трубы и фитинги</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat4.jpg" alt="Насосное оборудование" width="140" height="120" class="img">
-						<span class="name">Насосное<br/> оборудование</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat5.jpg" alt="Краны шаровые,вентили" width="140" height="120" class="img">
-						<span class="name">Краны шаровые,<br/>вентили</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat6.jpg" alt="Баки расширительные" width="140" height="120" class="img">
-						<span class="name">Баки<br/>расширительные</span>
-					</a>
-				</div>
-			</div><!-- end::row cl category__line -->
-			<div class="row cl category__line">
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat7.jpg" alt="Водонагреватели электрические" width="140" height="120" class="img">
-						<span class="name">Водонагреватели<br/>электрические</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat8.jpg" alt="Задвижки и затворы" width="140" height="120" class="img">
-						<span class="name">Задвижки и<br/>затворы</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat9.jpg" alt="Баки пластиковые для воды" width="140" height="120" class="img">
-						<span class="name">Баки пластиковые<br/> для воды</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat10.jpg" alt="Контрольно-измерительные приборы" width="140" height="120" class="img">
-						<span class="name">Контрольно-<br/>измерительные<br/>приборы</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat11.jpg" alt="Бойлеры" width="140" height="120" class="img">
-						<span class="name">Бойлеры</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat12.jpg" alt="Клапаны, регуляторы давления, группы безопасности" width="140" height="120" class="img">
-						<span class="name">Клапаны, регуляторы<br/>давления, группы<br/>безопасности</span>
-					</a>
-				</div>
-			</div><!-- end::row cl category__line -->
-        	<a href="#" class="category__show">Показать ещё категории</a>
-      	</div><!-- end: tabitem -->
+
+		<? foreach($arrIdSection as $sect): ?>
 		<div class="tabitem">
-			<div class="row cl category__line">
+
+			<?
+			$arFilter = array('IBLOCK_ID' => 11,"SECTION_ID" => $sect,'DEPTH_LEVEL' => 2,"ACTIVE" => "Y");
+			$rsSect = CIBlockSection::GetList(array('left_margin' => 'asc'),$arFilter);
+			$inc = 1;
+			$arrIdSection = array();
+			$arrSection = array();
+			while ($arSect = $rsSect->GetNext())
+			{
+				$arrSection[] = $arSect;
+			}
+			$rows = ceil(count($arrSection)/6);
+			$section = array_chunk($arrSection,6);
+			?>
+			<? for($i = 0;$i < $rows;$i++):?>
+			<div class="row cl category__line <?if($i >= 2):?>toggle_product_no<? endif; ?>">
+				<? foreach($section[$i] as $item):?>
 				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat1.jpg" alt="Котельное оборудование" width="140" height="120" class="img">
-						<span class="name">Котельное<br/>оборудование</span>
+					<a href="<?=$item['SECTION_PAGE_URL']?>" class="link">
+						<img src="<?=CFile::GetPath($item["PICTURE"]);?>" alt="<?=$item['NAME']?>" width="140" height="120" class="img">
+						<span class="name"><?=str_replace(' ','<br>',$item['NAME'])?></span>
 					</a>
 				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat2.jpg" alt="Радиаторы отопления" width="140" height="120" class="img">
-						<span class="name">Радиаторы отопления</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat3.jpg" alt="Трубы и фитинги" width="140" height="120" class="img">
-						<span class="name">Трубы и фитинги</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat4.jpg" alt="Насосное оборудование" width="140" height="120" class="img">
-						<span class="name">Насосное<br/> оборудование</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat5.jpg" alt="Краны шаровые,вентили" width="140" height="120" class="img">
-						<span class="name">Краны шаровые,<br/>вентили</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat6.jpg" alt="Баки расширительные" width="140" height="120" class="img">
-						<span class="name">Баки<br/>расширительные</span>
-					</a>
-				</div>
+				<? endforeach; ?>
 			</div><!-- row cl category__line-->
-			<div class="row cl category__line">
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat7.jpg" alt="Водонагреватели электрические" width="140" height="120" class="img">
-						<span class="name">Водонагреватели<br/>электрические</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat8.jpg" alt="Задвижки и затворы" width="140" height="120" class="img">
-						<span class="name">Задвижки и<br/>затворы</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat9.jpg" alt="Баки пластиковые для воды" width="140" height="120" class="img">
-						<span class="name">Баки пластиковые<br/> для воды</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat10.jpg" alt="Контрольно-измерительные приборы" width="140" height="120" class="img">
-						<span class="name">Контрольно-<br/>измерительные<br/>приборы</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat11.jpg" alt="Бойлеры" width="140" height="120" class="img">
-						<span class="name">Бойлеры</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat12.jpg" alt="Клапаны, регуляторы давления, группы безопасности" width="140" height="120" class="img">
-						<span class="name">Клапаны, регуляторы<br/>давления, группы<br/>безопасности</span>
-					</a>
-				</div>
-			</div>
+			<? endfor; ?>
 			<a href="#" class="category__show">Показать ещё категории</a>
 		</div><!-- end: tabitem -->
-      	<div class="tabitem">
-			<div class="row cl category__line">
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat1.jpg" alt="Котельное оборудование" width="140" height="120" class="img">
-						<span class="name">Котельное<br/>оборудование</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat2.jpg" alt="Радиаторы отопления" width="140" height="120" class="img">
-						<span class="name">Радиаторы отопления</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat3.jpg" alt="Трубы и фитинги" width="140" height="120" class="img">
-						<span class="name">Трубы и фитинги</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat4.jpg" alt="Насосное оборудование" width="140" height="120" class="img">
-						<span class="name">Насосное<br/> оборудование</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat5.jpg" alt="Краны шаровые,вентили" width="140" height="120" class="img">
-						<span class="name">Краны шаровые,<br/>вентили</span>
-					</a>
-				</div>
-					<div class="category">
-						<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat6.jpg" alt="Баки расширительные" width="140" height="120" class="img">
-						<span class="name">Баки<br/>расширительные</span>
-					</a>
-				</div>
-			</div>
-            <div class="row cl category__line">
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat7.jpg" alt="Водонагреватели электрические" width="140" height="120" class="img">
-						<span class="name">Водонагреватели<br/>электрические</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat8.jpg" alt="Задвижки и затворы" width="140" height="120" class="img">
-						<span class="name">Задвижки и<br/>затворы</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat9.jpg" alt="Баки пластиковые для воды" width="140" height="120" class="img">
-						<span class="name">Баки пластиковые<br/> для воды</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat10.jpg" alt="Контрольно-измерительные приборы" width="140" height="120" class="img">
-						<span class="name">Контрольно-<br/>измерительные<br/>приборы</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat11.jpg" alt="Бойлеры" width="140" height="120" class="img">
-						<span class="name">Бойлеры</span>
-					</a>
-				</div>
-				<div class="category">
-					<a href="/catalog/section/" class="link">
-						<img src="<?=SITE_TEMPLATE_PATH?>/img/categories/cat12.jpg" alt="Клапаны, регуляторы давления, группы безопасности" width="140" height="120" class="img">
-						<span class="name">Клапаны, регуляторы<br/>давления, группы<br/>безопасности</span>
-					</a>
-				</div>
-            </div>
-        	<a href="#" class="category__show">Показать ещё категории</a>
-      	</div><!-- end: tabitem -->
+		<? endforeach; ?>
+      	<div class="tabitem"></div>
+		<!-- end: tabitem -->
    	</div><!-- end: tablist_content -->
 </div><!--end::mp__categories-->
 <div class="mp__products">
@@ -563,7 +370,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 	"news-list-home", 
 	array(
 		"ACTIVE_DATE_FORMAT" => "j F Y",
-		"ADD_SECTIONS_CHAIN" => "Y",
+		"ADD_SECTIONS_CHAIN" => "N",
 		"AJAX_MODE" => "N",
 		"AJAX_OPTION_ADDITIONAL" => "",
 		"AJAX_OPTION_HISTORY" => "N",
@@ -589,7 +396,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 		"HIDE_LINK_WHEN_NO_DETAIL" => "N",
 		"IBLOCK_ID" => "7",
 		"IBLOCK_TYPE" => "news",
-		"INCLUDE_IBLOCK_INTO_CHAIN" => "Y",
+		"INCLUDE_IBLOCK_INTO_CHAIN" => "N",
 		"INCLUDE_SUBSECTIONS" => "Y",
 		"MESSAGE_404" => "",
 		"NEWS_COUNT" => "2",
@@ -629,7 +436,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 	"articles-list-home", 
 	array(
 		"ACTIVE_DATE_FORMAT" => "j F Y",
-		"ADD_SECTIONS_CHAIN" => "Y",
+		"ADD_SECTIONS_CHAIN" => "N",
 		"AJAX_MODE" => "N",
 		"AJAX_OPTION_ADDITIONAL" => "",
 		"AJAX_OPTION_HISTORY" => "N",
@@ -655,7 +462,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 		"HIDE_LINK_WHEN_NO_DETAIL" => "N",
 		"IBLOCK_ID" => "4",
 		"IBLOCK_TYPE" => "news",
-		"INCLUDE_IBLOCK_INTO_CHAIN" => "Y",
+		"INCLUDE_IBLOCK_INTO_CHAIN" => "N",
 		"INCLUDE_SUBSECTIONS" => "Y",
 		"MESSAGE_404" => "",
 		"NEWS_COUNT" => "2",

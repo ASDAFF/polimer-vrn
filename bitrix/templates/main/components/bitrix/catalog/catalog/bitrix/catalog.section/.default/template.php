@@ -269,22 +269,75 @@ if (!empty($arResult['ITEMS']))
 
 		<div class="related_articles cl">
 			<div class="col-txt">
-				<h1>Водонагреватели электрические</h1>
-				<p>Компания ООО «Полимер» была основана в 2007 году как дочернее предприятие ООО «Металлинвест плюс» (одного из крупнейших поставщиков стального металлопроката и труб в Воронежской области с почти 20-летней историей). Изначально целью основания фирмы была продажа уже имеющимся клиентам большего ассортимента товаров, а именно полипропиленовых труб и фитингов.</p>
-				<p>В настоящее время ООО «Полимер» является одной из крупнейших компаний оптово-розничной торговли материалами и оборудованием для отопления и водоснабжения в Воронежской области. Наш ассортимент постоянно расширяется и уже можно выделить несколько основных товарных групп:</p>
-				<ul>
-					<li>Инженерная сантехника (газовые котлы, радиаторы отопления, трубы и фитинги, запорная арматура, насосы и др.)</li>
-					<li>Строительно-отделочные материалы (гипсокартон, сухие смеси, поликарбонат, лакокраска, инструменты, электрика, крепеж и др.)</li>
-				</ul>
+				<?=htmlspecialchars_decode($arParams['PARENT_DESC'])?>
 			</div>
 			<div class="col-articles">
-				<h1>Статьи</h1>
-				<a href="#">Подробно о перфораторах</a>
-				<a href="#">Что выбрать – перфоратор или дрель?</a>
-				<a href="#">Устройство, тип патрона, функции перфоратора</a>
-				<a href="#">Дополнительная оснастка для перфораторов</a>
-				<a href="#">Как выбрать перфоратор – коротко о главном в водонагревателях</a>
-				<a href="#" class="allarticles">Все статьи</a>
+				<?$APPLICATION->IncludeComponent(
+					"bitrix:news.list",
+					"articles-list-catalog",
+					array(
+						"ACTIVE_DATE_FORMAT" => "j F Y",
+						"ADD_SECTIONS_CHAIN" => "N",
+						"AJAX_MODE" => "N",
+						"AJAX_OPTION_ADDITIONAL" => "",
+						"AJAX_OPTION_HISTORY" => "N",
+						"AJAX_OPTION_JUMP" => "N",
+						"AJAX_OPTION_STYLE" => "Y",
+						"CACHE_FILTER" => "N",
+						"CACHE_GROUPS" => "Y",
+						"CACHE_TIME" => "36000000",
+						"CACHE_TYPE" => "A",
+						"CHECK_DATES" => "Y",
+						"DETAIL_URL" => "",
+						"DISPLAY_BOTTOM_PAGER" => "Y",
+						"DISPLAY_DATE" => "Y",
+						"DISPLAY_NAME" => "Y",
+						"DISPLAY_PICTURE" => "Y",
+						"DISPLAY_PREVIEW_TEXT" => "Y",
+						"DISPLAY_TOP_PAGER" => "N",
+						"FIELD_CODE" => array(
+							0 => "",
+							1 => "",
+						),
+						"FILTER_NAME" => "",
+						"HIDE_LINK_WHEN_NO_DETAIL" => "N",
+						"IBLOCK_ID" => "4",
+						"IBLOCK_TYPE" => "news",
+						"INCLUDE_IBLOCK_INTO_CHAIN" => "N",
+						"INCLUDE_SUBSECTIONS" => "Y",
+						"MESSAGE_404" => "",
+						"NEWS_COUNT" => "2",
+						"PAGER_BASE_LINK_ENABLE" => "N",
+						"PAGER_DESC_NUMBERING" => "N",
+						"PAGER_DESC_NUMBERING_CACHE_TIME" => "36000",
+						"PAGER_SHOW_ALL" => "N",
+						"PAGER_SHOW_ALWAYS" => "N",
+						"PAGER_TEMPLATE" => ".default",
+						"PAGER_TITLE" => "статьи",
+						"LINK_TITLE" => "articles",
+						"PARENT_SECTION" => "",
+						"PARENT_SECTION_CODE" => "",
+						"PREVIEW_TRUNCATE_LEN" => "50",
+						"PROPERTY_CODE" => array(
+							0 => "",
+							1 => "",
+						),
+						"SET_BROWSER_TITLE" => "N",
+						"SET_LAST_MODIFIED" => "N",
+						"SET_META_DESCRIPTION" => "N",
+						"SET_META_KEYWORDS" => "N",
+						"SET_STATUS_404" => "N",
+						"SET_TITLE" => "N",
+						"SHOW_404" => "N",
+						"SORT_BY1" => "ACTIVE_FROM",
+						"SORT_BY2" => "SORT",
+						"SORT_ORDER1" => "DESC",
+						"SORT_ORDER2" => "ASC",
+						"COMPONENT_TEMPLATE" => "articles-list-home"
+					),
+					false
+				);?>
+
 			</div>
 		</div>
 	</div>

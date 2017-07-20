@@ -142,5 +142,13 @@ $(function(){
         lessLink: '<a href="#" style="border-bottom:snow">Скрыть</a>'
     });
 
+    $('.category__show').click(function(){
+       var than = $(this);
+        than.parent().find('.toggle_product_no').slideToggle();
+        return false;
+    });
+
+
+
 });
 
