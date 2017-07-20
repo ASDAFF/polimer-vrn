@@ -94,8 +94,8 @@ if (!empty($arResult['ITEMS']))
 								<div class="cost">
 									<span>
 										<?
-										$ar_res = CPrice::GetBasePrice($arItem['ID']);
-										echo $ar_res['PRICE'];
+										$ar_res = CCatalogProduct::GetOptimalPrice($arItem['ID'], 1, $USER->GetUserGroupArray(), 'N');
+										echo $ar_res['DISCOUNT_PRICE'];
 										?>
 									</span> Руб.</div>
 								<? if($ar_res['PRODUCT_QUANTITY'] > 0): ?>

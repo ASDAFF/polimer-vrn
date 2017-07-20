@@ -214,56 +214,57 @@ $this->setFrameMode(true);
       </div>
    </div><!--end::pc__prod-info-->
 
-   <div class="pc__prod-also">
-      <div class="pc__vertical-carousel">
-         <div class="vc-title">С этим товаром покупают</div>
-         <div class="vc-shell">
-            <div class="vc-block">
-               <div>
-                  <div class="item cl">
-                     <a href="#"><span><img src="<?=SITE_TEMPLATE_PATH?>/img/card/vc/item1.png" alt=""></span></a>
-                     <div class="cost"><span>1250</span> Руб.</div>
-                     <a href="#" class="txt">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-                     <a href="#" class="add2cart">В корзину</a>
-                  </div>
-               </div>
-               <div>
-                  <div class="item cl">
-                     <a href="#"><span><img src="<?=SITE_TEMPLATE_PATH?>/img/card/vc/item2.png" alt=""></span></a>
-                     <div class="cost"><span>1250</span> Руб.</div>
-                     <a href="#" class="txt">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-                     <a href="#" class="add2cart">В корзину</a>
-                  </div>
-               </div>
-               <div>
-                  <div class="item cl">
-                     <a href="#"><span><img src="<?=SITE_TEMPLATE_PATH?>/img/card/vc/item3.png" alt=""></span></a>
-                     <div class="cost"><span>1250</span> Руб.</div>
-                     <a href="#" class="txt">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-                     <a href="#" class="add2cart">В корзину</a>
-                  </div>
-               </div>
-               <div>
-                  <div class="item cl">
-                     <a href="#"><span><img src="<?=SITE_TEMPLATE_PATH?>/img/card/vc/item4.png" alt=""></span></a>
-                     <div class="cost"><span>1250</span> Руб.</div>
-                     <a href="#" class="txt">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-                     <a href="#" class="add2cart">В корзину</a>
-                  </div>
-               </div>
-               <div>
-                  <div class="item cl">
-                     <a href="#"><span><img src="<?=SITE_TEMPLATE_PATH?>/img/card/vc/item2.png" alt=""></span></a>
-                     <div class="cost"><span>1250</span> Руб.</div>
-                     <a href="#" class="txt">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-                     <a href="#" class="add2cart">В корзину</a>
-                  </div>
-               </div>
-            </div>
-            <div class="vc-ctrl"></div>
-         </div>
-      </div>
-   </div><!--end::pc__prod-also-->
+    <?$APPLICATION->IncludeComponent(
+        "bitrix:sale.recommended.products",
+        "sale-recomm-product",
+        Array(
+            "ACTION_VARIABLE" => "action",
+            "ADDITIONAL_PICT_PROP_10" => "MORE_PHOTO",
+            "ADDITIONAL_PICT_PROP_11" => "MORE_PHOTO",
+            "ADDITIONAL_PICT_PROP_12" => "MORE_PHOTO",
+            "ADD_PROPERTIES_TO_BASKET" => "Y",
+            "BASKET_URL" => "/personal/basket.php",
+            "CACHE_TIME" => "86400",
+            "CACHE_TYPE" => "A",
+            "CART_PROPERTIES_10" => array("",""),
+            "CART_PROPERTIES_11" => array("",""),
+            "CART_PROPERTIES_12" => array("",""),
+            "CODE" => "",
+            "CONVERT_CURRENCY" => "N",
+            "DETAIL_URL" => "",
+            "HIDE_NOT_AVAILABLE" => "N",
+            "IBLOCK_ID" => "11",
+            "IBLOCK_TYPE" => "1c_catalog",
+            "ID" => $arResult['ID'],
+            "LABEL_PROP_10" => "-",
+            "LABEL_PROP_11" => "-",
+            "LINE_ELEMENT_COUNT" => "3",
+            "MESS_BTN_BUY" => "РљСѓРїРёС‚СЊ",
+            "MESS_BTN_DETAIL" => "РџРѕРґСЂРѕР±РЅРµРµ",
+            "MESS_BTN_SUBSCRIBE" => "РџРѕРґРїРёСЃР°С‚СЊСЃСЏ",
+            "MESS_NOT_AVAILABLE" => "РќРµС‚ РІ РЅР°Р»РёС‡РёРё",
+            "MIN_BUYES" => "1",
+            "OFFER_TREE_PROPS_12" => array(),
+            "PAGE_ELEMENT_COUNT" => "30",
+            "PARTIAL_PRODUCT_PROPERTIES" => "N",
+            "PRICE_CODE" => array(),
+            "PRICE_VAT_INCLUDE" => "Y",
+            "PRODUCT_ID_VARIABLE" => "id",
+            "PRODUCT_PROPS_VARIABLE" => "prop",
+            "PRODUCT_QUANTITY_VARIABLE" => "quantity",
+            "PRODUCT_SUBSCRIPTION" => "N",
+            "PROPERTY_CODE_10" => array("",""),
+            "PROPERTY_CODE_11" => array("",""),
+            "PROPERTY_CODE_12" => array("",""),
+            "SHOW_DISCOUNT_PERCENT" => "N",
+            "SHOW_IMAGE" => "Y",
+            "SHOW_NAME" => "Y",
+            "SHOW_OLD_PRICE" => "N",
+            "SHOW_PRICE_COUNT" => "1",
+            "TEMPLATE_THEME" => "blue",
+            "USE_PRODUCT_QUANTITY" => "N"
+        )
+    );?>
 
    <div class="cl"></div>
 
@@ -357,6 +358,68 @@ $this->setFrameMode(true);
     ),
         false
     );?>
+
+        <?$APPLICATION->IncludeComponent("bitrix:news.list", "same-product", Array(
+            "ACTIVE_DATE_FORMAT" => "d.m.Y",	// Р¤РѕСЂРјР°С‚ РїРѕРєР°Р·Р° РґР°С‚С‹
+            "ADD_SECTIONS_CHAIN" => "Y",	// Р’РєР»СЋС‡Р°С‚СЊ СЂР°Р·РґРµР» РІ С†РµРїРѕС‡РєСѓ РЅР°РІРёРіР°С†РёРё
+            "AJAX_MODE" => "N",	// Р’РєР»СЋС‡РёС‚СЊ СЂРµР¶РёРј AJAX
+            "AJAX_OPTION_ADDITIONAL" => "",	// Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Р№ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ
+            "AJAX_OPTION_HISTORY" => "N",	// Р’РєР»СЋС‡РёС‚СЊ СЌРјСѓР»СЏС†РёСЋ РЅР°РІРёРіР°С†РёРё Р±СЂР°СѓР·РµСЂР°
+            "AJAX_OPTION_JUMP" => "N",	// Р’РєР»СЋС‡РёС‚СЊ РїСЂРѕРєСЂСѓС‚РєСѓ Рє РЅР°С‡Р°Р»Сѓ РєРѕРјРїРѕРЅРµРЅС‚Р°
+            "AJAX_OPTION_STYLE" => "Y",	// Р’РєР»СЋС‡РёС‚СЊ РїРѕРґРіСЂСѓР·РєСѓ СЃС‚РёР»РµР№
+            "CACHE_FILTER" => "N",	// РљРµС€РёСЂРѕРІР°С‚СЊ РїСЂРё СѓСЃС‚Р°РЅРѕРІР»РµРЅРЅРѕРј С„РёР»СЊС‚СЂРµ
+            "CACHE_GROUPS" => "Y",	// РЈС‡РёС‚С‹РІР°С‚СЊ РїСЂР°РІР° РґРѕСЃС‚СѓРїР°
+            "CACHE_TIME" => "36000000",	// Р’СЂРµРјСЏ РєРµС€РёСЂРѕРІР°РЅРёСЏ (СЃРµРє.)
+            "CACHE_TYPE" => "A",	// РўРёРї РєРµС€РёСЂРѕРІР°РЅРёСЏ
+            "CHECK_DATES" => "Y",	// РџРѕРєР°Р·С‹РІР°С‚СЊ С‚РѕР»СЊРєРѕ Р°РєС‚РёРІРЅС‹Рµ РЅР° РґР°РЅРЅС‹Р№ РјРѕРјРµРЅС‚ СЌР»РµРјРµРЅС‚С‹
+            "DETAIL_URL" => "",	// URL СЃС‚СЂР°РЅРёС†С‹ РґРµС‚Р°Р»СЊРЅРѕРіРѕ РїСЂРѕСЃРјРѕС‚СЂР° (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ - РёР· РЅР°СЃС‚СЂРѕРµРє РёРЅС„РѕР±Р»РѕРєР°)
+            "DISPLAY_BOTTOM_PAGER" => "Y",	// Р’С‹РІРѕРґРёС‚СЊ РїРѕРґ СЃРїРёСЃРєРѕРј
+            "DISPLAY_DATE" => "Y",	// Р’С‹РІРѕРґРёС‚СЊ РґР°С‚Сѓ СЌР»РµРјРµРЅС‚Р°
+            "DISPLAY_NAME" => "Y",	// Р’С‹РІРѕРґРёС‚СЊ РЅР°Р·РІР°РЅРёРµ СЌР»РµРјРµРЅС‚Р°
+            "DISPLAY_PICTURE" => "Y",	// Р’С‹РІРѕРґРёС‚СЊ РёР·РѕР±СЂР°Р¶РµРЅРёРµ РґР»СЏ Р°РЅРѕРЅСЃР°
+            "DISPLAY_PREVIEW_TEXT" => "Y",	// Р’С‹РІРѕРґРёС‚СЊ С‚РµРєСЃС‚ Р°РЅРѕРЅСЃР°
+            "DISPLAY_TOP_PAGER" => "N",	// Р’С‹РІРѕРґРёС‚СЊ РЅР°Рґ СЃРїРёСЃРєРѕРј
+            "FIELD_CODE" => array(	// РџРѕР»СЏ
+                0 => "",
+                1 => "",
+            ),
+            "FILTER_NAME" => "",	// Р¤РёР»СЊС‚СЂ
+            "HIDE_LINK_WHEN_NO_DETAIL" => "N",	// РЎРєСЂС‹РІР°С‚СЊ СЃСЃС‹Р»РєСѓ, РµСЃР»Рё РЅРµС‚ РґРµС‚Р°Р»СЊРЅРѕРіРѕ РѕРїРёСЃР°РЅРёСЏ
+            "IBLOCK_ID" => $arResult['IBLOCK_ID'],	// РљРѕРґ РёРЅС„РѕСЂРјР°С†РёРѕРЅРЅРѕРіРѕ Р±Р»РѕРєР°
+            "IBLOCK_TYPE" => "1c_catalog",	// РўРёРї РёРЅС„РѕСЂРјР°С†РёРѕРЅРЅРѕРіРѕ Р±Р»РѕРєР° (РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ С‚РѕР»СЊРєРѕ РґР»СЏ РїСЂРѕРІРµСЂРєРё)
+            "INCLUDE_IBLOCK_INTO_CHAIN" => "Y",	// Р’РєР»СЋС‡Р°С‚СЊ РёРЅС„РѕР±Р»РѕРє РІ С†РµРїРѕС‡РєСѓ РЅР°РІРёРіР°С†РёРё
+            "INCLUDE_SUBSECTIONS" => "Y",	// РџРѕРєР°Р·С‹РІР°С‚СЊ СЌР»РµРјРµРЅС‚С‹ РїРѕРґСЂР°Р·РґРµР»РѕРІ СЂР°Р·РґРµР»Р°
+            "MESSAGE_404" => "",	// РЎРѕРѕР±С‰РµРЅРёРµ РґР»СЏ РїРѕРєР°Р·Р° (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РёР· РєРѕРјРїРѕРЅРµРЅС‚Р°)
+            "NEWS_COUNT" => "20",	// РљРѕР»РёС‡РµСЃС‚РІРѕ РЅРѕРІРѕСЃС‚РµР№ РЅР° СЃС‚СЂР°РЅРёС†Рµ
+            "PAGER_BASE_LINK_ENABLE" => "N",	// Р’РєР»СЋС‡РёС‚СЊ РѕР±СЂР°Р±РѕС‚РєСѓ СЃСЃС‹Р»РѕРє
+            "PAGER_DESC_NUMBERING" => "N",	// Р�СЃРїРѕР»СЊР·РѕРІР°С‚СЊ РѕР±СЂР°С‚РЅСѓСЋ РЅР°РІРёРіР°С†РёСЋ
+            "PAGER_DESC_NUMBERING_CACHE_TIME" => "36000",	// Р’СЂРµРјСЏ РєРµС€РёСЂРѕРІР°РЅРёСЏ СЃС‚СЂР°РЅРёС† РґР»СЏ РѕР±СЂР°С‚РЅРѕР№ РЅР°РІРёРіР°С†РёРё
+            "PAGER_SHOW_ALL" => "N",	// РџРѕРєР°Р·С‹РІР°С‚СЊ СЃСЃС‹Р»РєСѓ "Р’СЃРµ"
+            "PAGER_SHOW_ALWAYS" => "N",	// Р’С‹РІРѕРґРёС‚СЊ РІСЃРµРіРґР°
+            "PAGER_TEMPLATE" => ".default",	// РЁР°Р±Р»РѕРЅ РїРѕСЃС‚СЂР°РЅРёС‡РЅРѕР№ РЅР°РІРёРіР°С†РёРё
+            "PAGER_TITLE" => "Товары со схожими характеристиками",	// РќР°Р·РІР°РЅРёРµ РєР°С‚РµРіРѕСЂРёР№
+            "PARENT_SECTION" => $arResult['IBLOCK_SECTION_ID'],	// ID СЂР°Р·РґРµР»Р°
+            "PARENT_SECTION_CODE" => "",	// РљРѕРґ СЂР°Р·РґРµР»Р°
+            "PREVIEW_TRUNCATE_LEN" => "",	// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ РґР»РёРЅР° Р°РЅРѕРЅСЃР° РґР»СЏ РІС‹РІРѕРґР° (С‚РѕР»СЊРєРѕ РґР»СЏ С‚РёРїР° С‚РµРєСЃС‚)
+            "PROPERTY_CODE" => array(	// РЎРІРѕР№СЃС‚РІР°
+                0 => "",
+                1 => "",
+            ),
+            "SET_BROWSER_TITLE" => "Y",	// РЈСЃС‚Р°РЅР°РІР»РёРІР°С‚СЊ Р·Р°РіРѕР»РѕРІРѕРє РѕРєРЅР° Р±СЂР°СѓР·РµСЂР°
+            "SET_LAST_MODIFIED" => "N",	// РЈСЃС‚Р°РЅР°РІР»РёРІР°С‚СЊ РІ Р·Р°РіРѕР»РѕРІРєР°С… РѕС‚РІРµС‚Р° РІСЂРµРјСЏ РјРѕРґРёС„РёРєР°С†РёРё СЃС‚СЂР°РЅРёС†С‹
+            "SET_META_DESCRIPTION" => "Y",	// РЈСЃС‚Р°РЅР°РІР»РёРІР°С‚СЊ РѕРїРёСЃР°РЅРёРµ СЃС‚СЂР°РЅРёС†С‹
+            "SET_META_KEYWORDS" => "Y",	// РЈСЃС‚Р°РЅР°РІР»РёРІР°С‚СЊ РєР»СЋС‡РµРІС‹Рµ СЃР»РѕРІР° СЃС‚СЂР°РЅРёС†С‹
+            "SET_STATUS_404" => "N",	// РЈСЃС‚Р°РЅР°РІР»РёРІР°С‚СЊ СЃС‚Р°С‚СѓСЃ 404
+            "SET_TITLE" => "Y",	// РЈСЃС‚Р°РЅР°РІР»РёРІР°С‚СЊ Р·Р°РіРѕР»РѕРІРѕРє СЃС‚СЂР°РЅРёС†С‹
+            "SHOW_404" => "N",	// РџРѕРєР°Р· СЃРїРµС†РёР°Р»СЊРЅРѕР№ СЃС‚СЂР°РЅРёС†С‹
+            "SORT_BY1" => "ACTIVE_FROM",	// РџРѕР»Рµ РґР»СЏ РїРµСЂРІРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё РЅРѕРІРѕСЃС‚РµР№
+            "SORT_BY2" => "SORT",	// РџРѕР»Рµ РґР»СЏ РІС‚РѕСЂРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё РЅРѕРІРѕСЃС‚РµР№
+            "SORT_ORDER1" => "DESC",	// РќР°РїСЂР°РІР»РµРЅРёРµ РґР»СЏ РїРµСЂРІРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё РЅРѕРІРѕСЃС‚РµР№
+            "SORT_ORDER2" => "ASC",	// РќР°РїСЂР°РІР»РµРЅРёРµ РґР»СЏ РІС‚РѕСЂРѕР№ СЃРѕСЂС‚РёСЂРѕРІРєРё РЅРѕРІРѕСЃС‚РµР№
+            "STRICT_SECTION_CHECK" => "N",	// РЎС‚СЂРѕРіР°СЏ РїСЂРѕРІРµСЂРєР° СЂР°Р·РґРµР»Р° РґР»СЏ РїРѕРєР°Р·Р° СЃРїРёСЃРєР°
+        ),
+            false
+        );?>
 
     </div>
 

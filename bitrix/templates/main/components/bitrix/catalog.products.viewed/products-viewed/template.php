@@ -143,8 +143,8 @@ $areaIds = array();
 					<div class="price">
 						<span>
 							<?
-							$ar_res = CPrice::GetBasePrice($item['ID']);
-							echo $ar_res['PRICE'];
+							$ar_res = CCatalogProduct::GetOptimalPrice($item['ID'], 1, $USER->GetUserGroupArray(), 'N');
+							echo $ar_res['DISCOUNT_PRICE'];
 							?>
 						</span>
 						Руб</div>
