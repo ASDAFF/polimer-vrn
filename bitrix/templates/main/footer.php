@@ -2,6 +2,7 @@
 				</div><!--end::page_content-->
 				<?}?>
 				<footer>
+
 					<div class="footer__top cl">
 						<div class="footer__col col--1">
 							<a href="/" class="footer__logo">
