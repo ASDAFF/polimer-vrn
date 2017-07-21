@@ -43,7 +43,7 @@ $sectionId = $APPLICATION->IncludeComponent(
 
 
 <?
-if($arParams["USE_COMPARE"]=="Y")
+if($arParams["USE_COMPARE"]=="N")
 {
 	?><?$APPLICATION->IncludeComponent(
 	"bitrix:catalog.compare.list",
