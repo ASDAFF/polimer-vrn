@@ -56,7 +56,7 @@ $this->setFrameMode(true);
 
          <div class="pc__buy-block cl">
             <div class="bb_compare">
-               <input type="checkbox" id="icompare">
+               <input type="checkbox" id="icompare" value="<?=$arResult['ID']?>">
                <label for="icompare">Сравнить</label>
             </div>
 

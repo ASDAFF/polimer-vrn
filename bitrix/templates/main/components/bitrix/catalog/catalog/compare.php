@@ -12,9 +12,12 @@
 /** @var CBitrixComponent $component */
 
 $this->setFrameMode(true);
-$this->addExternalCss("/bitrix/css/main/bootstrap.css");
-?>
 
+if($_REQUEST['action'] == "DELETE_FROM_COMPARE_LIST" AND $_REQUEST['id'] == 0){
+	unset($_SESSION[$arParams["COMPARE_NAME"]]);
+}
+?>
+<h1></h1>
 <?$APPLICATION->IncludeComponent(
 	"bitrix:catalog.compare.result",
 	"",
