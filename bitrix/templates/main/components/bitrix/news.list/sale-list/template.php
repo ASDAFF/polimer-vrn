@@ -13,7 +13,7 @@
 $this->setFrameMode(true);
 ?>
 <div class="nd__rightbar">
-	<h1>Другие <?=$arParams["PAGER_TITLE"]?></h1>
+	<div class="h1">Другие <?=$arParams["PAGER_TITLE"]?></div>
 	<div class="block cl">
 		<?foreach($arResult["ITEMS"] as $arItem):?>
 		<div class="item">

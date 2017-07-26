@@ -7,7 +7,7 @@ $APPLICATION->SetTitle("Новости");
 	"bitrix:news", 
 	"news", 
 	array(
-		"ADD_ELEMENT_CHAIN" => "N",
+		"ADD_ELEMENT_CHAIN" => "Y",
 		"ADD_SECTIONS_CHAIN" => "Y",
 		"AJAX_MODE" => "N",
 		"AJAX_OPTION_ADDITIONAL" => "",
@@ -44,7 +44,7 @@ $APPLICATION->SetTitle("Новости");
 		"HIDE_LINK_WHEN_NO_DETAIL" => "N",
 		"IBLOCK_ID" => "7",
 		"IBLOCK_TYPE" => "news",
-		"INCLUDE_IBLOCK_INTO_CHAIN" => "Y",
+		"INCLUDE_IBLOCK_INTO_CHAIN" => "N",
 		"LIST_ACTIVE_DATE_FORMAT" => "j F Y",
 		"LIST_FIELD_CODE" => array(
 			0 => "",
@@ -85,6 +85,7 @@ $APPLICATION->SetTitle("Новости");
 		"USE_SEARCH" => "N",
 		"USE_SHARE" => "N",
 		"COMPONENT_TEMPLATE" => "news",
+		"STRICT_SECTION_CHECK" => "N",
 		"SEF_URL_TEMPLATES" => array(
 			"news" => "/news/",
 			"section" => "",
