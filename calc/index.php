@@ -3,39 +3,30 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("Бесплатный подбор оборудования");
 ?>
 
-<div class="row cl">
-  <div class="rq__form">
-     <p>Наши консультации помогут Вам избежать стандартных ошибок и как следствие сэкономить время и деньги.</p>
-     <div class="line">
-        <span>ФИО</span>
-        <input type="text" class="fio">
-     </div>
-     <div class="line pl">
-        <span>Телефон</span>
-        <input type="text" class="phone">
-        <span class="txt_ct">Время звонка, до</span>
-        <input type="text" class="call_time">
-     </div>
-     <div class="line">
-        <span>E-mail</span>
-        <input type="text" class="mail">
-     </div>
-     <div class="line textarea">
-        <span>Текст заявки</span>
-        <textarea name="request_txt" cols="30" rows="7" placeholder="Введите краткий текст"></textarea>
-     </div>
-     <a href="#" class="attach">Прикрепите план здания или техническое задание <span>(файл до 50 мб)</span></a>
-     <a href="#" class="send">Отправить сообщение</a>
-  </div>
 
-  <div class="rq__list">
-     <div class="title">Мы не просто продаем оборудование для отопления, водоснабжения и канализации. Мы решаем эти проблемы для Вас. Обратившись в нашу компанию Вы получите:</div>
-     <ul>
-        <li>Бесплатную консультацию по правильной организации систем отопления, водоснабжения и канализации;</li>
-        <li>Квалифицированный подбор и расчет характеристик оборудования под Ваши потребности;</li>
-        <li>Рекомендации по монтажу от ведущих заводов-изготовителей отопительного оборудования.</li>
-     </ul>
-  </div>
-</div>
+<?$APPLICATION->IncludeComponent("nbrains:main.feedback", "free-calc", Array(
+    "COMPONENT_TEMPLATE" => ".default",
+    "EMAIL_TO" => "sale@polimer-vrn",	// E-mail, на который будет отправлено письмо
+    "EVENT_MESSAGE_ID" => array(	// Почтовые шаблоны для отправки письма
+        0 => "88",
+    ),
+    "IBLOCK_ID" => "13",	// Код информационного блока
+    "IBLOCK_TYPE" => "feedback",	// Тип информационного блока (используется только для проверки)
+    "OK_TEXT" => "Спасибо, ваше сообщение принято.",	// Сообщение, выводимое пользователю после отправки
+    "PROPERTY_CODE" => array(	// Поля формы
+        0 => "FIO",
+        1 => "EMAIL",
+        2 => "PHONE",
+        3 => "TIME_AFTER",
+        4 => "DESC",
+        5 => "RULE",
+    ),
+    "REQUIRED_FIELDS" => "",
+    "USE_CAPTCHA" => "N",	// Использовать защиту от автоматических сообщений (CAPTCHA) для неавторизованных пользователей
+),
+    false
+);?>
+
+
 
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

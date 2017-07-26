@@ -84,77 +84,64 @@
      	</div><!--end::container-->
 
 
-     	<div class="popup" id="mailus">
-     		<a href="#" class="close">&nbsp;</a>
-     		<div class="title">Написать письмо</div>
-     		<div class="subtitle">Если у Вас возник вопрос или Вы хотите оставить комментарий, воспользуйтесь формой обратной связи. Наши специалисты свяжутся с Вами в ближайшее время.</div>
-     		<form action="#">
-     			<fieldset>
-     				<span class="line cl">
-     					<span class="label">ФИО</span>
-     					<span class="value"><input type="text" name="NAME" /></span>
-     				</span>
-     				<span class="line cl">
-     					<span class="label">Телефон</span>
-     					<span class="value"><input class="phone" type="text" name="PHONE" /></span>
-     				</span>
-     				<span class="line cl">
-     					<span class="label">E-mail</span>
-     					<span class="value"><input type="text" name="EMAIL" /></span>
-     				</span>
-     				<span class="line cl wide">
-     					<span class="label">Текст сообщения</span>
-     					<span class="value">
-     						<textarea name="TEXT"></textarea>
-     					</span>
-     				</span>
-     				<span class="line submit"><input type="submit" value="Отправить сообщение" /></span>
-     			</fieldset>
-     		</form>
-     	</div>
-     	<div class="popup" id="oneclick">
-     		<a href="#" class="close">&nbsp;</a>
-     		<div class="title">Купить в 1 клик</div>
-     		<div class="subtitle">Укажите ваши данные и наши менеджеры свяжуться с вами для оформления заказа</div>
-     		<form action="#">
-     			<fieldset>
-     				<span class="line cl">
-     					<span class="label">ФИО</span>
-     					<span class="value"><input type="text" name="NAME" /></span>
-     				</span>
-     				<span class="line cl">
-     					<span class="label">Телефон</span>
-     					<span class="value"><input class="phone" type="text" name="PHONE" /></span>
-     				</span>
-     				<span class="line cl">
-     					<span class="label">E-mail</span>
-     					<span class="value"><input type="text" name="EMAIL" /></span>
-     				</span>
-     				<span class="line submit"><input type="submit" value="Отправить" /></span>
-     			</fieldset>
-     		</form>
-     	</div>
-     	<div class="popup" id="specialist">
-     		<a href="#" class="close">&nbsp;</a>
-     		<div class="title">Бесплатная консультация</div>
-     		<div class="subtitle">Укажите ваши данные и наши консультанты свяжуться с вами в ближайшее время</div>
-     		<form action="#">
-     			<fieldset>
-     				<span class="line cl">
-     					<span class="label">ФИО</span>
-     					<span class="value"><input type="text" name="NAME" /></span>
-     				</span>
-     				<span class="line cl">
-     					<span class="label">Телефон</span>
-     					<span class="value"><input class="phone" type="text" name="PHONE" /></span>
-     				</span>
-     				<span class="line cl">
-     					<span class="label">E-mail</span>
-     					<span class="value"><input type="text" name="EMAIL" /></span>
-     				</span>
-     				<span class="line submit"><input type="submit" value="Отправить" /></span>
-     			</fieldset>
-     		</form>
-     	</div>
+
+			<?$APPLICATION->IncludeComponent("nbrains:main.feedback", "write-mail", Array(
+				"EMAIL_TO" => "sale@polimer-vrn",	// E-mail, на который будет отправлено письмо
+				"EVENT_MESSAGE_ID" => array(	// Почтовые шаблоны для отправки письма
+					0 => "88",
+				),
+				"IBLOCK_ID" => "14",	// Код информационного блока
+				"IBLOCK_TYPE" => "feedback",	// Тип информационного блока (используется только для проверки)
+				"OK_TEXT" => "Спасибо, ваше сообщение принято.",	// Сообщение, выводимое пользователю после отправки
+				"PROPERTY_CODE" => array(	// Поля формы
+					0 => "FIO",
+					1 => "PHONE",
+					2 => "EMAIL",
+					3 => "DESC",
+					4 => "RULE",
+				),
+				"USE_CAPTCHA" => "N",	// Использовать защиту от автоматических сообщений (CAPTCHA) для неавторизованных пользователей
+			),
+				false
+			);?>
+
+
+				<?$APPLICATION->IncludeComponent("nbrains:main.feedback", "buy-one-click", Array(
+					"EMAIL_TO" => "sale@polimer-vrn",	// E-mail, на который будет отправлено письмо
+					"EVENT_MESSAGE_ID" => array(	// Почтовые шаблоны для отправки письма
+						0 => "88",
+					),
+					"IBLOCK_ID" => "15",	// Код информационного блока
+					"IBLOCK_TYPE" => "feedback",	// Тип информационного блока (используется только для проверки)
+					"OK_TEXT" => "Спасибо, ваше сообщение принято.",	// Сообщение, выводимое пользователю после отправки
+					"PROPERTY_CODE" => array(	// Поля формы
+						0 => "FIO",
+						1 => "PHONE",
+						2 => "EMAIL",
+						3 => "RULE",
+					),
+					"USE_CAPTCHA" => "N",	// Использовать защиту от автоматических сообщений (CAPTCHA) для неавторизованных пользователей
+				),
+					false
+				);?>
+
+				<?$APPLICATION->IncludeComponent("nbrains:main.feedback", "free-consultant", Array(
+					"EMAIL_TO" => "sale@polimer-vrn",	// E-mail, на который будет отправлено письмо
+					"EVENT_MESSAGE_ID" => "",	// Почтовые шаблоны для отправки письма
+					"IBLOCK_ID" => "16",	// Код информационного блока
+					"IBLOCK_TYPE" => "feedback",	// Тип информационного блока (используется только для проверки)
+					"OK_TEXT" => "Спасибо, ваше сообщение принято.",	// Сообщение, выводимое пользователю после отправки
+					"PROPERTY_CODE" => array(	// Поля формы
+						0 => "FIO",
+						1 => "PHONE",
+						2 => "EMAIL",
+						3 => "RULE",
+					),
+					"USE_CAPTCHA" => "N",	// Использовать защиту от автоматических сообщений (CAPTCHA) для неавторизованных пользователей
+				),
+					false
+				);?>
+
+
 	</body>
 </html>

@@ -2,3 +2,7 @@
 label {
     display: initial;
 }
+
+.label {
+    color: black;
+}
