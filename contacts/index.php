@@ -48,9 +48,9 @@ $APPLICATION->SetTitle("Контакты");
       </div>
       <div class="rh-col">
          <div class="lvl">Начальник отдела продаж</div>
-         <div class="name">Грачёва Юлия Борисовна</div>
-         <div class="phone">тел: (473) 237-35-55 <span>добавочный 323</span></div>
-         <div class="mail">e-mail: <a href="#">gracheva@polimer-vrn.ru</a></div>
+         <div class="name">Попова Оксана Сергеевна</div>
+         <div class="phone">тел: (473) 237-35-55 <span>добавочный 374</span></div>
+         <div class="mail">e-mail: <a href="#">popova@polimer-vrn.ru</a></div>
       </div>
    </div><!--end::co__heads-->
 
