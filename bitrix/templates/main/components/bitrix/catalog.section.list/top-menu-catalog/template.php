@@ -26,10 +26,10 @@ $this->setFrameMode(true);
 	<div class="wr">
 		<ul class="first-sections">
 
-			<? foreach($arResult['SECTIONS'] as $section): ?>
+			<? foreach($arResult['SECTIONS'] as $key => $section): ?>
 			<li>
 				<a href="<?=$section['SECTION_PAGE_URL']?>">
-					<img src="<?=SITE_TEMPLATE_PATH?>/img/category_1.png" width="90" height="65" alt="<?=$section['NAME']?>" />
+					<img src="<?=SITE_TEMPLATE_PATH?>/img/category_<? if($key > 0):?>2<? else: ?>1<?endif;?>.png" width="90" height="65" alt="<?=$section['NAME']?>" />
 					<?=str_replace(' ','<br>',$section['NAME'])?>
 				</a>
 				<div class="subsections">
