@@ -46,7 +46,7 @@ $arCurView = $arViewStyles[$arParams['VIEW_MODE']];
 
 	<div class="catalog-sections-list__item">
 		<a href="<?=$arSection['SECTION_PAGE_URL']?>" class="link"> <img alt="<?=$arSection['NAME']?>" src="<?=$arSection['PICTURE']['SRC'];?>" height="120" class="img">
-			<span class="name"><?=str_replace(' ','<br>',$arSection['NAME']);?></span></a>
+			<span class="name"><?=$arSection['NAME'];?></span></a>
 	</div>
 	<?endforeach;?>
 
