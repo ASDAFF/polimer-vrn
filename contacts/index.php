@@ -33,25 +33,6 @@ $APPLICATION->SetTitle("Контакты");
 	false
 );?>
 
-   <div class="co__heads cl">
-      <div class="rh-col">
-         <div class="lvl">Директор</div>
-         <div class="name">Рябцев Сергей Геннадьевич</div>
-         <div class="phone">тел: (473) 237-35-55 <span>добавочный 201</span></div>
-         <div class="mail">e-mail: <a href="#">rsg@polimer-vrn.ru</a></div>
-      </div>
-      <div class="rh-col">
-         <div class="lvl">Начальник отдела снабжения</div>
-         <div class="name">Старцев Дмитрий Олегович</div>
-         <div class="phone">тел: (473) 237-35-55 <span>добавочный 327</span></div>
-         <div class="mail">e-mail: <a href="#">dmitry@polimer-vrn.ru</a></div>
-      </div>
-      <div class="rh-col">
-         <div class="lvl">Начальник отдела продаж</div>
-         <div class="name">Попова Оксана Сергеевна</div>
-         <div class="phone">тел: (473) 237-35-55 <span>добавочный 374</span></div>
-         <div class="mail">e-mail: <a href="#">popova@polimer-vrn.ru</a></div>
-      </div>
-   </div><!--end::co__heads-->
+
 
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

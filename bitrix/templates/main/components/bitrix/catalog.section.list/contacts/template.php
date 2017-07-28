@@ -43,11 +43,20 @@ $this->setFrameMode(true);
 					<div class="col-title"><span><?=$arItem['NAME']?></span></div>
 
 					<div class="col-text">
+						<? if($arItem['STRET']['VALUE']): ?>
 						<div class="txt locate cl"><?=$arItem['STRET']['VALUE']?></div>
+						<? endif;?>
 						<div class="block-cont left">
+							<? if(empty($arItem['DEL_CATEGORY']['VALUE'])): ?>
 							<div class="tit insant">Инженерная<br>сантехника</div>
+							<? endif;?>
+							<? if($arItem['ING_PHONE']['VALUE']): ?>
 							<div class="txt phone"><?=$arItem['ING_PHONE']['VALUE']?></div>
+							<? endif;?>
+							<? if($arItem['ING_MAIL']['VALUE']): ?>
 							<a href="#" class="mail"><?=$arItem['ING_MAIL']['VALUE']?></a>
+							<? endif;?>
+							<? if($arItem['ING_TIME_W']['VALUE']): ?>
 							<div class="time">
 								<span>часы работы:</span>
 								<? foreach($arItem['ING_TIME_W']['VALUE'] as $v):?>
@@ -55,27 +64,42 @@ $this->setFrameMode(true);
 								<? endforeach; ?>
 
 							</div>
+							<? endif;?>
 						</div>
 
 						<div class="block-cont right">
+							<? if(empty($arItem['DEL_CATEGORY']['VALUE'])): ?>
 							<div class="tit stroma">Строительные<br>материалы</div>
+							<? endif;?>
+							<? if($arItem['STR_PHONE']['VALUE']): ?>
 							<div class="txt phone"><?=$arItem['STR_PHONE']['VALUE']?></div>
+							<? endif;?>
+							<? if($arItem['STR_MAIL']['VALUE']): ?>
 							<a href="#" class="mail"><?=$arItem['STR_MAIL']['VALUE']?></a>
+							<? endif;?>
+							<? if($arItem['STR_TIME_W']['VALUE']): ?>
 							<div class="time">
 								<span>часы работы:</span>
 								<? foreach($arItem['STR_TIME_W']['VALUE'] as $v):?>
 									<span><?=$v?></span>
 								<? endforeach; ?>
 							</div>
+							<? endif;?>
 						</div>
+						<? if($arItem['PLAN_STRET']['VALUE']): ?>
 						<a target="_blank" href="<?=CFile::GetPath($arItem['PLAN_STRET']['VALUE']);?>" class="dlmap">Скачать схему проезда</a>
+						<? endif;?>
 					</div>
 					<?
 					$map = explode(',',$arItem['MAP_API']['VALUE']);
 					?>
 					<div class="col-visual">
+						<? if($arItem['PREVIEW_PICTURE']['VALUE']): ?>
 						<div class="cw-row image"><img src="<?=CFile::GetPath($arItem['PREVIEW_PICTURE'])?>" alt="<?=$arItem['NAME']?>"></div>
+						<? endif;?>
+						<? if($arItem['MAP_API']['VALUE']): ?>
 						<div class="cw-row map" id="map_<?=$arItem['ID']?>"></div>
+						<? endif;?>
 					</div>
 					<script type="text/javascript">
 						ymaps.ready(init);
@@ -94,6 +118,30 @@ $this->setFrameMode(true);
 							myMap.geoObjects.add(myPlacemark);
 						}
 					</script>
+
+					<? if($arItem['ID'] == 24): ?>
+					<div class="co__heads cl">
+						<div class="rh-col">
+							<div class="lvl">Директор</div>
+							<div class="name">Рябцев Сергей Геннадьевич</div>
+							<div class="phone">тел: (473) 237-35-55 <span>добавочный 201</span></div>
+							<div class="mail">e-mail: <a href="#">rsg@polimer-vrn.ru</a></div>
+						</div>
+						<div class="rh-col">
+							<div class="lvl">Начальник отдела снабжения</div>
+							<div class="name">Старцев Дмитрий Олегович</div>
+							<div class="phone">тел: (473) 237-35-55 <span>добавочный 327</span></div>
+							<div class="mail">e-mail: <a href="#">dmitry@polimer-vrn.ru</a></div>
+						</div>
+						<div class="rh-col">
+							<div class="lvl">Начальник отдела продаж</div>
+							<div class="name">Попова Оксана Сергеевна</div>
+							<div class="phone">тел: (473) 237-35-55 <span>добавочный 374</span></div>
+							<div class="mail">e-mail: <a href="#">popova@polimer-vrn.ru</a></div>
+						</div>
+					</div><!--end::co__heads-->
+					<? endif; ?>
+
 				</div>
 				<?endforeach?>
 			</div>
