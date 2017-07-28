@@ -57,7 +57,7 @@ $this->setFrameMode(true);
 							<div class="txt phone"><?=$arItem['ING_PHONE']['VALUE']?></div>
 							<? endif;?>
 							<? if($arItem['ING_MAIL']['VALUE']): ?>
-							<a href="#" class="mail"><?=$arItem['ING_MAIL']['VALUE']?></a>
+							<a href="mailto:<?=$arItem['ING_MAIL']['VALUE']?>" class="mail"><?=$arItem['ING_MAIL']['VALUE']?></a>
 							<? endif;?>
 							<? if($arItem['ING_TIME_W']['VALUE']): ?>
 							<div class="time">
@@ -78,7 +78,7 @@ $this->setFrameMode(true);
 							<div class="txt phone"><?=$arItem['STR_PHONE']['VALUE']?></div>
 							<? endif;?>
 							<? if($arItem['STR_MAIL']['VALUE']): ?>
-							<a href="#" class="mail"><?=$arItem['STR_MAIL']['VALUE']?></a>
+							<a href="mailto:<?=$arItem['ING_MAIL']['VALUE']?>" class="mail"><?=$arItem['STR_MAIL']['VALUE']?></a>
 							<? endif;?>
 							<? if($arItem['STR_TIME_W']['VALUE']): ?>
 							<div class="time">
