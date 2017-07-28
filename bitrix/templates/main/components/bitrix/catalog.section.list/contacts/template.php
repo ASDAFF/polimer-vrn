@@ -50,6 +50,9 @@ $this->setFrameMode(true);
 							<? if(empty($arItem['DEL_CATEGORY']['VALUE'])): ?>
 							<div class="tit insant">Инженерная<br>сантехника</div>
 							<? endif;?>
+							<? if($arItem['TITLE']['VALUE']): ?>
+								<div class="tit"><?=$arItem['TITLE']['VALUE']?></div>
+							<? endif;?>
 							<? if($arItem['ING_PHONE']['VALUE']): ?>
 							<div class="txt phone"><?=$arItem['ING_PHONE']['VALUE']?></div>
 							<? endif;?>
