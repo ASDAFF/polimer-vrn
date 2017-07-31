@@ -318,12 +318,18 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 );?>
 
 					</div>
-					<div class="header__search">
-						<form id="search" class="search" method="get" action="/">
-							<input class="search__input input" type="text" placeholder="Поиск" value="">
-							<button type="submit" class="search__btn"></button>
-						</form>
-					</div><!--end::header__search-->
+
+						<?$APPLICATION->IncludeComponent(
+							"bitrix:search.form",
+							"search-form",
+							array(
+								"PAGE" => "#SITE_DIR#search/",
+								"USE_SUGGEST" => "Y",
+								"COMPONENT_TEMPLATE" => "search-form"
+							),
+							false
+						);?>
+
 					<a href="<?if ($USER->IsAuthorized()){?>/personal/orders-list.php<?}else{?>/personal/order/make/<?}?>" class="header__account">Личный кабинет</a>
 
 						<?$APPLICATION->IncludeComponent("bitrix:sale.basket.basket.line", "basket.small", Array(
