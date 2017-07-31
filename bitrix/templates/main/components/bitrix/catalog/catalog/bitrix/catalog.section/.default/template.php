@@ -278,7 +278,9 @@ if (!empty($arResult['ITEMS']))
 
 		<div class="related_articles cl">
 			<div class="col-txt">
+				<span class="catalog-sections-text-hidden">
 				<?=htmlspecialchars_decode($arParams['PARENT_DESC'])?>
+				</span>
 			</div>
 			<div class="col-articles">
 				<?$APPLICATION->IncludeComponent(
