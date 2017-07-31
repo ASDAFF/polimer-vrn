@@ -32,7 +32,8 @@ $APPLICATION->SetTitle("Статьи и советы");
 		"DETAIL_PAGER_TITLE" => "Страница",
 		"DETAIL_PROPERTY_CODE" => array(
 			0 => "DETALI_TITLE",
-			1 => "",
+			1 => "ADD_PROD",
+			2 => "",
 		),
 		"DETAIL_SET_CANONICAL_URL" => "N",
 		"DISPLAY_BOTTOM_PAGER" => "Y",

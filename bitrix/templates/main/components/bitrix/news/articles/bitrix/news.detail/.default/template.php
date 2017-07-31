@@ -12,8 +12,42 @@
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
 ?>
+
+
+
+
 <div class="cl">
 	<div class="nd__content">
+
+		<?
+		if($arResult['PROPERTIES']['ADD_PROD']['VALUE']):
+
+			?>
+			<div class="slider_product" id="mp__product__action" style="max-width: 840px;margin-bottom: 10px">
+				<?
+				$arSelect = Array("ID", "NAME","PREVIEW_PICTURE","DETAIL_PAGE_URL");
+				foreach($arResult['PROPERTIES']['ADD_PROD']['VALUE'] as $id){
+					$arFilter = Array("IBLOCK_ID"=> 11,"ID" => $id);
+					$res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
+					if($ob = $res->GetNextElement())
+					{$arFields = $ob->GetFields();
+						?>
+						<div>
+							<div class="product">
+								<a href="<?=$arFields["DETAIL_PAGE_URL"]?>" style="display: block;height: 120px;border-bottom: 0px;">
+									<img src="<?=CFile::GetPath($arFields["PREVIEW_PICTURE"]);?>" alt="<?=$arFields["NAME"]?>" style="max-height: 110px;margin: 0 auto;" class="img">
+								</a>
+								<a href="<?=$arFields["DETAIL_PAGE_URL"]?>" class="name" style="border-bottom: 0px;"><?=$arFields["NAME"]?></a>
+							</div>
+						</div>
+						<?
+					}
+				}
+				?>
+			</div><!-- end::slider_product -->
+
+		<? endif; ?>
+
 		<div class="date">
 			<?if($arParams["DISPLAY_DATE"]!="N" && $arResult["DISPLAY_ACTIVE_FROM"]):?>
 				<?=$arResult["DISPLAY_ACTIVE_FROM"]?>
