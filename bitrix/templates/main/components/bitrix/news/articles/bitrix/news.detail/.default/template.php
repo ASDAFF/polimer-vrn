@@ -23,7 +23,7 @@ $this->setFrameMode(true);
 		if($arResult['PROPERTIES']['ADD_PROD']['VALUE']):
 
 			?>
-			<div class="slider_product" id="mp__product__action" style="max-width: 840px;margin-bottom: 10px">
+			<div class="slider_product" id="mp__product__action" style="max-width: 840px;margin-bottom: 10px;border: 0px">
 				<?
 				$arSelect = Array("ID", "NAME","PREVIEW_PICTURE","DETAIL_PAGE_URL");
 				foreach($arResult['PROPERTIES']['ADD_PROD']['VALUE'] as $id){
@@ -33,7 +33,7 @@ $this->setFrameMode(true);
 					{$arFields = $ob->GetFields();
 						?>
 						<div>
-							<div class="product">
+							<div class="product" style="border-left: 0px;">
 								<a href="<?=$arFields["DETAIL_PAGE_URL"]?>" style="display: block;height: 120px;border-bottom: 0px;">
 									<img src="<?=CFile::GetPath($arFields["PREVIEW_PICTURE"]);?>" alt="<?=$arFields["NAME"]?>" style="max-height: 110px;margin: 0 auto;" class="img">
 								</a>
