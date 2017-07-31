@@ -1,177 +1,72 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("Доставка");
-?>
-
-<div class="sh__cities">
-  <a href="#" class="city active">Город</a>
-  <a href="#" class="city">Область</a>
-  <a href="#" class="city">Россия</a>
-</div><!--end::sh__cities-->
-
-<div class="delivery__areas">
-  <div class="area-item active">
-    <div class="row cl">
-      <div class="sh__text">
-         <p class="intro">Сделав заказ в нашей компании, <br>Вы можете забрать товар 2-мя способами:</p>
-         <div class="type cl">
-            <div class="shipby self">Самовывоз <br>товара</div>
-            <div class="shipby us">Заказать <br>доставку</div>
-         </div>
-         <ul>
-            <li>Цена доставки действительная при весе груза до 1тн., максимальный габаритный размер до 4м, объём до 12 куб.м. </li>
-            <li>Во всех остальных случаях стоимость доставки уточняйте у менеджера.</li>
-            <li>Доставка по городу и в пределах 15 км от города осуществляется в течение 1-2 рабочих дней с момента оформления заказа (возможность срочной доставки необходимо заранее уточнять у менеджера).</li>
-         </ul>
-         <p class="intro">В стоимость доставки включено время разгрузки <br>автомобиля силами клиента – 30 мин.</p>
-         <p>При задержке автомобиля свыше указанного времени, дополнительное время<br>оплачивается по факту простоя из расчета стоимости:</p>
-         <div class="cars cl">
-            <div class="car">
-               <img src="<?=SITE_TEMPLATE_PATH?>/img/sh_car1.png" alt="sh_car1.png" width="160" height="180">
-               <div class="txt">
-                  <div class="model">газель</div>
-                  <div class="cost"><span>400</span>руб./час</div>
-               </div>
-            </div>
-            <div class="car">
-               <img src="<?=SITE_TEMPLATE_PATH?>/img/sh_car2.png" alt="sh_car1.png" width="160" height="180">
-               <div class="txt">
-                  <div class="model">Зубр</div>
-                  <div class="cost"><span>1 200</span>руб./час</div>
-               </div>
-            </div>
-            <div class="car">
-               <img src="<?=SITE_TEMPLATE_PATH?>/img/sh_car3.png" alt="sh_car1.png" width="160" height="180">
-               <div class="txt">
-                  <div class="model">Маз</div>
-                  <div class="cost"><span>1 800</span>руб./час</div>
-               </div>
-            </div>
-         </div>
-      </div>
-
-      <div class="sh__visual">
-         <p class="intro">Стоимость доставки по городу:</p>
-         <div class="area_cost cl">
-            <div class="area red"><span>400</span>руб.</div>
-            <div class="area green"><span>600</span>руб.</div>
-            <div class="area yellow"><span>800</span>руб.</div>
-            <div class="area blue"><span>1000</span>руб.</div>
-            <div class="area gray"><span>1200</span>руб.</div>
-         </div>
-         <div class="map"><span><img src="<?=SITE_TEMPLATE_PATH?>/img/shipping_area.jpg" width="560" height="610" alt=""></span></div>
-      </div>
-    </div>
-  </div><!--end::area-->
-  <div class="area-item">
-    Доставка по области
-    <div class="row cl">
-      <div class="sh__text">
-         <p class="intro">Сделав заказ в нашей компании, <br>Вы можете забрать товар 2-мя способами:</p>
-         <div class="type cl">
-            <div class="shipby self">Самовывоз <br>товара</div>
-            <div class="shipby us">Заказать <br>доставку</div>
-         </div>
-         <ul>
-            <li>Цена доставки действительная при весе груза до 1тн., максимальный габаритный размер до 4м, объём до 12 куб.м. </li>
-            <li>Во всех остальных случаях стоимость доставки уточняйте у менеджера.</li>
-            <li>Доставка по городу и в пределах 15 км от города осуществляется в течение 1-2 рабочих дней с момента оформления заказа (возможность срочной доставки необходимо заранее уточнять у менеджера).</li>
-         </ul>
-         <p class="intro">В стоимость доставки включено время разгрузки <br>автомобиля силами клиента – 30 мин.</p>
-         <p>При задержке автомобиля свыше указанного времени, дополнительное время<br>оплачивается по факту простоя из расчета стоимости:</p>
-         <div class="cars cl">
-            <div class="car">
-               <img src="<?=SITE_TEMPLATE_PATH?>/img/sh_car1.png" alt="sh_car1.png" width="160" height="180">
-               <div class="txt">
-                  <div class="model">газель</div>
-                  <div class="cost"><span>400</span>руб./час</div>
-               </div>
-            </div>
-            <div class="car">
-               <img src="<?=SITE_TEMPLATE_PATH?>/img/sh_car2.png" alt="sh_car1.png" width="160" height="180">
-               <div class="txt">
-                  <div class="model">Зубр</div>
-                  <div class="cost"><span>1 200</span>руб./час</div>
-               </div>
-            </div>
-            <div class="car">
-               <img src="<?=SITE_TEMPLATE_PATH?>/img/sh_car3.png" alt="sh_car1.png" width="160" height="180">
-               <div class="txt">
-                  <div class="model">Маз</div>
-                  <div class="cost"><span>1 800</span>руб./час</div>
-               </div>
-            </div>
-         </div>
-      </div>
-
-      <div class="sh__visual">
-         <p class="intro">Стоимость доставки по городу:</p>
-         <div class="area_cost cl">
-            <div class="area red"><span>400</span>руб.</div>
-            <div class="area green"><span>600</span>руб.</div>
-            <div class="area yellow"><span>800</span>руб.</div>
-            <div class="area blue"><span>1000</span>руб.</div>
-            <div class="area gray"><span>1200</span>руб.</div>
-         </div>
-         <div class="map"><span><img src="<?=SITE_TEMPLATE_PATH?>/img/shipping_area.jpg" width="560" height="610" alt=""></span></div>
-      </div>
-    </div>
-  </div><!--end::area-->
-  <div class="area-item">
-    Доставка по России
-    <div class="row cl">
-      <div class="sh__text">
-         <p class="intro">Сделав заказ в нашей компании, <br>Вы можете забрать товар 2-мя способами:</p>
-         <div class="type cl">
-            <div class="shipby self">Самовывоз <br>товара</div>
-            <div class="shipby us">Заказать <br>доставку</div>
-         </div>
-         <ul>
-            <li>Цена доставки действительная при весе груза до 1тн., максимальный габаритный размер до 4м, объём до 12 куб.м. </li>
-            <li>Во всех остальных случаях стоимость доставки уточняйте у менеджера.</li>
-            <li>Доставка по городу и в пределах 15 км от города осуществляется в течение 1-2 рабочих дней с момента оформления заказа (возможность срочной доставки необходимо заранее уточнять у менеджера).</li>
-         </ul>
-         <p class="intro">В стоимость доставки включено время разгрузки <br>автомобиля силами клиента – 30 мин.</p>
-         <p>При задержке автомобиля свыше указанного времени, дополнительное время<br>оплачивается по факту простоя из расчета стоимости:</p>
-         <div class="cars cl">
-            <div class="car">
-               <img src="<?=SITE_TEMPLATE_PATH?>/img/sh_car1.png" alt="sh_car1.png" width="160" height="180">
-               <div class="txt">
-                  <div class="model">газель</div>
-                  <div class="cost"><span>400</span>руб./час</div>
-               </div>
-            </div>
-            <div class="car">
-               <img src="<?=SITE_TEMPLATE_PATH?>/img/sh_car2.png" alt="sh_car1.png" width="160" height="180">
-               <div class="txt">
-                  <div class="model">Зубр</div>
-                  <div class="cost"><span>1 200</span>руб./час</div>
-               </div>
-            </div>
-            <div class="car">
-               <img src="<?=SITE_TEMPLATE_PATH?>/img/sh_car3.png" alt="sh_car1.png" width="160" height="180">
-               <div class="txt">
-                  <div class="model">Маз</div>
-                  <div class="cost"><span>1 800</span>руб./час</div>
-               </div>
-            </div>
-         </div>
-      </div>
-
-      <div class="sh__visual">
-         <p class="intro">Стоимость доставки по городу:</p>
-         <div class="area_cost cl">
-            <div class="area red"><span>400</span>руб.</div>
-            <div class="area green"><span>600</span>руб.</div>
-            <div class="area yellow"><span>800</span>руб.</div>
-            <div class="area blue"><span>1000</span>руб.</div>
-            <div class="area gray"><span>1200</span>руб.</div>
-         </div>
-         <div class="map"><span><img src="<?=SITE_TEMPLATE_PATH?>/img/shipping_area.jpg" width="560" height="610" alt=""></span></div>
-      </div>
-    </div>
-  </div><!--end::area-->
-</div><!--end::delivery__areas-->
-
-
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+?><?$APPLICATION->IncludeComponent(
+	"bitrix:news.list", 
+	"delivery", 
+	array(
+		"ACTIVE_DATE_FORMAT" => "d.m.Y",
+		"ADD_SECTIONS_CHAIN" => "N",
+		"AJAX_MODE" => "N",
+		"AJAX_OPTION_ADDITIONAL" => "",
+		"AJAX_OPTION_HISTORY" => "N",
+		"AJAX_OPTION_JUMP" => "N",
+		"AJAX_OPTION_STYLE" => "Y",
+		"CACHE_FILTER" => "N",
+		"CACHE_GROUPS" => "Y",
+		"CACHE_TIME" => "36000000",
+		"CACHE_TYPE" => "A",
+		"CHECK_DATES" => "Y",
+		"DETAIL_URL" => "",
+		"DISPLAY_BOTTOM_PAGER" => "Y",
+		"DISPLAY_DATE" => "Y",
+		"DISPLAY_NAME" => "Y",
+		"DISPLAY_PICTURE" => "Y",
+		"DISPLAY_PREVIEW_TEXT" => "Y",
+		"DISPLAY_TOP_PAGER" => "N",
+		"FIELD_CODE" => array(
+			0 => "",
+			1 => "",
+		),
+		"FILTER_NAME" => "",
+		"HIDE_LINK_WHEN_NO_DETAIL" => "N",
+		"IBLOCK_ID" => "17",
+		"IBLOCK_TYPE" => "news",
+		"INCLUDE_IBLOCK_INTO_CHAIN" => "N",
+		"INCLUDE_SUBSECTIONS" => "Y",
+		"MESSAGE_404" => "",
+		"NEWS_COUNT" => "20",
+		"PAGER_BASE_LINK_ENABLE" => "N",
+		"PAGER_DESC_NUMBERING" => "N",
+		"PAGER_DESC_NUMBERING_CACHE_TIME" => "36000",
+		"PAGER_SHOW_ALL" => "N",
+		"PAGER_SHOW_ALWAYS" => "N",
+		"PAGER_TEMPLATE" => ".default",
+		"PAGER_TITLE" => "Новости",
+		"PARENT_SECTION" => "",
+		"PARENT_SECTION_CODE" => "",
+		"PREVIEW_TRUNCATE_LEN" => "",
+		"PROPERTY_CODE" => array(
+			0 => "DELIVERY_MAP",
+			1 => "ORDER_DELEVERY",
+			2 => "PICKAP_PRODUCT",
+			3 => "COST_DELEVERY",
+			4 => "IMG_AUTO",
+			5 => "",
+		),
+		"SET_BROWSER_TITLE" => "Y",
+		"SET_LAST_MODIFIED" => "N",
+		"SET_META_DESCRIPTION" => "Y",
+		"SET_META_KEYWORDS" => "Y",
+		"SET_STATUS_404" => "N",
+		"SET_TITLE" => "Y",
+		"SHOW_404" => "N",
+		"SORT_BY1" => "ACTIVE_FROM",
+		"SORT_BY2" => "SORT",
+		"SORT_ORDER1" => "DESC",
+		"SORT_ORDER2" => "ASC",
+		"STRICT_SECTION_CHECK" => "N",
+		"COMPONENT_TEMPLATE" => "delivery"
+	),
+	false
+);?><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
