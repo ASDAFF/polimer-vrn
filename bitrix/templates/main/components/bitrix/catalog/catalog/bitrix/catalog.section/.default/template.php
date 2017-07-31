@@ -22,11 +22,14 @@ if (!empty($arResult['ITEMS']))
 		<div class="products_roll">
 			<div class="pr_header cl">
 				<div class="sort">
+				<?
+				$arSort = array('Популярности' => 'shows','Наличию' => 'CATALOG_AVAILABLE','Цене' => 'catalog_PRICE_3',);
+				?>
 					<label for="select_prh">Сортировать по:</label>
 					<select name="select_prh" id="select_prh">
-						<option selected>Популярности</option>
-						<option>Наличию</option>
-						<option>Цене</option>
+						<? foreach($arSort as $k => $v): ?>
+							<option value="<?=$v?>" <? if($_REQUEST['ELEMENT_SORT_FIELD'] == $v):?>selected<?endif;?>><?=$k?></option>
+						<? endforeach; ?>
 					</select>
 				</div>
 				<div class="view">
@@ -57,12 +60,18 @@ if (!empty($arResult['ITEMS']))
 						</div>
 						Таблица</a>
 				</div>
+				<?
+				$arrSelect = array(20,40,80);
+				if(empty($_REQUEST['PAGE_ELEMENT_COUNT'])){
+					$_REQUEST['PAGE_ELEMENT_COUNT'] = 20;
+				}
+				?>
 				<div class="quan">
 					<label for="quan">Товаров на стр. :</label>
 					<select name="quan" id="quan">
-						<option selected>20</option>
-						<option>40</option>
-						<option>80</option>
+						<? foreach($arrSelect as $sel): ?>
+						<option <? if($_REQUEST['PAGE_ELEMENT_COUNT'] == $sel):?>selected<?endif;?>><?=$sel?></option>
+						<? endforeach; ?>
 					</select>
 				</div>
 				<a href="#" class="filter" onclick="return false">
@@ -170,9 +179,9 @@ if (!empty($arResult['ITEMS']))
 				<div class="quan_b">
 					<label for="quan_b">Товаров на стр. :</label>
 					<select name="quan" id="quan_b">
-						<option selected>20</option>
-						<option>40</option>
-						<option>80</option>
+						<? foreach($arrSelect as $sel): ?>
+							<option <? if($_REQUEST['PAGE_ELEMENT_COUNT'] == $sel):?>selected<?endif;?>><?=$sel?></option>
+						<? endforeach; ?>
 					</select>
 				</div>
 			</div>

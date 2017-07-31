@@ -1,7 +1,23 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("Каталог");
-?><?$APPLICATION->IncludeComponent(
+?>
+
+<?
+if(empty($_REQUEST['PAGE_ELEMENT_COUNT'])){
+	$_REQUEST['PAGE_ELEMENT_COUNT'] = 20;
+}
+if(empty($_REQUEST['ELEMENT_SORT_FIELD'])){
+	$_REQUEST['ELEMENT_SORT_FIELD'] = "shows";
+	$_REQUEST['ELEMENT_SORT_ORDER'] = "desc";
+}
+if($_REQUEST['ELEMENT_SORT_FIELD'] == "CATALOG_AVAILABLE" OR $_REQUEST['ELEMENT_SORT_FIELD'] == "shows"){
+	$_REQUEST['ELEMENT_SORT_ORDER'] = "desc";
+}
+
+?>
+
+<?$APPLICATION->IncludeComponent(
 	"bitrix:catalog", 
 	"catalog", 
 	array(
@@ -210,9 +226,9 @@ $APPLICATION->SetTitle("Каталог");
 		"DISABLE_INIT_JS_IN_COMPONENT" => "N",
 		"DISPLAY_BOTTOM_PAGER" => "Y",
 		"DISPLAY_TOP_PAGER" => "N",
-		"ELEMENT_SORT_FIELD" => "shows",
+		"ELEMENT_SORT_FIELD" => $_REQUEST['ELEMENT_SORT_FIELD'],
 		"ELEMENT_SORT_FIELD2" => "shows",
-		"ELEMENT_SORT_ORDER" => "asc",
+		"ELEMENT_SORT_ORDER" => $_REQUEST['ELEMENT_SORT_ORDER'],
 		"ELEMENT_SORT_ORDER2" => "asc",
 		"FILTER_FIELD_CODE" => array(
 			0 => "ID",
@@ -638,7 +654,7 @@ $APPLICATION->SetTitle("Каталог");
 		"PAGER_SHOW_ALWAYS" => "N",
 		"PAGER_TEMPLATE" => ".default",
 		"PAGER_TITLE" => "Товары",
-		"PAGE_ELEMENT_COUNT" => "30",
+		"PAGE_ELEMENT_COUNT" => $_REQUEST['PAGE_ELEMENT_COUNT'],
 		"PARTIAL_PRODUCT_PROPERTIES" => "N",
 		"PRICE_CODE" => array(
 			0 => "SITE",

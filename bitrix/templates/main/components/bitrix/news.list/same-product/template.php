@@ -19,8 +19,8 @@ if($arResult["ITEMS"]):
 	<?foreach($arResult["ITEMS"] as $arItem): ?>
 	<div>
 		<div class="product">
-			<a href="<?=$arItem["DETAIL_PAGE_URL"]?>">
-				<img src="<?=$arItem["PREVIEW_PICTURE"]["SRC"]?>" alt="<?=$arItem["NAME"]?>" width="132" height="110" style="height: 120px;width: 132px" class="img">
+			<a href="<?=$arItem["DETAIL_PAGE_URL"]?>" style="display: block;height: 120px">
+				<img src="<?=$arItem["PREVIEW_PICTURE"]["SRC"]?>" alt="<?=$arItem["NAME"]?>" style="max-height: 110px;margin: 0 auto;" class="img">
 			</a>
 			<a href="<?=$arItem["DETAIL_PAGE_URL"]?>" class="name"><?=$arItem["NAME"]?></a>
 			<div class="price">

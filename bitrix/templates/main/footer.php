@@ -15,7 +15,7 @@
 							<ul class="footer__list cl">
 								<li>+7 (473) 250-22-33</li>
 								<li>+7 (473) 250-22-33</li>
-								<li><a href="#">Адреса магазинов</a>
+								<li><a href="/contacts/">Адреса магазинов</a>
 							</li>
 							</ul>
 						</div><!--end::col__2-->
@@ -67,11 +67,11 @@
 					<div class="footer__bottom cl">
 						<div class="footer__copyright">© 2006 — 2016. Полимер.</div>
 						<ul class="footer__pay pay" title="Все способы оплаты">
-							<li><a href="#" class="visa">Visa</a></li>
-							<li><a href="#" class="master">MasterCard</a></li>
-							<li><a href="#" class="qiwi">Qiwi</a></li>
-							<li><a href="#" class="webmoney">Webmoney</a></li>
-							<li><a href="#" class="ya">Яндекс Деньги</a></li>
+							<li><a href="javascript:void(0)" class="visa">Visa</a></li>
+							<li><a href="javascript:void(0)" class="master">MasterCard</a></li>
+							<li><a href="javascript:void(0)" class="qiwi">Qiwi</a></li>
+							<li><a href="javascript:void(0)" class="webmoney">Webmoney</a></li>
+							<li><a href="javascript:void(0)" class="ya">Яндекс Деньги</a></li>
 						</ul>
 						<div class="footer__studio"><a href="http://www.agrweb.ru" title="Создание сайтов на 1С-Битркикс" target="_blank">Создание сайта </a>
 							<a href="http://www.agrweb.ru" target="_blank">
