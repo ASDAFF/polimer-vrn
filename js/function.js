@@ -141,7 +141,7 @@ $(function(){
         moreLink: '<a href="#" style="border-bottom:snow">Подробнее...</a>',
         lessLink: '<a href="#" style="border-bottom:snow">Скрыть</a>'
     });
-    $('.catalog-sections-text-hidden').readmore({
+    $('.col-txt > .catalog-sections-text-hidden').readmore({
         speed: 75,
         maxHeight: 160,
         moreLink: '<a href="#" style="border-bottom:snow">Подробнее...</a>',
