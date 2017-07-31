@@ -84,6 +84,9 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 		<!-- end: tabitem -->
    	</div><!-- end: tablist_content -->
 </div><!--end::mp__categories-->
+
+
+
 <div class="mp__products">
    	<div class="tabs">
       	<span class="tab active">Популярные товары</span>
@@ -92,255 +95,146 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
    	</div><!--end::tabs-->
 	<div class="tab_content">
 		<div class="tab_item ac">
-			<div class="slider_product" id="mp__product__popular">
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr1.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr2.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr3.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr3.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr4.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr5.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr6.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product ">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr1.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-			</div><!-- end::slider_product -->
+			<?$APPLICATION->IncludeComponent(
+	"bitrix:sale.bestsellers", 
+	"sale-bestsellers", 
+	array(
+		"ACTION_VARIABLE" => "action",
+		"ADDITIONAL_PICT_PROP_10" => "MORE_PHOTO",
+		"ADDITIONAL_PICT_PROP_11" => "MORE_PHOTO",
+		"ADDITIONAL_PICT_PROP_12" => "MORE_PHOTO",
+		"ADD_PROPERTIES_TO_BASKET" => "Y",
+		"AJAX_MODE" => "N",
+		"AJAX_OPTION_ADDITIONAL" => "",
+		"AJAX_OPTION_HISTORY" => "N",
+		"AJAX_OPTION_JUMP" => "N",
+		"AJAX_OPTION_STYLE" => "Y",
+		"BASKET_URL" => "/personal/basket.php",
+		"BY" => "AMOUNT",
+		"CACHE_TIME" => "86400",
+		"CACHE_TYPE" => "A",
+		"CART_PROPERTIES_10" => array(
+			0 => ",",
+		),
+		"CART_PROPERTIES_11" => array(
+			0 => "",
+			1 => ",",
+			2 => "",
+		),
+		"CART_PROPERTIES_12" => array(
+			0 => "",
+			1 => "",
+		),
+		"CONVERT_CURRENCY" => "N",
+		"DETAIL_URL" => "",
+		"DISPLAY_COMPARE" => "N",
+		"FILTER" => array(
+			0 => "N",
+			1 => "P",
+			2 => "F",
+		),
+		"HIDE_NOT_AVAILABLE" => "N",
+		"LABEL_PROP_10" => "-",
+		"LABEL_PROP_11" => "-",
+		"LINE_ELEMENT_COUNT" => "3",
+		"MESS_BTN_BUY" => "Купить",
+		"MESS_BTN_DETAIL" => "Подробнее",
+		"MESS_BTN_SUBSCRIBE" => "Подписаться",
+		"MESS_NOT_AVAILABLE" => "Нет в наличии",
+		"OFFER_TREE_PROPS_12" => array(
+		),
+		"PAGE_ELEMENT_COUNT" => "30",
+		"PARTIAL_PRODUCT_PROPERTIES" => "N",
+		"PERIOD" => "0",
+		"PRICE_CODE" => array(
+			0 => "SITE",
+		),
+		"PRICE_VAT_INCLUDE" => "Y",
+		"PRODUCT_ID_VARIABLE" => "id",
+		"PRODUCT_PROPS_VARIABLE" => "prop",
+		"PRODUCT_QUANTITY_VARIABLE" => "quantity",
+		"PRODUCT_SUBSCRIPTION" => "N",
+		"PROPERTY_CODE_10" => array(
+			0 => ",",
+		),
+		"PROPERTY_CODE_11" => array(
+			0 => "",
+			1 => ",",
+			2 => "",
+		),
+		"PROPERTY_CODE_12" => array(
+			0 => "",
+			1 => "",
+		),
+		"SHOW_DISCOUNT_PERCENT" => "N",
+		"SHOW_IMAGE" => "Y",
+		"SHOW_NAME" => "Y",
+		"SHOW_OLD_PRICE" => "N",
+		"SHOW_PRICE_COUNT" => "1",
+		"SHOW_PRODUCTS_10" => "N",
+		"SHOW_PRODUCTS_11" => "Y",
+		"TEMPLATE_THEME" => "blue",
+		"USE_PRODUCT_QUANTITY" => "N",
+		"COMPONENT_TEMPLATE" => "sale-bestsellers"
+	),
+	false
+);?>
+
 		</div><!-- end::tab_item -->
 		<div class="tab_item">
 			<div class="slider_product" id="mp__product__new">
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr2.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
+				<?
+				$arSelect = Array("ID","IBLOCK_ID", "NAME", "DETAIL_PAGE_URL","PREVIEW_PICTURE","PROPERTY_SALE");
+				$arFilter = array('IBLOCK_ID' => 11, 'ACTIVE' => 'Y','>=TIMESTAMP_X' => date($DB->DateFormatToPHP(CLang::GetDateFormat("SHORT")), strtotime('-30 day')));
+				$res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
+				while($ob = $res->GetNextElement()):
+					$arFields = $ob->GetFields();
+					?>
+					<div>
+						<div class="product">
+							<a href="<?=$arFields['DETAIL_PAGE_URL']?>" style="display: block;height: 110px;">
+								<img src="<?=CFile::GetPath($arFields["PREVIEW_PICTURE"]);?>" alt="" height="110" style="max-height: 110px;margin: 0 auto;" class="img">
+							</a>
+							<a href="<?=$arFields['DETAIL_PAGE_URL']?>" class="name"><?=$arFields['NAME']?></a>
+							<div class="price"><span>
+								<?
+								$ar_res = CCatalogProduct::GetOptimalPrice($arFields['ID'], 1, $USER->GetUserGroupArray(), 'N');
+								echo $ar_res['DISCOUNT_PRICE'];
+								?>
+							</span> Руб</div>
+							<a href="javascript:void(0)" onclick="addToBasket2(<?=$arFields['ID']?>, 1);" class="cart">В корзину</a>
+						</div>
 					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr1.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr4.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr5.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr3.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr3.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr6.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product ">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr1.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
+				<? endwhile; ?>
 			</div><!-- end::slider_product -->
 		</div><!-- end::tab_item -->
 		<div class="tab_item">
 			<div class="slider_product" id="mp__product__action">
+				<?
+				$arSelect = Array("ID","IBLOCK_ID", "NAME", "DETAIL_PAGE_URL","PREVIEW_PICTURE","PROPERTY_SALE");
+				$arFilter = Array("IBLOCK_ID" => 11, "ACTIVE" => "Y", "PROPERTY_SALE_VALUE" => "Y");
+				$res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
+				while($ob = $res->GetNextElement()):
+				$arFields = $ob->GetFields();
+				?>
 				<div>
 					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr6.jpg" alt="" width="132" height="110" class="img">
+						<a href="<?=$arFields['DETAIL_PAGE_URL']?>" style="display: block;height: 110px;">
+							<img src="<?=CFile::GetPath($arFields["PREVIEW_PICTURE"]);?>" alt="" height="110" style="max-height: 110px;margin: 0 auto;" class="img">
 						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
+						<a href="<?=$arFields['DETAIL_PAGE_URL']?>" class="name"><?=$arFields['NAME']?></a>
+						<div class="price"><span>
+								<?
+								$ar_res = CCatalogProduct::GetOptimalPrice($arFields['ID'], 1, $USER->GetUserGroupArray(), 'N');
+								echo $ar_res['DISCOUNT_PRICE'];
+								?>
+							</span> Руб</div>
+						<a href="javascript:void(0)" onclick="addToBasket2(<?=$arFields['ID']?>, 1);" class="cart">В корзину</a>
 					</div>
 				</div>
-				<div>
-					<div class="product ">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr1.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr3.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr3.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr4.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr5.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr1.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
-				<div>
-					<div class="product">
-						<a href="/catalog/section/detail/">
-							<img src="<?=SITE_TEMPLATE_PATH?>/img/product/pr2.jpg" alt="" width="132" height="110" class="img">
-						</a>
-						<a href="/catalog/section/detail/" class="name">Радиатор биметаллический RADENA BIMETALL CS 500, 10 секций</a>
-						<div class="price"><span>6 700</span> Руб</div>
-						<a href="#" class="cart">В корзину</a>
-					</div>
-				</div>
+				<? endwhile; ?>
+
+
 			</div><!-- end::slider_product -->
 		</div><!-- end::tab_item -->
    	</div><!-- end::tab_content -->
