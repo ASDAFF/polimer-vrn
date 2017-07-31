@@ -6,9 +6,7 @@ $APPLICATION->SetTitle("О компании");
    <div class="col-about">
       <p>Компания ООО “Полимер” была основана в 2007 году как дочернее предприятие ООО «Металлинвест плюс» (одного из крупнейших поставщиков стального металлопроката и труб в Воронежской области с почти 20-летней историей). Изначально целью основания фирмы была продажа уже имеющимся клиентам большего ассортимента товаров, а именно полипропиленовых труб и фитингов.</p>
       <div class="at__video">
-         <img src="<?=SITE_TEMPLATE_PATH?>/img/about_video-cover.jpg" width="540" height="430" alt="">
-         <div class="mask"></div>
-         <a href="#" class="btn_play"></a>
+         <iframe width="540" height="430" src="https://www.youtube.com/embed/DuOcQvf0lNs" frameborder="0" allowfullscreen></iframe>
       </div>
    </div>
 
