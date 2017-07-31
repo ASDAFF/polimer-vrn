@@ -141,6 +141,12 @@ $(function(){
         moreLink: '<a href="#" style="border-bottom:snow">Подробнее...</a>',
         lessLink: '<a href="#" style="border-bottom:snow">Скрыть</a>'
     });
+    $('.related_articles > .col-txt').readmore({
+        speed: 75,
+        maxHeight: 160,
+        moreLink: '<a href="#" style="border-bottom:snow">Подробнее...</a>',
+        lessLink: '<a href="#" style="border-bottom:snow">Скрыть</a>'
+    });
 
     $('.category__show').click(function(){
        var than = $(this);
