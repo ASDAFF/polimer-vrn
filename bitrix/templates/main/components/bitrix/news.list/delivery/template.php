@@ -65,7 +65,7 @@ $this->setFrameMode(true);
 				<p class="intro">Стоимость доставки по городу:</p>
 				<div class="area_cost cl">
 					<? foreach($arItem['PROPERTIES']['COST_DELEVERY']['VALUE'] as $key => $value):?>
-					<div class="area green"><span><?=$value?></span>руб.</div>
+					<div class="area <?=$arItem['PROPERTIES']['COST_DELEVERY']['DESCRIPTION'][$key]?>"><span><?=$value?></span>руб.</div>
 					<?endforeach;?>
 				</div>
 				<?endif;?>
