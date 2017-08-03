@@ -71,7 +71,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 				<div class="category">
 					<a href="<?=$item['SECTION_PAGE_URL']?>" class="link">
 						<img src="<?=CFile::GetPath($item["PICTURE"]);?>" alt="<?=$item['NAME']?>" height="120" class="img">
-						<span class="name"><?=str_replace(' ','<br>',$item['NAME'])?></span>
+						<span class="name"><?=$item['NAME']?></span>
 					</a>
 				</div>
 				<? endforeach; ?>
