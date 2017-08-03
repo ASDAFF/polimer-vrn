@@ -21,13 +21,13 @@ $this->setFrameMode(true);
 
 		<? foreach($section['SECTION_1'] as $sec_2): ?>
 		<li class="cat-li">
-			<a href="<?=$sec_2['SECTION_PAGE_URL']?>" class="title" <? if(count($sec_2['SECTION_2']) != 0): ?> onclick="return false" <? endif; ?>>
+			<a href="<?=$sec_2['SECTION_PAGE_URL']?>" class="title <?if($arParams["VARIABLES"] == $sec_2['CODE']):?>underline<?endif;?>" <? if(count($sec_2['SECTION_2']) != 0): ?> onclick="return false" <? endif; ?>>
 				<? if(count($sec_2['SECTION_2']) != 0): ?> <div class="cube"><span></span><span></span></div> <? endif; ?>
 				<?=$sec_2['NAME']?>
 			</a>
 			<div class="inner">
-			<? foreach($sec_2['SECTION_2'] as $sec_3): ?>
-				<a href="<?=$sec_3['SECTION_PAGE_URL']?>" class="list-item"><?=$sec_3['NAME']?></a>
+			<? foreach($sec_2['SECTION_2'] as $sec_3):?>
+				<a href="<?=$sec_3['SECTION_PAGE_URL']?>" class="list-item <?if($arParams["VARIABLES"] == $sec_3['CODE']):?>underline<?endif;?>"><?=$sec_3['NAME']?></a>
 			<? endforeach; ?>
 			</div>
 		</li>

@@ -290,7 +290,8 @@ if($ob = $res->GetNextElement()):?>
 
 		<?endif?>
 
-		<?$APPLICATION->IncludeComponent("bitrix:catalog.section.list", "catalog-menu", Array(
+		<?
+		$APPLICATION->IncludeComponent("bitrix:catalog.section.list", "catalog-menu", Array(
 			"ADD_SECTIONS_CHAIN" => "Y",	// Р’РєР»СЋС‡Р°С‚СЊ СЂР°Р·РґРµР» РІ С†РµРїРѕС‡РєСѓ РЅР°РІРёРіР°С†РёРё
 			"CACHE_GROUPS" => "Y",	// РЈС‡РёС‚С‹РІР°С‚СЊ РїСЂР°РІР° РґРѕСЃС‚СѓРїР°
 			"CACHE_TIME" => "36000000",	// Р’СЂРµРјСЏ РєРµС€РёСЂРѕРІР°РЅРёСЏ (СЃРµРє.)
@@ -309,6 +310,7 @@ if($ob = $res->GetNextElement()):?>
 				0 => "",
 				1 => "",
 			),
+			"VARIABLES" => $arResult["VARIABLES"]["SECTION_CODE"],
 			"SHOW_PARENT_NAME" => "Y",	// РџРѕРєР°Р·С‹РІР°С‚СЊ РЅР°Р·РІР°РЅРёРµ СЂР°Р·РґРµР»Р°
 			"TOP_DEPTH" => "3",	// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ РѕС‚РѕР±СЂР°Р¶Р°РµРјР°СЏ РіР»СѓР±РёРЅР° СЂР°Р·РґРµР»РѕРІ
 			"VIEW_MODE" => "LINE",	// Р’РёРґ СЃРїРёСЃРєР° РїРѕРґСЂР°Р·РґРµР»РѕРІ
