@@ -119,6 +119,18 @@ class CIMMessenger
 				$arFields['PARAMS']['KEYBOARD'] = Array();
 			}
 		}
+		if (isset($arFields['MENU']) || isset($arFields['PARAMS']['MENU']))
+		{
+			$menu = isset($arFields['MENU'])? $arFields['MENU']: $arFields['PARAMS']['MENU'];
+			if (is_object($menu))
+			{
+				$arFields['PARAMS']['MENU'] = $menu;
+			}
+			else
+			{
+				$arFields['PARAMS']['MENU'] = Array();
+			}
+		}
 
 		if (isset($arFields['FOR_USER_ID'])) // TODO create this feature in future
 		{
@@ -2842,6 +2854,13 @@ class CIMMessenger
 			elseif ($key == 'KEYBOARD')
 			{
 				if (is_object($value) && $value instanceof \Bitrix\Im\Bot\Keyboard)
+				{
+					$params[$key] = $value->getArray();
+				}
+			}
+			elseif ($key == 'MENU')
+			{
+				if (is_object($value) && $value instanceof \Bitrix\Im\Bot\ContextMenu)
 				{
 					$params[$key] = $value->getArray();
 				}

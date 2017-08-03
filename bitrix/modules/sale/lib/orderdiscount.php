@@ -28,6 +28,7 @@ class OrderDiscountManager
 	const DESCR_VALUE_ACTION_DISCOUNT = 'D';
 	const DESCR_VALUE_ACTION_EXTRA = 'E';
 	const DESCR_VALUE_ACTION_ACCUMULATE = 'A';
+	const DESCR_VALUE_ACTION_CUMULATIVE = self::DESCR_VALUE_ACTION_ACCUMULATE;
 
 	const DESCR_LIMIT_MAX = 'MAX';
 	const DESCR_LIMIT_MIN = 'MIN';
@@ -728,12 +729,23 @@ class OrderDiscountManager
 				$index = ($translate ? $basketList[$data['ENTITY_ID']] : $data['ENTITY_ID']);
 				$resultData['DATA']['BASKET'][$index] = $data['ENTITY_DATA'];
 			}
-			else
-			{
-
-			}
 		}
 		unset($data, $dataIterator);
+
+		$iterator = Internals\OrderDiscountDataTable::getList(array(
+			'select' => array('*'),
+			'filter' => array(
+				'=ORDER_ID' => $order,
+				'=ENTITY_TYPE' => Internals\OrderDiscountDataTable::ENTITY_TYPE_DISCOUNT_STORED_DATA
+			)
+		));
+		$actionStoredData = $iterator->fetch();
+		if (!empty($actionStoredData) && is_array($actionStoredData))
+		{
+			if (!empty($actionStoredData['ENTITY_DATA']) && is_array($actionStoredData['ENTITY_DATA']))
+				$resultData['DATA']['STORED_ACTION_DATA'] = $actionStoredData['ENTITY_DATA'];
+		}
+		unset($actionStoredData, $iterator);
 
 		$dataIterator = Internals\OrderRoundTable::getList(array(
 			'select' => array('*'),
@@ -1026,7 +1038,14 @@ class OrderDiscountManager
 		}
 
 		if ($process)
+		{
+			if (isset($data['REVERT_APPLY']))
+			{
+				$resultData['REVERT_APPLY'] = $data['REVERT_APPLY'];
+			}
+
 			$result->setData($resultData);
+		}
 		return $result;
 	}
 

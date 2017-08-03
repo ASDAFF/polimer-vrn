@@ -63,6 +63,8 @@ if ($ar_profile["DEFAULT_PROFILE"] != 'Y')
 		$intSetupVarsCount = extract($arSetupVars, EXTR_SKIP);
 }
 
+$firstStep = true;
+
 global $arCatalogAvailProdFields;
 $arCatalogAvailProdFields = CCatalogCSVSettings::getSettingsFields(CCatalogCSVSettings::FIELDS_ELEMENT);
 global $arCatalogAvailPriceFields;

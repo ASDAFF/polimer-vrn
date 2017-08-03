@@ -73,8 +73,14 @@ if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bit
 			}
 
 			$paramsField .= '<tr>'.
-				'<td>'.Loc::getMessage("SALE_DA_SORT") .'</td>'.
+				'<td>'.Loc::getMessage("SALE_DA_SORT") .':</td>'.
 				'<td><input type="text" name="SORT" value="'.$sort.'"></td>'.
+				'</tr>';
+
+			if(strlen($className::getClassDescription()) > 0)
+				$paramsField .= '<tr>'.
+				'<td>'.Loc::getMessage("SALE_DA_DESCR") .':</td>'.
+				'<td><div class="adm-sale-delivery-restriction-descr">'.$className::getClassDescription().'</div></td>'.
 				'</tr>';
 
 			$arResult["RESTRICTION_HTML"] = $paramsField."</table>";

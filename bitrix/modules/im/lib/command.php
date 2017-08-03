@@ -461,6 +461,7 @@ class Command
 
 		$messageFields['ATTACH'] = $messageFields['ATTACH']? $messageFields['ATTACH']: null;
 		$messageFields['KEYBOARD'] = $messageFields['KEYBOARD']? $messageFields['KEYBOARD']: null;
+		$messageFields['MENU'] = $messageFields['MENU']? $messageFields['MENU']: null;
 
 		if (self::isChat($messageFields['DIALOG_ID']))
 		{
@@ -475,6 +476,7 @@ class Command
 					"TO_CHAT_ID" => $chatId,
 					"ATTACH" => $messageFields['ATTACH'],
 					"KEYBOARD" => $messageFields['KEYBOARD'],
+					"MENU" => $messageFields['MENU'],
 				);
 				if (isset($messageFields['MESSAGE']))
 				{
@@ -488,6 +490,7 @@ class Command
 					"TO_CHAT_ID" => $chatId,
 					"ATTACH" => $messageFields['ATTACH'],
 					"KEYBOARD" => $messageFields['KEYBOARD'],
+					"MENU" => $messageFields['MENU'],
 					"SYSTEM" => 'Y',
 				);
 				if (isset($messageFields['MESSAGE']))

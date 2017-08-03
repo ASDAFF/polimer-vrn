@@ -5,7 +5,6 @@ namespace Sale\Handlers\PaySystem;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Request;
-use Bitrix\Main\Result;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\HttpClient;
@@ -15,6 +14,10 @@ use Bitrix\Sale\Payment;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class YandexHandler
+ * @package Sale\Handlers\PaySystem
+ */
 class YandexHandler extends PaySystem\ServiceHandler implements PaySystem\IRefundExtended, PaySystem\IHold
 {
 	/**
@@ -227,7 +230,7 @@ class YandexHandler extends PaySystem\ServiceHandler implements PaySystem\IRefun
 	/**
 	 * @param Payment $payment
 	 * @param Request $request
-	 * @return Result
+	 * @return PaySystem\ServiceResult
 	 */
 	private function processCheckAction(Payment $payment, Request $request)
 	{
@@ -255,6 +258,10 @@ class YandexHandler extends PaySystem\ServiceHandler implements PaySystem\IRefun
 		return $result;
 	}
 
+	/**
+	 * @param Request $request
+	 * @return array
+	 */
 	private function extractDataFromRequest(Request $request)
 	{
 		return array(

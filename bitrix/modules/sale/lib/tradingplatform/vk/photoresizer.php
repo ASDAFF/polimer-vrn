@@ -290,13 +290,12 @@ class PhotoResizer
 //				array(array("name" => "sharpen", "precision" => 15))
 			);
 
-//			overwrite original url and src
-			$photoUrl = self::buildPictureUrl($photoResize['SRC']);
-			$photoSrc = $photoResize['SRC'];
-
 //			need save new photo
-			$paramsToSave = \CFile::MakeFileArray($photoUrl);
+			$paramsToSave = \CFile::MakeFileArray($photoResize['SRC']);
 			$photoId = \CFile::SaveFile($paramsToSave, "resize_cache/vk_export_resize_img");
+			$savedFile = \CFile::GetFileArray($photoId);
+			$photoUrl = self::buildPictureUrl($savedFile['SRC']);
+			$photoSrc = $savedFile['SRC'];
 		}
 		
 		return array(

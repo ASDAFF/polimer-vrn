@@ -316,7 +316,7 @@ function updateBasketTable(basketItemId, res)
 							for (k = 0; k < arItem['PROPS'].length; k++)
 							{
 								arItemProp = arItem['PROPS'][k];
-								propsMap[arItemProp['CODE']] = arItemProp['VALUE'];
+								propsMap[arItemProp['CODE']] = (BX.type.isNotEmptyString(arItemProp['~VALUE']) ? arItemProp['~VALUE'] : arItemProp['VALUE']);
 							}
 							for (propId in arItem.SKU_DATA)
 							{

@@ -363,7 +363,8 @@ if ($params['BASKET_ITEMS'])
 	$items = $n;
 	if ($params['BILLDE_TOTAL_SHOW'] == 'Y')
 	{
-		if ($sum < $params['SUM'])
+		$eps = 0.0001;
+		if ($params['SUM'] - $sum > $eps)
 		{
 			$arCells[++$n] = array();
 			for ($i = 0; $i < $columnCount; $i++)

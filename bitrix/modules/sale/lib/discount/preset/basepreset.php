@@ -384,6 +384,15 @@ abstract class BasePreset
 	abstract public function getTitle();
 
 	/**
+	 * Tells if preset is available or not. It's possible that preset can't work in some license.
+	 * @return bool
+	 */
+	public function isAvailable()
+	{
+		return true;
+	}
+
+	/**
 	 * @return string
 	 */
 	abstract public function getDescription();
@@ -692,15 +701,7 @@ abstract class BasePreset
 
 	protected function processShowCommonSettingsInternal(State $state)
 	{
-		$groupList = array();
-		$groupIterator = Main\GroupTable::getList(array(
-			'select' => array('ID', 'NAME'),
-			'order' => array('C_SORT' => 'ASC', 'ID' => 'ASC')
-		));
-		while($group = $groupIterator->fetch())
-		{
-			$groupList[$group['ID']] = $group['NAME'];
-		}
+		$groupList = $this->getAllowableUserGroups();
 
 		switch(LANGUAGE_ID)
 		{
@@ -844,5 +845,25 @@ abstract class BasePreset
 	protected function getTypeOfDiscount()
 	{
 		return static::ACTION_TYPE_DISCOUNT;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getAllowableUserGroups()
+	{
+		$groupList = array();
+		$groupIterator = Main\GroupTable::getList(
+			array(
+				'select' => array('ID', 'NAME'),
+				'order' => array('C_SORT' => 'ASC', 'ID' => 'ASC')
+			)
+		);
+		while ($group = $groupIterator->fetch())
+		{
+			$groupList[$group['ID']] = $group['NAME'];
+		}
+
+		return $groupList;
 	}
 }

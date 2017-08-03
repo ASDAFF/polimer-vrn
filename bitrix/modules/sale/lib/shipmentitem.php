@@ -71,7 +71,7 @@ class ShipmentItem
 			$fields["BASKET_ID"] = $basketItem->getId();
 		}
 
-		$shipmentItem = new static();
+		$shipmentItem = static::createShipmentItemObject();
 		$shipmentItem->setFieldsNoDemand($fields);
 		$shipmentItem->setCollection($collection);
 
@@ -782,10 +782,23 @@ class ShipmentItem
 				'order' => array('DATE_INSERT' => 'ASC', 'ID' => 'ASC')
 			)
 		);
+
 		while ($itemData = $itemDataList->fetch())
-			$items[] = new static($itemData);
+			$items[] = static::createShipmentItemObject($itemData);
 
 		return $items;
+	}
+
+	/**
+	 * @param $itemData
+	 * @return ShipmentItem
+	 */
+	protected static function createShipmentItemObject(array $itemData = array())
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$shipmentItemClassName = $registry->getShipmentItemClassName();
+
+		return new $shipmentItemClassName($itemData);
 	}
 
 	/**

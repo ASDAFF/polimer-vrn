@@ -4,6 +4,7 @@ namespace Bitrix\Sale\Exchange\OneC;
 use Bitrix\Main;
 use Bitrix\Sale\Exchange;
 use Bitrix\Main\Type;
+use Bitrix\Sale\Internals\Fields;
 
 /**
  * Class DocumentImport
@@ -12,9 +13,15 @@ use Bitrix\Main\Type;
  */
 class DocumentImport
 {
-    public $fields = array();
+	/** @var Fields */
+	protected $fields;
 
-    /**
+	function __construct()
+	{
+		$this->fields = new Fields();
+	}
+
+	/**
      * @return array
      */
     protected static function getMessage()
@@ -30,44 +37,52 @@ class DocumentImport
         return Exchange\EntityType::UNDEFINED;
     }
 
-    /**
-     * @param $fields
-     */
-    public function setFields($fields)
-    {
-        $this->fields = $fields;
-    }
+	/**
+	 * @param array $values
+	 * @internal param array $fields
+	 */
+	public function setFields(array $values)
+	{
+		foreach ($values as $key=>$value)
+		{
+			$this->setField($key, $value);
+		}
+	}
 
-    /**
-     * @param $name
-     * @return null
-     */
-    public function getField($name)
-    {
-        if(isset($this->fields[$name]))
-        {
-            return $this->fields[$name];
-        }
+	/**
+	 * @param $name
+	 * @param $value
+	 */
+	public function setField($name, $value)
+	{
+		$this->fields->set($name, $value);
+	}
 
-        return null;
-    }
+	/**
+	 * @param $name
+	 * @return null|string
+	 */
+	public function getField($name)
+	{
+		return $this->fields->get($name);
+	}
 
-    /**
-     * @return array
-     */
-    public function getFields()
-    {
-        return $this->fields;
-    }
+	/**
+	 * @return array
+	 */
+	public function getFieldValues()
+	{
+		return $this->fields->getValues();
+	}
 
     /**
      * @return int
      */
     public function getId()
     {
-        if(isset($this->fields['ID']))
+		if($this->getField('ID'))
         {
-            return $this->fields['ID'];
+            return $this->getField('ID');
         }
 
         return null;
@@ -78,9 +93,9 @@ class DocumentImport
      */
     public function getExternalId()
     {
-        if(isset($this->fields['ID_1C']))
+		if($this->getField('ID_1C'))
         {
-            return $this->fields['ID_1C'];
+            return $this->getField('ID_1C');
         }
 
         return null;
@@ -559,7 +574,10 @@ class DocumentImport
                     $documentProfile = new UserProfileDocument();
                     $mess = Main\Localization\Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/sale/general/export.php');
 
-                    $fields[$k] = $documentProfile::prepareFieldsData($document["#"][$mess["SALE_EXPORT_CONTRAGENTS"]][0]["#"][$mess["SALE_EXPORT_CONTRAGENT"]][0]["#"]);
+                    if(is_array($document["#"][$mess["SALE_EXPORT_CONTRAGENTS"]][0]["#"][$mess["SALE_EXPORT_CONTRAGENT"]][0]["#"]))
+					{
+						$fields[$k] = $documentProfile::prepareFieldsData($document["#"][$mess["SALE_EXPORT_CONTRAGENTS"]][0]["#"][$mess["SALE_EXPORT_CONTRAGENT"]][0]["#"]);
+					}
 
                     break;
             }

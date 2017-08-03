@@ -43,7 +43,6 @@ Loc::loadMessages(__FILE__);
  * <li> NOTES string(255) optional
  * <li> CONDITIONS string optional
  * <li> UNPACK string optional
- * <li> COUPON reference to {@link \Bitrix\Catalog\DiscountCoupon}
  * <li> CREATED_BY_USER reference to {@link \Bitrix\Main\UserTable}
  * <li> MODIFIED_BY_USER reference to {@link \Bitrix\Main\UserTable}
  * <li> RESTRICTION reference to {@link \Bitrix\Catalog\DiscountRestriction}
@@ -235,11 +234,6 @@ class DiscountTable extends Main\Entity\DataManager
 				'MODIFIED_BY_USER',
 				'\Bitrix\Main\User',
 				array('=this.MODIFIED_BY' => 'ref.ID')
-			),
-			'RESTRICTION' => new Main\Entity\ReferenceField(
-				'RESTRICTIONS',
-				'Bitrix\Catalog\DiscountRestriction',
-				array('=this.ID' => 'ref.DISCOUNT_ID')
 			),
 			'SALE_DISCOUNT' => new Main\Entity\ReferenceField(
 				'SALE_DISCOUNT',

@@ -121,17 +121,15 @@ class im extends CModule
 			CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/im/install/admin', $_SERVER['DOCUMENT_ROOT'].'/bitrix/admin', true, true);
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates", True, True);
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/public", $_SERVER["DOCUMENT_ROOT"]."/", True, True);
-
+			
 			CUrlRewriter::add(array(
 				"CONDITION" => "#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#",
 				"RULE" => "alias=\$1",
-				"ID" => "bitrix:im.router",
 				"PATH" => "/desktop_app/router.php",
 			));
 			CUrlRewriter::add(array(
 				"CONDITION" => "#^/online/(/?)([^/]*)#",
 				"RULE" => "",
-				"ID" => "bitrix:im.router",
 				"PATH" => "/desktop_app/router.php",
 			));
 			

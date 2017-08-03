@@ -676,13 +676,20 @@ class DeliveryPaySystemTable extends \Bitrix\Main\Entity\DataManager
 	}
 	protected static function getDeliveryParentId($deliveryId)
 	{
-		$result = 0;
 		$activeData = self::getActiveDeliveryData();
 
-		if(!empty($activeData[$deliveryId]))
-			$result = intval($activeData[$deliveryId]['PARENT_ID']);
+		if(empty($activeData[$deliveryId]))
+			return 0;
 
-		return $result;
+		$parentId = intval($activeData[$deliveryId]['PARENT_ID']);
+
+		if($parentId <= 0 || empty($activeData[$parentId]))
+			return 0;
+
+		if($activeData[$parentId]['CLASS_NAME'] == '\Bitrix\Sale\Delivery\Services\Group')
+			return 0;
+
+		return $parentId;
 	}
 
 	protected static function getUnlinkedEnityItems($entityType, $linkDirection = null)

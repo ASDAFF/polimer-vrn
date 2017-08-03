@@ -112,6 +112,8 @@ class CBlogPostEdit extends CBitrixComponent
 		$arParams["USE_GOOGLE_CODE"] = $arParams["USE_GOOGLE_CODE"] === "Y";
 		$arParams["SEO_USE"] = ($arParams["SEO_USE"] == "Y") ? "Y" : "N";
 		
+		$arParams["USE_AUTOSAVE"] = COption::GetOptionString("blog", "use_autosave", "Y");
+		
 		return $arParams;
 	}
 	
@@ -122,6 +124,10 @@ class CBlogPostEdit extends CBitrixComponent
 		$user_id = $USER->GetID();
 		$this->arResult["UserID"] = $user_id;
 		$this->setUserId($user_id);
+//		check is user consent was given ever
+		if($user_id > 0)
+			$this->isUserGivenConsent();
+			
 		$this->arResult["enable_trackback"] = COption::GetOptionString("blog", "enable_trackback", "Y");
 		$this->arResult["allowVideo"] = COption::GetOptionString("blog", "allow_video", "Y");
 		$blogModulePermissions = $APPLICATION->GetGroupRight("blog");
@@ -512,10 +518,6 @@ class CBlogPostEdit extends CBitrixComponent
 											else
 												$redirectUrl = CComponentEngine::MakePathFromTemplate($this->arParams["PATH_TO_POST_EDIT"], array("blog" => $arBlog["URL"], "post_id" => $newID, "user_id" => $arBlog["OWNER_ID"]));
 										}
-//										todo: how use autosave?
-										$as = new CAutoSave(); // It is necessary to clear autosave buffer
-										$as->Reset();
-										LocalRedirect($redirectUrl);
 									}
 									else
 									{
@@ -1547,6 +1549,18 @@ class CBlogPostEdit extends CBitrixComponent
 		BXClearCache(true, "/" . SITE_ID . "/blog/" . $blogParams["URL"] . "/comment/" . $this->arParams["ID"] . "/");
 		BXClearCache(true, "/" . SITE_ID . "/blog/" . $blogParams["URL"] . "/trackback/" . $this->arParams["ID"] . "/");
 		BXClearCache(true, "/" . SITE_ID . "/blog/" . $blogParams["URL"] . "/post/" . $this->arParams["ID"] . "/");
+	}
+	
+	private function isUserGivenConsent()
+	{
+		if(isset($this->arParams["USER_CONSENT"]) && $this->arParams["USER_CONSENT"] == "Y"
+			&& isset($this->arParams["USER_CONSENT_ID"]) && $this->arParams["USER_CONSENT_ID"])
+		{
+			$this->arParams["USER_CONSENT_WAS_GIVEN"] = \Bitrix\Blog\BlogUser::isUserGivenConsent(
+				$this->arResult['UserID'],
+				$this->arParams["USER_CONSENT_ID"]
+			);
+		}
 	}
 }
 

@@ -90,6 +90,7 @@
 		this.crmEntityId = params.crmEntityId || 0;
 		this.crmActivityId = params.crmActivityId || 0;
 		this.crmActivityEditUrl = params.crmActivityEditUrl || '';
+		this.crmData = BX.type.isPlainObject(params.crmData) ? params.crmData : {};
 		this.externalRequests = {};
 
 		//portal call
@@ -107,6 +108,7 @@
 		this.makeCall = (params.makeCall === true); // emulate pressing on "dial" button right after showing call view
 		this.closable = false;
 		this.allowAutoClose = true;
+		this.folded = (params.folded === true);
 
 		this.title = '';
 		this._uiState = params.uiState || BX.PhoneCallView.UiState.idle;
@@ -117,44 +119,11 @@
 		this.qualityGrade = 0;
 
 		//timer
-		this.lastTimestamp = 0;
-		this.elaplsedMilliSeconds = 0;
+		this.initialTimestamp = params.initialTimestamp || 0;
 		this.timerInterval = null;
 
-		this.elements = {
-			main: null,
-			title: null,
-			sections: {
-				status: null,
-				timer: null,
-				crmButtons: null
-			},
-			avatar: null,
-			progress: null,
-			timer: null,
-			status: null,
-			qualityMeter: null,
-			crmCard: null,
-			crmButtons: null,
-			buttonsContainer: null,
-			topLevelButtonsContainer: null,
-			topButtonsContainer: null, //well..
-			buttons: {},
-			sidebarContainer: null,
-			tabsContainer: null,
-			tabsBodyContainer: null,
-			tabs: {
-				callList: null,
-				webform: null,
-				app: null
-			},
-			tabsBody: {
-				callList: null,
-				webform: null,
-				app: null
-			},
-			moreTabs: null
-		};
+		this.elements = this.getInitialElements();
+		this.sections = this.getInitialSections();
 
 		var uiStateButtons = this.getUiStateButtons(this._uiState);
 		this.buttonLayout = uiStateButtons.layout;
@@ -184,6 +153,8 @@
 		this.popup = null;
 
 		// event handlers
+		this._onBeforeUnloadHandler = this._onBeforeUnload.bind(this);
+		this._onDblClickHandler = this._onDblClick.bind(this);
 		this._onHoldButtonClickHandler = this._onHoldButtonClick.bind(this);
 		this._onMuteButtonClickHandler = this._onMuteButtonClick.bind(this);
 		this._onTransferButtonClickHandler = this._onTransferButtonClick.bind(this);
@@ -260,6 +231,53 @@
 		return new BX.PhoneCallView(params);
 	};
 
+	BX.PhoneCallView.prototype.getInitialElements = function()
+	{
+		return {
+			main: null,
+			title: null,
+			sections: {
+				status: null,
+				timer: null,
+				crmButtons: null
+			},
+			avatar: null,
+			progress: null,
+			timer: null,
+			status: null,
+			qualityMeter: null,
+			crmCard: null,
+			crmButtons: null,
+			buttonsContainer: null,
+			topLevelButtonsContainer: null,
+			topButtonsContainer: null, //well..
+			buttons: {},
+			sidebarContainer: null,
+			tabsContainer: null,
+			tabsBodyContainer: null,
+			tabs: {
+				callList: null,
+				webform: null,
+				app: null
+			},
+			tabsBody: {
+				callList: null,
+				webform: null,
+				app: null
+			},
+			moreTabs: null
+		};
+	};
+
+	BX.PhoneCallView.prototype.getInitialSections = function()
+	{
+		return {
+			status: {visible: false},
+			timer: {visible: false},
+			crmButtons: {visible: false}
+		}
+	};
+
 	BX.PhoneCallView.prototype.init = function()
 	{
 		var self = this;
@@ -287,6 +305,10 @@
 			document.body.appendChild(this.elements.main);
 			this.bindSlaveDesktopEvents();
 		}
+		else if(this.isFolded())
+		{
+			document.body.appendChild(this.elements.main);
+		}
 		else
 		{
 			this.popup = this.createPopup();
@@ -295,31 +317,50 @@
 
 		if(this.callListId > 0)
 		{
-			this.callListView = new CallList({
-				node: this.elements.tabsBody.callList,
-				id: this.callListId,
-				statusId: this.callListStatusId,
-				itemIndex: this.callListItemIndex,
-				makeCall: this.makeCall,
-				BXIM: this.BXIM,
-				onSelectedItem: this.onCallListSelectedItem.bind(this)
-			});
-
-			this.callListView.init(function()
+			if(this.callListView)
 			{
-				if(self.makeCall)
+				this.callListView.reinit({
+					node: this.elements.tabsBody.callList
+				});
+			}
+			else
+			{
+				this.callListView = new CallList({
+					node: this.elements.tabsBody.callList,
+					id: this.callListId,
+					statusId: this.callListStatusId,
+					itemIndex: this.callListItemIndex,
+					makeCall: this.makeCall,
+					BXIM: this.BXIM,
+					onSelectedItem: this.onCallListSelectedItem.bind(this)
+				});
+
+				this.callListView.init(function()
 				{
-					self._onMakeCallButtonClick();
-				}
-			});
-			this.setUiState(BX.PhoneCallView.UiState.outgoing);
+					if(self.makeCall)
+					{
+						self._onMakeCallButtonClick();
+					}
+				});
+				this.setUiState(BX.PhoneCallView.UiState.outgoing);
+			}
 		}
-		else if(this.crm)
+		else if(this.crm && !this.isFolded())
 		{
 			this.loadCrmCard(this.crmEntityType, this.crmEntityId);
 		}
 
 		BX.addCustomEvent("onPullEvent-crm", this._onPullEventCrmHandler);
+		if(!this.isDesktop())
+		{
+			window.addEventListener('beforeunload', this._onBeforeUnloadHandler);
+		}
+	};
+
+	BX.PhoneCallView.prototype.reinit = function()
+	{
+		this.elements = this.getInitialElements();
+		this.init();
 	};
 
 	BX.PhoneCallView.setDefaults = function(params)
@@ -331,7 +372,7 @@
 				defaults[paramName] = params[paramName];
 			}
 		}
-	};
+	}
 
 	BX.PhoneCallView.prototype.show = function()
 	{
@@ -358,7 +399,18 @@
 			events: {
 				onPopupClose: function()
 				{
-					self.callbacks.close();
+					if(self.isFolded())
+					{
+						this.destroy();
+					}
+					else
+					{
+						self.callbacks.close();
+					}
+				},
+				onPopupDestroy: function()
+				{
+					self.popup = null;
 				}
 			}
 		});
@@ -366,7 +418,9 @@
 
 	BX.PhoneCallView.prototype.createLayout = function()
 	{
-		if(this.currentLayout == layouts.crm)
+		if(this.isFolded())
+			return this.createLayoutFolded();
+		else if(this.currentLayout == layouts.crm)
 			return this.createLayoutCrm();
 		else
 			return this.createLayoutSimple();
@@ -374,42 +428,48 @@
 
 	BX.PhoneCallView.prototype.createLayoutCrm = function()
 	{
-		var result = BX.create("div", {props: {className: 'im-phone-call-top-level'}, children: [
-			this.elements.topLevelButtonsContainer = BX.create("div"),
-			BX.create("div", {
-				props: {className: 'im-phone-call-wrapper' + (this.hasSideBar() ? '' : ' im-phone-call-wrapper-without-sidebar')},
-				children: [
-					BX.create("div", {
-						props: {className: 'im-phone-call-container' + (this.hasSideBar() ? '' : ' im-phone-call-container-without-sidebar') },
-						children: [
-							BX.create("div", {props: {className: 'im-phone-call-header-container'}, children: [
-								BX.create("div", {props: {className: 'im-phone-call-header'}, children: [
-									this.elements.title = BX.create('div', {props: {className: 'im-phone-call-title-text'}, html: this.title})
-								]})
-							]}),
-							this.elements.crmCard = BX.create("div", {props: {className: 'im-phone-call-crm-card'}}),
-							this.elements.sections.status = BX.create("div", {props: {className: 'im-phone-call-section'}, style: {display: 'none'}, children: [
-								BX.create("div", {props: {className: 'im-phone-call-status-description'}, children: [
-									this.elements.status = BX.create("div", {props: {className: 'im-phone-call-status-description-item'}})
-								]})
-							]}),
-							this.elements.sections.timer = BX.create("div", {props: {className: 'im-phone-call-section'}, style: {display: 'none'}, children: [
-								BX.create("div", {props: {className: 'im-phone-call-status-timer'}, children: [
-									BX.create("div", {props: {className: 'im-phone-call-status-timer-item'}, children: [
-										this.elements.timer = BX.create("span")
+		var result = BX.create("div", {
+			props: {className: 'im-phone-call-top-level'},
+			events: {
+				dblclick: this._onDblClickHandler
+			},
+			children: [
+				this.elements.topLevelButtonsContainer = BX.create("div"),
+				BX.create("div", {
+					props: {className: 'im-phone-call-wrapper' + (this.hasSideBar() ? '' : ' im-phone-call-wrapper-without-sidebar')},
+					children: [
+						BX.create("div", {
+							props: {className: 'im-phone-call-container' + (this.hasSideBar() ? '' : ' im-phone-call-container-without-sidebar') },
+							children: [
+								BX.create("div", {props: {className: 'im-phone-call-header-container'}, children: [
+									BX.create("div", {props: {className: 'im-phone-call-header'}, children: [
+										this.elements.title = BX.create('div', {props: {className: 'im-phone-call-title-text'}, html: this.renderTitle()})
 									]})
-								]})
-							]}),
-							this.elements.sections.crmButtons = BX.create("div", {props: {className: 'im-phone-call-section'}, style: {display: 'none'}, children: [
-								this.elements.crmButtons = BX.create("div", {props: {className: 'im-phone-call-crm-buttons'}})
-							]}),
-							this.elements.buttonsContainer = BX.create("div", {props: {className: 'im-phone-call-buttons-container'}}),
-							this.elements.topButtonsContainer = BX.create("div", {props: {className: 'im-phone-call-buttons-container-top'}})
-						]
-					})
-				]
-			})
-		]});
+								]}),
+								this.elements.crmCard = BX.create("div", {props: {className: 'im-phone-call-crm-card'}}),
+								this.elements.sections.status = BX.create("div", {props: {className: 'im-phone-call-section'}, style: this.sections.status.visible ? {} : {display: 'none'}, children: [
+									BX.create("div", {props: {className: 'im-phone-call-status-description'}, children: [
+										this.elements.status = BX.create("div", {props: {className: 'im-phone-call-status-description-item'}, text: this.statusText})
+									]})
+								]}),
+								this.elements.sections.timer = BX.create("div", {props: {className: 'im-phone-call-section'}, style: this.sections.timer.visible ? {} : {display: 'none'}, children: [
+									BX.create("div", {props: {className: 'im-phone-call-status-timer'}, children: [
+										BX.create("div", {props: {className: 'im-phone-call-status-timer-item'}, children: [
+											this.elements.timer = BX.create("span")
+										]})
+									]})
+								]}),
+								this.elements.sections.crmButtons = BX.create("div", {props: {className: 'im-phone-call-section'}, style: this.sections.crmButtons.visible ? {} : {display: 'none'}, children: [
+									this.elements.crmButtons = BX.create("div", {props: {className: 'im-phone-call-crm-buttons'}})
+								]}),
+								this.elements.buttonsContainer = BX.create("div", {props: {className: 'im-phone-call-buttons-container'}}),
+								this.elements.topButtonsContainer = BX.create("div", {props: {className: 'im-phone-call-buttons-container-top'}})
+							]
+						})
+					]
+				})
+			]
+		});
 
 		if(this.hasSideBar())
 		{
@@ -520,6 +580,9 @@
 		{
 			if(self.elements.sections[sectionName])
 				self.elements.sections[sectionName].style.removeProperty('display');
+
+			if(self.sections[sectionName])
+				self.sections[sectionName].visible = true;
 		});
 	};
 
@@ -533,6 +596,9 @@
 		{
 			if(self.elements.sections[sectionName])
 				self.elements.sections[sectionName].style.display = 'none';
+
+			if(self.sections[sectionName])
+				self.sections[sectionName].visible = false;
 		});
 	};
 
@@ -550,14 +616,21 @@
 
 		for(var sectionName in this.elements.sections)
 		{
-			if(!this.elements.sections[sectionName])
-				return;
+			if (!this.elements.sections.hasOwnProperty(sectionName) || !BX.type.isDomNode(this.elements.sections[sectionName]))
+				continue;
 
-
-			if(sectionsIndex[sectionName])
+			if (sectionsIndex[sectionName])
+			{
 				this.elements.sections[sectionName].style.removeProperty('display');
+				if(this.sections.hasOwnProperty(sectionName))
+					this.sections[sectionName].visible = true;
+			}
 			else
+			{
 				this.elements.sections[sectionName].style.display = 'none';
+				if(this.sections.hasOwnProperty(sectionName))
+					this.sections[sectionName].visible = false;
+			}
 		}
 	};
 
@@ -658,9 +731,7 @@
 						BX.create("div", {props: {className: 'im-phone-calling-progress-container-block-l'}, children: [
 							BX.create("div", {props: {className: 'im-phone-calling-progress-phone'}})
 						]}),
-						BX.create("div", {props: {className: 'im-phone-calling-progress-container-block-c'}, children: [
-							BX.create("div", {props: {className: 'im-phone-calling-progress-bar'}})
-						]}),
+						this.elements.progress = BX.create("div", {props: {className: 'im-phone-calling-progress-container-block-c'}}),
 						BX.create("div", {props: {className: 'im-phone-calling-progress-container-block-r'}, children: [
 							this.elements.avatar = BX.create("div", {
 								props: {className: 'im-phone-calling-progress-customer'},
@@ -682,6 +753,34 @@
 		return result;
 	};
 
+	BX.PhoneCallView.prototype.createLayoutFolded = function()
+	{
+		var self = this;
+
+		return BX.create("div", {props: {className:"im-phone-call-panel-mini-container"}, children: [
+			BX.create("div", {props: {className:"im-phone-call-panel-mini-button-main"}, children: [
+				BX.create("div", {
+					props: {className:"im-phone-call-panel-mini-button-main-icon"},
+					events: {click: this._onHangupButtonClickHandler},
+					children: [
+						BX.create("div", {props: {className:"im-phone-call-panel-mini-pulse im-phone-call-panel-mini-pulse-animate"}}),
+						this.elements.sections.timer = this.elements.timer = BX.create("div", {
+							props: {className:"im-phone-call-panel-mini-timer"},
+							style: this.sections.timer.visible ? {} : {display: 'none'}
+						})
+					]
+				})
+			]}),
+			BX.create("div", {
+				props: {className:"im-phone-call-panel-mini-button"},
+				text: BX.message('IM_PHONE_CALL_VIEW_UNFOLD'),
+				events: {
+					click: function(){self.unfold();}
+				}
+			})
+		]});
+	};
+
 	BX.PhoneCallView.prototype.setActiveTab = function(params)
 	{
 		var tabId = params.tabId;
@@ -690,7 +789,7 @@
 		params.hidden = params.hidden === true;
 		for(tab in this.elements.tabs)
 		{
-			if(BX.type.isDomNode(this.elements.tabs[tab]))
+			if(this.elements.tabs.hasOwnProperty(tab) && BX.type.isDomNode(this.elements.tabs[tab]))
 			{
 				if(tab == tabId)
 					BX.addClass(this.elements.tabs[tab], 'im-phone-sidebar-tab-active');
@@ -706,7 +805,7 @@
 
 		for(tab in this.elements.tabsBody)
 		{
-			if(BX.type.isDomNode(this.elements.tabsBody[tab]))
+			if(this.elements.tabsBody.hasOwnProperty(tab) && BX.type.isDomNode(this.elements.tabsBody[tab]))
 			{
 				if(tab == tabBodyId)
 					this.elements.tabsBody[tab].style.removeProperty('display');
@@ -725,7 +824,7 @@
 			})
 		}
 
-		if(restAppId != '')
+		if(restAppId !== '')
 		{
 			this.loadRestApp({
 				id: restAppId,
@@ -793,7 +892,7 @@
 	BX.PhoneCallView.prototype._onTabMoreClick = function(e)
 	{
 		var self = this;
-		if(this.hiddenTabs.length == 0)
+		if(this.hiddenTabs.length === 0)
 			return;
 
 		if(this.moreTabsMenu)
@@ -910,9 +1009,9 @@
 		return callTitle;
 	};
 
-	BX.PhoneCallView.prototype.renderTitle = function(title)
+	BX.PhoneCallView.prototype.renderTitle = function()
 	{
-		return title;
+		return BX.util.htmlspecialchars(this.title);
 	};
 
 	BX.PhoneCallView.prototype.renderAvatar = function()
@@ -971,7 +1070,7 @@
 
 		if(this.elements.title)
 		{
-			this.elements.title.innerHTML = this.renderTitle(this.title);
+			this.elements.title.innerHTML = this.renderTitle();
 		}
 	};
 
@@ -1154,6 +1253,7 @@
 		if(!BX.type.isPlainObject(additionalParams))
 			additionalParams = {};
 
+		this.renderButtons();
 		BX.onCustomEvent(window, "CallCard::CallStateChanged", [callState, additionalParams]);
 		this.setOnSlave(desktopEvents.setCallState, [callState, additionalParams]);
 	};
@@ -1242,6 +1342,15 @@
 		}
 	};
 
+	BX.PhoneCallView.prototype.setCrmData = function (crmData)
+	{
+		if(!BX.type.isPlainObject(crmData))
+			return;
+
+		this.crm = true;
+		this.crmData = crmData;
+	};
+
 	BX.PhoneCallView.prototype.loadCrmCard = function(entityType, entityId)
 	{
 		BX.onCustomEvent(window, 'CallCard::EntityChanged', [{
@@ -1272,6 +1381,7 @@
 				if(self.currentLayout == layouts.simple)
 				{
 					self.currentLayout = layouts.crm;
+					self.crm = true;
 					var newMainElement = self.createLayoutCrm();
 
 					self.elements.main.parentNode.replaceChild(newMainElement, self.elements.main);
@@ -1346,7 +1456,7 @@
 	BX.PhoneCallView.prototype.updateView = function()
 	{
 		if(this.elements.title)
-			this.elements.title.innerHTML = this.getTitle();
+			this.elements.title.innerHTML = this.renderTitle();
 
 		if(this.elements.progress)
 		{
@@ -1358,6 +1468,7 @@
 			this.elements.status.innerText = this.statusText;
 
 		this.renderButtons();
+		this.renderTimer();
 	};
 
 	BX.PhoneCallView.prototype.renderProgress = function()
@@ -1410,24 +1521,26 @@
 		{
 			case BX.PhoneCallView.UiState.incoming:
 				result.buttons = ['answer', 'skip'];
+
 				break;
 			case BX.PhoneCallView.UiState.transferIncoming:
 				result.buttons = ['answer', 'skip'];
 				break;
 			case BX.PhoneCallView.UiState.outgoing:
 				result.buttons = ['call'];
+
 				if(this.callListId > 0)
 				{
 					result.buttons.push('next');
+					result.buttons.push('fold');
+
 					if(!this.isDesktop())
-					{
-						result.buttons.push('fold');
 						result.buttons.push('topClose');
-					}
 				}
 				break;
 			case BX.PhoneCallView.UiState.connectingIncoming:
 				result.buttons = ['hangup'];
+
 				break;
 			case BX.PhoneCallView.UiState.connectingOutgoing:
 				if(this.hasSipPhone)
@@ -1440,8 +1553,6 @@
 				if(this.callListId > 0)
 				{
 					result.buttons = ['redial', 'next', 'topClose'];
-					if(!this.isDesktop())
-						result.buttons.push('fold');
 				}
 				else
 				{
@@ -1456,14 +1567,18 @@
 				break;
 			case BX.PhoneCallView.UiState.connected:
 				if(this.callListId > 0)
-					result.buttons = ['hold', 'mute', 'dialpad', 'qualityMeter'];
+					result.buttons = ['hold', 'mute', 'dialpad', 'qualityMeter', 'fold'];
 				else
-					result.buttons = ['hold', 'mute', 'transfer', 'dialpad', 'qualityMeter'];
+					result.buttons = ['hold', 'mute', 'transfer', 'dialpad', 'qualityMeter', 'fold'];
 
 				if(this.deviceCall)
+				{
 					result.buttons.push('close');
+				}
 				else
+				{
 					result.buttons.push('hangup');
+				}
 
 				result.layout = BX.PhoneCallView.ButtonLayouts.spaced;
 				break;
@@ -1481,11 +1596,11 @@
 					if(this.callListId > 0)
 					{
 						result.buttons.push('next');
+						result.buttons.push('fold');
 					}
 				}
 				if(this.callListId > 0 && !this.isDesktop())
 				{
-					result.buttons.push('fold');
 					result.buttons.push('topClose');
 				}
 				break;
@@ -1494,6 +1609,7 @@
 				break;
 			case BX.PhoneCallView.UiState.externalCard:
 				result.buttons = ['close'];
+				result.buttons.push('fold');
 				break;
 		}
 
@@ -1619,13 +1735,16 @@
 					
 					break;
 				case 'topClose':
-					buttonNode = BX.create("div", {
-						props: {className: 'im-phone-call-top-close-btn'},
-						events: {
-							click: self._onCloseButtonClickHandler
-						}
-					});
-					topLevelButtonsFragment.appendChild(buttonNode);
+					if(!self.isDesktop())
+					{
+						buttonNode = BX.create("div", {
+							props: {className: 'im-phone-call-top-close-btn'},
+							events: {
+								click: self._onCloseButtonClickHandler
+							}
+						});
+						topLevelButtonsFragment.appendChild(buttonNode);
+					}
 					break;
 				case 'notifyAdmin':
 					buttonNode = self._renderSimpleButton(
@@ -1679,12 +1798,15 @@
 					buttonsFragment.appendChild(buttonNode);
 					break;
 				case 'fold':
-					buttonNode = BX.create("div", {props: {className: 'im-phone-btn-arrow active'}, children: [
-						BX.create("div", {props: {className: 'im-phone-btn-arrow-inner'}})
-					], events: {
-						click: self._onFoldButtonClickHandler
-					}});
-					topButtonsFragment.appendChild(buttonNode);
+					if(!self.isDesktop() && self.canBeFolded())
+					{
+						buttonNode = BX.create("div", {props: {className: 'im-phone-btn-arrow active'}, children: [
+							BX.create("div", {props: {className: 'im-phone-btn-arrow-inner'}, text: BX.message('IM_PHONE_CALL_VIEW_FOLD')})
+						], events: {
+							click: self._onFoldButtonClickHandler
+						}});
+						topButtonsFragment.appendChild(buttonNode);
+					}
 					break;
 				default:
 					throw "Unknown button " + buttonName;
@@ -1888,6 +2010,7 @@
 		if(this.restAppLayoutLoaded && placement)
 		{
 			placement.destroy();
+			this.restAppLayoutLoaded = false;
 		}
 	};
 
@@ -1906,6 +2029,12 @@
 			this.disableAutoClose();
 			cb([]);
 		}.bind(this);
+
+		appInterface.prototype.enableAutoClose = function(params, cb)
+		{
+			this.enableAutoClose();
+			cb([]);
+		}.bind(this);
 	};
 
 	BX.PhoneCallView.prototype.getPlacementOptions = function()
@@ -1920,6 +2049,33 @@
 			'CALL_STATE': this.callState,
 			'CALL_LIST_MODE': this.callListId > 0
 		}
+	};
+
+	BX.PhoneCallView.prototype.isUnloadAllowed = function()
+	{
+		return this.folded &&
+			(
+				this.deviceCall ||
+				this._uiState === BX.PhoneCallView.UiState.idle ||
+				this._uiState === BX.PhoneCallView.UiState.error ||
+				this._uiState === BX.PhoneCallView.UiState.externalCard
+			);
+	};
+
+	BX.PhoneCallView.prototype._onBeforeUnload = function(e)
+	{
+		if(!this.isUnloadAllowed())
+		{
+			e.returnValue = BX.message('IM_PHONE_CALL_VIEW_DONT_LEAVE');
+			return BX.message('IM_PHONE_CALL_VIEW_DONT_LEAVE');
+		}
+	};
+
+	BX.PhoneCallView.prototype._onDblClick = function(e)
+	{
+		BX.PreventDefault(e);
+		if(!this.isFolded() && this.canBeFolded())
+			this.fold();
 	};
 
 	BX.PhoneCallView.prototype._onHoldButtonClick = function(e)
@@ -2367,17 +2523,11 @@
 		if(this.timerInterval)
 			return;
 
-		this.lastTimestamp = (new Date()).getTime();
-		this.elaplsedMilliSeconds = 0;
-		this.timerInterval = setInterval(this.updateTimer.bind(this), 1000);
-		this.renderTimer();
-	};
-
-	BX.PhoneCallView.prototype.updateTimer = function()
-	{
-		var currentTimestamp = (new Date()).getTime();
-		this.elaplsedMilliSeconds += (currentTimestamp - this.lastTimestamp);
-		this.lastTimestamp = currentTimestamp;
+		if(this.initialTimestamp === 0)
+		{
+			this.initialTimestamp = (new Date()).getTime();
+		}
+		this.timerInterval = setInterval(this.renderTimer.bind(this), 1000);
 		this.renderTimer();
 	};
 
@@ -2386,7 +2536,10 @@
 		if(!this.elements.timer)
 			return;
 
-		var elapsedSeconds = Math.floor(this.elaplsedMilliSeconds / 1000);
+		var currentTimestamp = (new Date()).getTime();
+		var elapsedMilliSeconds = (currentTimestamp - this.initialTimestamp);
+
+		var elapsedSeconds = Math.floor(elapsedMilliSeconds / 1000);
 		var minutes = Math.floor(elapsedSeconds / 60).toString();
 		if(minutes.length < 2)
 			minutes = '0' + minutes;
@@ -2395,7 +2548,14 @@
 			seconds = '0' + seconds;
 		var template = (this.isRecording() ? BX.message('IM_PHONE_TIMER_WITH_RECORD') : BX.message('IM_PHONE_TIMER_WITHOUT_RECORD'));
 
-		this.elements.timer.innerText = template.replace('#MIN#', minutes).replace('#SEC#', seconds);
+		if(this.isFolded())
+		{
+			this.elements.timer.innerText = minutes + ':' + seconds;
+		}
+		else
+		{
+			this.elements.timer.innerText = template.replace('#MIN#', minutes).replace('#SEC#', seconds);
+		}
 	};
 
 	BX.PhoneCallView.prototype.stopTimer = function()
@@ -2560,6 +2720,55 @@
 
 	BX.PhoneCallView.prototype.fold = function()
 	{
+		if(!this.canBeFolded())
+			return false;
+
+		if(this.callListId > 0 && this.callState === BX.PhoneCallView.CallState.idle)
+		{
+			this.foldCallView();
+		}
+		else
+		{
+			this.foldCall();
+		}
+	};
+
+	BX.PhoneCallView.prototype.unfold = function()
+	{
+		if(!this.isDesktop() && this.isFolded() && !this.popup)
+		{
+			BX.cleanNode(this.elements.main, true);
+			this.folded = false;
+			this.reinit();
+			if(this.popup)
+			{
+				this.popup.show();
+			}
+		}
+	};
+
+	BX.PhoneCallView.prototype.foldCall = function()
+	{
+		if(this.isDesktop() || !this.popup)
+			return;
+
+		var self = this;
+		var popupNode = this.popup.popupContainer;
+		var overlayNode = this.popup.overlay.element;
+
+		BX.addClass(popupNode, 'im-phone-call-view-folding');
+		BX.addClass(overlayNode, 'popup-window-overlay-im-phone-call-view-folding');
+		setTimeout(function()
+		{
+			self.folded = true;
+			self.unloadRestApps();
+			self.popup.close();
+			self.reinit();
+		}, 300);
+	};
+
+	BX.PhoneCallView.prototype.foldCallView = function()
+	{
 		var self = this;
 		var foldedCallView = BX.FoldedCallView.getInstance();
 		var popupNode = this.popup.popupContainer;
@@ -2669,6 +2878,27 @@
 		return BX.MessengerCommon.isDesktop();
 	};
 
+	BX.PhoneCallView.prototype.isFolded = function()
+	{
+		return this.folded;
+	};
+
+	BX.PhoneCallView.prototype.canBeFolded = function()
+	{
+		return this.allowAutoClose && (this.callState === BX.PhoneCallView.CallState.connected || (this.callState === BX.PhoneCallView.CallState.idle && this.callListId > 0));
+	};
+
+	BX.PhoneCallView.prototype.getFoldedHeight = function()
+	{
+		if(!this.folded)
+			return 0;
+
+		if(!this.elements.main)
+			return 0;
+
+		return this.elements.main.clientHeight + (this.elements.sections.status ? this.elements.sections.status.clientHeight : 0);
+	};
+
 	BX.PhoneCallView.prototype.isWebformSupported = function()
 	{
 		return (!this.isDesktop() || this.desktop.isFeatureSupported('iframe'));
@@ -2734,6 +2964,18 @@
 	{
 		BX.onCustomEvent(window, 'CallCard::BeforeClose', []);
 
+		if(this.isFolded() && this.elements.main)
+		{
+			BX.addClass(this.elements.main, 'im-phone-call-panel-mini-closing');
+			setTimeout(function()
+				{
+					BX.cleanNode(this.elements.main, true);
+					this.elements = this.getInitialElements();
+				}.bind(this),
+				300
+			);
+		}
+
 		if (this.popup)
 			this.popup.close();
 
@@ -2745,11 +2987,19 @@
 		}
 
 		this.callbacks.close();
+		BX.onCustomEvent(window, 'CallCard::AfterClose', []);
 	};
 
 	BX.PhoneCallView.prototype.disableAutoClose = function()
 	{
 		this.allowAutoClose = false;
+		this.renderButtons();
+	};
+
+	BX.PhoneCallView.prototype.enableAutoClose = function()
+	{
+		this.allowAutoClose = true;
+		this.renderButtons();
 	};
 
 	BX.PhoneCallView.prototype.autoClose = function()
@@ -2766,9 +3016,21 @@
 
 	BX.PhoneCallView.prototype.dispose = function()
 	{
+		window.removeEventListener('beforeunload', this._onBeforeUnloadHandler);
 		BX.removeCustomEvent("onPullEvent-crm", this._onPullEventCrmHandler);
 		this.unloadRestApps();
 		this.unloadForm();
+
+		if(this.isFolded() && this.elements.main)
+		{
+			BX.addClass(this.elements.main, 'im-phone-call-panel-mini-closing');
+			setTimeout(function()
+				{
+					BX.cleanNode(this.elements.main, true);
+				}.bind(this),
+				300
+			);
+		}
 
 		if(this.popup)
 		{
@@ -2802,6 +3064,50 @@
 				window.removeEventListener('beforeunload', this._unloadHandler); //master window unload
 			}
 		}
+		else
+		{
+			window.removeEventListener('beforeunload', this._onBeforeUnloadHandler);
+		}
+	};
+
+	BX.PhoneCallView.prototype.canBeUnloaded = function()
+	{
+		return this.allowAutoClose && this.isFolded();
+	};
+
+	BX.PhoneCallView.prototype.getState = function()
+	{
+		return {
+			callId:  this.callId,
+			folded: this.folded,
+			uiState: this._uiState,
+			phoneNumber:  this.phoneNumber,
+			companyPhoneNumber:  this.companyPhoneNumber,
+			direction:  this.direction,
+			fromUserId:  this.fromUserId,
+			toUserId:  this.toUserId,
+			statusText: this.statusText,
+			crm: this.crm,
+			hasSipPhone: this.hasSipPhone,
+			deviceCall: this.deviceCall,
+			transfer: this.transfer,
+			callback: this.callback,
+			crmEntityType:  this.crmEntityType,
+			crmEntityId:  this.crmEntityId,
+			crmActivityId:  this.crmActivityId,
+			crmActivityEditUrl:  this.crmActivityEditUrl,
+			callListId: this.callListId,
+			callListStatusId:  this.callListStatusId,
+			callListItemIndex: this.callListItemIndex,
+			config: (this.config ? this.config : '{}'),
+			portalCall: (this.portalCall ? 'true' : 'false'),
+			portalCallData: (this.portalCallData ? this.portalCallData : '{}'),
+			portalCallUserId: this.portalCallUserId,
+			webformId: this.webformId,
+			webformSecCode:  this.webformSecCode,
+			initialTimestamp: this.initialTimestamp,
+			crmData: this.crmData
+		};
 	};
 
 	BX.PhoneCallView.Direction = {
@@ -3100,6 +3406,22 @@
 				BX.debug('empty call list. don\'t know what to do');
 			}
 		})
+	};
+
+	/**
+	 * @param {object} params
+	 * @param {Node} params.node DOM node to render call list.
+	 */
+	CallList.prototype.reinit = function(params)
+	{
+		if(BX.type.isDomNode(params.node))
+			this.node = params.node;
+
+		this.render();
+		this.selectItem(this.currentStatusId, this.currentItemIndex);
+		if(this.callingStatusId !== null && this.callingItemIndex !== null)
+			this.setCallingElement(this.callingStatusId, this.callingItemIndex);
+
 	};
 
 	CallList.prototype.load = function(next)
@@ -3809,7 +4131,7 @@
 		if(this.node == null)
 		{
 			this.node = BX.create("div", {
-				props: {id: 'im-phone-folded-call-view', className: 'im-phone-call-wrapper im-phone-call-wrapper-fixed'},
+				props: {id: 'im-phone-folded-call-view', className: 'im-phone-call-wrapper im-phone-call-wrapper-fixed im-phone-call-panel'},
 				events: {
 					dblclick: this._onViewDblClick.bind(this)
 				}
@@ -3853,7 +4175,7 @@
 				this.elements.unfoldButton = BX.create("div", {
 					props: {className: 'im-phone-btn-arrow'},
 					children: [
-						BX.create("div", {props: {className: 'im-phone-btn-arrow-inner'}})
+						BX.create("div", {props: {className: 'im-phone-btn-arrow-inner'}, text: BX.message("IM_PHONE_CALL_VIEW_UNFOLD")})
 					],
 					events: {
 						click: this._onUnfoldButtonClick.bind(this)
@@ -4435,9 +4757,17 @@
 		else if ((e.keyCode == 67 || e.keyCode == 86 || e.keyCode == 65 || e.keyCode == 88) && (e.metaKey || e.ctrlKey)) // ctrl+v/c/a/x
 		{}
 		else if (e.keyCode >= 48 && e.keyCode <= 57 && !e.shiftKey) // 0-9
-		{}
+		{
+			this.callbacks.onButtonClick({
+				key: e.key
+			});
+		}
 		else if (e.keyCode >= 96 && e.keyCode <= 105 && !e.shiftKey) // extra 0-9
-		{}
+		{
+			this.callbacks.onButtonClick({
+				key: e.key
+			});
+		}
 		else
 		{
 			return BX.PreventDefault(e);

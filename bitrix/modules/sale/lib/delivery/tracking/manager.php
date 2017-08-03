@@ -11,6 +11,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Sale\Delivery\Services;
 use Bitrix\Sale\Internals\ShipmentTable;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\PropertyValueCollection;
 use Bitrix\Sale\Result;
 use Bitrix\Sale\Shipment;
 
@@ -580,7 +581,125 @@ class Manager
 		}
 
 		$this->sendOnStatusesChangedEvent($params);
+		$this->sendStatusChangedMail($params);
 		return $result;
+	}
+
+	/**
+	 * @param StatusChangeEventParam[] $params
+	 * @return bool|int
+	 */
+	protected function sendStatusChangedMail($params)
+	{
+		if(empty($params))
+			return true;
+
+		/** @var  StatusChangeEventParam[] $paramsByShipmentId */
+		$paramsByShipmentId = array();
+
+		foreach($params as $status)
+			$paramsByShipmentId[$status->shipmentId] = $status;
+
+		$res = ShipmentTable::getList(array(
+			'filter' => array(
+				'=ID' => array_keys($paramsByShipmentId)
+			),
+			'select' => array(
+				'DELIVERY_NAME',
+				'SITE_ID' => 'ORDER.LID',
+				'SITE_NAME' => 'SITE.NAME',
+				'SHIPMENT_NO' => 'ID',
+				'SHIPMENT_DATE' => 'DATE_INSERT',
+				'ORDER_NO' => 'ORDER.ACCOUNT_NUMBER',
+				'ORDER_DATE' => 'ORDER.DATE_INSERT',
+				'USER_NAME' => 'ORDER.USER.NAME',
+				'USER_LAST_NAME' => 'ORDER.USER.LAST_NAME',
+				'EMAIL' => 'ORDER.USER.EMAIL'
+			),
+			'runtime' => array(
+				'SITE' => array(
+					'data_type' => 'Bitrix\Main\SiteTable',
+					'reference' => array(
+						'ref.LID' => 'this.ORDER.LID',
+					),
+					'join_type' => 'left'
+				),
+			)
+		));
+
+		$event = new \CEvent;
+
+		while($data = $res->fetch())
+		{
+			$userEmail = '';
+			$userName = '';
+			$order = Order::load($paramsByShipmentId[$data['SHIPMENT_NO']]->orderId);
+
+			/** @var PropertyValueCollection $propertyCollection */
+			if ($propertyCollection = $order->getPropertyCollection())
+			{
+				if ($propUserEmail = $propertyCollection->getUserEmail())
+					$userEmail = $propUserEmail->getValue();
+
+				if ($propPayerName = $propertyCollection->getPayerName())
+					$userName = $propPayerName->getValue();
+			}
+
+			if(empty($userEmail))
+				$userEmail = $data['EMAIL'];
+
+			if(empty($userName))
+				$userName = $data["USER_NAME"].((strlen($data["USER_NAME"])<=0 || strlen($data["USER_LAST_NAME"])<=0) ? "" : " ").$data["USER_LAST_NAME"];
+
+			$siteFields = \CAllEvent::GetSiteFieldsArray($data['SITE_ID']);
+
+			$fields = array(
+				'SITE_NAME' => $data['SITE_NAME'],
+				'ORDER_NO' => $data['ORDER_NO'],
+				'ORDER_DATE' => $data['ORDER_DATE']->toString(),
+				'ORDER_USER' => $userName,
+				'SHIPMENT_NO' => $data['SHIPMENT_NO'],
+				'SHIPMENT_DATE' => $data['SHIPMENT_DATE']->toString(),
+				'EMAIL' => $userEmail,
+				'STATUS_NAME' => self::getStatusName($paramsByShipmentId[$data['SHIPMENT_NO']]->status),
+				'STATUS_DESCRIPTION' => $paramsByShipmentId[$data['SHIPMENT_NO']]->description,
+				'TRACKING_NUMBER' => $paramsByShipmentId[$data['SHIPMENT_NO']]->trackingNumber,
+				'DELIVERY_NAME' => $data['DELIVERY_NAME'],
+				"ORDER_ACCOUNT_NUMBER_ENCODE" => urlencode(urlencode($data['ORDER_NO'])),
+				"SALE_EMAIL" => Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"]),
+			);
+
+			$fields['ORDER_DETAIL_URL'] = Loc::getMessage(
+				'SALE_DTM_ORDER_DETAIL_URL',
+				array(
+					'#A1#' => '<a href="http://'.$siteFields['SERVER_NAME'].'/personal/order/detail/'.$fields['ORDER_ACCOUNT_NUMBER_ENCODE'].'/">',
+					'#A2#' => '</a>'
+				)
+			).'.';
+
+			$trackingUrl = self::getTrackingUrl(
+				$paramsByShipmentId[$data['SHIPMENT_NO']]->deliveryId,
+				$paramsByShipmentId[$data['SHIPMENT_NO']]->trackingNumber
+			);
+
+			$deliveryTrackingUrl = '';
+
+			if(strlen($trackingUrl) > 0)
+			{
+				$deliveryTrackingUrl = Loc::getMessage(
+					'SALE_DTM_SHIPMENT_STATUS_TRACKING_URL',
+					array(
+						'#A1#' => '<a href="'.$trackingUrl.'">',
+						'#A2#' => '</a>'
+					)
+				).".<br><br>";
+			}
+
+			$fields['DELIVERY_TRACKING_URL'] = $deliveryTrackingUrl;
+			$event->Send("SALE_ORDER_SHIPMENT_STATUS_CHANGED", $data['SITE_ID'], $fields, "N");
+		}
+
+		return true;
 	}
 
 	/**

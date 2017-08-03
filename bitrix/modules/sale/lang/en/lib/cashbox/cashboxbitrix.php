@@ -20,6 +20,5 @@ $MESS["SALE_CASHBOX_BITRIX_SETTINGS_VAT_LABEL_NOT_VAT"] = "No tax [default]";
 $MESS["SALE_CASHBOX_BITRIX_SETTINGS_Z_REPORT"] = "Z Report print preferences";
 $MESS["SALE_CASHBOX_BITRIX_SETTINGS_Z_REPORT_LABEL"] = "Time to close cash register and print Z Report";
 $MESS["SALE_CASHBOX_BITRIX_VALIDATE_E_KKM_ID"] = "Cash register model is not specified";
-$MESS["SALE_CASHBOX_BITRIX_VALIDATE_E_OFD"] = "OFD is not selected";
 $MESS["SALE_CASHBOX_BITRIX_VALIDATE_E_NUMBER_KKM"] = "Cash register external ID is not specified";
 ?>

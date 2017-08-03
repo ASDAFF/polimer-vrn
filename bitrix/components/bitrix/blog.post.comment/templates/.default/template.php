@@ -12,6 +12,8 @@ BX.viewImageBind(
 	false, 
 	{tag:'IMG', attr: 'data-bx-image'}
 );
+
+BX.message({'BPC_ERROR_NO_TEXT':'<?=GetMessage("BPC_ERROR_NO_TEXT")?>'});
 </script>
 <div class="blog-comments" id="blg-comment-<?=$arParams["ID"]?>">
 <a name="comments"></a>
@@ -28,7 +30,6 @@ else
 		<?
 		if($arResult["use_captcha"]===true)
 		{
-//			todo: what about capcha
 			?>
 				BX('captcha').src='/bitrix/tools/captcha.php?captcha_code=' + '<?=$arResult["CaptchaCode"]?>';
 				BX('captcha_code').value = '<?=$arResult["CaptchaCode"]?>';
@@ -41,12 +42,15 @@ else
 	if(!top.arImagesId)
 		top.arImagesId = [];
 	<?
-	foreach($arResult["Images"] as $aImg)
+	if(!empty($arResult["Images"]))
 	{
-		?>
-		top.arImages['<?=$aImg["ID"]?>'] = "<?=CUtil::JSEscape($aImg["SRC"])?>";
-		top.arImagesId['<?=$aImg["ID"]?>'] = '<?=$aImg["ID"]?>';
-		<?
+		foreach($arResult["Images"] as $aImg)
+		{
+			?>
+			top.arImages['<?=$aImg["ID"]?>'] = "<?=CUtil::JSEscape($aImg["SRC"])?>";
+			top.arImagesId['<?=$aImg["ID"]?>'] = '<?=$aImg["ID"]?>';
+			<?
+		}
 	}
 	?>
 	</script><?
@@ -202,8 +206,30 @@ else
 						</div>
 						<?
 					}
+					
+					if ($arParams['USER_CONSENT'] == 'Y' && (empty($arResult["User"]) || !$arParams['USER_CONSENT_WAS_GIVEN']))
+					{
+//						userconsent only for unregistered users or once for registered early
+						$APPLICATION->IncludeComponent(
+							"bitrix:main.userconsent.request",
+							"",
+							array(
+								"ID" => $arParams["USER_CONSENT_ID"],
+								"IS_CHECKED" => $arParams["USER_CONSENT_IS_CHECKED"],
+								"AUTO_SAVE" => "Y",
+								"IS_LOADED" => $arParams["USER_CONSENT_IS_LOADED"],
+								"ORIGIN_ID" => "sender/sub",
+								"ORIGINATOR_ID" => "",
+								"REPLACE" => array(
+									'button_caption' => GetMessage("B_B_MS_SEND"),
+									'fields' => array(GetMessage("B_B_MS_NAME"), 'E-mail')
+								),
+								"SUBMIT_EVENT_NAME" => "OnUCFormCheckConsent"
+							)
+						);
+					}
 					?>
-
+					
 					<div class="blog-comment-buttons">
 						<input tabindex="10" value="<?=GetMessage("B_B_MS_SEND")?>" type="button" name="sub-post" id="post-button" onclick="submitCommentNew()">
 						<a href="javascript:void(0)" onclick="cancelComment();" class="blg-cancel-com"><?=GetMessage("BLOG_PC_COMMENT");?></a>
@@ -797,7 +823,7 @@ else
 				if(strlen($arResult["COMMENT_ERROR"])>0 && $_POST["parentId"] == "00" && strlen($_POST["parentId"]) > 1)
 				{
 					?>
-					<div class="blog-errors blog-note-box blog-note-error">
+						<div class="blog-errors blog-note-box blog-note-error">
 						<div class="blog-error-text">
 							<?=$arResult["COMMENT_ERROR"]?>
 						</div>

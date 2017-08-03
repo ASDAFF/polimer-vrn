@@ -3,6 +3,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\HtmlFilter;
 Loc::loadMessages(__FILE__);
 
 class CBlogPostCommentEdit extends CBitrixComponent
@@ -356,6 +357,9 @@ class CBlogPostCommentEdit extends CBitrixComponent
 						$this->arResult["arUser"] = $dbUser->GetNext();
 						$this->arResult["User"]["NAME"] = CBlogUser::GetUserNameEx($this->arResult["arUser"],$this->arResult["BlogUser"], $this->arParams);
 						$this->arResult["User"]["ID"] = $user_id;
+
+//						check is user consent was given ever
+						$this->isUserGivenConsent();
 					}
 					
 					if(!$USER->IsAuthorized())
@@ -954,21 +958,6 @@ class CBlogPostCommentEdit extends CBitrixComponent
 										"full" => "/bitrix/components/bitrix/blog/show_file.php?fid=".$arImage['ID']."&width=1000&height=1000"
 									);
 									$currImage = array_merge(CFile::GetfileArray($arImage['FILE_ID']), $currImage);
-//									$currImage["THUMBNAIL"] = $currImage["small"];
-									
-//									$this->arResult["arImages"][$arImage["COMMENT_ID"]][$arImage['ID']] = Array(
-//										"small" => "/bitrix/components/bitrix/blog/show_file.php?fid=".$arImage['ID']."&width=70&height=70&type=square",
-//										"full" => "/bitrix/components/bitrix/blog/show_file.php?fid=".$arImage['ID']."&width=1000&height=1000"
-//									);
-//									$arImages[$arImage['ID']] = array_merge(CFile::GetfileArray($arImage['FILE_ID']), $arImages[$arImage['ID']]);
-//									$arImages[$arImage['ID']]["THUMBNAIL"] = CFile::ResizeImageGet(
-//										$arImage["FILE_ID"],
-//										array("width" => 90, "height" => 90),
-//										BX_RESIZE_IMAGE_EXACT,
-//										true
-//									);
-									
-									
 									$this->arResult["arImages"][$arImage["COMMENT_ID"]][$arImage['ID']] = $currImage;
 								}
 								
@@ -979,7 +968,7 @@ class CBlogPostCommentEdit extends CBitrixComponent
 								$this->arResult["firstLevel"] = "";
 								
 								$blogUser = new Bitrix\Blog\BlogUser($this->arParams["CACHE_TIME"]);
-						$blogUser->setBlogId($arBlog["ID"]);
+								$blogUser->setBlogId($arBlog["ID"]);
 								$commentsUsers = $blogUser->getUsers(\Bitrix\Blog\BlogUser::getCommentAuthorsIdsByPostId($arPost['ID']));
 								
 								if($arComment = $dbComment->GetNext())
@@ -1028,7 +1017,7 @@ class CBlogPostCommentEdit extends CBitrixComponent
 											
 											$arComment["BlogUser"] = $commentsUsers[$arComment["AUTHOR_ID"]]["BlogUser"];
 											$arComment["arUser"] = $commentsUsers[$arComment["AUTHOR_ID"]]["arUser"];
-											$arComment["AuthorName"] = $commentsUsers[$arComment["AUTHOR_ID"]]["AUTHOR_NAME"];
+											$arComment["AuthorName"] = HtmlFilter::encode($commentsUsers[$arComment["AUTHOR_ID"]]["AUTHOR_NAME"]);
 											$arComment["AVATAR_file"] = $commentsUsers[$arComment["AUTHOR_ID"]]["BlogUser"]["AVATAR_file"];
 											if ($arComment["AVATAR_file"] !== false)
 												$arComment["AVATAR_img"] = $commentsUsers[$arComment["AUTHOR_ID"]]["BlogUser"]["AVATAR_img"]['30_30'];
@@ -1559,6 +1548,18 @@ class CBlogPostCommentEdit extends CBitrixComponent
 		$scriptStr .= ");});</script>";
 		
 		return $scriptStr;
+	}
+	
+	private function isUserGivenConsent()
+	{
+		if(isset($this->arParams["USER_CONSENT"]) && $this->arParams["USER_CONSENT"] == "Y"
+			&& isset($this->arParams["USER_CONSENT_ID"]) && $this->arParams["USER_CONSENT_ID"])
+		{
+			$this->arParams["USER_CONSENT_WAS_GIVEN"] = \Bitrix\Blog\BlogUser::isUserGivenConsent(
+				$this->arResult['arUser']['ID'],
+				$this->arParams["USER_CONSENT_ID"]
+			);
+		}
 	}
 }
 

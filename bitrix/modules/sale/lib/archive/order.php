@@ -14,11 +14,24 @@ class Order extends Sale\Order
 	 * Restrict recalculation discounts
 	 *
 	 * @param array $data			Order data.
-	 * @return void
+	 * @return Sale\Result
 	 */
 	public function applyDiscount(array $data)
 	{
-	}	
+		return new Sale\Result();
+	}
+
+	/**
+	 * @param array $fields
+	 * @return Order
+	 */
+	protected static function createOrderObject(array $fields = array())
+	{
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ARCHIVE_ORDER);
+		$orderClassName = $registry->getOrderClassName();
+
+		return new $orderClassName($fields);
+	}
 
 	/**
 	 * Set discount array for detail page.

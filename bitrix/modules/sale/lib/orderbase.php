@@ -126,9 +126,14 @@ abstract class OrderBase
 		return static::$mapFields;
 	}
 
-	protected function __construct(array $fields = array())
+	/**
+	 * @param array $fields
+	 * @throws Main\NotImplementedException
+	 * @return Order
+	 */
+	protected static function createOrderObject(array $fields = array())
 	{
-		parent::__construct($fields);
+		throw new Main\NotImplementedException();
 	}
 
 	/**
@@ -139,8 +144,7 @@ abstract class OrderBase
 	 */
 	public static function create($siteId, $userId = null, $currency = null)
 	{
-		$order = new static();
-
+		$order = static::createOrderObject();
 		$order->setFieldNoDemand('LID', $siteId);
 		if (intval($userId) > 0)
 			$order->setFieldNoDemand('USER_ID', $userId);
@@ -194,7 +198,7 @@ abstract class OrderBase
 		$res = static::loadFromDb($filter);
 		while($orderData = $res->fetch())
 		{
-			$order = new static($orderData);
+			$order = static::createOrderObject($orderData);
 
 			$order->calculateType = static::SALE_ORDER_CALC_TYPE_CHANGE;
 			$list[] = $order;

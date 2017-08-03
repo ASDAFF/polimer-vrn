@@ -395,7 +395,12 @@ class OrderImport extends EntityImport
         return $result;
     }
 
-    public static function getBasketItemByItem(Sale\Basket $basket, array $item)
+	/**
+	 * @param Sale\Basket $basket
+	 * @param array $item
+	 * @return Sale\BasketItem|bool
+	 */
+	static public function getBasketItemByItem(Sale\Basket $basket, array $item)
     {
         foreach($basket as $basketItem)
         {
@@ -427,6 +432,31 @@ class OrderImport extends EntityImport
         return false;
     }
 
+	/**
+	 * @param array $fields
+	 * @return array
+	 */
+	static public function getGroupItemsBasketFields($fields)
+	{
+		$result = array();
+
+		if(is_array($fields))
+		{
+			foreach($fields as $k=>$items)
+			{
+				foreach($items as $productXML_ID => $item)
+				{
+					if($item['TYPE'] == Exchange\ImportBase::ITEM_ITEM)
+					{
+						$result[$k][$productXML_ID] = $item;
+					}
+				}
+			}
+		}
+
+		return $result;
+	}
+
     private function fillBasket(Sale\Basket $basket, array $basketItems)
     {
         $result = new Sale\Result();
@@ -440,6 +470,8 @@ class OrderImport extends EntityImport
             $basketItemsIndexList[$basketItem->getId()] = $basketItem->getQuantity();
         }
 
+        $basketItems = self::getGroupItemsBasketFields($basketItems);
+
         if(!empty($basketItems))
 		{
 			$sort = 100;
@@ -447,80 +479,77 @@ class OrderImport extends EntityImport
 			{
 				foreach($items as $productXML_ID => $item)
 				{
-					if($item['TYPE'] == Exchange\ImportBase::ITEM_ITEM)
+					$fieldsBasket = array();
+					if($basketItem = self::getBasketItemByItem($basket, $item))
 					{
-						$fieldsBasket = array();
-						if($basketItem = self::getBasketItemByItem($basket, $item))
+						$criterionBasketItems = $this->getCurrentCriterion($basket->getOrder());
+
+						if($criterionBasketItems->equalsBasketItem($basketItem, $item))
 						{
-							$criterionBasketItems = $this->getCurrentCriterion($basket->getOrder());
+							if($item['PRICE'] != $basketItem->getPrice())
+								$basketItem->setPrice($item['PRICE'], true);
 
-							if($criterionBasketItems->equalsBasketItem($basketItem, $item))
+							if($item['QUANTITY'] != $basketItem->getQuantity())
+								$fieldsBasket['QUANTITY'] = $item['QUANTITY'];
+
+							$criterionBasketItemsTax = $this->getCurrentCriterion($basket->getOrder());
+
+							if($criterionBasketItemsTax->equalsBasketItemTax($basketItem, $item))
 							{
-								if($item['PRICE'] != $basketItem->getPrice())
-									$basketItem->setPrice($item['PRICE'], true);
-
-								if($item['QUANTITY'] != $basketItem->getQuantity())
-									$fieldsBasket['QUANTITY'] = $item['QUANTITY'];
-
-								$criterionBasketItemsTax = $this->getCurrentCriterion($basket->getOrder());
-
-								if($criterionBasketItemsTax->equalsBasketItemTax($basketItem, $item))
-								{
-									$taxListModify[$basketItem->getBasketCode()] = $item['TAX'];
-								}
-
-								$criterionBasketItemsDiscount = $this->getCurrentCriterion($basket->getOrder());
-
-								if($criterionBasketItemsDiscount->equalsBasketItemDiscount($basketItem, $item))
-								{
-									$fieldsBasket['DISCOUNT_PRICE'] = $item['DISCOUNT']['PRICE'];
-								}
+								$taxListModify[$basketItem->getBasketCode()] = $item['TAX'];
 							}
 
-							if (isset($basketItemsIndexList[$basketItem->getId()]))
-								unset($basketItemsIndexList[$basketItem->getId()]);
+							$criterionBasketItemsDiscount = $this->getCurrentCriterion($basket->getOrder());
+
+							if($criterionBasketItemsDiscount->equalsBasketItemDiscount($basketItem, $item))
+							{
+								$fieldsBasket['DISCOUNT_PRICE'] = $item['DISCOUNT']['PRICE'];
+							}
+						}
+
+						if (isset($basketItemsIndexList[$basketItem->getId()]))
+							unset($basketItemsIndexList[$basketItem->getId()]);
+					}
+					else
+					{
+
+						$fieldsBasket = $this->prepareFieldsBasketItem($productXML_ID, $item);
+						$fieldsCurrency = $this->convertCurrency($item);
+
+						$fieldsBasket['CURRENCY'] = $fieldsCurrency['CURRENCY'];
+						$fieldsBasket['SORT'] = $sort;
+						$sort += 100;
+
+						/** @var Sale\BasketItem $basketItem */
+						$basketItem = Sale\BasketItem::create($basket, $fieldsBasket['MODULE'], $fieldsBasket['PRODUCT_ID']);
+
+						$basket->addItem($basketItem);
+
+						$basketItem->setPrice($fieldsCurrency['PRICE'], true);
+
+						unset($fieldsBasket['MODULE'], $fieldsBasket['PRODUCT_ID']);
+
+						$taxListModify[$basketItem->getBasketCode()] = $item['TAX'];
+					}
+
+					if(!empty($fieldsBasket))
+					{
+						$r = $basketItem->setFields($fieldsBasket);
+						if ($r->isSuccess())
+						{
+							$fieldsBasketProperty = self::prepareFieldsBasketProperty($item);
+							if(!empty($fieldsBasketProperty))
+							{
+								/** @var Sale\BasketPropertiesCollection $propertyCollection */
+								if ($propertyCollection = $basketItem->getPropertyCollection())
+								{
+									$propertyCollection->setProperty($fieldsBasketProperty);
+								}
+							}
 						}
 						else
 						{
-
-							$fieldsBasket = $this->prepareFieldsBasketItem($productXML_ID, $item);
-							$fieldsCurrency = $this->convertCurrency($item);
-
-							$fieldsBasket['CURRENCY'] = $fieldsCurrency['CURRENCY'];
-							$fieldsBasket['SORT'] = $sort;
-							$sort += 100;
-
-							/** @var Sale\BasketItem $basketItem */
-							$basketItem = Sale\BasketItem::create($basket, $fieldsBasket['MODULE'], $fieldsBasket['PRODUCT_ID']);
-
-							$basket->addItem($basketItem);
-
-							$basketItem->setPrice($fieldsCurrency['PRICE'], true);
-
-							unset($fieldsBasket['MODULE'], $fieldsBasket['PRODUCT_ID']);
-
-							$taxListModify[$basketItem->getBasketCode()] = $item['TAX'];
-						}
-
-						if(!empty($fieldsBasket))
-						{
-							$r = $basketItem->setFields($fieldsBasket);
-							if ($r->isSuccess())
-							{
-								$fieldsBasketProperty = self::prepareFieldsBasketProperty($item);
-								if(!empty($fieldsBasketProperty))
-								{
-									/** @var Sale\BasketPropertiesCollection $propertyCollection */
-									if ($propertyCollection = $basketItem->getPropertyCollection())
-									{
-										$propertyCollection->setProperty($fieldsBasketProperty);
-									}
-								}
-							}
-							else
-							{
-								$result->addErrors($r->getErrors());
-							}
+							$result->addErrors($r->getErrors());
 						}
 					}
 				}
@@ -712,18 +741,6 @@ class OrderImport extends EntityImport
                 $iblock_fields[$iblockId] = $ar;
         }
         return $iblock_fields;
-    }
-
-	/**
-	 * @param Exchange\ICriterionOrder $criterion
-	 * @throws Main\ArgumentException
-	 */
-	public function loadCriterion($criterion)
-    {
-        if(!($criterion instanceof Exchange\ICriterionOrder))
-            throw new Main\ArgumentException("Criterion must be instanceof ICriterionOrder");
-
-        $this->loadCriterion = $criterion;
     }
 
     /**

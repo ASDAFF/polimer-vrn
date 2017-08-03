@@ -1168,7 +1168,7 @@ class CCatalogGifterProduct extends CGlobalCondCtrlAtoms
 							(isset($row['CATALOG']['PARENT_ID']) && array_intersect($gifts, (array)$row['CATALOG']['PARENT_ID'])) ||
 							(isset($row['CATALOG']['ID']) && isset($gifts[$row['CATALOG']['ID']]))
 						) &&
-						isset($row['QUANTITY']) && $row['QUANTITY'] == 1
+						isset($row['QUANTITY']) && $row['QUANTITY'] == \CCatalogGifterProduct::getRatio($row['CATALOG']['ID'])
 						&& isset($row['PRICE']) && $row['PRICE'] > 0
 					;
 					break;
@@ -1178,7 +1178,7 @@ class CCatalogGifterProduct extends CGlobalCondCtrlAtoms
 						(
 							isset($row['CATALOG']['SECTION_ID']) && array_intersect($gifts, (array)$row['CATALOG']['SECTION_ID'])
 						) &&
-						isset($row['QUANTITY']) && $row['QUANTITY'] == 1
+						isset($row['QUANTITY']) && $row['QUANTITY'] == \CCatalogGifterProduct::getRatio($row['CATALOG']['ID'])
 						&& isset($row['PRICE']) && $row['PRICE'] > 0
 					;
 
@@ -1192,6 +1192,23 @@ class CCatalogGifterProduct extends CGlobalCondCtrlAtoms
 
 			return $right;
 		};
+	}
+
+	public static function getRatio($productId)
+	{
+		if (!\Bitrix\Main\Loader::includeModule('catalog'))
+		{
+			return 1;
+		}
+
+		$ratio = \Bitrix\Catalog\MeasureRatioTable::getList(
+			array(
+				'select' => array('RATIO'),
+				'filter' => array('PRODUCT_ID' => $productId, '=IS_DEFAULT' => 'Y')
+			)
+		)->fetch();
+
+		return empty($ratio['RATIO'])? 1 : $ratio['RATIO'];
 	}
 
 	public static function ProvideGiftData(array $actionData)

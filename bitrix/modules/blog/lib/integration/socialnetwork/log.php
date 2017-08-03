@@ -10,7 +10,9 @@ namespace Bitrix\Blog\Integration\Socialnetwork;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Blog\Item\Post;
+use Bitrix\Main\Loader;
 use Bitrix\Socialnetwork\Item\LogIndex;
+use Bitrix\Vote\UF\Manager;
 
 class Log
 {
@@ -39,6 +41,8 @@ class Log
 	 */
 	public static function onIndexGetContent(Event $event)
 	{
+		global $USER_FIELD_MANAGER;
+
 		$result = new EventResult(
 			EventResult::UNDEFINED,
 			array(),
@@ -108,6 +112,33 @@ class Log
 				)
 				{
 					$content .= ' '.$metadata['TITLE'];
+				}
+			}
+
+			if (
+				!empty($postFieldList['UF_BLOG_POST_VOTE'])
+				&& intval($postFieldList['UF_BLOG_POST_VOTE']) > 0
+				&& Loader::includeModule('vote')
+			)
+			{
+				$postUFList = $USER_FIELD_MANAGER->getUserFields("BLOG_POST", $sourceId, LANGUAGE_ID);
+
+				if (!empty($postUFList['UF_BLOG_POST_VOTE']))
+				{
+					if (
+						($userFieldManager = Manager::getInstance($postUFList['UF_BLOG_POST_VOTE']))
+						&& ($attach = $userFieldManager->loadFromAttachId(intval($postFieldList['UF_BLOG_POST_VOTE'])))
+					)
+					{
+						foreach ($attach["QUESTIONS"] as $question)
+						{
+							$content .= ' '.$question["QUESTION"];
+							foreach ($question["ANSWERS"] as $answer)
+							{
+								$content .= ' '.$answer["MESSAGE"];
+							}
+						}
+					}
 				}
 			}
 

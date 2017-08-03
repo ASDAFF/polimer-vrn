@@ -263,10 +263,12 @@ final class Manager
 	 */
 	public static function add(array $data)
 	{
+		$addResult = CashboxTable::add($data);
+
 		$cacheManager = Main\Application::getInstance()->getManagedCache();
 		$cacheManager->clean(Manager::CACHE_ID);
 
-		return CashboxTable::add($data);
+		return $addResult;
 	}
 
 	/**
@@ -276,10 +278,12 @@ final class Manager
 	 */
 	public static function update($primary, array $data)
 	{
+		$updateResult = CashboxTable::update($primary, $data);
+
 		$cacheManager = Main\Application::getInstance()->getManagedCache();
 		$cacheManager->clean(Manager::CACHE_ID);
 
-		return CashboxTable::update($primary, $data);
+		return $updateResult;
 	}
 
 	/**
@@ -288,6 +292,8 @@ final class Manager
 	 */
 	public static function delete($primary)
 	{
+		$deleteResult = CashboxTable::delete($primary);
+
 		if ($primary == Cashbox1C::getId())
 		{
 			$cacheManager = Main\Application::getInstance()->getManagedCache();
@@ -297,7 +303,7 @@ final class Manager
 		$cacheManager = Main\Application::getInstance()->getManagedCache();
 		$cacheManager->clean(Manager::CACHE_ID);
 
-		return CashboxTable::delete($primary);
+		return $deleteResult;
 	}
 
 	/**

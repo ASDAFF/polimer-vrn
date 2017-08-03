@@ -271,6 +271,118 @@ class CSaleActionCtrl extends CGlobalCondCtrl
 	}
 }
 
+class CSaleCumulativeAction extends CGlobalCondCtrl
+{
+	public static function GetControlID()
+	{
+		return 'CumulativeAction';
+	}
+
+	public static function onBuildDiscountActionInterfaceControls()
+	{
+		return new \Bitrix\Main\EventResult(
+			\Bitrix\Main\EventResult::SUCCESS,
+			static::getControlDescr() + array('GROUP' => 'Y',  'EXECUTE_MODULE' => 'sale'),
+			'sale'
+		);
+	}
+
+	public static function IsGroup($strControlID = false)
+	{
+		return 'Y';
+	}
+
+	public static function Generate($oneCondition, $params, $control, $subs = false)
+	{
+		if (empty($oneCondition['ranges']) || !is_array($oneCondition['ranges']))
+		{
+			return '';
+		}
+
+		$filterCode = 'null';
+		if ($subs && is_array($subs))
+		{
+			$filterCode = static::buildSubsCode($subs, $oneCondition);
+		}
+
+		$rangesAsString = var_export($oneCondition['ranges'], true);
+
+		static::convertSumConfigurationDateToInt($oneCondition['sum_period_data']);
+
+		$configurationAsString = var_export(
+			array(
+				'sum' => $oneCondition,
+				'apply_if_more_profitable' => $oneCondition['apply_if_more_profitable'],
+			),
+			true
+		);
+
+		/** @see \Bitrix\Sale\Discount\Actions::applyCumulativeToBasket() */
+		return "\\Bitrix\\Sale\\Discount\\Actions::applyCumulativeToBasket({$params['ORDER']}, {$rangesAsString}, {$configurationAsString}, {$filterCode})";
+	}
+
+	protected static function buildSubsCode(array $subs, array $oneCondition)
+	{
+		if ($oneCondition['All'] == 'AND')
+		{
+			$prefix = '';
+			$logic = ' && ';
+			$itemPrefix = ($oneCondition['True'] == 'True' ? '' : '!');
+		}
+		else
+		{
+			$itemPrefix = '';
+			if ($oneCondition['True'] == 'True')
+			{
+				$prefix = '';
+				$logic = ' || ';
+			}
+			else
+			{
+				$prefix = '!';
+				$logic = ' && ';
+			}
+		}
+
+		$commandLine = $itemPrefix . implode($logic . $itemPrefix, $subs);
+		if ($prefix != '')
+		{
+			$commandLine = $prefix . '(' . $commandLine . ')';
+		}
+
+		$code = "function(\$row){
+			return ({$commandLine});
+		}";
+
+		return $code;
+	}
+
+	protected static function convertSumConfigurationDateToInt(&$periodData = array())
+	{
+		/** @see \Sale\Handlers\DiscountPreset\Cumulative::TYPE_COUNT_PERIOD_ALL_TIME */
+		/** @see \Sale\Handlers\DiscountPreset\Cumulative::TYPE_COUNT_PERIOD_INTERVAL */
+		/** @see \Sale\Handlers\DiscountPreset\Cumulative::TYPE_COUNT_PERIOD_RELATIVE */
+
+		if (isset($periodData['discount_sum_order_start']))
+		{
+			static::ConvertDateTime2Int(
+				$periodData['discount_sum_order_start'],
+				'FULL',
+				\CTimeZone::getOffset()
+			);
+		}
+
+		if (isset($periodData['discount_sum_order_end']))
+		{
+			static::ConvertDateTime2Int(
+				$periodData['discount_sum_order_end'],
+				'FULL',
+				\CTimeZone::getOffset()
+			);
+		}
+	}
+}
+
 class CSaleActionCtrlComplex extends CGlobalCondCtrlComplex
 {
 	public static function GetClassName()

@@ -178,9 +178,9 @@ class OrderEdit
 			);
 		}
 
-		$curFormat = \CCurrencyLang::getCurrencyFormat($currencyId);
+		$curFormat = \CCurrencyLang::GetFormatDescription($currencyId);
 		$currencyLang = preg_replace("/(^|[^&])#/", '$1', $curFormat["FORMAT_STRING"]);
-		$langPhrases = array("SALE_ORDEREDIT_DISCOUNT_UNKNOWN", "SALE_ORDEREDIT_REFRESHING_DATA", "SALE_ORDEREDIT_FIX", "SALE_ORDEREDIT_UNFIX");
+		$langPhrases = array("SALE_ORDEREDIT_DISCOUNT_UNKNOWN", "SALE_ORDEREDIT_REFRESHING_DATA", "SALE_ORDEREDIT_FIX", "SALE_ORDEREDIT_UNFIX", "SALE_ORDEREDIT_CLOSE", "SALE_ORDEREDIT_MESSAGE");
 
 		$result = '
 			<script type="text/javascript">

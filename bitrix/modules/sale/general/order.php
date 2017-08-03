@@ -2736,7 +2736,10 @@ class CAllSaleOrder
 			unset($arSaleOrder, $rsSaleOrders);
 
 			$archiveData = Sale\Archive\Manager::getList(
-				array('filter' => $arFilter)
+				array(
+					'filter' => $arFilter,
+					'select' => array('DATE_INSERT', 'PRICE', 'CURRENCY')
+				)
 			);
 
 			while($archiveOrder = $archiveData->fetch())

@@ -502,6 +502,8 @@ Class sale extends CModule
 		$statusMes[] = "SALE_NEW_ORDER_RECURRING";
 		$statusMes[] = "SALE_ORDER_TRACKING_NUMBER";
 		$statusMes[] = "SALE_SUBSCRIBE_PRODUCT";
+		$statusMes[] = "SALE_CHECK_PRINT";
+		$statusMes[] = "SALE_ORDER_SHIPMENT_STATUS_CHANGED";
 
 		$eventType = new CEventType;
 		$eventM = new CEventMessage;

@@ -315,13 +315,14 @@ abstract class Base extends \CBitrixComponent
 		$params['DISPLAY_COMPARE'] = isset($params['DISPLAY_COMPARE']) && $params['DISPLAY_COMPARE'] === 'Y';
 		$params['COMPARE_PATH'] = isset($params['COMPARE_PATH']) ? trim($params['COMPARE_PATH']) : '';
 		$params['COMPARE_NAME'] = isset($params['COMPARE_NAME']) ? trim($params['COMPARE_NAME']) : 'CATALOG_COMPARE_LIST';
-		$params['USE_PRICE_COUNT'] = isset($params['USE_PRICE_COUNT']) && $params['USE_PRICE_COUNT'] === 'Y';
 
+		$params['USE_PRICE_COUNT'] = isset($params['USE_PRICE_COUNT']) && $params['USE_PRICE_COUNT'] === 'Y';
 		$params['SHOW_PRICE_COUNT'] = isset($params['SHOW_PRICE_COUNT']) ? (int)$params['SHOW_PRICE_COUNT'] : 1;
 		if ($params['SHOW_PRICE_COUNT'] <= 0)
 		{
 			$params['SHOW_PRICE_COUNT'] = 1;
 		}
+		$params['FILL_ITEM_ALL_PRICES'] = isset($params['FILL_ITEM_ALL_PRICES']) && $params['FILL_ITEM_ALL_PRICES'] === 'Y';
 
 		$params['USE_PRODUCT_QUANTITY'] = isset($params['USE_PRODUCT_QUANTITY']) && $params['USE_PRODUCT_QUANTITY'] === 'Y';
 
@@ -2314,33 +2315,47 @@ abstract class Base extends \CBitrixComponent
 				'ITEM_PRICE_MODE' => null,
 				'ITEM_PRICES' => array()
 			);
+			if ($this->arParams['FILL_ITEM_ALL_PRICES'])
+				$result['ITEM_ALL_PRICES'] = array();
+			$priceBlockIndex = 0;
 			if (!empty($productPrices['QUANTITY']))
 			{
 				$result['ITEM_PRICE_MODE'] = Catalog\ProductTable::PRICE_MODE_QUANTITY;
 				$ratio = current($this->ratios[$id]);
 				foreach ($this->quantityRanges[$id] as $range)
 				{
-					$blockPrice = $this->calculatePriceBlock(
+					$priceBlock = $this->calculatePriceBlock(
 						$items[$index],
 						$productPrices['QUANTITY'][$range['HASH']],
 						$ratio['RATIO'],
 						$this->arParams['USE_PRICE_COUNT'] || $this->checkQuantityRange($range)
 					);
-					if (!empty($blockPrice))
+					if (!empty($priceBlock))
 					{
-						if ($blockPrice['QUANTITY_FROM'] === null)
+						$minimalPrice = ($this->arParams['FILL_ITEM_ALL_PRICES']
+							? $priceBlock['MINIMAL_PRICE']
+							: $priceBlock
+						);
+						if ($minimalPrice['QUANTITY_FROM'] === null)
 						{
-							$blockPrice['MIN_QUANTITY'] = $ratio['RATIO'];
+							$minimalPrice['MIN_QUANTITY'] = $ratio['RATIO'];
 						}
 						else
 						{
-							$blockPrice['MIN_QUANTITY'] = $ratio['RATIO'] * ((int)($blockPrice['QUANTITY_FROM']/$ratio['RATIO']));
-							if ($blockPrice['MIN_QUANTITY'] < $blockPrice['QUANTITY_FROM'])
-								$blockPrice['MIN_QUANTITY'] += $ratio['RATIO'];
+							$minimalPrice['MIN_QUANTITY'] = $ratio['RATIO'] * ((int)($minimalPrice['QUANTITY_FROM']/$ratio['RATIO']));
+							if ($minimalPrice['MIN_QUANTITY'] < $minimalPrice['QUANTITY_FROM'])
+								$minimalPrice['MIN_QUANTITY'] += $ratio['RATIO'];
 						}
-						$result['ITEM_PRICES'][] = $blockPrice;
+						$result['ITEM_PRICES'][$priceBlockIndex] = $minimalPrice;
+						if ($this->arParams['FILL_ITEM_ALL_PRICES'])
+						{
+							$priceBlock['ALL_PRICES']['MIN_QUANTITY'] = $minimalPrice['MIN_QUANTITY'];
+							$result['ITEM_ALL_PRICES'][$priceBlockIndex] = $priceBlock['ALL_PRICES'];
+						}
+						unset($minimalPrice);
+						$priceBlockIndex++;
 					}
-					unset($blockPrice);
+					unset($priceBlock);
 				}
 				unset($range);
 				unset($ratio);
@@ -2349,21 +2364,31 @@ abstract class Base extends \CBitrixComponent
 			{
 				$result['ITEM_PRICE_MODE'] = Catalog\ProductTable::PRICE_MODE_SIMPLE;
 				$ratio = current($this->ratios[$id]);
-				$blockPrice = $this->calculatePriceBlock(
+				$priceBlock = $this->calculatePriceBlock(
 					$items[$index],
 					$productPrices['SIMPLE'],
 					$ratio['RATIO'],
 					true
 				);
-				if (!empty($blockPrice))
+				if (!empty($priceBlock))
 				{
-					$blockPrice['MIN_QUANTITY'] = $ratio['RATIO'];
-					$result['ITEM_PRICES'][] = $blockPrice;
+					$minimalPrice = ($this->arParams['FILL_ITEM_ALL_PRICES']
+						? $priceBlock['MINIMAL_PRICE']
+						: $priceBlock
+					);
+					$minimalPrice['MIN_QUANTITY'] = $ratio['RATIO'];
+					$result['ITEM_PRICES'][$priceBlockIndex] = $minimalPrice;
+					if ($this->arParams['FILL_ITEM_ALL_PRICES'])
+					{
+						$priceBlock['ALL_PRICES']['MIN_QUANTITY'] = $minimalPrice['MIN_QUANTITY'];
+						$result['ITEM_ALL_PRICES'][$priceBlockIndex] = $priceBlock['ALL_PRICES'];
+					}
+					unset($minimalPrice);
+					$priceBlockIndex++;
 				}
-				unset($blockPrice);
+				unset($priceBlock);
 				unset($ratio);
 			}
-
 			$this->prices[$id] = $result;
 
 			if (isset($items[$index]['ACTIVE']) && $items[$index]['ACTIVE'] === 'N')
@@ -2375,12 +2400,11 @@ abstract class Base extends \CBitrixComponent
 				$items[$index]['CAN_BUY'] = !empty($result['ITEM_PRICES']) && $items[$index]['PRODUCT']['AVAILABLE'] === 'Y';
 			}
 
+			unset($priceBlockIndex, $result);
 			unset($productPrices);
 
 			if ($enableCompatible)
-			{
 				$this->resortOldPrices($id);
-			}
 		}
 		unset($index);
 	}
@@ -2483,6 +2507,15 @@ abstract class Base extends \CBitrixComponent
 		unset($urls, $enableCompatible);
 	}
 
+	/**
+	 * Calculate price block (simple price, quantity range, etc).
+	 *
+	 * @param array $product            Product data.
+	 * @param array $priceBlock         Prices.
+	 * @param int|float $ratio          Measure ratio value.
+	 * @param bool $defaultBlock        Save result to old keys (PRICES, PRICE_MATRIX, MIN_PRICE).
+	 * @return array|null
+	 */
 	protected function calculatePriceBlock(array $product, array $priceBlock, $ratio, $defaultBlock = false)
 	{
 		if (empty($product) || empty($priceBlock))
@@ -2498,6 +2531,7 @@ abstract class Base extends \CBitrixComponent
 		$baseCurrency = Currency\CurrencyManager::getBaseCurrency();
 		/** @var null|array $minimalPrice */
 		$minimalPrice = null;
+		$fullPrices = array();
 
 		$currencyConvert = $this->arParams['CONVERT_CURRENCY'] === 'Y';
 		$resultCurrency = ($currencyConvert ? $this->storage['CONVERT_CURRENCY']['CURRENCY_ID'] : null);
@@ -2623,6 +2657,21 @@ abstract class Base extends \CBitrixComponent
 
 				if ($minimalPrice === null || $minimalPrice['PRICE_SCALE'] > $priceRow['PRICE_SCALE'])
 					$minimalPrice = $priceRow;
+				if ($this->arParams['FILL_ITEM_ALL_PRICES'])
+				{
+					$fullPrices[$priceType] = array(
+						'ID' => $priceRow['ID'],
+						'PRICE_TYPE_ID' => $priceRow['PRICE_TYPE_ID'],
+						'CURRENCY' => $currency,
+						'BASE_PRICE' => $priceRow['BASE_PRICE'],
+						'UNROUND_PRICE' => $priceRow['UNROUND_PRICE'],
+						'PRICE' => $priceRow['PRICE'],
+						'DISCOUNT' => $priceRow['DISCOUNT'],
+						'PERCENT' => $priceRow['DISCOUNT']
+					);
+					if (isset($priceRow['VAT']))
+						$fullPrices[$priceType]['VAT'] = $priceRow['VAT'];
+				}
 
 				if ($enableCompatible)
 				{
@@ -2722,6 +2771,30 @@ abstract class Base extends \CBitrixComponent
 				);
 			}
 			unset($fieldName);
+
+			if ($this->arParams['FILL_ITEM_ALL_PRICES'])
+			{
+				foreach (array_keys($fullPrices) as $priceType)
+				{
+					foreach ($prepareFields as $fieldName)
+					{
+						$fullPrices[$priceType]['PRINT_'.$fieldName] = \CCurrencyLang::CurrencyFormat(
+							$fullPrices[$priceType][$fieldName],
+							$fullPrices[$priceType]['CURRENCY'],
+							true
+						);
+						$fullPrices[$priceType]['RATIO_'.$fieldName] = $fullPrices[$priceType][$fieldName]*$ratio;
+						$fullPrices[$priceType]['PRINT_RATIO_'.$fieldName] = \CCurrencyLang::CurrencyFormat(
+							$minimalPrice['RATIO_'.$fieldName],
+							$minimalPrice['CURRENCY'],
+							true
+						);
+					}
+					unset($fieldName);
+				}
+				unset($priceType);
+			}
+
 			unset($prepareFields);
 		}
 
@@ -2782,7 +2855,19 @@ abstract class Base extends \CBitrixComponent
 		}
 		unset($oldMatrix, $oldMinPrice, $oldPrices);
 
-		return $minimalPrice;
+		if (!$this->arParams['FILL_ITEM_ALL_PRICES'])
+			return $minimalPrice;
+
+		return array(
+			'MINIMAL_PRICE' => $minimalPrice,
+			'ALL_PRICES' => array(
+				'QUANTITY_FROM' => $minimalPrice['QUANTITY_FROM'],
+				'QUANTITY_TO' => $minimalPrice['QUANTITY_TO'],
+				'QUANTITY_HASH' => $minimalPrice['QUANTITY_HASH'],
+				'MEASURE_RATIO_ID' => $minimalPrice['MEASURE_RATIO_ID'],
+				'PRICES' => $fullPrices
+			)
+		);
 	}
 
 	protected function searchItemSelectedRatioId($id)
@@ -3616,7 +3701,8 @@ abstract class Base extends \CBitrixComponent
 				}
 
 				$APPLICATION->RestartBuffer();
-				echo \CUtil::PhpToJSObject($addResult);
+				header('Content-Type: application/json');
+				echo Main\Web\Json::encode($addResult);
 				die();
 			}
 			else

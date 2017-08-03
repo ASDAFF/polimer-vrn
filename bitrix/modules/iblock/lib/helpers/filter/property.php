@@ -109,7 +109,7 @@ class Property
 						$entityTypeNames = array();
 						foreach($property['USER_TYPE_SETTINGS'] as $entityType => $useMarker)
 						{
-							if(in_array($entityType, $listAvailableEntity))
+							if($useMarker == 'Y' && in_array($entityType, $listAvailableEntity))
 							{
 								$entityTypeNames[] = $entityType;
 							}

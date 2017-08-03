@@ -39,6 +39,10 @@ class CIMMessageParam
 				{
 					$v1 = array($v1);
 				}
+				else if(is_object($v1) && $v1 instanceof \Bitrix\Im\Bot\ContextMenu)
+				{
+					$v1 = array($v1);
+				}
 				else if(is_object($v1) && $v1 instanceof CIMMessageParamAttach)
 				{
 					$v1 = array($v1);
@@ -77,7 +81,7 @@ class CIMMessageParam
 								);
 							}
 						}
-						else if(is_object($v2) && $v2 instanceof \Bitrix\Im\Bot\Keyboard)
+						else if(is_object($v2) && ($v2 instanceof \Bitrix\Im\Bot\Keyboard || $v2 instanceof \Bitrix\Im\Bot\ContextMenu))
 						{
 							$value = $v2->getJson();
 							$valueArray = $v2->getArray();
@@ -378,7 +382,7 @@ class CIMMessageParam
 			{
 				$value = $ar["PARAM_VALUE"];
 			}
-			if ($ar["PARAM_NAME"] == 'KEYBOARD')
+			if (in_array($ar["PARAM_NAME"], Array('KEYBOARD', 'MENU')))
 			{
 				$arResult[$ar["MESSAGE_ID"]][$ar["PARAM_NAME"]] = $value;
 			}
@@ -599,6 +603,7 @@ class CIMMessageParam
 			'URL_ID' => Array(),
 			'ATTACH' => Array(),
 			'LINK_ACTIVE' => Array(),
+			'MENU' => 'N',
 			'KEYBOARD' => 'N',
 			'KEYBOARD_UID' => 0,
 			'CONNECTOR_MID' => Array(),
@@ -616,10 +621,8 @@ class CIMMessageParam
 			'CHAT_MESSAGE' => 0,
 			'CHAT_LAST_DATE' => 0,
 			'CHAT_USER' => Array(),
-			
 			'DATE_TEXT' => Array(),
 			'DATE_TS' => Array(),
-			
 			'IMOL_VOTE' => '',
 			'IMOL_VOTE_TEXT' => '',
 			'IMOL_VOTE_LIKE' => '',

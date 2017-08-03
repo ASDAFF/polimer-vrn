@@ -30,7 +30,7 @@ class PropertyValue
 
 	public static function create(PropertyValueCollection $collection, array $property = array())
 	{
-		$propertyValue = new static($property);
+		$propertyValue = static::createPropertyValueObject($property);
 		$propertyValue->setCollection($collection);
 		return $propertyValue;
 	}
@@ -262,7 +262,22 @@ class PropertyValue
 		$result = new Result();
 		$property = $this->getProperty();
 
+		if ($property['TYPE'] == "STRING" && ((int)$property['MAXLENGTH'] <= 0))
+		{
+			$property['MAXLENGTH'] = 500;
+		}
 		$error = Input\Manager::getError($property, $value);
+
+		if (!is_array($error))
+			$error = array($error);
+
+		foreach ($error as &$message)
+		{
+			$message = Loc::getMessage(
+				"SALE_PROPERTY_ERROR",
+				array("#PROPERTY_NAME#" => $property['NAME'], "#ERROR_MESSAGE#" => $message)
+			);
+		}
 
 		if (!is_array($value) && strval(trim($value)) != "" && $property['IS_EMAIL'] == 'Y' && !check_email($value, true)) // TODO EMAIL TYPE
 		{
@@ -282,7 +297,8 @@ class PropertyValue
 					if (isset($errorsList[$property['ID']]) && in_array($errorMsg, $errorsList[$property['ID']]))
 						continue;
 
-					$result->addError(new ResultError($property['NAME'].' '.$errorMsg, "PROPERTIES[".$key."]"));
+					$result->addError(new ResultError($errorMsg, "PROPERTIES[$key]"));
+					$result->addError(new ResultWarning($errorMsg, "PROPERTIES[$key]"));
 
 					$errorsList[$property['ID']][] = $errorMsg;
 				}
@@ -292,7 +308,8 @@ class PropertyValue
 				if (isset($errorsList[$property['ID']]) && in_array($e, $errorsList[$property['ID']]))
 					continue;
 
-				$result->addError(new ResultError($property['NAME'].' '.$e, "PROPERTIES[$key]"));
+				$result->addError(new ResultError($e, "PROPERTIES[$key]"));
+				$result->addError(new ResultWarning($e, "PROPERTIES[$key]"));
 
 				$errorsList[$property['ID']][] = $e;
 			}
@@ -520,6 +537,20 @@ class PropertyValue
 		return $result;
 	}
 
+	/**
+	 * @param array|null $property
+	 * @param array|null $value
+	 * @param array|null $relation
+	 * @return PropertyValue
+	 */
+	protected static function createPropertyValueObject(array $property = null, array $value = null, array $relation = null)
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$propertyValueClassName = $registry->getPropertyValueClassName();
+
+		return new $propertyValueClassName($property, $value, $relation);
+	}
+
 	public static function loadForOrder(Order $order)
 	{
 		$objects = array();
@@ -601,14 +632,14 @@ class PropertyValue
 				$fields = null;
 			}
 			if (isset($propRelation[$id]))
-				$objects[] = new static($property, $fields, $propRelation[$id]);
+				$objects[] = static::createPropertyValueObject($property, $fields, $propRelation[$id]);
 			else
-				$objects[] = new static($property, $fields);
+				$objects[] = static::createPropertyValueObject($property, $fields);
 		}
 
 		foreach ($propertyValues as $propertyValue)
 		{
-			$objects[] = new static(null, $propertyValue);
+			$objects[] = static::createPropertyValueObject(null, $propertyValue);
 		}
 
 		return $objects;

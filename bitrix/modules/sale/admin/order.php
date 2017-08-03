@@ -322,7 +322,7 @@ if(is_array($filter_group_id) && count($filter_group_id) > 0)
 if(IntVal($filter_affiliate_id)>0) $arFilter["AFFILIATE_ID"] = IntVal($filter_affiliate_id);
 if(strlen($filter_discount_coupon)>0) $arFilter["=ORDER_COUPONS.COUPON"] = trim($filter_discount_coupon);
 if(floatval($filter_price_from)>0) $arFilter[">=PRICE"] = floatval($filter_price_from);
-if(floatval($filter_price_to)>0) $arFilter["<PRICE"] = floatval($filter_price_to);
+if(floatval($filter_price_to)>0) $arFilter["<=PRICE"] = floatval($filter_price_to);
 if(strlen($filter_xml_id)>0) $arFilter["%XML_ID"] = trim($filter_xml_id);
 if(strlen($filter_tracking_number)>0) $arFilter["%SHIPMENT.TRACKING_NUMBER"] = trim($filter_tracking_number);
 
@@ -728,7 +728,7 @@ foreach ($arOrderPropsCode as $key => $value)
 		$arFilterTmp["=PROP_".$propIterator.".CODE"] = $key;
 
 		if (isset($filterOrderProps["%PROPERTY_VAL_BY_CODE_".$key]))
-			$arFilterTmp["%PROP_".$propIterator.".VALUE"] = $filterOrderPropValue[$key];
+			$arFilterTmp["?PROP_".$propIterator.".VALUE"] = $filterOrderPropValue[$key];
 		else
 			$arFilterTmp["PROP_".$propIterator.".VALUE"] = $filterOrderPropValue[$key];
 	}
@@ -757,7 +757,7 @@ foreach ($arOrderProps as $key => $value)
 		$arFilterTmp["=PROP_".$propIterator.".ORDER_PROPS_ID"] = $key;
 
 		if (isset($filterOrderProps["%PROPERTY_VALUE_".$key]))
-			$arFilterTmp["%PROP_".$propIterator.".VALUE"] = $filterOrderPropValue[$key];
+			$arFilterTmp["?PROP_".$propIterator.".VALUE"] = $filterOrderPropValue[$key];
 		else
 			$arFilterTmp["PROP_".$propIterator.".VALUE"] = $filterOrderPropValue[$key];
 	}

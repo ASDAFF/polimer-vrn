@@ -167,13 +167,12 @@ $arComponentParameters = array(
 		"GIFTS_SETTINGS" => array(
 			"NAME" => GetMessage("SALE_T_DESC_GIFTS_SETTINGS"),
 		),
+		"ANALYTICS_SETTINGS" => array(
+			"NAME" => GetMessage("ANALYTICS_SETTINGS")
+		),
 		"EXTENDED_SETTINGS" => array(
 			"NAME" => GetMessage("IBLOCK_EXTENDED_SETTINGS"),
 			"SORT" => 10000
-		),
-		'ANALYTICS_SETTINGS' => array(
-			'NAME' => GetMessage('ANALYTICS_SETTINGS'),
-			'SORT' => 11000
 		)
 	),
 	"PARAMETERS" => array(

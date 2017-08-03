@@ -13,6 +13,7 @@ $APPLICATION->IncludeComponent(
 			'bAutoResize' => true,
 			"documentCSS" => "body {color:#434343; font-size: 14px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 20px;}",
 			'setFocusAfterShow' => false,
+			'ctrlEnterHandler' => 'blogCommentCtrlEnterHandler'
 		),
 		
 		"ADDITIONAL" => array(),
@@ -36,14 +37,13 @@ $APPLICATION->IncludeComponent(
 				array_merge(
 					$arResult["COMMENT_PROPERTIES"]["DATA"]["UF_BLOG_POST_URL_PRV"],
 					array(
-						'ELEMENT_ID' => 'url_preview_'.$id,
+						'ELEMENT_ID' => 'url_preview_'.$component->createEditorId(),
 						'STYLE' => 'margin: 0 18px'
 					)
 				)
 				:
 				array()
 		),
-//		todo: smiles
 		"SMILES" => COption::GetOptionInt("blog", "smile_gallery_id", 0),
 		"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 	),

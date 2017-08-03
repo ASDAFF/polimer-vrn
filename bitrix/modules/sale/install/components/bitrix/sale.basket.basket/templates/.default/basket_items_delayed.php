@@ -151,7 +151,7 @@ $bPropsColumn  = false;
 										{
 											if (empty($propValue) || !is_array($propValue))
 												continue;
-											$propsMap[$propValue['CODE']] = $propValue['VALUE'];
+											$propsMap[$propValue['CODE']] = (isset($propValue['~VALUE']) ? $propValue['~VALUE'] : $propValue['VALUE']);
 										}
 										unset($propValue);
 										foreach ($arItem["SKU_DATA"] as $propId => $arProp):

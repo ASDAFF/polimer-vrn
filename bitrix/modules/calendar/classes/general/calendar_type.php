@@ -280,52 +280,51 @@ class CCalendarType
 	public static function GetOperations($xmlId, $userId = false)
 	{
 		global $USER;
-		$result = array();
 		if ($userId === false)
 			$userId = CCalendar::GetCurUserId();
 
 		$opCacheKey = $xmlId.'_'.$userId;
 
-		if ($userId)
+		if (is_array(self::$userOperationsCache[$opCacheKey]))
 		{
-			if (is_array(self::$userOperationsCache[$opCacheKey]))
+			$result = self::$userOperationsCache[$opCacheKey];
+		}
+		else
+		{
+			$arCodes = array();
+			if ($userId)
 			{
-				$result = self::$userOperationsCache[$opCacheKey];
-			}
-			else
-			{
-				$arCodes = array();
 				$rCodes = CAccess::GetUserCodes($userId);
 				while($code = $rCodes->Fetch())
 					$arCodes[] = $code['ACCESS_CODE'];
+			}
 
-				if(!in_array('G2', $arCodes))
-					$arCodes[] = 'G2';
+			if(!in_array('G2', $arCodes))
+				$arCodes[] = 'G2';
 
-				if(!in_array('AU', $arCodes) && $USER && $USER->GetId() == $userId)
-					$arCodes[] = 'AU';
+			if($userId && !in_array('AU', $arCodes) && $USER && $USER->GetId() == $userId)
+				$arCodes[] = 'AU';
 
-				$key = $xmlId.'|'.implode(',', $arCodes);
-				if(!is_array(self::$arOp[$key]))
+			$key = $xmlId.'|'.implode(',', $arCodes);
+			if(!is_array(self::$arOp[$key]))
+			{
+				if(!isset(self::$Permissions[$xmlId]))
+					self::GetArrayPermissions(array($xmlId));
+				$perms = self::$Permissions[$xmlId];
+
+				self::$arOp[$key] = array();
+				if(is_array($perms))
 				{
-					if(!isset(self::$Permissions[$xmlId]))
-						self::GetArrayPermissions(array($xmlId));
-					$perms = self::$Permissions[$xmlId];
-
-					self::$arOp[$key] = array();
-					if(is_array($perms))
+					foreach($perms as $code => $taskId)
 					{
-						foreach($perms as $code => $taskId)
+						if(in_array($code, $arCodes))
 						{
-							if(in_array($code, $arCodes))
-							{
-								self::$arOp[$key] = array_merge(self::$arOp[$key], CTask::GetOperations($taskId, true));
-							}
+							self::$arOp[$key] = array_merge(self::$arOp[$key], CTask::GetOperations($taskId, true));
 						}
 					}
 				}
-				$result = self::$userOperationsCache[$opCacheKey] = self::$arOp[$key];
 			}
+			$result = self::$userOperationsCache[$opCacheKey] = self::$arOp[$key];
 		}
 
 		return $result;

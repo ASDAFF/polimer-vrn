@@ -42,6 +42,12 @@ $get_xml_id = (isset($_GET["get_xml_id"]) && $_GET["get_xml_id"] === "Y");
 if ($get_xml_id)
 	$reloadParams['get_xml_id'] = 'Y';
 
+$hideIblockId = 0;
+if (isset($_GET['hideiblock']) && is_string($_GET['hideiblock']))
+	$hideIblockId = (int)$_GET['hideiblock'];
+if ($hideIblockId < 0)
+	$hideIblockId = 0;
+
 $showIblockList = true;
 $iblockFix = isset($_GET['iblockfix']) && $_GET['iblockfix'] === 'y';
 $IBLOCK_ID = 0;
@@ -59,7 +65,10 @@ if ($iblockFix)
 {
 	$reloadParams['iblockfix'] = 'y';
 	$showIblockList = false;
+	$hideIblockId = 0;
 }
+if ($hideIblockId > 0)
+	$reloadParams['hideiblock'] = $hideIblockId;
 
 $boolDiscount = (isset($_REQUEST['discount']) && $_REQUEST['discount'] === 'Y');
 if ($boolDiscount)
@@ -566,13 +575,18 @@ if ($iblockFix)
 $oFilter->Begin();
 if (!$iblockFix)
 {
+	$iblockFilter = array(
+		'MIN_PERMISSION' => 'S'
+	);
+	if ($hideIblockId > 0)
+		$iblockFilter['!ID'] = $hideIblockId;
 	?><tr>
 		<td><b><?echo GetMessage("IBLOCK_SECSEARCH_IBLOCK")?></b></td>
 		<td><?echo GetIBlockDropDownListEx(
 				$IBLOCK_ID,
 				"find_type",
 				"find_iblock_id",
-				array('MIN_PERMISSION' => 'S'),
+				$iblockFilter,
 				'',
 				'reloadFilter(this)'
 			);?></td>

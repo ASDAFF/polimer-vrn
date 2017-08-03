@@ -43,7 +43,8 @@ class OrderDiscountTable extends Main\Entity\DataManager
 		'USE_COUPONS',
 		'SORT',
 		'PRIORITY',
-		'LAST_DISCOUNT'
+		'LAST_DISCOUNT',
+		'ACTIONS_DESCR',
 	);
 	protected static $replaceFields = array(
 		'DISCOUNT_ID' => 'ID',
@@ -712,6 +713,7 @@ class OrderDiscountDataTable extends Main\Entity\DataManager
 	const ENTITY_TYPE_DISCOUNT = 0x0008;
 	const ENTITY_TYPE_ORDER = 0x0010;
 	const ENTITY_TYPE_ROUND = 0x0020;
+	const ENTITY_TYPE_DISCOUNT_STORED_DATA = 0x0040;
 
 	/**
 	 * Returns DB table name for entity.
@@ -748,7 +750,8 @@ class OrderDiscountDataTable extends Main\Entity\DataManager
 					self::ENTITY_TYPE_SHIPMENT,
 					self::ENTITY_TYPE_DISCOUNT,
 					self::ENTITY_TYPE_ORDER,
-					self::ENTITY_TYPE_ROUND
+					self::ENTITY_TYPE_ROUND,
+					self::ENTITY_TYPE_DISCOUNT_STORED_DATA
 				),
 				'title' => Loc::getMessage('ORDER_DISCOUNT_DATA_ENTITY_ENTITY_TYPE_FIELD')
 			)),

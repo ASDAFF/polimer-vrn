@@ -43,7 +43,8 @@ $arComponentParameters = array(
 	"GROUPS" => Array(
 		"COMMENT" => array("NAME" => GetMessage("BLOG_COMMENT_SETTINGS")),
 		),
-	"PARAMETERS" => array( 
+	"PARAMETERS" => array(
+		"USER_CONSENT" => array(),
 		"VARIABLE_ALIASES" => Array(
 			"blog" => Array(
 					"NAME" => GetMessage("BC_BLOG_VAR"),

@@ -25,13 +25,25 @@ class ShipmentItemStoreCollection
 	}
 
 	/**
+	 * @param $itemData
+	 * @return ShipmentItem
+	 */
+	protected static function createShipmentItemStoreCollectionObject(array $itemData = array())
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$shipmentItemStoreCollectionClassName = $registry->getShipmentItemStoreCollectionClassName();
+
+		return new $shipmentItemStoreCollectionClassName();
+	}
+
+	/**
 	 * @param ShipmentItem $shipmentItem
 	 * @return ShipmentItemCollection
 	 */
 	public static function load(ShipmentItem $shipmentItem)
 	{
 		/** @var ShipmentItemStoreCollection $shipmentItemStoreCollection */
-		$shipmentItemStoreCollection = new static();
+		$shipmentItemStoreCollection = static::createShipmentItemStoreCollectionObject();
 		$shipmentItemStoreCollection->shipmentItem = $shipmentItem;
 
 		if ($shipmentItem->getId() > 0)

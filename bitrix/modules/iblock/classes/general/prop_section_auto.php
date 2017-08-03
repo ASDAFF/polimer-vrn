@@ -78,13 +78,13 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
 			if (!is_array($mxElement))
 			{
 				$strResult = '<input type="text" name="'.htmlspecialcharsbx($strHTMLControlName["VALUE"]).'" id="'.$strHTMLControlName["VALUE"].'" value="" size="5">'.
-					'<input type="button" value="..." onClick="jsUtils.OpenWindow(\'iblock_section_search.php?lang='.LANGUAGE_ID.'&amp;IBLOCK_ID='.intval($arProperty["LINK_IBLOCK_ID"]).'&amp;n='.urlencode($strHTMLControlName["VALUE"]).($fixIBlock ? '&amp;iblockfix=y' : '').'&amp;tableId='.$windowTableId.'\', 900, 700);">'.
+					'<input type="button" value="..." onClick="jsUtils.OpenWindow(\'iblock_section_search.php?lang='.LANGUAGE_ID.'&amp;IBLOCK_ID='.intval($arProperty["LINK_IBLOCK_ID"]).'&amp;n='.urlencode($strHTMLControlName["VALUE"]).'&amp;hideiblock='.$arProperty['IBLOCK_ID'].($fixIBlock ? '&amp;iblockfix=y' : '').'&amp;tableId='.$windowTableId.'\', 900, 700);">'.
 					'&nbsp;<span id="sp_'.$strHTMLControlName["VALUE"].'" ></span>';
 			}
 			else
 			{
 				$strResult = '<input type="text" name="'.$strHTMLControlName["VALUE"].'" id="'.$strHTMLControlName["VALUE"].'" value="'.$arValue['VALUE'].'" size="5">'.
-					'<input type="button" value="..." onClick="jsUtils.OpenWindow(\'iblock_section_search.php?lang='.LANGUAGE_ID.'&amp;IBLOCK_ID='.$arProperty["LINK_IBLOCK_ID"].'&amp;n='.urlencode($strHTMLControlName["VALUE"]).($fixIBlock ? '&amp;iblockfix=y' : '').'&amp;tableId='.$windowTableId.'\', 900, 700);">'.
+					'<input type="button" value="..." onClick="jsUtils.OpenWindow(\'iblock_section_search.php?lang='.LANGUAGE_ID.'&amp;IBLOCK_ID='.$arProperty["LINK_IBLOCK_ID"].'&amp;n='.urlencode($strHTMLControlName["VALUE"]).'&amp;hideiblock='.$arProperty['IBLOCK_ID'].($fixIBlock ? '&amp;iblockfix=y' : '').'&amp;tableId='.$windowTableId.'\', 900, 700);">'.
 					'&nbsp;<span id="sp_'.$strHTMLControlName["VALUE"].'" >'.$mxElement['NAME'].'</span>';
 			}
 		}
@@ -127,7 +127,7 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
 				style="float: left; margin-right: 10px; margin-top: 5px;"
 				type="button" value="<? echo Loc::getMessage('BT_UT_SAUTOCOMPLETE_MESS_SEARCH_ELEMENT'); ?>"
 				title="<? echo Loc::getMessage('BT_UT_SAUTOCOMPLETE_MESS_SEARCH_ELEMENT_DESCR'); ?>"
-				onclick="jsUtils.OpenWindow('/bitrix/admin/iblock_section_search.php?lang=<? echo LANGUAGE_ID; ?>&IBLOCK_ID=<? echo $arProperty["LINK_IBLOCK_ID"]; ?>&n=&k=&lookup=<? echo 'jsMLI_'.$control_id; ?><?=($fixIBlock ? '&iblockfix=y' : '').'&tableId='.$windowTableId; ?>', 900, 700);"><?
+				onclick="jsUtils.OpenWindow('/bitrix/admin/iblock_section_search.php?lang=<? echo LANGUAGE_ID; ?>&IBLOCK_ID=<? echo $arProperty["LINK_IBLOCK_ID"]; ?>&n=&k=&lookup=<? echo 'jsMLI_'.$control_id; ?>&hideiblock=<?=$arProperty['IBLOCK_ID']; ?><?=($fixIBlock ? '&iblockfix=y' : '').'&tableId='.$windowTableId; ?>', 900, 700);"><?
 			}
 			if ('Y' == $arProperty['USER_TYPE_SETTINGS']['SHOW_ADD'] && $fixIBlock)
 			{
@@ -188,7 +188,7 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
 				if (is_array($mxElement))
 				{
 					$arResult[] = '<input type="text" name="'.$strHTMLControlName["VALUE"].'['.$intPropertyValueID.']" id="'.$strHTMLControlName["VALUE"].'['.$intPropertyValueID.']" value="'.$arOneValue['VALUE'].'" size="5">'.
-					'<input type="button" value="..." onClick="jsUtils.OpenWindow(\'iblock_section_search.php?lang='.LANGUAGE_ID.'&amp;IBLOCK_ID='.$arProperty["LINK_IBLOCK_ID"].'&amp;n='.urlencode($strHTMLControlName["VALUE"].'['.$intPropertyValueID.']').($fixIBlock ? '&amp;iblockfix=y' : '').'&amp;tableId='.$windowTableId.'\', 900, 700);">'.
+					'<input type="button" value="..." onClick="jsUtils.OpenWindow(\'iblock_section_search.php?lang='.LANGUAGE_ID.'&amp;IBLOCK_ID='.$arProperty["LINK_IBLOCK_ID"].'&amp;n='.urlencode($strHTMLControlName["VALUE"].'['.$intPropertyValueID.']').'&amp;hideiblock='.$arProperty['IBLOCK_ID'].($fixIBlock ? '&amp;iblockfix=y' : '').'&amp;tableId='.$windowTableId.'\', 900, 700);">'.
 					'&nbsp;<span id="sp_'.$strHTMLControlName["VALUE"].'['.$intPropertyValueID.']" >'.$mxElement['NAME'].'</span>';
 				}
 			}
@@ -198,7 +198,7 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
 				for ($i = 0; $i < $arProperty['MULTIPLE_CNT']; $i++)
 				{
 					$arResult[] = '<input type="text" name="'.$strHTMLControlName["VALUE"].'[n'.$i.']" id="'.$strHTMLControlName["VALUE"].'[n'.$i.']" value="" size="5">'.
-					'<input type="button" value="..." onClick="jsUtils.OpenWindow(\'iblock_section_search.php?lang='.LANGUAGE_ID.'&amp;IBLOCK_ID='.$arProperty["LINK_IBLOCK_ID"].'&amp;n='.urlencode($strHTMLControlName["VALUE"].'[n'.$i.']').($fixIBlock ? '&amp;iblockfix=y' : '').'&amp;tableId='.$windowTableId.'\', 900, 700);">'.
+					'<input type="button" value="..." onClick="jsUtils.OpenWindow(\'iblock_section_search.php?lang='.LANGUAGE_ID.'&amp;IBLOCK_ID='.$arProperty["LINK_IBLOCK_ID"].'&amp;n='.urlencode($strHTMLControlName["VALUE"].'[n'.$i.']').'&amp;hideiblock='.$arProperty['IBLOCK_ID'].($fixIBlock ? '&amp;iblockfix=y' : '').'&amp;tableId='.$windowTableId.'\', 900, 700);">'.
 					'&nbsp;<span id="sp_'.$strHTMLControlName["VALUE"].'[n'.$i.']" ></span>';
 				}
 			}
@@ -244,7 +244,7 @@ class CIBlockPropertySectionAutoComplete extends CIBlockPropertyElementAutoCompl
 				style="float: left; margin-right: 10px; margin-top: 5px;"
 				type="button" value="<? echo Loc::getMessage('BT_UT_SAUTOCOMPLETE_MESS_SEARCH_ELEMENT'); ?>"
 				title="<? echo Loc::getMessage('BT_UT_SAUTOCOMPLETE_MESS_SEARCH_ELEMENT_MULTI_DESCR'); ?>"
-				onclick="jsUtils.OpenWindow('/bitrix/admin/iblock_section_search.php?lang=<? echo LANGUAGE_ID; ?>&IBLOCK_ID=<? echo $arProperty["LINK_IBLOCK_ID"]; ?>&m=Y&n=&k=&lookup=<? echo 'jsMLI_'.$control_id; ?><?=($fixIBlock ? '&iblockfix=y' : '').'&tableId='.$windowTableId; ?>', 900, 700);"><?
+				onclick="jsUtils.OpenWindow('/bitrix/admin/iblock_section_search.php?lang=<? echo LANGUAGE_ID; ?>&IBLOCK_ID=<? echo $arProperty["LINK_IBLOCK_ID"]; ?>&m=Y&n=&k=&lookup=<? echo 'jsMLI_'.$control_id; ?>&hideiblock=<?=$arProperty['IBLOCK_ID']; ?>.<?=($fixIBlock ? '&iblockfix=y' : '').'&tableId='.$windowTableId; ?>', 900, 700);"><?
 			}
 			if ('Y' == $arProperty['USER_TYPE_SETTINGS']['SHOW_ADD'] && $fixIBlock)
 			{

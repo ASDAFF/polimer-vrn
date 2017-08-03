@@ -3,6 +3,7 @@
 namespace Bitrix\Sale\Cashbox;
 
 use Bitrix\Main;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Cashbox\Internals\CashboxCheckTable;
 use Bitrix\Sale\Cashbox\Internals\Check2CashboxTable;
 use Bitrix\Sale\Internals\CollectableEntity;
@@ -11,6 +12,8 @@ use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
+use Bitrix\Sale\PaySystem;
+use Bitrix\Sale\ShipmentItem;
 
 /**
  * Class Check
@@ -18,6 +21,8 @@ use Bitrix\Sale\ShipmentCollection;
  */
 abstract class Check
 {
+	const EVENT_ON_CHECK_PREPARE_DATA = 'OnSaleCheckPrepareData';
+
 	const PARAM_FISCAL_DOC_NUMBER = 'fiscal_doc_number';
 	const PARAM_FISCAL_DOC_ATTR = 'fiscal_doc_attribute';
 	const PARAM_FISCAL_RECEIPT_NUMBER = 'fiscal_receipt_number';
@@ -27,6 +32,9 @@ abstract class Check
 	const PARAM_DOC_TIME = 'doc_time';
 	const PARAM_DOC_SUM = 'doc_sum';
 	const PARAM_CALCULATION_ATTR = 'calculation_attribute';
+
+	const CALCULATED_SIGN_INCOME = 'income';
+	const CALCULATED_SIGN_CONSUMPTION = 'consumption';
 
 	/** @var array $fields */
 	private $fields = array();
@@ -42,6 +50,15 @@ abstract class Check
 	 * @return string
 	 */
 	public static function getType()
+	{
+		throw new Main\NotImplementedException();
+	}
+
+	/**
+	 * @throws Main\NotImplementedException
+	 * @return string
+	 */
+	public static function getCalculatedSign()
 	{
 		throw new Main\NotImplementedException();
 	}
@@ -238,4 +255,186 @@ abstract class Check
 	 * @return array
 	 */
 	abstract public function getDataForCheck();
+
+	/**
+	 * @param array $entities
+	 * @return array
+	 */
+	public function extractDataFromEntities(array $entities)
+	{
+		static $psList = array();
+		$result = array();
+		$order = null;
+		$totalSum = 0;
+
+		foreach ($entities as $entity)
+		{
+			if ($order === null)
+				$order = CheckManager::getOrder($entity);
+
+			if ($entity instanceof Payment)
+			{
+				if (!isset($psList[$entity->getPaymentSystemId()]))
+					$psList[$entity->getPaymentSystemId()] = PaySystem\Manager::getById($entity->getPaymentSystemId());
+
+				$paySystem = $psList[$entity->getPaymentSystemId()];
+
+				$result['PAYMENTS'][] = array(
+					'IS_CASH' => $paySystem['IS_CASH'],
+					'SUM' => $entity->getSum()
+				);
+
+				$totalSum += $entity->getSum();
+			}
+			elseif ($entity instanceof Shipment)
+			{
+				$shipmentItemCollection = $entity->getShipmentItemCollection();
+
+				/** @var ShipmentItem $shipmentItem */
+				foreach ($shipmentItemCollection as $shipmentItem)
+				{
+					$basketItem = $shipmentItem->getBasketItem();
+					if ($basketItem->isBundleChild())
+						continue;
+
+					$vatInfo = $this->getProductVatInfo($basketItem);
+					$item = array(
+						'PRODUCT_ID' => $basketItem->getProductId(),
+						'NAME' => $basketItem->getField('NAME'),
+						'BASE_PRICE' => $basketItem->getBasePrice(),
+						'PRICE' => $basketItem->getPrice(),
+						'SUM' => $basketItem->getFinalPrice(),
+						'QUANTITY' => (float)$shipmentItem->getQuantity(),
+						'VAT' => $vatInfo ? $vatInfo['ID'] : 0
+					);
+
+					$discountPrice = 0;
+					if ($basketItem->isCustomPrice())
+					{
+						$discountPrice = $basketItem->getBasePrice() - $basketItem->getPrice();
+					}
+					else
+					{
+						if ($basketItem->getDiscountPrice() > 0)
+							$discountPrice = (float)$basketItem->getDiscountPrice();
+					}
+
+					if ($discountPrice)
+					{
+						$item['DISCOUNT'] = array(
+							'PRICE' => $discountPrice,
+							'TYPE' => 'C',
+						);
+					}
+
+					$result['PRODUCTS'][] = $item;
+				}
+
+				$vatInfo = $this->getDeliveryVatInfo($entity);
+				$item = array(
+					'NAME' => Main\Localization\Loc::getMessage('SALE_CASHBOX_SELL_DELIVERY'),
+					'BASE_PRICE' => (float)$entity->getField('BASE_PRICE_DELIVERY'),
+					'PRICE' => (float)$entity->getPrice(),
+					'SUM' => (float)$entity->getPrice(),
+					'QUANTITY' => 1,
+					'VAT' => $vatInfo ? $vatInfo['ID'] : 0
+				);
+
+				if (!$entity->isCustomPrice() && $entity->getField('DISCOUNT_PRICE') > 0)
+				{
+					$item['DISCOUNT'] = array(
+						'PRICE' => $entity->getField('DISCOUNT_PRICE'),
+						'TYPE' => 'C',
+					);
+				}
+
+				$result['DELIVERY'][] = $item;
+			}
+		}
+
+		if ($order !== null)
+		{
+			$result['BUYER'] = array();
+
+			$properties = $order->getPropertyCollection();
+			$email = $properties->getUserEmail();
+			if ($email)
+				$result['BUYER']['EMAIL'] = $email->getValue();
+			$phone = $properties->getPhone();
+			if ($phone)
+				$result['BUYER']['PHONE'] = $phone->getValue();
+		}
+
+		$result['TOTAL_SUM'] = $totalSum;
+
+		$event = new Main\Event('sale', static::EVENT_ON_CHECK_PREPARE_DATA, array($result));
+		$event->send();
+
+		if ($event->getResults())
+		{
+			/** @var Main\EventResult $eventResult */
+			foreach ($event->getResults() as $eventResult)
+			{
+				if ($eventResult->getType() !== Main\EventResult::ERROR)
+				{
+					$result = $eventResult->getParameters();
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param Shipment $shipment
+	 * @return array
+	 */
+	private function getDeliveryVatInfo(Shipment $shipment)
+	{
+		$deliveryVatInfo = array();
+
+		$calcDeliveryTax = Main\Config\Option::get("sale", "COUNT_DELIVERY_TAX", "N");
+		if ($calcDeliveryTax === 'Y')
+		{
+			/** @var ShipmentCollection $collection */
+			$collection = $shipment->getCollection();
+
+			$order = $collection->getOrder();
+
+			$basket = $order->getBasket();
+
+			$maxVatRate = 0;
+			foreach ($basket as $basketItem)
+			{
+				$vatInfo = $this->getProductVatInfo($basketItem);
+				if ($maxVatRate < $vatInfo['RATE'])
+				{
+					$maxVatRate = $vatInfo['RATE'];
+					$deliveryVatInfo = $vatInfo;
+				}
+			}
+		}
+
+		return $deliveryVatInfo;
+	}
+
+	/**
+	 * @param BasketItem $basketItem
+	 * @return array|bool|false|mixed|null
+	 */
+	private function getProductVatInfo(BasketItem $basketItem)
+	{
+		static $vatInfoList = array();
+
+		if (!isset($vatInfoList[$basketItem->getProductId()]))
+		{
+			if (Main\Loader::includeModule('catalog'))
+			{
+				$dbRes = \CCatalogProduct::GetVATInfo($basketItem->getProductId());
+				$vatInfoList[$basketItem->getProductId()] = $dbRes->Fetch();
+			}
+		}
+
+		return $vatInfoList[$basketItem->getProductId()];
+	}
 }

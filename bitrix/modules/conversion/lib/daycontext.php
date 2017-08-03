@@ -28,7 +28,21 @@ final class DayContext extends Internals\BaseContext
 			$day   = new Date();
 		}
 
-		parent::addCounter($day, $name, $value);
+		$instance = self::getInstance();
+
+		if ($this->id === null && $this === $instance)
+		{
+			$pending =& self::$session['PENDING_COUNTERS'];
+
+			if (empty($pending[$name]))
+				$pending[$name] = 0;
+
+			$pending[$name] += (float) $value;
+		}
+		else
+		{
+			parent::addCounter($day, $name, $value);
+		}
 	}
 
 	/**
@@ -40,20 +54,23 @@ final class DayContext extends Internals\BaseContext
 	 */
 	public function addDayCounter($name, $value)
 	{
-		$instance =& self::$instance;
-		$session  =& self::$session;
+		$instance = self::getInstance();
+		$session =& self::$session;
 
-		$unique =& $session['UNIQUE'];
-
-		if ($this !== $instance || !in_array($name, $unique, true))
+		if ($this->id === null && $this === $instance)
 		{
-			$this->addCounter($name, $value);
+			$session['PENDING_DAY_COUNTERS'][$name] = (float) $value;
+		}
+		else
+		{
+			$unique =& $session['UNIQUE'];
 
-			if ($this === $instance)
+			if (!in_array($name, $unique, true))
 			{
 				$unique[] = $name;
 
-				$this->setCookie(); // TODO HACK save to database into session
+				$this->addCounter($name, $value);
+				$this->setCookie();
 			}
 		}
 	}
@@ -87,19 +104,25 @@ final class DayContext extends Internals\BaseContext
 		if (! is_scalar($item))
 			throw new ArgumentTypeException('item', 'scalar');
 
-		try
-		{
-			$result = Internals\ContextEntityItemTable::add(array(
-				'CONTEXT_ID' => $this->id,
-				'ENTITY'     => $entity,
-				'ITEM'       => $item,
-			));
+		$instance = self::getInstance();
 
-			$result->isSuccess(); // TODO
-		}
-		catch (\Bitrix\Main\DB\SqlQueryException $e)
+		if ($this->id === null && $this === $instance)
 		{
-			// TODO log??
+			self::$session['PENDING_ENTITY_ITEMS'][$entity.':'.$item] = array('ENTITY' => $entity, 'ITEM' => $item);
+		}
+		else
+		{
+			try
+			{
+				Internals\ContextEntityItemTable::add(array(
+					'CONTEXT_ID' => $this->id,
+					'ENTITY'     => $entity,
+					'ITEM'       => $item,
+				));
+			}
+			catch (\Bitrix\Main\DB\SqlQueryException $e)
+			{
+			}
 		}
 	}
 
@@ -144,9 +167,8 @@ final class DayContext extends Internals\BaseContext
 		{
 			$instance = new self;
 
-			$instance->saveInstance();
-
-			$instance->id = null;
+			foreach (EventManager::getInstance()->findEventHandlers('conversion', 'OnSetDayContextAttributes') as $handler)
+				ExecuteModuleEventEx($handler, array($instance));
 
 			$instance->setAttribute('conversion_site', $siteId);
 			$instance->save();
@@ -205,11 +227,6 @@ final class DayContext extends Internals\BaseContext
 			$instance->id = $session['ID'];
 			self::$session =& $session;
 			self::$instance = $instance;
-
-			if ($instance->id === null)
-				$instance->saveInstance();
-
-			$instance->setCookie();
 		}
 
 		return self::$instance;
@@ -228,24 +245,38 @@ final class DayContext extends Internals\BaseContext
 	}
 
 	/** @internal */
-	private function saveInstance()
+	public static function saveInstance()
 	{
-		$instance =& self::$instance;
-		$session  =& self::$session;
+		$instance = self::getInstance();
+		$session =& self::$session;
 
-		// save day context
-
-		if ($this->id === null)
+		if ($instance->id === null)
 		{
 			foreach (EventManager::getInstance()->findEventHandlers('conversion', 'OnSetDayContextAttributes') as $handler)
-			{
-				ExecuteModuleEventEx($handler, array($this));
-			}
+				ExecuteModuleEventEx($handler, array($instance));
 
-			$this->save();
+			$instance->save();
+		}
 
-			if ($this === $instance)
-				$session['ID'] = $instance->id;
+		$session['ID'] = $instance->id;
+		$instance->setCookie();
+
+		if (!empty($session['PENDING_COUNTERS']) && is_array($session['PENDING_COUNTERS']))
+		{
+			foreach ($session['PENDING_COUNTERS'] as $name => $value)
+				$instance->addCounter($name, $value);
+		}
+
+		if (!empty($session['PENDING_DAY_COUNTERS']) && is_array($session['PENDING_DAY_COUNTERS']))
+		{
+			foreach ($session['PENDING_DAY_COUNTERS'] as $name => $value)
+				$instance->addDayCounter($name, $value);
+		}
+
+		if (!empty($session['PENDING_ENTITY_ITEMS']) && is_array($session['PENDING_ENTITY_ITEMS']))
+		{
+			foreach ($session['PENDING_ENTITY_ITEMS'] as $i)
+				$instance->attachEntityItem($i['ENTITY'], $i['ITEM']);
 		}
 	}
 

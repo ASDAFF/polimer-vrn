@@ -997,7 +997,7 @@ else
 								<?
 							}
 
-							foreach ($arResult["TAX_LIST"] as $tax)
+							if ((float)$arResult["TAX_VALUE"] > 0)
 							{
 								?>
 								<li class="sale-order-detail-total-payment-list-left-item">
@@ -1031,10 +1031,10 @@ else
 								<?
 							}
 
-							foreach ($arResult["TAX_LIST"] as $tax)
+							if ((float)$arResult["TAX_VALUE"] > 0)
 							{
 								?>
-								<li class="sale-order-detail-total-payment-list-right-item"><?= $tax["VALUE_MONEY_FORMATED"] ?></li>
+								<li class="sale-order-detail-total-payment-list-right-item"><?= $arResult["TAX_VALUE_FORMATED"] ?></li>
 								<?
 							}
 							?>

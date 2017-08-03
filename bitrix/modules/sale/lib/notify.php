@@ -871,15 +871,15 @@ class Notify
 			throw new Main\ArgumentTypeException('entity', '\Bitrix\Sale\Payment');
 		}
 
-		/** @var ShipmentCollection $shipmentCollection */
-		if (!$shipmentCollection = $entity->getCollection())
+		/** @var PaymentCollection $paymentCollection */
+		if (!$paymentCollection = $entity->getCollection())
 		{
-			$result->addError(new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_SHIPMENT_COLLECTION_NOT_FOUND")));
+			$result->addError(new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_PAYMENT_COLLECTION_NOT_FOUND")));
 			return $result;
 		}
 
 		/** @var Order $order */
-		if (!$order = $shipmentCollection->getOrder())
+		if (!$order = $paymentCollection->getOrder())
 		{
 			$result->addError(new ResultError(Main\Localization\Loc::getMessage("SALE_NOTIFY_ORDER_NOT_FOUND")));
 			return $result;

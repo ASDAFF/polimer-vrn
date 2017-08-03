@@ -5,7 +5,7 @@ $APPLICATION->IncludeComponent(
 	Array(
 		"FORM_ID" => $component->createPostFormId(),
 		"SHOW_MORE" => "Y",
-		"PARSER" => blogTextParser::GetEditorToolbar(array('blog' => $arResult['Blog'])),
+		"PARSER" => blogTextParser::GetEditorToolbar(array("EDITOR_FULL" => "Y")),
 		"LHE" => array(
 			'id' => $component->createEditorId(),
 			'bSetDefaultCodeView' => $arParams['EDITOR_CODE_DEFAULT'],
@@ -35,14 +35,13 @@ $APPLICATION->IncludeComponent(
 				array_merge(
 					$arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_URL_PRV"],
 					array(
-						'ELEMENT_ID' => 'url_preview_'.$id,
+						'ELEMENT_ID' => 'url_preview_'.$component->createEditorId(),
 						'STYLE' => 'margin: 0 18px'
 					)
 				)
 				:
 				array()
 		),
-//		todo: smiles
 		"SMILES" => COption::GetOptionInt("blog", "smile_gallery_id", 0),
 		"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 	),

@@ -6925,10 +6925,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				if (settings.PATTERN && settings.PATTERN.length)
 				{
-					if (settings.MULTIPLE == 'Y' || settings.PATTERN.lastIndexOf(settings.PATTERN[0]) - 1 === -1)
-						textNode.removeAttribute('pattern');
-					else
-						textNode.setAttribute('pattern', settings.PATTERN.substr(1, settings.PATTERN.lastIndexOf(settings.PATTERN[0]) - 1));
+					textNode.removeAttribute('pattern');
 				}
 			}
 
@@ -7474,7 +7471,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				if (value.length > 0 && arProperty.PATTERN && arProperty.PATTERN.length)
 				{
-					re = new RegExp(input.pattern);
+					re = new RegExp(arProperty.PATTERN);
 					if (!re.test(value))
 						errors.push(field + ' ' + BX.message('SOA_INVALID_PATTERN'));
 				}
@@ -7702,11 +7699,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				priceHtml, params = {},
 				discText, valFormatted, i,
 				curDelivery, deliveryError, deliveryValue,
-				showOrderButton = this.params.SHOW_TOTAL_ORDER_BUTTON == 'Y';
+				showOrderButton = this.params.SHOW_TOTAL_ORDER_BUTTON === 'Y';
 
 			BX.cleanNode(this.totalInfoBlockNode);
 
-			if (parseFloat(total.ORDER_PRICE) == 0)
+			if (parseFloat(total.ORDER_PRICE) === 0)
 			{
 				priceHtml = this.params.MESS_PRICE_FREE;
 				params.free = true;
@@ -7753,7 +7750,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 			else
 			{
-				if (parseFloat(total.DELIVERY_PRICE) == 0)
+				if (parseFloat(total.DELIVERY_PRICE) === 0)
 				{
 					deliveryValue = this.params.MESS_PRICE_FREE;
 					params.free = true;
@@ -7763,7 +7760,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					deliveryValue = total.DELIVERY_PRICE_FORMATED;
 				}
 
-				if (curDelivery && typeof curDelivery.DELIVERY_DISCOUNT_PRICE != 'undefined')
+				if (
+					curDelivery && typeof curDelivery.DELIVERY_DISCOUNT_PRICE !== 'undefined'
+					&& parseFloat(curDelivery.PRICE) > parseFloat(curDelivery.DELIVERY_DISCOUNT_PRICE)
+				)
 				{
 					deliveryValue += '<br /><span class="bx-price-old">' + curDelivery.PRICE_FORMATED + '</span>';
 				}

@@ -574,11 +574,11 @@ class CatalogSectionComponent extends ElementList
 		if ($this->isEnableCompatible() && empty($this->arResult['NAV_RESULT']))
 		{
 			$this->initNavString(\CIBlockElement::GetList(
-				$this->sortFields,
+				array(),
 				array_merge($this->globalFilter, $this->filterFields + array('IBLOCK_ID' => $this->arParams['IBLOCK_ID'])),
 				false,
 				array('nTopCount' => 1),
-				$this->selectFields
+				array('ID')
 			));
 			$this->arResult['NAV_RESULT']->NavNum = Main\Security\Random::getString(6);
 		}

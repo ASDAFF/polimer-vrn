@@ -105,6 +105,9 @@ class Discount
 	/** @var array */
 	protected $applyResult = array();
 
+	/* Contains additional data used to calculate discounts for an existing order */
+	protected $discountStoredActionData = array();
+
 	/** @var array */
 	protected $loadedModules = array();
 	/** @var array */
@@ -212,6 +215,17 @@ class Discount
 	}
 
 	/**
+	 * @return Discount
+	 */
+	protected static function createDiscountObject()
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$discountClassName = $registry->getDiscountClassName();
+
+		return new $discountClassName();
+	}
+
+	/**
 	 * Builds discounts from order.
 	 *
 	 * @param Order $order Order object.
@@ -222,7 +236,7 @@ class Discount
 		$instanceIndex = static::getInstanceIndexByOrder($order);
 		if (!isset(self::$instances[$instanceIndex]))
 		{
-			$discount = new static;
+			$discount = static::createDiscountObject();
 			$discount->order = $order;
 			$discount->context = new Context\User($order->getUserId());
 			$discount->initInstanceData();
@@ -261,7 +275,7 @@ class Discount
 		$instanceIndex = static::getInstanceIndexByBasket($basket, $context);
 		if (!isset(self::$instances[$instanceIndex]))
 		{
-			$discount = new static;
+			$discount = static::createDiscountObject();
 		}
 		else
 		{
@@ -921,6 +935,7 @@ class Discount
 			);
 			unset($basketItem);
 		}
+		OrderDiscountManager::init();
 		OrderDiscountManager::setManagerConfig($orderDiscountConfig);
 		unset($orderDiscountConfig);
 	}
@@ -1035,12 +1050,12 @@ class Discount
 		if ($this->isOrderExists())
 		{
 			$basket = $this->getOrder()->getBasket();
-			$result = ($basket instanceof Basket && count($basket) > 0);
+			$result = ($basket instanceof Basket && $basket->count() > 0);
 			unset($basket);
 		}
 		else
 		{
-			$result = ($this->basket instanceof Basket && count($this->basket) > 0);
+			$result = ($this->basket instanceof Basket && $this->basket->count() > 0);
 		}
 		return $result;
 	}
@@ -1229,6 +1244,8 @@ class Discount
 			/** @var BasketItem $basketItem */
 			foreach ($basket as $basketItem)
 			{
+				if (!$basketItem->canBuy())
+					continue;
 				$code = $basketItem->getBasketCode();
 				$this->orderData['BASKET_ITEMS'][$code] = $basketItem->getFieldValues();
 				if (!isset($this->orderData['BASKET_ITEMS'][$code]['DISCOUNT_PRICE']))
@@ -1568,6 +1585,12 @@ class Discount
 			}
 			unset($basketCode, $basketData);
 		}
+
+		if (!empty($applyResultData['DATA']['STORED_ACTION_DATA']) && is_array($applyResultData['DATA']['STORED_ACTION_DATA']))
+			$this->discountStoredActionData = $applyResultData['DATA']['STORED_ACTION_DATA'];
+
+		unset($applyResultData, $applyResult);
+
 		return $result;
 	}
 
@@ -1964,6 +1987,26 @@ class Discount
 				));
 			}
 			unset($dataResult, $fields);
+
+			if (!empty($this->discountStoredActionData))
+			{
+				$fields = array(
+					'ORDER_ID' => $orderId,
+					'ENTITY_TYPE' => Internals\OrderDiscountDataTable::ENTITY_TYPE_DISCOUNT_STORED_DATA,
+					'ENTITY_ID' => $orderId,
+					'ENTITY_VALUE' => $orderId,
+					'ENTITY_DATA' => $this->discountStoredActionData
+				);
+				$dataResult = Internals\OrderDiscountDataTable::add($fields);
+				if (!$dataResult->isSuccess())
+				{
+					$result->addError(new Main\Entity\EntityError(
+						Loc::getMessage('BX_SALE_DISCOUNT_ERR_SAVE_APPLY_RULES'),
+						self::ERROR_ID
+					));
+				}
+				unset($dataResult, $fields);
+			}
 		}
 
 		if ($process)
@@ -2272,6 +2315,49 @@ class Discount
 				}
 				unset($dataResult, $fields);
 			}
+
+			if (!empty($this->discountStoredActionData))
+			{
+				$storedDataId = 0;
+				$iterator = Internals\OrderDiscountDataTable::getList(array(
+					'select' => array('ID'),
+					'filter' => array(
+						'=ORDER_ID' => $orderId,
+						'=ENTITY_TYPE' => Internals\OrderDiscountDataTable::ENTITY_TYPE_DISCOUNT_STORED_DATA,
+						'=ENTITY_ID' => $orderId
+					)
+				));
+				$row = $iterator->fetch();
+				if (!empty($row))
+					$storedDataId = (int)$row['ID'];
+				if ($storedDataId > 0)
+				{
+					$dataResult = Internals\OrderDiscountDataTable::update(
+						$storedDataId,
+						array(
+							'ENTITY_DATA' => $this->discountStoredActionData
+						)
+					);
+				}
+				else
+				{
+					$dataResult = Internals\OrderDiscountDataTable::add(array(
+						'ORDER_ID' => $orderId,
+						'ENTITY_TYPE' => Internals\OrderDiscountDataTable::ENTITY_TYPE_DISCOUNT_STORED_DATA,
+						'ENTITY_ID' => $orderId,
+						'ENTITY_VALUE' => $orderId,
+						'ENTITY_DATA' => $this->discountStoredActionData
+					));
+				}
+				if (!$dataResult->isSuccess())
+				{
+					$result->addError(new Main\Entity\EntityError(
+						Loc::getMessage('BX_SALE_DISCOUNT_ERR_SAVE_APPLY_RULES'),
+						self::ERROR_ID
+					));
+				}
+				unset($dataResult);
+			}
 		}
 
 		if ($process)
@@ -2553,17 +2639,25 @@ class Discount
 	 */
 	protected function checkDiscountConditions()
 	{
-		$checkOrder = null;
-
 		$key = $this->enableCheckingPrediction? 'PREDICTIONS_APP' : 'UNPACK';
-
+		$executeKey = $key.'_EXECUTE';
 		if (empty($this->currentStep['discount'][$key]))
 			return false;
-		eval('$checkOrder='.$this->currentStep['discount'][$key].';');
-		if (!is_callable($checkOrder))
-			return false;
-		$result = $checkOrder($this->orderData);
-		unset($checkOrder);
+		if (!array_key_exists($executeKey, $this->currentStep['discount']))
+		{
+			$checkOrder = null;
+			eval('$checkOrder='.$this->currentStep['discount'][$key].';');
+			if (!is_callable($checkOrder))
+				return false;
+			$result = $checkOrder($this->orderData);
+			unset($checkOrder);
+		}
+		else
+		{
+			if (!is_callable($this->currentStep['discount'][$executeKey]))
+				return false;
+			$result = $this->currentStep['discount'][$executeKey]($this->orderData);
+		}
 		return $result;
 	}
 
@@ -2596,13 +2690,27 @@ class Discount
 		}
 		if (!empty($discount['APPLICATION']))
 		{
-			$applyOrder = null;
-			eval('$applyOrder='.$discount['APPLICATION'].';');
-			if (is_callable($applyOrder))
+			if (!array_key_exists('APPLICATION_EXECUTE', $discount))
 			{
+				$discount['APPLICATION_EXECUTE'] = null;
+				eval('$discount["APPLICATION_EXECUTE"]='.$discount['APPLICATION'].';');
+			}
+			if (is_callable($discount['APPLICATION_EXECUTE']))
+			{
+				$currentUseMode = $this->getUseMode();
 				$this->currentStep['oldData'] = $this->orderData;
-				$applyOrder($this->orderData);
-				switch ($this->getUseMode())
+				if (
+					$currentUseMode == self::USE_MODE_APPLY
+					|| $currentUseMode == self::USE_MODE_MIXED
+				)
+				{
+					$discountStoredActionData = $this->getDiscountStoredActionData($this->currentStep['discountId']);
+					if (!empty($discountStoredActionData) && is_array($discountStoredActionData))
+						Discount\Actions::setStoredData($discountStoredActionData);
+					unset($discountStoredActionData);
+				}
+				$discount['APPLICATION_EXECUTE']($this->orderData);
+				switch ($currentUseMode)
 				{
 					case self::USE_MODE_COUPONS:
 					case self::USE_MODE_FULL:
@@ -2619,8 +2727,8 @@ class Discount
 				if (!$actionsResult->isSuccess())
 					$result->addErrors($actionsResult->getErrors());
 				unset($actionsResult);
+				unset($currentUseMode);
 			}
-			unset($applyOrder);
 		}
 		unset($discount);
 		Discount\Actions::clearAction();
@@ -3111,6 +3219,7 @@ class Discount
 				DiscountCouponsManager::setApply($orderCouponId, $stepResult);
 				unset($couponResult);
 			}
+			$this->setDiscountStoredActionData($orderDiscountId, Discount\Actions::getStoredData());
 		}
 
 		if (array_key_exists('DISCOUNT_DESCR', $this->orderData))
@@ -3183,6 +3292,8 @@ class Discount
 
 		if ($applied)
 		{
+			$this->tryToRevertApplyStatusInBlocks($stepResult);
+
 			$this->discountResult['APPLY_BLOCKS'][$this->discountResultCounter]['ORDER'][] = array(
 				'DISCOUNT_ID' => $orderDiscountId,
 				'COUPON_ID' => $orderCouponId,
@@ -3196,6 +3307,73 @@ class Discount
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Tries to revert apply status of discounts.
+	 * It depends on current $stepResult. If it has REVERT_APPLY like true, that we have to cancel discounts on basket
+	 * items which were affected.
+	 * @param array $stepResult
+	 * @return void
+	 */
+	protected function tryToRevertApplyStatusInBlocks(array $stepResult)
+	{
+		if (empty($stepResult['BASKET']))
+		{
+			return;
+		}
+
+		foreach ($stepResult['BASKET'] as $basketItemId => $item)
+		{
+			if ($item['APPLY'] !== 'Y')
+			{
+				continue;
+			}
+
+			if (empty($item['DESCR_DATA']))
+			{
+				continue;
+			}
+
+			foreach ($item['DESCR_DATA'] as $rowDescription)
+			{
+				if (
+					!empty($rowDescription['REVERT_APPLY']) &&
+					$rowDescription['VALUE_ACTION'] === OrderDiscountManager::DESCR_VALUE_ACTION_CUMULATIVE
+				)
+				{
+					$this->revertApplyBlockForBasketItem($basketItemId);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Reverts apply flag in blocks for basket items which has for example cumulative discount
+	 * which cancels previous discounts on item.
+	 * @param int $basketItemId
+	 * @return void
+	 */
+	protected function revertApplyBlockForBasketItem($basketItemId)
+	{
+		if (empty($this->discountResult['APPLY_BLOCKS'][$this->discountResultCounter]))
+		{
+			return;
+		}
+
+		$applyBlock = &$this->discountResult['APPLY_BLOCKS'][$this->discountResultCounter];
+		foreach ($applyBlock['ORDER'] as &$orderBlock)
+		{
+			foreach ($orderBlock['RESULT']['BASKET'] as $bid => &$basketItem)
+			{
+				if ($bid != $basketItemId)
+				{
+					continue;
+				}
+
+				$basketItem['APPLY'] = 'N';
+			}
+		}
 	}
 
 	/**
@@ -3794,6 +3972,44 @@ class Discount
 			}
 		}
 	}
+
+	/* discount action reference tools */
+
+	/**
+	 * Fill additional discount data.
+	 *
+	 * @param $orderDiscountId int Converted discount id.
+	 * @param array $data Discount data.
+	 *
+	 * @return void
+	 */
+	protected function setDiscountStoredActionData($orderDiscountId, array $data)
+	{
+		$orderDiscountId = (int)$orderDiscountId;
+		if (!isset($this->discountsCache[$orderDiscountId]))
+			return;
+		if (empty($data))
+			return;
+		if (!isset($this->discountStoredActionData[$this->discountResultCounter]))
+			$this->discountStoredActionData[$this->discountResultCounter] = array();
+		$this->discountStoredActionData[$this->discountResultCounter][$orderDiscountId] = $data;
+	}
+
+	/**
+	 * Returns stored action data for discount.
+	 *
+	 * @param int $orderDiscountId Converted discount id.
+	 * @return array|null
+	 */
+	protected function getDiscountStoredActionData($orderDiscountId)
+	{
+		$orderDiscountId = (int)$orderDiscountId;
+		if (isset($this->discountStoredActionData[$this->discountResultCounter][$orderDiscountId]))
+			return $this->discountStoredActionData[$this->discountResultCounter][$orderDiscountId];
+		return null;
+	}
+
+	/* discount action reference tools finish */
 
 	/**
 	 * Return true, if exist apply result from form for basket.
@@ -4405,6 +4621,7 @@ class Discount
 			'SHIPMENT_LIST' => array()
 		);
 		$this->clearCurrentApplyBlock();
+		$this->discountStoredActionData = array();
 	}
 
 	/**
@@ -4778,17 +4995,36 @@ class Discount
 				$this->discountIds, $this->executeModuleFilter, $this->orderData['SITE_ID'], $couponList?: array()
 			);
 
-			foreach($currentList as $i => $discount)
+			if (!empty($currentList))
 			{
-				if (!$this->loadDiscountModules('sale'.$discount['ID']))
+				foreach (array_keys($currentList) as $index)
 				{
-					unset($currentList[$i]);
-					continue;
+					$discount = $currentList[$index];
+					$code = 'sale'.$discount['ID'];
+					if (!$this->loadDiscountModules($code))
+					{
+						unset($currentList[$index]);
+						continue;
+					}
+					if (isset($this->cacheDiscountModules[$code]))
+					{
+						$currentList[$index]['MODULES'] = $this->cacheDiscountModules[$code];
+					}
+					$currentList[$index]['UNPACK_EXECUTE'] = null;
+					eval('$currentList[$index]["UNPACK_EXECUTE"]='.$discount['UNPACK'].';');
+					$currentList[$index]['APPLICATION_EXECUTE'] = null;
+					eval('$currentList[$index]["APPLICATION_EXECUTE"]='.$discount['APPLICATION'].';');
+					if (!is_callable($currentList[$index]['UNPACK_EXECUTE']) || !is_callable($currentList[$index]['APPLICATION_EXECUTE']))
+						continue;
+					$currentList[$index]['PREDICTIONS_APP_EXECUTE'] = null;
+					if (!empty($discount['PREDICTIONS_APP']))
+					{
+						eval('$currentList[$index]["PREDICTIONS_APP_EXECUTE"]='.$discount['PREDICTIONS_APP'].';');
+						if (!is_callable($currentList[$index]['PREDICTIONS_APP_EXECUTE']))
+							$currentList[$index]['PREDICTIONS_APP_EXECUTE'] = null;
+					}
 				}
-				if (isset($this->cacheDiscountModules['sale'.$discount['ID']]))
-				{
-					$currentList[$i]['MODULES'] = $this->cacheDiscountModules['sale'.$discount['ID']];
-				}
+				unset($code, $discount, $index);
 			}
 
 			$this->saleDiscountCache[$this->saleDiscountCacheKey] = $currentList;
@@ -4833,6 +5069,12 @@ class Discount
 
 		Discount\Actions::clearAction();
 
+		$blackList = array(
+			'UNPACK_EXECUTE' => true,
+			'APPLICATION_EXECUTE' => true,
+			'PREDICTIONS_APP_EXECUTE' => true
+		);
+
 		$index = -1;
 		$skipPriorityLevel = null;
 		foreach ($currentList as $discount)
@@ -4858,7 +5100,7 @@ class Discount
 			}
 
 			if ($useMode == self::USE_MODE_FULL && !isset($this->fullDiscountList[$discount['ID']]))
-				$this->fullDiscountList[$discount['ID']] = $discount;
+				$this->fullDiscountList[$discount['ID']] = array_diff_key($discount, $blackList);
 
 			$actionsResult = $this->applySaleDiscount();
 			if (!$actionsResult->isSuccess())
@@ -5337,14 +5579,11 @@ class Discount
 	protected static function getInstanceIndexByBasket(Basket $basket, Context\BaseContext $context = null)
 	{
 		$userGroupsString = '';
-		if ($context)
-		{
-			$userGroups = $context->getUserGroups();
-			Main\Type\Collection::normalizeArrayValuesByInt($userGroups);
-			$userGroupsString = '|' . md5(serialize($userGroups));
-		}
-
-		return '0|'.$basket->getFUserId(false).'|'.$basket->getSiteId().$userGroupsString;
+		if (!$context)
+			return '0|'.$basket->getFUserId(false).'|'.$basket->getSiteId();
+		$userGroups = $context->getUserGroups();
+		Main\Type\Collection::normalizeArrayValuesByInt($userGroups);
+		return '0|-1|'.$basket->getSiteId().'|'.md5(serialize($userGroups));
 	}
 
 	/**

@@ -496,6 +496,7 @@ BX.Sale.Admin.DiscountPreset.SelectProduct = (function(){
 				productId: product.id,
 				iblockId: iblockId,
 				quantity: product.quantity,
+				sessid: BX.bitrix_sessid(),
 				siteId: this.siteId
 			},
 			onsuccess: BX.delegate(function (data) {

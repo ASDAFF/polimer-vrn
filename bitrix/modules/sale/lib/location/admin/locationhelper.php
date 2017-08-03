@@ -638,8 +638,15 @@ final class LocationHelper extends NameHelper
 		if(!is_array($parameters))
 			$parameters = array();
 
-		$parameters['filter']['=SERVICE.CODE'] = 'ZIP';
+		$parameters['filter'][] = array(
+			'LOGIC' => 'OR',
+			array('=SERVICE.CODE' => 'ZIP'),
+			array('=SERVICE.CODE' => 'ZIP_LOWER')
+		);
+		$parameters['order']['SERVICE_CODE'] = 'ASC';
 		$parameters['filter']['=LOCATION.CODE'] = $locationCode;
+		$parameters['select'][] = '*';
+		$parameters['select']['SERVICE_CODE'] = 'SERVICE.CODE';
 
 		return \Bitrix\Sale\Location\ExternalTable::getList($parameters);
 	}

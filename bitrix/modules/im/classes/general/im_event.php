@@ -70,6 +70,9 @@ class CIMEvent
 	{
 		$bSocialnetworkInstalled = CModule::IncludeModule("socialnetwork");
 
+		$ratingNotifyTag = "RATING|".($arParams['VALUE'] >= 0 ? "" : "DL|").$arParams['ENTITY_TYPE_ID']."|".$arParams['ENTITY_ID'];
+		$ratingMentionNotifyTag = "RATING_MENTION|".($arParams['VALUE'] >= 0?"":"DL|").$arParams['ENTITY_TYPE_ID']."|".$arParams['ENTITY_ID'];
+
 		if (
 			$arParams['ENTITY_TYPE_ID'] == 'LISTS_NEW_ELEMENT'
 			&& $bSocialnetworkInstalled
@@ -103,7 +106,8 @@ class CIMEvent
 						"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 						"NOTIFY_MODULE" => "main",
 						"NOTIFY_EVENT" => "rating_vote",
-						"NOTIFY_TAG" => "RATING|".($arParams['VALUE'] >= 0 ? "" : "DL|").$arParams['ENTITY_TYPE_ID']."|".$arParams['ENTITY_ID'],
+						"NOTIFY_TAG" => $ratingNotifyTag,
+						"NOTIFY_SUB_TAG" => $ratingNotifyTag."|".intval($arLog['USER_ID']),
 						"NOTIFY_MESSAGE" => self::GetMessageRatingVote($arParams),
 						"NOTIFY_MESSAGE_OUT" => self::GetMessageRatingVote($arParams, true)
 					);
@@ -215,7 +219,8 @@ class CIMEvent
 							"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 							"NOTIFY_MODULE" => "main",
 							"NOTIFY_EVENT" => "rating_vote",
-							"NOTIFY_TAG" => "RATING|".($arParams['VALUE'] >= 0?"":"DL|").$arParams['ENTITY_TYPE_ID']."|".$arParams['ENTITY_ID'],
+							"NOTIFY_TAG" => $ratingNotifyTag,
+							"NOTIFY_SUB_TAG" => $ratingNotifyTag."|".intval($arComment['USER_ID']),
 							"NOTIFY_MESSAGE" => self::GetMessageRatingVote($arParams),
 							"NOTIFY_MESSAGE_OUT" => self::GetMessageRatingVote($arParams, true)
 						);
@@ -266,7 +271,8 @@ class CIMEvent
 									"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 									"NOTIFY_MODULE" => "main",
 									"NOTIFY_EVENT" => "rating_vote_mentioned",
-									"NOTIFY_TAG" => "RATING_MENTION|".($arParams['VALUE'] >= 0?"":"DL|").$arParams['ENTITY_TYPE_ID']."|".$arParams['ENTITY_ID'],
+									"NOTIFY_TAG" => $ratingMentionNotifyTag,
+									"NOTIFY_SUB_TAG" => $ratingMentionNotifyTag.'|'.intval($mentioned_user_id),
 									"NOTIFY_MESSAGE" => self::GetMessageRatingVote($arParams),
 									"NOTIFY_MESSAGE_OUT" => self::GetMessageRatingVote($arParams, true)
 								);
@@ -403,7 +409,8 @@ class CIMEvent
 									"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 									"NOTIFY_MODULE" => "main",
 									"NOTIFY_EVENT" => "rating_vote",
-									"NOTIFY_TAG" => "RATING|".($arParams['VALUE'] >= 0?"":"DL|").$arParams['ENTITY_TYPE_ID']."|".$arParams['ENTITY_ID'],
+									"NOTIFY_TAG" => $ratingNotifyTag,
+									"NOTIFY_SUB_TAG" => $ratingNotifyTag.'|'.intval($arParams['OWNER_ID']),
 									"NOTIFY_MESSAGE" => self::GetMessageRatingVote($arParams),
 									"NOTIFY_MESSAGE_OUT" => self::GetMessageRatingVote($arParams, true)
 								);
@@ -491,7 +498,8 @@ class CIMEvent
 												"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 												"NOTIFY_MODULE" => "main",
 												"NOTIFY_EVENT" => "rating_vote_mentioned",
-												"NOTIFY_TAG" => "RATING_MENTION|".($arParams['VALUE'] >= 0?"":"DL|").$arParams['ENTITY_TYPE_ID']."|".$arParams['ENTITY_ID'],
+												"NOTIFY_TAG" => $ratingMentionNotifyTag,
+												"NOTIFY_SUB_TAG" => $ratingMentionNotifyTag.'|'.intval($mentioned_user_id),
 												"NOTIFY_MESSAGE" => self::GetMessageRatingVote($arParams),
 												"NOTIFY_MESSAGE_OUT" => self::GetMessageRatingVote($arParams, true)
 											);

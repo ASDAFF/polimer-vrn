@@ -144,6 +144,9 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 
 		$result['ID'] = $checkInfo['ID'];
 		$result['CHECK_TYPE'] = $checkInfo['TYPE'];
+
+		$check = CheckManager::getObjectById($checkInfo['ID']);
+		$dateTime = new Main\Type\DateTime($data['payload']['receipt_datetime']);
 		$result['LINK_PARAMS'] = array(
 			Check::PARAM_REG_NUMBER_KKT => $data['payload']['ecr_registration_number'],
 			Check::PARAM_FISCAL_DOC_ATTR => $data['payload']['fiscal_document_attribute'],
@@ -152,7 +155,8 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 			Check::PARAM_FN_NUMBER => $data['payload']['fn_number'],
 			Check::PARAM_SHIFT_NUMBER => $data['payload']['shift_number'],
 			Check::PARAM_DOC_SUM => $data['payload']['total'],
-			Check::PARAM_DOC_TIME => $data['payload']['receipt_datetime'],
+			Check::PARAM_DOC_TIME => $dateTime->getTimestamp(),
+			Check::PARAM_CALCULATION_ATTR => $check::getCalculatedSign()
 		);
 
 		return $result;
@@ -304,30 +308,18 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 	{
 		$result = new Result();
 
-		$ch = curl_init($url);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_HEADER, 0);
-		curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
-		curl_setopt($ch, CURLOPT_ENCODING, "");
-		curl_setopt($ch, CURLOPT_USERAGENT, "1C-Bitrix");
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 120);
-		curl_setopt($ch, CURLOPT_TIMEOUT, 120);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-		curl_setopt($ch, CURLOPT_POST, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $this->encode($data));
-		$content = curl_exec($ch);
+		$http = new Main\Web\HttpClient(array('disableSslVerification' => true));
+		$response = $http->post($url, $this->encode($data));
 
-		$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-		if ($content !== false)
+		if ($response !== false)
 		{
 			try
 			{
-				$response = $this->decode($content);
+				$response = $this->decode($response);
 				if (!is_array($response))
 					$response = array();
 
-				$response['http_code'] = $httpCode;
+				$response['http_code'] = $http->getStatus();
 				$result->addData($response);
 			}
 			catch (Main\ArgumentException $e)
@@ -337,11 +329,12 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 		}
 		else
 		{
-			$error = curl_error($ch);
-			$result->addError(new Main\Error($error));
+			$error = $http->getError();
+			foreach ($error as $code =>$message)
+			{
+				$result->addError(new Main\Error($message, $code));
+			}
 		}
-
-		curl_close($ch);
 
 		return $result;
 	}
@@ -482,7 +475,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 	 */
 	private function getAccessToken()
 	{
-		return Main\Config\Option::get('sale', static::TOKEN_OPTION_NAME, '');
+		return Main\Config\Option::get('sale', $this->getOptionName(), '');
 	}
 
 	/**
@@ -490,7 +483,15 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 	 */
 	private function setToken($token)
 	{
-		Main\Config\Option::set('sale', static::TOKEN_OPTION_NAME, $token);
+		Main\Config\Option::set('sale', $this->getOptionName(), $token);
+	}
+
+	/**
+	 * @return string
+	 */
+	private function getOptionName()
+	{
+		return static::TOKEN_OPTION_NAME.'_'.ToLower($this->getField('NUMBER_KKM'));
 	}
 
 	/**
@@ -503,7 +504,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 	}
 
 	/**
-	 * @param array $data
+	 * @param string $data
 	 * @return mixed
 	 */
 	private function decode($data)

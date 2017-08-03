@@ -1324,11 +1324,8 @@ class CSaleExport
 		$bufer = '';
 		ob_start();
 
-		if(self::getVersionSchema() < self::PARTIAL_VERSION || $bExportFromCrm)
-		{
-			$arShipment = $arShipment[0];
-			$arPayment = $arPayment[0];
-		}
+        $arShipment = $arShipment[0];
+        $arPayment = $arPayment[0];
 
 		?><<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTIES_VALUES")?>><?
 		if(strlen($arOrder["DATE_PAYED"])>0)
@@ -1352,19 +1349,6 @@ class CSaleExport
 				</<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
 				<?
 			}
-			if(IntVal($arPayment["PAY_SYSTEM_ID"])>0)
-			{
-				?>
-				<<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
-					<<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>><?=CSaleExport::getTagName("SALE_EXPORT_PAY_SYSTEM")?></<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>>
-					<<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>><?=htmlspecialcharsbx($arPayment["PAY_SYSTEM_NAME"])?></<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>>
-				</<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
-				<<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
-				<<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>><?=GetMessage("SALE_EXPORT_PAY_SYSTEM_ID")?></<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>>
-				<<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>><?=htmlspecialcharsbx($arPayment["PAY_SYSTEM_ID"])?></<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>>
-				</<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
-				<?
-			}
 			if(strlen($arShipment["DATE_ALLOW_DELIVERY"])>0)
 			{
 				?>
@@ -1374,16 +1358,6 @@ class CSaleExport
 				</<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
 				<?
 			}
-			if(strlen($arShipment["DELIVERY_ID"])>0)
-			{
-				?>
-				<<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
-					<<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>><?=CSaleExport::getTagName("SALE_EXPORT_DELIVERY_SERVICE")?></<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>>
-					<<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>><?=htmlspecialcharsbx($arShipment["DELIVERY_NAME"])?></<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>>
-				</<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
-				<?
-			}
-
 		}
 		else
 		{
@@ -1393,6 +1367,34 @@ class CSaleExport
 				<<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>><?=$arOrder["DATE_ALLOW_DELIVERY"]?></<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>>
 			</<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>><?
 
+		}
+
+		if(strlen($arShipment["DELIVERY_ID"])>0)
+		{
+			?>
+            <<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
+            <<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>><?=CSaleExport::getTagName("SALE_EXPORT_DELIVERY_SERVICE")?></<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>>
+            <<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>><?=htmlspecialcharsbx($arShipment["DELIVERY_NAME"])?></<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>>
+            </<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
+            <<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
+            <<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>><?=GetMessage("SALE_EXPORT_DELIVERY_ID")?></<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>>
+            <<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>><?=htmlspecialcharsbx($arShipment["DELIVERY_ID"])?></<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>>
+            </<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
+			<?
+		}
+
+		if(IntVal($arPayment["PAY_SYSTEM_ID"])>0)
+		{
+			?>
+            <<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
+            <<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>><?=CSaleExport::getTagName("SALE_EXPORT_PAY_SYSTEM")?></<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>>
+            <<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>><?=htmlspecialcharsbx($arPayment["PAY_SYSTEM_NAME"])?></<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>>
+            </<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
+            <<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
+            <<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>><?=GetMessage("SALE_EXPORT_PAY_SYSTEM_ID")?></<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>>
+            <<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>><?=htmlspecialcharsbx($arPayment["PAY_SYSTEM_ID"])?></<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>>
+            </<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
+			<?
 		}
 		?>
 			<<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>

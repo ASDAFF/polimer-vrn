@@ -117,7 +117,7 @@ class OrderAdditional
 			}
 
 
-			if (empty($companies))
+			if (empty($companies) && $formPrefix === 'ORDER')
 			{
 				$companies = OrderEdit::makeSelectHtmlWithRestricted(
 					$formPrefix.'[COMPANY_ID]',

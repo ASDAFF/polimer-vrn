@@ -14,6 +14,7 @@ if (isset($templateData['BLOG_USE']) && $templateData['BLOG_USE'] == 'Y')
 {
 	if ($ajaxMode)
 	{
+		$APPLICATION->ShowAjaxHead();
 		$arBlogCommentParams = array(
 			'SEO_USER' => 'N',
 			'ID' => $arResult['BLOG_DATA']['BLOG_POST_ID'],

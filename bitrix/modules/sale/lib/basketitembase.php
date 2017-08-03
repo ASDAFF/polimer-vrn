@@ -55,6 +55,16 @@ abstract class BasketItemBase
 	}
 
 	/**
+	 * @param array $fields
+	 * @throws Main\NotImplementedException
+	 * @return BasketItem
+	 */
+	protected static function createBasketItemObject(array $fields = array())
+	{
+		throw new Main\NotImplementedException();
+	}
+
+	/**
 	 * @return array
 	 */
 	public static function getSettableFields()
@@ -120,7 +130,7 @@ abstract class BasketItemBase
 			"PRODUCT_ID" => $productId,
 		);
 
-		$basketItem = new static($fields);
+		$basketItem = static::createBasketItemObject($fields);
 		$basketItem->setCollection($basket);
 
 		return $basketItem;

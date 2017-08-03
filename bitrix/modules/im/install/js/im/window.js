@@ -10,7 +10,7 @@
 
 	var BX = window.BX;
 
-	BX.MessengerWindow = function ()
+	var MessengerWindow = function ()
 	{
 		this.popupConfirm = null;
 
@@ -45,7 +45,7 @@
 		this.minHeight = 384;
 	};
 
-	BX.MessengerWindow.prototype.init = function (params)
+	MessengerWindow.prototype.init = function (params)
 	{
 		params = params || {};
 		if (this.inited)
@@ -179,7 +179,7 @@
 		}, this));
 	}
 
-	BX.MessengerWindow.prototype.browse = function(url)
+	MessengerWindow.prototype.browse = function(url)
 	{
 		if (BX.MessengerCommon.isDesktop())
 		{
@@ -195,17 +195,17 @@
 		}
 	};
 	
-	BX.MessengerWindow.prototype.getCurrentUrl = function ()
+	MessengerWindow.prototype.getCurrentUrl = function ()
 	{
 		return document.location.protocol+'//'+document.location.hostname+(document.location.port == ''?'':':'+document.location.port)
 	}
 
-	BX.MessengerWindow.prototype.windowReload = function ()
+	MessengerWindow.prototype.windowReload = function ()
 	{
 		location.reload();
 	}
 
-	BX.MessengerWindow.prototype.logout = function (terminate, reason, skipCheck)
+	MessengerWindow.prototype.logout = function (terminate, reason, skipCheck)
 	{
 		if (typeof(BXDesktopSystem) == "undefined" || typeof(BXDesktopWindow) == "undefined")
 		{
@@ -221,7 +221,7 @@
 		return true;
 	}
 		
-	BX.MessengerWindow.prototype.adjustSize = function (width, height)
+	MessengerWindow.prototype.adjustSize = function (width, height)
 	{
 		if (this.context == 'POPUP-FULLSCREEN' && BX.hasClass(this.popup, 'bx-im-fullscreen-closed'))
 		{
@@ -289,7 +289,7 @@
 		return true;
 	}
 
-	BX.MessengerWindow.prototype.openConfirm = function(text, buttons, modal)
+	MessengerWindow.prototype.openConfirm = function(text, buttons, modal)
 	{
 		if (this.popupConfirm != null)
 			this.popupConfirm.destroy();
@@ -323,7 +323,7 @@
 		return true;
 	};
 	
-	BX.MessengerWindow.prototype.addSeparator = function (params)
+	MessengerWindow.prototype.addSeparator = function (params)
 	{
 		params.type = 'separator';
 		params.id = 'sep'+(+new Date())
@@ -332,7 +332,7 @@
 		this.drawTabs();
 	}
 
-	BX.MessengerWindow.prototype.addTab = function (params)
+	MessengerWindow.prototype.addTab = function (params)
 	{
 		if (!params || !params.id || !params.title)
 			return false;
@@ -376,7 +376,7 @@
 		this.drawTabs();
 	}
 	
-	BX.MessengerWindow.prototype.hideTab = function (id)
+	MessengerWindow.prototype.hideTab = function (id)
 	{
 		if (!id || !this.tabItems[id])
 			return false;
@@ -386,7 +386,7 @@
 		this.drawTabs();
 	}
 	
-	BX.MessengerWindow.prototype.showTab = function (id)
+	MessengerWindow.prototype.showTab = function (id)
 	{
 		if (!id || !this.tabItems[id])
 			return false;
@@ -396,12 +396,12 @@
 		this.drawTabs();
 	}
 	
-	BX.MessengerWindow.prototype.existsTab = function (id)
+	MessengerWindow.prototype.existsTab = function (id)
 	{
 		return this.tabItems[id];
 	}
 
-	BX.MessengerWindow.prototype.drawTabs = function (force)
+	MessengerWindow.prototype.drawTabs = function (force)
 	{
 		if (!force)
 		{
@@ -448,7 +448,7 @@
 		return true;
 	}
 
-	BX.MessengerWindow.prototype.drawTab = function (params)
+	MessengerWindow.prototype.drawTab = function (params)
 	{
 		if (params.type == 'separator')
 		{
@@ -476,7 +476,7 @@
 		return true;
 	}
 
-	BX.MessengerWindow.prototype.drawAppearance = function ()
+	MessengerWindow.prototype.drawAppearance = function ()
 	{
 		if (!this.content)
 			return false;
@@ -503,7 +503,7 @@
 		return true;
 	}
 
-	BX.MessengerWindow.prototype.changeTab = function (tabId, force)
+	MessengerWindow.prototype.changeTab = function (tabId, force)
 	{
 		force = typeof(force) == 'undefined'? true: force;
 
@@ -579,7 +579,7 @@
 		return true;
 	}
 
-	BX.MessengerWindow.prototype.closeTab = function (tabId)
+	MessengerWindow.prototype.closeTab = function (tabId)
 	{
 		tabId = tabId || this.getCurrentTab();
 
@@ -604,7 +604,7 @@
 		}
 	}
 
-	BX.MessengerWindow.prototype.setTabBadge = function (tabId, value)
+	MessengerWindow.prototype.setTabBadge = function (tabId, value)
 	{
 		if (!this.tabItems[tabId])
 			return false;
@@ -628,7 +628,7 @@
 		}
 	}
 
-	BX.MessengerWindow.prototype.setTabContent = function (tabId, content)
+	MessengerWindow.prototype.setTabContent = function (tabId, content)
 	{
 		if (!this.tabItems[tabId])
 			return false;
@@ -653,17 +653,17 @@
 		return true;
 	}
 
-	BX.MessengerWindow.prototype.getCurrentTab = function ()
+	MessengerWindow.prototype.getCurrentTab = function ()
 	{
 		return this.currentTab;
 	}
 
-	BX.MessengerWindow.prototype.getCurrentTabTarget = function ()
+	MessengerWindow.prototype.getCurrentTabTarget = function ()
 	{
 		return this.currentTabTarget;
 	}
 	
-	BX.MessengerWindow.prototype.setUserInfo = function (params)
+	MessengerWindow.prototype.setUserInfo = function (params)
 	{
 		if (!this.userInfo)
 		{
@@ -708,7 +708,7 @@
 		return true;
 	}
 
-	BX.MessengerWindow.prototype.updateUserInfo = function (params)
+	MessengerWindow.prototype.updateUserInfo = function (params)
 	{
 		for (var i in params)
 		{
@@ -717,12 +717,12 @@
 		return this.setUserInfo(this.userInfo);
 	}
 
-	BX.MessengerWindow.prototype.getUserInfo = function()
+	MessengerWindow.prototype.getUserInfo = function()
 	{
 		return this.userInfo;
 	}
 	
-	BX.MessengerWindow.prototype.isPopupShow = function()
+	MessengerWindow.prototype.isPopupShow = function()
 	{
 		if (this.context == 'DESKTOP')
 			return true;
@@ -732,7 +732,7 @@
 		return false;
 	}
 	
-	BX.MessengerWindow.prototype.backgroundChange = function()
+	MessengerWindow.prototype.backgroundChange = function()
 	{
 		var backgroundImage = this.backgroundSelector.value;
 		if (backgroundImage == 'transparent')
@@ -758,7 +758,7 @@
 		}	
 	}
 	
-	BX.MessengerWindow.prototype.showPopup = function(dialogId)
+	MessengerWindow.prototype.showPopup = function(dialogId)
 	{
 		if (this.isPopupShow())
 			return false;
@@ -789,7 +789,7 @@
 		return true;
 	}
 	
-	BX.MessengerWindow.prototype.closePopup = function()
+	MessengerWindow.prototype.closePopup = function()
 	{
 		if (!this.isPopupShow() || this.BXIM.webrtc.callInit)
 			return false;
@@ -815,7 +815,7 @@
 		return true;
 	}
 	
-	BX.MessengerWindow.prototype.storageSet = function(params)
+	MessengerWindow.prototype.storageSet = function(params)
 	{
 		if (params.key == 'imFullscreenBackground')
 		{
@@ -824,5 +824,5 @@
 		}
 	};
 
-	BX.MessengerWindow = new BX.MessengerWindow();
+	BX.MessengerWindow = new MessengerWindow();
 })(window);

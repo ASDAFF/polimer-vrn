@@ -336,7 +336,7 @@ else
 											echo " selected"
 									?>
 								>
-									<?=$site?>
+									<?=htmlspecialcharsbx($site)?>
 								</option>
 								<?
 							}

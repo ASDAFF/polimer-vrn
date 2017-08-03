@@ -14,6 +14,9 @@ $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 if ($saleModulePermissions < "W")
 	$APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
 
+if ($_SERVER["REQUEST_METHOD"] == "POST" && !check_bitrix_sessid())
+	$APPLICATION->AuthForm(Loc::getMessage("ACCESS_DENIED"));
+
 $APPLICATION->SetAdditionalCSS("/bitrix/panel/sale/preset.css");
 
 $presetManager = \Bitrix\Sale\Discount\Preset\Manager::getInstance();

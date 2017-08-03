@@ -441,13 +441,24 @@ class Tax
 	}
 
 	/**
+	 * @return Tax
+	 */
+	protected static function createTaxObject()
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$taxClassName = $registry->getTaxClassName();
+
+		return new $taxClassName();
+	}
+
+	/**
 	 * @param OrderBase $order
 	 *
 	 * @return Tax
 	 */
 	public static function load(OrderBase $order)
 	{
-		$tax = new static();
+		$tax = static::createTaxObject();
 		$tax->order = $order;
 
 		if ($order->getId() > 0)

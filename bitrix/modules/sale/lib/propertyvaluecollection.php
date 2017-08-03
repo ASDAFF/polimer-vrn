@@ -112,10 +112,21 @@ class PropertyValueCollection
 		$this->order = $order;
 	}
 
+	/**
+	 * @return PropertyValueCollection
+	 */
+	protected static function createPropertyValueCollectionObject()
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$propertyValueCollectionClassName = $registry->getPropertyValueCollectionClassName();
+
+		return new $propertyValueCollectionClassName();
+	}
+
 	public static function load(OrderBase $order)
 	{
 		/** @var PropertyValueCollection $propertyCollection */
-		$propertyCollection = new static();
+		$propertyCollection = static::createPropertyValueCollectionObject();
 		$propertyCollection->setOrder($order);
 
 		static $groups = array();
@@ -245,7 +256,10 @@ class PropertyValueCollection
 			);
 		}
 
-		$itemEventName = PropertyValue::getEntityEventName();
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+
+		$propertyClassName = $registry->get(Registry::ENTITY_PROPERTY_VALUE);
+		$itemEventName = $propertyClassName::getEntityEventName();
 		foreach ($itemsFromDb as $k => $v)
 		{
 			/** @var Main\Event $event */
@@ -565,5 +579,45 @@ class PropertyValueCollection
 		}
 
 		return $propertyValueCollectionClone;
+	}
+
+	/**
+	 * @return Result
+	 * @throws Main\ObjectNotFoundException
+	 */
+	public function verify()
+	{
+		$result = new Result();
+
+		/** @var Order $order */
+		if (!$order = $this->getOrder())
+		{
+			throw new Main\ObjectNotFoundException('Entity "Order" not found');
+		}
+		EntityMarker::deleteByFilter(
+			array(
+				"ORDER_ID" => $order->getId(),
+				"ENTITY_TYPE" => EntityMarker::ENTITY_TYPE_PROPERTY_VALUE
+			)
+		);
+
+		if (!EntityMarker::hasErrors($order))
+			$order->setField('MARKED', 'N');
+
+		/** @var PropertyValue $propertyValue */
+		foreach ($this->collection as $propertyValue)
+		{
+			$r = $propertyValue->checkValue($propertyValue->getPropertyId(),$propertyValue->getValue());
+
+			if (!$r->isSuccess() && (int)$propertyValue->getId() > 0)
+			{
+				$result->addWarnings($r->getWarnings());
+
+				EntityMarker::addMarker($order, $propertyValue, $r);
+				$order->setField('MARKED', 'Y');
+			}
+		}
+
+		return $result;
 	}
 }

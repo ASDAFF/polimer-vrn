@@ -1187,7 +1187,7 @@ class CCalendarEvent
 			if (!is_object(self::$TextParser))
 			{
 				self::$TextParser = new CTextParser();
-				self::$TextParser->allow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y", "TABLE" => "Y", "CUT_ANCHOR" => "N", "ALIGN" => "Y", "USER" => "Y", "USERFIELDS" => self::__GetUFForParseText($eventId, $arUFWDValue));
+				self::$TextParser->allow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y", "TABLE" => "Y", "CUT_ANCHOR" => "N", "ALIGN" => "Y", "USER" => "Y");
 			}
 
 			self::$TextParser->allow["USERFIELDS"] = self::__GetUFForParseText($eventId, $arUFWDValue);

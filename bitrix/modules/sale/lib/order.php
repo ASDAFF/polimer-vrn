@@ -50,6 +50,19 @@ class Order
 	}
 
 	/**
+	 * @param array $fields
+	 * @throws Main\NotImplementedException
+	 * @return Order
+	 */
+	protected static function createOrderObject(array $fields = array())
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$orderClassName = $registry->getOrderClassName();
+
+		return new $orderClassName($fields);
+	}
+
+	/**
 	 * Modify shipment collection.
 	 *
 	 * @param string $action				Action code.
@@ -64,6 +77,10 @@ class Order
 	public function onShipmentCollectionModify($action, Shipment $shipment, $name = null, $oldValue = null, $value = null)
 	{
 		$result = new Result();
+
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+
+		$optionClassName = $registry->get(Registry::ENTITY_OPTIONS);
 
 		if ($action == EventActions::DELETE)
 		{
@@ -189,11 +206,11 @@ class Order
 			{
 				if ($shipmentCollection->isAllowDelivery())
 				{
-					$orderStatus = Config\Option::get('sale', 'status_on_allow_delivery', '');
+					$orderStatus = $optionClassName::get('sale', 'status_on_allow_delivery', '');
 				}
 				elseif ($shipmentCollection->hasAllowDelivery())
 				{
-					$orderStatus = Config\Option::get('sale', 'status_on_allow_delivery_one_of', '');
+					$orderStatus = $optionClassName::get('sale', 'status_on_allow_delivery_one_of', '');
 				}
 			}
 
@@ -362,11 +379,11 @@ class Order
 			{
 				if ($shipmentCollection->isShipped())
 				{
-					$orderStatus = Config\Option::get('sale', 'status_on_shipped_shipment', '');
+					$orderStatus = $optionClassName::get('sale', 'status_on_shipped_shipment', '');
 				}
 				elseif ($shipmentCollection->hasShipped())
 				{
-					$orderStatus = Config\Option::get('sale', 'status_on_shipped_shipment_one_of', '');
+					$orderStatus = $optionClassName::get('sale', 'status_on_shipped_shipment_one_of', '');
 				}
 				$allowSetStatus = ($this->getField('STATUS_ID') != OrderStatus::getFinalStatus());
 			}
@@ -640,13 +657,9 @@ class Order
 	protected function loadBasket()
 	{
 		if (intval($this->getId()) > 0)
-		{
 			return Basket::loadItemsForOrder($this);
-		}
-		else
-		{
-			return false;
-		}
+
+		return null;
 	}
 
 	/**
@@ -1233,6 +1246,8 @@ class Order
 	 */
 	public static function deleteNoDemand($id)
 	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+
 		$result = new Result();
 
 		/** @var Main\Result $result */
@@ -1243,10 +1258,18 @@ class Order
 			return $result;
 		}
 
-		BasketItem::deleteNoDemand($id);
-		Shipment::deleteNoDemand($id);
-		Payment::deleteNoDemand($id);
-		PropertyValue::deleteNoDemand($id);
+		$basketItemClassName = $registry->getBasketItemClassName();
+		$basketItemClassName::deleteNoDemand($id);
+
+		$shipmentClassName = $registry->getShipmentClassName();
+		$shipmentClassName::deleteNoDemand($id);
+
+		$paymentClassName = $registry->getPaymentClassName();
+		$paymentClassName::deleteNoDemand($id);
+
+		$propertyValueClassName = $registry->getPropertyValueClassName();
+		$propertyValueClassName::deleteNoDemand($id);
+
 		OrderHistory::deleteByOrderId($id);
 		EntityMarker::deleteByOrderId($id);
 		Internals\OrderTable::delete($id);
@@ -1424,6 +1447,9 @@ class Order
 	{
 		$result = new Result();
 
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$paymentClassName = $registry->getPaymentClassName();
+
 		if ($action == EventActions::DELETE)
 		{
 			if ($this->getField('PAY_SYSTEM_ID') == $payment->getPaymentSystemId())
@@ -1490,7 +1516,7 @@ class Order
 				return $result;
 			}
 
-			if ($value != Payment::RETURN_NONE)
+			if ($value != $paymentClassName::RETURN_NONE)
 			{
 				if (!$payment->isPaid())
 				{
@@ -1519,11 +1545,11 @@ class Order
 					$creditSum = $payment->getSum() - $overPaid;
 				}
 
-				if ($value == Payment::RETURN_PS)
+				if ($value == $paymentClassName::RETURN_PS)
 				{
 					$psId = $payment->getPaymentSystemId();
 				}
-				elseif ($value == Payment::RETURN_INNER)
+				elseif ($value == $paymentClassName::RETURN_INNER)
 				{
 					$psId = Manager::getInnerPaySystemId();
 				}
@@ -1539,7 +1565,7 @@ class Order
 				{
 					if ($creditSum)
 					{
-						if ($value == Payment::RETURN_PS)
+						if ($value == $paymentClassName::RETURN_PS)
 						{
 							if ($overPaid > 0)
 							{
@@ -2311,13 +2337,17 @@ class Order
 
 		if ($oldPaid == "N")
 		{
+			$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+
+			$optionClassName = $registry->get(Registry::ENTITY_OPTIONS);
+
 			if ($this->isPaid())
 			{
-				$orderStatus = Config\Option::get('sale', 'status_on_paid', '');
+				$orderStatus = $optionClassName::get('sale', 'status_on_paid', '');
 			}
 			elseif ($paymentCollection->hasPaidPayment())
 			{
-				$orderStatus = Config\Option::get('sale', 'status_on_half_paid', '');
+				$orderStatus = $optionClassName::get('sale', 'status_on_half_paid', '');
 			}
 
 			$allowSetStatus = ($this->getField('STATUS_ID') != OrderStatus::getFinalStatus());
@@ -3197,6 +3227,16 @@ class Order
 		if ($basket = $this->getBasket())
 		{
 			$r = $basket->verify();
+			if (!$r->isSuccess())
+			{
+				$result->addErrors($r->getErrors());
+			}
+		}
+
+		/** @var PropertyValueCollection $propertyCollection */
+		if ($propertyCollection = $this->getPropertyCollection())
+		{
+			$r = $propertyCollection->verify();
 			if (!$r->isSuccess())
 			{
 				$result->addErrors($r->getErrors());

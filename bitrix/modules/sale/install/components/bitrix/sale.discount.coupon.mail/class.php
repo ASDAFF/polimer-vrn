@@ -49,9 +49,9 @@ class CSaleDiscountCouponMailComponent extends CBitrixComponent
 		$xmlId = $this->arParams['DISCOUNT_XML_ID'];
 		$saleDiscountValue = (float) $this->arParams['DISCOUNT_VALUE'];
 		$saleDiscountUnit = (string) $this->arParams['DISCOUNT_UNIT'];
-
+		$siteId = $this->getSiteId();
 		$fieldsAdd = array(
-			'LID' => $this->getSiteId(),
+			'LID' => $siteId ? $siteId : CSite::GetDefSite(),
 			'NAME' => Loc::getMessage("CVP_DISCOUNT_NAME"),
 			'ACTIVE' => 'Y',
 			'ACTIVE_FROM' => '',
@@ -89,7 +89,6 @@ class CSaleDiscountCouponMailComponent extends CBitrixComponent
 				'CHILDREN' => Array()
 			))
 		);
-
 
 		if(strlen($xmlId) <= 0)
 		{

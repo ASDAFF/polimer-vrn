@@ -1599,6 +1599,11 @@ abstract class ElementList extends Base
 				)
 				{
 					$variantParam = next($this->arParams['PRODUCT_ROW_VARIANTS']);
+					// if last variant is not suitable - should reset again
+					if ($variantParam === false)
+					{
+						$variantParam = reset($this->arParams['PRODUCT_ROW_VARIANTS']);
+					}
 
 					if ($variantParam === false)
 						break;
@@ -1859,6 +1864,8 @@ abstract class ElementList extends Base
 
 		if ($this->arResult['MODULES']['catalog'] && !empty($this->storage['IBLOCK_PARAMS']))
 		{
+			$elementIndex = array_keys($this->elements);
+
 			foreach ($this->storage['IBLOCK_PARAMS'] as $iblockId => $iblockParams)
 			{
 				$skuPropList[$iblockId] = array();
@@ -1876,10 +1883,61 @@ abstract class ElementList extends Base
 						)
 					);
 
-					$needValues = array();
-					\CIBlockPriceTools::getTreePropertyValues($skuPropList[$iblockId], $needValues);
+					if (!empty($skuPropList[$iblockId]))
+					{
+						if (!empty($this->productWithOffers[$iblockId]))
+						{
+							$skuPropIds = array();
+							foreach ($skuPropList[$iblockId] as $property)
+							{
+								$skuPropIds[$property['CODE']] = array(
+									'ID' => $property['ID'],
+									'CODE' => $property['CODE'],
+									'PROPERTY_TYPE' => $property['PROPERTY_TYPE'],
+									'USER_TYPE' => $property['USER_TYPE']
+								);
+							}
+							unset($property);
 
-					if (empty($skuPropList))
+							$needValues = array();
+							foreach ($elementIndex as $index)
+							{
+								if ($this->elements[$index]['IBLOCK_ID'] != $iblockId)
+									continue;
+								if ($this->elements[$index]['PRODUCT']['TYPE'] != Catalog\ProductTable::TYPE_SKU)
+									continue;
+								if (empty($this->elements[$index]['OFFERS']))
+									continue;
+								foreach ($this->elements[$index]['OFFERS'] as $offer)
+								{
+									foreach ($skuPropIds as $property)
+									{
+										if (isset($offer['DISPLAY_PROPERTIES'][$property['CODE']]))
+										{
+											if (!isset($needValues[$property['ID']]))
+												$needValues[$property['ID']] = array();
+											$valueId = ($property['PROPERTY_TYPE'] == Iblock\PropertyTable::TYPE_LIST
+												? $offer['DISPLAY_PROPERTIES'][$property['CODE']]['VALUE_ENUM_ID']
+												: $offer['DISPLAY_PROPERTIES'][$property['CODE']]['VALUE']
+											);
+											$needValues[$property['ID']][$valueId] = $valueId;
+											unset($valueId);
+										}
+									}
+									unset($property);
+								}
+								unset($offer);
+							}
+							unset($index);
+
+							if (!empty($needValues))
+								\CIBlockPriceTools::getTreePropertyValues($skuPropList[$iblockId], $needValues);
+							unset($needValues);
+
+							unset($skuPropIds);
+						}
+					}
+					else
 					{
 						$this->arParams['PRODUCT_DISPLAY_MODE'] = 'N';
 					}

@@ -2,12 +2,15 @@
 namespace Sale\Handlers\Delivery;
 
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\SystemException;
+use Bitrix\Sale\Order;
 use Bitrix\Sale\Shipment;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Delivery\CalculationResult;
+use Bitrix\Sale\ShipmentCollection;
 use Sale\Handlers\Delivery\Additional\RestClient;
 
 Loc::loadMessages(__FILE__);
@@ -129,6 +132,7 @@ class AdditionalProfile extends \Bitrix\Sale\Delivery\Services\Base
 	 * Calculates price
 	 * @param Shipment $shipment
 	 * @return CalculationResult
+	 * @throws SystemException
 	 * todo: Send default values if some params added to config, but not saved yet.
 	 */
 	protected function calculateConcrete(Shipment $shipment)
@@ -149,6 +153,25 @@ class AdditionalProfile extends \Bitrix\Sale\Delivery\Services\Base
 		{
 			$result = new CalculationResult();
 			$result->addError(new Error($e->getMessage()));
+		}
+
+		/** @var ShipmentCollection $shipmentCollection */
+		$shipmentCollection = $shipment->getCollection();
+		/** @var Order $order */
+		$order = $shipmentCollection->getOrder();
+		$shipmentCurrency = $order->getCurrency();
+
+		if ($result->isSuccess() && $this->currency != $shipmentCurrency)
+		{
+			if(!Loader::includeModule('currency'))
+				throw new SystemException("Can't include module \"Currency\"");
+
+			$result->setDeliveryPrice(
+				\CCurrencyRates::convertCurrency(
+					$result->getPrice(),
+					$this->currency,
+					$shipmentCurrency
+			));
 		}
 
 		return $result;

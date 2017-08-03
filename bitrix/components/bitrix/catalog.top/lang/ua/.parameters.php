@@ -1,4 +1,5 @@
 <?
+$MESS["IBLOCK_EXTENDED_SETTINGS"] = "Спеціальні налаштування";
 $MESS["IBLOCK_DETAIL_URL"] = "URL, що веде на сторінку зі вмістом елемента розділу";
 $MESS["IBLOCK_PRICES"] = "Ціни";
 $MESS["IBLOCK_BASKET"] = "Додавання до кошику";

@@ -67,12 +67,6 @@ else
 				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_1") ?></p>
 				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_2") ?> <?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_3") ?></p>
 				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_3a") ?></p>
-				<h3><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_TITLE_2") ?></h3>
-				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_7") ?></p>
-				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_7a") ?></p>
-				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_7b") ?></p>
-				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_7c") ?></p>
-				<img src="/bitrix/images/sale/vk/vk_man_2.png" alt="">
 				<h3><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_TITLE_3") ?></h3>
 				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_4", array(
 						'#A1' => '<a href="https://vk.com/apps?act=manage">',
@@ -84,10 +78,18 @@ else
 				<h3><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_TITLE_4") ?></h3>
 				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_8") ?></p>
 				<img src="/bitrix/images/sale/vk/vk_man_3.png" alt="">
-				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_9") ?></p>
+				
 				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_8a") ?></p>
-				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_8b") ?></p>
+				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_8b_") ?></p>
 				<img src="/bitrix/images/sale/vk/vk_man_3a.png" alt="">
+				<h3><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_TITLE_2_") ?></h3>
+				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_7_") ?></p>
+				<img src="/bitrix/images/sale/vk/vk_man_2.png" alt="">
+				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_7a_") ?></p>
+				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_7b_") ?></p>
+				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_7c") ?></p>
+				<br>
+				<p><?= Loc::getMessage("SALE_VK_MANUAL__CONNECTION_9_") ?></p>
 			</div>
 		</td>
 	</tr>

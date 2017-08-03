@@ -191,8 +191,11 @@ class BasketComponentHelper
 			$siteId = SITE_ID;
 		}
 
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$basketClassName = $registry->getBasketClassName();
+
 		$basketList = array();
-		$res = Basket::getList(array(
+		$res = $basketClassName::getList(array(
 								   'filter' => array(
 									   'FUSER_ID' => $fuserId,
 									   'ORDER_ID' => null,

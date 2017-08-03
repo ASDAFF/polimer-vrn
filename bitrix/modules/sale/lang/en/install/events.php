@@ -271,4 +271,32 @@ your payment has been processed and a respective receipt has been created. To vi
 
 To get more details on your order ##ORDER_ID# or #ORDER_DATE# please follow this link: http://#SERVER_NAME#/personal/order/detail/#ORDER_ACCOUNT_NUMBER_ENCODE#/
 ";
+$MESS["SALE_ORDER_SHIPMENT_STATUS_CHANGED_SUBJECT"] = "Status of your shipment from #SITE_NAME# has updated";
+$MESS["SALE_ORDER_SHIPMENT_STATUS_CHANGED_HTML_TITLE"] = "Tracking information for your shipment from #SITE_NAME# has been updated";
+$MESS["SALE_ORDER_SHIPMENT_STATUS_CHANGED_HTML_SUB_TITLE"] = "Dear #ORDER_USER#,";
+$MESS["SALE_ORDER_SHIPMENT_STATUS_CHANGED_HTML_TEXT"] = "Status of your shipment for order ##ORDER_NO# of #ORDER_DATE# has been updated to 
+
+\"#STATUS_NAME#\" (#STATUS_DESCRIPTION#).
+
+Tracking number: #TRACKING_NUMBER#.
+
+Shipped with: #DELIVERY_NAME#.
+
+#DELIVERY_TRACKING_URL##ORDER_DETAIL_URL#
+";
+$MESS["SALE_ORDER_SHIPMENT_STATUS_CHANGED_TYPE_NAME"] = "Package status update";
+$MESS["SALE_ORDER_SHIPMENT_STATUS_CHANGED_TYPE_DESC"] = "#SHIPMENT_NO# - shipment ID
+#SHIPMENT_DATE# - shipped on
+#ORDER_NO# - order #
+#ORDER_DATE# - order date
+#STATUS_NAME# - status name
+#STATUS_DESCRIPTION# - status description
+#TRACKING_NUMBER# - tracking number
+#EMAIL# - notify e-mail address
+#BCC# - send copy to address
+#ORDER_USER# - customer
+#DELIVERY_NAME# - delivery service name
+#DELIVERY_TRACKING_URL# - delivery service website for more tracking details
+#ORDER_ACCOUNT_NUMBER_ENCODE# - order ID (for links)
+#ORDER_DETAIL_URL# - order details URL";
 ?>

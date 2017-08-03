@@ -27,6 +27,7 @@ if (($referer = $_POST['HTTP_REFERER']) && is_string($referer))
 }
 
 $context = Bitrix\Conversion\DayContext::getInstance();
+$context->saveInstance();
 $context->addDayCounter('conversion_visit_day', 1);
 
 echo 'OK';

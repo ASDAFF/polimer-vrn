@@ -631,6 +631,63 @@ class CIMRestService extends IRestService
 		{
 			throw new Bitrix\Rest\RestException("Incorrect attach params", "ATTACH_ERROR", CRestServer::STATUS_WRONG_REQUEST);
 		}
+		
+		if (isset($arParams['KEYBOARD']) && !empty($arParams['KEYBOARD']))
+		{
+			$keyboard = Array();
+			if (is_string($arParams['KEYBOARD']))
+			{
+				$arParams['KEYBOARD'] = \CUtil::JsObjectToPhp($arParams['KEYBOARD']);
+			}
+			if (!isset($arParams['KEYBOARD']['BUTTONS']))
+			{
+				$keyboard['BUTTONS'] = $arParams['KEYBOARD'];
+			}
+			else
+			{
+				$keyboard = $arParams['KEYBOARD'];
+			}
+			$keyboard['BOT_ID'] = $arParams['BOT_ID'];
+			
+			$keyboard = \Bitrix\Im\Bot\Keyboard::getKeyboardByJson($keyboard);
+			if ($keyboard)
+			{
+				$arMessageFields['KEYBOARD'] = $keyboard;
+			}
+			else
+			{
+				throw new Bitrix\Rest\RestException("Incorrect keyboard params", "KEYBOARD_ERROR", CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
+		
+		if (isset($arParams['MENU']) && !empty($arParams['MENU']))
+		{
+			$menu = Array();
+			if (is_string($arParams['MENU']))
+			{
+				$arParams['MENU'] = \CUtil::JsObjectToPhp($arParams['MENU']);
+			}
+			if (!isset($arParams['MENU']['ITEMS']))
+			{
+				$menu['ITEMS'] = $arParams['MENU'];
+			}
+			else
+			{
+				$menu = $arParams['MENU'];
+			}
+			$menu['BOT_ID'] = $arParams['BOT_ID'];
+			
+			$menu = \Bitrix\Im\Bot\ContextMenu::getByJson($menu);
+			if ($menu)
+			{
+				$arMessageFields['MENU'] = $menu;
+			}
+			else
+			{
+				throw new Bitrix\Rest\RestException("Incorrect menu params", "MENU_ERROR", CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
+
 		if (isset($arParams['SYSTEM']) && $arParams['SYSTEM'] == 'Y')
 		{
 			$arMessageFields['SYSTEM'] = 'Y';
@@ -690,6 +747,7 @@ class CIMRestService extends IRestService
 		}
 		$arParams['IS_EDITED'] = $arParams['IS_EDITED'] == 'N'? 'N': 'Y';
 
+		$message = null;
 		if (isset($arParams['ATTACH']))
 		{
 			$message = CIMMessenger::CheckPossibilityUpdateMessage(IM_CHECK_UPDATE, $arParams['ID']);
@@ -723,6 +781,108 @@ class CIMRestService extends IRestService
 			}
 		}
 
+		if (isset($arParams['KEYBOARD']))
+		{
+			if (is_null($message))
+			{
+				$message = CIMMessenger::CheckPossibilityUpdateMessage(IM_CHECK_UPDATE, $arParams['ID']);
+			}
+			if (!$message)
+			{
+				throw new Bitrix\Rest\RestException("Time has expired for modification or you don't have access", "CANT_EDIT_MESSAGE", CRestServer::STATUS_FORBIDDEN);
+			}
+
+			if (empty($arParams['KEYBOARD']) || $arParams['KEYBOARD'] == 'N')
+			{
+				CIMMessageParam::Set($arParams['ID'], Array('KEYBOARD' => 'N'));
+			}
+			else
+			{
+				$keyboard = Array();
+				if (is_string($arParams['KEYBOARD']))
+				{
+					$arParams['KEYBOARD'] = \CUtil::JsObjectToPhp($arParams['KEYBOARD']);
+				}
+				if (!isset($arParams['KEYBOARD']['BUTTONS']))
+				{
+					$keyboard['BUTTONS'] = $arParams['KEYBOARD'];
+				}
+				else
+				{
+					$keyboard = $arParams['KEYBOARD'];
+				}
+				$keyboard['BOT_ID'] = $arParams['BOT_ID'];
+
+				$keyboard = \Bitrix\Im\Bot\Keyboard::getKeyboardByJson($keyboard);
+				if ($keyboard)
+				{
+					if ($keyboard->isAllowSize())
+					{
+						CIMMessageParam::Set($arParams['ID'], Array('KEYBOARD' => $keyboard));
+					}
+					else
+					{
+						throw new Bitrix\Rest\RestException("You have exceeded the maximum allowable size of keyboard", "KEYBOARD_OVERSIZE", CRestServer::STATUS_WRONG_REQUEST);
+					}
+				}
+				else if ($arParams['KEYBOARD'])
+				{
+					throw new Bitrix\Rest\RestException("Incorrect keyboard params", "KEYBOARD_ERROR", CRestServer::STATUS_WRONG_REQUEST);
+				}
+			}
+		}
+		
+		if (isset($arParams['MENU']))
+		{
+			if (is_null($message))
+			{
+				$message = CIMMessenger::CheckPossibilityUpdateMessage(IM_CHECK_UPDATE, $arParams['MESSAGE_ID'], $arParams['BOT_ID']);
+			}
+			if (!$message)
+			{
+				throw new Bitrix\Rest\RestException("Time has expired for modification or you don't have access", "CANT_EDIT_MESSAGE", CRestServer::STATUS_FORBIDDEN);
+			}
+
+			if (empty($arParams['MENU']) || $arParams['MENU'] == 'N')
+			{
+				CIMMessageParam::Set($arParams['MESSAGE_ID'], Array('MENU' => 'N'));
+			}
+			else
+			{
+				$menu = Array();
+				if (is_string($arParams['MENU']))
+				{
+					$arParams['MENU'] = \CUtil::JsObjectToPhp($arParams['MENU']);
+				}
+				if (!isset($arParams['MENU']['ITEMS']))
+				{
+					$menu['ITEMS'] = $arParams['MENU'];
+				}
+				else
+				{
+					$menu = $arParams['MENU'];
+				}
+				$menu['BOT_ID'] = $arParams['BOT_ID'];
+
+				$menu = \Bitrix\Im\Bot\ContextMenu::getByJson($menu);
+				if ($menu)
+				{
+					if ($menu->isAllowSize())
+					{
+						CIMMessageParam::Set($arParams['MESSAGE_ID'], Array('MENU' => $menu));
+					}
+					else
+					{
+						throw new Bitrix\Rest\RestException("You have exceeded the maximum allowable size of menu", "MENU_OVERSIZE", CRestServer::STATUS_WRONG_REQUEST);
+					}
+				}
+				else if ($arParams['MENU'])
+				{
+					throw new Bitrix\Rest\RestException("Incorrect menu params", "menu_ERROR", CRestServer::STATUS_WRONG_REQUEST);
+				}
+			}
+		}
+
 		if (isset($arParams['MESSAGE']))
 		{
 			$urlPreview = isset($arParams['URL_PREVIEW']) && $arParams['URL_PREVIEW'] == "N"? false: true;
@@ -733,7 +893,7 @@ class CIMRestService extends IRestService
 				throw new Bitrix\Rest\RestException("Time has expired for modification or you don't have access", "CANT_EDIT_MESSAGE", CRestServer::STATUS_FORBIDDEN);
 			}
 		}
-		CIMMessageParam::SendPull($arParams['ID'], Array('KEYBOARD', 'ATTACH'));
+		CIMMessageParam::SendPull($arParams['ID'], Array('KEYBOARD', 'ATTACH', 'MENU'));
 
 		return true;
 	}
@@ -938,11 +1098,13 @@ class CIMRestService extends IRestService
 	{
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
+		$customClientId = false;
 		$clientId = $server->getClientId();
 		if (!$clientId)
 		{
 			if (!empty($arParams['CLIENT_ID']))
 			{
+				$customClientId = true;
 				$clientId = 'custom'.$arParams['CLIENT_ID'];
 			}
 			else
@@ -956,6 +1118,10 @@ class CIMRestService extends IRestService
 
 		if (isset($arParams['EVENT_MESSAGE_ADD']) && !empty($arParams['EVENT_MESSAGE_ADD']))
 		{
+			if ($customClientId)
+			{
+				$arParams['EVENT_MESSAGE_ADD'] = $arParams['EVENT_MESSAGE_ADD'].(strpos($arParams['EVENT_MESSAGE_ADD'], '?') === false? '?': '&').'CLIENT_ID='.$arParams['CLIENT_ID'];
+			}
 			try
 			{
 				Bitrix\Rest\EventTable::checkCallback($arParams['EVENT_MESSAGE_ADD'], $arApp);
@@ -972,6 +1138,10 @@ class CIMRestService extends IRestService
 
 		if (isset($arParams['EVENT_WELCOME_MESSAGE']) && !empty($arParams['EVENT_WELCOME_MESSAGE']))
 		{
+			if ($customClientId)
+			{
+				$arParams['EVENT_WELCOME_MESSAGE'] = $arParams['EVENT_WELCOME_MESSAGE'].(strpos($arParams['EVENT_WELCOME_MESSAGE'], '?') === false? '?': '&').'CLIENT_ID='.$arParams['CLIENT_ID'];
+			}
 			try
 			{
 				Bitrix\Rest\EventTable::checkCallback($arParams['EVENT_WELCOME_MESSAGE'], $arApp);
@@ -988,6 +1158,10 @@ class CIMRestService extends IRestService
 
 		if (isset($arParams['EVENT_BOT_DELETE']) && !empty($arParams['EVENT_BOT_DELETE']))
 		{
+			if ($customClientId)
+			{
+				$arParams['EVENT_BOT_DELETE'] = $arParams['EVENT_BOT_DELETE'].(strpos($arParams['EVENT_BOT_DELETE'], '?') === false? '?': '&').'CLIENT_ID='.$arParams['CLIENT_ID'];
+			}
 			try
 			{
 				Bitrix\Rest\EventTable::checkCallback($arParams['EVENT_BOT_DELETE'], $arApp);
@@ -1128,10 +1302,12 @@ class CIMRestService extends IRestService
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		$clientId = $server->getClientId();
+		$customClientId = false;
 		if (!$clientId)
 		{
 			if (!empty($arParams['CLIENT_ID']))
 			{
+				$customClientId = true;
 				$clientId = 'custom'.$arParams['CLIENT_ID'];
 			}
 			else
@@ -1157,6 +1333,10 @@ class CIMRestService extends IRestService
 		if (isset($arParams['FIELDS']['EVENT_MESSAGE_ADD']) && !empty($arParams['FIELDS']['EVENT_MESSAGE_ADD']))
 		{
 			$updateEvents['EVENT_MESSAGE_ADD'] = $arParams['FIELDS']['EVENT_MESSAGE_ADD'];
+			if ($customClientId)
+			{
+				$updateEvents['EVENT_MESSAGE_ADD'] = $updateEvents['EVENT_MESSAGE_ADD'].(strpos($updateEvents['EVENT_MESSAGE_ADD'], '?') === false? '?': '&').'CLIENT_ID='.$arParams['CLIENT_ID'];
+			}
 			try
 			{
 				Bitrix\Rest\EventTable::checkCallback($arParams['FIELDS']['EVENT_MESSAGE_ADD'], $arApp);
@@ -1170,6 +1350,10 @@ class CIMRestService extends IRestService
 		if (isset($arParams['FIELDS']['EVENT_WELCOME_MESSAGE']) && !empty($arParams['FIELDS']['EVENT_WELCOME_MESSAGE']))
 		{
 			$updateEvents['EVENT_WELCOME_MESSAGE'] = $arParams['FIELDS']['EVENT_WELCOME_MESSAGE'];
+			if ($customClientId)
+			{
+				$updateEvents['EVENT_WELCOME_MESSAGE'] = $updateEvents['EVENT_WELCOME_MESSAGE'].(strpos($updateEvents['EVENT_WELCOME_MESSAGE'], '?') === false? '?': '&').'CLIENT_ID='.$arParams['CLIENT_ID'];
+			}
 			try
 			{
 				Bitrix\Rest\EventTable::checkCallback($arParams['FIELDS']['EVENT_WELCOME_MESSAGE'], $arApp);
@@ -1183,6 +1367,10 @@ class CIMRestService extends IRestService
 		if (isset($arParams['FIELDS']['EVENT_BOT_DELETE']) && !empty($arParams['FIELDS']['EVENT_BOT_DELETE']))
 		{
 			$updateEvents['EVENT_BOT_DELETE'] = $arParams['FIELDS']['EVENT_BOT_DELETE'];
+			if ($customClientId)
+			{
+				$updateEvents['EVENT_BOT_DELETE'] = $updateEvents['EVENT_BOT_DELETE'].(strpos($updateEvents['EVENT_BOT_DELETE'], '?') === false? '?': '&').'CLIENT_ID='.$arParams['CLIENT_ID'];
+			}
 			try
 			{
 				Bitrix\Rest\EventTable::checkCallback($arParams['FIELDS']['EVENT_BOT_DELETE'], $arApp);
@@ -1350,10 +1538,19 @@ class CIMRestService extends IRestService
 
 		$arMessageFields = Array();
 
-		$arMessageFields['DIALOG_ID'] = $arParams['DIALOG_ID'];
-		if (empty($arMessageFields['DIALOG_ID']))
+		if (intval($arParams['FROM_USER_ID']) && intval($arParams['TO_USER_ID']))
 		{
-			throw new Bitrix\Rest\RestException("Dialog ID can't be empty", "DIALOG_ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+			$arParams['SYSTEM'] = 'Y';
+			$arMessageFields['FROM_USER_ID'] = intval($arParams['FROM_USER_ID']);
+			$arMessageFields['TO_USER_ID'] = intval($arParams['TO_USER_ID']);
+		}
+		else
+		{
+			$arMessageFields['DIALOG_ID'] = $arParams['DIALOG_ID'];
+			if (empty($arMessageFields['DIALOG_ID']))
+			{
+				throw new Bitrix\Rest\RestException("Dialog ID can't be empty", "DIALOG_ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+			}
 		}
 
 		$arMessageFields['MESSAGE'] = trim($arParams['MESSAGE']);
@@ -1407,6 +1604,34 @@ class CIMRestService extends IRestService
 			else
 			{
 				throw new Bitrix\Rest\RestException("Incorrect keyboard params", "KEYBOARD_ERROR", CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
+		
+		if (isset($arParams['MENU']) && !empty($arParams['MENU']))
+		{
+			$menu = Array();
+			if (is_string($arParams['MENU']))
+			{
+				$arParams['MENU'] = \CUtil::JsObjectToPhp($arParams['MENU']);
+			}
+			if (!isset($arParams['MENU']['ITEMS']))
+			{
+				$menu['ITEMS'] = $arParams['MENU'];
+			}
+			else
+			{
+				$menu = $arParams['MENU'];
+			}
+			$menu['BOT_ID'] = $arParams['BOT_ID'];
+			
+			$menu = \Bitrix\Im\Bot\ContextMenu::getByJson($menu);
+			if ($menu)
+			{
+				$arMessageFields['MENU'] = $menu;
+			}
+			else
+			{
+				throw new Bitrix\Rest\RestException("Incorrect menu params", "MENU_ERROR", CRestServer::STATUS_WRONG_REQUEST);
 			}
 		}
 
@@ -1568,6 +1793,57 @@ class CIMRestService extends IRestService
 				}
 			}
 		}
+		
+		if (isset($arParams['MENU']))
+		{
+			if (is_null($message))
+			{
+				$message = CIMMessenger::CheckPossibilityUpdateMessage(IM_CHECK_UPDATE, $arParams['MESSAGE_ID'], $arParams['BOT_ID']);
+			}
+			if (!$message)
+			{
+				throw new Bitrix\Rest\RestException("Time has expired for modification or you don't have access", "CANT_EDIT_MESSAGE", CRestServer::STATUS_FORBIDDEN);
+			}
+
+			if (empty($arParams['MENU']) || $arParams['MENU'] == 'N')
+			{
+				CIMMessageParam::Set($arParams['MESSAGE_ID'], Array('MENU' => 'N'));
+			}
+			else
+			{
+				$menu = Array();
+				if (is_string($arParams['MENU']))
+				{
+					$arParams['MENU'] = \CUtil::JsObjectToPhp($arParams['MENU']);
+				}
+				if (!isset($arParams['MENU']['ITEMS']))
+				{
+					$menu['ITEMS'] = $arParams['MENU'];
+				}
+				else
+				{
+					$menu = $arParams['MENU'];
+				}
+				$menu['BOT_ID'] = $arParams['BOT_ID'];
+
+				$menu = \Bitrix\Im\Bot\ContextMenu::getByJson($menu);
+				if ($menu)
+				{
+					if ($menu->isAllowSize())
+					{
+						CIMMessageParam::Set($arParams['MESSAGE_ID'], Array('MENU' => $menu));
+					}
+					else
+					{
+						throw new Bitrix\Rest\RestException("You have exceeded the maximum allowable size of menu", "MENU_OVERSIZE", CRestServer::STATUS_WRONG_REQUEST);
+					}
+				}
+				else if ($arParams['MENU'])
+				{
+					throw new Bitrix\Rest\RestException("Incorrect menu params", "menu_ERROR", CRestServer::STATUS_WRONG_REQUEST);
+				}
+			}
+		}
 
 		if (isset($arParams['MESSAGE']))
 		{
@@ -1581,7 +1857,7 @@ class CIMRestService extends IRestService
 			}
 		}
 
-		CIMMessageParam::SendPull($arParams['MESSAGE_ID'], Array('KEYBOARD', 'ATTACH'));
+		CIMMessageParam::SendPull($arParams['MESSAGE_ID'], Array('KEYBOARD', 'ATTACH', 'MENU'));
 
 		return true;
 	}
@@ -1779,6 +2055,18 @@ class CIMRestService extends IRestService
 
 		if (!$arHandler['APP_CODE'])
 		{
+			$parts = parse_url($arHandler['EVENT_HANDLER']);
+			parse_str($parts['query'], $query);
+			$query = array_change_key_case($query, CASE_UPPER);
+			
+			if ($query['CLIENT_ID'])
+			{
+				$arHandler['APP_CODE'] = 'custom'.$query['CLIENT_ID'];
+			}
+		}
+		
+		if (!$arHandler['APP_CODE'])
+		{
 			throw new Exception('Event is intended for another application');
 		}
 
@@ -1848,7 +2136,19 @@ class CIMRestService extends IRestService
 	public static function onBotMessageAdd($arParams, $arHandler)
 	{
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
-
+		
+		if (!$arHandler['APP_CODE'])
+		{
+			$parts = parse_url($arHandler['EVENT_HANDLER']);
+			parse_str($parts['query'], $query);
+			$query = array_change_key_case($query, CASE_UPPER);
+			
+			if ($query['CLIENT_ID'])
+			{
+				$arHandler['APP_CODE'] = 'custom'.$query['CLIENT_ID'];
+			}
+		}
+		
 		if (!$arHandler['APP_CODE'])
 		{
 			throw new Exception('Event is intended for another application');
@@ -1916,6 +2216,17 @@ class CIMRestService extends IRestService
 
 		if (!$arHandler['APP_CODE'])
 		{
+			$parts = parse_url($arHandler['EVENT_HANDLER']);
+			parse_str($parts['query'], $query);
+			$query = array_change_key_case($query, CASE_UPPER);
+			if ($query['CLIENT_ID'])
+			{
+				$arHandler['APP_CODE'] = 'custom'.$query['CLIENT_ID'];
+			}
+		}
+		
+		if (!$arHandler['APP_CODE'])
+		{
 			throw new Exception('Event is intended for another application');
 		}
 
@@ -1971,6 +2282,17 @@ class CIMRestService extends IRestService
 
 		if (!$arHandler['APP_CODE'])
 		{
+			$parts = parse_url($arHandler['EVENT_HANDLER']);
+			parse_str($parts['query'], $query);
+			$query = array_change_key_case($query, CASE_UPPER);
+			if ($query['CLIENT_ID'])
+			{
+				$arHandler['APP_CODE'] = 'custom'.$query['CLIENT_ID'];
+			}
+		}
+		
+		if (!$arHandler['APP_CODE'])
+		{
 			throw new Exception('Event is intended for another application');
 		}
 
@@ -2006,11 +2328,13 @@ class CIMRestService extends IRestService
 	{
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
+		$customClientId = false;
 		$clientId = $server->getClientId();
 		if (!$clientId)
 		{
 			if (!empty($arParams['CLIENT_ID']))
 			{
+				$customClientId = true;
 				$clientId = 'custom'.$arParams['CLIENT_ID'];
 			}
 			else
@@ -2024,6 +2348,10 @@ class CIMRestService extends IRestService
 
 		if (isset($arParams['EVENT_COMMAND_ADD']) && !empty($arParams['EVENT_COMMAND_ADD']))
 		{
+			if ($customClientId)
+			{
+				$arParams['EVENT_COMMAND_ADD'] = $arParams['EVENT_COMMAND_ADD'].(strpos($arParams['EVENT_COMMAND_ADD'], '?') === false? '?': '&').'CLIENT_ID='.$arParams['CLIENT_ID'];
+			}
 			try
 			{
 				Bitrix\Rest\EventTable::checkCallback($arParams['EVENT_COMMAND_ADD'], $arApp);
@@ -2134,10 +2462,12 @@ class CIMRestService extends IRestService
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		$clientId = $server->getClientId();
+		$customClientId = false;
 		if (!$clientId)
 		{
 			if (!empty($arParams['CLIENT_ID']))
 			{
+				$customClientId = true;
 				$clientId = 'custom'.$arParams['CLIENT_ID'];
 			}
 			else
@@ -2163,6 +2493,10 @@ class CIMRestService extends IRestService
 		if (isset($arParams['FIELDS']['EVENT_COMMAND_ADD']) && !empty($arParams['FIELDS']['EVENT_COMMAND_ADD']))
 		{
 			$updateEvents['EVENT_COMMAND_ADD'] = $arParams['FIELDS']['EVENT_COMMAND_ADD'];
+			if ($customClientId)
+			{
+				$updateEvents['EVENT_COMMAND_ADD'] = $updateEvents['EVENT_COMMAND_ADD'].(strpos($updateEvents['EVENT_COMMAND_ADD'], '?') === false? '?': '&').'CLIENT_ID='.$arParams['CLIENT_ID'];
+			}
 			try
 			{
 				Bitrix\Rest\EventTable::checkCallback($arParams['FIELDS']['EVENT_COMMAND_ADD'], $arApp);
@@ -2333,6 +2667,34 @@ class CIMRestService extends IRestService
 				throw new Bitrix\Rest\RestException("Incorrect keyboard params", "KEYBOARD_ERROR", CRestServer::STATUS_WRONG_REQUEST);
 			}
 		}
+		
+		if (isset($arParams['MENU']) && !empty($arParams['MENU']))
+		{
+			$menu = Array();
+			if (is_string($arParams['MENU']))
+			{
+				$arParams['MENU'] = \CUtil::JsObjectToPhp($arParams['MENU']);
+			}
+			if (!isset($arParams['MENU']['ITEMS']))
+			{
+				$menu['ITEMS'] = $arParams['MENU'];
+			}
+			else
+			{
+				$menu = $arParams['MENU'];
+			}
+			$menu['BOT_ID'] = $arParams['BOT_ID'];
+			
+			$menu = \Bitrix\Im\Bot\ContextMenu::getByJson($menu);
+			if ($menu)
+			{
+				$arMessageFields['MENU'] = $menu;
+			}
+			else
+			{
+				throw new Bitrix\Rest\RestException("Incorrect menu params", "MENU_ERROR", CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
 
 		if (isset($arParams['SYSTEM']) && $arParams['SYSTEM'] == 'Y')
 		{
@@ -2381,6 +2743,11 @@ class CIMRestService extends IRestService
 		}
 
 		$iframe = '';
+		$iframeWidth = 0;
+		$iframeHeight = 0;
+		$iframePopup = 'N';
+		$hash = '';
+		
 		$js = '';
 		if (
 			isset($arParams['JS_METHOD']) && in_array($arParams['JS_METHOD'], Array('PUT', 'SEND', 'CALL', 'SUPPORT')) &&
@@ -2415,9 +2782,6 @@ class CIMRestService extends IRestService
 					$js = "BXIM.openMessenger('networkLines".$matches[0]."');";
 				}
 			}
-			$iframeWidth = 0;
-			$iframeHeight = 0;
-			$hash = '';
 		}
 		else if (isset($arParams['IFRAME']) && !empty($arParams['IFRAME']))
 		{
@@ -2433,6 +2797,7 @@ class CIMRestService extends IRestService
 			$iframe = $arParams['IFRAME'];
 			$iframeWidth = isset($arParams['IFRAME_WIDTH']) && intval($arParams['IFRAME_WIDTH']) > 250? intval($arParams['IFRAME_WIDTH']): 320;
 			$iframeHeight = isset($arParams['IFRAME_HEIGHT']) && intval($arParams['IFRAME_HEIGHT']) > 50? intval($arParams['IFRAME_HEIGHT']): 250;
+			$iframePopup = isset($arParams['IFRAME_POPUP']) && $arParams['IFRAME_POPUP'] == 'Y'? 'Y': 'N';
 
 			if (!isset($arParams['HASH']) || empty($arParams['HASH']))
 			{
@@ -2459,7 +2824,8 @@ class CIMRestService extends IRestService
 
 		$context = isset($arParams['CONTEXT'])? $arParams['CONTEXT']: 'ALL';
 		$hidden = isset($arParams['HIDDEN']) && $arParams['HIDDEN'] == 'Y'? 'Y': 'N';
-		$extranet = isset($arParams['EXTRANET_SUPPORT']) && $arParams['EXTRANET_SUPPORT'] == 'Y'? 'Y': 'N';
+		$extranetSupport = isset($arParams['EXTRANET_SUPPORT']) && $arParams['EXTRANET_SUPPORT'] == 'Y'? 'Y': 'N';
+		$livechatSupport = isset($arParams['LIVECHAT_SUPPORT']) && $arParams['LIVECHAT_SUPPORT'] == 'Y'? 'Y': 'N';
 
 		$arParams['BOT_ID'] = intval($arParams['BOT_ID']);
 		if ($arParams['BOT_ID'] > 0)
@@ -2497,7 +2863,9 @@ class CIMRestService extends IRestService
 			'IFRAME' => $iframe,
 			'IFRAME_HEIGHT' => $iframeHeight,
 			'IFRAME_WIDTH' => $iframeWidth,
-			'EXTRANET_SUPPORT' => $extranet,
+			'IFRAME_POPUP' => $iframePopup,
+			'EXTRANET_SUPPORT' => $extranetSupport,
+			'LIVECHAT_SUPPORT' => $livechatSupport,
 			'MODULE_ID' => 'rest',
 			'LANG' => $arParams['LANG'],
 		));
@@ -2515,7 +2883,9 @@ class CIMRestService extends IRestService
 			'IFRAME' => $iframe,
 			'IFRAME_HEIGHT' => $iframeHeight,
 			'IFRAME_WIDTH' => $iframeWidth,
-			'EXTRANET_SUPPORT' => $extranet,
+			'IFRAME_POPUP' => $iframePopup,
+			'EXTRANET_SUPPORT' => $extranetSupport,
+			'LIVECHAT_SUPPORT' => $livechatSupport,
 			'MODULE_ID' => 'rest',
 			'LANG' => $arParams['LANG'],
 		),1), "WRONG_REQUEST", CRestServer::STATUS_WRONG_REQUEST);
@@ -2659,6 +3029,10 @@ class CIMRestService extends IRestService
 		{
 			$updateFields['IFRAME_HEIGHT'] = intval($arParams['FIELDS']['IFRAME_HEIGHT']);
 		}
+		if (isset($arParams['FIELDS']['IFRAME_POPUP']) && !empty($arParams['FIELDS']['IFRAME_POPUP']))
+		{
+			$updateFields['IFRAME_POPUP'] = $arParams['FIELDS']['IFRAME_POPUP'] == 'Y'? 'Y': 'N';
+		}
 
 		if (isset($arParams['FIELDS']['HIDDEN']) && !empty($arParams['FIELDS']['HIDDEN']))
 		{
@@ -2668,6 +3042,11 @@ class CIMRestService extends IRestService
 		if (isset($arParams['FIELDS']['EXTRANET_SUPPORT']) && !empty($arParams['FIELDS']['EXTRANET_SUPPORT']))
 		{
 			$updateFields['EXTRANET_SUPPORT'] = $arParams['FIELDS']['EXTRANET_SUPPORT'] == 'Y'? 'Y': 'N';
+		}
+		
+		if (isset($arParams['FIELDS']['LIVECHAT_SUPPORT']) && !empty($arParams['FIELDS']['LIVECHAT_SUPPORT']))
+		{
+			$updateFields['LIVECHAT_SUPPORT'] = $arParams['FIELDS']['LIVECHAT_SUPPORT'] == 'Y'? 'Y': 'N';
 		}
 
 		if (isset($arParams['FIELDS']['LANG']) && !empty($arParams['FIELDS']['LANG']))

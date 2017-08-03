@@ -55,6 +55,14 @@ class Post
 					$select[] = 'UF_BLOG_POST_FILE';
 				}
 
+				if (
+					Main\ModuleManager::isModuleInstalled('vote')
+					&& Main\ModuleManager::isModuleInstalled('socialnetwork')
+				)
+				{
+					$select[] = 'UF_BLOG_POST_VOTE';
+				}
+
 				$res = PostTable::getList(array(
 					'filter' => array('=ID' => $postId),
 					'select' => $select

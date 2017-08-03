@@ -388,24 +388,35 @@ class CIBlockSection extends CAllIBlockSection
 					"SELECT DISTINCT ".$strSelect.$strSql.$strGroupBy.$strSqlOrder,
 					$nTopCount
 				));
+				if(isset($arFilter["IBLOCK_ID"]) && $arFilter["IBLOCK_ID"] > 0)
+				{
+					$res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("IBLOCK_".$arFilter["IBLOCK_ID"]."_SECTION"));
+				}
 			}
 			else
 			{
 				$res_cnt = $DB->Query("SELECT COUNT(DISTINCT BS.ID) as C ".$strSql);
 				$res_cnt = $res_cnt->Fetch();
 				$res = new CDBResult();
+				if(isset($arFilter["IBLOCK_ID"]) && $arFilter["IBLOCK_ID"] > 0)
+				{
+					$res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("IBLOCK_".$arFilter["IBLOCK_ID"]."_SECTION"));
+				}
 				$res->NavQuery("SELECT DISTINCT ".$strSelect.$strSql.$strGroupBy.$strSqlOrder, $res_cnt["C"], $arNavStartParams);
 			}
 		}
 		else
 		{
 			$res = $DB->Query("SELECT DISTINCT ".$strSelect.$strSql.$strGroupBy.$strSqlOrder, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
+			if(isset($arFilter["IBLOCK_ID"]) && $arFilter["IBLOCK_ID"] > 0)
+			{
+				$res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("IBLOCK_".$arFilter["IBLOCK_ID"]."_SECTION"));
+			}
 		}
 
 		$res = new CIBlockResult($res);
 		if(isset($arFilter["IBLOCK_ID"]) && $arFilter["IBLOCK_ID"] > 0)
 		{
-			$res->SetUserFields($USER_FIELD_MANAGER->GetUserFields("IBLOCK_".$arFilter["IBLOCK_ID"]."_SECTION"));
 			$res->SetIBlockTag($arFilter["IBLOCK_ID"]);
 		}
 

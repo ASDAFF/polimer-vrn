@@ -2,6 +2,7 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Im as IM;
+use Bitrix\Main\Loader;
 
 class CIMNotify
 {
@@ -492,14 +493,59 @@ class CIMNotify
 			}
 			//CUserCounter::Set($this->user_id, 'im_notify_v2', 0, '**', '', false);
 		}
-		
+
 		$this->SendMarkNotifyRead($chatId, $id, $setThisAndHigher, $appId);
-		
+
 		CIMMessenger::SpeedFileDelete($this->user_id, IM_SPEED_NOTIFY);
-		
+
 		return true;
 	}
-	
+
+	public function MarkNotifyReadBySubTag($subTagList = array())
+	{
+		global $DB;
+
+		if (empty($subTagList))
+		{
+			return;
+		}
+
+		if (!is_array($subTagList))
+		{
+			$subTagList = array($subTagList);
+		}
+
+		$idList = array();
+
+		$strSql ="SELECT ID FROM b_im_message WHERE NOTIFY_SUB_TAG IN (".implode(",", array_map(function($subTag) { return "'".$subTag."'";}, $subTagList)).") AND NOTIFY_READ='N' AND NOTIFY_TYPE > '".IM_NOTIFY_CONFIRM."'";
+		$res = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		while ($message = $res->fetch())
+		{
+			$idList[] = intval($message["ID"]);
+		}
+
+		if (!empty($idList))
+		{
+			$strSql ="UPDATE b_im_message SET NOTIFY_READ = 'Y' WHERE ID IN (".implode(",", $idList).")";
+			$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+
+			if (Loader::includeModule("pull"))
+			{
+				CPullStack::AddByUser($this->user_id, Array(
+					'module_id' => 'im',
+					'command' => 'massReadNotify',
+					'params' => Array(
+						'idList' => $idList,
+					),
+				));
+			}
+
+			CIMMessenger::SpeedFileDelete($this->user_id, IM_SPEED_NOTIFY);
+		}
+
+		return true;
+	}
+
 	private function SendMarkNotifyRead($chatId, $messageId, $setThisAndHigher, $appId)
 	{
 		if ($chatId <= 0)

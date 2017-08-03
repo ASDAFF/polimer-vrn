@@ -5,7 +5,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale;
 use Bitrix\Catalog;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\Entity;
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_admin_before.php');
 /** @var CAllUser $USER */
@@ -35,6 +34,9 @@ final class DiscountCatalogMigrator
 	const STATUS_FINISH       = 2;
 	const STATUS_TIME_EXPIRED = 3;
 	const STATUS_ERROR        = 4;
+
+	const TYPE_GENERAL    = 2;
+	const TYPE_CUMULATIVE = 3;
 
 	public $countSuccessfulSteps = 0;
 	/** @var  DiscountCatalogMigratorLogger */
@@ -68,6 +70,8 @@ final class DiscountCatalogMigrator
 		$this->isOracle = $this->connection instanceof \Bitrix\Main\DB\OracleConnection;
 		$this->isMysql = $this->connection instanceof \Bitrix\Main\DB\MysqlCommonConnection;
 		$this->isMssql = $this->connection instanceof \Bitrix\Main\DB\MssqlConnection;
+
+		\Bitrix\Sale\Discount\Preset\Manager::getInstance()->registerAutoLoader();
 	}
 
 	public function log($data)
@@ -293,6 +297,7 @@ final class DiscountCatalogMigrator
 //		$this->recalculatePriority();
 
 		$this->moveDiscounts();
+		$this->moveCumulativeDiscounts();
 		$this->moveCoupons();
 		$this->fillShortDescription();
 
@@ -328,15 +333,12 @@ final class DiscountCatalogMigrator
 
 	protected function moveDiscounts()
 	{
-		global $APPLICATION;
-
  		if($this->isStepFinished(__METHOD__))
 		{
 			return;
 		}
 
 		$counter = $this->getCounter();
-
 		$discountIterator = Catalog\DiscountTable::getList(array(
 			'filter' => array(
 				'>ID' => $counter,
@@ -346,15 +348,23 @@ final class DiscountCatalogMigrator
 		    'order' => array('ID' => 'ASC'),
 		));
 
-		$maxPriority = $this->getMaxPriorityFromOldSaleDiscounts() + 10;
-		while($discount = $discountIterator->fetch())
-		{
-			$errors = array();
-			if($counter > $discount['ID'])
-			{
-				continue;
-			}
+		$this->migrateDiscounts($discountIterator);
 
+		$this->setStepFinished(__METHOD__);
+	}
+
+	private function migrateDiscounts(\Bitrix\Main\DB\Result $discountIterator)
+	{
+		global $APPLICATION;
+		$maxPriority = $this->getMaxPriorityFromOldSaleDiscounts() + 10;
+
+		foreach ($discountIterator as $discount)
+		{
+			$typeDiscount = $discount['TYPE'] == CCatalogDiscountSave::ENTITY_ID?
+				self::TYPE_CUMULATIVE : self::TYPE_GENERAL
+			;
+
+			$errors = array();
 			$newData = array(
 				'XML_ID' => $discount['XML_ID'],
 				'LID' => $discount['SITE_ID'],
@@ -370,17 +380,22 @@ final class DiscountCatalogMigrator
 				'CREATED_BY' => $discount['CREATED_BY'],
 				'PRIORITY' => $discount['PRIORITY'] + $maxPriority,
 				'LAST_DISCOUNT' => $discount['LAST_DISCOUNT'],
-			    'EXECUTE_MODULE' => 'catalog',
+				'EXECUTE_MODULE' => 'catalog',
 			);
 
-			$rawFields = array(
+			if ($discount['TYPE'] == \CCatalogDiscountSave::ENTITY_ID)
+			{
+				$newData['PRESET_ID'] = \Sale\Handlers\DiscountPreset\Cumulative::className();
+			}
+
+			$rawFields = $this->createActionAndCondition($discount);
+			$rawFields = array_merge($rawFields, array(
 				'ID' => $discount['ID'],
 				'LID' => $newData['LID'],
-				'CONDITIONS' => $this->createConditionStructure($discount),
-				'ACTIONS' => $this->createApplicationStructure($discount),
 				'CURRENCY' => $discount['CURRENCY'],
 				'USER_GROUPS' => array(2), //fabrication!
-			);
+			));
+
 			if (\CSaleDiscount::checkFields('ADD', $rawFields))
 			{
 				$newData['UNPACK'] = $rawFields['UNPACK'];
@@ -392,6 +407,11 @@ final class DiscountCatalogMigrator
 					$newData['EXECUTE_MODULE'] = $rawFields['EXECUTE_MODULE'];
 				}
 
+				if ($newData['PRESET_ID'] == \Sale\Handlers\DiscountPreset\Cumulative::className())
+				{
+					$newData['EXECUTE_MODULE'] = 'sale';
+				}
+
 				$addResult = \Bitrix\Sale\Internals\DiscountTable::add($newData);
 				if(!$addResult->isSuccess())
 				{
@@ -401,7 +421,7 @@ final class DiscountCatalogMigrator
 						$addResult->getErrorMessages()
 					));
 
-					$this->setAsConverted($discount['ID'], 0);
+					$this->setAsConverted($discount['ID'], 0, $typeDiscount);
 				}
 				else
 				{
@@ -413,9 +433,9 @@ final class DiscountCatalogMigrator
 					{
 						Sale\Internals\DiscountModuleTable::updateByDiscount($addResult->getId(), $rawFields['HANDLERS']['MODULES'], true);
 					}
-					$this->moveUserGroupsByDiscount($discount['ID'], $addResult->getId());
+					$this->moveUserGroupsByDiscount($discount, $addResult->getId(), $typeDiscount);
 
-					$this->setAsConverted($discount['ID'], $addResult->getId());
+					$this->setAsConverted($discount['ID'], $addResult->getId(), $typeDiscount);
 				}
 			}
 			else
@@ -437,7 +457,7 @@ final class DiscountCatalogMigrator
 						'#ERRORS#' => implode('; ', $errors)
 					)
 				);
-				$this->setAsConverted($discount['ID'], 0);
+				$this->setAsConverted($discount['ID'], 0, $typeDiscount);
 
 				$this->log(array(
 					"Check fields error",
@@ -448,8 +468,121 @@ final class DiscountCatalogMigrator
 
 			$this->storeCounter($discount['ID']);
 		}
+	}
+
+	protected function moveCumulativeDiscounts()
+	{
+ 		if($this->isStepFinished(__METHOD__))
+		{
+			return;
+		}
+
+		$counter = $this->getCounter();
+		$discountIterator = Catalog\DiscountTable::getList(array(
+			'filter' => array(
+				'>ID' => $counter,
+				'TYPE' => \CCatalogDiscountSave::ENTITY_ID,
+				'=ACTIVE' => 'Y',
+			),
+		    'order' => array('ID' => 'ASC'),
+		));
+
+		$this->migrateDiscounts($discountIterator);
+		$this->recalculatePriorityForCumulativeDiscounts();
 
 		$this->setStepFinished(__METHOD__);
+	}
+
+	/**
+	 * We are moving cumulative discounts to the end of list with the lowest priority.
+	 */
+	protected function recalculatePriorityForCumulativeDiscounts()
+	{
+		if ($this->isStepFinished(__METHOD__))
+		{
+			return;
+		}
+
+		$this->connection->queryExecute("
+			UPDATE b_sale_discount discount
+			INNER JOIN b_catalog_discount c_discount ON c_discount.SALE_ID = discount.ID
+			SET discount.PRIORITY = -1
+			WHERE c_discount.TYPE = 1 AND discount.ACTIVE = 'Y'"
+		);
+
+		$this->connection->queryExecute("
+			UPDATE b_sale_discount discount
+			SET discount.PRIORITY = discount.PRIORITY + 100
+			WHERE discount.ACTIVE = 'Y' AND discount.PRIORITY <> -1"
+		);
+
+		$this->connection->queryExecute("
+			UPDATE b_sale_discount discount
+			SET discount.PRIORITY = 50
+			WHERE discount.ACTIVE = 'Y' AND discount.PRIORITY = -1"
+		);
+
+		$this->setStepFinished(__METHOD__);
+	}
+
+	private function getActionsAndConditionsForCumulativeDiscount(array $catalogRow)
+	{
+		if ($catalogRow['TYPE'] != \CCatalogDiscountSave::ENTITY_ID)
+		{
+			return array();
+		}
+
+		$cumulativePreset = new \Sale\Handlers\DiscountPreset\Cumulative();
+
+		$state = new \Bitrix\Sale\Discount\Preset\State($catalogRow);
+		$state['discount_ranges'] = $this->getRanges($catalogRow['ID']);
+		$state['discount_type_sum_period'] = $this->getTypeSumPeriod($catalogRow);
+		
+		$state['discount_sum_order_start'] = $catalogRow['COUNT_FROM'];
+		$state['discount_sum_order_end'] = $catalogRow['COUNT_TO'];
+		$state['discount_sum_period_value'] = $catalogRow['COUNT_SIZE'];
+		$state['discount_sum_period_type'] = $catalogRow['COUNT_TYPE'];
+
+		$discountFields = $cumulativePreset->generateDiscount($state);
+
+		return array(
+			'CONDITIONS' => $discountFields['CONDITIONS'],
+			'ACTIONS' => $discountFields['ACTIONS'],
+		);
+	}
+
+	private function getTypeSumPeriod(array $catalogRow)
+	{
+		$oldType = $catalogRow['COUNT_PERIOD'];
+		switch ($oldType)
+		{
+			case \CCatalogDiscountSave::COUNT_TIME_ALL:
+				return \Sale\Handlers\DiscountPreset\Cumulative::TYPE_COUNT_PERIOD_ALL_TIME;
+			case \CCatalogDiscountSave::COUNT_TIME_INTERVAL:
+				return \Sale\Handlers\DiscountPreset\Cumulative::TYPE_COUNT_PERIOD_INTERVAL;
+			case \CCatalogDiscountSave::COUNT_TIME_PERIOD:
+				return \Sale\Handlers\DiscountPreset\Cumulative::TYPE_COUNT_PERIOD_RELATIVE;
+		}
+
+		return null;
+	}
+
+	private function getRanges($cumulativeDiscountId)
+	{
+		$cumulativeDiscountId = (int)$cumulativeDiscountId;
+		$sql = "SELECT RANGE_FROM, TYPE, VALUE FROM b_catalog_disc_save_range WHERE DISCOUNT_ID = {$cumulativeDiscountId}";
+		foreach ($this->connection->query($sql) as $row)
+		{
+			$matrix[] = array(
+				'sum' => $row['RANGE_FROM'],
+				'value' => $row['VALUE'],
+				'type' => $row['TYPE'],
+			);
+		}
+
+		\Bitrix\Main\Type\Collection::sortByColumn($matrix, 'sum');
+
+		return $matrix;
 	}
 
 	protected function moveCoupons()
@@ -653,12 +786,22 @@ final class DiscountCatalogMigrator
 		$this->setStepFinished(__METHOD__);
 	}
 
-	protected function setAsConverted($catalogDiscountId, $saleDiscountId)
+	protected function setAsConverted($catalogDiscountId, $saleDiscountId, $typeDiscount = self::TYPE_GENERAL)
 	{
-		CCatalogDiscount::Update($catalogDiscountId, array(
-			'ACTIVE' => 'N',
-			'SALE_ID' => $saleDiscountId,
-		));		
+		if ($typeDiscount === self::TYPE_GENERAL)
+		{
+			CCatalogDiscount::Update($catalogDiscountId, array(
+				'ACTIVE' => 'N',
+				'SALE_ID' => $saleDiscountId,
+			));
+		}
+		if ($typeDiscount === self::TYPE_CUMULATIVE)
+		{
+			CCatalogDiscountSave::Update($catalogDiscountId, array(
+				'ACTIVE' => 'N',
+				'SALE_ID' => $saleDiscountId,
+			));
+		}
 	}
 
 	protected function getAllUserGroups()
@@ -699,15 +842,26 @@ final class DiscountCatalogMigrator
 		return $priceTypeIds;
 	}
 
-	protected function moveUserGroupsByDiscount($catalogDiscountId, $saleDiscountId)
+	protected function moveUserGroupsByDiscount(array $catalogRow, $saleDiscountId, $typeDiscount = self::TYPE_GENERAL)
 	{
-		$groupDiscountIterator = Catalog\DiscountRestrictionTable::getList(array(
-			'select' => array('DISCOUNT_ID', 'USER_GROUP_ID'),
-			'filter' => array('=DISCOUNT_ID' => $catalogDiscountId, '=ACTIVE' => 'Y'),
-		));
+		$catalogDiscountId = (int)$catalogRow['ID'];
+
+		if ($typeDiscount === self::TYPE_CUMULATIVE)
+		{
+			$groupDiscountIterator = $this->connection->query("
+				SELECT GROUP_ID as USER_GROUP_ID FROM b_catalog_disc_save_group WHERE DISCOUNT_ID = {$catalogDiscountId}
+			");
+		}
+		else
+		{
+			$groupDiscountIterator = Catalog\DiscountRestrictionTable::getList(array(
+				'select' => array('USER_GROUP_ID'),
+				'filter' => array('=DISCOUNT_ID' => $catalogDiscountId, '=ACTIVE' => 'Y'),
+			));
+		}
 
 		$groupIds = array();
-		while($row = $groupDiscountIterator->fetch())
+		foreach ($groupDiscountIterator as $row)
 		{
 			if($row['USER_GROUP_ID'] == -1)
 			{
@@ -725,7 +879,26 @@ final class DiscountCatalogMigrator
 		);
 	}
 
-	protected function createConditionStructure(array $catalogRow)
+	protected function createActionAndCondition(array $catalogRow)
+	{
+		if ($catalogRow['TYPE'] == \CCatalogDiscountSave::ENTITY_ID)
+		{
+			return array_intersect_key(
+				$this->getActionsAndConditionsForCumulativeDiscount($catalogRow),
+				array(
+					'CONDITIONS' => true,
+					'ACTIONS' => true,
+				)
+			);
+		}
+
+		return array(
+			'CONDITIONS' => $this->createConditionStructureForGeneralDiscount($catalogRow),
+			'ACTIONS' => $this->createApplicationStructureForGeneralDiscount($catalogRow),
+		);
+	}
+
+	protected function createConditionStructureForGeneralDiscount(array $catalogRow)
 	{
 		$structure = array(
 			'CLASS_ID' => 'CondGroup',
@@ -764,7 +937,7 @@ final class DiscountCatalogMigrator
 		return $structure;
 	}
 
-	protected function createApplicationStructure(array $catalogRow)
+	protected function createApplicationStructureForGeneralDiscount(array $catalogRow)
 	{
 		$unit = '';
 		if($catalogRow['VALUE_TYPE'] === \CCatalogDiscount::TYPE_PERCENT)
@@ -994,13 +1167,6 @@ if (isset($_REQUEST['migrator_process']) && ($_REQUEST['migrator_process'] === '
 else
 {
 	$listNonSupportedFeatures = array();
-	//check "discount save"
-	$discountSaveResult = CCatalogDiscountSave::GetList(array(), array('ACTIVE' => 'Y',), false, array("nTopCount" => 1));
-	while($discountSaveResult && ($row = $discountSaveResult->fetch()))
-	{
-		$listNonSupportedFeatures[] = Loc::getMessage('DISCOUNT_CATALOG_MIGRATOR_NON_SUPPORTED_FEATURE_DISC_SAVE');
-	}
-
 	//check discount with DISCOUNT_TYPE = S
 	$discountWithTypeSale = (bool)Catalog\DiscountTable::getList(array(
 		'select' => array('ID'),
@@ -1014,6 +1180,20 @@ else
 	if($discountWithTypeSale)
 	{
 		$listNonSupportedFeatures[] = Loc::getMessage('DISCOUNT_CATALOG_MIGRATOR_NON_SUPPORTED_FEATURE_DISC_TYPE_SALE');		
+	}
+
+	$discountWithRelativeActivePeriod = (bool)Catalog\DiscountTable::getList(array(
+		'select' => array('ID'),
+		'filter' => array(
+			'=ACTIVE' => 'Y',
+			'>ACTION_SIZE' => 0,
+		),
+		'limit' => 1,
+	))->fetch();
+
+	if($discountWithRelativeActivePeriod)
+	{
+		$listNonSupportedFeatures[] = Loc::getMessage('DISCOUNT_CATALOG_MIGRATOR_NON_SUPPORTED_FEATURE_RELATIVE_ACTIVE_PERIOD');
 	}
 
 	//check currency <> SITE_ID sale currency
@@ -1034,8 +1214,16 @@ else
 		$listNonSupportedFeatures[$i] = '<span style="margin-left: 10px;">' . $feature . '</span>';
 	}
 
+	//check "discount save"
+	$isThereSaveDiscounts = false;
+	$discountSaveResult = CCatalogDiscountSave::GetList(array(), array('ACTIVE' => 'Y',), false, array("nTopCount" => 1));
+	while($discountSaveResult && ($row = $discountSaveResult->fetch()))
+	{
+		$isThereSaveDiscounts = true;
+	}
+
 	$popupText =
-		Loc::getMessage('DISCOUNT_CATALOG_MIGRATOR_HELLO_TEXT') . '<br>' .
+		Loc::getMessage('DISCOUNT_CATALOG_MIGRATOR_HELLO_TEXT_NEW', array('#CUMULATIVE_PART#' => $isThereSaveDiscounts? Loc::getMessage('DISCOUNT_CATALOG_MIGRATOR_HELLO_TEXT_CUMULATIVE_PART') : '',)) . '<br>' .
 		Loc::getMessage('DISCOUNT_CATALOG_MIGRATOR_HELLO_TEXT_FINAL')
 	;
 
@@ -1125,7 +1313,7 @@ else
 			content: '<div style="margin-bottom: 10px;"><b></b></div><?= CUtil::JSEscape($popupText) ?><br/>'
 		});
 
-		dialog.SetSize({width: 700, height: 430});
+		dialog.SetSize({width: 700, height: 430+<?= $isThereSaveDiscounts? 100:0 ?>});
 		dialog.Show();
 
 	}

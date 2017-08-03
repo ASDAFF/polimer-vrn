@@ -276,6 +276,7 @@ Class blog extends CModule
 		$eventManager->registerEventHandler('mail', 'onForwardReceivedBLOG_POST', 'blog', '\Bitrix\Blog\Internals\MailHandler', 'handleForwardReceivedBlogPost');
 		$eventManager->registerEventHandler('socialnetwork', 'onLogIndexGetContent', 'blog', '\Bitrix\Blog\Integration\Socialnetwork\Log', 'onIndexGetContent');
 		$eventManager->registerEventHandler('socialnetwork', 'onLogCommentIndexGetContent', 'blog', '\Bitrix\Blog\Integration\Socialnetwork\LogComment', 'onIndexGetContent');
+		$eventManager->registerEventHandler('socialnetwork', 'onContentViewed', 'blog', '\Bitrix\Blog\Integration\Socialnetwork\ContentViewHandler', 'onContentViewed');
 
 		CModule::IncludeModule("blog");
 		if (CModule::IncludeModule("search"))
@@ -342,7 +343,7 @@ Class blog extends CModule
 		$eventManager->unregisterEventHandler('mail', 'onForwardReceivedBLOG_POST', 'blog', '\Bitrix\Blog\Internals\MailHandler', 'handleForwardReceivedBlogPost');
 		$eventManager->unregisterEventHandler('socialnetwork', 'onLogIndexGetContent', 'blog', '\Bitrix\Blog\Integration\Socialnetwork\Log', 'onIndexGetContent');
 		$eventManager->unregisterEventHandler('socialnetwork', 'onLogCommentIndexGetContent', 'blog', '\Bitrix\Blog\Integration\Socialnetwork\LogComment', 'onIndexGetContent');
-
+		$eventManager->unregisterEventHandler('socialnetwork', 'onContentViewed', 'blog', '\Bitrix\Blog\Integration\Socialnetwork\ContentViewHandler', 'onContentViewed');
 
 		UnRegisterModule("blog");
 

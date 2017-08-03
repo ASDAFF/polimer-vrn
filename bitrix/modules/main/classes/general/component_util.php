@@ -798,7 +798,7 @@ class CComponentUtil
 					"PARENT" => "USER_CONSENT",
 					"NAME" => GetMessage("COMP_PROP_USER_CONSENT_ID"),
 					"TYPE" => "LIST",
-					"VALUES" => array_merge(array(GetMessage("COMP_PROP_USER_CONSENT_ID_DEF")), \Bitrix\Main\UserConsent\Agreement::getActiveList()),
+					"VALUES" => array(GetMessage("COMP_PROP_USER_CONSENT_ID_DEF")) + \Bitrix\Main\UserConsent\Agreement::getActiveList(),
 					"MULTIPLE" => "N",
 					"DEFAULT" => "",
 				);

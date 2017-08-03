@@ -47,4 +47,11 @@ $MESS["SOA_NAME_COLUMN_PREVIEW_PICTURE"] = "Зображення";
 $MESS["SOA_NAME_COLUMN_DETAIL_PICTURE"] = "Детальне зображення";
 $MESS["SOA_SUM_DEFAULT_COLUMN"] = "Сума";
 $MESS["SOA_ORDER_CALCULATE_ERROR"] = "Помилка розрахунку замовлення";
+$MESS["SOA_TEMPL_ORDER_PS_ERROR"] = "Помилка обраного способу оплати. Зверніться до Адміністрації сайту, або виберіть інший спосіб оплати.";
+$MESS["SOA_DELIVERY_CALCULATE_ERROR"] = "Не вдалося розрахувати вартість доставки";
+$MESS["INNER_PAYMENT_BALANCE_ERROR"] = "На внутрішньому рахунку недостатньо коштів";
+$MESS["P2D_CALCULATE_ERROR"] = "При розрахунку замовлення виникла помилка";
+$MESS["DELIVERY_CHANGE_WARNING"] = "Обрана перша доступна доставка";
+$MESS["PAY_SYSTEM_CHANGE_WARNING"] = "Обрана перша доступна платіжна система";
+$MESS["SESSID_ERROR"] = "Ваша сесія закінчилася. Будь ласка, перезавантажте сторінку.";
 ?>

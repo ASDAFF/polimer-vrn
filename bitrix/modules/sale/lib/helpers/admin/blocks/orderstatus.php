@@ -108,10 +108,12 @@ class OrderStatus
 		if($showSaveButton && !$orderLocked)
 		{
 			$result .= '
-									&nbsp;
-									<span id="save_status_button" class="adm-btn" onclick="BX.Sale.Admin.OrderEditPage.onSaveStatusButton(\''.$order->getId().'\',\'STATUS_ID\');">
-										'.Loc::getMessage("SALE_ORDER_STATUS_SAVE").'
-									</span>';
+				&nbsp;
+				<span id="save_status_button" class="adm-btn" onclick="BX.Sale.Admin.OrderEditPage.onSaveStatusButton(\''.$order->getId().'\',\'STATUS_ID\');">
+					'.Loc::getMessage("SALE_ORDER_STATUS_SAVE").'
+				</span>
+				<span id="save_status_result_ok" class="adm-sale-green-check-mark" style="display:none;" title="'.Loc::getMessage('SALE_ORDER_STATUS_CHANGED_SUCCESS').'"></span>
+				';
 		}
 
 		$result .= '</td>

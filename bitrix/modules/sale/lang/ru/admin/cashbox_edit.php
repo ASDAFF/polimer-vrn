@@ -14,6 +14,7 @@ $MESS["SALE_CASHBOX_ERROR"] = "Ошибка сохранения";
 $MESS["SALE_CASHBOX_HANDLER"] = "Обработчик";
 $MESS["SALE_CASHBOX_NAME"] = "Название";
 $MESS["SALE_CASHBOX_NO_HANDLER"] = "Выберите обработчик";
+$MESS["SALE_CASHBOX_OTHER_HANDLER"] = "Другой";
 $MESS["SALE_CASHBOX_OFD_TEST_MODE"] = "Тестовый режим работы ОФД";
 $MESS["SALE_CASHBOX_KKM_ID"] = "Марка ККМ";
 $MESS["SALE_CASHBOX_ACTIVE"] = "Активность";

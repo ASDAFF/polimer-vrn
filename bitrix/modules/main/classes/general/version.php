@@ -1,4 +1,4 @@
 <?
-define("SM_VERSION","17.0.9");
-define("SM_VERSION_DATE","2017-06-21 13:15:00"); // YYYY-MM-DD HH:MI:SS
+define("SM_VERSION","17.0.10");
+define("SM_VERSION_DATE","2017-07-10 15:43:00"); // YYYY-MM-DD HH:MI:SS
 ?>

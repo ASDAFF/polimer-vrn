@@ -309,4 +309,5 @@ $MESS["IM_FORM_SELECT_NO"] = "No";
 $MESS["IM_FORM_BUTTON_SEND"] = "Send";
 $MESS["IM_FORM_BUTTON_HIDE"] = "Hide";
 $MESS["IM_APPS_LIST"] = "Show available apps";
+$MESS["IM_M_MENU_APP_EXISTS"] = "More actions are available.";
 ?>

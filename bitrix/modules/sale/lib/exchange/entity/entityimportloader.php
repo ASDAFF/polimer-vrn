@@ -42,15 +42,81 @@ class EntityImportLoader
      * @return null
      * @throws Main\ArgumentException
      */
-    public function getByNumber($number)
-    {
-        $entity = static::getEntityTable();
-        if($r = $entity::getById($number)->fetch())
-        {
-            return $r;
-        }
-        return null;
-    }
+	public function getByNumber($number)
+	{
+		if($number === "")
+		{
+			throw new Main\ArgumentException('Is not defined', 'ID');
+		}
+		$entity = static::getEntityTable();
+		/** TODO: only EntityType::ORDER */
+		$accountNumberPrefix = $this->settings->prefixFor(EntityType::ORDER);
+
+		if(is_numeric($number))
+		{
+			if($r = $entity::getById($number)->fetch())
+				return $r;
+
+			if($r = $entity::getList(array(
+				'select' => array('ID'),
+				'filter' => array('ID_1C' => $number),
+				'order' => array('ID' => 'DESC')))->fetch()
+			)
+				return $r;
+
+
+			if($r = $entity::getList(array(
+				'select' => array('ID'),
+				'filter' => array('ACCOUNT_NUMBER' => $number),
+				'order' => array('ID' => 'DESC')))->fetch()
+			)
+				return $r;
+
+			if ($accountNumberPrefix !== "")
+			{
+				if(strpos($number, $accountNumberPrefix) === 0)
+				{
+					$number = substr($number, strlen($accountNumberPrefix));
+					if ($r = $entity::getById($number)->fetch())
+						return $r;
+				}
+			}
+		}
+		else
+		{
+			if ($r = $entity::getList(array(
+				'select' => array('ID'),
+				'filter' => array('ID_1C' => $number),
+				'order' => array('ID' => 'DESC')))->fetch()
+			)
+				return $r;
+
+			if ($r = $entity::getList(array(
+				'select' => array('ID'),
+				'filter' => array('ACCOUNT_NUMBER' => $number),
+				'order' => array('ID' => 'DESC')))->fetch()
+			)
+				return $r;
+
+			if($accountNumberPrefix != "")
+			{
+				if(strpos($number, $accountNumberPrefix) === 0)
+				{
+					$number = substr($number, strlen($accountNumberPrefix));
+					if($r = $entity::getById($number)->fetch())
+						return $r;
+
+					if($r = $entity::getList(array(
+						'select' => array('ID'),
+						'filter' => array('ACCOUNT_NUMBER' => $number),
+						'order' => array('ID' => 'DESC')))->fetch()
+					)
+						return $r;
+				}
+			}
+		}
+		return null;
+	}
 
     /**
      * @param $xmlId
@@ -79,7 +145,7 @@ class EntityImportLoader
     }
 
     /**
-     * @return object
+     * @return Main\Entity\DataManager
      * @throws Main\ArgumentException
      */
     protected static function getEntityTable()
@@ -104,80 +170,6 @@ class OrderImportLoader extends EntityImportLoader
             'ID',
             'ID_1C'
         );
-    }
-
-    public function getByNumber($number)
-    {
-        if($number === "")
-        {
-            throw new Main\ArgumentException('Is not defined', 'ID');
-        }
-
-        $accountNumberPrefix = $this->settings->prefixFor(EntityType::ORDER);
-
-        if(is_numeric($number))
-        {
-            if($r = OrderTable::getById($number)->fetch())
-                return $r;
-
-            if($r = OrderTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array('ID_1C' => $number),
-                'order' => array('ID' => 'DESC')))->fetch()
-            )
-                return $r;
-
-            if($r = OrderTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array('ACCOUNT_NUMBER' => $number),
-                'order' => array('ID' => 'DESC')))->fetch()
-            )
-                return $r;
-
-            if ($accountNumberPrefix !== "")
-            {
-                if(strpos($number, $accountNumberPrefix) === 0)
-                {
-                    $number = substr($number, strlen($accountNumberPrefix));
-                    if ($r = OrderTable::getById($number)->fetch())
-                        return $r;
-                }
-            }
-        }
-        else
-        {
-            if ($r = OrderTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array('ID_1C' => $number),
-                'order' => array('ID' => 'DESC')))->fetch()
-            )
-                return $r;
-
-            if ($r = OrderTable::getList(array(
-                'select' => array('ID'),
-                'filter' => array('ACCOUNT_NUMBER' => $number),
-                'order' => array('ID' => 'DESC')))->fetch()
-            )
-                return $r;
-
-            if($accountNumberPrefix != "")
-            {
-                if(strpos($number, $accountNumberPrefix) === 0)
-                {
-                    $number = substr($number, strlen($accountNumberPrefix));
-                    if($r = OrderTable::getById($number)->fetch())
-                        return $r;
-
-                    if($r = OrderTable::getList(array(
-                        'select' => array('ID'),
-                        'filter' => array('ACCOUNT_NUMBER' => $number),
-                        'order' => array('ID' => 'DESC')))->fetch()
-                    )
-                        return $r;
-                }
-            }
-        }
-        return null;
     }
 
     protected static function getEntityTable()

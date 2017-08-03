@@ -349,12 +349,22 @@ do{ //one iteration loop
 			"TITLE" => GetMessage("IBEL_E_TAB_RIGHTS_TITLE")
 		);
 
-	if (strlen($arIBlock["EDIT_FILE_AFTER"])>0 && is_file($_SERVER["DOCUMENT_ROOT"].$arIBlock["EDIT_FILE_AFTER"]))
+	$arIBlock["EDIT_FILE_AFTER"] = (string)$arIBlock["EDIT_FILE_AFTER"];
+	$arIBTYPE["EDIT_FILE_AFTER"] = (string)$arIBTYPE["EDIT_FILE_AFTER"];
+	if (
+		$arIBlock["EDIT_FILE_AFTER"] != ''
+		&& (substr($arIBlock["EDIT_FILE_AFTER"], -4) == '.php')
+		&& is_file($_SERVER["DOCUMENT_ROOT"].$arIBlock["EDIT_FILE_AFTER"])
+	)
 	{
 		$bCustomForm = true;
 		$customFormFile = $arIBlock["EDIT_FILE_AFTER"];
 	}
-	elseif (strlen($arIBTYPE["EDIT_FILE_AFTER"])>0 && is_file($_SERVER["DOCUMENT_ROOT"].$arIBTYPE["EDIT_FILE_AFTER"]))
+	elseif (
+		$arIBTYPE["EDIT_FILE_AFTER"] != ''
+		&& (substr($arIBTYPE["EDIT_FILE_AFTER"], -4) == '.php')
+		&& is_file($_SERVER["DOCUMENT_ROOT"].$arIBTYPE["EDIT_FILE_AFTER"])
+	)
 	{
 		$bCustomForm = true;
 		$customFormFile = $arIBTYPE["EDIT_FILE_AFTER"];
@@ -684,11 +694,21 @@ do{ //one iteration loop
 			unset($id);
 		}
 
-		if(strlen($arIBlock["EDIT_FILE_BEFORE"])>0 && is_file($_SERVER["DOCUMENT_ROOT"].$arIBlock["EDIT_FILE_BEFORE"]))
+		$arIBlock["EDIT_FILE_BEFORE"] = (string)$arIBlock["EDIT_FILE_BEFORE"];
+		$arIBTYPE["EDIT_FILE_BEFORE"] = (string)$arIBTYPE["EDIT_FILE_BEFORE"];
+		if(
+			$arIBlock["EDIT_FILE_BEFORE"] != ''
+			&& (substr($arIBlock["EDIT_FILE_BEFORE"], -4) == '.php')
+			&& is_file($_SERVER["DOCUMENT_ROOT"].$arIBlock["EDIT_FILE_BEFORE"])
+		)
 		{
 			include($_SERVER["DOCUMENT_ROOT"].$arIBlock["EDIT_FILE_BEFORE"]);
 		}
-		elseif(strlen($arIBTYPE["EDIT_FILE_BEFORE"])>0 && is_file($_SERVER["DOCUMENT_ROOT"].$arIBTYPE["EDIT_FILE_BEFORE"]))
+		elseif(
+			$arIBTYPE["EDIT_FILE_BEFORE"] != ''
+			&& (substr($arIBTYPE["EDIT_FILE_BEFORE"], -4) == '.php')
+			&& is_file($_SERVER["DOCUMENT_ROOT"].$arIBTYPE["EDIT_FILE_BEFORE"])
+		)
 		{
 			include($_SERVER["DOCUMENT_ROOT"].$arIBTYPE["EDIT_FILE_BEFORE"]);
 		}

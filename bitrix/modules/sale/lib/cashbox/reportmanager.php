@@ -79,9 +79,13 @@ final class ReportManager
 
 				$p = $nowTs - $datePrintStartTs;
 				if ($p > static::MIN_TIME_RESENDING_REPORT && $p < static::MAX_TIME_RESENDING_REPORT)
+				{
 					return $lastZReport['ID'];
+				}
 				elseif ($p >= static::MAX_TIME_RESENDING_REPORT)
+				{
 					Internals\CashboxZReportTable::update($lastZReport['ID'], array('STATUS' => 'E', 'DATE_PRINT_END' => new DateTime()));
+				}
 			}
 		}
 		else

@@ -11,4 +11,7 @@ $MESS["IM_PHONE_CALL_LIST_MORE"] = "#COUNT# more";
 $MESS["IM_PHONE_CALL_VIEW_NUMBER_UNKNOWN"] = "No number specified";
 $MESS["IM_PHONE_CALL_VIEW_MORE"] = "More";
 $MESS["IM_PHONE_CALL_VIEW_RATE_QUALITY"] = "Rate connection quality";
+$MESS["IM_PHONE_CALL_VIEW_DONT_LEAVE"] = "Leaving the page will end the call";
+$MESS["IM_PHONE_CALL_VIEW_FOLD"] = "Minimize";
+$MESS["IM_PHONE_CALL_VIEW_UNFOLD"] = "Restore";
 ?>

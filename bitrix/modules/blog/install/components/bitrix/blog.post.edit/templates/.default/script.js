@@ -27,13 +27,12 @@ BlogPostAutoSaveIcon = function () {
 	formHeader.insertBefore(auto_lnk, formHeader.children[0]);
 }
 
-// todo: to new editor
 BlogPostAutoSave = function () {
 	var formId = 'POST_BLOG_FORM';
 	var form = BX(formId);
 	if (!form) return;
 
-	var controlID = "POST_MESSAGE_HTML";
+	var controlID = "POST_MESSAGE";
 	var titleID = 'POST_TITLE';
 	var title = BX(titleID);
 	var tags = BX(formId).TAGS;
@@ -79,6 +78,7 @@ BlogPostAutoSave = function () {
 		BX.removeClass(auto_lnk,'bx-core-autosave-ready');
 		BX.addClass(auto_lnk,'bx-core-autosave-saving');
 
+		// not oBlogLHE!!
 		if (! window.oBlogLHE) return;
 
 		form_data[controlID+'_type'] = window.oBlogLHE.sEditorMode;
@@ -110,54 +110,12 @@ BlogPostAutoSave = function () {
 	});
 
 	BX.addCustomEvent(form, 'onAutoSaveRestoreFound', function(ob, data) {
-		if (BX.util.trim(data[controlID]).length < 1 && BX.util.trim(data[titleID]).length < 1) return;
-		var _ob = ob;
-		
-		var formHeaders = BX.findChild(form, {'className': /blog-post-edit/ }, true, true);
-		var w = "100%";
-		if(formHeaders.length > 0)
-			w = formHeaders[0].clientWidth + 'px';
+		var text = (BX.util.trim(data[controlID]) || ''),
+			title = (BX.util.trim(data[titleID]) || '');
+		if (text.length < 1 && title.length < 1) return;
 
-		var id = form.name || Math.random();
-		recoverNotify = BX.create('DIV', {
-			'props': {
-				'className': 'blog-notify-bar',
-				'id' : 'post-form-autosave-not'
-			},
-			'children': [
-				BX.create('DIV', {
-					'props': { 'className': 'blog-notify-close' },
-					'children': [
-						BX.create('A', {
-							'events':{
-								'click': function() {
-									if (!! recoverNotify)
-										BX.remove(recoverNotify);
-									return false;
-								}
-							}
-						})
-					]
-				}),
-				BX.create('DIV', {
-					'props': { 'className': 'blog-notify-text' },
-					'children': [
-						BX.create('SPAN', { 'text': recoverMessage }),
-						BX.create('A', {
-							'attr': {'href': 'javascript:void(0)'},
-							'props': {'className': actionClass},
-							'text': actionText,
-							'events':{
-								'click': function() { _ob.Restore(); return false;}
-							}
-						})
-					]
-				})
-			],
-			'style': {'width':w}
-		});
-		
-		form.insertBefore(recoverNotify, form.children[1]);
+		ob.Restore();
+		// todo: need notify? see in socnetwork
 	});
 
 	BX.addCustomEvent(form, 'onAutoSaveRestore', function(ob, data) {
@@ -354,7 +312,7 @@ BX.BlogPostInit = function(formID, params)
 		{
 			// add style for cut-image
 			var cutCss = "\nimg.bxed-cut{background: transparent url('/bitrix/images/blog/editor/cut_image.gif') left top repeat-x; margin: 2px; width: 100%; height: 12px;}\n";
-			if(editor.iframeCssText.length > 0)
+			if(editor.iframeCssText != undefined && editor.iframeCssText.length > 0)
 				editor.iframeCssText += cutCss;
 			else
 				editor.iframeCssText = cutCss;

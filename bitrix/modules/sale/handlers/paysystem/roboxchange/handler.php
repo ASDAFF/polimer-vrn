@@ -25,9 +25,11 @@ class RoboxchangeHandler extends PaySystem\ServiceHandler
 		if ($this->isTestMode($payment))
 			$test = '_TEST';
 
+		$paymentShouldPay = (float)$this->getBusinessValue($payment, 'PAYMENT_SHOULD_PAY');
+
 		$signatureValue = md5(
 			$this->getBusinessValue($payment, 'ROBOXCHANGE_SHOPLOGIN').":".
-			$this->getBusinessValue($payment, 'PAYMENT_SHOULD_PAY').":".
+			$paymentShouldPay.":".
 			$this->getBusinessValue($payment, 'PAYMENT_ID').":".
 			$this->getBusinessValue($payment, 'ROBOXCHANGE_SHOPPASSWORD'.$test).':'.
 			'SHP_BX_PAYSYSTEM_CODE='.$payment->getPaymentSystemId().':'.
@@ -39,6 +41,7 @@ class RoboxchangeHandler extends PaySystem\ServiceHandler
 			'PS_MODE' => $this->service->getField('PS_MODE'),
 			'SIGNATURE_VALUE' => $signatureValue,
 			'BX_PAYSYSTEM_CODE' => $payment->getPaymentSystemId(),
+			'PAYMENT_SHOULD_PAY' => $paymentShouldPay,
 		);
 		$this->setExtraParams($params);
 

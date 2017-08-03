@@ -1724,6 +1724,8 @@ else
 			'TEMPLATE_THEME' => $arParams['TEMPLATE_THEME'],
 			'USE_STICKERS' => true,
 			'USE_SUBSCRIBE' => $showSubscribe,
+			'SHOW_SLIDER' => $arParams['SHOW_SLIDER'],
+			'SLIDER_INTERVAL' => $arParams['SLIDER_INTERVAL'],
 			'ALT' => $alt,
 			'TITLE' => $title,
 			'MAGNIFIER_ZOOM_PERCENT' => 200,

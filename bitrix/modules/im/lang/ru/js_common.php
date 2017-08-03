@@ -68,6 +68,7 @@ $MESS["IM_M_WRITING"] = "#USER_NAME# пишет сообщение...";
 $MESS["IM_M_WRITING_BOX"] = "пишет сообщение...";
 $MESS["IM_M_RETRY"] = "Кликните для повторной отправки сообщения";
 $MESS["IM_M_OPEN_EXTRA_TITLE"] = "Кликните для открытия меню действий или кликните удерживая #SHORTCUT# для цитирования сообщения";
+$MESS["IM_M_MENU_APP_EXISTS"] = "Доступны дополнительные действия.";
 $MESS["IM_MESSAGE_LIKE"] = "Нравится";
 $MESS["IM_MESSAGE_DISLIKE"] = "Не нравится";
 $MESS["IM_MESSAGE_LIKE_LIST"] = "Кликните для просмотра списка";

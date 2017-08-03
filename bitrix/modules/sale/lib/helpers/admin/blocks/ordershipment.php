@@ -140,7 +140,7 @@ class OrderShipment
 			$title = Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_NEW_SHIPMENT_TITLE');
 		}
 
-		$curFormat = \CCurrencyLang::getCurrencyFormat($data['CURRENCY']);
+		$curFormat = \CCurrencyLang::GetFormatDescription($data['CURRENCY']);
 		$currencyLang = preg_replace("/(^|[^&])#/", '$1', $curFormat["FORMAT_STRING"]);
 
 		$customPriceDelivery = isset($post['CUSTOM_PRICE_DELIVERY']) ? $post['CUSTOM_PRICE_DELIVERY'] : $data['CUSTOM_PRICE_DELIVERY'];
@@ -717,8 +717,10 @@ class OrderShipment
 				"STORES_LIST" => $stores,
 				"MAP" => array(
 					'OPTIONS' => array('ENABLE_DRAGGING'),
-					'CONTROLS' => array('SMALLZOOM')
-				)
+					'CONTROLS' => array('SMALLZOOM', 'SMALL_ZOOM_CONTROL')
+				),
+				"TITLE" => Loc::getMessage('SALE_ORDER_SHIPMENT_STORE_SELF_DELIVERY'),
+				"SHOW_MAP_TYPE_SETTINGS" => "Y"
 			);
 
 			if ($formType === 'archive' || $formType === 'view')
@@ -735,8 +737,9 @@ class OrderShipment
 				".default",
 				$params
 			);
-			$map .= '<div class="adm-s-order-delivery-store-title">'.Loc::getMessage('SALE_ORDER_SHIPMENT_STORE_SELF_DELIVERY').'</div>';
+			$map .= '<div style="padding-top: 15px;">';
 			$map .= ob_get_contents();
+			$map .= '</div>';
 			ob_end_clean();
 
 			$map .= '<link rel="stylesheet" type="text/css" href="/bitrix/components/bitrix/sale.store.choose/templates/.default/style.css">';

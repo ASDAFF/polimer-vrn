@@ -870,9 +870,19 @@ class Bot
 		if (strlen($appId) > 0 && $bots[$botId]['APP_ID'] != $appId)
 			return false;
 
-		if (empty($messageFields['DIALOG_ID']))
+		$isPrivateSystem = false;
+		if ($messageFields['FROM_USER_ID'] && $messageFields['TO_USER_ID'])
+		{
+			$messageFields['SYSTEM'] = 'Y';
+			$messageFields['DIALOG_ID'] = $messageFields['TO_USER_ID'];
+			$isPrivateSystem = true;
+		}
+		else if (empty($messageFields['DIALOG_ID']))
+		{
 			return false;
+		}
 
+		$messageFields['MENU'] = $messageFields['MENU']? $messageFields['MENU']: null;
 		$messageFields['ATTACH'] = $messageFields['ATTACH']? $messageFields['ATTACH']: null;
 		$messageFields['KEYBOARD'] = $messageFields['KEYBOARD']? $messageFields['KEYBOARD']: null;
 		$messageFields['PARAMS'] = $messageFields['PARAMS']? $messageFields['PARAMS']: Array();
@@ -894,6 +904,7 @@ class Bot
 					"TO_CHAT_ID" => $chatId,
 					"ATTACH" => $messageFields['ATTACH'],
 					"KEYBOARD" => $messageFields['KEYBOARD'],
+					"MENU" => $messageFields['MENU'],
 					"PARAMS" => $messageFields['PARAMS'],
 				);
 				if (isset($messageFields['MESSAGE']) && (!empty($messageFields['MESSAGE']) || $messageFields['MESSAGE'] === "0"))
@@ -923,12 +934,26 @@ class Bot
 		}
 		else
 		{
+			if ($isPrivateSystem)
+			{
+				$fromUserId = intval($messageFields['FROM_USER_ID']); 
+				if ($botId > 0)
+				{
+					$messageFields['MESSAGE'] = Loc::getMessage("BOT_MESSAGE_FROM", Array("#BOT_NAME#" => "[USER=".$botId."]".\Bitrix\Im\User::getInstance($botId)->getFullName()."[/USER][BR]")).$messageFields['MESSAGE'];
+				}
+			}
+			else
+			{
+				$fromUserId = $botId; 
+			}
+			
 			$userId = intval($messageFields['DIALOG_ID']);
 			$ar = Array(
-				"FROM_USER_ID" => $botId,
+				"FROM_USER_ID" => $fromUserId,
 				"TO_USER_ID" => $userId,
 				"ATTACH" => $messageFields['ATTACH'],
 				"KEYBOARD" => $messageFields['KEYBOARD'],
+				"MENU" => $messageFields['MENU'],
 				"PARAMS" => $messageFields['PARAMS'],
 			);
 			if (isset($messageFields['MESSAGE']) && (!empty($messageFields['MESSAGE']) || $messageFields['MESSAGE'] === "0"))
@@ -1010,6 +1035,21 @@ class Bot
 			}
 		}
 		
+		if (isset($messageFields['MENU']))
+		{
+			if (empty($messageFields['MENU']) || $messageFields['MENU'] == 'N')
+			{
+				\CIMMessageParam::Set($messageId, Array('MENU' => 'N'));
+			}
+			else if ($messageFields['MENU'] instanceof \Bitrix\Im\Bot\ContextMenu)
+			{
+				if ($messageFields['MENU']->isAllowSize())
+				{
+					\CIMMessageParam::Set($messageId, Array('MENU' => $messageFields['MENU']));
+				}
+			}
+		}
+		
 		if (isset($messageFields['MESSAGE']))
 		{
 			$urlPreview = isset($messageFields['URL_PREVIEW']) && $messageFields['URL_PREVIEW'] == "N"? false: true;
@@ -1022,7 +1062,7 @@ class Bot
 				return false;
 			}
 		}
-		\CIMMessageParam::SendPull($messageId, Array('KEYBOARD', 'ATTACH'));
+		\CIMMessageParam::SendPull($messageId, Array('KEYBOARD', 'ATTACH', 'MENU'));
 
 		return true;
 	}

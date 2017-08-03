@@ -1,7 +1,7 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
-define("IM_REVISION", 100);
+define("IM_REVISION", 101);
 define("IM_MOBILE_REVISION", 6);
 define("IM_MOBILE_CACHE_VERSION", 1);
 

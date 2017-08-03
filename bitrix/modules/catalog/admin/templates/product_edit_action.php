@@ -219,12 +219,20 @@ if ($USER->CanDoOperation('catalog_price'))
 				if ($USER->CanDoOperation('catalog_purchas_info') && !$bUseStoreControl)
 				{
 					if (
-						isset($_POST['CAT_PURCHASING_PRICE']) && trim($_POST['CAT_PURCHASING_PRICE']) != ''
-						&& isset($_POST['CAT_PURCHASING_CURRENCY']) && trim($_POST['CAT_PURCHASING_CURRENCY']) != ''
+						isset($_POST['CAT_PURCHASING_PRICE'])
+						&& isset($_POST['CAT_PURCHASING_CURRENCY'])
 					)
 					{
-						$arFields['PURCHASING_PRICE'] = $_POST['CAT_PURCHASING_PRICE'];
-						$arFields['PURCHASING_CURRENCY'] = $_POST['CAT_PURCHASING_CURRENCY'];
+						$price = trim($_POST['CAT_PURCHASING_PRICE']);
+						$currency = trim($_POST['CAT_PURCHASING_CURRENCY']);
+						if ($price == '' || $currency == '')
+						{
+							$price = false;
+							$currency = false;
+						}
+						$arFields['PURCHASING_PRICE'] = $price;
+						$arFields['PURCHASING_CURRENCY'] = $currency;
+						unset($currency, $price);
 					}
 				}
 

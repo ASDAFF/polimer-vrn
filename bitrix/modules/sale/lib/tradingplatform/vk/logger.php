@@ -82,20 +82,7 @@ class Logger
 	 */
 	public function addError($errCode, $itemId = NULL, $errParams = NULL)
 	{
-//		check if current item already throw error with current code
-		$existingErrors = $this->getExistingErrors($errCode, $itemId);
 		$errorDescription = $this->getErrorsDescriptions($errCode);
-		
-		foreach ($existingErrors as $key => $err)
-		{
-//			todo: set current time on add
-//			check date (use newer error)
-			if (strtotime($err['TIME']) <= time())
-				LogTable::delete($err['ID']);
-			else
-				return false;
-		}
-		
 		$errCode = $errorDescription['CODE'] ? $errorDescription['CODE'] : $errCode;
 //		add new error
 		if (!$this->addErrorToTable($errCode, $itemId, $errParams))
@@ -498,7 +485,8 @@ class Logger
 				"MESSAGE" => Loc::getMessage("SALE_VK_ERROR__CODE_100"),
 				"CODE" => "100",
 				"ITEMS_TYPE" => 'METHODS',
-				'IGNORE' => true,
+//				'IGNORE' => true,
+				"CRITICAL" => true,
 			),
 			"1" => array(
 				"MESSAGE" => Loc::getMessage("SALE_VK_ERROR__UNKNOWN_VK_ERROR") . ' ' . Loc::getMessage('SALE_VK_ERROR__CODE_1'),

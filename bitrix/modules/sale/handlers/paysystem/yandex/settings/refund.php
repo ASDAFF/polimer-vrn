@@ -29,7 +29,7 @@ if ($request->get("generate") === 'Y')
 	if ($companyName && !preg_match('/[^a-zA-Z]+/', $companyName))
 	{
 		PaySystem\YandexCert::generate($shopId, $companyName);
-		LocalRedirect($APPLICATION->GetCurPage().'?shop_id='.$shopId.'&lang='.LANG);
+		LocalRedirect($APPLICATION->GetCurPage().'?shop_id='.$shopId."&handler=".$handler.'&lang='.LANG);
 	}
 	else
 	{
@@ -112,7 +112,8 @@ $tabRControl->Begin();?>
 	<tr>
 		<td colspan="2">
 			<ol>
-				<li><?=sprintf(Loc::getMessage("SALE_YANDEX_RETURN_HOW_ITEM1"), $APPLICATION->GetCurPage()."?lang=ru&csr=Y&shopId=".$shopId."&handler=".$handler)?></li>
+				<li><?=Loc::getMessage("SALE_YANDEX_RETURN_HOW_ITEM0");?></li>
+				<li><?=Loc::getMessage("SALE_YANDEX_RETURN_HOW_ITEM1")?></li>
 				<li><?=Loc::getMessage("SALE_YANDEX_RETURN_HOW_ITEM2")?></li>
 				<li><?=Loc::getMessage("SALE_YANDEX_RETURN_HOW_ITEM3")?></li>
 				<li><?=Loc::getMessage("SALE_YANDEX_RETURN_HOW_ITEM4")?></li>
@@ -126,11 +127,12 @@ $tabRControl->Begin();?>
 
 	<? if ($strCN):?>
 		<tr>
-			<td colspan="2"><?=Loc::getMessage("SALE_YANDEX_RETURN_STATEMENT_INTRO")?></td>
-		</tr>
-		<tr>
 			<td class="adm-detail-valign-top adm-detail-content-cell-l"><strong><?=Loc::getMessage("SALE_YANDEX_RETURN_STATEMENT_CN")?></strong>:</td>
 			<td class="adm-detail-content-cell-r"><?=$strCN?></td>
+		</tr>
+		<tr>
+			<td class="adm-detail-valign-top adm-detail-content-cell-l"><strong><?=Loc::getMessage("SALE_YANDEX_RETURN_CSR")?></strong>:</td>
+			<td class="adm-detail-content-cell-r"><?=sprintf(Loc::getMessage("SALE_YANDEX_RETURN_CSR_DOWNLOAD"), $APPLICATION->GetCurPage()."?lang=ru&csr=Y&shop_id=".$shopId."&handler=".$handler)?></td>
 		</tr>
 		<tr>
 			<td class="adm-detail-valign-top adm-detail-content-cell-l"><strong><?=Loc::getMessage("SALE_YANDEX_RETURN_STATEMENT_SIGN")?></strong>:</td>

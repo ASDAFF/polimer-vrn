@@ -20,9 +20,11 @@ Loc::loadMessages(__FILE__);
  * <li> IFRAME string(255) optional
  * <li> IFRAME_WIDTH int optional
  * <li> IFRAME_HEIGHT int optional
+ * <li> IFRAME_POPUP bool optional default 'N'
  * <li> JS string(255) optional
  * <li> HIDDEN bool optional default 'N'
  * <li> EXTRANET_SUPPORT bool optional default 'N'
+ * <li> LIVECHAT_SUPPORT bool optional default 'N'
  * <li> CLASS string(255) optional
  * <li> METHOD_LANG_GET string(255) optional
  * </ul>
@@ -101,11 +103,21 @@ class AppTable extends Main\Entity\DataManager
 				'data_type' => 'integer',
 				'default_value' => '250',
 			),
+			'IFRAME_POPUP' => array(
+				'data_type' => 'boolean',
+				'values' => array('N', 'Y'),
+				'default_value' => 'N',
+			),
 			'JS' => array(
 				'data_type' => 'string',
 				'validation' => array(__CLASS__, 'validateJs'),
 			),
 			'EXTRANET_SUPPORT' => array(
+				'data_type' => 'boolean',
+				'values' => array('N', 'Y'),
+				'default_value' => 'N',
+			),
+			'LIVECHAT_SUPPORT' => array(
 				'data_type' => 'boolean',
 				'values' => array('N', 'Y'),
 				'default_value' => 'N',

@@ -5,6 +5,7 @@ namespace Bitrix\Sale\Cashbox;
 use Bitrix\Main;
 use Bitrix\Catalog;
 use Bitrix\Main\Localization;
+use Bitrix\Sale\Cashbox\Internals\CashboxCheckTable;
 use Bitrix\Sale\Cashbox\Internals\KkmModelTable;
 use Bitrix\Sale\Result;
 
@@ -219,10 +220,27 @@ class CashboxBitrix extends Cashbox
 			);
 		}
 
-		$result['LINK_PARAMS'] = static::parseQrParam($data['qr']);
-		$result['LINK_PARAMS']['qr'] = $data['qr'];
+		$result['LINK_PARAMS'] = static::getCheckLinkParams($data);
 
 		return $result;
+	}
+
+	/**
+	 * @param $data
+	 * @return array
+	 */
+	private static function getCheckLinkParams($data)
+	{
+		$linkParams = static::parseQrParam($data['qr']);
+
+		$uuid = self::parseUuid($data['uuid']);
+		$check = CheckManager::getObjectById($uuid['id']);
+		if ($check)
+		{
+			$linkParams[Check::PARAM_CALCULATION_ATTR] = $check::getCalculatedSign();
+		}
+
+		return $linkParams;
 	}
 
 	/**
@@ -254,9 +272,7 @@ class CashboxBitrix extends Cashbox
 		$result['CASHLESS_SUM'] = $data['reg_income'] - $data['payments_cache'];
 		$result['CUMULATIVE_SUM'] = $data['nz_sum'];
 		$result['RETURNED_SUM'] = $data['reg_return'];
-
 		$result['LINK_PARAMS'] = static::parseQrParam($data['qr']);
-		$result['LINK_PARAMS']['qr'] = $data['qr'];
 
 		return $result;
 	}
@@ -271,19 +287,6 @@ class CashboxBitrix extends Cashbox
 			SellReturnCashCheck::getType() => 2,
 			SellReturnCheck::getType() => 2
 		);
-	}
-
-	/**
-	 * @param array $linkParams
-	 * @return string
-	 */
-	public function getCheckLink(array $linkParams)
-	{
-		// for compatibility
-		if (isset($linkParams['qr']))
-			$linkParams = static::parseQrParam($linkParams['qr']);
-
-		return parent::getCheckLink($linkParams);
 	}
 
 	/**
@@ -312,6 +315,8 @@ class CashboxBitrix extends Cashbox
 						break;
 					case 't' :
 						$key = Check::PARAM_DOC_TIME;
+						$dateTime = new Main\Type\DateTime($value, 'Ymd\THis');
+						$value = (string)$dateTime->getTimestamp();
 						break;
 					case 's' :
 						$key = Check::PARAM_DOC_SUM;
@@ -462,11 +467,6 @@ class CashboxBitrix extends Cashbox
 		if (empty($data['KKM_ID']))
 		{
 			$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_VALIDATE_E_KKM_ID')));
-		}
-
-		if (empty($data['OFD']))
-		{
-			$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_VALIDATE_E_OFD')));
 		}
 
 		if (empty($data['NUMBER_KKM']))

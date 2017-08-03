@@ -7,6 +7,98 @@ ErrorDocument 404 /404.php
   #php_value mbstring.internal_encoding UTF-8
 </IfModule>
 
+  Redirect 301 /articles/plastic-pipes/ /articles/plastikovye-truby/
+  Redirect 301 /articles/polyethylene-pipes/ /articles/polijetilenovye-truby/
+  Redirect 301 /articles/pipes-for-heating/ /articles/truby-dlja-otoplenija/
+  Redirect 301 /articles/centrifugal-pump/ /articles/centrobezhnyj-nasos/
+  Redirect 301 /articles/pump-for-heating/ /articles/nasos-dlja-otoplenija/
+  Redirect 301 /articles/klej_plitochnyj/ /articles/plitochnyy-kley/
+  Redirect 301 /articles/gidroizolyaciya/ /catalog/gidro_paroizolyatsiya/
+  Redirect 301 /articles/gvl/ /catalog/gipsokarton/
+  Redirect 301 /articles/list_osb/ /catalog/osp/
+  Redirect 301 /articles/list_sml/ /catalog/sml/
+  Redirect 301 /articles/list_dvp/ /catalog/dvp/
+  Redirect 301 /articles/list_dsp/ /catalog/dsp/
+  Redirect 301 /articles/polypropylene-fittings/ /catalog/truby_i_fitingi/
+  Redirect 301 /articles/polypropylene-pipes/ /catalog/truby_i_fitingi/
+  Redirect 301 /articles/disk-shutter/ /catalog/zatvor_povorotnyy_diskovyy_tecofi_frantsiya/
+  Redirect 301 /catalog/oborudovanie_danfoss_esbe_icma/ http://polimer-vrn.ru/catalog/oborudovanie_danfoss_esbe_stout/
+  Redirect 301 /catalog/vozdukhovody_plastikovye_/ http://polimer-vrn.ru/catalog/ventilyatsiya/
+  Redirect 301 /catalog/konnektory/ http://polimer-vrn.ru/catalog/polivochnaya_sistema_belamos/
+  Redirect 301 /catalog/shlangi_polivochnye/ http://polimer-vrn.ru/catalog/shlangi_kapelnyy_poliv_taymery/
+  Redirect 301 /catalog/zadvizhki_stalnye_30s41nzh_zkl2_16_t_425_ru_16_voda_par_nefteprodukty/ http://polimer-vrn.ru/catalog/zadvizhki_stalnye_30s41nzh_zkl2_16_voda_par_nefteprodukty_t_425_c_ru_16_/
+  Redirect 301 /catalog/zadvizhki_chugunnye_30ch6br_31ch6br_voda_par_t_225_s_ru_10/ http://polimer-vrn.ru/catalog/zadvizhki_chugunnye_30ch6br_31ch6br_voda_par_t_225_c_ru_10/
+  Redirect 301 /catalog/zatvor_mezhflantsevyy_metapocca/ http://polimer-vrn.ru/catalog/zatvor_povorotnyy_diskovyy_metapocca/
+  Redirect 301 /catalog/gruppy_bezopasnosti/ http://polimer-vrn.ru/catalog/gruppy_bezopasnosti_watts/
+  Redirect 301 /catalog/manometry/ http://polimer-vrn.ru/catalog/manometry_termometry/
+  Redirect 301 /catalog/stabilizator_napryazheniya/ http://polimer-vrn.ru/catalog/stabilizatory_napryazheniya/
+  Redirect 301 /catalog/klapany_pozharnye/ http://polimer-vrn.ru/catalog/ventil_pozharnyy/
+  Redirect 301 /catalog/krany_sharovye_gallop/ http://polimer-vrn.ru/catalog/krany_sharovye_kitay/
+  Redirect 301 /catalog/krany_sharovye_aqualink/ http://polimer-vrn.ru/catalog/krany_sharovye_aquahit/
+  Redirect 301 /catalog/krany_sharovye_/ http://polimer-vrn.ru/catalog/krany_sharovye_rasprodazha/
+  Redirect 301 /catalog/rele_davleniya/ http://polimer-vrn.ru/catalog/rele_davleniya_i_komplektuyushchie/
+  Redirect 301 /catalog/sifony-gofry-shlangi/ http://polimer-vrn.ru/catalog/sifony_gofry_shlangi/
+  Redirect 301 /catalog/vanny_/ http://polimer-vrn.ru/catalog/ekrany_dlya_vann/
+  Redirect 301 /catalog/uplotnitelnye_prokladki_i_koltsa_santekhnicheskie/ http://polimer-vrn.ru/catalog/uplotnitelnye_prokladki_i_koltsa_santekhnicheskie_len_germetik/
+  Redirect 301 /catalog/kanalizatsiya_trapy_trosy/ http://polimer-vrn.ru/catalog/kanalizatsiya_trapy/
+  Redirect 301 /catalog/polipropilenovye_truby/ http://polimer-vrn.ru/catalog/polipropilenovye_truby_zachistnye/
+  Redirect 301 /catalog/polipropelenovye_truby_i_fitingi_fusitek/ http://polimer-vrn.ru/catalog/polipropilenovye_truby_i_fitingi_fora_fusitek/
+  Redirect 301 /catalog/truba_obsadnaya/ http://polimer-vrn.ru/catalog/truba_obsadnaya_/
+  Redirect 301 /catalog/truby_i_fitingi_iz_polietilena_pe_80/ http://polimer-vrn.ru/catalog/truby_i_fitingi_iz_polietilena_/
+  Redirect 301 /catalog/filtr_kolba_katridzhi/ http://polimer-vrn.ru/catalog/kartridzhi/
+  Redirect 301 /catalog/belamos_1/ http://polimer-vrn.ru/catalog/filtr_kolba/
+  Redirect 301 /catalog/filtry_gryazeviki_flantsevye/ http://polimer-vrn.ru/catalog/filtry_flantsevye/
+  Redirect 301 /catalog/avtomatika/ http://polimer-vrn.ru/catalog/vorota_avtomatika_rolstavni/
+  Redirect 301 /catalog/kley_germetik_montazhnaya_pena/ http://polimer-vrn.ru/catalog/germetik_montazhnaya_pena/
+  Redirect 301 /catalog/fanera_dvp_dsp_osp_sml/ http://polimer-vrn.ru/catalog/listovye_materialy/
+  Redirect 301 /catalog/lyuki_revizionnye_smotrovye/ http://polimer-vrn.ru/catalog/lyuki_revizionnye_reshetki/
+  Redirect 301 /catalog/plenka_skotch_steklosetka/ http://polimer-vrn.ru/catalog/plenka_skotch_steklosetka_verevki/
+  Redirect 301 /catalog/elektrika_svetilniki_ventilyatory/ http://polimer-vrn.ru/catalog/elektrika_svetilniki/
+  Redirect 301 /catalog/germetik_moment_makrofleks/ http://polimer-vrn.ru/catalog/germetik/
+  Redirect 301 /catalog/gipsokarton_belgips/ http://polimer-vrn.ru/catalog/gipsokarton_gipsoton/
+  Redirect 301 /catalog/gayki_shayby_shpilki/ http://polimer-vrn.ru/catalog/gayki_shayby_shpilki_ankery/
+  Redirect 301 /catalog/shpatlevka_teks/ http://polimer-vrn.ru/catalog/shpatlevka/
+  Redirect 301 /catalog/emal_aerozol_kudo/ http://polimer-vrn.ru/catalog/emal_aerozol_kudo_bosny_kimtek/
+  Redirect 301 /catalog/emal_yaroslavskiy_kolorit/ http://polimer-vrn.ru/catalog/emal_pf_115_promfasovka/
+  Redirect 301 /catalog/modulnye_ograzhdeniya_shtaketnik/ http://polimer-vrn.ru/catalog/modulnye_ograzhdeniya/
+  Redirect 301 /catalog/bity_haisser/ http://polimer-vrn.ru/catalog/bity/
+  Redirect 301 /catalog/svarka_raskhodnye_materialy/ http://polimer-vrn.ru/catalog/raskhodnye_materialy_1/
+  Redirect 301 /catalog/sukhie_smesi_khokholskiy_pk/ http://polimer-vrn.ru/catalog/sukhie_smesi_khokholskiy_pk_sm_999/
+  Redirect 301 /catalog/inzhenernaya_santekhnika/ http://polimer-vrn.ru/catalog/inzhenernaya_santekhnika_otoplenie_vodoprovod_kanalizatsiya/
+  Redirect 301 /catalog/stroitelno_otdelochnye_materialy/ http://polimer-vrn.ru/catalog/stroitelnye_materialy/
+  Redirect 301 /catalog/cendvichdym/ http://polimer-vrn.ru/catalog/cendvich_dymokhody/
+  Redirect 301 /catalog/kotly_napolnye_lemaks_wise/ http://polimer-vrn.ru/catalog/kotly_napolnye_lemaks_wise_chugun_/
+  Redirect 301 /catalog/kotly_nastennye_galan/ http://polimer-vrn.ru/catalog/kotly_elektricheskie_galan/
+  Redirect 301 /catalog/akvario/ http://polimer-vrn.ru/catalog/poverkhnostnye_nasosy_aquario/
+  Redirect 301 /catalog/belamos/ http://polimer-vrn.ru/catalog/tsirkulyatsionnye_nasosy_belamos/
+  Redirect 301 /catalog/grundfos/ http://polimer-vrn.ru/catalog/tsirkulyatsionnye_nasosy_grundfos/
+  Redirect 301 /catalog/wilo/ http://polimer-vrn.ru/catalog/tsirkulyatsionnye_nasosy_wilo/
+  Redirect 301 /catalog/radiator_alyuminievyy_rommer_plus_500/ http://polimer-vrn.ru/catalog/radiator_alyuminievyy_rommer_plus_500_96/
+  Redirect 301 /catalog/radiator_alyuminievyy_vulcano_/ http://polimer-vrn.ru/catalog/radiator_alyuminievyy_vulcano/
+  Redirect 301 /catalog/radiator_bimetallicheskiy_evolution_500/ http://polimer-vrn.ru/catalog/radiator_bimetallicheskiy_evolution/
+  Redirect 301 /catalog/oute_shishkova_bogacheva/ http://polimer-vrn.ru/catalog/oute/
+  Redirect 301 /catalog/smartsant_sh/ http://polimer-vrn.ru/catalog/smart_shishkova/
+  Redirect 301 /catalog/schetchiki_domovye_dlya_goryachey_i_kholodnoy_vody/ http://polimer-vrn.ru/catalog/schetchiki_domovye_dlya_goryachey_i_kholodnoy_vody_du20_du50/
+  Redirect 301 /catalog/kanalizatsiya_naruzhnyaya/ http://polimer-vrn.ru/catalog/kanalizatsiya_naruzhnaya/
+  Redirect 301 /catalog/fitingi_1/ http://polimer-vrn.ru/catalog/fitingi_khemkor/
+  Redirect 301 /catalog/kompzitnaya_truba_ppr_al_ppr_s_vnutrennim_armirovaniem_pn25_/ http://polimer-vrn.ru/catalog/truba_armirovannaya_po_tsentru_tsvet_belyy_fora_fusitek_/
+  Redirect 301 /catalog/kompzitnaya_truba_ppr_ppr_gf_ppr_fusitek_faser_pn20/ http://polimer-vrn.ru/catalog/truba_armirovannaya_steklovoloknom_tsvet_belyy_fora_fusitek_faser_/
+  Redirect 301 /catalog/truba_iz_ppr_pn20_dlya_goryachey_kholodnoy_i_pitevoy_vody/ http://polimer-vrn.ru/catalog/truba_iz_ppr_pn20_dlya_goryachey_kholodnoy_i_pitevoy_vody_fora_fusitek/
+  Redirect 301 /catalog/fitingi_tsvet_belyy_fusitek/ http://polimer-vrn.ru/catalog/fitingi_tsvet_belyy_fora_fusitek/
+  Redirect 301 /catalog/truba_pe_80/ http://polimer-vrn.ru/catalog/truba_/
+  Redirect 301 /catalog/otvyertki/ http://polimer-vrn.ru/catalog/otvyertki_klyuchi/
+  Redirect 301 /catalog/grunty_krafor/ http://polimer-vrn.ru/catalog/grunt_emal_po_rzhavchine/
+  Redirect 301 /catalog/grunty_colorrus/ http://polimer-vrn.ru/catalog/grunty_gf_021/
+  Redirect 301 /catalog/furnitura_sunnex/ http://polimer-vrn.ru/catalog/furnitura_sunnex_royalplast/
+  Redirect 301 /catalog/lopaty/ http://polimer-vrn.ru/catalog/sayding_zheltyy_alta_profil/
+  Redirect 301 /catalog/krany_sharovye_gallop_amerikanka/ http://polimer-vrn.ru/catalog/krany_sharovye_amerikanka_1/
+  Redirect 301 /catalog/krany_sharovye_gallop_g_g_babochka/ http://polimer-vrn.ru/catalog/krany_sharovye_g_g_babochka_1/
+  Redirect 301 /catalog/krany_sharovye_gallop_g_g_rychag/ http://polimer-vrn.ru/catalog/krany_sharovye_g_g_rychag_1/
+  Redirect 301 /catalog/krany_sharovye_gallop_g_sh_babochka/ http://polimer-vrn.ru/catalog/krany_sharovye_g_sh_babochka_1/
+  Redirect 301 /catalog/krany_sharovye_gallop_g_sh_rychag/ http://polimer-vrn.ru/catalog/krany_sharovye_g_sh_rychag_1/
+  Redirect 301 /catalog/krany_sharovye_varmega_sh_sh_babochka/ http://polimer-vrn.ru/catalog/krany_sharovye_sh_sh_babochka_1/
+
+
 <IfModule mod_rewrite.c>
   Options +FollowSymLinks
   RewriteEngine On
@@ -23,6 +115,13 @@ RewriteCond %{REQUEST_FILENAME} [\xF1-\xF3][\x80-\xBF]{3} [OR]
 RewriteCond %{REQUEST_FILENAME} \xF4[\x80-\x8F][\x80-\xBF]{2}
 RewriteCond %{REQUEST_FILENAME} !/bitrix/virtual_file_system.php$
 RewriteRule ^(.*)$ /bitrix/virtual_file_system.php [L]
+
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-l
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteCond %{REQUEST_URI} ^(.*/[^/\.]+)$
+  RewriteRule ^(.*)$ http://%{HTTP_HOST}/$1/ [R=301,L]
+
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-l
   RewriteCond %{REQUEST_FILENAME} !-d

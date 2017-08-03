@@ -25,6 +25,15 @@ class SellCheck extends Check
 	}
 
 	/**
+	 * @throws Main\NotImplementedException
+	 * @return string
+	 */
+	public static function getCalculatedSign()
+	{
+		return static::CALCULATED_SIGN_INCOME;
+	}
+
+	/**
 	 * @return string
 	 */
 	public static function getName()
@@ -37,9 +46,6 @@ class SellCheck extends Check
 	 */
 	public function getDataForCheck()
 	{
-		static $psList = array();
-		$totalSum = 0;
-
 		$result = array(
 			'type' => static::getType(),
 			'unique_id' => $this->getField('ID'),
@@ -52,96 +58,70 @@ class SellCheck extends Check
 
 		if ($entities)
 		{
-			foreach ($entities as $entity)
+			$entitiesData = $this->extractDataFromEntities($entities);
+
+			foreach ($entitiesData['PAYMENTS'] as $payment)
 			{
-				if ($order === null)
-					$order = CheckManager::getOrder($entity);
-
-				if ($entity instanceof Payment)
-				{
-					if (!isset($psList[$entity->getPaymentSystemId()]))
-						$psList[$entity->getPaymentSystemId()] = PaySystem\Manager::getById($entity->getPaymentSystemId());
-
-					$paySystem = $psList[$entity->getPaymentSystemId()];
-
-					$result['payments'][] = array(
-						'is_cash' => $paySystem['IS_CASH'],
-						'sum' => $entity->getSum()
-					);
-
-					$totalSum += $entity->getSum();
-				}
-				elseif ($entity instanceof Shipment)
-				{
-					$shipmentItemCollection = $entity->getShipmentItemCollection();
-
-					/** @var ShipmentItem $shipmentItem */
-					foreach ($shipmentItemCollection as $shipmentItem)
-					{
-						$basketItem = $shipmentItem->getBasketItem();
-						if ($basketItem->isBundleChild())
-							continue;
-
-						$vatInfo = array();
-						if (Main\Loader::includeModule('catalog'))
-						{
-							$dbRes = \CCatalogProduct::GetVATInfo($basketItem->getProductId());
-							$vatInfo = $dbRes->Fetch();
-						}
-
-						$item = array(
-							'name' => $basketItem->getField('NAME'),
-							'base_price' => $basketItem->getBasePrice(),
-							'price' => $basketItem->getPrice(),
-							'sum' => $basketItem->getFinalPrice(),
-							'quantity' => (float)$shipmentItem->getQuantity(),
-							'vat' => $vatInfo ? $vatInfo['ID'] : 0
-						);
-
-						if ($basketItem->getDiscountPrice() > 0)
-						{
-							$item['discount'] = array(
-								'discount' => $basketItem->getDiscountPrice(),
-								'discount_type' => 'C',
-							);
-						}
-
-						$result['items'][] = $item;
-					}
-
-					$item = array(
-						'name' => Main\Localization\Loc::getMessage('SALE_CASHBOX_SELL_DELIVERY'),
-						'base_price' => (float)$entity->getField('BASE_PRICE_DELIVERY'),
-						'price' => (float)$entity->getPrice(),
-						'sum' => (float)$entity->getPrice(),
-						'quantity' => 1,
-						'vat' => 0
-					);
-
-					if ($entity->getField('DISCOUNT_PRICE') > 0)
-					{
-						$item['discount'] = array(
-							'discount' => $entity->getField('DISCOUNT_PRICE'),
-							'discount_type' => 'C',
-						);
-					}
-
-					$result['items'][] = $item;
-				}
+				$result['payments'][] = array(
+					'is_cash' => $payment['IS_CASH'],
+					'sum' => $payment['SUM']
+				);
 			}
 
-			if ($order !== null)
+			foreach ($entitiesData['PRODUCTS'] as $product)
 			{
-				$properties = $order->getPropertyCollection();
-				$email = $properties->getUserEmail();
-				if ($email)
-					$result['client_email'] = $email->getValue();
-				$phone = $properties->getPhone();
-				if ($phone)
-					$result['client_phone'] = $phone->getValue();
+				$item = array(
+					'name' => $product['NAME'],
+					'base_price' => $product['BASE_PRICE'],
+					'price' => $product['PRICE'],
+					'sum' => $product['SUM'],
+					'quantity' => $product['QUANTITY'],
+					'vat' => $product['VAT']
+				);
+
+				if ($product['DISCOUNT'])
+				{
+					$item['discount'] = array(
+						'discount' => $product['DISCOUNT']['PRICE'],
+						'discount_type' => $product['DISCOUNT']['TYPE'],
+					);
+				}
+
+				$result['items'][] = $item;
 			}
 
-			$result['total_sum'] = $totalSum;
+			foreach ($entitiesData['DELIVERY'] as $delivery)
+			{
+				$item = array(
+					'name' => $delivery['NAME'],
+					'base_price' => $delivery['BASE_PRICE'],
+					'price' => $delivery['PRICE'],
+					'sum' => $delivery['SUM'],
+					'quantity' => $delivery['QUANTITY'],
+					'vat' => $delivery['VAT']
+				);
+
+				if ($delivery['DISCOUNT'])
+				{
+					$item['discount'] = array(
+						'discount' => $delivery['DISCOUNT']['PRICE'],
+						'discount_type' => $delivery['DISCOUNT']['TYPE'],
+					);
+				}
+
+				$result['items'][] = $item;
+			}
+
+			if (isset($entitiesData['BUYER']))
+			{
+				if (isset($entitiesData['BUYER']['EMAIL']))
+					$result['client_email'] = $entitiesData['BUYER']['EMAIL'];
+
+				if (isset($entitiesData['BUYER']['PHONE']))
+					$result['client_phone'] = $entitiesData['BUYER']['PHONE'];
+			}
+
+			$result['total_sum'] = $entitiesData['TOTAL_SUM'];
 		}
 
 		return $result;

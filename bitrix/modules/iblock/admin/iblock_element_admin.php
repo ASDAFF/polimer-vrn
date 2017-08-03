@@ -674,28 +674,24 @@ if($lAdmin->EditAction())
 					if (!empty($arCatalogProduct))
 						CCatalogProduct::Update($ID, $arCatalogProduct);
 				}
-				if (isset($arFields['CATALOG_MEASURE_RATIO']) && '' != trim($arFields['CATALOG_MEASURE_RATIO']))
+				if (isset($arFields['CATALOG_MEASURE_RATIO']))
 				{
-					$intRatioID = 0;
-					$rsRatios = CCatalogMeasureRatio::getList(
-						array(),
-						array('PRODUCT_ID' => $ID),
-						false,
-						false,
-						array('ID', 'PRODUCT_ID')
-					);
-					if ($arRatio = $rsRatios->Fetch())
+					$newValue = trim($arFields['CATALOG_MEASURE_RATIO']);
+					if ($newValue != '')
 					{
-						$intRatioID = intval($arRatio['ID']);
+						$intRatioID = 0;
+						$ratio = Catalog\MeasureRatioTable::getList(array(
+							'select' => array('ID', 'PRODUCT_ID'),
+							'filter' => array('=PRODUCT_ID' => $ID, '=IS_DEFAULT' => 'Y'),
+						))->fetch();
+						if (!empty($ratio))
+							$intRatioID = (int)$ratio['ID'];
+						if ($intRatioID > 0)
+							$ratioResult = CCatalogMeasureRatio::update($intRatioID, array('RATIO' => $newValue));
+						else
+							$ratioResult = CCatalogMeasureRatio::add(array('PRODUCT_ID' => $ID, 'RATIO' => $newValue, 'IS_DEFAULT' => 'Y'));
 					}
-					if (0 < $intRatioID)
-					{
-						CCatalogMeasureRatio::update($intRatioID, array('RATIO' => trim($arFields['CATALOG_MEASURE_RATIO'])));
-					}
-					else
-					{
-						CCatalogMeasureRatio::add(array('PRODUCT_ID' => $ID, 'RATIO' => trim($arFields['CATALOG_MEASURE_RATIO'])));
-					}
+					unset($newValue);
 				}
 			}
 		}
@@ -2259,7 +2255,7 @@ while($arRes = $rsData->NavNext(true, "f_"))
 		}
 		if (isset($arSelectedFieldsMap['CATALOG_MEASURE_RATIO']))
 		{
-			$row->arRes['CATALOG_MEASURE_RATIO'] = 1;
+			$row->arRes['CATALOG_MEASURE_RATIO'] = ' ';
 		}
 	}
 
@@ -2366,21 +2362,18 @@ if ($bCatalog && !empty($arRows))
 
 	if (isset($arSelectedFieldsMap['CATALOG_MEASURE_RATIO']))
 	{
-		$rsRatios = CCatalogMeasureRatio::getList(
-			array(),
-			array('@PRODUCT_ID' => $arRowKeys),
-			false,
-			false,
-			array('ID', 'PRODUCT_ID', 'RATIO')
-		);
-		while ($arRatio = $rsRatios->Fetch())
+		$iterator = Catalog\MeasureRatioTable::getList(array(
+			'select' => array('ID', 'PRODUCT_ID', 'RATIO'),
+			'filter' => array('@PRODUCT_ID' => $arRowKeys, '=IS_DEFAULT' => 'Y')
+		));
+		while ($row = $iterator->fetch())
 		{
-			$arRatio['PRODUCT_ID'] = (int)$arRatio['PRODUCT_ID'];
-			if (isset($arRows[$arRatio['PRODUCT_ID']]))
-			{
-				$arRows[$arRatio['PRODUCT_ID']]->arRes['CATALOG_MEASURE_RATIO'] = $arRatio['RATIO'];
-			}
+			$id = (int)$row['PRODUCT_ID'];
+			if (isset($arRows[$id]))
+				$arRows[$id]->arRes['CATALOG_MEASURE_RATIO'] = $row['RATIO'];
+			unset($id);
 		}
+		unset($row, $iterator);
 	}
 }
 
@@ -2397,7 +2390,7 @@ foreach($arRows as $f_ID => $row)
 	{
 		if ($bCatalog)
 		{
-			if ($showCatalogWithOffers || $row->arRes['CATALOG_TYPE'] != CCatalogProduct::TYPE_SKU)
+			if ($showCatalogWithOffers || $row->arRes['CATALOG_TYPE'] != Catalog\ProductTable::TYPE_SKU)
 			{
 				if (isset($arElementOps[$f_ID]["element_edit_price"]))
 				{
@@ -2515,7 +2508,7 @@ foreach($arRows as $f_ID => $row)
 
 		if ($bCatalog)
 		{
-			if ($showCatalogWithOffers || $row->arRes['CATALOG_TYPE'] != CCatalogProduct::TYPE_SKU)
+			if ($showCatalogWithOffers || $row->arRes['CATALOG_TYPE'] != Catalog\ProductTable::TYPE_SKU)
 			{
 				if (isset($arElementOps[$f_ID]["element_edit_price"]) && $boolCatalogPrice)
 				{
@@ -2623,7 +2616,7 @@ foreach($arRows as $f_ID => $row)
 
 		if ($bCatalog)
 		{
-			if ($showCatalogWithOffers || $row->arRes['CATALOG_TYPE'] != CCatalogProduct::TYPE_SKU)
+			if ($showCatalogWithOffers || $row->arRes['CATALOG_TYPE'] != Catalog\ProductTable::TYPE_SKU)
 			{
 				$row->AddCheckField('CATALOG_AVAILABLE', false);
 				$row->AddInputField("CATALOG_QUANTITY", false);
@@ -2698,9 +2691,9 @@ foreach($arRows as $f_ID => $row)
 			$strProductType .= ('' != $strProductType ? ', ' : '').GetMessage('IBEL_CATALOG_TYPE_MESS_GROUP');
 		$row->AddViewField('CATALOG_TYPE', $strProductType);
 	}
-	if ($bCatalog && isset($arSelectedFieldsMap['CATALOG_MEASURE']) && ($showCatalogWithOffers || $row->arRes['CATALOG_TYPE'] != CCatalogProduct::TYPE_SKU))
+	if ($bCatalog && isset($arSelectedFieldsMap['CATALOG_MEASURE']) && ($showCatalogWithOffers || $row->arRes['CATALOG_TYPE'] != Catalog\ProductTable::TYPE_SKU))
 	{
-		if (isset($arElementOps[$f_ID]["element_edit_price"]) && $boolCatalogPrice && $row->arRes['CATALOG_TYPE'] != CCatalogProduct::TYPE_SET)
+		if (isset($arElementOps[$f_ID]["element_edit_price"]) && $boolCatalogPrice && $row->arRes['CATALOG_TYPE'] != Catalog\ProductTable::TYPE_SET)
 		{
 			$row->AddSelectField('CATALOG_MEASURE', $measureList);
 		}

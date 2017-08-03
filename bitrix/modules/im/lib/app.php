@@ -29,6 +29,7 @@ class App
 		$iframe = '';
 		$iframeWidth = 350;
 		$iframeHeight = 250;
+		$iframePopup = 'N';
 		$jscommand = isset($fields['JS'])? $fields['JS']: '';
 		
 		if (isset($fields['IFRAME']) && $fields['IFRAME'])
@@ -48,6 +49,7 @@ class App
 			$iframe = $fields['IFRAME'].(isset($check['query'])? '&': '?');
 			$iframeWidth = isset($fields['IFRAME_WIDTH']) && intval($fields['IFRAME_WIDTH']) > 250? intval($fields['IFRAME_WIDTH']): $iframeWidth;
 			$iframeHeight = isset($fields['IFRAME_HEIGHT']) && intval($fields['IFRAME_HEIGHT']) > 50? intval($fields['IFRAME_HEIGHT']): $iframeHeight;
+			$iframePopup = isset($fields['IFRAME_POPUP']) && $fields['IFRAME_POPUP'] == 'Y'? 'Y': $iframePopup;
 		}
 		else if (!$jscommand)
 		{
@@ -73,6 +75,7 @@ class App
 		}
 		
 		$extranetSupport = isset($fields['EXTRANET_SUPPORT']) && $fields['EXTRANET_SUPPORT'] == 'Y'? 'Y': 'N';
+		$livechatSupport = isset($fields['LIVECHAT_SUPPORT']) && $fields['LIVECHAT_SUPPORT'] == 'Y'? 'Y': 'N';
 		
 		/* vars for module install */
 		$class = isset($fields['CLASS'])? $fields['CLASS']: '';
@@ -132,8 +135,10 @@ class App
 			'IFRAME' => $iframe,
 			'IFRAME_WIDTH' => $iframeWidth,
 			'IFRAME_HEIGHT' => $iframeHeight,
+			'IFRAME_POPUP' => $iframePopup,
 			'JS' => $jscommand,
 			'EXTRANET_SUPPORT' => $extranetSupport,
+			'LIVECHAT_SUPPORT' => $livechatSupport,
 			'CLASS' => $class,
 			'METHOD_LANG_GET' => $methodLangGet,
 			'APP_ID' => $restAppId
@@ -323,6 +328,10 @@ class App
 		{
 			$update['IFRAME_HEIGHT'] = intval($updateFields['IFRAME_HEIGHT']) > 50? intval($updateFields['IFRAME_HEIGHT']): 150;
 		}
+		if (isset($updateFields['IFRAME_POPUP']))
+		{
+			$update['IFRAME_POPUP'] = $updateFields['IFRAME_POPUP'] == 'Y'? 'Y': 'N';
+		}
 		if (isset($updateFields['ICON_ID']) && $updateFields['ICON_ID'])
 		{
 			$update['ICON_FILE_ID'] = intval($updateFields['ICON_ID']);
@@ -339,6 +348,10 @@ class App
 		{
 			$update['EXTRANET_SUPPORT'] = $updateFields['EXTRANET_SUPPORT'] == 'Y'? 'Y': 'N';
 		}
+		if (isset($updateFields['LIVECHAT_SUPPORT']))
+		{
+			$update['LIVECHAT_SUPPORT'] = $updateFields['LIVECHAT_SUPPORT'] == 'Y'? 'Y': 'N';
+		}
 		
 		if (!empty($update))
 		{
@@ -350,7 +363,16 @@ class App
 		
 		if (\Bitrix\Main\Loader::includeModule('pull'))
 		{
-			if ($update['REGISTERED'] || $update['DOMAIN_HASH'] || $update['CONTEXT'] || $update['IFRAME'] || $update['JS']  || $update['IFRAME_WIDTH'] || $update['IFRAME_HEIGHT'])
+			if (
+				$update['REGISTERED'] 
+				|| $update['DOMAIN_HASH'] 
+				|| $update['CONTEXT'] 
+				|| $update['IFRAME'] 
+				|| $update['JS']  
+				|| $update['IFRAME_WIDTH'] 
+				|| $update['IFRAME_HEIGHT']
+				|| $update['IFRAME_POPUP']
+			)
 			{
 				\CPullStack::AddShared(Array(
 					'module_id' => 'im',
@@ -364,6 +386,7 @@ class App
 						'iframe' => $update['IFRAME'],
 						'iframeWidth' => $update['IFRAME_WIDTH'],
 						'iframeHeight' => $update['IFRAME_HEIGHT'],
+						'iframePopup' => $update['IFRAME_POPUP'],
 					)
 				));
 			}
@@ -555,7 +578,7 @@ class App
 	public static function getListCache($lang = LANGUAGE_ID)
 	{
 		$cache = \Bitrix\Main\Data\Cache::createInstance();
-		if($cache->initCache(self::CACHE_TTL, 'list_v2_'.$lang, self::CACHE_PATH))
+		if($cache->initCache(self::CACHE_TTL, 'list_v3_'.$lang, self::CACHE_PATH))
 		{
 			$result = $cache->getVars();
 		}
@@ -677,14 +700,17 @@ class App
 		$apps = self::getListCache($lang);
 
 		$userId = $GLOBALS['USER']? $GLOBALS['USER']->GetId(): 0;
-		if ($userId && \Bitrix\Im\User::getInstance($userId)->isExtranet())
-		{
-			return Array();
-		}
+		$isExtranet = $userId && \Bitrix\Im\User::getInstance($userId)->isExtranet();
+		$isConnector = $userId && \Bitrix\Im\User::getInstance($userId)->isConnector();
 		
 		$result = Array();
 		foreach ($apps as $app)
 		{
+			if ($isConnector && $app['LIVECHAT_SUPPORT'] != 'Y')
+				continue;
+			else if ($isExtranet && $app['EXTRANET_SUPPORT'] != 'Y')
+				continue;
+			
 			$botData = \Bitrix\Im\Bot::getCache($app['BOT_ID']);
 			$result[] = Array(
 				'id' => $app['ID'],
@@ -697,9 +723,9 @@ class App
 				'iframe' => $app['IFRAME'],
 				'iframeWidth' => $app['IFRAME_WIDTH'],
 				'iframeHeight' => $app['IFRAME_HEIGHT'],
+				'iframePopup' => $app['IFRAME_POPUP'] == 'Y',
 				'js' => $app['JS'],
 				'context' => ToLower($app['CONTEXT']),
-				'extranet' => $app['EXTRANET_SUPPORT'] == 'Y',
 				'hidden' => $app['HIDDEN'] == 'Y',
 				'title' => $app['TITLE'],
 				'description' => $app['DESCRIPTION'],
