@@ -141,9 +141,18 @@ final class Manager
 		$elementIds = $sectionIds = array();
 		foreach($condition['CHILDREN'] as $child)
 		{
+			$onlyOneCondition =
+				count($child['CHILDREN']) === 1 &&
+				$child['DATA']['All'] === 'AND' &&
+				$child['DATA']['Found'] === 'Found'
+			;
+
 			if(
 				$child['CLASS_ID'] === 'CondBsktProductGroup' &&
-				$child['DATA']['All'] === 'OR'  && $child['DATA']['Found'] === 'Found'
+				(
+					($child['DATA']['All'] === 'OR' && $child['DATA']['Found'] === 'Found') ||
+					$onlyOneCondition
+				)
 			)
 			{
 				foreach($child['CHILDREN'] as $grandchild)
@@ -151,7 +160,11 @@ final class Manager
 					switch($grandchild['CLASS_ID'])
 					{
 						case 'CondIBElement':
-							if($grandchild['DATA']['logic'] === 'Equal')
+							if (is_array($grandchild['DATA']['value']))
+							{
+								$elementIds = array_merge($elementIds, $grandchild['DATA']['value']);
+							}
+							else
 							{
 								$elementIds[] = $grandchild['DATA']['value'];
 							}

@@ -14,6 +14,7 @@ use Bitrix\Main\Entity;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Internals;
@@ -53,7 +54,7 @@ class BasketItem
 			"PRODUCT_ID" => $productId,
 		);
 
-		$basketItem = new static($fields);
+		$basketItem = static::createBasketItemObject($fields);
 
 		if ($basketCode !== null)
 		{
@@ -71,6 +72,19 @@ class BasketItem
 		$basketItem->setCollection($basket);
 
 		return $basketItem;
+	}
+
+	/**
+	 * @param array $fields
+	 * @throws NotImplementedException
+	 * @return BasketItem
+	 */
+	protected static function createBasketItemObject(array $fields = array())
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$basketItemClassName = $registry->getBasketItemClassName();
+
+		return new $basketItemClassName($fields);
 	}
 
 	/**
@@ -1036,7 +1050,7 @@ class BasketItem
 				}
 
 				/** @var BasketItem $basketItem */
-				$bundleBasketItem = BasketItem::create($bundleCollection, $bundleFields['MODULE'], $bundleFields['PRODUCT_ID']);
+				$bundleBasketItem = static::create($bundleCollection, $bundleFields['MODULE'], $bundleFields['PRODUCT_ID']);
 
 				if (!empty($bundleDat["PROPS"]) && is_array($bundleDat["PROPS"]))
 				{

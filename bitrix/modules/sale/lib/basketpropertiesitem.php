@@ -66,12 +66,23 @@ class BasketPropertyItem
 	}
 
 	/**
+	 * @return BasketPropertyItem
+	 */
+	protected static function createBasketPropertyItemObject()
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$basketPropertyItemClassName = $registry->getBasketPropertyItemClassName();
+
+		return new $basketPropertyItemClassName();
+	}
+
+	/**
 	 * @param BasketPropertiesCollection $basketPropertiesCollection
 	 * @return static
 	 */
 	public static function create(BasketPropertiesCollection $basketPropertiesCollection)
 	{
-		$basketPropertyItem = new static();
+		$basketPropertyItem = static::createBasketPropertyItemObject();
 		$basketPropertyItem->setCollection($basketPropertiesCollection);
 
 		return $basketPropertyItem;

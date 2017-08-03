@@ -52,6 +52,17 @@ class ShipmentItemStore
 
 	}
 
+	/**
+	 * @param $itemData
+	 * @return ShipmentItemStore
+	 */
+	protected static function createShipmentItemStoreObject(array $itemData = array())
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$shipmentItemStoreClassName = $registry->getShipmentItemStoreClassName();
+
+		return new $shipmentItemStoreClassName($itemData);
+	}
 
 	public static function create(ShipmentItemStoreCollection $collection, BasketItem $basketItem)
 	{
@@ -59,7 +70,7 @@ class ShipmentItemStore
 			'BASKET_ID' => $basketItem->getId(),
 		);
 
-		$shipmentItemStore = new static($fields);
+		$shipmentItemStore = static::createShipmentItemStoreObject($fields);
 		$shipmentItemStore->setCollection($collection);
 
 		$shipmentItemStore->basketItem = $basketItem;
@@ -265,7 +276,7 @@ class ShipmentItemStore
 			)
 		);
 		while ($itemData = $itemDataList->fetch())
-			$items[] = new static($itemData);
+			$items[] = static::createShipmentItemStoreObject($itemData);
 
 		return $items;
 	}

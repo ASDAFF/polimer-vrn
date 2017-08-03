@@ -3648,7 +3648,7 @@ REQ
 		return $result;
 	}
 
-	function _transaction_lock($IBLOCK_ID)
+	public static function _transaction_lock($IBLOCK_ID)
 	{
 		/** @global CDatabase $DB */
 		global $DB;

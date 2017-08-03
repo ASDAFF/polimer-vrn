@@ -1120,9 +1120,22 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 		{
 			$this->requestData["ID"] = $this->order->getId();
 		}
-		else
+		elseif ((int)$id > 0)
 		{
 			$this->order = Sale\Order::load($id);
+		}
+	}
+
+	/**
+	 * @return void
+	 */
+	protected function checkOrder()
+	{
+		global $USER;
+
+		if (!($this->order) || ($this->order->getUserId() !== $USER->GetID() && empty($this->requestData['hash'])))
+		{
+			$this->doCaseOrderIdNotSet();
 		}
 	}
 
@@ -1133,17 +1146,12 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 	 */
 	protected function obtainDataOrder()
 	{
-		global $USER;
-
 		if (!($this->order))
 		{
 			$this->loadOrder($this->requestData["ID"]);
 		}
 
-		if (!($this->order) || ($this->order->getUserId() !== $USER->GetID() && empty($this->requestData['hash'])))
-		{
-			$this->doCaseOrderIdNotSet();
-		}
+		$this->checkOrder();
 
 		$this->requestData["ID"] = $this->order->getId();
 
@@ -1339,7 +1347,7 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 		unset($payment);
 
 		// for compatibility
-		$firstPaySystem = current($this->dbResult['PAYMENT']);
+		$firstPaySystem = reset($this->dbResult['PAYMENT']);
 		$this->dbResult['PAY_SYSTEM'] = $firstPaySystem['PAY_SYSTEM'];
 		$this->dbResult['CAN_REPAY'] = $firstPaySystem['CAN_REPAY'];
 	}
@@ -1387,7 +1395,7 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 				$cachedData = array();
 
 				// Person type
-				$cachedData['PERSON_TYPE'] = Sale\PersonType::load(SITE_ID);
+				$cachedData['PERSON_TYPE'] = Sale\PersonType::load($this->dbResult['LID']);
 
 				// Save statuses for Filter form
 				$cachedData['STATUS'] = array();
@@ -1430,6 +1438,26 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 	}
 
 	/**
+	 * Function create cache id.
+	 *
+	 * @return array
+	 */
+	protected function createCacheId()
+	{
+		global $USER;
+		global $APPLICATION;
+
+		return array(
+			$APPLICATION->GetCurPage(),
+			$this->dbResult["ID"],
+			$this->dbResult["PERSON_TYPE_ID"],
+			$this->dbResult["DATE_UPDATE"]->toString(),
+			$this->useCatalog,
+			$this->arParams["CACHE_GROUPS"] === "N" ? false : $USER->GetGroups()
+		);
+	}
+
+	/**
 	 * Function contains a mechanism for cacheing data in the component
 	 *
 	 * @throws Exception
@@ -1437,16 +1465,7 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 	 */
 	protected function obtainDataCached()
 	{
-		global $USER;
-		global $APPLICATION;
-
-		if ($this->startCache(array(
-			$APPLICATION->GetCurPage(),
-			$this->dbResult["ID"],
-			$this->dbResult["PERSON_TYPE_ID"],
-			$this->useCatalog,
-			$this->arParams["CACHE_GROUPS"] === "N" ? false : $USER->GetGroups()
-		)))
+		if ($this->startCache($this->createCacheId()))
 		{
 			try
 			{

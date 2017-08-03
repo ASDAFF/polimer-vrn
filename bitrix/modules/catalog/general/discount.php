@@ -1059,13 +1059,15 @@ class CAllCatalogDiscount
 
 		if($priceRow)
 		{
-			$basketItem->setField('PRODUCT_PRICE_ID', $priceRow['ID']);
-			$basketItem->setField('BASE_PRICE', $priceRow['PRICE']);
-			$basketItem->setField('PRICE', $priceRow['PRICE']);
-			$basketItem->setField('DISCOUNT_PRICE', 0);
-			$basketItem->setField('CURRENCY', $priceRow['CURRENCY']);
-			$basketItem->setField('CAN_BUY', 'Y');
-			$basketItem->setField('DELAY', 'N');
+			$basketItem->setFields(array(
+				'PRODUCT_PRICE_ID' => $priceRow['ID'],
+				'BASE_PRICE' => $priceRow['PRICE'],
+				'PRICE' => $priceRow['PRICE'],
+				'DISCOUNT_PRICE' => 0,
+				'CURRENCY' => $priceRow['CURRENCY'],
+				'CAN_BUY' => 'Y',
+				'DELAY' => 'N'
+			));
 		}
 
 		if($isRenewal)
@@ -3723,6 +3725,31 @@ class CAllCatalogDiscount
 		if (!is_array($arProps))
 			return;
 
+		$whiteList = array(
+			'ID' => true,
+			'~ID' => true,
+			'PROPERTY_TYPE' => true,
+			'~PROPERTY_TYPE' => true,
+			'MULTIPLE' => true,
+			'~MULTIPLE' => true,
+			'USER_TYPE' => true,
+			'~USER_TYPE' => true,
+			'VALUE' => true,
+			'~VALUE' => true,
+			'VALUE_ENUM_ID' => true,
+			'~VALUE_ENUM_ID' => true
+		);
+		if (!empty($arProps))
+		{
+			foreach (array_keys($arProps) as $index)
+			{
+				$arProps[$index] = array_intersect_key($arProps[$index], $whiteList);
+				if (empty($arProps[$index]))
+					unset($arProps[$index]);
+			}
+			unset($index);
+		}
+
 		if (self::isUsedSaleDiscountOnly())
 			Catalog\Discount\DiscountManager::setProductPropertiesCache($intProductID, $arProps);
 		else
@@ -3733,14 +3760,24 @@ class CAllCatalogDiscount
 	{
 		if (empty($arTypes) || !is_array($arTypes))
 			return;
-		if (isset($arTypes['PRODUCT']))
-			self::$arCacheProduct = array();
-		if (isset($arTypes['SECTIONS']))
-			self::$arCacheProductSections = array();
-		if (isset($arTypes['SECTION_CHAINS']))
-			self::$arCacheProductSectionChain = array();
-		if (isset($arTypes['PROPERTIES']))
-			self::$arCacheProductProperties = array();
+
+		if (self::isUsedSaleDiscountOnly())
+		{
+			Catalog\Discount\DiscountManager::clearProductsCache();
+			Catalog\Discount\DiscountManager::clearProductPropertiesCache();
+			Catalog\Discount\DiscountManager::clearProductPricesCache();
+		}
+		else
+		{
+			if (isset($arTypes['PRODUCT']))
+				self::$arCacheProduct = array();
+			if (isset($arTypes['SECTIONS']))
+				self::$arCacheProductSections = array();
+			if (isset($arTypes['SECTION_CHAINS']))
+				self::$arCacheProductSectionChain = array();
+			if (isset($arTypes['PROPERTIES']))
+				self::$arCacheProductProperties = array();
+		}
 	}
 
 	public static function isUsedSaleDiscountOnly()

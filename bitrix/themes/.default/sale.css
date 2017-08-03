@@ -2105,6 +2105,7 @@ a.dashed-link:hover {
 	font-weight: bold;
 	text-shadow:0 1px 0 #fff;
 	border-bottom: 1px solid #a9a9a9;
+	padding: 1px 3px;
 }
 .adm-s-order-table-ddi-table thead td:first-child{
 	border-radius: 5px 0 0 0;
@@ -3249,9 +3250,6 @@ tr.adm-s-delivery-restriction-delcat:hover a.adm-s-bus-morelinkqhsw{
 }
 
 /* CASHBOX STYLES */
-select::-ms-expand {
-	display: none;
-}
 
 .adm-cashbox-border {
 	margin: 65px 0 45px 0;
@@ -3616,7 +3614,22 @@ select::-ms-expand {
 .deducted-status span,
 .shipment-status span,
 .delivery-status span,
-.adm-shipment-block-short-info td span
-{
+.adm-shipment-block-short-info td span{
 	white-space: nowrap;
+}
+
+.adm-sale-delivery-restriction-descr{
+	border:1px solid;
+	border-color: #87919c #959ea9 #9ea7b1 #959ea9;
+	border-radius: 4px;
+	padding: 5px;
+}
+
+.adm-sale-green-check-mark {
+	content: '';
+	margin: 9px 15px;
+	position: absolute;
+	width: 17px;
+	height: 12px;
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABEAAAAMCAMAAACz+6aNAAAAilBMVEUAAAD//wCIzACG1wCQ0wCK1QCJzgCO0ACHzwCKzwCN0ACMzgCN0ACL0QCK0QCL0ACM0ACL0ACL0gCM0QCK0ACL0QCK0ACL0QCK0QCK0QCL0QCL0gCL0QCL0QCL0QCL0QCK0QCL0QCK0QCL0QCL0QCL0gCL0QCL0QCL0QCL0QCL0QCL0QCL0QCL0QB0gkMaAAAALXRSTlMAAQ8TFxgaGyAlJioxNz1WXWdsb3h5g4uMkJWpwszNztLX3d7h5ufr7vL8/f5+uoLEAAAAbElEQVQI112OxxrBYAAEJwTRRQmiRIhu3v/1XLTfnvabw85CkOG2EYLRzSIA6d3r4BdMHl76wDh+gamee8DSsglApqcuQK77BKK5Vh0AooVW7SjXQ/IezPS40rL1dcxUd/GfdlMPv6br2qc/AZjhCRcVbuz3AAAAAElFTkSuQmCC);
 }

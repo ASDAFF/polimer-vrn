@@ -432,7 +432,7 @@ if ($errors)
 					box-shadow: 0 1px 0 0 rgba(255,255,255,0.3), inset 0 2px 2px -1px rgba(180,188,191,0.7);
 				}
 			</style>
-			<input type="text" name="NEW_COLOR" id="new_color" value="<?=htmlspecialcharsbx($status['COLOR'])?>" size="4" maxlength="2" style="float:left; margin-right: 5px">
+			<input type="text" name="NEW_COLOR" id="new_color" value="<?=htmlspecialcharsbx($status['COLOR'])?>" size="4" maxlength="7" style="float:left; margin-right: 5px">
 			<script>
 			function SetStatusColorInput(color)
 			{

@@ -49,9 +49,19 @@ final class State extends Dictionary
 		return $this;
 	}
 
+	/**
+	 * @param string $name
+	 * @param callable|null $defaultValue
+	 *
+	 * @return null|string
+	 */
 	public function get($name, $defaultValue = null)
 	{
 		$value = parent::get($name);
+		if ($defaultValue && is_callable($defaultValue))
+		{
+			return $defaultValue($value);
+		}
 
 		return $value !== null? $value : $defaultValue;
 	}

@@ -2149,6 +2149,7 @@ class CAllIBlockSection
 			"EXTERNAL_ID"		=>$arFilter["EXTERNAL_ID"],
 			"ACTIVE"		=>$arFilter["ACTIVE"],
 
+			"CNT_ACTIVE"		=>$arFilter["CNT_ACTIVE"],
 			"CNT_ALL"		=>$arFilter["CNT_ALL"],
 			"ELEMENT_SUBSECTIONS"	=>$arFilter["ELEMENT_SUBSECTIONS"],
 		);

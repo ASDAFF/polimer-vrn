@@ -24,6 +24,9 @@ Loc::loadMessages(__FILE__);
  * <li> DATE_CREATE datetime optional
  * <li> CREATED_BY int optional
  * <li> DESCRIPTION string optional
+ * <li> CREATED_BY_USER reference to {@link \Bitrix\Main\UserTable}
+ * <li> MODIFIED_BY_USER reference to {@link \Bitrix\Main\UserTable}
+ * <li> DISCOUNT reference to {@link \Bitrix\Catalog\DiscountTable}
  * </ul>
  *
  * @package Bitrix\Catalog

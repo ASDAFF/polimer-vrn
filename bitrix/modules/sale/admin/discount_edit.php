@@ -317,6 +317,7 @@ $defaultValues = array(
 	'CONDITIONS' => '',
 	'XML_ID' => '',
 	'ACTIONS' => '',
+	'PRESET_ID' => null,
 );
 if (isset($_REQUEST['LID']))
 	$defaultValues['LID'] = trim($_REQUEST['LID']);
@@ -354,6 +355,12 @@ else
 		$arDiscountGroupList[] = (int)$arDiscountGroup['GROUP_ID'];
 	}
 }
+
+if (!empty($arDiscount['PRESET_ID']))
+{
+	LocalRedirect('/bitrix/admin/sale_discount_preset_detail.php?DISCOUNT_ID='.$arDiscount['ID'].'&from_list=order&lang='.LANGUAGE_ID);
+}
+
 if (!empty($errors))
 {
 	if ($boolCondParseError || $boolActParseError)

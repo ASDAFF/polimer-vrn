@@ -615,7 +615,7 @@ class Vk extends Platform
 		else return false;
 		
 		$urlParams["display"] = "page";
-		$urlParams["scope"] = self::getScope(array("market", "photos", "offline", "wall", "docs"));
+		$urlParams["scope"] = self::getScope(array("market", "photos", "offline", "wall", "docs", "groups"));
 		$urlParams["response_type"] = "code";
 		$urlParams["v"] = Api::$apiVersion;
 		

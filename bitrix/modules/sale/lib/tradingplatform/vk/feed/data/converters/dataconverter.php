@@ -21,12 +21,20 @@ abstract class DataConverter
 	protected static function convertQuotes($str)
 	{
 		if(strlen($str) > 0)
-			return preg_replace(
-				array('#"(.*?)"#', '#&quot;(.*?)&quot;#'),
-				Loc::getMessage("SALE_VK_PRODUCT_LAQUO").'$1'.Loc::getMessage("SALE_VK_PRODUCT_RAQUO"), $str
+		{
+//			check inches
+			$str = preg_replace(
+				'/(\d+[ ]*)(&quot;)/',
+				'$1'.Loc::getMessage('SALE_VK_INCH'), $str
 			);
-		else
-			return $str;
+			
+//			check quotes
+			$str = preg_replace(
+				array('#"(.*?)"#', '#&quot;(.*?)&quot;#'),
+				Loc::getMessage("SALE_VK_PRODUCT_LAQUO") . '$1' . Loc::getMessage("SALE_VK_PRODUCT_RAQUO"), $str
+			);
+		}
+		return $str;
 	}
 }
 

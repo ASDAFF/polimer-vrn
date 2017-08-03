@@ -236,6 +236,7 @@ $MESS["EC_RRULE_EVERY_YEAR"] = "yearly, on the #DAY# day of the #MONTH# month";
 $MESS["EC_RRULE_EVERY_YEAR_1"] = "every #YEAR# years, on the #DAY# of the #MONTH# month";
 $MESS["EC_RRULE_UNTIL"] = "till #UNTIL_DATE#";
 $MESS["EC_RRULE_FROM"] = "from #FROM_DATE#";
+$MESS["EC_RRULE_COUNT"] = "#COUNT# time(s)";
 $MESS["EC_JS_EVERY_M"] = "every";
 $MESS["EC_JS_EVERY_F"] = "every";
 $MESS["EC_JS_EVERY_M_"] = "Every";
@@ -476,7 +477,7 @@ $MESS["EC_MOBILE_HELP_IPHONE"] = "<p>To set up your Apple device to support CalD
 <li>Click <b>Add Account</b>.</li>
 <li>Select <b>Other</b> &gt; <b>Add CalDAV Account</b>.</li>
 <li>Specify this website address as server (<span class=\"bxec-link\">#CALENDAR_LINK#</span>). Use your login and password.</li>
-<li>Use Basic Authorization.</li>
+<li>If two-step authentication is enabled on your portal, use the password assigned on the \"Application passwords\" screen in your profile.</li>
 #POINT_SET_PORT#
 </ol><p>Your calendars will appear in the \"Calendar\" application.</p>";
 $MESS["EC_MOBILE_HELP_MAC"] = "<p>Configuring iCal to use your calendars:</p>
@@ -486,6 +487,7 @@ $MESS["EC_MOBILE_HELP_MAC"] = "<p>Configuring iCal to use your calendars:</p>
 <li>Select CalDAV as the account type.</li>
 <li>Set the account type to manual.</li>
 <li>In the account settings, specify this site's URL (<span class=\"bxec-link\">#CALENDAR_LINK#</span>) as the server address, and enter your user name and password.</li>
+<li>If two-step authentication is enabled on your portal, use the password assigned on the \"Application passwords\" screen in your profile.</li>
 		#POINT_SET_PORT#
 </ol>
 <p>Now you can see your calendars online in iCal.</p>";
@@ -499,6 +501,7 @@ If you still don't have a Bitrix24 account, add a new account selecting Bitrix24
 	<li>Enter your login (e-mail).</li>
 	<li>Enter your password.</li>
 </ul>
+<li>If two-step authentication is enabled on your portal, use the password assigned on the \"Application passwords\" screen in your profile.</li>
 </li>
 <li>Tap on the account and check the calendar (and contacts if so required) to sync them to your mobile device.</li>
 
@@ -663,5 +666,4 @@ $MESS["EC_D_REC_EV_ONLY_THIS_EVENT"] = "Only this event";
 $MESS["EC_D_REC_EV_NEXT"] = "This and all subsequent events";
 $MESS["EC_D_REC_EV_ALL"] = "All events";
 $MESS["EC_BUSY_ALERT"] = "One or more participants are not available during hours specified and cannot be invited.";
-$MESS["EC_RRULE_COUNT"] = "#COUNT# time(s)";
 ?>

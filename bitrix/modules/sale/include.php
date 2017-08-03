@@ -332,6 +332,7 @@ CModule::AddAutoloadClasses(
 
 		"\\Bitrix\\Sale\\PriceMaths" => "lib/pricemaths.php",
 		"\\Bitrix\\Sale\\BasketComponentHelper" => "lib/basketcomponenthelper.php",
+		"\\Bitrix\\Sale\\Registry" => "lib/registry.php",
 
 		"IPaymentOrder" => "lib/internals/paymentinterface.php",
 		"IShipmentOrder" => "lib/internals/shipmentinterface.php",
@@ -436,6 +437,7 @@ CModule::AddAutoloadClasses(
 		"CSaleCondTree" => "general/sale_cond.php",
 		"CSaleCondCtrlPastOrder" => "general/sale_cond.php",
 		"CSaleCondCumulativeCtrl" => "general/sale_cond.php",
+		"CSaleCumulativeAction" => "general/sale_act.php",
 		"CSaleActionCtrl" => "general/sale_act.php",
 		"CSaleActionCtrlGroup" => "general/sale_act.php",
 		"CSaleActionCtrlAction" => "general/sale_act.php",

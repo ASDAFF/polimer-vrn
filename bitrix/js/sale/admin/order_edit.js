@@ -91,22 +91,42 @@ BX.Sale.Admin.OrderEditPage =
 
 	showDialog: function(text, title)
 	{
-		alert(text);
+		var dialog = new BX.PopupWindow(
+			'adm-sale-order-alert-dialog',
+			null,
+			{
+				autoHide: false,
+				draggable: true,
+				offsetLeft: 0,
+				offsetTop: 0,
+				bindOptions: { forceBindPosition: false },
+				closeByEsc: true,
+				closeIcon: true,
+				titleBar: title || BX.message('SALE_ORDEREDIT_MESSAGE'),
+				contentColor: 'white',
+				content: BX.create(
+					'span',
+					{
+						html: text,
+						style: {backgroundColor: "white"}
+					}
+				)
+			}
+		);
 
-		/*
-		var dialog = new BX.CDialog({
-			title: title || "",
-			content: text,
-			height: 100,
-			width: 300,
-			draggable: true,
-			resizable: false
-		});
+		dialog.setButtons([
+			new BX.PopupWindowButton(
+				{
+					text: BX.message('SALE_ORDEREDIT_CLOSE'),
+					className: "popup-window-button-link-cancel",
+					events:
+					{
+						click : BX.delegate(function(){dialog.close(); dialog.destroy()}, dialog)
+					}
+				}
+		)]);
 
-		dialog.ClearButtons();
-		dialog.SetButtons([BX.CDialog.btnClose]);
-		dialog.Show();
-		*/
+		dialog.show();
 	},
 
 	/* Fields events handlers */
@@ -872,6 +892,8 @@ BX.Sale.Admin.OrderEditPage =
 			if(typeof select.value == 'undefined')
 				BX.debug("Error getting select value id: "+selectId);
 
+			BX('save_status_result_ok').style.display = 'none';
+
 			return {
 				action: "saveStatus",
 				orderId: orderId,
@@ -884,7 +906,7 @@ BX.Sale.Admin.OrderEditPage =
 					{
 						BX.Sale.Admin.OrderEditPage.callFieldsUpdaters({STATUS_ID: select.value});
 						BX.Sale.Admin.OrderEditPage.disableSavingButtons(result.CAN_USER_EDIT != "Y");
-						message = BX.message("SALE_ORDER_STATUS_CHANGED_SUCCESS");
+						BX('save_status_result_ok').style.display = '';
 					}
 					else if(result && result.ERROR)
 					{
@@ -895,7 +917,8 @@ BX.Sale.Admin.OrderEditPage =
 						message = BX.message("SALE_ORDER_STATUS_CHANGE_ERROR");
 					}
 
-					BX.Sale.Admin.OrderEditPage.showDialog(message);
+					if(message)
+						BX.Sale.Admin.OrderEditPage.showDialog(message);
 				}
 			};
 		},

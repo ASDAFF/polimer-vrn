@@ -326,8 +326,17 @@ else
 			}
 			elseif ('GROUP_ID' == $key)
 			{
-				if (is_array($arGroupsCanEditID) && is_array($_POST[$key]))
-					$arFieldsValue[$key] = array_intersect($_POST[$key], $arGroupsCanEditID);
+				if (
+					\Bitrix\Main\Loader::includeModule("bitrix24")
+					&& in_array(1, $_POST[$key])
+					&& CBitrix24::isMoreAdminAvailable()
+					|| !\Bitrix\Main\ModuleManager::isModuleInstalled("bitrix24")
+					|| !in_array(1, $_POST[$key])
+				)
+				{
+					if (is_array($arGroupsCanEditID) && is_array($_POST[$key]))
+						$arFieldsValue[$key] = array_intersect($_POST[$key], $arGroupsCanEditID);
+				}
 			}
 			elseif ($_POST[$key] !== $arResult['User'][$key])
 				$arFieldsValue[$key] = $_POST[$key];

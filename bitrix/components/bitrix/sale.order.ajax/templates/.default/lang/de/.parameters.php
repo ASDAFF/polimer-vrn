@@ -1,5 +1,5 @@
 <?
-$MESS["SHOW_ORDER_BUTTON"] = "Checkout-Schaltfl?che anzeigen (f?r nicht autorisierte Nutzer)";
+$MESS["SHOW_ORDER_BUTTON"] = "Checkout-Schaltfläche anzeigen (für nicht autorisierte Nutzer)";
 $MESS["SHOW_ALWAYS"] = "immer";
 $MESS["SHOW_FINAL_STEP"] = "nur beim letzten Schritt";
 $MESS["SHOW_TOTAL_ORDER_BUTTON"] = "Zus?tzliche Checkout-Schaltfl?che anzeigen";
@@ -11,7 +11,7 @@ $MESS["DELIVERY_PARENT_NAMES"] = "Namen des ?bergeordneten Lieferservices anzeig
 $MESS["ALLOW_USER_PROFILES"] = "Kundenprofile erlauben";
 $MESS["ALLOW_NEW_PROFILE"] = "Mehrfache Kundenprofile erlauben";
 $MESS["SHOW_STORES_IMAGES"] = "Bilder der Lager im Formular zur Auswahl der Abholungsstandorte anzeigen";
-$MESS["SKIP_USELESS_BLOCK"] = "Schritte ?berspringen, wenn nur ein Element ausgew?hlt werden kann";
+$MESS["SKIP_USELESS_BLOCK"] = "Schritte überspringen, wenn nur ein Element ausgewählt werden kann";
 $MESS["BASKET_POSITION"] = "Position des Warenkorbs";
 $MESS["BASKET_POSITION_BEFORE"] = "vorher";
 $MESS["BASKET_POSITION_AFTER"] = "nachher";
@@ -30,10 +30,10 @@ $MESS["PRODUCT_COLUMNS_HIDDEN"] = "Zus?tzliche ausgeblendete Spalten in der Prod
 $MESS["SHOW_MAP_FOR_DELIVERIES"] = "Karte f?r Lieferservices anzeigen";
 $MESS["PROPS_FADE_LIST"] = "Sichtbare Bestelleigenschaften beim ausgeblendeten Block";
 $MESS["USE_CUSTOM_MESSAGES"] = "Benutzerdefinierte Nachrichten nutzen";
-$MESS["USE_YM_GOALS1"] = "Z?hlerziele von Yandex.Metrics nutzen";
-$MESS["USE_YM_GOALS_TIP"] = "Daf?r muss der Z?hler von Yandex.Metrics cauf der Seite sein.";
+$MESS["USE_YM_GOALS1"] = "Zählerziele von Yandex.Metrics nutzen";
+$MESS["USE_YM_GOALS_TIP"] = "Dafür muss der Zähler von Yandex.Metrics cauf der Seite sein.";
 $MESS["YM_GOALS_COUNTER"] = "Code des Z?hlers von Yandex.Metrics";
-$MESS["YM_GOALS_INITIALIZE"] = "Ziel-ID f?r Initialisierung der Komponente";
+$MESS["YM_GOALS_INITIALIZE"] = "Ziel-ID für Initialisierung der Komponente";
 $MESS["YM_GOALS_EDIT_REGION"] = "Ziel-ID f?r Bearbeitung der Lieferregion";
 $MESS["YM_GOALS_EDIT_DELIVERY"] = "Ziel-ID f?r Bearbeitung der Lieferung";
 $MESS["YM_GOALS_EDIT_PICKUP"] = "Ziel-ID f?r Bearbeitung der Abholungsstandorte";
@@ -118,6 +118,7 @@ $MESS["INNER_PS_BALANCE_DEFAULT"] = "Ihr Guthaben:";
 $MESS["ORDER_DESC"] = "?berschrift f?r Kommentare zur Bestellung";
 $MESS["ORDER_DESC_DEFAULT"] = "Kommentare zur Bestellung:";
 $MESS["SUCCESS_PRELOAD_TEXT"] = "Text der Benachrichtigung dar?ber, dass die Bestelldaten erfolgreich geladen sind";
+$MESS["SUCCESS_PRELOAD_TEXT"] = "Text der Benachrichtigung darüber, dass die Bestelldaten erfolgreich geladen sind";
 $MESS["SUCCESS_PRELOAD_TEXT_DEFAULT"] = "
 Sie haben bei uns fr?her eingekauft, und wir k?nnen uns an Sie erinnern, deshalb haben wir uns erlaubt, Felder f?r Sie auszuf?llen.<br />
 Sind die Informationen korrekt, klicken Sie auf \"#ORDER_BUTTON#\".
@@ -127,11 +128,11 @@ $MESS["FAIL_PRELOAD_TEXT_DEFAULT"] = "
 Sie haben bei uns fr?her eingekauft, und wir k?nnen uns an Sie erinnern, deshalb haben wir uns erlaubt, Felder f?r Sie auszuf?llen.<br />
 ?berpr?fen Sie bitte die Bestellinformationen und ?ndern Sie diese, wenn erforderlich. Wenn alles stimmt, klicken Sie auf \"#ORDER_BUTTON#\".
 ";
-$MESS["DELIVERY_CALC_ERROR_TITLE"] = "?berschrift des Fehlers bei Lieferberechnung";
-$MESS["DELIVERY_CALC_ERROR_TITLE_DEFAULT"] = "Lieferkosten k?nnen nicht berechnet werden.";
+$MESS["DELIVERY_CALC_ERROR_TITLE"] = "Überschrift des Fehlers bei Lieferberechnung";
+$MESS["DELIVERY_CALC_ERROR_TITLE_DEFAULT"] = "Lieferkosten können nicht berechnet werden.";
 $MESS["DELIVERY_CALC_ERROR_TEXT"] = "Text des Fehlers der Lieferberechnung";
-$MESS["DELIVERY_CALC_ERROR_TEXT_DEFAULT"] = "Sie k?nnen Checkout fortsetzen. Unsere Mitarbeiter werden sich mit Ihnen wegen Lieferung in Verbindung setzen.";
-$MESS["SERVICES_IMAGES_SCALING"] = "Modus der Ansicht zus?tzlicher Bilder";
+$MESS["DELIVERY_CALC_ERROR_TEXT_DEFAULT"] = "Sie können Checkout fortsetzen. Unsere Mitarbeiter werden sich mit Ihnen wegen Lieferung in Verbindung setzen.";
+$MESS["SERVICES_IMAGES_SCALING"] = "Modus der Ansicht zusätzlicher Bilder";
 $MESS["SERVICES_IMAGES_SCALING_TIP"] = "Das schlie?t auch Logos der Liefer- und Zahlungssysteme sowie Abholstandorte ein.";
 $MESS["SOA_ADAPTIVE"] = "adaptiv";
 $MESS["SOA_STANDARD"] = "standard";
@@ -141,5 +142,5 @@ $MESS["USE_ENHANCED_ECOMMERCE_TIP"] = "Die Optionen von Google Analytics Enhance
 $MESS["DATA_LAYER_NAME"] = "Name des Datencontainers";
 $MESS["BRAND_PROPERTY"] = "Eigenschaft, die den Namen der Handelsmarke enth?lt";
 $MESS["PAY_SYSTEM_PAYABLE_ERROR_TEXT"] = "Benachrichtigungstext, der angezeigt wird, wenn die Bestellung nicht bezahlt werden kann";
-$MESS["PAY_SYSTEM_PAYABLE_ERROR_DEFAULT"] = "Sie werden die Bestellung bezahlen k?nnen, nachdem wir feststellen, dass die von Ihnen bestellte Produkte am Lager sind. Wird Ihre Bestellung erf?llt, erhalten Sie eine E-Mail mit Zahlungsanweisungen. Sie werden dann die Bestellung innerhalb Ihres Accounts abschlie?en k?nnen.";
+$MESS["PAY_SYSTEM_PAYABLE_ERROR_DEFAULT"] = "Sie werden die Bestellung bezahlen können, nachdem wir feststellen, dass die von Ihnen bestellte Produkte am Lager sind. Wird Ihre Bestellung erfüllt, erhalten Sie eine E-Mail mit Zahlungsanweisungen. Sie werden dann die Bestellung innerhalb Ihres Accounts abschließen können.";
 ?>

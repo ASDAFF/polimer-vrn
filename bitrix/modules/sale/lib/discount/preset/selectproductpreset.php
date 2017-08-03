@@ -140,6 +140,7 @@ abstract class SelectProductPreset extends BasePreset
 				'MULTIPLE' => $multi? 'Y' : 'N',
 				'MAX_WIDTH' => '200',
 				'MIN_HEIGHT' => '100',
+				'WITHOUT_IBLOCK' => 'Y',
 				'FILTER' => 'Y',
 				'TYPE' => 'SECTION',
 			), null, array('HIDE_ICONS' => 'Y')

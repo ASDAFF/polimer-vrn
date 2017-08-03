@@ -212,7 +212,7 @@
 			if(rstrParams.class == '\\Bitrix\\Sale\\Delivery\\Restrictions\\ByLocation')
 				var width = 1030;
 			else
-				width = 400;
+				width = 600;
 
 			var	dialog = new BX.CDialog({
 					'content': '<form id="sale-delivery-restriction-edit-form">'+

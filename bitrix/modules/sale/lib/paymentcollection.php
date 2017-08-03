@@ -193,13 +193,24 @@ class PaymentCollection
 	}
 
 	/**
+	 * @return PaymentCollection
+	 */
+	protected static function createPaymentCollectionObject()
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$paymentCollectionClassName = $registry->getPaymentCollectionClassName();
+
+		return new $paymentCollectionClassName();
+	}
+
+	/**
 	 * @param OrderBase $order
 	 * @return PaymentCollection
 	 */
 	public static function load(OrderBase $order)
 	{
 		/** @var PaymentCollection $paymentCollection */
-		$paymentCollection = new static();
+		$paymentCollection = static::createPaymentCollectionObject();
 		$paymentCollection->setOrder($order);
 
 		if ($order->getId() > 0)
@@ -373,7 +384,9 @@ class PaymentCollection
 				unset($itemsFromDb[$payment->getId()]);
 		}
 
-		$itemEventName = Payment::getEntityEventName();
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$paymentClassName = $registry->getPaymentClassName();
+		$itemEventName = $paymentClassName::getEntityEventName();
 		foreach ($itemsFromDb as $k => $v)
 		{
 			/** @var Main\Event $event */

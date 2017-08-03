@@ -1017,15 +1017,10 @@ class ProductSearchComponent extends \CBitrixComponent
 			"find_id" => "ID (".GetMessage("SPS_ID_FROM_TO").")",
 			"find_xml_id" => GetMessage("SPS_XML_ID"),
 		);
-		$arProps = $this->getProps();
-		foreach ($arProps as $arProp)
-			$arFindFields["find_prop_" . $arProp["ID"]] = $arProp["NAME"];
-		$arSkuProps = $this->getSkuProps();
-		foreach ($arSkuProps as $arProp)
-		{
-			if ($arProp["FILTRABLE"] == "Y" && $arProp["PROPERTY_TYPE"] != "F")
-				$arFindFields["IBLIST_A_SUB_PROP_" . $arProp["ID"]] = $arProp["NAME"]. ' ('.GetMessage("SPS_OFFER").')';
-		}
+		foreach ($this->getProps() as $arProp)
+			$arFindFields["filter_el_property_".$arProp["ID"]] = $arProp["NAME"];
+		foreach ($this->getSkuProps() as $arProp)
+			$arFindFields["filter_sub_el_property_".$arProp["ID"]] = $arProp["NAME"]. ' ('.GetMessage("SPS_OFFER").')';
 		return $arFindFields;
 	}
 

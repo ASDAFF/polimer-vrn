@@ -38,6 +38,18 @@ class Basket
 	}
 
 	/**
+	 * @throws Main\NotImplementedException
+	 * @return Basket
+	 */
+	protected static function createBasketObject()
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$basketClassName = $registry->getBasketClassName();
+
+		return new $basketClassName;
+	}
+
+	/**
 	 * Returns copy of current basket.
 	 * For example, the copy will be used to calculate discounts.
 	 * So, basket does not contain full information about BasketItem with bundleCollection, because now it is not
@@ -56,7 +68,7 @@ class Basket
 			throw new Main\SystemException('Could not clone basket which has order.');
 		}
 
-		$basket = Basket::create($this->siteId);
+		$basket = static::create($this->siteId);
 		/**@var BasketItem $item */
 		foreach($this as $originalItem)
 		{
@@ -73,7 +85,7 @@ class Basket
 	 */
 	public static function create($siteId)
 	{
-		$basket = new static();
+		$basket = static::createBasketObject();
 		$basket->setSiteId($siteId);
 
 //		if ($fuserId !== null)
@@ -302,6 +314,9 @@ class Basket
 	{
 		$result = new Result();
 
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$basketItemClassName = $registry->getBasketItemClassName();
+
 		$isStartField = $this->isStartField();
 
 		$discount = null;
@@ -315,7 +330,7 @@ class Basket
 			$discount = Discount::loadByBasket($this);
 		}
 
-		$settableFields = array_fill_keys(BasketItem::getSettableFields(), true);
+		$settableFields = array_fill_keys($basketItemClassName::getSettableFields(), true);
 		$data = Provider::getProductData($this, $select, $refreshItem);
 		foreach ($data as $key => $value)
 		{
@@ -453,7 +468,7 @@ class Basket
 						else
 						{
 							/** @var BasketItem $bundleBasketItem */
-							$bundleBasketItem = BasketItem::create($bundleCollection, $bundleBasketItemData['MODULE'], $bundleBasketItemData['PRODUCT_ID']);
+							$bundleBasketItem = $basketItemClassName::create($bundleCollection, $bundleBasketItemData['MODULE'], $bundleBasketItemData['PRODUCT_ID']);
 						}
 
 						if (!$bundleBasketItem)
@@ -586,8 +601,11 @@ class Basket
 	public static function loadBundleChild(BasketItemBase $basketItem)
 	{
 
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$bundleBasketClassName = $registry->getBundleBasketClassName();
+
 		/** @var BasketBundleCollection $collection */
-		$collection = new BasketBundleCollection();
+		$collection = new $bundleBasketClassName();
 
 		$collection->setParentBasketItem($basketItem);
 		if ($basketItem->getId() > 0)
@@ -1010,7 +1028,10 @@ class Basket
 
 		if (!empty($filter))
 		{
-			$itemEventName = BasketItem::getEntityEventName();
+			$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+
+			$basketItemClassName = $registry->getBasketItemClassName();
+			$itemEventName = $basketItemClassName::getEntityEventName();
 
 			foreach ($itemsFromDb as $k => $v)
 			{
@@ -1526,6 +1547,9 @@ class Basket
 	{
 		$list = array();
 
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$basketItemClassName = $registry->getBasketItemClassName();
+
 		/** @var BasketItem $basketItem */
 		foreach ($this->collection as $basketItem)
 		{
@@ -1556,7 +1580,7 @@ class Basket
 			}
 
 			$measure = (strval($basketItem->getField("MEASURE_NAME")) != '') ? $basketItem->getField("MEASURE_NAME") : Loc::getMessage("SOA_SHT");
-			$list[$basketItem->getBasketCode()] = $basketItemData." - ".BasketItem::formatQuantity($basketItem->getQuantity())." ".$measure.": ".SaleFormatCurrency($basketItem->getPrice(), $basketItem->getCurrency());
+			$list[$basketItem->getBasketCode()] = $basketItemData." - ".$basketItemClassName::formatQuantity($basketItem->getQuantity())." ".$measure.": ".SaleFormatCurrency($basketItem->getPrice(), $basketItem->getCurrency());
 
 		}
 

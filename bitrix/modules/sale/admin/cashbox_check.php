@@ -337,7 +337,9 @@ $lAdmin->AddFooter(
 		),
 	)
 );
-if ($saleModulePermissions == "W")
+
+$dbRes = Internals\CashboxTable::getList(array('filter' => array('=ACTIVE' => 'Y', '=ENABLED' => 'Y')));
+if ($saleModulePermissions == "W" && $dbRes->fetch())
 {
 	$aContext = array(
 		array(
@@ -432,7 +434,7 @@ $oFilter->Begin();
 		<td valign="top">
 			<select name="filter_check_status[]" multiple size="3">
 				<?
-					$statusesList = array('N','P','Y');
+					$statusesList = array('N','P','Y', 'E');
 					foreach($statusesList as  $statusCode)
 					{
 						?>

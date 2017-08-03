@@ -3052,6 +3052,8 @@ class CIBlockCMLImport
 					if(array_key_exists($value, $this->SECTION_MAP))
 						$arElement["IBLOCK_SECTION"][] = $this->SECTION_MAP[$value];
 				}
+				if($arElement["IBLOCK_SECTION"])
+					$arElement["IBLOCK_SECTION_ID"] = $arElement["IBLOCK_SECTION"][0];
 			}
 
 			if(array_key_exists($this->mess["IBLOCK_XML2_PRICES"], $arXMLElement))
@@ -3697,7 +3699,7 @@ class CIBlockCMLImport
 
 				//Check if all the taxes exists in BSM catalog
 				$arTaxMap = array();
-				$rsTaxProperty = CIBlockElement::GetProperty($this->arProperties[$CML_LINK]["LINK_IBLOCK_ID"], $arElement["PROPERTY_VALUES"][$CML_LINK], "sort", "asc", array("CODE" => "CML2_TAXES"));
+				$rsTaxProperty = CIBlockElement::GetProperty($this->arProperties[$CML_LINK]["LINK_IBLOCK_ID"], $CML_LINK_ELEMENT, "sort", "asc", array("CODE" => "CML2_TAXES"));
 				while($arTaxProperty = $rsTaxProperty->Fetch())
 				{
 					if(
@@ -4237,14 +4239,14 @@ class CIBlockCMLImport
 				"CURRENCY" => $this->CheckCurrency($price[$this->mess["IBLOCK_XML2_CURRENCY"]]),
 			);
 
-			foreach($this->ConvertDiscounts($arDiscounts) as $arDiscount)
+			if (
+				strlen($price[$this->mess["IBLOCK_XML2_QUANTITY_FROM"]])
+				|| strlen($price[$this->mess["IBLOCK_XML2_QUANTITY_TO"]])
+			)
 			{
-				$arPrice["QUANTITY_FROM"] = $arDiscount["QUANTITY_FROM"];
-				$arPrice["QUANTITY_TO"] = $arDiscount["QUANTITY_TO"];
-				if($arDiscount["PERCENT"] > 0)
-					$arPrice["PRICE"] = $arPrice["^PRICE"] - $arPrice["^PRICE"]/100*$arDiscount["PERCENT"];
-				else
-					$arPrice["PRICE"] = $arPrice["^PRICE"];
+				$arPrice["QUANTITY_FROM"] = $price[$this->mess["IBLOCK_XML2_QUANTITY_FROM"]];
+				$arPrice["QUANTITY_TO"] = $price[$this->mess["IBLOCK_XML2_QUANTITY_TO"]];
+				$arPrice["PRICE"] = $arPrice["^PRICE"];
 
 				$id = $arPrice["CATALOG_GROUP_ID"].":".$arPrice["QUANTITY_FROM"].":".$arPrice["QUANTITY_TO"];
 				if(array_key_exists($id, $arDBPrices))
@@ -4255,6 +4257,29 @@ class CIBlockCMLImport
 				else
 				{
 					CPrice::Add($arPrice);
+				}
+			}
+			else
+			{
+				foreach($this->ConvertDiscounts($arDiscounts) as $arDiscount)
+				{
+					$arPrice["QUANTITY_FROM"] = $arDiscount["QUANTITY_FROM"];
+					$arPrice["QUANTITY_TO"] = $arDiscount["QUANTITY_TO"];
+					if($arDiscount["PERCENT"] > 0)
+						$arPrice["PRICE"] = $arPrice["^PRICE"] - $arPrice["^PRICE"]/100*$arDiscount["PERCENT"];
+					else
+						$arPrice["PRICE"] = $arPrice["^PRICE"];
+
+					$id = $arPrice["CATALOG_GROUP_ID"].":".$arPrice["QUANTITY_FROM"].":".$arPrice["QUANTITY_TO"];
+					if(array_key_exists($id, $arDBPrices))
+					{
+						CPrice::Update($arDBPrices[$id], $arPrice);
+						unset($arToDelete[$id]);
+					}
+					else
+					{
+						CPrice::Add($arPrice);
+					}
 				}
 			}
 		}
@@ -5684,15 +5709,14 @@ class CIBlockCMLExport
 			$rsPrices = CPrice::GetList(array(), array("PRODUCT_ID" => $arElement["ID"]));
 			while($arPrice = $rsPrices->Fetch())
 			{
-				if(!$arPrice["QUANTITY_FROM"] && !$arPrice["QUANTITY_TO"])
-				{
-					$arPrices[] = array(
-						GetMessage("IBLOCK_XML2_PRICE_TYPE_ID") => $this->prices[$arPrice["CATALOG_GROUP_ID"]],
-						GetMessage("IBLOCK_XML2_PRICE_FOR_ONE") => $arPrice["PRICE"],
-						GetMessage("IBLOCK_XML2_CURRENCY") => $arPrice["CURRENCY"],
-						GetMessage("IBLOCK_XML2_MEASURE") => $xmlMeasure,
-					);
-				}
+				$arPrices[] = array(
+					GetMessage("IBLOCK_XML2_PRICE_TYPE_ID") => $this->prices[$arPrice["CATALOG_GROUP_ID"]],
+					GetMessage("IBLOCK_XML2_PRICE_FOR_ONE") => $arPrice["PRICE"],
+					GetMessage("IBLOCK_XML2_CURRENCY") => $arPrice["CURRENCY"],
+					GetMessage("IBLOCK_XML2_MEASURE") => $xmlMeasure,
+					GetMessage("IBLOCK_XML2_QUANTITY_FROM") => $arPrice["QUANTITY_FROM"],
+					GetMessage("IBLOCK_XML2_QUANTITY_TO") => $arPrice["QUANTITY_TO"],
+				);
 			}
 			if(count($arPrices)>0)
 			{

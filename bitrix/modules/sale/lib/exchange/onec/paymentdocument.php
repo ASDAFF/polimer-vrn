@@ -82,7 +82,10 @@ class PaymentDocument extends DocumentImport
                         ),
                         '1C_PAYED' => array(
                             'TYPE' => 'bool'
-                        )
+                        ),
+						'PAY_SYSTEM_ID' => array(
+							'TYPE' => 'int'
+						),
                     )
                 )
             );

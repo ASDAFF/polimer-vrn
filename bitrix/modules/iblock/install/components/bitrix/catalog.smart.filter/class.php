@@ -155,7 +155,7 @@ class CBitrixCatalogSmartFilter extends CBitrixComponent
 					"IBLOCK_ID" => $arProperty["IBLOCK_ID"],
 					"CODE" => $arProperty["CODE"],
 					"~NAME" => $arProperty["NAME"],
-					"NAME" => htmlspecialcharsbx($arProperty["NAME"]),
+					"NAME" => htmlspecialcharsEx($arProperty["NAME"]),
 					"PROPERTY_TYPE" => $arProperty["PROPERTY_TYPE"],
 					"USER_TYPE" => $arProperty["USER_TYPE"],
 					"USER_TYPE_SETTINGS" => $arProperty["USER_TYPE_SETTINGS"],

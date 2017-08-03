@@ -117,6 +117,32 @@ else
 					}
 					?>
 					<tr>
+						<td></td>
+						<td><?
+							//							userconsent only for unregistered users
+							if (empty($arResult["User"]) && $arParams['USER_CONSENT'] == 'Y')
+							{
+								$APPLICATION->IncludeComponent(
+									"bitrix:main.userconsent.request",
+									"",
+									array(
+										"ID" => $arParams["USER_CONSENT_ID"],
+										"IS_CHECKED" => $arParams["USER_CONSENT_IS_CHECKED"],
+										"AUTO_SAVE" => "Y",
+										"IS_LOADED" => $arParams["USER_CONSENT_IS_LOADED"],
+										"ORIGIN_ID" => "sender/sub",
+										"ORIGINATOR_ID" => "",
+										"REPLACE" => array(
+											'button_caption' => GetMessage("B_B_MS_SEND"),
+											'fields' => array(GetMessage("B_B_MS_NAME"), 'E-mail')
+										),
+									)
+								);
+							}
+							?>
+						</td>
+					</tr>
+					<tr>
 						<td>&nbsp;</td>
 						<td align="left"><input type="hidden" name="post" value="Y"><input type="submit" name="post" value="<?=GetMessage("B_B_MS_SEND")?>"><input type="submit" name="preview" value="<?=GetMessage("B_B_MS_PREVIEW")?>"></td>
 					</tr>

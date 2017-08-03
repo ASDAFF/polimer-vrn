@@ -4,8 +4,7 @@ namespace Bitrix\Sale\Helpers\Admin\Blocks;
 
 use Bitrix\Main\Entity\EntityError;
 use Bitrix\Sale\Cashbox\CheckManager;
-use Bitrix\Sale\Cashbox\Internals\CashboxCheckTable;
-use Bitrix\Sale\Cashbox\Ofd;
+use Bitrix\Sale\Cashbox\Internals\CashboxTable;
 use Bitrix\Sale\Helpers\Admin\OrderEdit;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\OrderStatus;
@@ -105,6 +104,9 @@ class OrderPayment
 
 		$fields['CHECK'] = CheckManager::getCheckInfo($item);
 		$fields['CAN_PRINT_CHECK'] = $fields['PAY_SYSTEM_LIST'][$fields['PAY_SYSTEM_ID']]['CAN_PRINT_CHECK'];
+
+		$dbRes = CashboxTable::getList(array('filter' => array('=ACTIVE' => 'Y', '=ENABLED' => 'Y')));
+		$fields['HAS_ENABLED_CASHBOX'] = ($dbRes->fetch()) ? 'Y' : 'N';
 
 		return $fields;
 	}
@@ -388,7 +390,7 @@ class OrderPayment
 			$title = Loc::getMessage('SALE_ORDER_PAYMENT_BLOCK_NEW_PAYMENT_TITLE');
 		}
 
-		$curFormat = \CCurrencyLang::getCurrencyFormat($data['CURRENCY']);
+		$curFormat = \CCurrencyLang::GetFormatDescription($data['CURRENCY']);
 		$currencyLang = preg_replace("/(^|[^&])#/", '$1', $curFormat["FORMAT_STRING"]);
 		$disabled = ($data['PAID'] == 'Y') ? 'readonly' : '';
 
@@ -468,7 +470,7 @@ class OrderPayment
 			$checkLink .= static::buildCheckHtml($data['CHECK']);
 		}
 		$checkLink .= '</td></tr>';
-		if ($data['CAN_PRINT_CHECK'] == 'Y')
+		if ($data['CAN_PRINT_CHECK'] == 'Y' && $data['HAS_ENABLED_CASHBOX'] === 'Y')
 		{
 			$checkLink .= '<tr><td class="adm-detail-content-cell-r tac"><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderPayment.prototype.showCreateCheckWindow('.$data['ID'].');">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_ADD').'</a></td></tr>';
 		}
@@ -783,13 +785,13 @@ class OrderPayment
 		$checkLink = '';
 		if (!empty($data['CHECK']) || $form != 'archive')
 		{
-			$checkLink .= '<tr><td class="tac" id="PAYMENT_CHECK_LIST_ID_'.$data['ID'].'">';
 			if (!empty($data['CHECK']))
 			{
+				$checkLink .= '<tr><td class="tac" id="PAYMENT_CHECK_LIST_ID_'.$data['ID'].'">';
 				$checkLink .= static::buildCheckHtml($data['CHECK']);
+				$checkLink .= "</td></tr>";
 			}
-			$checkLink .= "</td></tr>";
-			if($form != 'archive' && $data['CAN_PRINT_CHECK'] == 'Y')
+			if($form != 'archive' && $data['CAN_PRINT_CHECK'] == 'Y' && $data['HAS_ENABLED_CASHBOX'] === 'Y')
 			{
 				$checkLink .= '<tr><td class="adm-detail-content-cell-r tac"><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderPayment.prototype.showCreateCheckWindow('.$data['ID'].');">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_ADD').'</a></td></tr>';
 			}
@@ -860,7 +862,7 @@ class OrderPayment
 										</tbody>
 									</table>
 								</div>';
-		if (($data['CAN_PRINT_CHECK'] == 'Y' && $form != 'archive') || !empty($data['CHECK']))
+		if ($checkLink)
 		{
 			$result .= '<div class="adm-bus-table-container caption border" style="padding-top:10px;">
 						<div class="adm-bus-table-caption-title" style="background: #eef5f5;">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_LINK_TITLE').'</div>
@@ -996,22 +998,20 @@ class OrderPayment
 		$paymentStatus = '<span><span id="BUTTON_PAID_'.$index.'_SHORT" '.$class.'>'.Loc::getMessage('SALE_ORDER_PAYMENT_STATUS_'.$paidString).'</span>'.$triangle.'</span>';
 
 		$checkLink = '';
-		if (($data['CAN_PRINT_CHECK'] == 'Y' && $form != 'archive') || !empty($data['CHECK']))
+		if (($data['CAN_PRINT_CHECK'] == 'Y' && $form != 'archive' && $data['HAS_ENABLED_CASHBOX'] === 'Y') || !empty($data['CHECK']))
 		{
-			$checkLink = '
-				<td class="adm-bus-section-container-section-check">
-					<td width="80px">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_LINK_TITLE').':</td>
-					<td><div id="PAYMENT_CHECK_LIST_ID_SHORT_VIEW'.$data['ID'].'">';
+			$checkLink = '<td width="80px">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_LINK_TITLE').':</td><td>';
 			if (!empty($data['CHECK']))
 			{
+				$checkLink .= '<div id="PAYMENT_CHECK_LIST_ID_SHORT_VIEW'.$data['ID'].'">';
 				$checkLink .= static::buildCheckHtml($data['CHECK']);
+				$checkLink .= "</div>";
 			}
-			$checkLink .= "</div>";
-			$checkLink .= ($form != 'archive' && $data['CAN_PRINT_CHECK'] == 'Y') ? '<div><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderPayment.prototype.showCreateCheckWindow('.$data['ID'].');">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_ADD').'</a></div>': '';
-			$checkLink .='
-					</td>
-				</td>
-			';
+			if ($form != 'archive' && $data['CAN_PRINT_CHECK'] == 'Y' && $data['HAS_ENABLED_CASHBOX'] === 'Y')
+			{
+				$checkLink .= '<div><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderPayment.prototype.showCreateCheckWindow('.$data['ID'].');">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_ADD').'</a></div>';
+			}
+			$checkLink .='</td>';
 		}
 
 

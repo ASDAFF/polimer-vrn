@@ -27,4 +27,17 @@ $MESS["DISCOUNT_CATALOG_MIGRATOR_PAGE_HELLO_TEXT"] = "<p>The discount merge wiza
 <p>After the wizard completes, you will get a ready to use armory of marketing tools. You can start using discounts without having to learn all the sophisticated configuration options.</p> 
 <p>Offer flexible discounts, market your products, increase sales! The system will do the chores for you.</p>
 ";
+$MESS["DISCOUNT_CATALOG_MIGRATOR_NON_SUPPORTED_FEATURE_RELATIVE_ACTIVE_PERIOD"] = "Progressive discount lifetime is set to \"Time period from a discount start date\" ";
+$MESS["DISCOUNT_CATALOG_MIGRATOR_HELLO_TEXT_NEW"] = "This update will merge the Commercial Catalog discounts and the e-Store module's discounts in a unified processing queue.<br><br>
+When merged, the discounts will be easier to manage. This will also help you control discount dependencies, suspend discounts at any time and specify discount application priority.<br><br>
+The merging may take a while if your project specifies a lot of discounts. It is advised to perform this task when your web store's website experiences the lowest load possible.<br><br>
+#CUMULATIVE_PART#
+<br>
+";
+$MESS["DISCOUNT_CATALOG_MIGRATOR_HELLO_TEXT_CUMULATIVE_PART"] = "You Are Using Progressive Discounts!<br><br>
+<b>Important!</b><br><br>
+The Discount Processing Logic Has Been Improved; Two More Options Can Now Be Applied: \"Don't Apply Further Rules\" And \"Set Discount Priority\".
+The Progressive Discounts Will Be Migrated As Well. You Will Then Have to Check And Set Discount Priorities, And Configure Expiration If Required.<br>
+By Default, Progressive Discount Priority Is Set to The Lowest Possible Value So They Will Apply Last. Note That If There Are Discounts With Higher Priority Whose Option \"Don't Apply Further Rules\" Is Enabled, No Progressive Discount Will Apply.<br><br><br>
+";
 ?>

@@ -70,7 +70,6 @@ class ShipmentItemCollection
 			$quantityList[$basketItem->getBasketCode()] = $shipmentCollection->getBasketItemQuantity($basketItem);
 		}
 
-
 		/** @var BasketItem $basketItem */
 		foreach ($basket as $basketItem)
 		{
@@ -480,7 +479,9 @@ class ShipmentItemCollection
 			throw new Main\ObjectNotFoundException('Entity "Basket" not found');
 		}
 
-		$itemEventName = ShipmentItem::getEntityEventName();
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$shipmentItemClassName = $registry->getShipmentItemClassName();
+		$itemEventName = $shipmentItemClassName::getEntityEventName();
 
 		foreach ($itemsFromDb as $k => $v)
 		{
@@ -526,6 +527,17 @@ class ShipmentItemCollection
 	}
 
 	/**
+	 * @return ShipmentItemCollection
+	 */
+	protected static function createShipmentItemCollectionObject()
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$shipmentItemCollectionClassName = $registry->getShipmentItemCollectionClassName();
+
+		return new $shipmentItemCollectionClassName();
+	}
+
+	/**
 	 * @param Shipment $shipment
 	 *
 	 * @return ShipmentItemCollection
@@ -535,7 +547,7 @@ class ShipmentItemCollection
 	public static function load(Shipment $shipment)
 	{
 		/** @var ShipmentItemCollection $shipmentItemCollection */
-		$shipmentItemCollection = new static();
+		$shipmentItemCollection = static::createShipmentItemCollectionObject();
 		$shipmentItemCollection->shipment = $shipment;
 
 		if ($shipment->getId() > 0)

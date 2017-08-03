@@ -182,7 +182,7 @@ function conversion_renderRate(array $rate, array $rateType)
 					?>
 					<span class="stat-item-block-title"><?=Loc::getMessage('CONVERSION_SALE_RATE_SUM')?></span>
 					<span class="stat-item-block-digit"><?=number_format($rate['SUM'])?>
-						<span><?=isset($rateType['UNITS']['SUM']) ? $rateType['UNITS']['SUM'] : ''?></span>
+						<span><? if (isset($rateType['UNITS']['SUM'])) echo htmlspecialcharsbx($rateType['UNITS']['SUM']); ?></span>
 					</span>
 					<?
 				}

@@ -135,7 +135,7 @@ $MESS["CP_BCE_COMPATIBLE_MODE"] = "Enable compatibility mode";
 $MESS["CP_BCE_HIDE_NOT_AVAILABLE_OFFERS_HIDE"] = "don't show";
 $MESS["CP_BCE_HIDE_NOT_AVAILABLE_OFFERS_SUBSCRIBE"] = "show as subscribe-to option";
 $MESS["CP_BCE_HIDE_NOT_AVAILABLE_OFFERS_SHOW"] = "show all";
-$MESS["COMPATIBLE_MODE_TIP"] = "This option is required for customized templates created for use with the iblock module version older than 17.0.0. It is recommended to migrate the template to the new format. See the documentation for more information.";
 $MESS["CP_BCE_HIDE_NOT_AVAILABLE_OFFERS"] = "Unavailable SKU's";
 $MESS["HIDE_NOT_AVAILABLE_OFFERS_TIP"] = "An SKU whose quantity is equal to or less than zero will be unavailable for purchase if: 1) stock control option is enabled for the SKU, and 2) out-of-stock items cannot be purchased.<hr>Even if an SKU is available, it does not necessarily mean it can be purchased. To be purchasable, an SKU requires prices of the types that are selected as available for a customer.";
+$MESS["COMPATIBLE_MODE_TIP"] = "Use this option for customized templates created for iblock versions prior to 17.0.0. To improve performance, migrate the component template to the new format.";
 ?>

@@ -500,6 +500,7 @@ BX.ImMobile.prototype.mobileActionReady = function()
 					this.messenger.contactListShowed[BX.proxy_context.firstChild.getAttribute('data-id')] = true;
 					BX.proxy_context.firstChild.innerHTML = BX.message('IM_CL_HIDE');
 					BX.addClass(BX.proxy_context.parentNode, 'bx-messenger-chatlist-show-all');
+					BitrixMobile.LazyLoad.showImages();
 				}
 			}, this));
 			BitrixMobile.fastClick.bindDelegate(this.messenger.popupContactListElementsWrap, {className: 'bx-messenger-chatlist-search-button'}, BX.delegate(function(e){

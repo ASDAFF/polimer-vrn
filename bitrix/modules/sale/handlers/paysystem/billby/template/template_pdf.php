@@ -61,17 +61,14 @@ if ($params['BILLBY_HEADER_SHOW'] == 'Y')
 		list($imageHeight, $imageWidth) = $pdf->GetImageSize($params['BILLBY_PATH_TO_LOGO']);
 
 		$imgMargin = 5;
-		if ($imageWidth >= $width)
+		$imgDpi = intval($params['BILLBY_LOGO_DPI']) ?: 96;
+		$imgZoom = 96 / $imgDpi;
+
+		$logoHeight = $imageHeight * $imgZoom + $imgMargin;
+		$logoWidth  = $imageWidth * $imgZoom + $imgMargin;
+		if ($logoWidth >= $width)
 		{
 			$imgDpi = 96 * $imageWidth/($width*0.6 + 5);
-			$imgZoom = 96 / $imgDpi;
-
-			$logoHeight = $imageHeight * $imgZoom + $imgMargin;
-			$logoWidth  = $imageWidth * $imgZoom + $imgMargin;
-		}
-		else
-		{
-			$imgDpi = intval($params['BILLBY_LOGO_DPI']) ?: 96;
 			$imgZoom = 96 / $imgDpi;
 
 			$logoHeight = $imageHeight * $imgZoom + $imgMargin;

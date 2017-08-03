@@ -1,11 +1,14 @@
 <?php
 namespace Bitrix\Sale;
 
-use Bitrix\Main\Localization\Loc,
-	Bitrix\Main\Config;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class Configuration
+ * @package Bitrix\Sale
+ */
 class Configuration
 {
 	const RESERVE_ON_CREATE = 'O';
@@ -54,7 +57,10 @@ class Configuration
 	 */
 	public static function getProductReservationCondition()
 	{
-		return Config\Option::get('sale', 'product_reserve_condition');
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$optionClassName = $registry->get(Registry::ENTITY_OPTIONS);
+
+		return $optionClassName::get('sale', 'product_reserve_condition');
 	}
 
 	/**
@@ -65,7 +71,10 @@ class Configuration
 	 */
 	public static function getProductReserveClearPeriod()
 	{
-		return (int)Config\Option::get('sale', 'product_reserve_clear_period');
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$optionClassName = $registry->get(Registry::ENTITY_OPTIONS);
+
+		return (int)$optionClassName::get('sale', 'product_reserve_clear_period');
 	}
 
 	/**
@@ -87,7 +96,10 @@ class Configuration
 	 */
 	public static function needShipOnAllowDelivery()
 	{
-		return ((string)Config\Option::get('sale', 'allow_deduction_on_delivery') == 'Y');
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$optionClassName = $registry->get(Registry::ENTITY_OPTIONS);
+
+		return ((string)$optionClassName::get('sale', 'allow_deduction_on_delivery') === 'Y');
 	}
 
 	/**
@@ -108,7 +120,10 @@ class Configuration
 	 */
 	public static function getAllowDeliveryOnPayCondition()
 	{
-		return Config\Option::get('sale', 'status_on_change_allow_delivery_after_paid');
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$optionClassName = $registry->get(Registry::ENTITY_OPTIONS);
+
+		return $optionClassName::get('sale', 'status_on_change_allow_delivery_after_paid');
 	}
 
 	/**
@@ -131,14 +146,26 @@ class Configuration
 		);
 	}
 
+	/**
+	 * @return mixed
+	 */
 	public static function getStatusPaidCondition()
 	{
-		return Config\Option::get('sale', 'status_on_paid_condition');
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$optionClassName = $registry->get(Registry::ENTITY_OPTIONS);
+
+		return $optionClassName::get('sale', 'status_on_paid_condition');
 	}
 
+	/**
+	 * @return mixed
+	 */
 	public static function getStatusAllowDeliveryCondition()
 	{
-		return Config\Option::get('sale', 'status_on_paid_condition');
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$optionClassName = $registry->get(Registry::ENTITY_OPTIONS);
+
+		return $optionClassName::get('sale', 'status_on_paid_condition');
 	}
 
 	/**
@@ -149,7 +176,10 @@ class Configuration
 	 */
 	public static function useStoreControl()
 	{
-		return ((string)Config\Option::get('catalog', 'default_use_store_control') == 'Y');
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$optionClassName = $registry->get(Registry::ENTITY_OPTIONS);
+
+		return ((string)$optionClassName::get('catalog', 'default_use_store_control') === 'Y');
 	}
 
 	/**
@@ -160,7 +190,10 @@ class Configuration
 	 */
 	public static function isEnabledReservation()
 	{
-		return ((string)Config\Option::get('catalog', 'enable_reservation') == 'Y');
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$optionClassName = $registry->get(Registry::ENTITY_OPTIONS);
+
+		return ((string)$optionClassName::get('catalog', 'enable_reservation') === 'Y');
 	}
 
 	/**
@@ -169,6 +202,9 @@ class Configuration
 	 */
 	public static function isAllowedSeparatelyDiscountCalculation()
 	{
-		return Config\Option::get('sale', 'discount_separately_calculation') === 'Y';
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$optionClassName = $registry->get(Registry::ENTITY_OPTIONS);
+
+		return $optionClassName::get('sale', 'discount_separately_calculation') === 'Y';
 	}
 }

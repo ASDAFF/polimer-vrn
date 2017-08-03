@@ -16,6 +16,7 @@ class Product extends DataConverter
 	private $result;
 	
 	const DESCRIPTION_LENGHT_MIN = 10;
+	const DESCRIPTION_LENGHT_MAX = 6900;	// it is not correct value, but in doc i can't find true info
 	const NAME_LENGHT_MIN = 4;
 	const NAME_LENGHT_MAX = 100;
 	
@@ -175,6 +176,11 @@ class Product extends DataConverter
 				if ($logger)
 					$logger->addError('PRODUCT_SHORT_DESCRIPTION', $this->result["BX_ID"]);
 			}
+		}
+		
+		if (strlen($newDesc) > self::DESCRIPTION_LENGHT_MAX)
+		{
+			$newDesc = substr($newDesc, 0 ,self::DESCRIPTION_LENGHT_MAX) . '...';
 		}
 		
 		return $newDesc;

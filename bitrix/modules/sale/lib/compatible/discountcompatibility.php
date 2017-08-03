@@ -322,6 +322,7 @@ class DiscountCompatibility
 		self::$basketDiscountList = array();
 		self::$basketItemsData = array();
 		self::$useCompatible = true;
+		Sale\OrderDiscountManager::init();
 		Sale\OrderDiscountManager::setManagerConfig(self::$config);
 		self::$saved = false;
 		self::$repeatSave = false;

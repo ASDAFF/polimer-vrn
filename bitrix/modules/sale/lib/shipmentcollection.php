@@ -212,7 +212,7 @@ class ShipmentCollection
 	public static function load(OrderBase $order)
 	{
 		/** @var ShipmentCollection $shipmentCollection */
-		$shipmentCollection = new static();
+		$shipmentCollection = static::createShipmentCollectionObject();
 		$shipmentCollection->setOrder($order);
 
 		if ($order->getId() > 0)
@@ -229,6 +229,16 @@ class ShipmentCollection
 		return $shipmentCollection;
 	}
 
+	/**
+	 * @return ShipmentCollection
+	 */
+	protected static function createShipmentCollectionObject()
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$className = $registry->getShipmentCollectionClassName();
+
+		return new $className();
+	}
 
 	/**
 	 * Getting the system shipment
@@ -243,7 +253,6 @@ class ShipmentCollection
 			if ($shipment->isSystem())
 				return $shipment;
 		}
-
 		$shipment = Shipment::createSystem($this);
 		$this->addItem($shipment);
 
@@ -392,7 +401,10 @@ class ShipmentCollection
 				unset($itemsFromDb[$shipment->getId()]);
 		}
 
-		$itemEventName = Shipment::getEntityEventName();
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+
+		$shipmentClassName = $registry->getShipmentClassName();
+		$itemEventName = $shipmentClassName::getEntityEventName();
 
 		foreach ($itemsFromDb as $k => $v)
 		{
@@ -887,7 +899,7 @@ class ShipmentCollection
 
 					if ($allowQuantityChange)
 					{
-						/** @var DeliveryService $deliveryService */
+						/** @var Delivery\Services\Base $deliveryService */
 						if ($deliveryService = $currentShipment->getDelivery())
 						{
 							$allowQuantityChange = $deliveryService->isAllowEditShipment();

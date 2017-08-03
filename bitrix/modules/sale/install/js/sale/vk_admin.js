@@ -40,6 +40,8 @@
 						BX.closeWait();
 						BX.adjust(BX('vk_export_notify__error_critical'), {style: {display: 'block'}});
 						BX.adjust(BX('vk_export_notify__error_critical'), {html: result.ERRORS_CRITICAL});
+						if (result.PROGRESS.length > 0)
+							BX.adjust(BX('vk_export_notify__progress'), {html: result.PROGRESS});
 						BX.Sale.VkAdmin.exportProcessEpilog();
 					}
 

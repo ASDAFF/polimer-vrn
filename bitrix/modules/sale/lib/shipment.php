@@ -23,7 +23,7 @@ class Shipment
 	/** @var array ShipmentItemCollection */
 	protected $shipmentItemCollection;
 
-	/** @var  DeliveryService */
+	/** @var  Delivery\Services\Base */
 	protected $deliveryService = null;
 
 	protected $extraServices = null;
@@ -118,7 +118,7 @@ class Shipment
 			$fields['STATUS_ID'] = $deliveryStatus;
 		}
 
-		$shipment = new static();
+		$shipment = static::createShipmentObject();
 		$shipment->setFieldsNoDemand($fields);
 		$shipment->setCollection($collection);
 
@@ -128,6 +128,18 @@ class Shipment
 		}
 
 		return $shipment;
+	}
+
+	/**
+	 * @param array $fields
+	 * @return Shipment
+	 */
+	protected static function createShipmentObject(array $fields = array())
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$shipmentClassName = $registry->getShipmentClassName();
+
+		return new $shipmentClassName($fields);
 	}
 
 	/**
@@ -545,7 +557,7 @@ class Shipment
 			)
 		);
 		while ($shipmentData = $shipmentDataList->fetch())
-			$shipments[] = new static($shipmentData);
+			$shipments[] = static::createShipmentObject($shipmentData);
 
 
 		return $shipments;
@@ -900,7 +912,7 @@ class Shipment
 	}
 
 	/**
-	 * @return DeliveryService
+	 * @return Delivery\Services\Base
 	 */
 	public function getDelivery()
 	{
@@ -913,7 +925,7 @@ class Shipment
 	}
 
 	/**
-	 * @return Delivery\Services\Base|DeliveryService
+	 * @return Delivery\Services\Base
 	 * @throws Main\ArgumentNullException
 	 * @throws Main\SystemException
 	 */

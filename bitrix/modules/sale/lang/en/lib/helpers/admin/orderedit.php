@@ -14,4 +14,5 @@ $MESS["SALE_ORDEREDIT_BASKET_ITEM_DEL_ERROR"] = "Error deleting product";
 $MESS["SALE_ORDEREDIT_UNMARK_ERROR"] = "Error unmarking order as trouble";
 $MESS["SALE_ORDEREDIT_LOCKED"] = "The order was temporarily locked by the customer #ID# (#DATE#)";
 $MESS["SALE_ORDEREDIT_PRODUCT_IS_NOT_AVAILABLE"] = "Product \"#NAME_ID#\" is unavailable";
+$MESS["SALE_ORDEREDIT_MESSAGE"] = "Message";
 ?>

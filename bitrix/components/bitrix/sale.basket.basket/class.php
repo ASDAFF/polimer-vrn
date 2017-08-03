@@ -597,7 +597,10 @@ class CBitrixBasketComponent extends CBitrixComponent
 
 		if (($sessionBasketPrice != $allSum) || (count($arOrder["BASKET_ITEMS"]) != $sessionBasketQuantity))
 		{
-			\Bitrix\Sale\BasketComponentHelper::updateFUserBasket($fuserId, SITE_ID);
+			if (!empty($_SESSION['SALE_USER_BASKET_PRICE']))
+				unset($_SESSION['SALE_USER_BASKET_PRICE']);
+			if (!empty($_SESSION['SALE_USER_BASKET_QUANTITY']))
+				unset($_SESSION['SALE_USER_BASKET_QUANTITY']);
 			$arResult["EVENT_ONCHANGE_ON_START"] = "Y";
 		}
 
@@ -969,7 +972,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 						{
 							$arValues['n'.$arEnum['ID']] = array(
 								'ID' => $arEnum['ID'],
-								'NAME' => htmlspecialcharsbx($arEnum['VALUE']),
+								'NAME' => $arEnum['VALUE'],
 								'SORT' => (int)$arEnum['SORT'],
 								'PICT' => false
 							);

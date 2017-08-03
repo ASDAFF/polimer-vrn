@@ -279,7 +279,7 @@
 .bx-notifier-item-button-cancel:hover, .bx-messenger-mark .popup-window-button-decline:hover {
 	background: #c9424c!important;
 }
-.bx-messenger-keyboard {  display: block;  margin: 3px 59px 0 61px;  }
+.bx-messenger-keyboard {  display: block;  margin: 3px 59px 0 61px; text-align: left; }
 .bx-messenger-keyboard-button { display: block;  margin-top: 5px; }
 .bx-messenger-keyboard-button-line { display: inline-block; margin-right: 4px; }
 .bx-messenger-keyboard-button-text {  font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;  padding: 4px 10px; display: inline-block;  text-decoration: none; background-color: #e8e9eb; border-radius: 4px; color: #535c68; text-align: center;  min-width: 24px;  cursor: pointer; transition: opacity .5s; opacity: 1; }
@@ -326,6 +326,11 @@
 .bx-messenger-content-item-ol-output .bx-messenger-hr { border-top-color: #fff!important;;}
 .bx-messenger-content-item-ol-output .bx-messenger-content-item-content {background-color: #f3f5f7!important;;border-color: #f3f5f7!important;}
 .bx-messenger-content-item-ol-output .bx-messenger-content-item-text-center {color: #000000!important;}
+
+.bx-messenger-content-item-ol-attention .bx-messenger-content-item-date { color: #a6aaae!important; }
+.bx-messenger-content-item-ol-attention .bx-messenger-hr { border-top-color: #e9faca!important;;}
+.bx-messenger-content-item-ol-attention .bx-messenger-content-item-content {background-color: #e9faca!important;;border-color: #fff6c5!important;}
+.bx-messenger-content-item-ol-attention .bx-messenger-content-item-text-center {color: #000000!important;}
 
 .bx-messenger-content-item-vote .bx-messenger-content-item-like {display: none;}
 .bx-messenger-content-item-vote .bx-messenger-message { text-align: center; display: block;}

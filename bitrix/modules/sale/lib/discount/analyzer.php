@@ -3,11 +3,13 @@
 namespace Bitrix\Sale\Discount;
 
 use Bitrix\Main\ErrorCollection;
-use Bitrix\Main\Event;
+use Bitrix\Sale\Internals\DiscountModuleTable;
 use Bitrix\Sale\Internals\DiscountTable;
 
 final class Analyzer
 {
+	/** @var array */
+	protected $internalModules = array('sale', 'catalog', 'main');
 	/** @var  ErrorCollection */
 	protected $errorCollection;
 	/** @var  static */
@@ -127,93 +129,19 @@ final class Analyzer
 		));
 		$query->setLimit(1);
 
-		return !(bool)$query->exec()->fetch() && !$this->isThereCustomEventListener();
+		return !(bool)$query->exec()->fetch() && !$this->isThereCustomDiscountModules();
 	}
 
-	private function isThereCustomEventListener()
+	private function isThereCustomDiscountModules()
 	{
-		/** @see \CGlobalCondTree::GetEventList */
-		$events = array(
-			array(
-				'MODULE_ID' => 'catalog',
-				'EVENT_ID' => 'onBuildDiscountInterfaceAtoms'
-			),
-			array(
-				'MODULE_ID' => 'catalog',
-				'EVENT_ID' => 'onBuildDiscountInterfaceControls'
-			),
-			array(
-				'MODULE_ID' => 'catalog',
-				'EVENT_ID' => 'OnCondCatAtomBuildList'
-			),
-			array(
-				'MODULE_ID' => 'catalog',
-				'EVENT_ID' => 'OnCondCatControlBuildList'
-			),
-			array(
-				'MODULE_ID' => 'sale',
-				'EVENT_ID' => 'onBuildDiscountConditionInterfaceAtoms'
-			),
-			array(
-				'MODULE_ID' => 'sale',
-				'EVENT_ID' => 'onBuildDiscountConditionInterfaceControls'
-			),
-			array(
-				'MODULE_ID' => 'sale',
-				'EVENT_ID' => 'OnCondSaleAtomBuildList'
-			),
-			array(
-				'MODULE_ID' => 'sale',
-				'EVENT_ID' => 'OnCondSaleControlBuildList'
-			),
-			array(
-				'MODULE_ID' => 'sale',
-				'EVENT_ID' => 'onBuildDiscountActionInterfaceAtoms'
-			),
-			array(
-				'MODULE_ID' => 'sale',
-				'EVENT_ID' => 'onBuildDiscountActionInterfaceControls'
-			),
-			array(
-				'MODULE_ID' => 'sale',
-				'EVENT_ID' => 'OnCondSaleActionsAtomBuildList'
-			),
-			array(
-				'MODULE_ID' => 'sale',
-				'EVENT_ID' => 'OnCondSaleActionsControlBuildList'
-			)
-		);
+		$query = DiscountModuleTable::query();
+		$query->setSelect(array('ID'));
+		$query->setFilter(array(
+			'!@MODULE_ID' => $this->internalModules,
+		));
+		$query->setLimit(1);
 
-		foreach ($events as $event)
-		{
-			$event = new Event(
-				$event['MODULE_ID'],
-				$event['EVENT_ID']
-			);
-
-			$event->send();
-			$resultList = $event->getResults();
-			if (!empty($resultList))
-			{
-				foreach ($resultList as $eventResult)
-				{
-					$module = $eventResult->getModuleId();
-					if (!$module)
-					{
-						continue;
-					}
-
-					if ($module !== 'sale' && $module !== 'catalog' && $module !== 'main')
-					{
-						AddMessage2Log(array(207, $module));
-						//it means there is custom listener
-						return true;
-					}
-				}
-			}
-		}
-
-		return false;
+		return (bool)$query->exec()->fetch();
 	}
 
 	private function isExistOnlySaleDiscountAction(array $discount)

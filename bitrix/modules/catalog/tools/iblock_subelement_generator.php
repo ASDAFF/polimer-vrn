@@ -530,6 +530,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && !$bReadOnly && check_bitrix_sessid()
 				$template->set(array(
 					"MY_TEMPLATE" => $title,
 				));
+				CCatalogMeasureRatio::add(array('PRODUCT_ID' => $idNewElement, 'RATIO' => 1, 'IS_DEFAULT' => 'Y'));
 			}
 			else
 			{
@@ -578,7 +579,7 @@ $arPropertyPopupIB1 = array();
 foreach($arResult as $key => $property)
 {
 	$arPropertyPopupIB1[$property["CODE"]] = array(
-			"TEXT" => htmlspecialcharsbx($property["NAME"]),
+			"TEXT" => $property["NAME"],
 			"ONCLICK" => "obPropertyTable.addPropertyInTitle('{=this.property.".$property["ID"]."}')",
 			"CODE" => $property["CODE"],
 	);
@@ -594,7 +595,7 @@ $arPropertyPopupIB2 = array("NAME" => array(
 foreach($arAllParentProperties as $key => $property)
 {
 	$arPropertyPopupIB2[$property["CODE"]] = array(
-			"TEXT" => htmlspecialcharsbx($property["NAME"]),
+			"TEXT" => $property["NAME"],
 			"ONCLICK" => "obPropertyTable.addPropertyInTitle('{=this.property.CML2_LINK.property.".$property["CODE"]."}')",
 			"CODE" => $property["CODE"],
 	);

@@ -19,4 +19,6 @@ $MESS["SPOD_PARAM_RESAMPLE_TYPE_BX_RESIZE_IMAGE_EXACT"] = "З обрізання
 $MESS["SPOD_PARAM_RESAMPLE_TYPE_BX_RESIZE_IMAGE_PROPORTIONAL"] = "Із збереженням пропорцій";
 $MESS["SPOD_PARAM_RESAMPLE_TYPE_BX_RESIZE_IMAGE_PROPORTIONAL_ALT"] = "Із збереженням пропорцій, поліпшена обробка";
 $MESS["SPOD_PATH_TO_COPY"] = "Сторінка повторення замовлення";
+$MESS["SPOD_ALLOW_INNER"] = "Дозволити оплату з внутрішнього рахунку";
+$MESS["SPOD_ONLY_INNER_FULL"] = "Дозволити оплату з внутрішнього рахунку тільки в повному обсязі";
 ?>

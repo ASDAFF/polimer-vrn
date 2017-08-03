@@ -10,7 +10,7 @@
 
 	var BX = window.BX;
 
-	BX.desktop = function ()
+	var Desktop = function ()
 	{
 		this.apiReady = typeof(BXDesktopSystem) != "undefined" || typeof(BXDesktopWindow) != "undefined";
 		this.clientVersion = 0;
@@ -81,7 +81,7 @@
 		}, this));
 	};
 
-	BX.desktop.prototype.init = function (params)
+	Desktop.prototype.init = function (params)
 	{
 		params = params || {};
 		if (this.inited)
@@ -212,7 +212,7 @@
 		this.addCustomEvent("BXFileStorageSyncPauseChanged", BX.delegate(this.onSyncStatusChanged, this));
 	}
 
-	BX.desktop.prototype.notSupported = function ()
+	Desktop.prototype.notSupported = function ()
 	{
 		this.setWindowMinSize({ Width: 864, Height: 493 });
 		this.setWindowSize({ Width: 864, Height: 493 });
@@ -231,22 +231,22 @@
 		});
 	}
 
-	BX.desktop.prototype.getCurrentUrl = function ()
+	Desktop.prototype.getCurrentUrl = function ()
 	{
 		return document.location.protocol+'//'+document.location.hostname+(document.location.port == ''?'':':'+document.location.port)
 	}
 
-	BX.desktop.prototype.ready = function ()
+	Desktop.prototype.ready = function ()
 	{
 		return this.apiReady;
 	}
 
-	BX.desktop.prototype.diskReady = function ()
+	Desktop.prototype.diskReady = function ()
 	{
 		return this.apiReady && typeof(BXFileStorage) != 'undefined';
 	}
 
-	BX.desktop.prototype.login = function (callback)
+	Desktop.prototype.login = function (callback)
 	{
 		if (this.disableLogin)
 		{
@@ -290,7 +290,7 @@
 		return true;
 	}
 	
-	BX.desktop.prototype.loginSuccessCallback = function (sessid)
+	Desktop.prototype.loginSuccessCallback = function (sessid)
 	{
 		if (typeof(sessid) == "string")
 		{
@@ -304,17 +304,17 @@
 		return true;
 	}
 
-	BX.desktop.prototype.showLoginForm = function ()
+	Desktop.prototype.showLoginForm = function ()
 	{
 		BXDesktopSystem.Logout(1, 'login_form');
 	}
 
-	BX.desktop.prototype.windowReload = function ()
+	Desktop.prototype.windowReload = function ()
 	{
 		location.reload();
 	}
 
-	BX.desktop.prototype.logout = function (terminate, reason, skipCheck)
+	Desktop.prototype.logout = function (terminate, reason, skipCheck)
 	{
 		terminate = terminate == true;
 
@@ -351,7 +351,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.checkUpdate = function (openBrowser)
+	Desktop.prototype.checkUpdate = function (openBrowser)
 	{
 		if (typeof(BXDesktopSystem) == 'undefined')
 			return false;
@@ -365,7 +365,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.getApiVersion = function (full)
+	Desktop.prototype.getApiVersion = function (full)
 	{
 		if (typeof(BXDesktopSystem) == 'undefined')
 			return 0;
@@ -376,7 +376,7 @@
 		return full? this.clientVersion.join('.'): this.clientVersion[3];
 	}
 
-	BX.desktop.prototype.enableInVersion = function (version)
+	Desktop.prototype.enableInVersion = function (version)
 	{
 		if (typeof(BXDesktopSystem) == 'undefined')
 			return false;
@@ -384,7 +384,7 @@
 		return this.getApiVersion() >= parseInt(version);
 	}
 
-	BX.desktop.prototype.addCustomEvent = function(eventName, eventHandler)
+	Desktop.prototype.addCustomEvent = function(eventName, eventHandler)
 	{
 		if (!this.ready()) return false;
 		var realHandler = function (e)
@@ -405,7 +405,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.removeCustomEvents = function(eventName)
+	Desktop.prototype.removeCustomEvents = function(eventName)
 	{
 		if(!this.eventHandlers[eventName])
 			return false;
@@ -417,7 +417,7 @@
 		this.eventHandlers[eventName] = [];
 	}
 
-	BX.desktop.prototype.onCustomEvent = function(windowTarget, eventName, arEventParams)
+	Desktop.prototype.onCustomEvent = function(windowTarget, eventName, arEventParams)
 	{
 		if (!this.ready()) return false;
 
@@ -455,7 +455,7 @@
 		return true;
 	}
 	
-	BX.desktop.prototype.findWindow = function (name)
+	Desktop.prototype.findWindow = function (name)
 	{
 		if (!this.ready()) return null;
 
@@ -478,14 +478,14 @@
 		return null;
 	}
 
-	BX.desktop.prototype.windowIsFocused = function ()
+	Desktop.prototype.windowIsFocused = function ()
 	{
 		if (!this.ready()) return false;
 
 		return BXDesktopWindow.GetProperty("isForeground");
 	}
 
-	BX.desktop.prototype.setIconStatus = function (status)
+	Desktop.prototype.setIconStatus = function (status)
 	{
 		if (!this.ready()) return false;
 
@@ -498,7 +498,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.setIconBadge = function (count, important)
+	Desktop.prototype.setIconBadge = function (count, important)
 	{
 		if (!this.ready()) return false;
 
@@ -512,14 +512,14 @@
 		return true;
 	}
 
-	BX.desktop.prototype.setIconTooltip = function (iconTitle)
+	Desktop.prototype.setIconTooltip = function (iconTitle)
 	{
 		if (!this.ready()) return false;
 
 		return BXDesktopSystem.ExecuteCommand('tooltip.change', iconTitle);
 	}
 
-	BX.desktop.prototype.setWindowResizable = function (enabled)
+	Desktop.prototype.setWindowResizable = function (enabled)
 	{
 		if (!this.ready()) return false;
 
@@ -528,7 +528,7 @@
 		return false;
 	}
 
-	BX.desktop.prototype.setWindowClosable = function (enabled)
+	Desktop.prototype.setWindowClosable = function (enabled)
 	{
 		if (!this.ready()) return false;
 
@@ -537,7 +537,7 @@
 		return false;
 	}
 
-	BX.desktop.prototype.flashIcon = function (voiced)
+	Desktop.prototype.flashIcon = function (voiced)
 	{
 		if (!this.ready()) return false;
 
@@ -546,7 +546,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.getWorkArea = function ()
+	Desktop.prototype.getWorkArea = function ()
 	{
 		if (!this.ready())
 			return false;
@@ -556,7 +556,7 @@
 		return {top: coordinates[0], left: coordinates[1], right: coordinates[2], bottom: coordinates[3]}
 	}
 
-	BX.desktop.prototype.showNotification = function (notifyId, content, js)
+	Desktop.prototype.showNotification = function (notifyId, content, js)
 	{
 		if (!this.ready() || content == "")
 			return false;
@@ -571,12 +571,12 @@
 		return true;
 	}
 
-	BX.desktop.prototype.adjustSize = function (width, height)
+	Desktop.prototype.adjustSize = function (width, height)
 	{
 		return BX.MessengerWindow.adjustSize(width, height);
 	}
 
-	BX.desktop.prototype.resize = function ()
+	Desktop.prototype.resize = function ()
 	{
 		if (!this.ready()) return false;
 
@@ -585,7 +585,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.syncPause = function (status, immediate)
+	Desktop.prototype.syncPause = function (status, immediate)
 	{
 		if (!this.diskReady()) return false;
 
@@ -605,17 +605,17 @@
 		return true;
 	};
 
-	BX.desktop.prototype.onSyncStatusChanged = function (status)
+	Desktop.prototype.onSyncStatusChanged = function (status)
 	{
 		this.syncPause(status, true);
 	};
 
-	BX.desktop.prototype.getSyncStatus = function ()
+	Desktop.prototype.getSyncStatus = function ()
 	{
 		return this.syncStatus;
 	};
 
-	BX.desktop.prototype.windowCommand = function (windowTarget, command)
+	Desktop.prototype.windowCommand = function (windowTarget, command)
 	{
 		if (!this.ready()) return false;
 
@@ -664,7 +664,7 @@
 		return true;
 	};
 
-	BX.desktop.prototype.openTopmostWindow = function(html, js, bodyClass)
+	Desktop.prototype.openTopmostWindow = function(html, js, bodyClass)
 	{
 		if (!this.ready())
 			return false;
@@ -675,7 +675,7 @@
 		return true;
 	};
 
-	BX.desktop.prototype.closeTopmostWindow = function()
+	Desktop.prototype.closeTopmostWindow = function()
 	{
 		if (this.topmostWindow)
 		{
@@ -685,7 +685,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.getHtmlPage = function(content, jsContent, bodyClass)
+	Desktop.prototype.getHtmlPage = function(content, jsContent, bodyClass)
 	{
 		if (!this.ready()) return;
 
@@ -708,7 +708,7 @@
 		return '<!DOCTYPE html><html>'+this.htmlWrapperHead+'<body class="im-desktop im-desktop-popup '+bodyClass+'">'+content+jsContent+'</body></html>';
 	};
 
-	BX.desktop.prototype.openDeveloperTools = function()
+	Desktop.prototype.openDeveloperTools = function()
 	{
 		if (typeof(BXDesktopWindow) == 'undefined')
 			return false;
@@ -718,7 +718,7 @@
 		return true;
 	};
 
-	BX.desktop.prototype.openLogsFolder = function()
+	Desktop.prototype.openLogsFolder = function()
 	{
 		if (!this.ready()) return false;
 
@@ -727,7 +727,7 @@
 		return true;
 	};
 
-	BX.desktop.prototype.browse = function (url)
+	Desktop.prototype.browse = function (url)
 	{
 		if (typeof(BXDesktopSystem) == 'undefined')
 			return false;
@@ -737,7 +737,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.autorunStatus = function(value)
+	Desktop.prototype.autorunStatus = function(value)
 	{
 		if (!this.ready()) return false;
 
@@ -754,14 +754,14 @@
 		return this.autorun;
 	};
 
-	BX.desktop.prototype.diskAttachStatus = function()
+	Desktop.prototype.diskAttachStatus = function()
 	{
 		if (!this.ready()) return false;
 
 		return BitrixDisk? BitrixDisk.enabled: false;
 	};
 
-	BX.desktop.prototype.clipboardSelected = function (element, expandToWholeWord)
+	Desktop.prototype.clipboardSelected = function (element, expandToWholeWord)
 	{
 		expandToWholeWord = expandToWholeWord || false;
 
@@ -823,7 +823,7 @@
 		return {text: resultText, selectionStart: selectionStart, selectionEnd: selectionEnd};
 	}
 
-	BX.desktop.prototype.clipboardCopy = function(callback, cut)
+	Desktop.prototype.clipboardCopy = function(callback, cut)
 	{
 		if (!this.ready()) return false;
 
@@ -849,12 +849,12 @@
 		return text;
 	}
 
-	BX.desktop.prototype.clipboardCut = function ()
+	Desktop.prototype.clipboardCut = function ()
 	{
 		return this.clipboardCopy(null, true);
 	}
 
-	BX.desktop.prototype.clipboardPaste = function ()
+	Desktop.prototype.clipboardPaste = function ()
 	{
 		if (!this.ready()) return false;
 
@@ -863,7 +863,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.clipboardDelete = function ()
+	Desktop.prototype.clipboardDelete = function ()
 	{
 		if (!this.ready()) return false;
 
@@ -872,7 +872,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.clipboardUndo = function ()
+	Desktop.prototype.clipboardUndo = function ()
 	{
 		if (!this.ready()) return false;
 
@@ -881,7 +881,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.clipboardRedo = function ()
+	Desktop.prototype.clipboardRedo = function ()
 	{
 		if (!this.ready()) return false;
 
@@ -890,7 +890,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.clipboardReplaceText = function (element, positionStart, positionEnd, text)
+	Desktop.prototype.clipboardReplaceText = function (element, positionStart, positionEnd, text)
 	{
 		if (!this.ready()) return false;
 
@@ -911,7 +911,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.selectAll = function (element)
+	Desktop.prototype.selectAll = function (element)
 	{
 		if (!this.ready()) return false;
 
@@ -920,7 +920,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.getLocalConfig = function(name, def)
+	Desktop.prototype.getLocalConfig = function(name, def)
 	{
 		def = typeof(def) == 'undefined'? null: def;
 
@@ -939,7 +939,7 @@
 		return result;
 	};
 
-	BX.desktop.prototype.setLocalConfig = function(name, value)
+	Desktop.prototype.setLocalConfig = function(name, value)
 	{
 		if (!this.ready()) return false;
 
@@ -957,7 +957,7 @@
 		return true;
 	};
 
-	BX.desktop.prototype.removeLocalConfig = function(name)
+	Desktop.prototype.removeLocalConfig = function(name)
 	{
 		if (!this.ready()) return false;
 
@@ -966,7 +966,7 @@
 		return true;
 	};
 
-	BX.desktop.prototype.log = function (filename, text)
+	Desktop.prototype.log = function (filename, text)
 	{
 		if (!this.ready()) return false;
 
@@ -975,12 +975,12 @@
 		return true;
 	}
 
-	BX.desktop.prototype.createWindow = function (name, callback)
+	Desktop.prototype.createWindow = function (name, callback)
 	{
 		BXDesktopSystem.GetWindow(name, callback)
 	}
 
-	BX.desktop.prototype.getWindowTitle = function (title)
+	Desktop.prototype.getWindowTitle = function (title)
 	{
 		if (!this.ready()) return false;
 
@@ -989,7 +989,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.setWindowTitle = function (title)
+	Desktop.prototype.setWindowTitle = function (title)
 	{
 		if (!this.ready()) return false;
 
@@ -1005,7 +1005,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.setWindowPosition = function (params)
+	Desktop.prototype.setWindowPosition = function (params)
 	{
 		if (!this.ready()) return false;
 
@@ -1014,7 +1014,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.setWindowSize = function (params)
+	Desktop.prototype.setWindowSize = function (params)
 	{
 		if (!this.ready()) return false;
 
@@ -1025,7 +1025,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.setWindowMinSize = function (params)
+	Desktop.prototype.setWindowMinSize = function (params)
 	{
 		if (!this.ready())
 			return false;
@@ -1041,7 +1041,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.addTrayMenuItem = function (params)
+	Desktop.prototype.addTrayMenuItem = function (params)
 	{
 		if (!this.ready()) return false;
 
@@ -1050,7 +1050,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.finalizeTrayMenu = function ()
+	Desktop.prototype.finalizeTrayMenu = function ()
 	{
 		if (!this.ready()) return false;
 
@@ -1059,7 +1059,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.preventShutdown = function ()
+	Desktop.prototype.preventShutdown = function ()
 	{
 		if (!this.ready()) return false;
 
@@ -1068,7 +1068,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.diskReportStorageNotification = function (command, params)
+	Desktop.prototype.diskReportStorageNotification = function (command, params)
 	{
 		if (!this.ready()) return false;
 
@@ -1077,7 +1077,7 @@
 		return true;
 	}
 
-	BX.desktop.prototype.diskOpenFolder = function ()
+	Desktop.prototype.diskOpenFolder = function ()
 	{
 		if (!this.ready()) return false;
 
@@ -1087,32 +1087,32 @@
 	}
 
 	/* Interface */
-	BX.desktop.prototype.addSeparator = function (params)
+	Desktop.prototype.addSeparator = function (params)
 	{
 		return BX.MessengerWindow.addSeparator(params);
 	}
 
-	BX.desktop.prototype.addTab = function (params)
+	Desktop.prototype.addTab = function (params)
 	{
 		return BX.MessengerWindow.addTab(params);
 	}
 
-	BX.desktop.prototype.changeTab = function (tabId, force)
+	Desktop.prototype.changeTab = function (tabId, force)
 	{
 		return BX.MessengerWindow.changeTab(tabId, force);
 	}
 
-	BX.desktop.prototype.closeTab = function (tabId)
+	Desktop.prototype.closeTab = function (tabId)
 	{
 		return BX.MessengerWindow.closeTab(tabId);
 	}
 
-	BX.desktop.prototype.setTabBadge = function (tabId, value)
+	Desktop.prototype.setTabBadge = function (tabId, value)
 	{
 		return BX.MessengerWindow.setTabBadge(tabId, value);
 	}
 
-	BX.desktop.prototype.updateTabBadge = function ()
+	Desktop.prototype.updateTabBadge = function ()
 	{
 		if (!this.ready())
 			return false;
@@ -1132,12 +1132,12 @@
 		BXDesktopSystem.SetTabBadge(this.getContextWindow(), value+'');
 	}
 
-	BX.desktop.prototype.setTabContent = function (tabId, content)
+	Desktop.prototype.setTabContent = function (tabId, content)
 	{
 		return BX.MessengerWindow.setTabContent(tabId, content);
 	}
 
-	BX.desktop.prototype.isActiveWindow = function ()
+	Desktop.prototype.isActiveWindow = function ()
 	{
 		if (!this.ready())
 			return false;
@@ -1145,7 +1145,7 @@
 		return BXDesktopSystem.IsActiveTab();
 	}
 	
-	BX.desktop.prototype.getActiveWindow = function ()
+	Desktop.prototype.getActiveWindow = function ()
 	{
 		if (!this.ready())
 			return 1;
@@ -1153,7 +1153,7 @@
 		return BXDesktopSystem.ActiveTab();
 	}
 	
-	BX.desktop.prototype.getContextWindow = function ()
+	Desktop.prototype.getContextWindow = function ()
 	{
 		if (!this.ready())
 			return 1;
@@ -1175,7 +1175,7 @@
 		}
 	}
 	
-	BX.desktop.prototype.setActiveWindow = function (windowId)
+	Desktop.prototype.setActiveWindow = function (windowId)
 	{
 		if (!this.ready())
 			return false;
@@ -1193,10 +1193,10 @@
 		}
 	}
 
-	BX.desktop.prototype.getUserInfo = function()
+	Desktop.prototype.getUserInfo = function()
 	{
 		return BX.MessengerWindow.getUserInfo();
 	}
 
-	BX.desktop = new BX.desktop();
+	BX.desktop = new Desktop();
 })(window);

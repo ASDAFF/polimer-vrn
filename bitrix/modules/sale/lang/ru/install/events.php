@@ -318,4 +318,33 @@ $MESS["SALE_ORDER_TRACKING_NUMBER_HTML_TEXT"] = "Произошла почтов
 
 E-mail: #SALE_EMAIL#
 ";
+
+$MESS["SALE_ORDER_SHIPMENT_STATUS_CHANGED_SUBJECT"] = "Статус почтового отправления вашего заказа на сайте #SITE_NAME# изменился";
+$MESS["SALE_ORDER_SHIPMENT_STATUS_CHANGED_HTML_TITLE"] = "Изменился статус почтового отправления заказа на сайте #SITE_NAME#";
+$MESS["SALE_ORDER_SHIPMENT_STATUS_CHANGED_HTML_SUB_TITLE"] = "Уважаемый #ORDER_USER#,";
+$MESS["SALE_ORDER_SHIPMENT_STATUS_CHANGED_HTML_TEXT"] = "Статус почтового отправления по заказу № #ORDER_NO# от #ORDER_DATE#
+
+изменил значение на \"#STATUS_NAME#\" (#STATUS_DESCRIPTION#).
+
+Идентификатор отправления: #TRACKING_NUMBER#.
+
+Наименование службы доставки: #DELIVERY_NAME#.
+
+#DELIVERY_TRACKING_URL##ORDER_DETAIL_URL#
+";
+$MESS["SALE_ORDER_SHIPMENT_STATUS_CHANGED_TYPE_NAME"] = "Уведомление об изменении статуса почтового отправления";
+$MESS["SALE_ORDER_SHIPMENT_STATUS_CHANGED_TYPE_DESC"] = "#SHIPMENT_NO# - номер отгрузки
+#SHIPMENT_DATE# - дата отгрузки
+#ORDER_NO# - номер заказа
+#ORDER_DATE# - дата заказа
+#STATUS_NAME# - название статуса
+#STATUS_DESCRIPTION# - описание статуса
+#TRACKING_NUMBER# - идентификатор почтового отправления
+#EMAIL# - кому будет отправлено письмо
+#BCC# - кому будет отправлена копия письма
+#ORDER_USER# - заказчик
+#DELIVERY_NAME# - наименование службы доставки
+#DELIVERY_TRACKING_URL# - ссылка на сайте службы доставке, где можно подробнее узнать о статусе отправления
+#ORDER_ACCOUNT_NUMBER_ENCODE# - код заказа(для ссылок)
+#ORDER_DETAIL_URL# - ссылка для просмотра подробной информации о заказе";
 ?>

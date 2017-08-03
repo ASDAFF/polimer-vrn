@@ -65,7 +65,8 @@ elseif ($APPLICATION->GetGroupRight("sale") >= "W" && check_bitrix_sessid())
 				}
 				else
 				{
-					$arResult['PROGRESS'] .= Vk\Journal::getProgressFinishMessage();
+					$ok = isset($arResult["ERRORS_CRITICAL"]) && $arResult["ERRORS_CRITICAL"] ? false : true;
+					$arResult['PROGRESS'] .= Vk\Journal::getProgressFinishMessage($ok);
 				}
 				
 			}

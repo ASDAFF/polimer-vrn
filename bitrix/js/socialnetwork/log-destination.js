@@ -594,6 +594,9 @@ BX.SocNetLogDestination.openContainer = function(name, params)
 								BX.create('div', {
 									attrs: {
 										id: "BXSocNetLogDestinationContainerContent"
+									},
+									props: {
+										className: "bx-finder-container-content"
 									}
 								})
 							]
@@ -603,6 +606,9 @@ BX.SocNetLogDestination.openContainer = function(name, params)
 				: BX.create('div', {
 					attrs: {
 						id: "BXSocNetLogDestinationContainerContent"
+					},
+					props: {
+						className: "bx-finder-container-content"
 					}
 				})
 		)
@@ -1505,6 +1511,8 @@ BX.SocNetLogDestination.search = function(text, sendAjax, name, nameTemplate, pa
 					if (
 						typeof BX.SocNetLogDestination.obItems[name][group][i].login != 'undefined'
 						&& BX.SocNetLogDestination.obItems[name][group][i].login.length > 0
+						&& partsSearchText.length <= 1
+						&& searchString.length > 2
 					)
 					{
 						partsItem.push(BX.SocNetLogDestination.obItems[name][group][i].login.toLowerCase());
@@ -2157,14 +2165,8 @@ BX.SocNetLogDestination.drawItemsGroup = function(lastItems, groupCode, name, se
 			: ''
 	);
 
-	var keys = lastItems[groupCode]? Object.keys(lastItems[groupCode]): [];
-	keys.sort(function(a, b) {
-		return +lastItems[groupCode][a] - +lastItems[groupCode][b];
-	});
-	for (var index = 0; index < keys.length; index++)
+	for (var i in lastItems[groupCode])
 	{
-		i = keys[index];
-
 		if (!BX.SocNetLogDestination.obItems[name][groupCode][i])
 		{
 			continue;

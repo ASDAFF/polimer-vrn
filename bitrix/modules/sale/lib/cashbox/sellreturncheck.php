@@ -3,6 +3,7 @@
 namespace Bitrix\Sale\Cashbox;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\NotImplementedException;
 
 Loc::loadMessages(__FILE__);
 
@@ -21,6 +22,15 @@ class SellReturnCheck extends SellCheck
 	}
 
 	/**
+	 * @throws NotImplementedException
+	 * @return string
+	 */
+	public static function getCalculatedSign()
+	{
+		return static::CALCULATED_SIGN_CONSUMPTION;
+	}
+
+	/**
 	 * @return string
 	 */
 	public static function getName()
@@ -29,16 +39,17 @@ class SellReturnCheck extends SellCheck
 	}
 
 	/**
+	 * @param array $entities
 	 * @return array
 	 */
-	public function getDataForCheck()
+	public function extractDataFromEntities(array $entities)
 	{
-		$result = parent::getDataForCheck();
+		$result = parent::extractDataFromEntities($entities);
 
-		if (isset($result['payments']))
+		if (isset($result['PAYMENTS']))
 		{
-			foreach ($result['payments'] as $i => $payment)
-				$result['payments'][$i]['is_cash'] = 'N';
+			foreach ($result['PAYMENTS'] as $i => $payment)
+				$result['PAYMENTS'][$i]['IS_CASH'] = 'N';
 
 		}
 

@@ -115,8 +115,16 @@ class SaleOrderPaymentChange extends \CBitrixComponent
 
 		$paymentCollection = $this->order->getPaymentCollection();
 		/** @var \Bitrix\Sale\Payment $payment */
-		$payment = $paymentCollection->createItem();
-		
+		if ((int)$this->arResult['PAYMENT']['ID'] > 0)
+		{
+			$payment = $paymentCollection->getItemById($this->arResult['PAYMENT']['ID']);
+		}
+
+		if (empty($payment))
+		{
+			$payment = $paymentCollection->createItem();
+		}
+
 		$paySystemList = PaySystem\Manager::getListWithRestrictions($payment);
 
 		foreach ($paySystemList as $paySystemElement)

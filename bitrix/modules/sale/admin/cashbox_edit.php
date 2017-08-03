@@ -242,16 +242,16 @@ $tabControl->BeginCustomField('OFD', GetMessage("SALE_CASHBOX_OFD"));
 		<td width="60%">
 			<select name="OFD" id="OFD">
 				<?
-					$ofdList = Bitrix\Sale\Cashbox\Ofd::getHandlerList();
-				?>
-				<option value=""><?=Loc::getMessage("SALE_CASHBOX_NO_HANDLER") ?></option>
-				<?
+				$ofdList = Bitrix\Sale\Cashbox\Ofd::getHandlerList();
 				foreach ($ofdList as $handler => $name)
 				{
 					$selected = ($handler === $cashbox['OFD']) ? 'selected' : '';
 					echo '<option value="'.$handler.'" '.$selected.'>'.$name.'</option>';
 				}
+
+				$selected = ($cashbox['OFD'] === '') ? 'selected' : '';
 				?>
+				<option value="" <?=$selected;?>><?=Loc::getMessage("SALE_CASHBOX_OTHER_HANDLER");?></option>
 			</select>
 		</td>
 	</tr>

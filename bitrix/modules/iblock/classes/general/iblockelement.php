@@ -5314,15 +5314,35 @@ class CAllIBlockElement
 	{
 		$iblockExtVersion = (CIBlockElement::GetIBVersion($iblockID) == 2);
 		$propertiesList = array();
+		$shortProperties = array();
 		$userTypesList = array();
 		$existList = array();
 
 		$selectListMultiply = array('SORT' => SORT_ASC, 'VALUE' => SORT_STRING);
 		$selectAllMultiply = array('PROPERTY_VALUE_ID' => SORT_ASC);
 
+		$selectFields = array(
+			'ID', 'IBLOCK_ID', 'NAME', 'ACTIVE', 'SORT', 'CODE', 'DEFAULT_VALUE', 'PROPERTY_TYPE', 'ROW_COUNT', 'COL_COUNT', 'LIST_TYPE',
+			'MULTIPLE', 'XML_ID', 'FILE_TYPE', 'MULTIPLE_CNT', 'LINK_IBLOCK_ID', 'WITH_DESCRIPTION', 'SEARCHABLE', 'FILTRABLE',
+			'IS_REQUIRED', 'VERSION', 'USER_TYPE', 'USER_TYPE_SETTINGS', 'HINT'
+		);
+
 		if (!is_array($options))
 			$options = array();
 		$usePropertyId = (isset($options['USE_PROPERTY_ID']) && $options['USE_PROPERTY_ID'] == 'Y');
+		$propertyFieldList = array();
+		if (!empty($options['PROPERTY_FIELDS']) && is_array($options['PROPERTY_FIELDS']))
+			$propertyFieldList = array_intersect($options['PROPERTY_FIELDS'], $selectFields);
+		if (!empty($propertyFieldList))
+		{
+			if (!in_array('ID', $propertyFieldList))
+				$propertyFieldList[] = 'ID';
+			if (in_array('NAME', $propertyFieldList))
+				$propertyFieldList[] = '~NAME';
+			if (in_array('DEFAULT_VALUE', $propertyFieldList))
+				$propertyFieldList[] = '~DEFAULT_VALUE';
+			$propertyFieldList = array_fill_keys($propertyFieldList, true);
+		}
 
 		$propertyListFilter = array(
 			'IBLOCK_ID' => $iblockID
@@ -5364,11 +5384,7 @@ class CAllIBlockElement
 
 		$propertyID = array();
 		$propertyIterator = Iblock\PropertyTable::getList(array(
-			'select' => array(
-				'ID', 'IBLOCK_ID', 'NAME', 'ACTIVE', 'SORT', 'CODE', 'DEFAULT_VALUE', 'PROPERTY_TYPE', 'ROW_COUNT', 'COL_COUNT', 'LIST_TYPE',
-				'MULTIPLE', 'XML_ID', 'FILE_TYPE', 'MULTIPLE_CNT', 'LINK_IBLOCK_ID', 'WITH_DESCRIPTION', 'SEARCHABLE', 'FILTRABLE',
-				'IS_REQUIRED', 'VERSION', 'USER_TYPE', 'USER_TYPE_SETTINGS', 'HINT'
-			),
+			'select' => $selectFields,
 			'filter' => $propertyListFilter,
 			'order' => array('SORT'=>'ASC', 'ID'=>'ASC')
 		));
@@ -5409,6 +5425,10 @@ class CAllIBlockElement
 				$existList[] = $property['ID'];
 			}
 			$propertiesList[$code] = $property;
+			$shortProperties[$code] = (!empty($propertyFieldList)
+				? array_intersect_key($property, $propertyFieldList)
+				: $property
+			);
 		}
 		unset($property, $propertyIterator);
 
@@ -5457,7 +5477,7 @@ class CAllIBlockElement
 			{
 				$existElementDescription = isset($value['DESCRIPTION']) && array_key_exists($property['ID'], $value['DESCRIPTION']);
 				$existElementPropertyID = isset($value['PROPERTY_VALUE_ID']) && array_key_exists($property['ID'], $value['PROPERTY_VALUE_ID']);
-				$elementValues[$code] = $property;
+				$elementValues[$code] = $shortProperties[$code];
 
 				$elementValues[$code]['VALUE_ENUM'] = null;
 				$elementValues[$code]['VALUE_XML_ID'] = null;

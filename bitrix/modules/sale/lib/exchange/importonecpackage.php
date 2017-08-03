@@ -63,7 +63,7 @@ class ImportOneCPackage extends ImportPattern
 
         $params = $item->getFieldValues();
 
-        $fields = &$params['TRAITS'];
+		$fieldsCriterion = $fields = &$params['TRAITS'];
 
         $converter = OneC\Converter::getInstance($item->getOwnerTypeId());
         $converter->loadSettings($item->getSettings());
@@ -75,13 +75,16 @@ class ImportOneCPackage extends ImportPattern
         $criterion = $item->getCurrentCriterion($item->getEntity());
         $collision = $item->getCurrentCollision($item->getOwnerTypeId());
 
-		if($criterion->equals($fields))
+		if($item instanceof Exchange\Entity\ShipmentImport)
+			$fieldsCriterion['ITEMS'] = $params['ITEMS'];
+
+        if($criterion->equals($fieldsCriterion))
 		{
 			$collision->resolve($item);
 		}
 
-        if(!$criterion->equals($fields) ||
-            ($criterion->equals($fields) && !$item->hasCollisionErrors()))
+        if(!$criterion->equals($fieldsCriterion) ||
+            ($criterion->equals($fieldsCriterion) && !$item->hasCollisionErrors()))
         {
 			$result = $item->import($params);
         }
@@ -163,8 +166,42 @@ class ImportOneCPackage extends ImportPattern
         return OneC\DocumentImport::resolveDocumentTypeId($fields);
     }
 
+	/**
+	 * @param OneC\DocumentImport[] $documents
+	 * @return mixed|null
+	 */
+	protected function getDocumentOrder(array $documents)
+	{
+		foreach($documents as $document)
+		{
+			if($document->getOwnerEntityTypeId() == EntityType::ORDER)
+				return $document;
+		}
+		return null;
+	}
+
     /**
-     * @param array $documents
+	 * @param OneC\OrderDocument $document
+	 * @return null|int
+	 */
+	protected function getDefaultPaySystem(OneC\OrderDocument $document)
+	{
+		$fields = $document->getFieldValues();
+		return isset($fields['REK_VALUES']['PAY_SYSTEM_ID'])?$fields['REK_VALUES']['PAY_SYSTEM_ID']:null;
+	}
+
+	/**
+	 * @param OneC\OrderDocument $document
+	 * @return null|int
+	 */
+	protected function getDefaultDeliverySystem(OneC\OrderDocument $document)
+	{
+		$fields = $document->getFieldValues();
+		return isset($fields['REK_VALUES']['DELIVERY_SYSTEM_ID'])?$fields['REK_VALUES']['DELIVERY_SYSTEM_ID']:null;
+	}
+
+    /**
+     * @param OneC\DocumentImport[] $documents
      * @return Result
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\NotSupportedException
@@ -197,21 +234,36 @@ class ImportOneCPackage extends ImportPattern
 			}
 		}
 
-		foreach($documents as $document)
+		if(!isset($documentOrder))
+			$documentOrder = $this->getDocumentOrder($documents);
+
+		if($documentOrder instanceof OneC\OrderDocument)
 		{
-			if($document->getOwnerEntityTypeId() == EntityType::ORDER)
+			$agentFieldValue = $documentOrder->getFieldValues();
+			if(is_array($agentFieldValue['AGENT']))
 			{
-				$agent = $document->getField('AGENT');
 				$documentProfile = new OneC\UserProfileDocument();
-				$documentProfile->setFields($agent);
+				$documentProfile->setFields($agentFieldValue['AGENT']);
 				$documents[] = $documentProfile;
-				break;
 			}
 		}
 
-        /** @var OneC\DocumentImport $document */
         foreach($documents as $document)
         {
+			if($document instanceof OneC\PaymentDocument)
+			{
+				$paymentFields = $document->getFieldValues();
+				$paymentFields['REK_VALUES']['PAY_SYSTEM_ID_DEFAULT'] = $this->getDefaultPaySystem($documentOrder);
+				$document->setFields($paymentFields);
+			}
+
+			if($document instanceof OneC\ShipmentDocument)
+			{
+				$shimpentFields = $document->getFieldValues();
+				$shimpentFields['REK_VALUES']['DELIVERY_SYSTEM_ID_DEFAULT'] = $this->getDefaultDeliverySystem($documentOrder);
+				$document->setFields($shimpentFields);
+			}
+
 			$settings = Manager::getSettingsByType($document->getOwnerEntityTypeId());
 
         	$convertor = OneC\Converter::getInstance($document->getOwnerEntityTypeId());
@@ -250,7 +302,7 @@ class ImportOneCPackage extends ImportPattern
 	 * @param array $documents
 	 * @return bool
 	 */
-	public static function hasDocumentOrder(array $documents)
+	static public function hasDocumentOrder(array $documents)
 	{
 		foreach($documents as $document)
 		{

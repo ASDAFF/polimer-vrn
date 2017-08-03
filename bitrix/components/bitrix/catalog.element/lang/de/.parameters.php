@@ -135,7 +135,7 @@ $MESS["CP_BCE_COMPATIBLE_MODE"] = "Kompatibilitätsmodus aktivieren";
 $MESS["CP_BCE_HIDE_NOT_AVAILABLE_OFFERS_HIDE"] = "nicht anzeigen";
 $MESS["CP_BCE_HIDE_NOT_AVAILABLE_OFFERS_SUBSCRIBE"] = "mit einer Abonnement-Option anzeigen";
 $MESS["CP_BCE_HIDE_NOT_AVAILABLE_OFFERS_SHOW"] = "alle anzeigen";
-$MESS["COMPATIBLE_MODE_TIP"] = "Diese Option ist erforderlich für Anpassung der Vorlagen, die erstellt wurden zur Nutzung mit dem Modul Informationsblöcke vor der Version 17.0.0. Es wird empfohlen, die Vorlage aufs neue Format zu übertragen. Nähere Informationen finden Sie in der Dokumentation.";
 $MESS["CP_BCE_HIDE_NOT_AVAILABLE_OFFERS"] = "Nicht verfügbare Produktvarianten";
 $MESS["HIDE_NOT_AVAILABLE_OFFERS_TIP"] = "Eine Produktvariante, deren Menge kleiner oder gleich Null ist, wird für den Kauf nicht verfügbar sein, wenn: 1) die Option der Lagerverwaltung für die Produktvariante aktiviert ist, und 2) Elemente, die nicht am Lager sind, können nicht gekauft werden.<hr>Auch wenn eine Produktvariante verfügbar ist, bedeutet das nicht automatisch, sie kann gekauft werden. Eine Produktvariante benötigt Preise von den Typen, die als für einen Kunden verfügbare Preise angegeben sind, damit diese Produktvariante gekauft werden kann.";
+$MESS["COMPATIBLE_MODE_TIP"] = "Nutzen Sie diese Option für angepasste Vorlagen, die für Informationsblöcke vor der Version 17.0.0. erstellt wurden. Um die Performance zu verbessern, sollten Sie die Komponentenvorlage auf das neue Format übertragen.";
 ?>

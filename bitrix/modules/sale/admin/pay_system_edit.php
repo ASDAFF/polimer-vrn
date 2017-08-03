@@ -397,6 +397,8 @@ $tabControl->BeginNextTab();
 			<select name="ACTION_FILE" onchange='BX.Sale.PaySystem.getHandlerOptions(this)'>
 				<?
 					$handlerList = Bitrix\Sale\PaySystem\Manager::getHandlerList();
+					natsort($handlerList['SYSTEM']);
+					natsort($handlerList['USER']);
 
 					if ($request->get('ACTION_FILE') !== null)
 						$handlerName = $request->get('ACTION_FILE');

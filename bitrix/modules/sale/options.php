@@ -816,7 +816,7 @@ if (!empty($delieryStatusesList) && is_array($delieryStatusesList))
 {
 	foreach ($delieryStatusesList as $statusId => $statusName)
 	{
-		$delieryStatuses[$statusId] = "[".$statusId."] ".$statusName;
+		$delieryStatuses[$statusId] = "[".$statusId."] ".htmlspecialcharsbx($statusName);
 	}
 }
 
@@ -1130,7 +1130,7 @@ $tabControl->BeginNextTab();
 				<?
 				foreach($statusesWithoutNoChange as $statusID => $statusName)
 				{
-					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=$statusName?></option><?
+					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=htmlspecialcharsbx($statusName)?></option><?
 				}
 				?>
 			</select>
@@ -1955,7 +1955,7 @@ endfor;
 				<?
 				foreach($arStatuses as $statusID => $statusName)
 				{
-					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=$statusName?></option><?
+					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=htmlspecialcharsbx($statusName)?></option><?
 				}
 				?>
 			</select>
@@ -1973,7 +1973,7 @@ endfor;
 				<?
 				foreach($arStatuses as $statusID => $statusName)
 				{
-					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=$statusName?></option><?
+					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=htmlspecialcharsbx($statusName)?></option><?
 				}
 				?>
 			</select>
@@ -2021,7 +2021,7 @@ endfor;
 				<?
 				foreach($arStatuses as $statusID => $statusName)
 				{
-					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=$statusName?></option><?
+					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=htmlspecialcharsbx($statusName)?></option><?
 				}
 				?>
 			</select>
@@ -2039,7 +2039,7 @@ endfor;
 				<?
 				foreach($arStatuses as $statusID => $statusName)
 				{
-					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=$statusName?></option><?
+					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=htmlspecialcharsbx($statusName)?></option><?
 				}
 				?>
 			</select>
@@ -2057,7 +2057,7 @@ endfor;
 				<?
 				foreach($arStatuses as $statusID => $statusName)
 				{
-					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=$statusName?></option><?
+					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=htmlspecialcharsbx($statusName)?></option><?
 				}
 				?>
 			</select>
@@ -2075,7 +2075,7 @@ endfor;
 				<?
 				foreach($arStatuses as $statusID => $statusName)
 				{
-					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=$statusName?></option><?
+					?><option value="<?=$statusID?>"<?if ($val == $statusID) echo " selected";?>><?=htmlspecialcharsbx($statusName)?></option><?
 				}
 				?>
 			</select>

@@ -59,6 +59,7 @@ class CSaleDiscount extends CAllSaleDiscount
 			"UNPACK" => array("FIELD" => "D.UNPACK", "TYPE" => "string"),
 			"APPLICATION" => array("FIELD" => "D.APPLICATION", "TYPE" => "string"),
 			"ACTIONS" => array("FIELD" => "D.ACTIONS", "TYPE" => "string"),
+			"PRESET_ID" => array("FIELD" => "D.PRESET_ID", "TYPE" => "string"),
 			"USE_COUPONS" => array("FIELD" => "D.USE_COUPONS", "TYPE" => "char"),
 			"USER_GROUPS" => array("FIELD" => "DG.GROUP_ID", "TYPE" => "int","FROM" => "LEFT JOIN b_sale_discount_group DG ON (D.ID = DG.DISCOUNT_ID)")
 		);

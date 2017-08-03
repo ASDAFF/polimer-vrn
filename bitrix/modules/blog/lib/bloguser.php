@@ -11,6 +11,7 @@ namespace Bitrix\Blog;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Main\UserConsent\Internals\ConsentTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -357,5 +358,40 @@ class BlogUser
 		}
 		
 		return $result;
+	}
+	
+	/**
+	 * Check, is user given consent for current agreement ever in the past.
+	 * Consent checked based on component URL, it means, that if URL will be changed, result will be false again.
+	 *
+	 * @param $userId - ID of main user (not blog user!)
+	 */
+	public static function isUserGivenConsent($userId, $agreementId)
+	{
+		if(!$userId || $userId <= 0)
+			throw new ArgumentNullException('User ID');
+		if(!$agreementId || $agreementId <= 0)
+			throw new ArgumentNullException('Agreement ID');
+		
+//		Find root URL for current component. We will check this URL in consents table.
+//		URL will be common for any constnt in this component
+		$url = \CMain::IsHTTPS() ? 'https://' : 'http://';
+		$url.= $_SERVER["SERVER_NAME"];
+		$url.= (isset($_SERVER["REAL_FILE_PATH"]) ? $_SERVER["REAL_FILE_PATH"] : $_SERVER["SCRIPT_NAME"]);
+		$urlDir = pathinfo($url);
+		$urlDir = $urlDir['dirname'];
+		
+		$filter = array(
+			"=USER_ID" => $userId,
+			"%=URL" => "%$urlDir%",
+			"=AGREEMENT_ID" => $agreementId
+		);
+		
+		$isGivenAgreement = false;
+		$consents = ConsentTable::getList(array('filter' => $filter));
+		if($consents->fetch())
+			$isGivenAgreement = true;
+		
+		return $isGivenAgreement;
 	}
 }

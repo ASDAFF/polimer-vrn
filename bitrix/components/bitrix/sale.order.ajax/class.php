@@ -2922,6 +2922,7 @@ class SaleOrderAjax extends \CBitrixComponent
 		global $APPLICATION;
 		$arResult =& $this->arResult;
 
+		$prePayablePs = array();
 		$arPersonTypes = PersonType::load($this->context->getSite());
 		$arPersonTypes = array_keys($arPersonTypes);
 		if (!empty($arPersonTypes))
@@ -2934,15 +2935,43 @@ class SaleOrderAjax extends \CBitrixComponent
 				'filter'  => array(
 					"ACTIVE" => "Y",
 					"HAVE_PREPAY" => "Y",
-					"PERSON_TYPE_ID" => $arPersonTypes,
 				)
 			));
-			if ($arPaySysAction = $paySysAction->fetch())
+			$connection = Main\Application::getConnection();
+			$helper = $connection->getSqlHelper();
+
+			while ($arPaySysAction = $paySysAction->fetch())
 			{
-				$arResult["PREPAY_PS"] = $arPaySysAction;
+				$dbRestriction = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(array(
+					'select' => array('PARAMS'),
+					'filter' => array(
+						'SERVICE_ID' => $arPaySysAction['ID'],
+						'CLASS_NAME' => $helper->forSql('\Bitrix\Sale\Services\PaySystem\Restrictions\PersonType'),
+						'SERVICE_TYPE' => Bitrix\Sale\Services\PaySystem\Restrictions\Manager::SERVICE_TYPE_PAYMENT
+					)
+				));
+
+				if ($restriction = $dbRestriction->fetch())
+				{
+					if (array_intersect($arPersonTypes, $restriction['PARAMS']['PERSON_TYPE_ID']))
+					{
+						$prePayablePs = $arPaySysAction;
+						break;
+					}
+				}
+				else
+				{
+					$prePayablePs = $arPaySysAction;
+					break;
+				}
+			}
+
+			if ($prePayablePs)
+			{
+				$arResult["PREPAY_PS"] = $prePayablePs;
 				$arResult["HAVE_PREPAYMENT"] = true;
 
-				$this->prePaymentService = new PaySystem\Service($arPaySysAction);
+				$this->prePaymentService = new PaySystem\Service($prePayablePs);
 				if ($this->prePaymentService->isPrePayable())
 				{
 					$this->prePaymentService->initPrePayment(null, $this->request);

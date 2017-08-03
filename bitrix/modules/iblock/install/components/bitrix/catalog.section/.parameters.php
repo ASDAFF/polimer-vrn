@@ -195,13 +195,12 @@ $arComponentParameters = array(
 		'COMPARE' => array(
 			'NAME' => GetMessage('IBLOCK_COMPARE')
 		),
+		'ANALYTICS_SETTINGS' => array(
+			'NAME' => GetMessage('ANALYTICS_SETTINGS')
+		),
 		'EXTENDED_SETTINGS' => array(
 			'NAME' => GetMessage('IBLOCK_EXTENDED_SETTINGS'),
 			'SORT' => 10000
-		),
-		'ANALYTICS_SETTINGS' => array(
-			'NAME' => GetMessage('ANALYTICS_SETTINGS'),
-			'SORT' => 11000
 		)
 	),
 	'PARAMETERS' => array(

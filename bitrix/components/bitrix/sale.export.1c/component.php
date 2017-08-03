@@ -613,6 +613,20 @@ else
 			}
 			?>
 			</<?=GetMessage("CC_BSC1_DI_PS")?>>
+			<<?=GetMessage("CC_BSC1_DI_DS")?>>
+            <?
+            $deliveryList = \Bitrix\Sale\Delivery\Services\Manager::getActiveList(true);
+            foreach($deliveryList as $delivery)
+            {
+                ?>
+                <<?=GetMessage("CC_BSC1_DI_ELEMENT")?>>
+                <<?=GetMessage("CC_BSC1_DI_ID")?>><?=$delivery["ID"]?></<?=GetMessage("CC_BSC1_DI_ID")?>>
+                <<?=GetMessage("CC_BSC1_DI_NAME")?>><?=htmlspecialcharsbx($delivery["NAME"])?></<?=GetMessage("CC_BSC1_DI_NAME")?>>
+                </<?=GetMessage("CC_BSC1_DI_ELEMENT")?>>
+                <?
+            }
+            ?>
+            </<?=GetMessage("CC_BSC1_DI_DS")?>>
 		</<?=GetMessage("CC_BSC1_DI_GENERAL")?>><?
 	}
 	else

@@ -164,6 +164,9 @@ class ProductAdd extends DataProcessor
 				$dataToCache = Vk\Api\ApiHelper::changeArrayMainKey($dataToCache, 'vk_id');
 				$vkExportedData->addData($dataToCache);
 			}
+			
+			if ($richLog)
+				$logger->addLog("Finish product add chunk");
 
 //			check timer before next step, because not-agressive export can be run very long time
 			if ($timer !== NULL && !$timer->check())

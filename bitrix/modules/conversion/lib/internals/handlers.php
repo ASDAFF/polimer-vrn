@@ -312,14 +312,8 @@ final class Handlers
 								}
 							})("'.DayContext::getVarName().'");
 
-							if (cookie && cookie.EXPIRE >= BX.message("SERVER_TIME") && cookie.UNIQUE && cookie.UNIQUE.length > 0)
-							{
-								for (var i = 0; i < cookie.UNIQUE.length; i++)
-								{
-									if (cookie.UNIQUE[i] == "conversion_visit_day")
-										return;
-								}
-							}
+							if (cookie && cookie.EXPIRE >= BX.message("SERVER_TIME"))
+								return;
 
 							var request = new XMLHttpRequest();
 							request.open("POST", "/bitrix/tools/conversion/ajax_counter.php", true);

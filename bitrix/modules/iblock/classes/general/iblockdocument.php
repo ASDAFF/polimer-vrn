@@ -2996,6 +2996,10 @@ class CIBlockDocument
 		$arFilter = array("ACTIVE" => "Y");
 		if ($group != 2)
 			$arFilter["GROUPS_ID"] = $group;
+		else
+		{
+			$arFilter['EXTERNAL_AUTH_ID'] = '';
+		}
 
 		$dbUsersList = CUser::GetList(($b = "ID"), ($o = "ASC"), $arFilter);
 		while ($arUser = $dbUsersList->Fetch())

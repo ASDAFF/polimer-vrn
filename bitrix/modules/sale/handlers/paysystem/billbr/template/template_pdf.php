@@ -55,17 +55,15 @@ if ($params['BILLBR_PATH_TO_LOGO'])
 {
 	list($imageHeight, $imageWidth) = $pdf->GetImageSize($params['BILLBR_PATH_TO_LOGO']);
 
-	if ($imageWidth >= $width)
+	$imgDpi = intval($params['BILLBR_LOGO_DPI']) ?: 96;
+	$imgZoom = 96 / $imgDpi;
+
+	$logoHeight = $imageHeight * $imgZoom + 5;
+	$logoWidth  = $imageWidth * $imgZoom + 5;
+
+	if ($logoWidth >= $width)
 	{
 		$imgDpi = 96 * $imageWidth/($width*0.6 + 5);
-		$imgZoom = 96 / $imgDpi;
-
-		$logoHeight = $imageHeight * $imgZoom + 5;
-		$logoWidth  = $imageWidth * $imgZoom + 5;
-	}
-	else
-	{
-		$imgDpi = intval($params['BILL_LOGO_DPI']) ?: 96;
 		$imgZoom = 96 / $imgDpi;
 
 		$logoHeight = $imageHeight * $imgZoom + 5;
@@ -459,7 +457,8 @@ if ($params['BASKET_ITEMS'])
 	$items = $n;
 	if ($params['BILLBR_TOTAL_SHOW'] == 'Y')
 	{
-		if ($sum < $params['SUM'])
+		$eps = 0.0001;
+		if ($params['SUM'] - $sum > $eps)
 		{
 			$arCells[++$n] = array();
 			for ($i = 0; $i < $columnCount; $i++)

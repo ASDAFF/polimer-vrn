@@ -53,13 +53,3 @@ interface ICriterionOrder extends ICriterion
      */
     public function equalsBasketItemDiscount(BasketItem $basketItem, array $fields);
 }
-
-interface ICriterionShipment extends ICriterion
-{
-    /**
-     * @param array $fields
-     * @param $withoutSystem
-     * @return mixed
-     */
-    public function equalsForList(array $fields, $withoutSystem=null);
-}

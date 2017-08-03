@@ -220,7 +220,7 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 		{
 			if(!empty($shopLocation['CODE']))
 			{
-				$extLoc = LocationHelper::getZipByLocation($shopLocation['CODE'])->fetch();
+				$extLoc = LocationHelper::getZipByLocation($shopLocation['CODE'], array('limit' => 1))->fetch();
 
 				if(!empty($extLoc['XML_ID']))
 					$result["ZIP_FROM"] = $extLoc['XML_ID'];
@@ -228,7 +228,7 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 
 			if(!empty($locToInternalCode))
 			{
-				$extLoc = LocationHelper::getZipByLocation($locToInternalCode)->fetch();
+				$extLoc = LocationHelper::getZipByLocation($locToInternalCode, array('limit' => 1))->fetch();
 
 				if(!empty($extLoc['XML_ID']))
 					$result["ZIP_TO"] = $extLoc['XML_ID'];

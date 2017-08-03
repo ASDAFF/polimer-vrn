@@ -1,4 +1,6 @@
 <?
+use Bitrix\Main\Config\Option;
+
 IncludeModuleLangFile(__FILE__);
 class blogTextParser extends CTextParser
 {
@@ -501,23 +503,44 @@ class blogTextParser extends CTextParser
 	
 	public static function GetEditorToolbar($arParams)
 	{
-//		dbg: this is wrong
-//		todo: allowVideo in settings
-		$result = Array(
-			"Bold", "Italic", "Underline", "Strike", "ForeColor",
-			"FontList", "FontSizeList", "RemoveFormat", "Quote", "Code",
-			"CreateLink",
-			"Image",
-			"Table",
-			"Justify",
-			"InsertOrderedList",
-			"InsertUnorderedList",
-			"SmileList",
-			"Source",
-			"UploadImage",
-			(($arParams["allowVideo"] == "Y") ? "InputVideo" : ""),
-//			"MentionUser",
+		if(isset($arParams["blog"]))
+		{
+			$blog = $arParams["blog"];
+		}
+		else
+		{
+			$blog = array();
+			$arParams = array("EDITOR_FULL" => "Y");
+		}
+		$editorFull = isset($arParams["EDITOR_FULL"]) && $arParams["EDITOR_FULL"] == "Y";
+		
+		$defaultFeatures = array("Bold","Italic","Underline","SmileList","RemoveFormat","Quote","Code"/*,"Source"*/);
+		$extendFeatures = array(
+			"EDITOR_USE_FONT" => array("FontList", "FontSizeList","ForeColor"),
+			"EDITOR_USE_LINK" => array("CreateLink"),
+			"EDITOR_USE_IMAGE" => array("UploadImage","Image"),
+			"EDITOR_USE_FORMAT" => array("Strike","Table","Justify","InsertOrderedList","InsertUnorderedList"),
 		);
+		
+		$result = $defaultFeatures;
+		if($editorFull)
+		{
+			foreach($extendFeatures as $key => $feature)
+				$result = array_merge($result, $feature);
+		}
+		else
+		{
+			foreach($extendFeatures as $key => $feature)
+			{
+				if(isset($blog[$key]) && $blog[$key] == "Y")
+					$result = array_merge($result, $feature);
+			}
+		}
+		
+//		use allow video setting from base blog params
+		$useVideo = Option::get('blog', 'allow_video', 'N') == "Y" ? true : false;
+		if($useVideo && ((isset($blog["EDITOR_USE_VIDEO"]) && $blog["EDITOR_USE_VIDEO"] == "Y") || $editorFull))
+			$result[] = "InputVideo";
 
 		if (LANGUAGE_ID == 'ru')
 			$result[] = 'Translit';

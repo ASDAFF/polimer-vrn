@@ -221,13 +221,12 @@ $arComponentParameters = array(
 		"BIG_DATA_SETTINGS" => array(
 			"NAME" => GetMessage("CP_BC_GROUP_BIG_DATA_SETTINGS")
 		),
+		'ANALYTICS_SETTINGS' => array(
+			'NAME' => GetMessage('ANALYTICS_SETTINGS')
+		),
 		"EXTENDED_SETTINGS" => array(
 			"NAME" => GetMessage("IBLOCK_EXTENDED_SETTINGS"),
 			"SORT" => 10000
-		),
-		'ANALYTICS_SETTINGS' => array(
-			'NAME' => GetMessage('ANALYTICS_SETTINGS'),
-			'SORT' => 11000
 		)
 	),
 	"PARAMETERS" => array(

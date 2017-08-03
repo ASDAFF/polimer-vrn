@@ -62,6 +62,12 @@ class OrderDocument extends DocumentImport
                         '1C_DELIVERY_DATE' => array(
                             'TYPE' => 'datetime'
                         ),
+						'PAY_SYSTEM_ID' => array(
+							'TYPE' => 'string'
+						),
+						'DELIVERY_SYSTEM_ID' => array(
+							'TYPE' => 'string'
+						),
                     ),
                 ),
                 'ITEMS' => array(

@@ -68,6 +68,9 @@ class ShipmentDocument extends DocumentImport
                         '1C_TRACKING_NUMBER' => array(
                             'TYPE' => 'string'
                         ),
+                        'DELIVERY_SYSTEM_ID' => array(
+                            'TYPE' => 'int'
+                        ),
                     )
                 ),
                 'ITEMS' => array(

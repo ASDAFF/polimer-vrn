@@ -116,7 +116,6 @@ class Comment
 			empty($message)
 			|| $blogId <= 0
 			|| $postId <= 0
-			|| $authorId <= 0
 		)
 		{
 			return false;
@@ -317,6 +316,7 @@ class Comment
 				"TITLE" => $postTitle,
 				"URL" => $postUrl,
 				"ID" => $postId,
+				"COMMENT_ID" => $commentId,
 				"FROM_USER_ID" => $commentAuthorId,
 				"TO_USER_ID" => array($postAuthorId),
 				"TO_SOCNET_RIGHTS" => $userCode,

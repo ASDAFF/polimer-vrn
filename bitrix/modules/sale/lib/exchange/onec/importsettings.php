@@ -93,6 +93,27 @@ class ImportSettings implements Exchange\ISettings
         return self::$currentSettings;
     }
 
+	/**
+	 * @param $entityTypeId
+	 * @return string
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\NotSupportedException
+	 */
+	protected function resolveName($entityTypeId)
+	{
+		if(!is_int($entityTypeId))
+		{
+			throw new Main\ArgumentTypeException('entityTypeID', 'integer');
+		}
+
+		if(!Exchange\EntityType::IsDefined($entityTypeId))
+		{
+			throw new Main\NotSupportedException("Entity ID: '{$entityTypeId}' is not supported in current context");
+		}
+
+		return Exchange\EntityType::ResolveName($entityTypeId);
+	}
+
     /**
      * @param $entityTypeId
      * @return bool
@@ -101,19 +122,8 @@ class ImportSettings implements Exchange\ISettings
      */
     public function isImportableFor($entityTypeId)
     {
-        if(!is_int($entityTypeId))
-        {
-            throw new Main\ArgumentTypeException('entityTypeID', 'integer');
-        }
-
-        if(!Exchange\EntityType::IsDefined($entityTypeId))
-        {
-            throw new Main\NotSupportedException("Entity ID: '{$entityTypeId}' is not supported in current context");
-        }
-
-        $entityTypeName = Exchange\EntityType::ResolveName($entityTypeId);
-        //By default control is enabled
-        return isset($this->settings['importableFor'][$entityTypeName]) && $this->settings['importableFor'][$entityTypeName] === 'Y';
+		$entityTypeName = $this->resolveName($entityTypeId);
+		return isset($this->settings['importableFor'][$entityTypeName]) && $this->settings['importableFor'][$entityTypeName] === 'Y';
     }
 
     /**
@@ -124,18 +134,7 @@ class ImportSettings implements Exchange\ISettings
      */
     public function prefixFor($entityTypeId)
     {
-        if(!is_int($entityTypeId))
-        {
-            throw new Main\ArgumentTypeException('entityTypeID', 'integer');
-        }
-
-        if(!Exchange\EntityType::IsDefined($entityTypeId))
-        {
-            throw new Main\NotSupportedException("Entity ID: '{$entityTypeId}' is not supported in current context");
-        }
-
-        $entityTypeName = Exchange\EntityType::ResolveName($entityTypeId);
-        //By default control is enabled
+		$entityTypeName = $this->resolveName($entityTypeId);
         return $this->settings['accountNumberPrefix'][$entityTypeName];
     }
 
@@ -147,23 +146,21 @@ class ImportSettings implements Exchange\ISettings
      */
     public function paySystemIdFor($entityTypeId)
     {
-        if(!is_int($entityTypeId))
-        {
-            throw new Main\ArgumentTypeException('entityTypeID', 'integer');
-        }
-
-        if(!Exchange\EntityType::IsDefined($entityTypeId))
-        {
-            throw new Main\NotSupportedException("Entity ID: '{$entityTypeId}' is not supported in current context");
-        }
-
-        $entityTypeName = Exchange\EntityType::ResolveName($entityTypeId);
-        //By default control is enabled
-
-        return ($this->settings['paySystem'][$entityTypeName] == '' ? $this->settings['paySystemDefault'][$entityTypeName]: $this->settings['paySystem'][$entityTypeName]);
-
-
+		$entityTypeName = $this->resolveName($entityTypeId);
+        return $this->settings['paySystem'][$entityTypeName];
     }
+
+	/**
+	 * @param $entityTypeId
+	 * @return mixed
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\NotSupportedException
+	 */
+	public function paySystemIdDefaultFor($entityTypeId)
+	{
+		$entityTypeName = $this->resolveName($entityTypeId);
+		return $this->settings['paySystemDefault'][$entityTypeName];
+	}
 
     /**
      * @param $entityTypeId
@@ -173,22 +170,23 @@ class ImportSettings implements Exchange\ISettings
      */
     public function shipmentServiceFor($entityTypeId)
     {
-        if(!is_int($entityTypeId))
-        {
-            throw new Main\ArgumentTypeException('entityTypeID', 'integer');
-        }
-
-        if(!Exchange\EntityType::IsDefined($entityTypeId))
-        {
-            throw new Main\NotSupportedException("Entity ID: '{$entityTypeId}' is not supported in current context");
-        }
-
-        $entityTypeName = Exchange\EntityType::ResolveName($entityTypeId);
-        //By default control is enabled
-
-        return ($this->settings['shipmentService'][$entityTypeName] == '' ? $this->settings['shipmentServiceDefault'][$entityTypeName]: $this->settings['shipmentService'][$entityTypeName]);
+		$entityTypeName = $this->resolveName($entityTypeId);
+        return $this->settings['shipmentService'][$entityTypeName];
 
     }
+
+	/**
+	 * @param $entityTypeId
+	 * @return mixed
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\NotSupportedException
+	 */
+	public function shipmentServiceDefaultFor($entityTypeId)
+	{
+		$entityTypeName = $this->resolveName($entityTypeId);
+		return $this->settings['shipmentServiceDefault'][$entityTypeName];
+
+	}
 
     /**
      * @param $entityTypeId
@@ -198,19 +196,7 @@ class ImportSettings implements Exchange\ISettings
      */
     public function finalStatusIdFor($entityTypeId)
     {
-        if(!is_int($entityTypeId))
-        {
-            throw new Main\ArgumentTypeException('entityTypeID', 'integer');
-        }
-
-        if(!Exchange\EntityType::IsDefined($entityTypeId))
-        {
-            throw new Main\NotSupportedException("Entity ID: '{$entityTypeId}' is not supported in current context");
-        }
-
-        $entityTypeName = Exchange\EntityType::ResolveName($entityTypeId);
-        //By default control is enabled
-
+		$entityTypeName = $this->resolveName($entityTypeId);
         return (isset($this->settings['finalStatusId'][$entityTypeName]) ? $this->settings['finalStatusId'][$entityTypeName]: '');
 
     }
@@ -223,19 +209,7 @@ class ImportSettings implements Exchange\ISettings
      */
     public function finalStatusOnDeliveryFor($entityTypeId)
     {
-        if(!is_int($entityTypeId))
-        {
-            throw new Main\ArgumentTypeException('entityTypeID', 'integer');
-        }
-
-        if(!Exchange\EntityType::IsDefined($entityTypeId))
-        {
-            throw new Main\NotSupportedException("Entity ID: '{$entityTypeId}' is not supported in current context");
-        }
-
-        $entityTypeName = Exchange\EntityType::ResolveName($entityTypeId);
-        //By default control is enabled
-
+		$entityTypeName = $this->resolveName($entityTypeId);
         return (isset($this->settings['finalStatusOnDelivery'][$entityTypeName]) ? $this->settings['finalStatusOnDelivery'][$entityTypeName]: '');
 
     }
@@ -248,19 +222,7 @@ class ImportSettings implements Exchange\ISettings
      */
     public function changeStatusFor($entityTypeId)
     {
-        if(!is_int($entityTypeId))
-        {
-            throw new Main\ArgumentTypeException('entityTypeID', 'integer');
-        }
-
-        if(!Exchange\EntityType::IsDefined($entityTypeId))
-        {
-            throw new Main\NotSupportedException("Entity ID: '{$entityTypeId}' is not supported in current context");
-        }
-
-        $entityTypeName = Exchange\EntityType::ResolveName($entityTypeId);
-        //By default control is enabled
-
+		$entityTypeName = $this->resolveName($entityTypeId);
         return ($this->settings['changeStatusFor'][$entityTypeName] == 'Y' ? $this->settings['changeStatusFor'][$entityTypeName]: '');
     }
 
@@ -272,18 +234,7 @@ class ImportSettings implements Exchange\ISettings
 	 */
 	public function canCreateOrder($entityTypeId)
 	{
-		if(!is_int($entityTypeId))
-		{
-			throw new Main\ArgumentTypeException('entityTypeID', 'integer');
-		}
-
-		if(!Exchange\EntityType::IsDefined($entityTypeId))
-		{
-			throw new Main\NotSupportedException("Entity ID: '{$entityTypeId}' is not supported in current context");
-		}
-
-		$entityTypeName = Exchange\EntityType::ResolveName($entityTypeId);
-
+		$entityTypeName = $this->resolveName($entityTypeId);
 		return ($this->settings['canCreateOrder'][$entityTypeName] == 'Y' ? $this->settings['canCreateOrder'][$entityTypeName]: '');
 	}
 
@@ -319,18 +270,7 @@ class ImportSettings implements Exchange\ISettings
 	 */
 	public function getCollisionResolve($entityTypeId)
 	{
-		if(!is_int($entityTypeId))
-		{
-			throw new Main\ArgumentTypeException('entityTypeID', 'integer');
-		}
-
-		if(!Exchange\EntityType::IsDefined($entityTypeId))
-		{
-			throw new Main\NotSupportedException("Entity ID: '{$entityTypeId}' is not supported in current context");
-		}
-
-		$entityTypeName = Exchange\EntityType::ResolveName($entityTypeId);
-
+		$entityTypeName = $this->resolveName($entityTypeId);
 		return is_array($this->settings['collisionResolve'][$entityTypeName]) ? $this->settings['collisionResolve'][$entityTypeName]:array();
 	}
 }

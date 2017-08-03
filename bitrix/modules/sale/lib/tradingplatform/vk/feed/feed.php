@@ -85,7 +85,7 @@ class Feed
 			$journal = new Vk\Journal($exportId, $this->feedType);
 			$logger = new Vk\Logger($exportId);
 			if ($richLog = $vk->getRichLog($exportId))
-				$logger->addLog('Process data', 'Feed type ' . $this->feedType);
+				$logger->addLog('Feed start', 'Feed type ' . $this->feedType);
 			
 			$convertedData = array();
 			$nextStepItem = NULL;
@@ -93,6 +93,8 @@ class Feed
 			
 			foreach ($this->sourceDataIterator as $data)
 			{
+				if ($richLog = $vk->getRichLog($exportId))
+					$logger->addLog('Item to convert', 'ID: ' . $data["ID"] . ' NAME: ' . $data["NAME"]);
 				if ($nextStepFlag)
 				{
 					$nextStepItem = $data["ID"];
@@ -109,7 +111,11 @@ class Feed
 //			PROCESSING
 			if (count($convertedData) > 0)
 			{
+				if ($richLog = $vk->getRichLog($exportId))
+					$logger->addLog('Items to process', 'Count '.count($convertedData));
 				$this->dataProcessor->process($convertedData, self::getTimer());
+				if ($richLog = $vk->getRichLog($exportId))
+					$logger->addLog('Finish process items', 'Count '.count($convertedData));
 				$journal->addItemsCount(count($convertedData));
 //				for running next step
 				if ($nextStepItem)

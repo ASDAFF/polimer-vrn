@@ -447,6 +447,36 @@ class DiscountManager
 	}
 
 	/**
+	 * Clear property values cache.
+	 *
+	 * @return void
+	 */
+	public static function clearProductPropertiesCache()
+	{
+		self::$productProperties = array();
+	}
+
+	/**
+	 * Clear products cache.
+	 *
+	 * @return void
+	 */
+	public static function clearProductsCache()
+	{
+		self::$preloadedProductsData = array();
+	}
+
+	/**
+	 * Clear product prices cache.
+	 *
+	 * @return void
+	 */
+	public static function clearProductPricesCache()
+	{
+		self::$preloadedPriceData = array();
+	}
+
+	/**
 	 * Preloads prices for products with catalog groups.
 	 *
 	 * @param array $productIds		List of product ids.

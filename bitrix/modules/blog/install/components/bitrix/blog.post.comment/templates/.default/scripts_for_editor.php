@@ -39,6 +39,15 @@ window.FCForm = function(arParams)
 	this.windowEvents =
 		{
 			OnUCAfterRecordEdit : BX.delegate(function(entityId, id, data, act) {
+				<?if($arResult["use_captcha"]===true):?>
+				BX.ajax.getCaptcha(function(data) {
+					BX("captcha_word").value = "";
+					BX("captcha_code").value = data["captcha_sid"];
+					BX("captcha").src = '/bitrix/tools/captcha.php?captcha_code=' + data["captcha_sid"];
+					BX("captcha").style.display = "";
+				});
+				<?endif;?>
+				
 				if (!!this.entitiesId[entityId]) {
 					if (act === "EDIT" || act === "ADD" || act === "REPLY")
 					{
@@ -114,7 +123,13 @@ window.FCForm.prototype = {
 		res = (!!res ? res : this.id);
 		return (!!res ? BX('record-' + res[0] + '-switcher') : null);
 	},
-	hide : function(quick) {if (this.eventNode.style.display != 'none') { BX.onCustomEvent(this.eventNode, 'OnShowLHE', [(quick === true ? false : 'hide')]); } if (quick) { document.body.appendChild(this.form); }},
+	hide : function(quick)
+	{
+		if (this.eventNode.style.display != 'none') {
+			BX.onCustomEvent(this.eventNode, 'OnShowLHE', [(quick === true ? false : 'hide')]);
+		}
+		if (quick) { document.body.appendChild(this.form); }
+	},
 	show : function(id, text, data, act)
 	{
 		if (this.id && !!id && this.id.join('-') == id.join('-'))
@@ -143,111 +158,155 @@ window.FCForm.prototype = {
 		return true;
 	},
 	submit : function() {
-		if (this.busy === true)
-			return 'busy';
-
-		var text = (this.handler.editorIsLoaded ? this.handler.oEditor.GetContent() : '');
-
-		if (!text)
-		{
-			this.showError(BX.message('JERROR_NO_MESSAGE'));
-			return false;
-		}
-		BX.showWait(this.eventNode);
-		this.busy = true;
-
-		var post_data = {};
-		window.convertFormToArray(this.form, post_data);
-		post_data['REVIEW_TEXT'] = text;
-		post_data['NOREDIRECT'] = "Y";
-		post_data['MODE'] = "RECORD";
-		post_data['AJAX_POST'] = "Y";
-		post_data['id'] = this.id;
-		if (this.jsCommentId !== null)
-			post_data['COMMENT_EXEMPLAR_ID'] = this.jsCommentId;
-		post_data['SITE_ID'] = BX.message("SITE_ID");
-		post_data['LANGUAGE_ID'] = BX.message("LANGUAGE_ID");
-
-		if (this.editing === true)
-		{
-			post_data['REVIEW_ACTION'] = "EDIT";
-			post_data["FILTER"] = {"ID" : this.id[1]};
-		}
-		BX.onCustomEvent(this.eventNode, 'OnUCFormSubmit', [this, post_data]);
-		BX.onCustomEvent(window, 'OnUCFormSubmit', [this.id[0], this.id[1], this, post_data]);
-		BX.ajax({
-			'method': 'POST',
-			'url': this.form.action,
-			'data': post_data,
-			'dataType' : 'html',
-			'processData' : false,
-			onsuccess: BX.proxy(function(data) {
-				var true_data = data, ENTITY_XML_ID = this.id[0];
-				if (!!data)
-				{
-					var dataProcessed = BX.processHTML(data, true);
-					
-//					run scripts to reinit comments data
-					scripts = dataProcessed.SCRIPT;
-					for(var s in scripts)
+		<?if($arParams["AJAX_POST"] == "Y"): //ajax submit, data will be return from component?>
+			if (this.busy === true)
+				return 'busy';
+			
+			this.clearError();
+			var text = (this.handler.editorIsLoaded ? this.handler.oEditor.GetContent() : '');
+	
+			if (!text)
+			{
+				this.showError(BX.message('BPC_ERROR_NO_TEXT'));
+				return false;
+			}
+			BX.showWait(this.eventNode);
+			this.busy = true;
+	
+			var post_data = {};
+			window.convertFormToArray(this.form, post_data);
+			post_data['REVIEW_TEXT'] = text;
+			post_data['NOREDIRECT'] = "Y";
+			post_data['MODE'] = "RECORD";
+			post_data['AJAX_POST'] = "Y";
+			post_data['id'] = this.id;
+			if (this.jsCommentId !== null)
+				post_data['COMMENT_EXEMPLAR_ID'] = this.jsCommentId;
+			post_data['SITE_ID'] = BX.message("SITE_ID");
+			post_data['LANGUAGE_ID'] = BX.message("LANGUAGE_ID");
+	
+			if (this.editing === true)
+			{
+				post_data['REVIEW_ACTION'] = "EDIT";
+				post_data["FILTER"] = {"ID" : this.id[1]};
+			}
+			BX.onCustomEvent(this.eventNode, 'OnUCFormSubmit', [this, post_data]);
+			BX.onCustomEvent(window, 'OnUCFormSubmit', [this.id[0], this.id[1], this, post_data]);
+			BX.ajax({
+				'method': 'POST',
+				'url': this.form.action,
+				'data': post_data,
+				'dataType' : 'html',
+				'processData' : false,
+				onsuccess: BX.proxy(function(data) {
+					var true_data = data, ENTITY_XML_ID = this.id[0];
+					if (!!data)
 					{
-						if (scripts.hasOwnProperty(s) && scripts[s].isInternal)
+						var dataProcessed = BX.processHTML(data, true);
+						
+	//					run scripts to reinit comments data
+						scripts = dataProcessed.SCRIPT;
+						for(var s in scripts)
 						{
-							eval(scripts[s].JS);
+							if (scripts.hasOwnProperty(s) && scripts[s].isInternal)
+							{
+								eval(scripts[s].JS);
+							}
 						}
-					}
-					
-					BX.ajax.processScripts(scripts, true);
-//					commentEr object may be set in template
-					if(window.commentEr && window.commentEr == "Y")
-					{
-						BX('err_comment_'+this.id[1]).innerHTML = data;
-					}
-					else
-					{
-						if(BX('edit_id').value > 0)
+						
+						BX.ajax.processScripts(scripts, true);
+	//					commentEr object may be set in template
+						if(window.commentEr && window.commentEr == "Y")
 						{
-							var commentId = 'blg-comment-'+this.id[1];
-							if(BX(commentId))
-							{
-								var newComment = BX.create('div',{'html':data});	// tmp container for data
-//								paste response data from tmp container
-								BX(commentId).innerHTML = BX.findChild(newComment, {"attribute" : {"id": commentId}}, true).innerHTML;
-								BX.cleanNode(newComment, true);
-//								if(BX.browser.IsIE()) //for IE, numbered list not rendering well
-//									setTimeout(function (){BX('blg-comment-'+id).innerHTML = BX('blg-comment-'+id).innerHTML}, 10);
-							}
-							else
-							{
-								BX('blg-comment-'+this.id[1]+'old').innerHTML = data;
-								if(BX.browser.IsIE()) //for IE, numbered list not rendering well
-									setTimeout(function (){BX('blg-comment-'+id+'old').innerHTML = BX('blg-comment-'+id+'old').innerHTML}, 10);
-							}
+							BX('err_comment_'+this.id[1]).innerHTML = data;
 						}
 						else
 						{
-							BX('new_comment_cont_'+this.id[1]).innerHTML += data;
-							if(BX.browser.IsIE()) //for IE, numbered list not rendering well
-								setTimeout(function (){BX('new_comment_cont_'+this.id[1]).innerHTML = BX('new_comment_cont_'+this.id[1]).innerHTML}, 10);
+							if(BX('edit_id').value > 0)
+							{
+								var commentId = 'blg-comment-'+this.id[1];
+								if(BX(commentId))
+								{
+									var newComment = BX.create('div',{'html':data});	// tmp container for data
+	//								paste response data from tmp container
+									BX(commentId).innerHTML = BX.findChild(newComment, {"attribute" : {"id": commentId}}, true).innerHTML;
+									BX.cleanNode(newComment, true);
+	//								if(BX.browser.IsIE()) //for IE, numbered list not rendering well
+	//									setTimeout(function (){BX('blg-comment-'+id).innerHTML = BX('blg-comment-'+id).innerHTML}, 10);
+								}
+								else
+								{
+									BX('blg-comment-'+this.id[1]+'old').innerHTML = data;
+									if(BX.browser.IsIE()) //for IE, numbered list not rendering well
+										setTimeout(function (){BX('blg-comment-'+id+'old').innerHTML = BX('blg-comment-'+id+'old').innerHTML}, 10);
+								}
+							}
+							else
+							{
+								BX('new_comment_cont_'+this.id[1]).innerHTML += data;
+								if(BX.browser.IsIE()) //for IE, numbered list not rendering well
+									setTimeout(function (){BX('new_comment_cont_'+this.id[1]).innerHTML = BX('new_comment_cont_'+this.id[1]).innerHTML}, 10);
+							}
+	//						todo: what is it?
+							BX('form_c_del').style.display = "none";
 						}
-//						todo: what is it?
-						BX('form_c_del').style.display = "none";
+						window.commentEr = false;
 					}
-					window.commentEr = false;
-				}
-				BX.closeWait(this.eventNode);
-				this.hide(true);
-				this.id = null;	// after closing form we must unattach them from comment entity
-//				disable button before?
-				BX('post-button').disabled = false;
-				this.busy = false;
-			}, this),
+					BX.closeWait(this.eventNode);
+					this.hide(true);
+					this.id = null;	// after closing form we must unattach them from comment entity
+	//				disable button before?
+					BX('post-button').disabled = false;
+					this.busy = false;
+				}, this),
+				
+				onfailure: BX.delegate(function() {
+					BX.closeWait(this.eventNode);
+					this.busy = false;
+				}, this)
+			});
 			
-			onfailure: BX.delegate(function() {
-				BX.closeWait(this.eventNode);
-				this.busy = false;
- 			}, this)
-		});
+		<?else:	//ajax - not need JS, just submit to component?>
+			BX.submit(this.form);
+		<?endif;?>
+	},
+	checkConsent: function() {
+//		consent was set previously
+		if(this.consent == true)
+		{
+			this.submit();
+		}
+		else
+		{
+//			to listen consent answer if they not set already
+			var control = BX.UserConsent.load(BX('<?=$component->createPostFormId()?>'));
+			
+//			add new accept event with form submit
+			BX.addCustomEvent(
+				control,
+				BX.UserConsent.events.save,
+				BX.proxy(function () {this.consent = true; this.submit();}, this)
+			);
+			BX.addCustomEvent(
+				control,
+				BX.UserConsent.events.refused,
+				BX.proxy(function () {this.consent = false;}, this)
+			);
+			
+//			to open consent form if needed
+			BX.onCustomEvent(this, 'OnUCFormCheckConsent', []);
+		}
+	},
+	showError : function(text) {
+		var node = BX('err_comment_'+this.id[1]);
+		node.insertBefore(BX.create('div', {
+				attrs : {"class": "feed-add-error"},
+				html: '<div class="blog-errors blog-note-box blog-note-error"><div class="blog-error-text" id="blg-com-err">' + text + '</div></div>'
+			}),
+			node.firstChild);
+	},
+	clearError : function() {
+		BX('err_comment_'+this.id[1]).innerHTML = "";
 	},
 };
 
@@ -366,7 +425,11 @@ window.replyCommentNew = function(key, postId)
 
 window.submitCommentNew = function()
 {
-	window["UC"]["f<?=$component->createPostFormId()?>"].submit();
+	<?if ($arParams['USER_CONSENT'] == 'Y' && (empty($arResult["User"]) || !$arParams['USER_CONSENT_WAS_GIVEN'])):?>
+		window["UC"]["f<?=$component->createPostFormId()?>"].checkConsent();
+	<?else:?>
+		window["UC"]["f<?=$component->createPostFormId()?>"].submit();
+	<?endif;?>
 };
 
 window.cancelComment = function()
@@ -492,6 +555,12 @@ window.onLightEditorShow = function(content, data){
 window.__blogOnUCFormSubmit =  function(obj, post_data) {
 	post_data["decode"] = "Y";	// to convert charset in component
 };
+
+window.blogCommentCtrlEnterHandler = function(e)
+{
+	submitCommentNew();
+};
+
 
 </script>
 

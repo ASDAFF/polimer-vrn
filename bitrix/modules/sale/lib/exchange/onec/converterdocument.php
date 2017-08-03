@@ -29,59 +29,68 @@ class ConverterDocumentOrder extends Converter
 
         $result = array();
 
-        $params = $documentImport->getFields();
+        $params = $documentImport->getFieldValues();
 
-        foreach($params as $k=>$v)
+		$availableFields = Order::getAvailableFields();
+
+		foreach ($availableFields as $k)
         {
             switch($k)
             {
                 case 'ID_1C':
-                case 'VERSION_1C':
-                    if(!empty($v))
-                        $fields[$k] = $v;
-                    break;
-                case 'COMMENT':
-                    if(!empty($v))
-                        $fields['COMMENTS'] = $v;
-                    break;
-                case 'CANCELED':
-                    if($v == 'Y')
-                        $fields['CANCELED'] = 'Y';
-                    break;
-				case '1C_TIME':
-					if($v instanceof DateTime)
-						$fields['DATE_INSERT'] = $v;
+				case 'VERSION_1C':
+					if(isset($params[$k]))
+						$fields[$k] = $params[$k];
 					break;
-                case 'REK_VALUES':
-                    foreach($params[$k] as $name=>$value)
-                    {
-                        switch($name)
-                        {
-                            case 'CANCEL':
-                                if($params['CANCELED'] <> 'Y')
-                                {
-                                    if($value == 'Y')
-                                        $fields['CANCELED'] = 'Y';
-                                    else
-                                        $fields['CANCELED'] = 'N';
-                                }
-                                break;
-                            case '1C_STATUS_ID':
-                                if(!empty($value))
-                                {
-                                    /** @var ImportSettings $settings */
-                                    $settings = $this->getSettings();
-                                    if($settings->changeStatusFor(EntityType::ORDER) == 'Y')
-                                        $fields['STATUS_ID'] = $value;
-                                }
-                                break;
-                            case '1C_PAYED_DATE':
-                            case '1C_DELIVERY_DATE':
-                                $fields[$name] = $value;
-                                break;
-                        }
-                    }
+				case 'COMMENTS':
+					if(isset($params['COMMENT']))
+						$fields[$k] = $params['COMMENT'];
+					break;
+                case 'CANCELED':
+					$value='';
+					if(isset($params['CANCELED']))
+						$value = $params['CANCELED'];
+
+					if($value == 'Y')
+					{
+						$fields[$k] = 'Y';
+					}
+					else
+					{
+						$v='';
+						if(isset($params['REK_VALUES']['CANCEL']))
+						{
+							$v = $params['REK_VALUES']['CANCEL'];
+						}
+
+						if($v == 'Y')
+						{
+							$fields[$k] = 'Y';
+						}
+						else
+						{
+							$fields[$k] = 'N';
+						}
+					}
                     break;
+				case 'DATE_INSERT':
+					if(isset($params['1C_TIME']) && $params['1C_TIME'] instanceof DateTime)
+						$fields[$k] = $params['1C_TIME'];
+					break;
+				case 'STATUS_ID':
+					if(isset($params[$k]))
+					{
+						$settings = $this->getSettings();
+						if($settings->changeStatusFor(EntityType::ORDER) == 'Y')
+							$fields[$k] = $params['REK_VALUES']['1C_STATUS_ID'];
+					}
+
+					break;
+				case '1C_PAYED_DATE':
+				case '1C_DELIVERY_DATE':
+					if(isset($params['REK_VALUES'][$k]))
+						$fields[$k] = $params['REK_VALUES'][$k];
+				break;
             }
         }
 
@@ -143,136 +152,107 @@ class ConverterDocumentShipment extends Converter
 
         $result = array();
 
-        $params = $documentImport->getFields();
+        $params = $documentImport->getFieldValues();
 
-        foreach($params as $k=>$v)
-        {
-            switch($k)
-            {
-                case 'ID_1C':
-                case 'VERSION_1C':
-                    if(!empty($v))
-                        $fields[$k] = $v;
-                    break;
-                case 'COMMENT':
-                    if(!empty($v))
-                        $fields['COMMENTS'] = $v;
-                    break;
-                case '1C_DATE':
-                    if(!empty($v))
-                        $fields['DELIVERY_DOC_DATE'] = $v;
-                    break;
-                case 'ITEMS':
-                    foreach($v as $items)
-                    {
-                        foreach($items as $item)
-                        {
-                            if($item['TYPE'] == ImportBase::ITEM_SERVICE)
-                            {
-                                //if((!empty($shipment)? $shipment->getPrice():'') != $item["PRICE"])
-                                //{
-                                //$fields["CUSTOM_PRICE_DELIVERY"] = "Y";
-                                $fields["BASE_PRICE_DELIVERY"] = $item["PRICE"];
-                                //$fields["CURRENCY"] = $settings->getCurrency();
-                                //}
-                                break 2;
-                            }
-                        }
-                    }
-                    break;
-                case 'REK_VALUES':
-                    foreach($params[$k] as $trait=>$value)
-                    {
-                        switch($trait)
-                        {
-                            case '1C_DELIVERY_NUM':
-                                if(!empty($v))
-                                    $fields['DELIVERY_DOC_NUM'] = $value;
-                                break;
-                            case 'CANCEL':
-                                if($value == 'Y')
-                                    $fields['DEDUCTED'] = 'N';
-                                break;
-                            case 'DEDUCTED':
-                                if($value == 'Y')
-                                {
-                                    $fields['DEDUCTED'] = 'Y';
-                                    $fields['ALLOW_DELIVERY'] = 'Y';
-                                }
-                                break;
-                            case '1C_TRACKING_NUMBER':
-                                if(!empty($v))
-                                    $fields['TRACKING_NUMBER'] = $value;
-                                break;
-                        }
-                    }
-                    break;
-                case 'AGENT':
-                    $profileFields = $params['AGENT'];
+		$availableFields = Shipment::getAvailableFields();
 
-                    $property = array();
-                    foreach($profileFields as $name => $value)
-                    {
-                        switch($name)
-                        {
-                            case 'ID':
-                            case 'VERSION':
-                            case 'ITEM_NAME':
-                            case 'OFICIAL_NAME':
-                            case 'FULL_NAME':
-                            case 'INN':
-                            case 'KPP':
-                            case 'OKPO_CODE':
-                            case 'EGRPO':
-                            case 'OKVED':
-                            case 'OKDP':
-                            case 'OKOPF':
-                            case 'OKFC':
-                            case 'OKPO':
-                                $property[$k] = $value;
-                                break;
-                            case 'CONTACT':
-                                $property["EMAIL"] = $value["MAIL_NEW"];
-                                $property["PHONE"] = $value["WORK_PHONE_NEW"];
-                                break;
-                            case 'REPRESENTATIVE':
-                                $property["CONTACT_PERSON"] = $value["CONTACT_PERSON"];
-                                break;
-                            case 'REGISTRATION_ADDRESS':
-                            case 'UR_ADDRESS':
-                            	if(isset($value['ADDRESS_FIELD']))
-								{
-									foreach($value['ADDRESS_FIELD'] as $k => $v)
-									{
-										if(strlen($v['VALUE']) > 0 && !isset($property[$k]))
-										    $property[$k] = $v['VALUE'];
-									}
-								}
+		foreach ($availableFields as $k)
+		{
+			switch($k)
+			{
+				case 'ID_1C':
+				case 'VERSION_1C':
+					if(isset($params[$k]))
+						$fields[$k] = $params[$k];
+					break;
+				case 'COMMENTS':
+					if(isset($params['COMMENT']))
+						$fields[$k] = $params['COMMENT'];
+					break;
+				case 'DELIVERY_DOC_DATE':
+					if(isset($params['1C_DATE']))
+						$fields[$k] = $params['1C_DATE'];
+					break;
+				case 'DELIVERY_DOC_NUM':
+					if(isset($params['REK_VALUES']['1C_DELIVERY_NUM']))
+						$fields[$k] = $params['REK_VALUES']['1C_DELIVERY_NUM'];
+					break;
+				case 'DEDUCTED':
+					$deducted='';
+					$cancel='';
 
-                                $property["ADDRESS_FULL"] = $value["PRESENTATION"];
-                                $property["INDEX"] = $value["POST_CODE"];
-                                break;
-                            case 'ADDRESS':
-								if(isset($value['ADDRESS_FIELD']))
-								{
-									foreach($value as $k => $v)
-									{
-										if(!isset($v['VALUE']))
-											continue;
+					if(isset($params['REK_VALUES']['DEDUCTED']))
+						$deducted = $params['REK_VALUES']['DEDUCTED'];
+					if(isset($params['REK_VALUES']['CANCEL']))
+						$cancel = $params['REK_VALUES']['CANCEL'];
 
-										if(strlen($v['VALUE']) > 0 && empty($property["F_".$k]))
-											$property["F_".$k] = $v['VALUE'];
-									}
-								}
+					if($deducted == 'Y')
+						$fields[$k] = 'Y';
+					elseif($cancel == 'Y')
+						$fields[$k] = 'N';
+					break;
+				case 'ALLOW_DELIVERY':
+					$value='';
+					if(isset($params['REK_VALUES']['DEDUCTED']))
+						$value = $params['REK_VALUES']['DEDUCTED'];
 
-                                $property["F_ADDRESS_FULL"] = $value["PRESENTATION"];
-                                $property["F_INDEX"] = $value["POST_CODE"];
-                                break;
-                        }
-                    }
-                    break;
-            }
-        }
+					if($value == 'Y')
+						$fields[$k] = 'Y';
+					break;
+				case 'TRACKING_NUMBER':
+					if(isset($params['REK_VALUES']['1C_TRACKING_NUMBER']))
+						$fields[$k] = $params['REK_VALUES']['1C_TRACKING_NUMBER'];
+					break;
+				case 'BASE_PRICE_DELIVERY':
+					foreach($params['ITEMS'] as $items)
+					{
+						foreach($items as $item)
+						{
+							if($item['TYPE'] == ImportBase::ITEM_SERVICE)
+							{
+								//if((!empty($shipment)? $shipment->getPrice():'') != $item["PRICE"])
+								//{
+								//$fields["CUSTOM_PRICE_DELIVERY"] = "Y";
+								$fields["BASE_PRICE_DELIVERY"] = $item["PRICE"];
+								//$fields["CURRENCY"] = $settings->getCurrency();
+								//}
+								break 2;
+							}
+						}
+					}
+					break;
+				case 'DELIVERY_ID':
+					$deliverySystemId = 0;
+					if(isset($params['REK_VALUES']['DELIVERY_SYSTEM_ID']))
+					{
+						$deliverySystemId = $params['REK_VALUES']['DELIVERY_SYSTEM_ID'];
+					}
+
+					if($deliverySystemId<=0)
+					{
+						if(isset($params['REK_VALUES']['DELIVERY_SYSTEM_ID_DEFAULT']))
+						{
+							$deliverySystemId = $params['REK_VALUES']['DELIVERY_SYSTEM_ID_DEFAULT'];
+						}
+					}
+
+					/** @var ImportSettings $settings */
+					$settings = $this->getSettings();
+
+					if($deliverySystemId<=0)
+					{
+						$deliverySystemId = $settings->shipmentServiceFor($documentImport->getOwnerEntityTypeId());
+					}
+
+					if($deliverySystemId<=0)
+					{
+						$deliverySystemId = $settings->shipmentServiceDefaultFor($documentImport->getOwnerEntityTypeId());
+					}
+
+					$fields[$k] = $deliverySystemId;
+					break;
+			}
+		}
 
 		$result['TRAITS'] = isset($fields)? $fields:array();
 		$result['ITEMS'] = isset($params['ITEMS'])? $params['ITEMS']:array();
@@ -305,6 +285,12 @@ class ConverterDocumentShipment extends Converter
                         unset($fields['BASE_PRICE_DELIVERY']);
                     }
                     break;
+				case 'DELIVERY_ID':
+					if(!empty($shipment))
+					{
+						unset($fields['DELIVERY_ID']);
+					}
+					break;
             }
         }
         unset($fields['ID']);
@@ -318,7 +304,7 @@ class ConverterDocumentShipment extends Converter
  */
 class ConverterDocumentPayment extends Converter
 {
-    /**
+	/**
      * @param $documentImport
      * @return array
      * @throws ArgumentException
@@ -330,25 +316,94 @@ class ConverterDocumentPayment extends Converter
 
         $result = array();
 
-        $params = $documentImport->getFields();
+        $params = $documentImport->getFieldValues();
 
-        foreach($params as $k=>$v)
-        {
-            switch($k)
-            {
-                case 'ID_1C':
-                case 'VERSION_1C':
-                    if(!empty($v))
-                        $fields[$k] = $v;
-                    break;
-                case 'AMOUNT':
-                    if(!empty($v))
-                        $fields['SUM'] = $v;
-                    break;
-                case 'COMMENT':
-                    if(!empty($v))
-                        $fields['COMMENTS'] = $v;
-                    break;
+        $availableFields = array_merge(Payment::getAvailableFields(), array('CASH_BOX_CHECKS'));
+
+        /** TODO: huck */
+        rsort($availableFields);
+
+        foreach ($availableFields as $k)
+		{
+			switch($k)
+			{
+				case 'ID_1C':
+				case 'VERSION_1C':
+					if(isset($params[$k]))
+						$fields[$k] = $params[$k];
+					break;
+				case 'SUM':
+					if(isset($params['AMOUNT']))
+						$fields[$k] = $params['AMOUNT'];
+					break;
+				case 'COMMENTS':
+					if(isset($params['COMMENT']))
+						$fields[$k] = $params['COMMENT'];
+					break;
+				case 'PAY_VOUCHER_DATE':
+					if(isset($params['REK_VALUES']['1C_PAYED_DATE']))
+						$fields[$k] = $params['REK_VALUES']['1C_PAYED_DATE'];
+					break;
+				case 'PAY_VOUCHER_NUM':
+					if(isset($params['REK_VALUES']['1C_PAYED_NUM']))
+						$fields[$k] = $params['REK_VALUES']['1C_PAYED_NUM'];
+					break;
+				case 'PAID':
+					$payed='';
+					$cancel='';
+
+					if(isset($params['REK_VALUES']['1C_PAYED']))
+						$payed = $params['REK_VALUES']['1C_PAYED'];
+					if(isset($params['REK_VALUES']['CANCEL']))
+						$cancel = $params['REK_VALUES']['CANCEL'];
+
+					if($payed == 'Y')
+						$fields[$k] = 'Y';
+					elseif($cancel == 'Y')
+						$fields[$k] = 'N';
+					break;
+				case 'IS_RETURN':
+					if(isset($params['REK_VALUES']['1C_RETURN']))
+					{
+						$value = $params['REK_VALUES']['1C_RETURN'];
+						if($value == 'Y')
+							$fields[$k] = 'Y';
+					}
+					break;
+				case 'PAY_RETURN_COMMENT':
+					if(isset($params['REK_VALUES']['1C_RETURN_REASON']))
+						$fields[$k] = $params['REK_VALUES']['1C_RETURN_REASON'];
+					break;
+				case 'PAY_SYSTEM_ID':
+					$paySystemId = 0;
+					if(isset($params['REK_VALUES']['PAY_SYSTEM_ID']))
+					{
+						$paySystemId = $params['REK_VALUES']['PAY_SYSTEM_ID'];
+					}
+
+					if($paySystemId<=0)
+					{
+						if(isset($params['REK_VALUES']['PAY_SYSTEM_ID_DEFAULT']))
+						{
+							$paySystemId = $params['REK_VALUES']['PAY_SYSTEM_ID_DEFAULT'];
+						}
+					}
+					/** @var ImportSettings $settings */
+					$settings = $this->getSettings();
+
+					if($paySystemId<=0)
+					{
+						$paySystemId = $settings->paySystemIdFor($documentImport->getOwnerEntityTypeId());
+					}
+
+					if($paySystemId<=0)
+					{
+						 $paySystemId = $settings->paySystemIdDefaultFor($documentImport->getOwnerEntityTypeId());
+					}
+
+					$fields[$k] = $paySystemId;
+					break;
+
 				case 'CASH_BOX_CHECKS':
 					if(is_array($params[$k]))
 					{
@@ -371,40 +426,8 @@ class ConverterDocumentPayment extends Converter
 						}
 					}
 					break;
-				case 'REK_VALUES':
-                    foreach($params[$k] as $trait=>$value)
-                    {
-                        switch($trait)
-                        {
-                            case '1C_PAYED_DATE':
-                                if(!empty($value))
-                                    $fields["PAY_VOUCHER_DATE"] = $value;
-                                break;
-                            case '1C_PAYED_NUM':
-                                if(!empty($value))
-                                    $fields["PAY_VOUCHER_NUM"] = $value;
-                                break;
-                            case 'CANCEL':
-                                if($value == 'Y')
-                                    $fields['PAID'] = 'N';
-                                break;
-                            case '1C_RETURN':
-                                if($value == 'Y')
-                                    $fields["IS_RETURN"] = 'Y';
-                                break;
-                            case '1C_RETURN_REASON':
-                                if(!empty($value))
-                                    $fields["PAY_RETURN_COMMENT"] = $value;
-                                break;
-                            case '1C_PAYED':
-                                if($value == 'Y')
-                                    $fields['PAID'] = 'Y';
-                                break;
-                        }
-                    }
-                    break;
-            }
-        }
+			}
+		}
 
 		$result['TRAITS'] = isset($fields)? $fields:array();
 		$result['CASH_BOX_CHECKS'] = isset($cashBoxChecks)? $cashBoxChecks:array();
@@ -431,6 +454,12 @@ class ConverterDocumentPayment extends Converter
                         unset($fields['SUM']);
                     }
                     break;
+				case 'PAY_SYSTEM_ID':
+					if(!empty($payment))
+					{
+						unset($fields['PAY_SYSTEM_ID']);
+					}
+					break;
             }
         }
 
@@ -461,7 +490,7 @@ class ConverterDocumentProfile extends Converter
 
         $result = array();
 
-        $params = $documentImport->getFields();
+        $params = $documentImport->getFieldValues();
         foreach($params as $k=>$v)
         {
             switch($k)

@@ -493,7 +493,8 @@ if ($params['PRICE'] > 0)
 if ($params['BILLKZ_TOTAL_SHOW'] == 'Y')
 {
 	$cntBasketItem = $n;
-	if ($sum < $params['SUM'])
+	$eps = 0.0001;
+	if ($params['SUM'] - $sum > $eps)
 	{
 		$cells[++$n] = array();
 		for ($i = 0; $i < $columnCount; $i++)

@@ -153,10 +153,6 @@ else
 	}
 	unset($index);
 
-	foreach (array_keys($arResult['FILTER_LABELS']) as $index)
-		$arResult['FILTER_LABELS'][$index] = htmlspecialcharsbx($arResult['FILTER_LABELS'][$index]);
-	unset($index);
-
 	$lAdmin->AddHeaders($arResult['HEADERS']);
 
 	$arSelectedFields = $lAdmin->GetVisibleHeaderColumns();

@@ -9,6 +9,7 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Sale;
 use Bitrix\Sale\Delivery\Services;
 use Bitrix\Sale\PaySystem;
+use Bitrix\Main\Config\Option;
 
 Loc::loadMessages(__FILE__);
 
@@ -77,6 +78,20 @@ class BillHandler extends PaySystem\BaseServiceHandler
 
 		$taxes = $order->getTax();
 		$extraParams['TAXES'] = $taxes->getTaxList();
+
+		if (Option::get("sale", "COUNT_DELIVERY_TAX", "N") === 'Y')
+		{
+			$taxes->setDeliveryCalculate(true);
+			$resultRefreshValue = $taxes->refreshData();
+			if ($resultRefreshValue->isSuccess())
+			{
+				$taxesData = $resultRefreshValue->getData();
+				if ((float)$order->getField('TAX_VALUE') === (float)$taxesData['TAX_PRICE'])
+				{
+					$extraParams['TAXES'] = $taxes->getTaxList();
+				}
+			}
+		}
 
 		/** @var \Bitrix\Sale\ShipmentCollection $shipmentCollection */
 		$shipmentCollection = $order->getShipmentCollection();

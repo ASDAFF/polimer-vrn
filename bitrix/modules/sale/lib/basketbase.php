@@ -46,6 +46,15 @@ abstract class BasketBase
 	}
 
 	/**
+	 * @throws Main\NotImplementedException
+	 * @return Basket
+	 */
+	protected static function createBasketObject()
+	{
+		throw new Main\NotImplementedException();
+	}
+
+	/**
 	 * @internal
 	 *
 	 * Load the contents of the basket to order
@@ -55,7 +64,7 @@ abstract class BasketBase
 	 */
 	public static function loadItemsForOrder(OrderBase $order)
 	{
-		$basket = new static();
+		$basket = static::createBasketObject();
 		$basket->setOrder($order);
 		return $basket->loadFromDb(array(
 			"ORDER_ID" => $order->getId()

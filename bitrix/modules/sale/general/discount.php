@@ -409,15 +409,15 @@ class CAllSaleDiscount
 				}
 			}
 			unset($discount, $discountIterator);
-			if ($executeRound)
-				Sale\Compatible\DiscountCompatibility::roundPrices($arOrder['BASKET_ITEMS']);
-			unset($executeRound);
 
 			$arOrder['DISCOUNT_LIST'] = $resultDiscountList;
 			$arOrder['FULL_DISCOUNT_LIST'] = $resultDiscountFullList;
 			if ($isOrderConverted == 'Y')
 				Sale\Compatible\DiscountCompatibility::setOldDiscountResult($resultDiscountList);
 		}
+		if ($executeRound)
+			Sale\Compatible\DiscountCompatibility::roundPrices($arOrder['BASKET_ITEMS']);
+		unset($executeRound);
 
 		$arOrder["ORDER_PRICE"] = 0;
 		$arOrder["ORDER_WEIGHT"] = 0;
@@ -487,12 +487,23 @@ class CAllSaleDiscount
 					{
 						if ($row['RESULT']['APPLY'] != 'Y')
 							continue;
+
 						$descr = $row['RESULT']['DESCR_DATA'][0];
+						$validDiscount = (
+							isset($descr['TYPE']) && $descr['TYPE'] == Sale\OrderDiscountManager::DESCR_TYPE_VALUE
+							&& (
+								$descr['VALUE_ACTION'] == Sale\OrderDiscountManager::DESCR_VALUE_ACTION_DISCOUNT
+								|| $descr['VALUE_ACTION'] == Sale\OrderDiscountManager::DESCR_VALUE_ACTION_ACCUMULATE
+							)
+							&& $descr['VALUE_TYPE'] == Sale\OrderDiscountManager::DESCR_VALUE_TYPE_PERCENT
+						);
+
+						if (!$validDiscount)
+							$simplePercent = false;
+
 						if (
 							$simplePercent
-							&& isset($descr['TYPE']) && $descr['TYPE'] == Sale\OrderDiscountManager::DESCR_TYPE_VALUE
-							&& $descr['VALUE_ACTION'] == Sale\OrderDiscountManager::DESCR_VALUE_ACTION_DISCOUNT
-							&& $descr['VALUE_TYPE'] == Sale\OrderDiscountManager::DESCR_VALUE_TYPE_PERCENT
+							&& $validDiscount
 						)
 						{
 							if ($simplePercentValue === null)
@@ -500,7 +511,7 @@ class CAllSaleDiscount
 							else
 								$simplePercent = false;
 						}
-						unset($descr);
+						unset($validDiscount, $descr);
 					}
 					unset($row);
 				}
@@ -834,132 +845,138 @@ class CAllSaleDiscount
 			'ENTITY' => array(),
 			'EXECUTE_MODULE' => array()
 		);
-		if ($updateData && $discountSite == '')
-		{
-			$rsDiscounts = CSaleDiscount::GetList(
-				array(),
-				array('ID' => $discountID),
-				false,
-				false,
-				array('ID', 'LID')
-			);
-			if ($discountInfo = $rsDiscounts->Fetch())
-			{
-				$discountSite = $discountInfo['LID'];
-			}
-			else
-			{
-				return false;
-			}
-		}
-
-		if ($useConditions)
-		{
-			if (!isset($arFields['CONDITIONS']) || empty($arFields['CONDITIONS']))
-			{
-				$APPLICATION->ThrowException(Loc::getMessage("BT_MOD_SALE_DISC_ERR_EMPTY_CONDITIONS"), "CONDITIONS");
-				return false;
-			}
-			else
-			{
-				$arFields['UNPACK'] = '';
-				if (!self::prepareDiscountConditions($arFields['CONDITIONS'], $arFields['UNPACK'], $conditionData, self::PREPARE_CONDITIONS, $discountSite))
-				{
-					return false;
-				}
-			}
-		}
-
-		if ($usePredictions && $arFields['PREDICTIONS'])
-		{
-			$arFields['PREDICTIONS_APP'] = '';
-			if (!self::prepareDiscountConditions($arFields['PREDICTIONS'], $arFields['PREDICTIONS_APP'], $predictionData, self::PREPARE_CONDITIONS, $discountSite))
-			{
-				return false;
-			}
-		}
-
-		if ($useActions)
-		{
-			if (!isset($arFields['ACTIONS']) || empty($arFields['ACTIONS']))
-			{
-				$APPLICATION->ThrowException(Loc::getMessage("BT_MOD_SALE_DISC_ERR_EMPTY_ACTIONS_EXT"), "ACTIONS");
-				return false;
-			}
-			else
-			{
-				$arFields['APPLICATION'] = '';
-				if (!self::prepareDiscountConditions($arFields['ACTIONS'], $arFields['APPLICATION'], $actionData, self::PREPARE_ACTIONS, $discountSite))
-				{
-					return false;
-				}
-			}
-		}
 
 		if ($updateData)
 		{
+			$selectFields = array();
+			if ($discountSite == '')
+				$selectFields['LID'] = true;
 			if (!$useConditions)
 			{
-				$rsDiscounts = CSaleDiscount::GetList(
-					array(),
-					array('ID' => $discountID),
-					false,
-					false,
-					array('ID', 'CONDITIONS', 'LID')
-				);
-				if ($discountInfo = $rsDiscounts->Fetch())
-				{
-					$discountInfo['UNPACK'] = '';
-					if (!self::prepareDiscountConditions($discountInfo['CONDITIONS'], $discountInfo['UNPACK'], $conditionData, self::PREPARE_CONDITIONS, $discountInfo['LID']))
-					{
-						return false;
-					}
-				}
-				else
-				{
-					return false;
-				}
-			}
-			if (!$usePredictions)
-			{
-				$rsDiscounts = CSaleDiscount::GetList(
-					array(),
-					array('ID' => $discountID),
-					false,
-					false,
-					array('ID', 'PREDICTIONS', 'LID')
-				);
-				if ($discountInfo = $rsDiscounts->Fetch() && $discountInfo['PREDICTIONS'])
-				{
-					$discountInfo['PREDICTIONS_APP'] = '';
-					if (!self::prepareDiscountConditions($discountInfo['PREDICTIONS'], $discountInfo['PREDICTIONS_APP'], $predictionData, self::PREPARE_CONDITIONS, $discountInfo['LID']))
-					{
-						return false;
-					}
-				}
+				$selectFields['LID'] = true;
+				$selectFields['CONDITIONS_LIST'] = true;
 			}
 			if (!$useActions)
 			{
-				$rsDiscounts = CSaleDiscount::GetList(
-					array(),
-					array('ID' => $discountID),
-					false,
-					false,
-					array('ID', 'ACTIONS', 'LID')
-				);
-				if ($discountInfo = $rsDiscounts->Fetch())
+				$selectFields['LID'] = true;
+				$selectFields['ACTIONS_LIST'] = true;
+			}
+			if (!$usePredictions)
+			{
+				$selectFields['LID'] = true;
+				$selectFields['PREDICTIONS_LIST'] = true;
+			}
+			if (!empty($selectFields))
+			{
+				$selectFields['ID'] = true;
+				$discountInfo = Sale\Internals\DiscountTable::getList(array(
+					'select' => array_keys($selectFields),
+					'filter' => array('=ID' => $discountID)
+				))->fetch();
+				if (empty($discountInfo))
+					return false;
+
+				if ($discountSite == '')
+					$discountSite = $discountInfo['LID'];
+			}
+			unset($selectFields);
+			if ($useConditions)
+			{
+				if (!isset($arFields['CONDITIONS']) || empty($arFields['CONDITIONS']))
 				{
-					$discountInfo['APPLICATION'] = '';
-					if (!self::prepareDiscountConditions($discountInfo['ACTIONS'], $discountInfo['APPLICATION'], $actionData, self::PREPARE_ACTIONS, $discountInfo['LID']))
-					{
-						return false;
-					}
+					$APPLICATION->ThrowException(Loc::getMessage('BT_MOD_SALE_DISC_ERR_EMPTY_CONDITIONS'), 'CONDITIONS');
+					return false;
 				}
 				else
 				{
-					return false;
+					$arFields['UNPACK'] = '';
+					if (!self::prepareDiscountConditions(
+						$arFields['CONDITIONS'],
+						$arFields['UNPACK'],
+						$conditionData,
+						self::PREPARE_CONDITIONS,
+						$discountSite)
+					)
+						return false;
 				}
 			}
+			else
+			{
+				$discountInfo['UNPACK'] = '';
+				if (!self::prepareDiscountConditions(
+					$discountInfo['CONDITIONS_LIST'],
+					$discountInfo['UNPACK'],
+					$conditionData,
+					self::PREPARE_CONDITIONS,
+					$discountSite)
+				)
+					return false;
+			}
+
+			if ($useActions)
+			{
+				if (!isset($arFields['ACTIONS']) || empty($arFields['ACTIONS']))
+				{
+					$APPLICATION->ThrowException(Loc::getMessage('BT_MOD_SALE_DISC_ERR_EMPTY_ACTIONS_EXT'), 'ACTIONS');
+					return false;
+				}
+				else
+				{
+					$arFields['APPLICATION'] = '';
+					if (!self::prepareDiscountConditions(
+						$arFields['ACTIONS'],
+						$arFields['APPLICATION'],
+						$actionData,
+						self::PREPARE_ACTIONS,
+						$discountSite)
+					)
+						return false;
+				}
+			}
+			else
+			{
+				$discountInfo['APPLICATION'] = '';
+				if (!self::prepareDiscountConditions(
+					$discountInfo['ACTIONS_LIST'],
+					$discountInfo['APPLICATION'],
+					$actionData,
+					self::PREPARE_ACTIONS,
+					$discountSite)
+				)
+					return false;
+			}
+
+			if ($usePredictions)
+			{
+				$arFields['PREDICTIONS_APP'] = '';
+				if ($arFields['PREDICTIONS'])
+				{
+					if (!self::prepareDiscountConditions(
+						$arFields['PREDICTIONS'],
+						$arFields['PREDICTIONS_APP'],
+						$predictionData,
+						self::PREPARE_CONDITIONS,
+						$discountSite)
+					)
+						return false;
+				}
+			}
+			else
+			{
+				if ($discountInfo['PREDICTIONS_LIST'])
+				{
+					$discountInfo['PREDICTIONS_APP'] = '';
+					if (!self::prepareDiscountConditions(
+						$discountInfo['PREDICTIONS_LIST'],
+						$discountInfo['PREDICTIONS_APP'],
+						$predictionData,
+						self::PREPARE_CONDITIONS,
+						$discountSite)
+					)
+						return false;
+				}
+			}
+
 			if (!empty($conditionData['HANDLERS']) || !empty($actionData['HANDLERS']) || !empty($predictionData['HANDLERS']))
 			{
 				$conditionData['HANDLERS']['MODULES'] = $conditionData['HANDLERS']['MODULES']?: array();
@@ -1022,10 +1039,11 @@ class CAllSaleDiscount
 		if ($executeModule != '')
 			$arFields['EXECUTE_MODULE'] = $executeModule;
 
-		if (!empty($usedHandlers))
+		if ($updateData)
+		{
 			$arFields['HANDLERS'] = $usedHandlers;
-		if (!empty($usedEntities))
 			$arFields['ENTITIES'] = $usedEntities;
+		}
 
 		if ((is_set($arFields, 'USE_COUPONS') || $ACTION == 'ADD') && ('Y' != $arFields['USE_COUPONS']))
 			$arFields['USE_COUPONS'] = 'N';

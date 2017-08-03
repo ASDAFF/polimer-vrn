@@ -18,6 +18,7 @@ class EntityMarker
 	const ENTITY_TYPE_BASKET_ITEM = 'BASKET_ITEM';
 	const ENTITY_TYPE_SHIPMENT = 'SHIPMENT';
 	const ENTITY_TYPE_PAYMENT = 'PAYMENT';
+	const ENTITY_TYPE_PROPERTY_VALUE = 'PROPERTY_VALUE';
 
 	const ENTITY_SUCCESS_CODE_FAIL = 'N';
 	const ENTITY_SUCCESS_CODE_DONE = 'Y';
@@ -253,6 +254,7 @@ class EntityMarker
 			static::ENTITY_TYPE_BASKET_ITEM => '\Bitrix\Sale\BasketItem',
 			static::ENTITY_TYPE_SHIPMENT => '\Bitrix\Sale\Shipment',
 			static::ENTITY_TYPE_PAYMENT => '\Bitrix\Sale\Payment',
+			static::ENTITY_TYPE_PROPERTY_VALUE => '\Bitrix\Sale\PropertyValue',
 		);
 	}
 

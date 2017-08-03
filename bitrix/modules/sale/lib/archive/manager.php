@@ -104,6 +104,15 @@ class Manager
 							$preparedBasketItems = array_intersect_key($item, array_flip(static::$archiveFieldNamesBasket));
 							$preparedBasketItems['ARCHIVE_ID'] = $archivedOrderId;
 							$preparedBasketItems['BASKET_DATA'] = serialize($item);
+
+							if (empty($preparedBasketItems['DATE_INSERT']))
+							{
+								$zeroDate = new \DateTime();
+								$zeroDate->setDate(0,0,0);
+								$zeroDate->setTime(0,0,0);
+								$preparedBasketItems['DATE_INSERT'] = Type\DateTime::createFromPhp($zeroDate);
+							}
+
 							$additionBasketResult = Internals\BasketArchiveTable::add($preparedBasketItems);
 							if ($additionBasketResult->isSuccess())
 							{
@@ -123,7 +132,7 @@ class Manager
 						{
 							if ($shipmentData["RESERVED"] == "Y" &&	$shipmentData["DEDUCTED"] == "N")
 							{
-								$order = Order::load($id);
+								$order = Sale\Order::load($id);
 								if ($shipmentCollection = $order->getShipmentCollection())
 								{
 									foreach ($shipmentCollection as $shipment)
@@ -661,7 +670,6 @@ class Manager
 		$rulesList = array();
 		
 		$ruleIterator = Internals\OrderRulesTable::getList(array(
-			'select' => array('*', 'RULE_DESCR' => 'DESCR.DESCR', 'RULE_DESCR_ID' => 'DESCR.ID'),
 			'filter' => array('=ORDER_ID' => $orderIds),
 			'order' => array('ID' => 'ASC')
 		));
@@ -670,6 +678,20 @@ class Manager
 		{
 			$discountList[] = $rule['ORDER_DISCOUNT_ID'];
 			$rulesList[$rule['ID']] = $rule;
+		}
+
+		$discountList = array_unique($discountList);
+
+		$ruleDecsrIterator = Internals\OrderRulesDescrTable::getList(array(
+			'select' => array('RULE_ID', 'DESCR', 'ID'),
+			'filter' => array('@ORDER_ID' => $orderIds),
+			'order' => array('ID' => 'ASC')
+		));
+
+		while ($ruleDescr = $ruleDecsrIterator->fetch())
+		{
+			$rulesList[$ruleDescr['RULE_ID']]['RULE_DESCR'] = $ruleDescr['DESCR'];
+			$rulesList[$ruleDescr['RULE_ID']]['RULE_DESCR_ID'] = $ruleDescr['ID'];
 		}
 
 		if (!empty($discountList))

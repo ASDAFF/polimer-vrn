@@ -652,9 +652,19 @@ class CAllBlogComment
 
 	public static function GetSocNetUserPerms($postId = 0, $authorId = 0, $userId = 0)
 	{
+		$permsBySG = false;
+		return self::GetSocNetUserPermsNew($postId, $authorId, $userId, $permsBySG);
+	}
+
+	public static function GetSocNetUserPermsNew($postId = 0, $authorId = 0, $userId = 0, &$permsBySG)
+	{
 		global $APPLICATION, $USER, $AR_BLOG_PERMS;
 
 		$bCurrent = false;
+		if ($permsBySG === null)
+		{
+			$permsBySG = false;
+		}
 
 		if (
 			!isset($userId)
@@ -682,7 +692,6 @@ class CAllBlogComment
 		{
 			$perms = BLOG_PERMS_FULL;
 		}
-
 		elseif (
 			$blogModulePermissions >= "W"
 			|| ($bCurrent ? CSocNetUser::IsCurrentUserModuleAdmin() : CSocNetUser::IsUserModuleAdmin($userId))
@@ -834,18 +843,23 @@ class CAllBlogComment
 										{
 											case "full_comment":
 												$perms = BLOG_PERMS_FULL;
+												$permsBySG = true;
 												break;
 											case "moderate_comment":
 												$perms = BLOG_PERMS_MODERATE;
+												$permsBySG = true;
 												break;
 											case "write_comment":
 												$perms = BLOG_PERMS_WRITE;
+												$permsBySG = true;
 												break;
 											case "premoderate_comment":
 												$perms = BLOG_PERMS_PREMODERATE;
+												$permsBySG = true;
 												break;
 											case "view_comment":
 												$perms = BLOG_PERMS_READ;
+												$permsBySG = true;
 												break;
 										}
 									}

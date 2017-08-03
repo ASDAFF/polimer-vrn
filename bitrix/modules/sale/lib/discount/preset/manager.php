@@ -129,9 +129,15 @@ final class Manager
 	{
 		if($this->presetList === null)
 		{
-			$this->presetList = array_merge(
-				$this->buildDefaultPresets(),
-				$this->buildCustomPresets()
+			$this->presetList = array_filter(
+				array_merge(
+					$this->buildDefaultPresets(),
+					$this->buildCustomPresets()
+				),
+				function(BasePreset $preset)
+				{
+					return $preset->isAvailable();
+				}
 			);
 		}
 

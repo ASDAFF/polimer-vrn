@@ -139,6 +139,7 @@ class CriterionOrder extends ImportCriterionOneCCml2
 
 	/**
 	 * @param Sale\Order|null $entity
+	 * @throws Main\ArgumentException
 	 */
 	public function setEntity($entity = null)
 	{
@@ -150,32 +151,11 @@ class CriterionOrder extends ImportCriterionOneCCml2
 }
 
 class CriterionShipment extends ImportCriterionOneCCml2
-    implements Exchange\ICriterionShipment
 {
-    /**
-     * @param array $fields
-     * @param bool|true $withoutSystem
-     * @return bool
-     */
-    public function equalsForList(array $fields, $withoutSystem = true)
-    {
-        /** @var Sale\Shipment $entity */
-        $entity = $this->getEntity();
-
-        if(!$entity->isShipped() && ($withoutSystem || !$entity->isSystem()))
-        {
-            if($this->equals($fields))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * @param Sale\Shipment $entity
-     */
+	/**
+	 * @param Sale\Shipment $entity
+	 * @throws Main\ArgumentException
+	 */
 	public function setEntity($entity = null)
 	{
 		if(!empty($entity) && !($entity instanceof Sale\Shipment))
@@ -183,19 +163,141 @@ class CriterionShipment extends ImportCriterionOneCCml2
 
 		parent::setEntity($entity);
 	}
+
+	/**
+	 * @param array $fields
+	 * @return bool
+	 */
+	public function equals(array $fields)
+	{
+		/** @var Sale\Shipment $entity */
+		$entity = $this->getEntity();
+		if(empty($entity))
+		{
+			return true;
+		}
+
+		if(strlen($entity->getField('VERSION_1C'))<=0 && strlen($fields['VERSION_1C'])>0)
+		{
+			$bBasketItemsMatch = true;
+			$basketItemsIndexList = array();
+			$fieldsItemsIndexList = array();
+
+			$basketItems = Exchange\Entity\OrderImport::getGroupItemsBasketFields($fields['ITEMS']);
+			if(count($basketItems)<=0)
+			{
+				return true;
+			}
+
+			/** @var Sale\ShipmentCollection $shipmentCollection */
+			$shipmentCollection = $entity->getCollection();
+			$order = $shipmentCollection->getOrder();
+			$basket = $order->getBasket();
+			/** @var Sale\BasketItem $basketItem */
+			foreach ($basket as $basketItem)
+			{
+				if($entity->isExistBasketItem($basketItem))
+				{
+					$quantity = $entity->getBasketItemQuantity($basketItem);
+					if($quantity>0)
+					{
+						$basketItemsIndexList[$basketItem->getId()] = $quantity;
+					}
+				}
+			}
+
+			foreach($basketItems as $items)
+			{
+				foreach($items as $productXML_ID => $item)
+				{
+					if($basketItem = Exchange\Entity\OrderImport::getBasketItemByItem($basket, $item))
+					{
+						$fieldsItemsIndexList[$basketItem->getId()] = $item['QUANTITY'];
+					}
+				}
+			}
+
+			if(count($basketItemsIndexList)<>count($fieldsItemsIndexList))
+			{
+				$bBasketItemsMatch = false;
+			}
+			else
+			{
+				foreach ($basketItemsIndexList as $basketId=>$quantity)
+				{
+					if(isset($fieldsItemsIndexList[$basketId]) && $fieldsItemsIndexList[$basketId] == $quantity)
+						unset($fieldsItemsIndexList[$basketId]);
+				}
+
+				if(count($fieldsItemsIndexList)>0)
+					$bBasketItemsMatch = false;
+			}
+
+			$itemDeliveryService = Exchange\Entity\ShipmentImport::getFieldsDeliveryService($fields);
+
+			if($bBasketItemsMatch &&
+				($entity->isShipped()? $fields['DEDUCTED']=='Y':true) &&
+				$entity->getPrice() == $itemDeliveryService['PRICE']
+			)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+		else
+		{
+			return parent::equals($fields);
+		}
+	}
 }
 
 class CriterionPayment extends ImportCriterionOneCCml2
 {
-    /**
-     * @param Sale\Payment|null $entity
-     */
+	/**
+	 * @param Sale\Payment|null $entity
+	 * @throws Main\ArgumentException
+	 */
 	public function setEntity($entity = null)
 	{
 		if(!empty($entity) && !($entity instanceof Sale\Payment))
 			throw new Main\ArgumentException("Entity must be instanceof Payment");
 
 		parent::setEntity($entity);
+	}
+
+	/**
+	 * @param array $fields
+	 * @return bool
+	 */
+	public function equals(array $fields)
+	{
+		/** @var Sale\Payment $entity */
+		$entity = $this->getEntity();
+		if(empty($entity))
+		{
+			return true;
+		}
+
+		if(strlen($entity->getField('VERSION_1C'))<=0 && strlen($fields['VERSION_1C'])>0)
+		{
+			if(($entity->isPaid()? $fields['PAID']=='Y':true) &&
+				$entity->getSum() == $fields['SUM']
+				)
+			{
+				return false;
+			}
+			else
+			{
+				return true;
+			}
+		}
+		else
+		{
+			return parent::equals($fields);
+		}
 	}
 }
 
@@ -228,9 +330,10 @@ class CriterionProfile extends ImportCriterionOneCCml2
         return false;
     }
 
-    /**
-     * @param Exchange\ProfileImport|null $entity
-     */
+	/**
+	 * @param Exchange\ProfileImport|null $entity
+	 * @throws Main\ArgumentException
+	 */
 	public function setEntity($entity = null)
 	{
 		if(!empty($entity) && !($entity instanceof Exchange\ProfileImport))

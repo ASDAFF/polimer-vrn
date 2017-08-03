@@ -2047,6 +2047,7 @@ class CAllBlogPost
 				{
 					$arMessageFields["NOTIFY_EVENT"] = "mention";
 					$arMessageFields["NOTIFY_TAG"] = "BLOG|POST_MENTION|".$arParams["ID"];
+					$arMessageFields["NOTIFY_SUB_TAG"] = "BLOG|POST_MENTION|".$arParams["ID"].'|'.$val;
 
 					if (!$bTitleEmpty)
 					{
@@ -2096,7 +2097,8 @@ class CAllBlogPost
 				elseif ($arParams["TYPE"] == "COMMENT")
 				{
 					$arMessageFields["NOTIFY_EVENT"] = "mention_comment";
-					$arMessageFields["NOTIFY_TAG"] = "BLOG|COMMENT_MENTION|".$arParams["ID"].(!empty($arParams["COMMENT_ID"]) ? '|'.$arParams["COMMENT_ID"] : '');
+					$arMessageFields["NOTIFY_TAG"] = "BLOG|COMMENT_MENTION|".$arParams["ID"].'|'.$arParams["COMMENT_ID"];
+					$arMessageFields["NOTIFY_SUB_TAG"] = "BLOG|COMMENT_MENTION|".$arParams["COMMENT_ID"].'|'.$val;
 
 					$commentCropped = truncateText($arParams["BODY"], 100);
 
@@ -2170,7 +2172,7 @@ class CAllBlogPost
 			}
 		}
 
-
+		$notifySubTag = false;
 		// notify 'to' users and an author
 		if (!empty($arUsers))
 		{
@@ -2189,7 +2191,8 @@ class CAllBlogPost
 				}
 
 				$arMessageFields["NOTIFY_EVENT"] = "post";
-				$arMessageFields["NOTIFY_TAG"] = "BLOG|POST|".$arParams["ID"];
+
+				$notifySubTag = $arMessageFields["NOTIFY_TAG"] = "BLOG|POST|".$arParams["ID"];
 
 				if (!$bTitleEmpty)
 				{
@@ -2251,7 +2254,9 @@ class CAllBlogPost
 				}
 
 				$arMessageFields["NOTIFY_EVENT"] = "comment";
-				$arMessageFields["NOTIFY_TAG"] = "BLOG|COMMENT|".$arParams["ID"].(!empty($arParams["COMMENT_ID"]) ? '|'.$arParams["COMMENT_ID"] : '');
+
+				$arMessageFields["NOTIFY_TAG"] = "BLOG|COMMENT|".$arParams["ID"].'|'.$arParams["COMMENT_ID"];
+				$notifySubTag = "BLOG|COMMENT|".$arParams["COMMENT_ID"];
 
 				$commentCropped = truncateText($arParams["BODY"], 100);
 
@@ -2368,6 +2373,8 @@ class CAllBlogPost
 
 				$arMessageFields["NOTIFY_EVENT"] = "share";
 				$arMessageFields["NOTIFY_TAG"] = "BLOG|SHARE|".$arParams["ID"];
+				$notifySubTag = "BLOG|POST|".$arParams["ID"];
+
 				if (!$bTitleEmpty)
 				{
 					$arMessageFields["NOTIFY_MESSAGE"] = GetMessage(
@@ -2429,6 +2436,8 @@ class CAllBlogPost
 
 				$arMessageFields["NOTIFY_EVENT"] = "share2users";
 				$arMessageFields["NOTIFY_TAG"] = "BLOG|SHARE2USERS|".$arParams["ID"];
+				$notifySubTag = "BLOG|POST|".$arParams["ID"];
+
 				if (!$bTitleEmpty)
 				{
 					$arMessageFields["NOTIFY_MESSAGE"] = GetMessage(
@@ -2605,6 +2614,10 @@ class CAllBlogPost
 			}
 
 			$arMessageFieldsTmp["TO_USER_ID"] = $v;
+			if ($notifySubTag)
+			{
+				$arMessageFieldsTmp["NOTIFY_SUB_TAG"] = $notifySubTag."|".$v;
+			}
 
 			CIMNotify::Add($arMessageFieldsTmp);
 

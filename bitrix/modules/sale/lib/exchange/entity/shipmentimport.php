@@ -74,65 +74,70 @@ class ShipmentImport extends EntityImport
         return $parentEntity->save();
     }
 
-    /**
-     * @param array $params
-     * @return Sale\Result
-     * @throws Main\ArgumentNullException
-     * @throws Main\ArgumentTypeException
-     * @throws Main\NotSupportedException
-     */
-    public function add(array $params)
+	/**
+	 * @param array $params
+	 * @return Sale\Result
+	 */
+	public function add(array $params)
     {
-        /** @var Order $parentEntity */
-        $parentEntity = $this->getParentEntity();
+		$result = new Sale\Result();
 
-        if(!$this->isLoadedParentEntity())
+		if(!$this->isLoadedParentEntity())
+		{
+			$result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_SHIPMENT_ORDER_IS_NOT_LOADED_ERROR'),'ENTITY_SHIPMENT_ORDER_IS_NOT_LOADED_ERROR'));
+			return $result;
+		}
+
+		$fields = $params['TRAITS'];
+		$parentEntity = $this->getParentEntity();
+
+        if(($shipmentService = Manager::getObjectById($fields['DELIVERY_ID'])) == null)
         {
-            throw new Main\ArgumentNullException("order is not loaded");
-        }
+			$result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_SHIPMENT_DELIVERY_SERVICE_IS_NOT_AVAILABLE_ERROR'),'DELIVERY_SERVICE_IS_NOT_AVAILABLE_ERROR'));
+		}
+		else
+		{
+			$shipmentCollection = $parentEntity->getShipmentCollection();
+			$shipment = $shipmentCollection->createItem($shipmentService);
 
-        $shipmentServiceId = $this->settings->shipmentServiceFor($this->getOwnerTypeId());
-        $shipmentService = Manager::getObjectById($shipmentServiceId);
+			$shipment->setField('DELIVERY_NAME', $shipmentService->getName());
 
-        $shipmentCollection = $parentEntity->getShipmentCollection();
-        $shipment = $shipmentCollection->createItem($shipmentService);
-        $shipment->setField('DELIVERY_NAME', $shipmentService->getName());
+			$basket = $parentEntity->getBasket();
+			$result = $this->fillShipmentItems($shipment, $basket, $params);
+			if(!$result->isSuccess())
+			{
+				return $result;
+			}
 
-        $basket = $parentEntity->getBasket();
-        $result = $this->fillShipmentItems($shipment, $basket, $params);
-        if(!$result->isSuccess())
-        {
-            return $result;
-        }
+			$result = $shipment->setFields($fields);
 
-        $fields = $params['TRAITS'];
-        $result = $shipment->setFields($fields);
-
-        if($result->isSuccess())
-        {
-            $this->setEntity($shipment);
-        }
+			if($result->isSuccess())
+			{
+				$this->setEntity($shipment);
+			}
+		}
 
         return $result;
     }
 
-    /**
-     * @param array $params
-     * @return Sale\Result
-     * @throws Main\ArgumentNullException
-     */
-    public function update(array $params)
+	/**
+	 * @param array $params
+	 * @return Sale\Result
+	 */
+	public function update(array $params)
     {
-        /** @var Sale\Shipment $shipment */
+    	$result = new Sale\Result();
+
+		if(!$this->isLoadedParentEntity())
+		{
+			$result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_SHIPMENT_ORDER_IS_NOT_LOADED_ERROR'),'ORDER_IS_NOT_LOADED_ERROR'));
+			return $result;
+		}
+
+		/** @var Shipment $shipment */
         $shipment = $this->getEntity();
 
-        /** @var Order $parentEntity */
         $parentEntity = $this->getParentEntity();
-
-        if(!$this->isLoadedParentEntity())
-        {
-            throw new Main\ArgumentNullException("order is not loaded");
-        }
 
         $criterion = $this->getCurrentCriterion($this->getEntity());
 
@@ -226,20 +231,17 @@ class ShipmentImport extends EntityImport
     /**
      * @param Order $order
      * @param Sale\BasketItem $basketItem
-     * @param $fields
      * @return int
      * @throws Main\ObjectNotFoundException
      */
-    private function getBasketItemQuantity(Order $order, Sale\BasketItem $basketItem, $fields)
+    private function getBasketItemQuantity(Order $order, Sale\BasketItem $basketItem)
     {
         $allQuantity = 0;
         /** @var Shipment $shipment */
         foreach ($order->getShipmentCollection() as $shipment)
         {
-            $criterion = $this->getCurrentCriterion($shipment);
-
-            if (!$criterion->equalsForList($fields))
-                continue;
+            if($shipment->isShipped())
+            	continue;
 
             $allQuantity += (int)$shipment->getBasketItemQuantity($basketItem);
         }
@@ -276,8 +278,7 @@ class ShipmentImport extends EntityImport
                     {
                         if($basketItem = OrderImport::getBasketItemByItem($basket, $item))
                         {
-                            /** @var Sale\BasketItem $basketItem */
-                            $basketItemQuantity = $this->getBasketItemQuantity($order, $basketItem, $fields);
+                            $basketItemQuantity = $this->getBasketItemQuantity($order, $basketItem);
 
                             $shipmentItem = self::getShipmentItem($shipment, $basketItem);
 
@@ -285,13 +286,12 @@ class ShipmentImport extends EntityImport
 
                             if($deltaQuantity < 0)
                             {
-                                $this->fillShipmentItem($shipmentItem, 0, $deltaQuantity);
+                                $this->fillShipmentItem($shipmentItem, 0, abs($deltaQuantity));
                             }
                             elseif($deltaQuantity > 0)
                             {
                                 if($basketItemQuantity >= $item['QUANTITY'])
                                 {
-                                    /** @var Sale\Shipment $systemShipment */
                                     $systemShipment = $order->getShipmentCollection()->getSystemShipment();
                                     $systemBasketQuantity = $systemShipment->getBasketItemQuantity($basketItem);
 
@@ -303,7 +303,7 @@ class ShipmentImport extends EntityImport
                                     {
                                         $needQuantity = $deltaQuantity - $systemBasketQuantity;
 
-                                        $r = $this->synchronizeQuantityShipmentItems($basketItem, $needQuantity, $fields);
+                                        $r = $this->synchronizeQuantityShipmentItems($basketItem, $needQuantity);
                                         if($r->isSuccess())
                                         {
                                             $this->fillShipmentItem($shipmentItem, $item['QUANTITY'], $shipmentItem->getQuantity());
@@ -411,12 +411,11 @@ class ShipmentImport extends EntityImport
      * If we decrease quantity relative to a specific shipment, we assume the quantity relocated to the system shipment will later be added to the selected shipment.
      * @param Sale\BasketItem $basketItem
      * @param $needQuantity
-     * @param array $fields
      * @return Sale\Result
      * @throws Main\ObjectNotFoundException
      * @internal
      */
-    public function synchronizeQuantityShipmentItems(Sale\BasketItem $basketItem, $needQuantity, array $fields = array())
+    public function synchronizeQuantityShipmentItems(Sale\BasketItem $basketItem, $needQuantity)
     {
         $result = new Sale\Result();
 
@@ -438,10 +437,8 @@ class ShipmentImport extends EntityImport
             if(!empty($entity) && $entity->getId() == $shipment->getId())
                 continue;
 
-            $criterion = $this->getCurrentCriterion($shipment);
-
-            if (!$criterion->equalsForList($fields, false))
-                continue;
+            if($shipment->isShipped() || $shipment->isSystem())
+				continue;
 
             $basketQuantity = $shipment->getBasketItemQuantity($basketItem);
             if(empty($basketQuantity))
@@ -472,6 +469,27 @@ class ShipmentImport extends EntityImport
         return $result;
     }
 
+	/**
+	 * @param $fields
+	 * @return array
+	 */
+	static public function getFieldsDeliveryService($fields)
+	{
+		$result = array();
+		foreach($fields["ITEMS"] as $items)
+		{
+			foreach($items as $item)
+			{
+				if($item['TYPE'] == Exchange\ImportBase::ITEM_SERVICE)
+				{
+					$result = $item;
+					break 2;
+				}
+			}
+		}
+		return $result;
+	}
+
     /**
      * @param $fields
      * @return array
@@ -479,21 +497,16 @@ class ShipmentImport extends EntityImport
     public function prepareFieldsDeliveryService($fields)
     {
         $result = array();
-        foreach($fields["ITEMS"] as $items)
-        {
-            foreach($items as $item)
-            {
-                if($item['TYPE'] == Exchange\ImportBase::ITEM_SERVICE)
-                {
-                    $result = array(
-                        "CUSTOM_PRICE_DELIVERY" => "Y",
-                        "BASE_PRICE_DELIVERY" => $item["PRICE"],
-                        "CURRENCY" => $this->settings->getCurrency()
-                    );
-                    break 2;
-                }
-            }
-        }
+
+        $item = self::getFieldsDeliveryService($fields);
+        if(count($item)>0)
+		{
+			$result = array(
+				"CUSTOM_PRICE_DELIVERY" => "Y",
+				"BASE_PRICE_DELIVERY" => $item["PRICE"],
+				"CURRENCY" => $this->settings->getCurrency()
+			);
+		}
 
         return $result;
     }
@@ -523,17 +536,5 @@ class ShipmentImport extends EntityImport
             throw new Main\ArgumentException("Entity must be instanceof Shipment");
 
         return Exchange\EntityType::SHIPMENT;
-    }
-
-	/**
-	 * @param Exchange\ICriterionShipment $criterion
-	 * @throws Main\ArgumentException
-	 */
-	public function loadCriterion($criterion)
-    {
-        if(!($criterion instanceof Exchange\ICriterionShipment))
-            throw new Main\ArgumentException("Criterion must be instanceof ICriterionShipment");
-
-        $this->loadCriterion = $criterion;
     }
 }

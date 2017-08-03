@@ -1134,7 +1134,7 @@ class Manager
 		while($rstFields = $dbRstrRes->fetch())
 		{
 			$rstParams = is_array($rstFields["PARAMS"]) ? $rstFields["PARAMS"] : array();
-			$tmp[$rstFields['SERVICE_ID']] = $restriction->check($checkParams, $rstParams, $deliveryId);
+			$tmp[$rstFields['SERVICE_ID']] = $restriction->check($checkParams, $rstParams, $rstFields['SERVICE_ID']);
 		}
 
 		if(count($deliveryId) == 1)

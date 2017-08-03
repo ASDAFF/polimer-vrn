@@ -4,6 +4,7 @@ use Bitrix\Main,
 	Bitrix\Main\Localization\Loc,
 	Bitrix\Main\EventResult,
 	Bitrix\Sale;
+use Bitrix\Sale\Discount\CumulativeCalculator;
 
 if (!Loader::includeModule('catalog'))
 	return;
@@ -908,10 +909,10 @@ class CSaleCondCtrlBasketGroup extends CSaleCondCtrlGroup
 
 	private static function getCodeForCumulativeGroupCondition($oneCondition, $values, $params, $control, $subs)
 	{
-		$sumConfiguration = 'array()';
+		$dataSumConfiguration = 'array()';
 		if ($subs && $subs[0])
 		{
-			$sumConfiguration = $subs[0];
+			$dataSumConfiguration = $subs[0];
 		}
 
 		$logic = static::SearchLogic(
@@ -936,7 +937,7 @@ class CSaleCondCtrlBasketGroup extends CSaleCondCtrlGroup
 		/** @see \CSaleCondCumulativeCtrl::getCumulativeValue */
 		return str_replace(
 			array('#FIELD#', '#VALUE#'),
-			array("\CSaleCondCumulativeCtrl::getCumulativeValue({$params['ORDER']}, {$sumConfiguration}) ", $values['Value']),
+			array("\CSaleCondCumulativeCtrl::getCumulativeValue({$params['ORDER']}, {$dataSumConfiguration}) ", $values['Value']),
 			$logic['OP']['N']
 		);
 	}
@@ -1613,7 +1614,9 @@ class CSaleCondCtrlBasketFields extends CSaleCondCtrlComplex
 		if ($index !== false)
 		{
 			unset($arControls[$index]);
+			$arControls = array_values($arControls);
 		}
+		unset($index);
 
 		return $arControls;
 	}
@@ -2570,8 +2573,8 @@ class CSaleCondTree extends CGlobalCondTree
 
 class CSaleCondCumulativeCtrl extends \CSaleCondCtrlComplex
 {
-	const TYPE_ORDER_ARCHIVED     = 2;
-	const TYPE_ORDER_NON_ARCHIVED = 3;
+	const TYPE_ORDER_ARCHIVED     = CumulativeCalculator::TYPE_ORDER_ARCHIVED;
+	const TYPE_ORDER_NON_ARCHIVED = CumulativeCalculator::TYPE_ORDER_NON_ARCHIVED;
 
 	public static function onBuildDiscountConditionInterfaceControls()
 	{
@@ -2701,112 +2704,46 @@ class CSaleCondCumulativeCtrl extends \CSaleCondCtrlComplex
 		return var_export($configuration, true);
 	}
 
-	public static function getCumulativeValue($currentOrder, array $sumConfiguration = array())
+	public static function getCumulativeValue($currentOrder, array $dataSumConfiguration = array())
 	{
-		if (!Loader::includeModule('currency'))
-		{
-			return false;
-		}
-
 		if(empty($currentOrder['USER_ID']))
 		{
 			return false;
 		}
 
-		$orderUserId = (int)$currentOrder['USER_ID'];
-		$filter = array(
-			'USER_ID' => $orderUserId,
-			'=LID' => $currentOrder['SITE_ID'],
-			'=PAYED' => 'Y',
-			'=CANCELED' => 'N',
+		$cumulativeCalculator = new CumulativeCalculator((int)$currentOrder['USER_ID'], $currentOrder['SITE_ID']);
+		$cumulativeCalculator->setSumConfiguration(
+			static::convertDataToSumConfiguration($dataSumConfiguration)
 		);
 
-		if($sumConfiguration)
-		{
-			$controlId = $sumConfiguration['controlId'];
-			$values = $sumConfiguration['values'];
-			if ($controlId === 'PeriodRelative')
-			{
-				$value = (int)$values['Value'];
-				$type = $values['TypeRelativePeriod'];
-				if (!in_array($type, array('D', 'M', 'Y')))
-				{
-					return false;
-				}
-
-				$start = new Main\Type\DateTime();
-				$end = $start->add("-P{$value}{$type}");
-
-				$filter['>=DATE_INSERT'] = $end;
-			}
-			elseif ($controlId === 'Period')
-			{
-				if (!empty($values['ValueStart']))
-				{
-					$filter['>=DATE_INSERT'] = Main\Type\DateTime::createFromTimestamp($values['ValueStart']);
-				}
-				if (!empty($values['ValueEnd']))
-				{
-					$filter['<DATE_INSERT'] = Main\Type\DateTime::createFromTimestamp($values['ValueEnd']);
-				}
-			}
-		}
-
-		$sum = 0;
-		foreach (array(self::TYPE_ORDER_NON_ARCHIVED, self::TYPE_ORDER_ARCHIVED) as $orderType)
-		{
-			$sum += self::sumOrders($filter, $orderType);
-		}
-
-		return $sum;
+		return $cumulativeCalculator->calculate();
 	}
 
-	private static function sumOrders($filter, $orderType)
+	protected static function convertDataToSumConfiguration(array $dataSumConfiguration)
 	{
-		$provider = null;
-		if ($orderType === self::TYPE_ORDER_ARCHIVED)
-		{
-			/** @var \Bitrix\Sale\Archive\Manager $provider */
-			$provider = '\Bitrix\Sale\Archive\Manager';
-		}
-		elseif ($orderType === self::TYPE_ORDER_NON_ARCHIVED)
-		{
-			/** @var \Bitrix\Sale\Order $provider */
-			$provider = '\Bitrix\Sale\Order';
-		}
-
-		if ($provider === null)
-		{
-			return false;
-		}
-
-		$orders = $provider::getList(
-			array(
-				'filter' => $filter,
-				'select' => array('DATE_INSERT', 'PRICE', 'CURRENCY')
-			)
+		$sumConfiguration = array(
+			'type_sum_period'  => CumulativeCalculator::TYPE_COUNT_PERIOD_ALL_TIME,
 		);
 
-		$sum = 0;
-		$currency = null;
-		foreach ($orders as $orderData)
+		$controlId = $dataSumConfiguration['controlId'];
+		if ($controlId === 'Period')
 		{
-			if (!$currency)
-			{
-				$currency = $orderData['CURRENCY'];
-			}
-
-			if ($currency !== $orderData['CURRENCY'])
-			{
-				$sum += CCurrencyRates::ConvertCurrency($orderData['PRICE'], $orderData['CURRENCY'], $currency);
-			}
-			else
-			{
-				$sum += $orderData['PRICE'];
-			}
+			$sumConfiguration['type_sum_period'] = CumulativeCalculator::TYPE_COUNT_PERIOD_INTERVAL;
+			$sumConfiguration['sum_period_data'] = array(
+				'order_start' => $dataSumConfiguration['values']['ValueStart'],
+				'order_end' => $dataSumConfiguration['values']['ValueEnd'],
+			);
+		}
+		elseif ($controlId == 'PeriodRelative')
+		{
+			$sumConfiguration['type_sum_period'] = CumulativeCalculator::TYPE_COUNT_PERIOD_RELATIVE;
+			$sumConfiguration['sum_period_data'] = array(
+				'period_value' => $dataSumConfiguration['values']['Value'],
+				'period_type' => $dataSumConfiguration['values']['TypeRelativePeriod'],
+			);
 		}
 
-		return $sum;
+		return $sumConfiguration;
 	}
 
 	/**

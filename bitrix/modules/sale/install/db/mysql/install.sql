@@ -571,7 +571,8 @@ create table if not exists b_sale_discount
 	SHORT_DESCRIPTION text null,
 	primary key (ID),
 	index IXS_DISCOUNT_LID(LID),
-	index IX_SSD_ACTIVE_DATE(ACTIVE_FROM, ACTIVE_TO)
+	index IX_SSD_ACTIVE_DATE(ACTIVE_FROM, ACTIVE_TO),
+	index IX_PRESET_ID(PRESET_ID)
 );
 
 create table if not exists b_sale_discount_coupon

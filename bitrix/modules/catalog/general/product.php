@@ -966,6 +966,7 @@ class CAllCatalogProduct
 				$result['PRICE'] = $discountResult['PRICE'];
 				$result['COMPARE_PRICE'] = $discountResult['PRICE'];
 				$result['DISCOUNT_LIST'] = $discountResult['DISCOUNT_LIST'];
+				$result['USE_ROUND'] = true;
 				unset($discountResult);
 			}
 			elseif($isNeedleToMinimizeCatalogGroup)
@@ -1721,12 +1722,20 @@ class CAllCatalogProduct
 				'QUANTITY' => $quantity,
 				'LID' => $siteID,
 				'PRODUCT_PRICE_ID' => $priceData['ID'],
+				'BASE_PRICE' => $priceData['PRICE'],
 				'PRICE' => $priceData['PRICE'],
+				'DISCOUNT_PRICE' => 0,
 				'CURRENCY' => $priceData['CURRENCY'],
+				'CAN_BUY' => 'Y',
+				'DELAY' => 'N'
 			)
 		);
 
 		$discount = Sale\Discount::loadByBasket($basket);
+		$discount->setBasketItemData(
+			$basketItem->getBasketCode(),
+			array('PRICE_TYPE_ID' => (int)$priceData['CATALOG_GROUP_ID'])
+		);
 
 		$discount->setExecuteModuleFilter(array('all', 'catalog'));
 		$discount->calculate();

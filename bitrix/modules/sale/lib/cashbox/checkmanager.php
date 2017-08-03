@@ -720,4 +720,22 @@ final class CheckManager
 		$dbRes = CashboxCheckTable::getList(array('filter' => array('EXTERNAL_UUID' => $uuid)));
 		return $dbRes->fetch();
 	}
+
+	/**
+	 * @param $id
+	 * @return Check|null
+	 */
+	public static function getObjectById($id)
+	{
+		if ($id <= 0)
+			return null;
+
+		$dbRes = CashboxCheckTable::getById($id);
+		if ($checkInfo = $dbRes->fetch())
+		{
+			return static::createByType($checkInfo['TYPE']);
+		}
+
+		return null;
+	}
 }

@@ -55,37 +55,38 @@ class PaymentImport extends EntityImport
         return $parentEntity->save();
     }
 
-    /**
-     * @param array $params
-     * @return Sale\Result
-     * @throws Main\ArgumentException
-     */
-    public function add(array $params)
+	/**
+	 * @param array $params
+	 * @return Sale\Result
+	 */
+	public function add(array $params)
     {
+    	$result = new Sale\Result();
+
         if(!$this->isLoadedParentEntity())
         {
-            throw new Main\ArgumentException("order is not loaded");
+			$result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_PAYMENT_ORDER_IS_NOT_LOADED_ERROR'),'ENTITY_PAYMENT_ORDER_IS_NOT_LOADED_ERROR'));
+			return $result;
         }
 
-        /** @var Order $parentEntity */
-        $parentEntity = $this->getParentEntity();
+		$fields = $params['TRAITS'];
 
-        $paySystemId = $this->settings->paySystemIdFor($this->getOwnerTypeId());
-        $paySystem = Sale\PaySystem\Manager::getObjectById($paySystemId);
+        if(($paySystem = Sale\PaySystem\Manager::getObjectById($fields['PAY_SYSTEM_ID'])) == null)
+		{
+			$result->addError(new Error(GetMessage('SALE_EXCHANGE_ENTITY_PAYMENT_PAYMENT_SYSTEM_IS_NOT_AVAILABLE_ERROR'),'PAYMENT_SYSTEM_IS_NOT_AVAILABLE_ERROR'));
+		}
+		else
+		{
+			$parentEntity = $this->getParentEntity();
+			$paymentCollection = $parentEntity->getPaymentCollection();
+			$payment = $paymentCollection->createItem($paySystem);
+			$result = $payment->setFields($fields);
 
-        $paymentCollection = $parentEntity->getPaymentCollection();
-
-        /** @var Sale\PaymentCollection $paymentCollection */
-        $payment = $paymentCollection->createItem($paySystem);
-
-        $fields = $params['TRAITS'];
-        /** @var Payment $payment */
-		$result = $payment->setFields($fields);
-
-        if($result->isSuccess())
-        {
-            $this->setEntity($payment);
-        }
+			if($result->isSuccess())
+			{
+				$this->setEntity($payment);
+			}
+		}
 
         return $result;
     }

@@ -233,8 +233,8 @@ if ($arParams["INIT"] == 'Y')
 		foreach ($arChatMessage['files'] as $key => $value)
 			$arResult['MESSAGE']['files'][$key] = $value;
 
-		foreach ($arChatMessage['woUserInGroup'] as $key => $value)
-			$arResult['MESSAGE']['woUserInGroup'][$key] = $value;
+		//foreach ($arChatMessage['woUserInGroup'] as $key => $value)
+		//	$arResult['MESSAGE']['woUserInGroup'][$key] = $value;
 
 		if ($arResult["CONTEXT"] == "DESKTOP")
 		{

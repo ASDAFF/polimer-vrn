@@ -212,16 +212,19 @@ class YandexCert
 	 */
 	static public function getCsr($shopId)
 	{
-        header('Content-Description: File Transfer');
-        header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename=csr_for_yamoney.csr');
-        header('Content-Transfer-Encoding: binary');
-        header('Expires: 0');
-        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-        header('Pragma: public');
-        echo self::getValue('CSR', $shopId);
-        die();
-    }
+		global $APPLICATION;
+		$APPLICATION->RestartBuffer();
+
+		header('Content-Description: File Transfer');
+		header('Content-Type: application/octet-stream');
+		header('Content-Disposition: attachment; filename=csr_for_yamoney.csr');
+		header('Content-Transfer-Encoding: binary');
+		header('Expires: 0');
+		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+		header('Pragma: public');
+		echo self::getValue('CSR', $shopId);
+		die();
+	}
 
 	/**
 	 * @param $field

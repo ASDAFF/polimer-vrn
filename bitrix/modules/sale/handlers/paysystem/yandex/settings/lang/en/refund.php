@@ -20,7 +20,6 @@ $MESS["SALE_YANDEX_RETURN_HOW_ITEM4"] = "Send a message to Yandex.Checkout's rep
                                 </ul>";
 $MESS["SALE_YANDEX_RETURN_HOW_ITEM5"] = "Wait for the certificate to be sent to you and upload it on this page.";
 $MESS["SALE_YANDEX_RETURN_STATEMENT"] = "Data for application form";
-$MESS["SALE_YANDEX_RETURN_STATEMENT_INTRO"] = "Copy and paste this information in the form. Fill in other fields manually.";
 $MESS["SALE_YANDEX_RETURN_STATEMENT_CN"] = "CN";
 $MESS["SALE_YANDEX_RETURN_STATEMENT_SIGN"] = "Electronic signature for certificate";
 $MESS["SALE_YANDEX_RETURN_STATEMENT_CAUSE"] = "Reason for request";

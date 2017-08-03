@@ -18,5 +18,4 @@ $MESS['SALE_CASHBOX_BITRIX_SETTINGS_VAT_LABEL_NOT_VAT'] = 'Без НДС [по �
 $MESS['SALE_CASHBOX_BITRIX_SETTINGS_Z_REPORT'] = 'Настройки печати Z-отчетов';
 $MESS['SALE_CASHBOX_BITRIX_SETTINGS_Z_REPORT_LABEL'] = 'Время закрытия кассовой смены и печати Z-отчета';
 $MESS['SALE_CASHBOX_BITRIX_VALIDATE_E_KKM_ID'] = 'Не указана марка ККМ';
-$MESS['SALE_CASHBOX_BITRIX_VALIDATE_E_OFD'] = 'Не выбран ОФД';
 $MESS['SALE_CASHBOX_BITRIX_VALIDATE_E_NUMBER_KKM'] = 'Не указан внешний идентификатор кассы';

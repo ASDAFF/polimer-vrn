@@ -29,7 +29,7 @@ class Payment
 
 	protected $isInner = null;
 
-	private static $innerPaySystemId = null;
+	protected static $innerPaySystemId = null;
 
 	protected static $mapFields = array();
 
@@ -102,6 +102,18 @@ class Payment
 		return static::$mapFields;
 	}
 
+	/**
+	 * @param array $fields
+	 * @return Payment
+	 */
+	protected static function createPaymentObject(array $fields = array())
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$paymentClassName = $registry->getPaymentClassName();
+
+		return new $paymentClassName($fields);
+	}
+
 	public static function create(PaymentCollection $collection, Sale\PaySystem\Service $paySystem = null)
 	{
 		$fields = array(
@@ -115,7 +127,7 @@ class Payment
 			$fields["PAY_SYSTEM_NAME"] = $paySystem->getField('NAME');
 		}
 
-		$payment = new static();
+		$payment = static::createPaymentObject();
 		$payment->setFieldsNoDemand($fields);
 		$payment->setCollection($collection);
 
@@ -137,7 +149,7 @@ class Payment
 			)
 		);
 		while ($paymentData = $paymentDataList->fetch())
-			$payments[] = new static($paymentData);
+			$payments[] = static::createPaymentObject($paymentData);
 
 		return $payments;
 	}

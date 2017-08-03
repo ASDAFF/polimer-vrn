@@ -12,7 +12,8 @@ $MESS['SALE_YANDEX_RETURN_TEXT_CLEAR'] = "Удалить сертификат ";
 $MESS['SALE_YANDEX_RETURN_TEXT_CLEAR_ALL'] = "Обновить данные MWS ";
 
 $MESS['SALE_YANDEX_RETURN_HOW'] = "Как получить сертификат";
-$MESS['SALE_YANDEX_RETURN_HOW_ITEM1'] = "Скачайте <a href='%s'>готовый запрос на сертификат</a> (файл в формате .csr).";
+$MESS['SALE_YANDEX_RETURN_HOW_ITEM0'] = "Сгенерируйте данные для заполнения заявки";
+$MESS['SALE_YANDEX_RETURN_HOW_ITEM1'] = "Скачайте готовый запрос на сертификат (файл в формате .csr).";
 $MESS['SALE_YANDEX_RETURN_HOW_ITEM2'] = "Скачайте <a target=\"_blank\" href=\"https://money.yandex.ru/i/html-letters/SSL_Cert_Form.doc\">заявку на сертификат</a>.";
 $MESS['SALE_YANDEX_RETURN_HOW_ITEM3'] = "В заявке заполните таблицу данными с этой страницы (внизу), поставьте подпись и печать компании.";
 $MESS['SALE_YANDEX_RETURN_HOW_ITEM4'] = "Напишите менеджеру Яндекс.Кассы на <a href=\"mailto:merchants@yamoney.ru\">merchants@yamoney.ru</a>, что вам нужен сертификат для возвратов по MWS. К письму приложите:".
@@ -24,11 +25,13 @@ $MESS['SALE_YANDEX_RETURN_HOW_ITEM4'] = "Напишите менеджеру Я�
 $MESS['SALE_YANDEX_RETURN_HOW_ITEM5'] = "Дождитесь сертификата и загрузите его на этой странице.";
 
 $MESS['SALE_YANDEX_RETURN_STATEMENT'] = "Данные для заполнения заявки";
-$MESS['SALE_YANDEX_RETURN_STATEMENT_INTRO'] = "Скопируйте эти данные в таблицу. Остальные строчки заполните самостоятельно.";
+
 $MESS['SALE_YANDEX_RETURN_STATEMENT_CN'] = "CN";
 $MESS['SALE_YANDEX_RETURN_STATEMENT_SIGN'] = "Электронная подпись на сертификат";
 $MESS['SALE_YANDEX_RETURN_STATEMENT_CAUSE'] = "Причина запроса";
 $MESS['SALE_YANDEX_RETURN_STATEMENT_CAUSE_VAL'] = "Первоначальный";
+$MESS['SALE_YANDEX_RETURN_CSR'] = "Запрос на сертификат";
+$MESS['SALE_YANDEX_RETURN_CSR_DOWNLOAD'] = "<a href='%s'>скачать</a>";
 $MESS['SPSN_2FLIST'] = "Вернуться к платежной системе";
 
 $MESS['SALE_YANDEX_RETURN_SAVE'] = "Сохранить";

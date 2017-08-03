@@ -56,6 +56,17 @@ class BasketPropertiesCollection
 	}
 
 	/**
+	 * @return BasketPropertiesCollection
+	 */
+	protected static function createBasketPropertiesCollectionObject()
+	{
+		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		$basketPropertiesCollectionClassName = $registry->getBasketPropertiesCollectionClassName();
+
+		return new $basketPropertiesCollectionClassName();
+	}
+
+	/**
 	 * @param BasketItem $basketItem
 	 * @return static
 	 * @throws \Bitrix\Main\ArgumentException
@@ -63,7 +74,7 @@ class BasketPropertiesCollection
 	public static function load(BasketItem $basketItem)
 	{
 
-		$basketPropertyCollection = new static();
+		$basketPropertyCollection = static::createBasketPropertiesCollectionObject();
 		$basketPropertyCollection->basketItem = $basketItem;
 		
 		if ($basketItem->getId() <= 0)

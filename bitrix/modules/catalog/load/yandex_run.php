@@ -10,6 +10,9 @@
 /** @var bool $firstStep */
 /** @var int $CUR_ELEMENT_ID */
 /** @var bool $finalExport */
+/** @var bool $boolNeedRootSection */
+/** @var int $intMaxSectionID */
+
 use Bitrix\Currency,
 	Bitrix\Iblock,
 	Bitrix\Catalog;
@@ -20,14 +23,22 @@ $MAX_EXECUTION_TIME = (isset($MAX_EXECUTION_TIME) ? (int)$MAX_EXECUTION_TIME : 0
 if ($MAX_EXECUTION_TIME <= 0)
 	$MAX_EXECUTION_TIME = 0;
 if (defined('BX_CAT_CRON') && BX_CAT_CRON == true)
+{
 	$MAX_EXECUTION_TIME = 0;
+	$firstStep = true;
+}
 if (defined("CATALOG_EXPORT_NO_STEP") && CATALOG_EXPORT_NO_STEP == true)
+{
 	$MAX_EXECUTION_TIME = 0;
+	$firstStep = true;
+}
 if ($MAX_EXECUTION_TIME == 0)
 	set_time_limit(0);
+if (!isset($firstStep))
+	$firstStep = true;
 
-$pageSize = 200;
-$navParams = ($MAX_EXECUTION_TIME == 0 ? false : array('nTopCount' => $pageSize));
+$pageSize = 100;
+$navParams = array('nTopCount' => $pageSize);
 
 $SETUP_VARS_LIST = 'IBLOCK_ID,V,XML_DATA,SETUP_SERVER_NAME,SETUP_FILE_NAME,USE_HTTPS,FILTER_AVAILABLE,DISABLE_REFERERS,MAX_EXECUTION_TIME';
 $INTERNAL_VARS_LIST = 'intMaxSectionID,boolNeedRootSection,arSectionIDs,arAvailGroups';
@@ -38,11 +49,7 @@ if (!CCatalog::IsUserExists())
 {
 	$bTmpUserCreated = true;
 	if (isset($USER))
-	{
 		$USER_TMP = $USER;
-		unset($USER);
-	}
-
 	$USER = new CUser();
 }
 
@@ -275,12 +282,12 @@ function yandex_get_value($arOffer, $param, $PROPERTY, $arProperties, $arUserTyp
 				}
 				break;
 			case Iblock\PropertyTable::TYPE_LIST:
-				if (!empty($arProperty['VALUE']))
+				if (!empty($arProperty['~VALUE']))
 				{
-					if (is_array($arProperty['VALUE']))
-						$value .= implode(', ', $arProperty['VALUE']);
+					if (is_array($arProperty['~VALUE']))
+						$value .= implode(', ', $arProperty['~VALUE']);
 					else
-						$value .= $arProperty['VALUE'];
+						$value .= $arProperty['~VALUE'];
 				}
 				break;
 			case Iblock\PropertyTable::TYPE_FILE:
@@ -390,9 +397,10 @@ if (!function_exists('yandexPrepareItems'))
 						$safeRow[$field] = htmlspecialcharsEx($value);
 					else
 						$safeRow[$field] = $value;
+					$safeRow['~'.$field] = $value;
 				}
 				unset($field, $value);
-				$row['DETAIL_PAGE_URL'] = \CIBlock::ReplaceDetailUrl($row['DETAIL_PAGE_URL'], $row, true, 'E');
+				$row['DETAIL_PAGE_URL'] = \CIBlock::ReplaceDetailUrl($safeRow['~DETAIL_PAGE_URL'], $safeRow, true, 'E');
 				unset($safeRow);
 			}
 
@@ -490,7 +498,37 @@ if ($parametricFieldsExist)
 	$parametricFieldsExist = !empty($parametricFields);
 }
 
-$needProperties = !empty($XML_DATA['XML_DATA']) && is_array($XML_DATA['XML_DATA']);
+$needProperties = $fieldsExist || $parametricFieldsExist;
+$yandexNeedPropertyIds = array();
+if ($fieldsExist)
+{
+	foreach ($fields as $id)
+		$yandexNeedPropertyIds[$id] = true;
+	unset($id);
+}
+if ($parametricFieldsExist)
+{
+	foreach ($parametricFields as $id)
+		$yandexNeedPropertyIds[$id] = true;
+	unset($id);
+}
+
+$whiteList = array(
+	'ID' => true,
+	'~ID' => true,
+	'PROPERTY_TYPE' => true,
+	'~PROPERTY_TYPE' => true,
+	'MULTIPLE' => true,
+	'~MULTIPLE' => true,
+	'USER_TYPE' => true,
+	'~USER_TYPE' => true,
+	'VALUE' => true,
+	'~VALUE' => true,
+	'VALUE_ENUM_ID' => true,
+	'~VALUE_ENUM_ID' => true,
+	'DESCRIPTION' => true,
+	'~DESCRIPTION' => true
+);
 
 $IBLOCK_ID = (int)$IBLOCK_ID;
 $db_iblock = CIBlock::GetByID($IBLOCK_ID);
@@ -663,6 +701,14 @@ else
 }
 
 $propertyIdList = array_keys($arProperties);
+if (empty($arRunErrors))
+{
+	if (
+		$arCatalog['CATALOG_TYPE'] == CCatalogSku::TYPE_FULL
+		|| $arCatalog['CATALOG_TYPE'] == CCatalogSku::TYPE_PRODUCT
+	)
+		$propertyIdList[] = $arCatalog['SKU_PROPERTY_ID'];
+}
 
 $arUserTypeFormat = array();
 foreach($arProperties as $key => $arProperty)
@@ -1027,9 +1073,6 @@ if (empty($arRunErrors))
 	if ($filterAvailable)
 		$filter['CATALOG_AVAILABLE'] = 'Y';
 
-	if (isset($CUR_ELEMENT_ID) && $CUR_ELEMENT_ID > 0)
-		$filter['>ID'] = $CUR_ELEMENT_ID;
-
 	$offersFilter = array('ACTIVE' => 'Y', 'ACTIVE_DATE' => 'Y');
 	if ($filterAvailable)
 		$offersFilter['CATALOG_AVAILABLE'] = 'Y';
@@ -1041,289 +1084,583 @@ if (empty($arRunErrors))
 			$mxValues = false;
 			if ($arSKUExport['SKU_PROP_COND']['COND'] == 'NONZERO' || $arSKUExport['SKU_PROP_COND']['COND'] == 'NONEQUAL')
 				$strExportKey = '!';
-			$strExportKey .= 'PROPERTY_' . $arSKUExport['SKU_PROP_COND']['PROP_ID'];
+			$strExportKey .= 'PROPERTY_'.$arSKUExport['SKU_PROP_COND']['PROP_ID'];
 			if ($arSKUExport['SKU_PROP_COND']['COND'] == 'EQUAL' || $arSKUExport['SKU_PROP_COND']['COND'] == 'NONEQUAL')
 				$mxValues = $arSKUExport['SKU_PROP_COND']['VALUES'];
 			$offersFilter[$strExportKey] = $mxValues;
 		}
 	}
 
-	$itemIdsList = array();
-	$items = array();
-
-	$skuIdsList = array();
-	$simpleIdsList = array();
-
-	$iterator = CIBlockElement::GetList(
-		array('ID' => 'ASC'),
-		$filter,
-		false,
-		$navParams,
-		$itemFields
-	);
-	while ($row = $iterator->Fetch())
+	do
 	{
-		$finalExport = false; // items exist
+		if (isset($CUR_ELEMENT_ID) && $CUR_ELEMENT_ID > 0)
+			$filter['>ID'] = $CUR_ELEMENT_ID;
 
-		$id = (int)$row['ID'];
-		$CUR_ELEMENT_ID = $id;
+		$existItems = false;
 
-		$row['CATALOG_TYPE'] = (int)$row['CATALOG_TYPE'];
-		$elementType = $row['CATALOG_TYPE'];
-		if (!isset($allowedTypes[$elementType]))
-			continue;
+		$itemIdsList = array();
+		$items = array();
 
-		$row['SECTIONS'] = array();
-		if ($needProperties || $needDiscountCache)
-			$row['PROPERTIES'] = array();
-		$row['PRICES'] = array();
+		$skuIdsList = array();
+		$simpleIdsList = array();
 
-		$items[$id] = $row;
-		$itemIdsList[$id] = $id;
-
-		if ($elementType == Catalog\ProductTable::TYPE_SKU)
-			$skuIdsList[$id] = $id;
-		else
-			$simpleIdsList[$id] = $id;
-	}
-	unset($row, $iterator);
-
-	if (!empty($items))
-	{
-		yandexPrepareItems($items, $itemOptions);
-
-		foreach (array_chunk($itemIdsList, 500) as $pageIds)
+		$iterator = CIBlockElement::GetList(
+			array('ID' => 'ASC'),
+			$filter,
+			false,
+			$navParams,
+			$itemFields
+		);
+		while ($row = $iterator->Fetch())
 		{
-			$iterator = Iblock\SectionElementTable::getList(array(
-				'select' => array('IBLOCK_ELEMENT_ID', 'IBLOCK_SECTION_ID'),
-				'filter' => array('@IBLOCK_ELEMENT_ID' => $pageIds, '==ADDITIONAL_PROPERTY_ID' => null),
-				'order' => array('IBLOCK_ELEMENT_ID' => 'ASC')
-			));
-			while ($row = $iterator->fetch())
-			{
-				$id = (int)$row['IBLOCK_ELEMENT_ID'];
-				$sectionId = (int)$row['IBLOCK_SECTION_ID'];
-				$items[$id]['SECTIONS'][$sectionId] = $sectionId;
-				unset($sectionId, $id);
-			}
-			unset($row, $iterator);
+			$finalExport = false; // items exist
+			$existItems = true;
+
+			$id = (int)$row['ID'];
+			$CUR_ELEMENT_ID = $id;
+
+			$row['CATALOG_TYPE'] = (int)$row['CATALOG_TYPE'];
+			$elementType = $row['CATALOG_TYPE'];
+			if (!isset($allowedTypes[$elementType]))
+				continue;
+
+			$row['SECTIONS'] = array();
+			if ($needProperties || $needDiscountCache)
+				$row['PROPERTIES'] = array();
+			$row['PRICES'] = array();
+
+			$items[$id] = $row;
+			$itemIdsList[$id] = $id;
+
+			if ($elementType == Catalog\ProductTable::TYPE_SKU)
+				$skuIdsList[$id] = $id;
+			else
+				$simpleIdsList[$id] = $id;
 		}
-		unset($pageIds);
+		unset($row, $iterator);
 
-		if ($needProperties || $needDiscountCache)
+		if (!empty($items))
 		{
-			if (!empty($propertyIdList))
+			yandexPrepareItems($items, $itemOptions);
+
+			foreach (array_chunk($itemIdsList, 500) as $pageIds)
 			{
-				\CIBlockElement::GetPropertyValuesArray(
-					$items,
-					$IBLOCK_ID,
-					array(
-						'ID' => $itemIdsList,
-						'IBLOCK_ID' => $IBLOCK_ID
-					),
-					array('ID' => $propertyIdList),
-					array('USE_PROPERTY_ID' => 'Y')
-				);
+				$iterator = Iblock\SectionElementTable::getList(array(
+					'select' => array('IBLOCK_ELEMENT_ID', 'IBLOCK_SECTION_ID'),
+					'filter' => array('@IBLOCK_ELEMENT_ID' => $pageIds, '==ADDITIONAL_PROPERTY_ID' => null),
+					'order' => array('IBLOCK_ELEMENT_ID' => 'ASC')
+				));
+				while ($row = $iterator->fetch())
+				{
+					$id = (int)$row['IBLOCK_ELEMENT_ID'];
+					$sectionId = (int)$row['IBLOCK_SECTION_ID'];
+					$items[$id]['SECTIONS'][$sectionId] = $sectionId;
+					unset($sectionId, $id);
+				}
+				unset($row, $iterator);
+			}
+			unset($pageIds);
+
+			if ($needProperties || $needDiscountCache)
+			{
+				if (!empty($propertyIdList))
+				{
+					\CIBlockElement::GetPropertyValuesArray(
+						$items,
+						$IBLOCK_ID,
+						array(
+							'ID' => $itemIdsList,
+							'IBLOCK_ID' => $IBLOCK_ID
+						),
+						array('ID' => $propertyIdList),
+						array('USE_PROPERTY_ID' => 'Y')
+					);
+				}
+
+				if ($needDiscountCache)
+				{
+					foreach ($itemIdsList as $id)
+					{
+						\CCatalogDiscount::SetProductPropertiesCache($id, $items[$id]['PROPERTIES']);
+					}
+					unset($id);
+				}
+
+				if (!$needProperties)
+				{
+					foreach ($itemIdsList as $id)
+						$items[$id]['PROPERTIES'] = array();
+					unset($id);
+				}
+				else
+				{
+					foreach ($itemIdsList as $id)
+					{
+						if (empty($items[$id]['PROPERTIES']))
+							continue;
+						foreach (array_keys($items[$id]['PROPERTIES']) as $index)
+						{
+							$propertyId = $items[$id]['PROPERTIES'][$index]['ID'];
+							if (!isset($yandexNeedPropertyIds[$propertyId]))
+							{
+								unset($items[$id]['PROPERTIES'][$index]);
+							}
+							else
+							{
+								$items[$id]['PROPERTIES'][$index] = array_intersect_key(
+									$items[$id]['PROPERTIES'][$index],
+									$whiteList
+								);
+							}
+							unset($propertyId);
+						}
+						unset($index);
+					}
+					unset($id);
+				}
 			}
 
 			if ($needDiscountCache)
 			{
-				foreach ($itemIdsList as $id)
-				{
-					\CCatalogDiscount::SetProductPropertiesCache($id, $items[$id]['PROPERTIES']);
-					Catalog\Discount\DiscountManager::setProductPropertiesCache($id, $items[$id]['PROPERTIES']);
-				}
-				unset($id);
+				\CCatalogDiscount::SetProductSectionsCache($itemIdsList);
+				\CCatalogDiscount::SetDiscountProductCache($itemIdsList, array('IBLOCK_ID' => $IBLOCK_ID, 'GET_BY_ID' => 'Y'));
 			}
-		}
-
-		if ($needDiscountCache)
-		{
-			\CCatalogDiscount::SetProductSectionsCache($itemIdsList);
-			\CCatalogDiscount::SetDiscountProductCache($itemIdsList, array('IBLOCK_ID' => $IBLOCK_ID, 'GET_BY_ID' => 'Y'));
-		}
-
-		if (!empty($skuIdsList))
-		{
-			$offerPropertyFilter = array();
-			if ($needProperties || $needDiscountCache)
-			{
-				if (!empty($propertyIdList))
-					$offerPropertyFilter = array('ID' => $propertyIdList);
-			}
-
-			$offers = \CCatalogSku::getOffersList(
-				$skuIdsList,
-				$IBLOCK_ID,
-				$offersFilter,
-				$offerFields,
-				$offerPropertyFilter
-			);
-			unset($offerPropertyFilter);
-
-			if (!empty($offers))
-			{
-				$offerLinks = array();
-				$offerIdsList = array();
-				foreach (array_keys($offers) as $productId)
-				{
-					unset($skuIdsList[$productId]);
-					$items[$productId]['OFFERS'] = array();
-					foreach (array_keys($offers[$productId]) as $offerId)
-					{
-						$productOffer = $offers[$productId][$offerId];
-
-						$productOffer['PRICES'] = array();
-						if ($needDiscountCache)
-							\CCatalogDiscount::SetProductPropertiesCache($offerId, $productOffer['PROPERTIES']);
-						$items[$productId]['OFFERS'][$offerId] = $productOffer;
-						unset($productOffer);
-
-						$offerLinks[$offerId] = &$items[$productId]['OFFERS'][$offerId];
-						$offerIdsList[$offerId] = $offerId;
-					}
-					unset($offerId);
-				}
-				if (!empty($offerIdsList))
-				{
-					yandexPrepareItems($offerLinks, $itemOptions);
-
-					if ($needDiscountCache)
-					{
-						\CCatalogDiscount::SetProductSectionsCache($offerIdsList);
-						\CCatalogDiscount::SetDiscountProductCache($offerIdsList, array('IBLOCK_ID' => $arCatalog['IBLOCK_ID'], 'GET_BY_ID' => 'Y'));
-					}
-
-					foreach (array_chunk($offerIdsList, 500) as $pageIds)
-					{
-						$priceFilter = array(
-							'@PRODUCT_ID' => $pageIds,
-							'+<=QUANTITY_FROM' => 1,
-							'+>=QUANTITY_TO' => 1,
-						);
-						if ($selectedPriceType > 0)
-							$priceFilter['CATALOG_GROUP_ID'] = $selectedPriceType;
-						else
-							$priceFilter['@CATALOG_GROUP_ID'] = $priceTypeList;
-
-						$priceIterator = \CPrice::GetListEx(
-							array(),
-							$priceFilter,
-							false,
-							false,
-							array('ID', 'PRODUCT_ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY')
-						);
-						while ($price = $priceIterator->Fetch())
-						{
-							$id = (int)$price['PRODUCT_ID'];
-							$priceTypeId = (int)$price['CATALOG_GROUP_ID'];
-							$offerLinks[$id]['PRICES'][$priceTypeId] = $price;
-							unset($priceTypeId, $id);
-						}
-						unset($price, $priceIterator);
-					}
-					unset($pageIds);
-				}
-
-				unset($offerIdsList, $offerLinks);
-			}
-			unset($offers);
 
 			if (!empty($skuIdsList))
 			{
-				foreach ($skuIdsList as $id)
+				$offerPropertyFilter = array();
+				if ($needProperties || $needDiscountCache)
 				{
-					unset($items[$id]);
-					unset($itemIdsList[$id]);
+					if (!empty($propertyIdList))
+						$offerPropertyFilter = array('ID' => $propertyIdList);
 				}
-				unset($id);
-			}
-		}
 
-		if (!empty($simpleIdsList))
-		{
-			foreach (array_chunk($simpleIdsList, 500) as $pageIds)
-			{
-				$priceFilter = array(
-					'@PRODUCT_ID' => $pageIds,
-					'+<=QUANTITY_FROM' => 1,
-					'+>=QUANTITY_TO' => 1,
+				$offers = \CCatalogSku::getOffersList(
+					$skuIdsList,
+					$IBLOCK_ID,
+					$offersFilter,
+					$offerFields,
+					$offerPropertyFilter
 				);
-				if ($selectedPriceType > 0)
-					$priceFilter['CATALOG_GROUP_ID'] = $selectedPriceType;
-				else
-					$priceFilter['@CATALOG_GROUP_ID'] = $priceTypeList;
+				unset($offerPropertyFilter);
 
-				$priceIterator = \CPrice::GetListEx(
-					array(),
-					$priceFilter,
-					false,
-					false,
-					array('ID', 'PRODUCT_ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY')
-				);
-				while ($price = $priceIterator->Fetch())
+				if (!empty($offers))
 				{
-					$id = (int)$price['PRODUCT_ID'];
-					$priceTypeId = (int)$price['CATALOG_GROUP_ID'];
-					$items[$id]['PRICES'][$priceTypeId] = $price;
-					unset($priceTypeId, $id);
-				}
-				unset($price, $priceIterator);
-			}
-			unset($pageIds);
-		}
-	}
-
-	$itemsContent = '';
-	if (!empty($items))
-	{
-		foreach ($itemIdsList as $id)
-		{
-			$CUR_ELEMENT_ID = $id;
-
-			$row = $items[$id];
-
-			if (!empty($row['SECTIONS']))
-			{
-				foreach ($row['SECTIONS'] as $sectionId)
-				{
-					if (!isset($arAvailGroups[$sectionId]))
-						continue;
-					$row['CATEGORY_ID'] = $sectionId;
-				}
-				unset($sectionId);
-			}
-			else
-			{
-				$boolNeedRootSection = true;
-				$row['CATEGORY_ID'] = $intMaxSectionID;
-			}
-			if (!isset($row['CATEGORY_ID']))
-				continue;
-
-			if ($row['CATALOG_TYPE'] == Catalog\ProductTable::TYPE_SKU && !empty($row['OFFERS']))
-			{
-				$minOfferId = null;
-				$minOfferPrice = null;
-
-				foreach (array_keys($row['OFFERS']) as $offerId)
-				{
-					if (empty($row['OFFERS'][$offerId]['PRICES']))
+					$offerLinks = array();
+					$offerIdsList = array();
+					foreach (array_keys($offers) as $productId)
 					{
-						unset($row['OFFERS'][$offerId]);
-						continue;
+						unset($skuIdsList[$productId]);
+						$items[$productId]['OFFERS'] = array();
+						foreach (array_keys($offers[$productId]) as $offerId)
+						{
+							$productOffer = $offers[$productId][$offerId];
+
+							$productOffer['PRICES'] = array();
+							if ($needDiscountCache)
+								\CCatalogDiscount::SetProductPropertiesCache($offerId, $productOffer['PROPERTIES']);
+							if (!$needProperties)
+							{
+								$productOffer['PROPERTIES'] = array();
+							}
+							else
+							{
+								if (!empty($productOffer['PROPERTIES']))
+								{
+									foreach (array_keys($productOffer['PROPERTIES']) as $index)
+									{
+										$propertyId = $productOffer['PROPERTIES'][$index]['ID'];
+										if (!isset($yandexNeedPropertyIds[$propertyId]))
+										{
+											unset($productOffer['PROPERTIES'][$index]);
+										}
+										else
+										{
+											$productOffer['PROPERTIES'][$index] = array_intersect_key(
+												$productOffer['PROPERTIES'][$index],
+												$whiteList
+											);
+										}
+										unset($propertyId);
+									}
+									unset($index);
+								}
+							}
+							$items[$productId]['OFFERS'][$offerId] = $productOffer;
+							unset($productOffer);
+
+							$offerLinks[$offerId] = &$items[$productId]['OFFERS'][$offerId];
+							$offerIdsList[$offerId] = $offerId;
+						}
+						unset($offerId);
+					}
+					if (!empty($offerIdsList))
+					{
+						yandexPrepareItems($offerLinks, $itemOptions);
+
+						foreach (array_chunk($offerIdsList, 500) as $pageIds)
+						{
+							if ($needDiscountCache)
+							{
+								\CCatalogDiscount::SetProductSectionsCache($pageIds);
+								\CCatalogDiscount::SetDiscountProductCache(
+									$pageIds,
+									array('IBLOCK_ID' => $arCatalog['IBLOCK_ID'], 'GET_BY_ID' => 'Y')
+								);
+							}
+
+							if (!$filterAvailable)
+							{
+								$iterator = Catalog\ProductTable::getList(array(
+									'select' => array('ID', 'AVAILABLE'),
+									'filter' => array('@ID' => $pageIds)
+								));
+								while ($row = $iterator->fetch())
+								{
+									$id = (int)$row['ID'];
+									$offerLinks[$id]['CATALOG_AVAILABLE'] = $row['AVAILABLE'];
+								}
+								unset($id, $row, $iterator);
+							}
+
+							$priceFilter = array(
+								'@PRODUCT_ID' => $pageIds,
+								'+<=QUANTITY_FROM' => 1,
+								'+>=QUANTITY_TO' => 1,
+							);
+							if ($selectedPriceType > 0)
+								$priceFilter['CATALOG_GROUP_ID'] = $selectedPriceType;
+							else
+								$priceFilter['@CATALOG_GROUP_ID'] = $priceTypeList;
+
+							$priceIterator = \CPrice::GetListEx(
+								array(),
+								$priceFilter,
+								false,
+								false,
+								array('ID', 'PRODUCT_ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY')
+							);
+							while ($price = $priceIterator->Fetch())
+							{
+								$id = (int)$price['PRODUCT_ID'];
+								$priceTypeId = (int)$price['CATALOG_GROUP_ID'];
+								$offerLinks[$id]['PRICES'][$priceTypeId] = $price;
+								unset($priceTypeId, $id);
+							}
+							unset($price, $priceIterator);
+						}
+						unset($pageIds);
 					}
 
+					unset($offerIdsList, $offerLinks);
+				}
+				unset($offers);
+
+				if (!empty($skuIdsList))
+				{
+					foreach ($skuIdsList as $id)
+					{
+						unset($items[$id]);
+						unset($itemIdsList[$id]);
+					}
+					unset($id);
+				}
+			}
+
+			if (!empty($simpleIdsList))
+			{
+				foreach (array_chunk($simpleIdsList, 500) as $pageIds)
+				{
+					$priceFilter = array(
+						'@PRODUCT_ID' => $pageIds,
+						'+<=QUANTITY_FROM' => 1,
+						'+>=QUANTITY_TO' => 1,
+					);
+					if ($selectedPriceType > 0)
+						$priceFilter['CATALOG_GROUP_ID'] = $selectedPriceType;
+					else
+						$priceFilter['@CATALOG_GROUP_ID'] = $priceTypeList;
+
+					$priceIterator = \CPrice::GetListEx(
+						array(),
+						$priceFilter,
+						false,
+						false,
+						array('ID', 'PRODUCT_ID', 'CATALOG_GROUP_ID', 'PRICE', 'CURRENCY')
+					);
+					while ($price = $priceIterator->Fetch())
+					{
+						$id = (int)$price['PRODUCT_ID'];
+						$priceTypeId = (int)$price['CATALOG_GROUP_ID'];
+						$items[$id]['PRICES'][$priceTypeId] = $price;
+						unset($priceTypeId, $id);
+					}
+					unset($price, $priceIterator);
+				}
+				unset($pageIds);
+			}
+		}
+
+		$itemsContent = '';
+		if (!empty($items))
+		{
+			foreach ($itemIdsList as $id)
+			{
+				$CUR_ELEMENT_ID = $id;
+
+				$row = $items[$id];
+
+				if (!empty($row['SECTIONS']))
+				{
+					foreach ($row['SECTIONS'] as $sectionId)
+					{
+						if (!isset($arAvailGroups[$sectionId]))
+							continue;
+						$row['CATEGORY_ID'] = $sectionId;
+					}
+					unset($sectionId);
+				}
+				else
+				{
+					$boolNeedRootSection = true;
+					$row['CATEGORY_ID'] = $intMaxSectionID;
+				}
+				if (!isset($row['CATEGORY_ID']))
+					continue;
+
+				if ($row['CATALOG_TYPE'] == Catalog\ProductTable::TYPE_SKU && !empty($row['OFFERS']))
+				{
+					$minOfferId = null;
+					$minOfferPrice = null;
+
+					foreach (array_keys($row['OFFERS']) as $offerId)
+					{
+						if (empty($row['OFFERS'][$offerId]['PRICES']))
+						{
+							unset($row['OFFERS'][$offerId]);
+							continue;
+						}
+
+						$fullPrice = 0;
+						$minPrice = 0;
+						$minPriceCurrency = '';
+
+						$calculatePrice = CCatalogProduct::GetOptimalPrice(
+							$row['OFFERS'][$offerId]['ID'],
+							1,
+							array(2),
+							'N',
+							$row['OFFERS'][$offerId]['PRICES'],
+							$ar_iblock['LID'],
+							array()
+						);
+
+						if (!empty($calculatePrice))
+						{
+							$minPrice = $calculatePrice['RESULT_PRICE']['DISCOUNT_PRICE'];
+							$fullPrice = $calculatePrice['RESULT_PRICE']['BASE_PRICE'];
+							$minPriceCurrency = $calculatePrice['RESULT_PRICE']['CURRENCY'];
+						}
+						unset($calculatePrice);
+						if ($minPrice <= 0)
+						{
+							unset($row['OFFERS'][$offerId]);
+							continue;
+						}
+						$row['OFFERS'][$offerId]['RESULT_PRICE'] = array(
+							'MIN_PRICE' => $minPrice,
+							'FULL_PRICE' => $fullPrice,
+							'CURRENCY' => $minPriceCurrency
+						);
+						if ($minOfferPrice === null || $minOfferPrice > $minPrice)
+						{
+							$minOfferId = $offerId;
+							$minOfferPrice = $minPrice;
+						}
+					}
+					unset($offerId);
+
+					if ($arSKUExport['SKU_EXPORT_COND'] == YANDEX_SKU_EXPORT_MIN_PRICE)
+					{
+						if ($minOfferId === null)
+							$row['OFFERS'] = array();
+						else
+							$row['OFFERS'] = array($minOfferId => $row['OFFERS'][$minOfferId]);
+					}
+					if (empty($row['OFFERS']))
+						continue;
+
+					foreach ($row['OFFERS'] as $offer)
+					{
+						$available = ' available="'.($offer['CATALOG_AVAILABLE'] == 'Y' ? 'true' : 'false').'"';
+						$itemsContent .= '<offer id="'.$offer['ID'].'"'.$productFormat.$available.">\n";
+						unset($available);
+
+						$referer = '';
+						if (!$disableReferers)
+							$referer = (strpos($offer['DETAIL_PAGE_URL'], '?') === false ? '?' : '&amp;').'r1=<?=$strReferer1; ?>&amp;r2=<?=$strReferer2; ?>';
+
+						$itemsContent .= "<url>".$usedProtocol.$ar_iblock['SERVER_NAME'].htmlspecialcharsbx($offer['DETAIL_PAGE_URL']).$referer."</url>\n";
+						unset($referer);
+
+						$minPrice = $offer['RESULT_PRICE']['MIN_PRICE'];
+						$fullPrice = $offer['RESULT_PRICE']['FULL_PRICE'];
+						$itemsContent .= "<price>".$minPrice."</price>\n";
+						if ($minPrice < $fullPrice)
+							$itemsContent .= "<oldprice>".$fullPrice."</oldprice>\n";
+						$itemsContent .= "<currencyId>".$offer['RESULT_PRICE']['CURRENCY']."</currencyId>\n";
+
+						$itemsContent .= "<categoryId>".$row['CATEGORY_ID']."</categoryId>\n";
+
+						$picture = (!empty($offer['PICTURE']) ? $offer['PICTURE'] : $row['PICTURE']);
+						if (!empty($picture))
+							$itemsContent .= "<picture>".$picture."</picture>\n";
+						unset($picture);
+
+						$y = 0;
+						foreach ($arYandexFields as $key)
+						{
+							switch ($key)
+							{
+								case 'name':
+									if ($yandexFormat == 'vendor.model' || $yandexFormat == 'artist.title')
+										continue;
+
+									$itemsContent .= "<name>".yandex_text2xml($offer['NAME'], true)."</name>\n";
+									break;
+								case 'description':
+									$itemsContent .= "<description>".
+										($offer['DESCRIPTION'] !== '' ? $offer['DESCRIPTION'] : $row['DESCRIPTION']).
+										"</description>\n";
+									break;
+								case 'param':
+									if ($parametricFieldsExist)
+									{
+										foreach ($parametricFields as $paramKey => $prop_id)
+										{
+											$value = yandex_get_value(
+												$offer,
+												'PARAM_'.$paramKey,
+												$prop_id,
+												$arProperties,
+												$arUserTypeFormat,
+												$usedProtocol
+											);
+											if ($value == '')
+											{
+												$value = yandex_get_value(
+													$row,
+													'PARAM_'.$paramKey,
+													$prop_id,
+													$arProperties,
+													$arUserTypeFormat,
+													$usedProtocol
+												);
+											}
+											if ($value != '')
+												$itemsContent .= $value."\n";
+											unset($value);
+										}
+										unset($paramKey, $prop_id);
+									}
+									break;
+								case 'model':
+								case 'title':
+									if (!$fieldsExist || !isset($fields[$key]))
+									{
+										if (
+											$key == 'model' && $yandexFormat == 'vendor.model'
+											||
+											$key == 'title' && $yandexFormat == 'artist.title'
+										)
+											$itemsContent .= "<".$key.">".yandex_text2xml($offer['NAME'], true)."</".$key.">\n";
+									}
+									else
+									{
+										$value = yandex_get_value(
+											$offer,
+											$key,
+											$fields[$key],
+											$arProperties,
+											$arUserTypeFormat,
+											$usedProtocol
+										);
+										if ($value == '')
+										{
+											$value = yandex_get_value(
+												$row,
+												$key,
+												$fields[$key],
+												$arProperties,
+												$arUserTypeFormat,
+												$usedProtocol
+											);
+										}
+										if ($value != '')
+											$itemsContent .= $value."\n";
+										unset($value);
+									}
+									break;
+								case 'year':
+								default:
+									if ($key == 'year')
+									{
+										$y++;
+										if ($yandexFormat == 'artist.title')
+										{
+											if ($y == 1)
+												continue;
+										}
+										else
+										{
+											if ($y > 1)
+												continue;
+										}
+									}
+									if ($fieldsExist && isset($fields[$key]))
+									{
+										$value = yandex_get_value(
+											$offer,
+											$key,
+											$fields[$key],
+											$arProperties,
+											$arUserTypeFormat,
+											$usedProtocol
+										);
+										if ($value == '')
+										{
+											$value = yandex_get_value(
+												$row,
+												$key,
+												$fields[$key],
+												$arProperties,
+												$arUserTypeFormat,
+												$usedProtocol
+											);
+										}
+										if ($value != '')
+											$itemsContent .= $value."\n";
+										unset($value);
+									}
+							}
+						}
+
+						$itemsContent .= '</offer>'."\n";
+					}
+					unset($offer);
+				}
+				elseif (isset($simpleIdsList[$id]) && !empty($row['PRICES']))
+				{
 					$fullPrice = 0;
 					$minPrice = 0;
 					$minPriceCurrency = '';
 
 					$calculatePrice = CCatalogProduct::GetOptimalPrice(
-						$row['OFFERS'][$offerId]['ID'],
+						$row['ID'],
 						1,
 						array(2),
 						'N',
-						$row['OFFERS'][$offerId]['PRICES'],
+						$row['PRICES'],
 						$ar_iblock['LID'],
 						array()
 					);
@@ -1335,60 +1672,29 @@ if (empty($arRunErrors))
 						$minPriceCurrency = $calculatePrice['RESULT_PRICE']['CURRENCY'];
 					}
 					unset($calculatePrice);
+
 					if ($minPrice <= 0)
-					{
-						unset($row['OFFERS'][$offerId]);
 						continue;
-					}
-					$row['OFFERS'][$offerId]['RESULT_PRICE'] = array(
-						'MIN_PRICE' => $minPrice,
-						'FULL_PRICE' => $fullPrice,
-						'CURRENCY' => $minPriceCurrency
-					);
-					if ($minOfferPrice === null || $minOfferPrice > $minPrice)
-					{
-						$minOfferId = $offerId;
-						$minOfferPrice = $minPrice;
-					}
-				}
-				unset($offerId);
 
-				if ($arSKUExport['SKU_EXPORT_COND'] == YANDEX_SKU_EXPORT_MIN_PRICE)
-				{
-					if ($minOfferId === null)
-						$row['OFFERS'] = array();
-					else
-						$row['OFFERS'] = array($minOfferId => $row['OFFERS'][$minOfferId]);
-				}
-				if (empty($row['OFFERS']))
-					continue;
-
-				foreach ($row['OFFERS'] as $offer)
-				{
-					$available = ' available="' . ($offer['CATALOG_AVAILABLE'] == 'Y' ? 'true' : 'false') . '"';
-					$itemsContent .= '<offer id="' . $offer['ID'] . '"' . $productFormat . $available . ">\n";
+					$available = ' available="'.($row['CATALOG_AVAILABLE'] == 'Y' ? 'true' : 'false').'"';
+					$itemsContent .= '<offer id="'.$row['ID'].'"'.$productFormat.$available.">\n";
 					unset($available);
 
 					$referer = '';
 					if (!$disableReferers)
-						$referer = (strpos($offer['DETAIL_PAGE_URL'], '?') === false ? '?' : '&amp;') . 'r1=<?=$strReferer1; ?>&amp;r2=<?=$strReferer2; ?>';
+						$referer = (strpos($row['DETAIL_PAGE_URL'], '?') === false ? '?' : '&amp;').'r1=<?=$strReferer1; ?>&amp;r2=<?=$strReferer2; ?>';
 
-					$itemsContent .= "<url>" . $usedProtocol . $ar_iblock['SERVER_NAME'] . htmlspecialcharsbx($offer['DETAIL_PAGE_URL']) . $referer . "</url>\n";
+					$itemsContent .= "<url>".$usedProtocol.$ar_iblock['SERVER_NAME'].htmlspecialcharsbx($row['DETAIL_PAGE_URL']).$referer."</url>\n";
 					unset($referer);
 
-					$minPrice = $offer['RESULT_PRICE']['MIN_PRICE'];
-					$fullPrice = $offer['RESULT_PRICE']['FULL_PRICE'];
-					$itemsContent .= "<price>" . $minPrice . "</price>\n";
+					$itemsContent .= "<price>".$minPrice."</price>\n";
 					if ($minPrice < $fullPrice)
-						$itemsContent .= "<oldprice>" . $fullPrice . "</oldprice>\n";
-					$itemsContent .= "<currencyId>" . $offer['RESULT_PRICE']['CURRENCY'] . "</currencyId>\n";
+						$itemsContent .= "<oldprice>".$fullPrice."</oldprice>\n";
+					$itemsContent .= "<currencyId>".$minPriceCurrency."</currencyId>\n";
 
-					$itemsContent .= "<categoryId>" . $row['CATEGORY_ID'] . "</categoryId>\n";
-
-					$picture = (!empty($offer['PICTURE']) ? $offer['PICTURE'] : $row['PICTURE']);
-					if (!empty($picture))
-						$itemsContent .= "<picture>" . $picture . "</picture>\n";
-					unset($picture);
+					$itemsContent .= "<categoryId>".$row['CATEGORY_ID']."</categoryId>\n";
+					if (!empty($row['PICTURE']))
+						$itemsContent .= "<picture>".$row['PICTURE']."</picture>\n";
 
 					$y = 0;
 					foreach ($arYandexFields as $key)
@@ -1399,12 +1705,10 @@ if (empty($arRunErrors))
 								if ($yandexFormat == 'vendor.model' || $yandexFormat == 'artist.title')
 									continue;
 
-								$itemsContent .= "<name>" . yandex_text2xml($offer['NAME'], true) . "</name>\n";
+								$itemsContent .= "<name>".yandex_text2xml($row['NAME'], true)."</name>\n";
 								break;
 							case 'description':
-								$itemsContent .= "<description>" .
-									($offer['DESCRIPTION'] !== '' ? $offer['DESCRIPTION'] : $row['DESCRIPTION']) .
-									"</description>\n";
+								$itemsContent .= "<description>".$row['DESCRIPTION']."</description>\n";
 								break;
 							case 'param':
 								if ($parametricFieldsExist)
@@ -1412,26 +1716,15 @@ if (empty($arRunErrors))
 									foreach ($parametricFields as $paramKey => $prop_id)
 									{
 										$value = yandex_get_value(
-											$offer,
-											'PARAM_' . $paramKey,
+											$row,
+											'PARAM_'.$paramKey,
 											$prop_id,
 											$arProperties,
 											$arUserTypeFormat,
 											$usedProtocol
 										);
-										if ($value == '')
-										{
-											$value = yandex_get_value(
-												$row,
-												'PARAM_' . $paramKey,
-												$prop_id,
-												$arProperties,
-												$arUserTypeFormat,
-												$usedProtocol
-											);
-										}
 										if ($value != '')
-											$itemsContent .= $value . "\n";
+											$itemsContent .= $value."\n";
 										unset($value);
 									}
 									unset($paramKey, $prop_id);
@@ -1446,31 +1739,20 @@ if (empty($arRunErrors))
 										||
 										$key == 'title' && $yandexFormat == 'artist.title'
 									)
-										$itemsContent .= "<" . $key . ">" . yandex_text2xml($offer['NAME'], true) . "</" . $key . ">\n";
+										$itemsContent .= "<".$key.">".yandex_text2xml($row['NAME'], true)."</".$key.">\n";
 								}
 								else
 								{
 									$value = yandex_get_value(
-										$offer,
+										$row,
 										$key,
 										$fields[$key],
 										$arProperties,
 										$arUserTypeFormat,
 										$usedProtocol
 									);
-									if ($value == '')
-									{
-										$value = yandex_get_value(
-											$row,
-											$key,
-											$fields[$key],
-											$arProperties,
-											$arUserTypeFormat,
-											$usedProtocol
-										);
-									}
 									if ($value != '')
-										$itemsContent .= $value . "\n";
+										$itemsContent .= $value."\n";
 									unset($value);
 								}
 								break;
@@ -1493,195 +1775,52 @@ if (empty($arRunErrors))
 								if ($fieldsExist && isset($fields[$key]))
 								{
 									$value = yandex_get_value(
-										$offer,
+										$row,
 										$key,
 										$fields[$key],
 										$arProperties,
 										$arUserTypeFormat,
 										$usedProtocol
 									);
-									if ($value == '')
-									{
-										$value = yandex_get_value(
-											$row,
-											$key,
-											$fields[$key],
-											$arProperties,
-											$arUserTypeFormat,
-											$usedProtocol
-										);
-									}
 									if ($value != '')
-										$itemsContent .= $value . "\n";
+										$itemsContent .= $value."\n";
 									unset($value);
 								}
 						}
 					}
 
-					$itemsContent .= '</offer>' . "\n";
+					$itemsContent .= "</offer>\n";
 				}
-				unset($offer);
+
+				unset($row);
+
+				if ($MAX_EXECUTION_TIME > 0 && (getmicrotime() - START_EXEC_TIME) >= $MAX_EXECUTION_TIME)
+					break;
 			}
-			elseif (isset($simpleIdsList[$id]) && !empty($row['PRICES']))
-			{
-				$fullPrice = 0;
-				$minPrice = 0;
-				$minPriceCurrency = '';
+			unset($id);
 
-				$calculatePrice = CCatalogProduct::GetOptimalPrice(
-					$row['ID'],
-					1,
-					array(2),
-					'N',
-					$row['PRICES'],
-					$ar_iblock['LID'],
-					array()
-				);
-
-				if (!empty($calculatePrice))
-				{
-					$minPrice = $calculatePrice['RESULT_PRICE']['DISCOUNT_PRICE'];
-					$fullPrice = $calculatePrice['RESULT_PRICE']['BASE_PRICE'];
-					$minPriceCurrency = $calculatePrice['RESULT_PRICE']['CURRENCY'];
-				}
-				unset($calculatePrice);
-
-				if ($minPrice <= 0)
-					continue;
-
-				$available = ' available="' . ($row['CATALOG_AVAILABLE'] == 'Y' ? 'true' : 'false') . '"';
-				$itemsContent .= '<offer id="' . $row['ID'] . '"' . $productFormat . $available . ">\n";
-				unset($available);
-
-				$referer = '';
-				if (!$disableReferers)
-					$referer = (strpos($row['DETAIL_PAGE_URL'], '?') === false ? '?' : '&amp;') . 'r1=<?=$strReferer1; ?>&amp;r2=<?=$strReferer2; ?>';
-
-				$itemsContent .= "<url>" . $usedProtocol . $ar_iblock['SERVER_NAME'] . htmlspecialcharsbx($row['DETAIL_PAGE_URL']) . $referer . "</url>\n";
-				unset($referer);
-
-				$itemsContent .= "<price>" . $minPrice . "</price>\n";
-				if ($minPrice < $fullPrice)
-					$itemsContent .= "<oldprice>" . $fullPrice . "</oldprice>\n";
-				$itemsContent .= "<currencyId>" . $minPriceCurrency . "</currencyId>\n";
-
-				$itemsContent .= "<categoryId>" . $row['CATEGORY_ID'] . "</categoryId>\n";
-				if (!empty($row['PICTURE']))
-					$itemsContent .= "<picture>" . $row['PICTURE'] . "</picture>\n";
-
-				$y = 0;
-				foreach ($arYandexFields as $key)
-				{
-					switch ($key)
-					{
-						case 'name':
-							if ($yandexFormat == 'vendor.model' || $yandexFormat == 'artist.title')
-								continue;
-
-							$itemsContent .= "<name>" . yandex_text2xml($row['NAME'], true) . "</name>\n";
-							break;
-						case 'description':
-							$itemsContent .= "<description>" . $row['DESCRIPTION'] . "</description>\n";
-							break;
-						case 'param':
-							if ($parametricFieldsExist)
-							{
-								foreach ($parametricFields as $paramKey => $prop_id)
-								{
-									$value = yandex_get_value(
-										$row,
-										'PARAM_' . $paramKey,
-										$prop_id,
-										$arProperties,
-										$arUserTypeFormat,
-										$usedProtocol
-									);
-									if ($value != '')
-										$itemsContent .= $value . "\n";
-									unset($value);
-								}
-								unset($paramKey, $prop_id);
-							}
-							break;
-						case 'model':
-						case 'title':
-							if (!$fieldsExist || !isset($fields[$key]))
-							{
-								if (
-									$key == 'model' && $yandexFormat == 'vendor.model'
-									||
-									$key == 'title' && $yandexFormat == 'artist.title'
-								)
-									$itemsContent .= "<" . $key . ">" . yandex_text2xml($row['NAME'], true) . "</" . $key . ">\n";
-							}
-							else
-							{
-								$value = yandex_get_value(
-									$row,
-									$key,
-									$fields[$key],
-									$arProperties,
-									$arUserTypeFormat,
-									$usedProtocol
-								);
-								if ($value != '')
-									$itemsContent .= $value . "\n";
-								unset($value);
-							}
-							break;
-						case 'year':
-						default:
-							if ($key == 'year')
-							{
-								$y++;
-								if ($yandexFormat == 'artist.title')
-								{
-									if ($y == 1)
-										continue;
-								}
-								else
-								{
-									if ($y > 1)
-										continue;
-								}
-							}
-							if ($fieldsExist && isset($fields[$key]))
-							{
-								$value = yandex_get_value(
-									$row,
-									$key,
-									$fields[$key],
-									$arProperties,
-									$arUserTypeFormat,
-									$usedProtocol
-								);
-								if ($value != '')
-									$itemsContent .= $value . "\n";
-								unset($value);
-							}
-					}
-				}
-
-				$itemsContent .= "</offer>\n";
-			}
-
-			unset($row);
-
-			if ($MAX_EXECUTION_TIME > 0 && (getmicrotime() - START_EXEC_TIME) >= $MAX_EXECUTION_TIME)
-				break;
+			\CCatalogDiscount::ClearDiscountCache(array(
+				'PRODUCT' => true,
+				'SECTIONS' => true,
+				'PROPERTIES' => true
+			));
 		}
-		unset($id);
 
-		\CCatalogDiscount::ClearDiscountCache(array(
-			'PRODUCT' => true,
-			'SECTIONS' => true,
-			'PROPERTIES' => true
-		));
+		if ($itemsContent !== '')
+			fwrite($itemsFile, $itemsContent);
+		unset($itemsContent);
+
+		unset($simpleIdsList, $skuIdsList);
+		unset($items, $itemIdsList);
 	}
+	while ($MAX_EXECUTION_TIME == 0 && $existItems);
+}
 
-	if ($itemsContent !== '')
-		fwrite($itemsFile, $itemsContent);
-	unset($itemsContent);
+if (empty($arRunErrors))
+{
+	if (is_resource($itemsFile))
+		@fclose($itemsFile);
+	unset($itemsFile);
 }
 
 if (empty($arRunErrors))
@@ -1720,7 +1859,6 @@ if (!empty($arRunErrors))
 
 if ($bTmpUserCreated)
 {
-	unset($USER);
 	if (isset($USER_TMP))
 	{
 		$USER = $USER_TMP;

@@ -34,29 +34,38 @@ class CCalendarSync
 				"PRIVATE_EVENT" => !!$arFields['PRIVATE_EVENT']
 			);
 
-			if (isset($arFields['ATTENDEE_EMAIL_LIST']) && $entityType == 'user' && false)
-			{
-				$arNewFields['IS_MEETING'] = count($arFields['ATTENDEE_EMAIL_LIST']) > 0;
-				$arNewFields['ATTENDEES'] = self::GetUsersByEmailList($arFields['ATTENDEE_EMAIL_LIST']);
-
-				if (!empty($arNewFields['ATTENDEES']))
-				{
-					$arNewFields['ATTENDEES_CODES'] = array();
-					foreach($arNewFields['ATTENDEES'] as $attendee)
-					{
-						if(intval($attendee['USER_ID']) > 0)
-						{
-							$arNewFields['ATTENDEES_CODES'][] = 'U'.IntVal($attendee['USER_ID']);
-						}
-					}
-					$arNewFields['ATTENDEES_CODES'] = array_unique($arNewFields['ATTENDEES_CODES']);
-				}
-
-				$arNewFields['MEETING_HOST'] = $entityId;
-				$arNewFields['MEETING'] = array(
-					'HOST_NAME' => CCalendar::GetUserName($entityId)
-				);
-			}
+			// TODO: unknown error on exchange 2011
+//			if (isset($arFields['ATTENDEE_EMAIL_LIST']) && $entityType == 'user')
+//			{
+//				$arNewFields['ATTENDEES'] = self::GetUsersByEmailList($arFields['ATTENDEE_EMAIL_LIST']);
+//
+//				if (!empty($arNewFields['ATTENDEES']))
+//				{
+//					if (count($arNewFields['ATTENDEES']) > 1 || $arNewFields['ATTENDEES'][0]['USER_ID'] != $entityId)
+//					{
+//						$arNewFields['IS_MEETING'] = count($arFields['ATTENDEE_EMAIL_LIST']) > 0;
+//						$arNewFields['MEETING_HOST'] = $entityId;
+//						$arNewFields['MEETING'] = array(
+//							'HOST_NAME' => CCalendar::GetUserName($entityId)
+//						);
+//
+//						$arNewFields['ATTENDEES_CODES'] = array();
+//						foreach($arNewFields['ATTENDEES'] as $attendee)
+//						{
+//							if(intval($attendee['USER_ID']) > 0)
+//							{
+//								$arNewFields['ATTENDEES_CODES'][] = 'U'.IntVal($attendee['USER_ID']);
+//							}
+//						}
+//						$arNewFields['ATTENDEES_CODES'] = array_unique($arNewFields['ATTENDEES_CODES']);
+//					}
+//					else
+//					{
+//						$arNewFields['IS_MEETING'] = false;
+//						unset($arNewFields['ATTENDEES']);
+//					}
+//				}
+//			}
 
 			$arNewFields["DATE_FROM"] = $arFields['DATE_FROM'];
 			$arNewFields["DATE_TO"] = $arFields['DATE_TO'];
@@ -128,7 +137,7 @@ class CCalendarSync
 					$arNewFields['EXDATE'] = $arFields["EXDATE"];
 			}
 
-			if ($eventId > 0 && $arNewFields['IS_MEETING'] && $bExchange && false)
+			if ($eventId > 0 && $arNewFields['IS_MEETING'] && $bExchange)
 			{
 				$curEvent = CCalendarEvent::GetList(
 					array(
@@ -145,7 +154,7 @@ class CCalendarSync
 				if ($curEvent)
 					$curEvent = $curEvent[0];
 
-				if ($curEvent['IS_MEETING'] && $curEvent['MEETING_HOST'] !== $userId)
+				if ($curEvent['IS_MEETING'] && $curEvent['MEETING_HOST'] != $userId)
 				{
 					$arFields = $curEvent;
 					$arFields['SKIP_TIME'] = $curEvent['DT_SKIP_TIME'] == 'Y';
@@ -163,8 +172,10 @@ class CCalendarSync
 					{
 						$arFields["RRULE"] = CCalendarEvent::ParseRRULE($curEvent["RRULE"]);
 					}
+					$arFields['DAV_EXCH_LABEL'] = $arNewFields['DAV_EXCH_LABEL'];
+					$curEvent['DAV_EXCH_LABEL'] = $arNewFields['DAV_EXCH_LABEL'];
 
-					$res = self::DoSaveToDav(array(
+					self::DoSaveToDav(array(
 						'bExchange' => true,
 						'sectionId' => $curEvent['SECT_ID']
 					), $arFields, $curEvent);
@@ -319,16 +330,23 @@ class CCalendarSync
 			// Convert BBcode to HTML for exchange
 			$arDavFields["DESCRIPTION"] = CCalendarEvent::ParseText($arDavFields['DESCRIPTION']);
 
-			if ($arFields['IS_MEETING'] && count($arFields['ATTENDEES']) > 0 && false)
-			{
-				$arDavFields['REQUIRED_ATTENDEES'] = self::GetExchangeEmailForUser($arFields['ATTENDEES']);
-			}
+			// Todo: unknown error on exchange 2011
+//			if ($arFields['IS_MEETING'] && count($arFields['ATTENDEES']) > 0)
+//			{
+//				$arDavFields['REQUIRED_ATTENDEES'] = self::GetExchangeEmailForUser($arFields['ATTENDEES']);
+//				if (empty($arDavFields['REQUIRED_ATTENDEES']))
+//					unset($arDavFields['REQUIRED_ATTENDEES']);
+//			}
 
 			// New event  or move existent event to Exchange calendar
 			if ($arFields['ID'] <= 0 || ($event && !$event['DAV_EXCH_LABEL']))
+			{
 				$exchRes = CDavExchangeCalendar::DoAddItem($ownerId, $section['DAV_EXCH_CAL'], $arDavFields);
+			}
 			else
+			{
 				$exchRes = CDavExchangeCalendar::DoUpdateItem($ownerId, $event['DAV_XML_ID'], $event['DAV_EXCH_LABEL'], $arDavFields);
+			}
 
 			if (!is_array($exchRes) || !array_key_exists("XML_ID", $exchRes))
 				return CCalendar::CollectExchangeErrors($exchRes);
@@ -601,55 +619,59 @@ class CCalendarSync
 	public static function GetUsersByEmailList($emailList = array())
 	{
 		global $DB;
-		$exchangeMailbox = COption::GetOptionString("dav", "exchange_mailbox", "");
-		$exchangeUseLogin = COption::GetOptionString("dav", "exchange_use_login", "Y");
-		$exchangeMailboxStrlen = strlen($exchangeMailbox);
-
 		$users = array();
-		$strValue = "";
-		foreach($emailList as $email)
-		{
-			$strValue .= ",'".CDatabase::ForSql($email)."'";
-		}
-		$strValue = trim($strValue, ', ');
 
-		if($strValue != '')
+		if (CCalendar::IsSocNet())
 		{
-			$strSql = "SELECT U.ID, BUF.UF_BXDAVEX_MAILBOX
-					FROM b_user U
-					LEFT JOIN b_uts_user BUF ON (BUF.VALUE_ID = U.ID)
-					WHERE
-						U.ACTIVE = 'Y' AND
-						BUF.UF_BXDAVEX_MAILBOX in (".$strValue.")";
+			$exchangeMailbox = COption::GetOptionString("dav", "exchange_mailbox", "");
+			$exchangeUseLogin = COption::GetOptionString("dav", "exchange_use_login", "Y");
+			$exchangeMailboxStrlen = strlen($exchangeMailbox);
 
-			$res = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
-			$checkedEmails = array();
-			while($entry = $res->Fetch())
+			$strValue = "";
+			foreach($emailList as $email)
 			{
-				$checkedEmails[] = strtolower($entry["UF_BXDAVEX_MAILBOX"]);
-				$users[] = $entry['ID'];
+				$strValue .= ",'".CDatabase::ForSql($email)."'";
 			}
+			$strValue = trim($strValue, ', ');
 
-			if ($exchangeUseLogin == "Y")
+			if($strValue != '')
 			{
-				$strLogins = '';
-				foreach($emailList as $email)
+				$strSql = "SELECT U.ID, BUF.UF_BXDAVEX_MAILBOX
+						FROM b_user U
+						LEFT JOIN b_uts_user BUF ON (BUF.VALUE_ID = U.ID)
+						WHERE
+							U.ACTIVE = 'Y' AND
+							BUF.UF_BXDAVEX_MAILBOX in (".$strValue.")";
+
+				$res = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+				$checkedEmails = array();
+				while($entry = $res->Fetch())
 				{
-					if(!in_array(strtolower($email), $checkedEmails) && strtolower(substr($email, strlen($email) - $exchangeMailboxStrlen)) == strtolower($exchangeMailbox))
-					{
-						$value = substr($email, 0, strlen($email) - $exchangeMailboxStrlen);
-						$strLogins .= ",'".CDatabase::ForSql($value)."'";
-					}
+					$checkedEmails[] = strtolower($entry["UF_BXDAVEX_MAILBOX"]);
+					$users[] = $entry['ID'];
 				}
-				$strLogins = trim($strLogins, ', ');
 
-				if ($strLogins !== '')
+				if ($exchangeUseLogin == "Y")
 				{
-					$res = $DB->Query("SELECT U.ID, U.LOGIN FROM b_user U WHERE U.ACTIVE = 'Y' AND U.LOGIN in (".$strLogins.")", false, "File: ".__FILE__."<br>Line: ".__LINE__);
-
-					while($entry = $res->Fetch())
+					$strLogins = '';
+					foreach($emailList as $email)
 					{
-						$users[] = $entry['ID'];
+						if(!in_array(strtolower($email), $checkedEmails) && strtolower(substr($email, strlen($email) - $exchangeMailboxStrlen)) == strtolower($exchangeMailbox))
+						{
+							$value = substr($email, 0, strlen($email) - $exchangeMailboxStrlen);
+							$strLogins .= ",'".CDatabase::ForSql($value)."'";
+						}
+					}
+					$strLogins = trim($strLogins, ', ');
+
+					if ($strLogins !== '')
+					{
+						$res = $DB->Query("SELECT U.ID, U.LOGIN FROM b_user U WHERE U.ACTIVE = 'Y' AND U.LOGIN in (".$strLogins.")", false, "File: ".__FILE__."<br>Line: ".__LINE__);
+
+						while($entry = $res->Fetch())
+						{
+							$users[] = $entry['ID'];
+						}
 					}
 				}
 			}
