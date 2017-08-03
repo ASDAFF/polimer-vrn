@@ -11,10 +11,21 @@
 /** @var string $componentPath */
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
+
+	$arFilter = array('IBLOCK_ID' => $arParams['IBLOCK_ID'],"CODE" => $arParams["VARIABLES"], "DEPTH_LEVEL" => 4);
+	$rsSect = CIBlockSection::GetList(array(),$arFilter);
+	if($arSect = $rsSect->GetNext())
+	{
+		$rsSect = CIBlockSection::GetList(array(),array('IBLOCK_ID' => $arParams['IBLOCK_ID'],"ID" => $arSect["IBLOCK_SECTION_ID"]));
+		if($arSect = $rsSect->GetNext()){
+			$arParams["VARIABLES"]  = $arSect['CODE'];
+		}
+	}
+
 ?>
 
 <? foreach($arResult['SECTIONS'] as $key => $section): ?>
-<div class="cat insan <? if($key == 0): ?>open<? endif; ?>">
+<div class="cat insan">
 	<a href="#" class="name" onclick="return false"><div class="cube"><span></span><span></span></div><?=$section['NAME']?></a>
 
 	<ul class="cat-ul">
