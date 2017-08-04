@@ -43,7 +43,15 @@
 						</div><!--end::col__3-->
 						<div class="footer__col col--4">
 							<div class="footer__title">Каталог</div>
-							<?$APPLICATION->IncludeComponent(
+							<div class="cl">
+								<ul class="footer__list footer__list--50">
+									<li><a href="/catalog/inzhenernaya_santekhnika_otoplenie_vodoprovod_kanalizatsiya/">Инженерная сантехника</a></li>
+									<li><a href="/catalog/stroitelnye_materialy/">Строительные материалы</a></li>
+								</ul>
+							</div>
+							<?
+							/*
+							$APPLICATION->IncludeComponent(
 								"bitrix:menu", 
 								"footer-catalog", 
 								array(
@@ -61,7 +69,7 @@
 									"COMPONENT_TEMPLATE" => "footer"
 								),
 								false
-							); //footer__list?>
+							); //footer__list */?>
 						</div>
 					</div>
 					<div class="footer__bottom cl">
