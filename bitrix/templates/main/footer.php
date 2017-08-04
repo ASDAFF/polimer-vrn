@@ -73,7 +73,7 @@
 						</div>
 					</div>
 					<div class="footer__bottom cl">
-						<div class="footer__copyright">© 2006 — 2016. Полимер.</div>
+						<div class="footer__copyright">© 2006 — <?=data("Y")?>. Полимер.</div>
 						<ul class="footer__pay pay" title="Все способы оплаты">
 							<li><a href="javascript:void(0)" class="visa">Visa</a></li>
 							<li><a href="javascript:void(0)" class="master">MasterCard</a></li>
@@ -90,6 +90,12 @@
 			</div><!--end::wr-->
      	</div><!--end::container-->
 
+				<!— BEGIN JIVOSITE CODE {literal} —>
+				<script type='text/javascript'>
+					(function(){ var widget_id = 'Ms4VnpNIHY';var d=document;var w=window;function l(){
+						var s = document.createElement('script'); s.type = 'text/javascript'; s.async = true; s.src = '//code.jivosite.com/script/widget/'+widget_id; var ss = document.getElementsByTagName('script')[0]; ss.parentNode.insertBefore(s, ss);}if(d.readyState=='complete'){l();}else{if(w.attachEvent){w.attachEvent('onload',l);}else{w.addEventListener('load',l,false);}}})();
+				</script>
+				<!— {/literal} END JIVOSITE CODE —>
 
 
 			<?$APPLICATION->IncludeComponent("nbrains:main.feedback", "write-mail", Array(
