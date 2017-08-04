@@ -73,7 +73,7 @@
 						</div>
 					</div>
 					<div class="footer__bottom cl">
-						<div class="footer__copyright">© 2006 — <?=data("Y")?>. Полимер.</div>
+						<div class="footer__copyright">© 2006 — <?=data("Y");?>. Полимер.</div>
 						<ul class="footer__pay pay" title="Все способы оплаты">
 							<li><a href="javascript:void(0)" class="visa">Visa</a></li>
 							<li><a href="javascript:void(0)" class="master">MasterCard</a></li>
