@@ -75,7 +75,7 @@
 						</ul>
 						<div class="footer__studio">
 
-							
+
 						</div>
 					</div>
 				</footer>
