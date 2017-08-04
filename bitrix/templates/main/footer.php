@@ -73,10 +73,9 @@
 							<li><a href="javascript:void(0)" class="webmoney">Webmoney</a></li>
 							<li><a href="javascript:void(0)" class="ya">Яндекс Деньги</a></li>
 						</ul>
-						<div class="footer__studio"><a href="http://www.agrweb.ru" title="Создание сайтов на 1С-Битркикс" target="_blank">Создание сайта </a>
-							<a href="http://www.agrweb.ru" target="_blank">
-								<img src="<?=SITE_TEMPLATE_PATH?>/img/agrweb.png" width="110" height="10" alt="Разработчик сайта">
-							</a>
+						<div class="footer__studio">
+
+							
 						</div>
 					</div>
 				</footer>
