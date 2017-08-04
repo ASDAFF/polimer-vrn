@@ -48,7 +48,7 @@
 								"footer-catalog", 
 								array(
 									"ALLOW_MULTI_SELECT" => "N",
-									"CHILD_MENU_TYPE" => "footer_catalog",
+									"CHILD_MENU_TYPE" => "footer",
 									"DELAY" => "N",
 									"MAX_LEVEL" => "1",
 									"MENU_CACHE_GET_VARS" => array(
@@ -58,7 +58,7 @@
 									"MENU_CACHE_USE_GROUPS" => "Y",
 									"ROOT_MENU_TYPE" => "footer_catalog",
 									"USE_EXT" => "N",
-									"COMPONENT_TEMPLATE" => "footer-catalog"
+									"COMPONENT_TEMPLATE" => "footer"
 								),
 								false
 							); //footer__list?>
