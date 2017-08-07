@@ -8,7 +8,7 @@
 							<a href="/" class="footer__logo">
 								<img src="<?=SITE_TEMPLATE_PATH?>/img/h_logo.jpg" alt="Полимер" width="206" height="44">
 							</a>
-							<p class="footer__logotext">Оптово-розничной торговля материалами и оборудованием для отопления и водоснабжения в Воронежской области.</p>
+							<p class="footer__logotext">Оптово-розничная торговля материалами и оборудованием для отопления и водоснабжения в Воронежской области.</p>
 						</div><!--end::col__1-->
 						<div class="footer__col col--2">
 							<div class="footer__title">Контакты</div>
