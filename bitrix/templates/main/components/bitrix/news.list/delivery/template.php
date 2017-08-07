@@ -71,7 +71,13 @@ $this->setFrameMode(true);
 				<?endif;?>
 
 				<? if($arItem['PREVIEW_PICTURE']['SRC']): ?>
-				<div class="map"><span><img src="<?=$arItem['PREVIEW_PICTURE']['SRC']?>" width="560" height="610" alt=""></span></div>
+				<div class="map">
+					<span>
+						<a href="<?=$arItem['PREVIEW_PICTURE']['DESCRIPTION']?>">
+							<img src="<?=$arItem['PREVIEW_PICTURE']['SRC']?>" width="560" height="610" alt="">
+						</a>
+					</span>
+				</div>
 				<? endif; ?>
 
 			</div>
