@@ -78,6 +78,11 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["submit"] <> '' && (!isset($_P
 					{
 						$PROP[$field['CODE']] = Array("VALUE" => $enum_fields['ID']);
 					}
+				}elseif($field['PROPERTY_TYPE'] == "F"){
+
+					$img = $_FILES['FILE'];
+					$fid = CFile::SaveFile($img, "vote");
+					$PROP[$field['CODE']] = Array("VALUE" => $fid);
 
 				}
 			}
