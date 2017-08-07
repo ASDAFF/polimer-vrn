@@ -108,7 +108,7 @@ $this->setFrameMode(true);
 						ymaps.ready(init);
 						var myMap;
 						function init(){
-							myMap = new ymaps.Map("map_<?=$arItem['ID']?>", {
+							myMap = new ymaps.Map("map_<?=$arSection['ID'].$arItem['ID']?>", {
 								center: [<?=$map[0]?>, <?=$map[1]?>],
 								zoom: 16
 							});
