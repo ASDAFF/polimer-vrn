@@ -101,7 +101,7 @@ $this->setFrameMode(true);
 						<div class="cw-row image"><img src="<?=CFile::GetPath($arItem['PREVIEW_PICTURE'])?>" alt="<?=$arItem['NAME']?>"></div>
 						<? endif;?>
 						<? if($arItem['MAP_API']['VALUE']): ?>
-						<div class="cw-row map" id="map_<?=$arItem['ID']?>"></div>
+						<div class="cw-row map" id="map_<?=$arSection['ID'].$arItem['ID']?>"></div>
 						<? endif;?>
 					</div>
 					<script type="text/javascript">
