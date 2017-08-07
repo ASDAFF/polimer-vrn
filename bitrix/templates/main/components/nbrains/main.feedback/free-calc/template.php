@@ -52,7 +52,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 			<textarea name="DESC" cols="30" rows="7" placeholder="Введите краткий текст"><?=$_POST['DESC']?></textarea>
 		</div>
 
-<!--		<a href="#" class="attach">Прикрепите план здания или техническое задание <span>(файл до 50 мб)</span></a>-->
+		<a href="#" class="attach">Прикрепите план здания или техническое задание <span>(файл до 50 мб)</span></a>
 		<?if($arParams["USE_CAPTCHA"] == "Y"):?>
 			<div class="mf-captcha">
 				<div class="mf-text"><?=GetMessage("MFT_CAPTCHA")?></div>
