@@ -33,7 +33,7 @@ $strReturn .= '<div class="wr">';
 $itemSize = count($arResult);
 for($index = 0; $index < $itemSize; $index++)
 {
-	$title = htmlspecialcharsex($arResult[$index]["TITLE"]);
+	$title = htmlspecialcharsex(preg_replace('#(~(.*?)~)#is', '', $arResult[$index]["TITLE"]));
 
 	$nextRef = ($index < $itemSize-2 && $arResult[$index+1]["LINK"] <> ""? ' itemref="bx_breadcrumb_'.($index+1).'"' : '');
 	$child = ($index > 0? ' itemprop="child"' : '');

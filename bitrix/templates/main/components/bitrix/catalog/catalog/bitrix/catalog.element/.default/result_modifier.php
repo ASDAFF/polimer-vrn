@@ -617,4 +617,6 @@ if($arResult['PROPERTIES']['MORE_PHOTO']['VALUE']){
 	$arResult['PROPERTIES']['MORE_PHOTO']['VALUE'] = array($arResult['DETAIL_PICTURE']['ID']);
 }
 
+$arResult['NAME'] = preg_replace('#(~(.*?)~)#is', '', $arResult['NAME']);
+
 

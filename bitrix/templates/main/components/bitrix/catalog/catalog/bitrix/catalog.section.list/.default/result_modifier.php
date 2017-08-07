@@ -96,4 +96,8 @@ if (0 < $arResult['SECTIONS_COUNT'])
 		}
 	}
 }
+
+foreach($arResult['SECTIONS'] as $key => &$arSection){
+	$arResult['SECTIONS'][$key]['NAME'] = preg_replace('#(~(.*?)~)#is', '', $arSection['NAME']);
+}
 ?>

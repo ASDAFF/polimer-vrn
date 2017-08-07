@@ -503,3 +503,7 @@ if (!empty($arResult['ITEMS']))
 		}
 	}
 }
+$arResult['NAME'] = preg_replace('#(~(.*?)~)#is', '', $arResult['NAME']);
+foreach ($arResult['ITEMS'] as $key => $arItem){
+	$arResult['ITEMS'][$key]['NAME'] = preg_replace('#(~(.*?)~)#is', '', $arItem['NAME']);
+}
