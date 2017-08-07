@@ -33,7 +33,7 @@ $this->setFrameMode(true);
 				<?foreach($arItem['PROPERTIES']['PRICE']['VALUE'] as $key => $v):?>
 					<div class="line cl">
 						<span><?=$arItem['PROPERTIES']['PRICE']['DESCRIPTION'][$key]?></span>
-						<a target="_blank" href="<?=CFile::GetPath($v);?>" class="download">Скачать</a>
+						<a target="_blank" href="<?=$v;?>" class="download">Скачать</a>
 					</div>
 				<? endforeach; ?>
 				</div>
