@@ -21,7 +21,7 @@ $this->setFrameMode(true);
 		</div>
 		<h1 class="title"><?=$arResult['PROPERTIES']['DETALI_TITLE']['VALUE']?></h1>
 		<div class="txt">
-			<a href="<?=$arParams['SECTION_URL']?>" class="back2allnews"><span></span><span></span>Назад к списку акций</a>
+			<a href="<?=$arParams['SECTION_URL']?>" class="back2allnews"><span></span><span></span>Назад к списку новости</a>
 
 			<?if(strlen($arResult["DETAIL_TEXT"])>0):?>
 				<?echo $arResult["DETAIL_TEXT"];?>
@@ -29,7 +29,7 @@ $this->setFrameMode(true);
 
 		</div>
 		<div class="bottombar cl">
-			<a href="<?=$arParams['SECTION_URL']?>" class="back2allnews"><span></span><span></span>Назад к списку акций</a>
+			<a href="<?=$arParams['SECTION_URL']?>" class="back2allnews"><span></span><span></span>Назад к списку новости</a>
 			<div class="soc_share">
 				<div class="ss_social">
 					<div class="social-likes">
