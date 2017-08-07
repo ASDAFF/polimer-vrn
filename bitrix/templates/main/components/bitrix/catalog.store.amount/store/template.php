@@ -29,18 +29,32 @@ $this->setFrameMode(true);
 			<div class="mtn">Наличие</div>
 
             <div class="qbar cl">
-               <span class="green"></span>
-               <span class="green"></span>
-               <span class="green"></span>
-               <span class="green"></span>
-               <span class="green"></span>
-               <span></span>
-               <span></span>
-               <span></span>
-               <span></span>
-               <span></span>
+			<!--Условия остатка на складе-->
+				<? $str_count = '';?>
+				<? if($arProperty["AMOUNT"] > 50):
+					$str_count = 'Много';
+					?>
+				   <span class="green"></span>
+				   <span class="green"></span>
+				   <span class="green"></span>
+				   <span class="green"></span>
+				   <span class="green"></span>
+				<? elseif($arProperty["AMOUNT"] < 10):
+					$str_count = 'Мало';
+					?>
+					<span class="red"></span>
+					<span class="red"></span>
+				<? elseif($arProperty["AMOUNT"] < 50):
+					$str_count = 'Достаточно';
+					?>
+					<span class="yellow"></span>
+					<span class="yellow"></span>
+					<span class="yellow"></span>
+				<? endif; ?>
+			<!--Условия остатка на складе END-->
+
             </div>
-            <div class="q"><?=$arProperty["AMOUNT"]?></div>
+            <div class="q"><?=$str_count;?></div>
 
 		</div>
 		<div class="tab-cell">
