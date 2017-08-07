@@ -14,7 +14,7 @@ $this->setFrameMode(true);
 if($arResult["ITEMS"]):
 ?>
 <div class="h2"><?=$arParams['PAGER_TITLE']?></div>
-<div class="slider_product" id="mp__product__action">
+<div class="slider_product_show_all slider_product" id="mp__product__action">
 
 	<?foreach($arResult["ITEMS"] as $arItem): ?>
 	<div>

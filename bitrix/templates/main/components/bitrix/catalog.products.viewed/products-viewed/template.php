@@ -120,7 +120,7 @@ if (!empty($arResult['ITEMS']) && !empty($arResult['ITEM_ROWS']))
 {
 	?>
 	<div class="h2">Вы смотрели</div>
-	<div class="slider_product" id="mp__product__action">
+	<div class="slider_product_show_all slider_product" id="mp__product__action">
 
 	<?
 $areaIds = array();

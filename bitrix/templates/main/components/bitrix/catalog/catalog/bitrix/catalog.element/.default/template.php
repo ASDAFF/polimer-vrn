@@ -268,7 +268,8 @@ $this->setFrameMode(true);
 
    <div class="cl"></div>
 
-    <div class="pc__prod-info">
+    <div class="col-show-slides-6">
+
 
     <?$APPLICATION->IncludeComponent("bitrix:catalog.products.viewed", "products-viewed", Array(
         "ACTION_VARIABLE" => "action_cpv",	// РќР°Р·РІР°РЅРёРµ РїРµСЂРµРјРµРЅРЅРѕР№, РІ РєРѕС‚РѕСЂРѕР№ РїРµСЂРµРґР°РµС‚СЃСЏ РґРµР№СЃС‚РІРёРµ
@@ -421,6 +422,7 @@ $this->setFrameMode(true);
             false
         );?>
 
-    </div>
+        </div>
+
 
 </div><!--end::prod_card-->
