@@ -13,7 +13,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 
 
 <?if(!empty($arResult["ERROR_MESSAGE"])){?>
-	<div class="popup" id="<?=$arParams["IBLOCK_TYPE"].$arParams["IBLOCK_ID"].'ERROR'?>" style="display: block;left: 33%;min-width: 500px;">
+	<div class="popup" id="<?=$arParams["IBLOCK_TYPE"].$arParams["IBLOCK_ID"].'ERROR'?>" style="display: block;width: 650px;margin: 0 0 0 -325px;">
 		<a href="#" class="close">&nbsp;</a>
 		<div class="title"></div>
 		<div class="subtitle">
@@ -26,7 +26,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 <?}?>
 
 <?if(strlen($arResult["OK_MESSAGE"]) > 0){?>
-	<div class="popup" id="<?=$arParams["IBLOCK_TYPE"].$arParams["IBLOCK_ID"].'OK'?>" style="display: block;left: 33%;min-width: 500px;">
+	<div class="popup" id="<?=$arParams["IBLOCK_TYPE"].$arParams["IBLOCK_ID"].'OK'?>" style="display: block;width: 650px;margin: 0 0 0 -325px;">
 		<a href="#" class="close">&nbsp;</a>
 		<div class="title"></div>
 		<div class="subtitle">
@@ -90,7 +90,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 </div>
 
 
-<div class="popup" id="<?=$arParams["IBLOCK_TYPE"].$arParams["IBLOCK_ID"]?>" style="display: none;left: 33%">
+<div class="popup" id="<?=$arParams["IBLOCK_TYPE"].$arParams["IBLOCK_ID"]?>" style="display: none;width: 650px;margin: 0 0 0 -325px;">
 	<a href="#" class="close">&nbsp;</a>
 	<div class="title"></div>
 	<div class="subtitle">

@@ -88,7 +88,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 </div>
 </form>
 
-<div class="popup" id="<?=$arParams["IBLOCK_TYPE"].$arParams["IBLOCK_ID"]?>" style="display: none;left: 30%">
+<div class="popup" id="<?=$arParams["IBLOCK_TYPE"].$arParams["IBLOCK_ID"]?>" style="display: none;width: 650px;margin: 0 0 0 -325px;">
 	<a href="#" class="close">&nbsp;</a>
 	<div class="title"></div>
 	<div class="subtitle">
