@@ -31,7 +31,7 @@ $this->setFrameMode(true);
             <div class="qbar cl">
 			<!--Условия остатка на складе-->
 				<? $str_count = '';?>
-				<? if($arProperty["AMOUNT"] => 50):
+				<? if($arProperty["AMOUNT"] >= 50):
 					$str_count = 'Много';
 					?>
 				   <span class="green"></span>
@@ -39,7 +39,7 @@ $this->setFrameMode(true);
 				   <span class="green"></span>
 				   <span class="green"></span>
 				   <span class="green"></span>
-				<? elseif($arProperty["AMOUNT"] =< 10):
+				<? elseif($arProperty["AMOUNT"] <= 10):
 					$str_count = 'Мало';
 					?>
 					<span class="red"></span>
