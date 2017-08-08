@@ -158,6 +158,11 @@ if (!empty($arResult['ITEMS']))
 								</a>
 								<div class="instock">Товар в наличии</div>
 
+
+								<?else:?>
+								<div class="cost_total"><span></span></div>
+								<a href="javascript:void(0)" class="add2cartOrder show-popup" data-id="order-product">Товар под заказ</a>
+								<div class="outstock">Товар под заказ</div>
 								<? endif; ?>
 
 							</div>

@@ -97,6 +97,27 @@
 				</script>
 				<!— {/literal} END JIVOSITE CODE —>
 
+			<?$APPLICATION->IncludeComponent(
+				"nbrains:main.feedback",
+				"order-product",
+				array(
+					"EMAIL_TO" => "sale@polimer-vrn",
+					"EVENT_MESSAGE_ID" => array(
+					),
+					"IBLOCK_ID" => "18",
+					"IBLOCK_TYPE" => "feedback",
+					"OK_TEXT" => "Спасибо, ваше сообщение принято.",
+					"PROPERTY_CODE" => array(
+						0 => "FIO",
+						1 => "EMAIL",
+						2 => "PHONE",
+						3 => "RULE",
+					),
+					"USE_CAPTCHA" => "N",
+					"COMPONENT_TEMPLATE" => "order-product"
+				),
+				false
+			);?>
 
 			<?$APPLICATION->IncludeComponent("nbrains:main.feedback", "write-mail", Array(
 				"EMAIL_TO" => "sale@polimer-vrn",	// E-mail, на который будет отправлено письмо
