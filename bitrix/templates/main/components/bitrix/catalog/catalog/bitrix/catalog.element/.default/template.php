@@ -37,7 +37,8 @@ $this->setFrameMode(true);
 <div class="prod_card cl">
    <div class="pc__prod-info">
       <h1><?=$arResult['NAME']?></h1>
-      <div class="pc__code">Код товара: <span><?=$arResult['PROPERTIES']['CML2_ARTICLE']['VALUE']?></span></div>
+
+<!--      <div class="pc__code">Код товара: <span>--><?//=$arResult['PROPERTIES']['CML2_ARTICLE']['VALUE']?><!--</span></div>-->
 
       <div class="cl">
          <div class="pc__prod-gallery cl">

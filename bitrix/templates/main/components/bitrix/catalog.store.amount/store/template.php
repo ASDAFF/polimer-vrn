@@ -24,7 +24,7 @@ $this->setFrameMode(true);
 <?foreach($arResult["STORES"] as $pid => $arProperty):?>
 	<div class="tab-row cl">
 		<div class="tab-cell">
-			 <?=$arProperty["TITLE"]?><span><?=$arProperty["PHONE"]?></span>email:<a href="#"><?=$arProperty["EMAIL"]?></a></div>
+			 <?=$arProperty["TITLE"]?><span><?=$arProperty["PHONE"]?></span><?if($arProperty["EMAIL"]):?>email:<a href="#"><?=$arProperty["EMAIL"]?></a><? endif; ?></div>
 		<div class="tab-cell">
 			<div class="mtn">Наличие</div>
 
@@ -50,6 +50,8 @@ $this->setFrameMode(true);
 					<span class="yellow"></span>
 					<span class="yellow"></span>
 					<span class="yellow"></span>
+				<? elseif($arProperty["AMOUNT"] == 0): ?>
+					<?=$str_count = 'Отсутствует';?>
 				<? endif; ?>
 			<!--Условия остатка на складе END-->
 
