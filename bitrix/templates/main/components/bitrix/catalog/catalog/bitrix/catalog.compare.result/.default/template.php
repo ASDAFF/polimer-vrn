@@ -46,7 +46,7 @@ $arrPropertyCode = array();
 					<a href="?action=DELETE_FROM_COMPARE_LIST&id=<?=$arElement['ID']?>" class="delete"></a>
 					<div class="info">
 						<div class="img">
-							<a href="#"><img src="<?=$arElement['PREVIEW_PICTURE']['SRC']?>" width="132" height="110" alt="Радиатор алюминиевый TORRID 500/100 12 секций" /></a>
+							<a href="#"><img src="<?=$arElement['PREVIEW_PICTURE']['SRC']?>" style="max-height: 170px;" alt="<?=$arElement["NAME"]?>" /></a>
 						</div>
 						<div class="name" style="min-height: 65px">
 							<a href="<?=$arElement['DETAIL_PAGE_URL']?>"><?=$arElement["NAME"]?></a>

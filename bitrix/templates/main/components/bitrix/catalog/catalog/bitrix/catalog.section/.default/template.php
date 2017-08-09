@@ -89,7 +89,7 @@ if (!empty($arResult['ITEMS']))
 							<div class="inner">
 								<div class="compare">
 									<label>
-										<input type="checkbox" value="<?=$arItem['ID']?>">
+										<input type="checkbox" id-cat="<?=$arItem['IBLOCK_SECTION_ID']?>" value="<?=$arItem['ID']?>">
 										<span>Сравнить</span>
 									</label>
 								</div>
