@@ -43,22 +43,22 @@ $this->setFrameMode(true);
 		</div>
 	</div>
 
-	<form method="post" action="http://cp.unisender.com/ru/subscribe?hash=5dpcmpjehbb5zcruq3gwuf91zyopeqzsgfrt91jy&amp;list_ids=2799919">
+	<form method="post" action="http://cp.unisender.com/ru/subscribe?hash=5dpcmpjehbb5zcruq3gwuf91zyopeqzsgfrt91jy&amp;list_ids=2799919" TARGET="_blank">
 	<div class="pl__subscribe">
 		<div class="form">
 			<div class="name">Получайте новые <br>обновления прайс-листов <br>на Вашу почту</div>
 			<div class="inp">
 				<span>Представьтесь</span>
 				<input type="hidden" name="charset" value="utf-8" />
-				<input type="text" class="name" name="Name">
+				<input type="text" class="name" placeholder="Имя" name="Name">
 			</div>
 			<div class="inp">
 				<span>E-mail*</span>
-				<input type="text" name="email">
+				<input type="text" placeholder="vash_mail@mail.ru" name="email">
 			</div>
 			<div class="inp">
 				<span>Телефон</span>
-				<input type="text" name="phone" class="phone">
+				<input type="text" name="phone" placeholder="+7 (473) 234-03-01" class="phone">
 			</div>
 			<input class="btn_subscribe" type="submit" value=" Подписаться " />
 			<div class="req">* - обязательное поле</div>
