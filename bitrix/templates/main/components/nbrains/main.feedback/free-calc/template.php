@@ -32,12 +32,12 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 
 		<div class="line">
 			<span>ФИО</span>
-			<input type="text" class="fio" name="FIO" value="<?=$_POST['FIO']?>">
+			<input type="text" class="fio name" placeholder="ФИО" name="FIO" value="<?=$_POST['FIO']?>">
 		</div>
 
 		<div class="line pl">
 			<span>Телефон</span>
-			<input type="text" class="phone" name="PHONE" value="<?=$_POST['PHONE']?>">
+			<input type="text" class="phone" name="PHONE" placeholder="+7 (473) 234-03-01" value="<?=$_POST['PHONE']?>">
 			<span class="txt_ct">Время звонка, до</span>
 			<input type="text" class="call_time" name="TIME_AFTER" value="<?=$_POST['TIME_AFTER']?>">
 		</div>

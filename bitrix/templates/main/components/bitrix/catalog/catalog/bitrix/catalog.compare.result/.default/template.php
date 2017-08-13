@@ -77,5 +77,11 @@ $arrPropertyCode = array();
 
 
 <script type="text/javascript">
+	var height = [];
+	$('.compare-page .values .val').each(function(el,v){
+		height[el] = $(v).height();
+	});
+	$('.compare-page .values .val').height(Math.max.apply(null, height));
+
 	var CatalogCompareObj = new BX.Iblock.Catalog.CompareClass("bx_catalog_compare_block");
 </script>
