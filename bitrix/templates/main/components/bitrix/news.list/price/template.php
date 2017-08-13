@@ -50,7 +50,7 @@ $this->setFrameMode(true);
 			<div class="inp">
 				<span>Представьтесь</span>
 				<input type="hidden" name="charset" value="utf-8" />
-				<input type="text" name="Name">
+				<input type="text" class="name" name="Name">
 			</div>
 			<div class="inp">
 				<span>E-mail*</span>
