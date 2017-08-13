@@ -48,7 +48,7 @@ $arrPropertyCode = array();
 						<div class="img">
 							<a href="#"><img src="<?=$arElement['PREVIEW_PICTURE']['SRC']?>" style="max-height: 170px;" alt="<?=$arElement["NAME"]?>" /></a>
 						</div>
-						<div class="name" style="min-height: 65px">
+						<div class="name" style="min-height: 80px">
 							<a href="<?=$arElement['DETAIL_PAGE_URL']?>"><?=$arElement["NAME"]?></a>
 						</div>
 					</div>

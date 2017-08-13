@@ -17,10 +17,10 @@ $this->setFrameMode(true);
 	<div>
 		<div class="item cl">
 			<div class="slider__product">
-				<img src="<?=$arItem["PREVIEW_PICTURE"]["SRC"]?>" alt="<?=$arItem["PREVIEW_PICTURE"]["ALT"]?>" width="199" height="314" >
+				<img src="<?=$arItem["PREVIEW_PICTURE"]["SRC"]?>" alt="<?=$arItem["PREVIEW_PICTURE"]["ALT"]?>" width="" height="" >
 			</div>
 			<div class="slider__content">
-				<img src="<?=$arItem["DETAIL_PICTURE"]["SRC"]?>" width="161" height="37" alt="<?=$arItem["PREVIEW_PICTURE"]["ALT"]?>" class="slider__img">
+<!--				<img src="--><?//=$arItem["DETAIL_PICTURE"]["SRC"]?><!--" width="161" height="37" alt="--><?//=$arItem["PREVIEW_PICTURE"]["ALT"]?><!--" class="slider__img">-->
 				<div class="slider__text">
 					<?if($arParams["DISPLAY_PREVIEW_TEXT"]!="N" && $arItem["PREVIEW_TEXT"]):?>
 						<?echo $arItem["PREVIEW_TEXT"];?>
