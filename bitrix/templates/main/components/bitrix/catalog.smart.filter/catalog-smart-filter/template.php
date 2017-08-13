@@ -55,7 +55,7 @@ $this->addExternalCss("/bitrix/css/main/font-awesome.css");
 						?>
 
 
-						<li class="cat-li li-open">
+						<li class="cat-li">
 							<span class="bx-filter-container-modef"></span>
 							<a href="#" class="title" onclick="return false"><?=$arItem["NAME"]?></span></a>
 							<div class="inner">
@@ -184,7 +184,7 @@ $this->addExternalCss("/bitrix/css/main/font-awesome.css");
 
 
 
-					<li class="cat-li li-open">
+					<li class="cat-li">
 						<span class="bx-filter-container-modef"></span>
 						<a href="#" class="title" onclick="return false"><?=$arItem["NAME"]?></a>
 
