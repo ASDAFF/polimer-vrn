@@ -731,21 +731,21 @@ COLOR
 @media (max-width: 767px) {
 	.bx-touch .bx-filter .bx-filter-popup-result {
 		font-size: 12px;
-		line-height: 14px;
-		position: fixed !important;
+		/* line-height: 14px; */
+		/* position: fixed !important; */
 		z-index: 1001;
-		top: auto !important;
+		top: 5px !important;
 		right: 0 !important;
-		bottom: 0 !important;
+		/* bottom: 0 !important; */
 		left: 0 !important;
-		margin-top: 0;
+		/* margin-top: 0; */
 		margin-left: 0;
 		width: auto;
-		height: auto;
+		height: 30px;
 		padding: 10px;
 		border-radius: 2px;
 		border: 1px solid #c6dae7;
-		background: rgba(255,255,255,.9);
+		background: rgb(255, 255, 255);
 	}
 	.bx-touch .bx-filter .bx-filter-popup-result br{display: none;}
 	.bx-filter .bx-filter-popup-result .arrow {

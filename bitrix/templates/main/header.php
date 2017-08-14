@@ -121,32 +121,39 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 				<div class="mm__wrap">
 					<div class="wr cl">
 						<div class="cl">
-							<form id="mm__search" class="mm__search" method="get" action="/">
-								<input class="search__input input" type="text" placeholder="Поиск" value="">
-								<button type="submit" class="search__btn"></button>
-							</form>
-							<a href="/personal/" class="mm__account">Личный кабинет</a>
+
+							<?$APPLICATION->IncludeComponent(
+								"bitrix:search.form",
+								"search-form-mobile",
+								array(
+									"PAGE" => "#SITE_DIR#search/",
+									"USE_SUGGEST" => "Y",
+									"COMPONENT_TEMPLATE" => "search-form"
+								),
+								false
+							);?>
+
+
+							<a href="/personal/order/make/" class="mm__account">Личный кабинет</a>
 						</div><!--end::cl-->
-						<ul class="mm__category cl">
-							<li class="maincategory maincategory--1 cl">
-								<a href="/catalog/">
-									<span class="img"></span>
-									<span class="name">Инженерная<br/> сантехника</span>
-								</a>
-							</li>
-							<li class="maincategory maincategory--2 cl">
-								<a href="/catalog/">
-									<span class="img"></span>
-									<span class="name">Cтроительные<br/> полимеры</span>
-								</a>
-							</li>
-							<li class="maincategory maincategory--3 cl">
-								<a href="/catalog/">
-									<span class="img"></span>
-									<span class="name">Прайс-листы</span>
-								</a>
-							</li>
-						</ul>
+
+						<?$APPLICATION->IncludeComponent("bitrix:menu", "mobile-cat-menu-one", Array(
+							"ALLOW_MULTI_SELECT" => "N",	// Разрешить несколько активных пунктов одновременно
+							"CHILD_MENU_TYPE" => "left",	// Тип меню для остальных уровней
+							"DELAY" => "N",	// Откладывать выполнение шаблона меню
+							"MAX_LEVEL" => "1",	// Уровень вложенности меню
+							"MENU_CACHE_GET_VARS" => array(	// Значимые переменные запроса
+								0 => "",
+							),
+							"MENU_CACHE_TIME" => "3600",	// Время кеширования (сек.)
+							"MENU_CACHE_TYPE" => "N",	// Тип кеширования
+							"MENU_CACHE_USE_GROUPS" => "Y",	// Учитывать права доступа
+							"ROOT_MENU_TYPE" => "mobile-categories",	// Тип меню для первого уровня
+							"USE_EXT" => "N",	// Подключать файлы с именами вида .тип_меню.menu_ext.php
+						),
+							false
+						);?>
+
 						<div class="cl">
 							<a href="/sale/" class="mm__action">Акции</a>
 							<a href="/calc/" class="mm__calculation">Бесплатный расчет</a>

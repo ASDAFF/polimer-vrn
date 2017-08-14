@@ -153,12 +153,10 @@ if (!empty($arResult['ITEMS']))
 									</script>
 								<div class="cost_total"><span><?=$ar_res['DISCOUNT_PRICE'];?></span> Руб.</div>
 								<a href="javascript:void(0)" class="add2cart">
-									<span class="txt1">В корзину</span>
+									<span class="txt1" onclick="if(document.body.clientWidth < 659){addToBasket2(<?=$arItem['ID']?>, $('#count_<?=$arItem['ID']?> input').val())};">В корзину</span>
 									<span class="txt2" onclick="addToBasket2(<?=$arItem['ID']?>, $('#count_<?=$arItem['ID']?> input').val());">Добавить в корзину</span>
 								</a>
 								<div class="instock">Товар в наличии</div>
-
-
 								<?else:?>
 								<div class="cost_total"><span></span></div>
 								<a href="javascript:void(0)" class="add2cartOrder show-popup" data-id="order-product">Товар под заказ</a>
