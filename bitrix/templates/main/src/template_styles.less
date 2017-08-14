@@ -3013,6 +3013,7 @@ header {
 }
 
 
+
 @media screen and (max-width: 1319px) {
 	.at__block-about {
 		.col-about {
@@ -3192,10 +3193,40 @@ header {
 }
 
 @media screen and (max-width: 659px) {
+
+  .at__blue-line {
+	&:before {
+	  position: absolute;
+	  display: none;
+	  content: '';
+	  width: 250px;
+	  height: 100%;
+	  top: 0;
+	  right: 100%;
+	  background: #056CCC;
+	}
+	&:after {
+	  position: absolute;
+	  display: none;
+	  content: '';
+	  width: 250px;
+	  height: 100%;
+	  top: 0;
+	  left: 100%;
+	  background: #0053a6;
+	}
+  }
+
+}
+
+@media screen and (max-width: 659px) {
 	.at__block-about {
 		.col-about {
 			.at__video {
 				margin-top: 20px;
+			  iframe{
+				width: 100%;
+			  }
 			}
 			p {
 				&.about {
@@ -3243,6 +3274,7 @@ header {
 				.txt {
 					font: 400 16px/20px @fira;
 					&:before {
+					  	display: none;
 						left: 545px;
 					}
 				}
@@ -7884,8 +7916,9 @@ a.pickup-stores__item{ display: block; background: url(img/place_ico.png) 20px 2
 			.column {
 				width: 350px;
 				&:nth-child(2) {
-					margin-left: 50px;
-					width: 420px;
+				  margin-left: 0px;
+				  margin-top: 20px;
+				  width: 310px;
 				}
 				.title {
 					padding: 0 0 40px;
@@ -8010,7 +8043,7 @@ a.pickup-stores__item{ display: block; background: url(img/place_ico.png) 20px 2
 				position: relative;
 				width: 100%;
 				&:nth-child(2) {
-					display: none;
+					//display: none;
 					.title {
 						padding-left: 0;
 					}
@@ -11466,7 +11499,7 @@ a.pickup-stores__item{ display: block; background: url(img/place_ico.png) 20px 2
 		display: block;
 		width: 25px;
 		height: 18px;
-		top: 85px;
+		top: 50px;
 		right: 0;
 		.sandwich {
 			display: block;
@@ -11525,7 +11558,7 @@ a.pickup-stores__item{ display: block; background: url(img/place_ico.png) 20px 2
 		}
 	}
 	.co__cities {
-		top: 85px;
+		top: 50px;
 		right: auto;
 		left: 0;
 	}
@@ -11551,7 +11584,7 @@ a.pickup-stores__item{ display: block; background: url(img/place_ico.png) 20px 2
 				}
 			}
 			&.show {
-				height: 420px;
+				height: 300px;
 			}
 		}
 		.t-content {
@@ -11969,7 +12002,7 @@ a.pickup-stores__item{ display: block; background: url(img/place_ico.png) 20px 2
 	.sh__cities {
 		left: 0;
 		right: 0;
-		top: 70px;
+		top: 50px;
 	}
 	.sh__text {
 		float: none;
@@ -13096,6 +13129,7 @@ footer {
 				.footer__list {
 					&.footer__list--50 {
 						width: 100%;
+					  	border-top: 1px solid #cdd2d6;
 					}
 					li {
 						padding: 10px 0;

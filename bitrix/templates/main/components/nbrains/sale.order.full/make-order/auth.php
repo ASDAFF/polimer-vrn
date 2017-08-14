@@ -43,17 +43,17 @@ if($cntBasketItems > 0):
 				<input type="submit" class="login_enter" value="Войти">
 				<input type="hidden" name="do_authorize" value="Y">
 
-				<a href="<?=$arParams["PATH_TO_AUTH"]?>?forgot_password=yes&back_url=<?= urlencode($arParams["PATH_TO_ORDER"]); ?>" class="remind_pass">Напомнить пароль</a>
+				<a href="/bitrix/admin/?forgot_password=yes/#forgot_password" class="remind_pass">Напомнить пароль</a>
 
-				<div class="login_social cl">
-					<span>Войти через социальные сети</span>
-					<a href="#" class="go"></a>
-					<a href="#" class="tw"></a>
-					<a href="#" class="vk"></a>
-					<a href="#" class="rs"></a>
-					<a href="#" class="fb"></a>
-					<a href="#" class="ok"></a>
-				</div>
+<!--				<div class="login_social cl">-->
+<!--					<span>Войти через социальные сети</span>-->
+<!--					<a href="#" class="go"></a>-->
+<!--					<a href="#" class="tw"></a>-->
+<!--					<a href="#" class="vk"></a>-->
+<!--					<a href="#" class="rs"></a>-->
+<!--					<a href="#" class="fb"></a>-->
+<!--					<a href="#" class="ok"></a>-->
+<!--				</div>-->
 
 			</form>
 
@@ -86,7 +86,7 @@ if($cntBasketItems > 0):
 				?>
 			</div>
 			<div class="line"><span><?echo GetMessage("STOF_LASTNAME")?></span>
-				<input type="text" name="NEW_LAST_NAME" size="40" value="<?=$arResult["POST"]["NEW_LAST_NAME"]?>">
+				<input type="text" name="NEW_LAST_NAME" placeholder="" size="40" value="<?=$arResult["POST"]["NEW_LAST_NAME"]?>">
 			</div>
 			<div class="line"><span><?echo GetMessage("STOF_NAME")?></span>
 				<input type="text" name="NEW_NAME" size="40" value="<?=$arResult["POST"]["NEW_NAME"]?>">
