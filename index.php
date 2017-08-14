@@ -3,26 +3,25 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("«Полимер» — главная страница сайта");
 ?>
 <div class="mp__categories">
-	<ul class="maincategory__mobile cl">
-		<li class="maincategory maincategory--1 cl">
-			<a href="#">
-				<span class="img"></span>
-				<span class="name">Инженерная<br/> сантехника</span>
-			</a>
-		</li>
-		<li class="maincategory maincategory--2 cl">
-			<a href="#">
-				<span class="img"></span>
-				<span class="name">Cтроительные<br/> полимеры</span>
-			</a>
-		</li>
-		<li class="maincategory maincategory--3 cl">
-			<a href="#">
-				<span class="img"></span>
-				<span class="name">Прайс-листы</span>
-			</a>
-		</li>
-	</ul>
+
+	<?$APPLICATION->IncludeComponent("bitrix:menu", "mobile-cat-menu", Array(
+		"ALLOW_MULTI_SELECT" => "N",	// Р Р°Р·СЂРµС€РёС‚СЊ РЅРµСЃРєРѕР»СЊРєРѕ Р°РєС‚РёРІРЅС‹С… РїСѓРЅРєС‚РѕРІ РѕРґРЅРѕРІСЂРµРјРµРЅРЅРѕ
+		"CHILD_MENU_TYPE" => "left",	// РўРёРї РјРµРЅСЋ РґР»СЏ РѕСЃС‚Р°Р»СЊРЅС‹С… СѓСЂРѕРІРЅРµР№
+		"DELAY" => "N",	// РћС‚РєР»Р°РґС‹РІР°С‚СЊ РІС‹РїРѕР»РЅРµРЅРёРµ С€Р°Р±Р»РѕРЅР° РјРµРЅСЋ
+		"MAX_LEVEL" => "1",	// РЈСЂРѕРІРµРЅСЊ РІР»РѕР¶РµРЅРЅРѕСЃС‚Рё РјРµРЅСЋ
+		"MENU_CACHE_GET_VARS" => array(	// Р—РЅР°С‡РёРјС‹Рµ РїРµСЂРµРјРµРЅРЅС‹Рµ Р·Р°РїСЂРѕСЃР°
+			0 => "",
+		),
+		"MENU_CACHE_TIME" => "3600",	// Р’СЂРµРјСЏ РєРµС€РёСЂРѕРІР°РЅРёСЏ (СЃРµРє.)
+		"MENU_CACHE_TYPE" => "N",	// РўРёРї РєРµС€РёСЂРѕРІР°РЅРёСЏ
+		"MENU_CACHE_USE_GROUPS" => "Y",	// РЈС‡РёС‚С‹РІР°С‚СЊ РїСЂР°РІР° РґРѕСЃС‚СѓРїР°
+		"ROOT_MENU_TYPE" => "mobile-categories",	// РўРёРї РјРµРЅСЋ РґР»СЏ РїРµСЂРІРѕРіРѕ СѓСЂРѕРІРЅСЏ
+		"USE_EXT" => "N",	// РџРѕРґРєР»СЋС‡Р°С‚СЊ С„Р°Р№Р»С‹ СЃ РёРјРµРЅР°РјРё РІРёРґР° .С‚РёРї_РјРµРЅСЋ.menu_ext.php
+	),
+		false
+	);?>
+
+
 	<ul class="tabslist cl">
 
 		<?

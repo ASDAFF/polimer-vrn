@@ -4,7 +4,7 @@ if ($normalCount > 0)
 {?>
 
 	<div class="basket">
-		<a href="#" class="check">Проверка наличия на складе</a>
+<!--		<a href="#" class="check">Проверка наличия на складе</a>-->
 		<h1>Корзина</h1>
 		<div class="list">
 			<div class="l-head">
@@ -50,7 +50,7 @@ if ($normalCount > 0)
 				<input type="text" id="coupon" name="COUPON" value="">
 				<span>Активировать промокод:</span>
 			</div>
-			<a href="/check-out/step2.php" class="checkout_wr">Оформить заказ без регистрации</a>
+<!--			<a href="/check-out/step2.php" class="checkout_wr">Оформить заказ без регистрации</a>-->
 			<a href="<?=$arParams['PATH_TO_ORDER']?>" class="checkout">Оформить заказ</a>
 			<div class="total">
 				<div class="t-row t-sale cl">
