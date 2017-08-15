@@ -101,12 +101,17 @@ if (!empty($arResult['ITEMS']))
 								</a>
 								<a href="<?=$arItem['DETAIL_PAGE_URL']?>" class="title"><?=$arItem['NAME']?></a>
 								<div class="cost">
-									<span>
+
 										<?
 										$ar_res = CCatalogProduct::GetOptimalPrice($arItem['ID'], 1, $USER->GetUserGroupArray(), 'N');
-										echo $ar_res['DISCOUNT_PRICE'];
+										if($ar_res['DISCOUNT_PRICE']){
+											echo "<span>";
+											echo $ar_res['DISCOUNT_PRICE'];
+											echo "</span> Руб.";
+										}
 										?>
-									</span> Руб.</div>
+								</div>
+
 								<? if($arItem['CATALOG_QUANTITY'] > 0): ?>
 								<div class="quantity" id="count_<?=$arItem['ID']?>">
 									<a class="minus na" href="#"></a>

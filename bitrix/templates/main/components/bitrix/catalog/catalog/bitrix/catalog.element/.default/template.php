@@ -61,6 +61,9 @@ $this->setFrameMode(true);
                <label for="icompare">Сравнить</label>
             </div>
 
+            <? if(empty($arResult['ITEM_PRICES'])): ?>
+                <h1>Цену уточняйте у менеджера</h1>
+            <? else: ?>
             <div class="bb_col">
                <div class="price">
                   <? foreach($arResult['ITEM_PRICES'] as $name => $price):?>
@@ -68,7 +71,7 @@ $this->setFrameMode(true);
                   <div class="price-new"><span><?=$price['UNROUND_PRICE']?></span>  руб.</div>
                   <? endforeach; ?>
                </div>
-               <a href="#" class="cheaper">Нашли дешевле ?</a>
+<!--               <a href="#" class="cheaper">Нашли дешевле ?</a>-->
             </div>
 
             <div class="bb_col right">
@@ -84,6 +87,7 @@ $this->setFrameMode(true);
                   <a class="plus" href="#"></a>
                </div>
             </div>
+            <? endif; ?>
 
             <? if($arResult['CATALOG_QUANTITY'] > 0): ?>
             <a href="javascript:void(0)" class="add2cart" onclick="addToBasket2(<?=$arResult['ID']?>, $('#count_product').val());">Добавить в корзину</a>
