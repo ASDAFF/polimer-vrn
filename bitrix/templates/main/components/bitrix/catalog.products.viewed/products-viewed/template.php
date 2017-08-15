@@ -141,13 +141,18 @@ $areaIds = array();
 					</a>
 					<a href="<?=$item['DETAIL_PAGE_URL']?>" class="name"><?=$item['NAME']?></a>
 					<div class="price">
-						<span>
 							<?
 							$ar_res = CCatalogProduct::GetOptimalPrice($item['ID'], 1, $USER->GetUserGroupArray(), 'N');
-							echo $ar_res['DISCOUNT_PRICE'];
+							if($ar_res['DISCOUNT_PRICE']){
+								echo "<span>";
+								echo $ar_res['DISCOUNT_PRICE'];
+								echo "</span> Руб.";
+							}
 							?>
-						</span>
-						Руб</div>
+					</div>
+					<?if(!$ar_res['DISCOUNT_PRICE']){
+						print '<span class="noprice" style="font-size: 11px;margin: 17px 0">Цену уточняйте у менеджера</span>';
+					}?>
 					<a href="javascript:void(0)" onclick="addToBasket2(<?=$item['ID']?>,1);" class="cart">В корзину</a>
 				</div>
 			</div>

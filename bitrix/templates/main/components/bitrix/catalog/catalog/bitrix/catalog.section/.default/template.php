@@ -95,13 +95,12 @@ if (!empty($arResult['ITEMS']))
 								</div>
 								<div class="close"></div>
 								<a href="<?=$arItem['DETAIL_PAGE_URL']?>" class="pic">
-                       <span>
-                          <img src="<?=$arItem['PREVIEW_PICTURE']['SRC']?>" alt="">
-                       </span>
+								   <span>
+									  <img src="<?=$arItem['PREVIEW_PICTURE']['SRC']?>" alt="">
+								   </span>
 								</a>
 								<a href="<?=$arItem['DETAIL_PAGE_URL']?>" class="title"><?=$arItem['NAME']?></a>
 								<div class="cost">
-
 										<?
 										$ar_res = CCatalogProduct::GetOptimalPrice($arItem['ID'], 1, $USER->GetUserGroupArray(), 'N');
 										if($ar_res['DISCOUNT_PRICE']){
@@ -111,6 +110,9 @@ if (!empty($arResult['ITEMS']))
 										}
 										?>
 								</div>
+								<?if(!$ar_res['DISCOUNT_PRICE']){
+									print '<span class="noprice">Цену уточняйте у менеджера</span>';
+								}?>
 
 								<? if($arItem['CATALOG_QUANTITY'] > 0): ?>
 								<div class="quantity" id="count_<?=$arItem['ID']?>">

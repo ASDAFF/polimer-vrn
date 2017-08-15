@@ -24,12 +24,19 @@ if($arResult["ITEMS"]):
 			</a>
 			<a href="<?=$arItem["DETAIL_PAGE_URL"]?>" class="name"><?=$arItem["NAME"]?></a>
 			<div class="price">
-				<span>
-					<?
-					$ar_res = CCatalogProduct::GetOptimalPrice($arItem['ID'], 1, $USER->GetUserGroupArray(), 'N');
+				<?
+				$ar_res = CCatalogProduct::GetOptimalPrice($arItem['ID'], 1, $USER->GetUserGroupArray(), 'N');
+				if($ar_res['DISCOUNT_PRICE']){
+					echo "<span>";
 					echo $ar_res['DISCOUNT_PRICE'];
+					echo "</span> Руб.";
+					}
 					?>
-				</span> Руб</div>
+			</div>
+			<?if(!$ar_res['DISCOUNT_PRICE']){
+				print '<span class="noprice" style="font-size: 11px;margin: 17px 0">Цену уточняйте у менеджера</span>';
+			}?>
+
 			<a href="javascript:void(0)" onclick="addToBasket2(<?=$arItem['ID']?>,1);" class="cart">В корзину</a>
 		</div>
 	</div>
