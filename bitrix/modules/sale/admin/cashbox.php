@@ -84,8 +84,8 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 					</div>					
 				</li>
 				<li class="adm-cashbox-list-item cashbox-list-item-6">
-					<a class="adm-cashbox-list-load-link" href="https://www.1c-bitrix.ru/download/BxDTO-1.0.34-win32.exe" target="_blank"><?=Loc::getMessage('SALE_CASHBOX_LOAD')?></a>
-					(<a class="adm-cashbox-list-load-link" href="https://www.1c-bitrix.ru/download/BxDTO-1.0.34-win32.msi" target="_blank">msi</a>, <a class="adm-cashbox-list-load-link" href="https://www.1c-bitrix.ru/download/BxDTO-1.0.34-win32.exe" target="_blank">exe</a>) <?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_6')?>
+					<a class="adm-cashbox-list-load-link" href="https://www.1c-bitrix.ru/download/1c-bitrix-kassi.php" target="_blank"><?=Loc::getMessage('SALE_CASHBOX_LOAD')?></a>
+					<?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_6')?>
 				</li>
 				<li class="adm-cashbox-list-item cashbox-list-item-7"><?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_7')?></li>
 				<li class="adm-cashbox-list-item cashbox-list-item-8"><?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_8')?></li>

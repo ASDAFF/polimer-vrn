@@ -66,7 +66,7 @@ class Logger
 	 */
 	public function addLog($itemId = NULL, $params = NULL)
 	{
-		return $this->addError("LOG", $itemId, $params);
+		return $this->addError("LOG", $itemId, print_r($params, true));	//print_r to preserve multilevel array error in mysql
 	}
 	
 	/**
@@ -150,9 +150,6 @@ class Logger
 		$errCodes[$errorDescription['CODE']] = $errorDescription['CODE'];
 		$errCodes[$errCode] = $errCode;
 		
-		$critical = $errorDescription['CRITICAL'] ? true : false;
-		$notCritical = !$critical;
-
 //		remove error from log table
 		$resErrId = LogTable::getList(array('filter' => array("EXPORT_ID" => $this->exportId, "ERROR_CODE" => $errCodes)));
 		while ($err = $resErrId->fetch())
@@ -172,7 +169,7 @@ class Logger
 	public function clearLog()
 	{
 //		clear errors
-		$existingErrors = $this->getExistingErrors($errCode, $itemId);
+		$existingErrors = $this->getExistingErrors();
 		foreach ($existingErrors as $key => $err)
 			$resDelete = LogTable::delete($err['ID']);
 		
@@ -308,7 +305,7 @@ class Logger
 				if ($richLog = $vk->getRichLog($this->exportId))
 				{
 					$href = '/bitrix/admin/sale_vk_export_edit.php' . '?ID=' . $this->exportId . '&lang=' . LANG . '&download_log=Y';
-					$result .= '<br><p>'.Loc::getMessage("SALE_VK_ERRORS__LOG_TITLE").': <a href="'.$href.'">' . Loc::getMessage("SALE_VK_ERRORS__LOG_DOWNLOAD") . '</a>.</p>';
+					$result .= '<br><p>' . Loc::getMessage("SALE_VK_ERRORS__LOG_TITLE") . ': <a href="' . $href . '">' . Loc::getMessage("SALE_VK_ERRORS__LOG_DOWNLOAD") . '</a>.</p>';
 				}
 			}
 			
@@ -360,7 +357,7 @@ class Logger
 		$log = "";
 		while ($record = $resExistLogs->fetch())
 		{
-			$log .= $record["TIME"] . ' - ' .$record["ITEM_ID"] . ".";
+			$log .= $record["TIME"] . ' - ' . $record["ITEM_ID"] . ".";
 			if (!empty($record["ERROR_PARAMS"]))
 				$log .= " Params: " . print_r($record["ERROR_PARAMS"], true);
 			$log .= "\r\n";
@@ -575,6 +572,12 @@ class Logger
 				"MESSAGE" => Loc::getMessage("SALE_VK_ERROR__WRONG_ACCESS_TOKEN"),
 				"CRITICAL" => true,
 				"CODE" => "5",
+				"ITEMS_TYPE" => 'NONE',
+			),
+			"CLIENT_SECRET_IS_INCORRECT" => array(
+				"MESSAGE" => Loc::getMessage("SALE_VK_ERROR__CLIENT_SECRET_IS_INCORRECT"),
+				"CRITICAL" => true,
+				"CODE" => "CLIENT_SECRET_IS_INCORRECT",
 				"ITEMS_TYPE" => 'NONE',
 			),
 			"205" => array(

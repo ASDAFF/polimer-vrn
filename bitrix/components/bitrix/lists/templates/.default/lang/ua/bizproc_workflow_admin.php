@@ -5,4 +5,5 @@ $MESS["CT_BL_STATE_BIZPROC"] = "Створити бізнес-процес зі 
 $MESS["CT_BL_SEQ_BIZPROC"] = "Створити послідовний бізнес-процес";
 $MESS["CT_BL_ELEMENTS_TITLE"] = "Перейти до списку";
 $MESS["BIZPROC_MODULE_NOT_INSTALLED"] = "Модуль Бізнес-процеси не встановлено.";
+$MESS["CT_BL_TOOLBAR_RETURN_LIST_ELEMENT"] = "ДО СПИСКУ";
 ?>

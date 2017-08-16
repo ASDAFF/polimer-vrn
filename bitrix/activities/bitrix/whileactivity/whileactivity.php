@@ -180,6 +180,7 @@ class CBPWhileActivity
 
 		$runtime = CBPRuntime::GetRuntime();
 		$arActivities = $runtime->SearchActivitiesByType("condition");
+		$conditionFound = false;
 
 		foreach ($arTestProperties as $key => $value)
 		{
@@ -195,7 +196,16 @@ class CBPWhileActivity
 					),
 					$arErrors
 				);
+				$conditionFound = true;
 			}
+		}
+
+		if (!$conditionFound)
+		{
+			$arErrors[] = array(
+				"code" => "condition",
+				"message" => GetMessage("BPWA_CONDITION_NOT_SET"),
+			);
 		}
 
 		return array_merge($arErrors, parent::ValidateProperties($arTestProperties, $user));

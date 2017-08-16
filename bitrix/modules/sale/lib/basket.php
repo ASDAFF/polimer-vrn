@@ -389,10 +389,21 @@ class Basket
 			if (!$item)
 				continue;
 
+			if (!$item->isCustomPrice() && array_key_exists('DISCOUNT_PRICE', $value1) && array_key_exists('BASE_PRICE', $value1))
+			{
+				$value1['PRICE'] = $value1['BASE_PRICE'] - $value1['DISCOUNT_PRICE'];
+			}
+
+			if (empty($value1))
+			{
+				$value1['CAN_BUY'] = 'N';
+			}
+
 			/** @var Main\Entity\Event $event */
 			$event = new Main\Event('sale', EventActions::EVENT_ON_BASKET_ITEM_REFRESH_DATA, array(
 				'ENTITY' => $item,
-				'VALUES' => $value
+				'VALUES' => $value,
+				'PREPARED_VALUES' => $value1
 			));
 			$event->send();
 
@@ -418,20 +429,10 @@ class Basket
 				}
 			}
 
-			if (!$item->isCustomPrice() && array_key_exists('DISCOUNT_PRICE', $value1) && array_key_exists('BASE_PRICE', $value1))
-			{
-				$value1['PRICE'] = $value1['BASE_PRICE'] - $value1['DISCOUNT_PRICE'];
-			}
-
 			if ($discount instanceof Discount)
-				$discount->setBasketItemData($key, $value);
+				$discount->setBasketItemData($key, $value1);
 
 			$isBundleParent = (bool)($item && $item->isBundleParent());
-
-			if (empty($value1))
-			{
-				$value1['CAN_BUY'] = 'N';
-			}
 
 			/** @var Result $r */
 			$r = $item->setFields($value1);
@@ -1580,7 +1581,7 @@ class Basket
 			}
 
 			$measure = (strval($basketItem->getField("MEASURE_NAME")) != '') ? $basketItem->getField("MEASURE_NAME") : Loc::getMessage("SOA_SHT");
-			$list[$basketItem->getBasketCode()] = $basketItemData." - ".$basketItemClassName::formatQuantity($basketItem->getQuantity())." ".$measure.": ".SaleFormatCurrency($basketItem->getPrice(), $basketItem->getCurrency());
+			$list[$basketItem->getBasketCode()] = $basketItemData." - ".$basketItemClassName::formatQuantity($basketItem->getQuantity())." ".$measure." x ".SaleFormatCurrency($basketItem->getPrice(), $basketItem->getCurrency());
 
 		}
 

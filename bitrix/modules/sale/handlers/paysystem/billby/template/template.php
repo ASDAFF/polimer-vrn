@@ -786,7 +786,7 @@ for ($n = 1; $n <= $rowsCnt; $n++):
 	$inWords = in_array($params['CURRENCY'], array("RUR", "RUB", "UAH", "KZT", "BYN"));
 	echo Loc::getMessage('SALE_HPS_BILLBY_TOTAL_VAT').': ';
 	if ($inWords)
-		echo Number2Word_Rus($totalVatSum, "Y", $params['CURRENCY']);
+		echo Number2Word_Rus(roundEx($totalVatSum, 2), "Y", $params['CURRENCY']);
 	else
 		echo SaleFormatCurrency($totalVatSum, $params['CURRENCY'], false);
 	unset($totalVatSum);

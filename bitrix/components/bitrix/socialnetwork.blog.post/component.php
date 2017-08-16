@@ -13,6 +13,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @global CUserTypeManager $USER_FIELD_MANAGER */
 global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
+use Bitrix\Socialnetwork\Livefeed;
+
 if (!CModule::IncludeModule("blog"))
 {
 	ShowError(GetMessage("BLOG_MODULE_NOT_INSTALL"));
@@ -294,6 +296,8 @@ if(
 {
 	if(!empty($arPost))
 	{
+		$bNoLogEntry = false;
+
 		if (
 			(
 				(
@@ -309,8 +313,10 @@ if(
 			&& CModule::IncludeModule("socialnetwork")
 		)
 		{
+			$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+
 			$arFilter = array(
-				"EVENT_ID" => array("blog_post", "blog_post_micro", "blog_post_important"),
+				"EVENT_ID" => $blogPostLivefeedProvider->getEventId(),
 				"SOURCE_ID" => $arParams["ID"],
 			);
 
@@ -347,9 +353,21 @@ if(
 			}
 		}
 
-		if (!$arResult["bFromList"])
+		if (
+			!$arResult["bFromList"]
+			&& $_SERVER["REQUEST_METHOD"] != "POST"
+		)
 		{
-			CBlogPost::CounterInc($arPost["ID"]);
+			CBlogPost::counterInc($arPost["ID"]);
+
+			if ($liveFeedEntity = Livefeed\BlogPost::init(array(
+				'ENTITY_TYPE' => Livefeed\Provider::DATA_ENTITY_TYPE_BLOG_POST,
+				'ENTITY_ID' => $arPost["ID"],
+				'LOG_ID' => (isset($arParams["LOG_ID"]) ? intval($arParams["LOG_ID"]) : false)
+			)))
+			{
+				$liveFeedEntity->setContentView();
+			}
 		}
 
 		$arPost = CBlogTools::htmlspecialcharsExArray($arPost);
@@ -734,6 +752,7 @@ if(
 			}
 			else
 			{
+				$arResult["Post"]["hasVideoInline"] = false;
 				$arResult["Assets"] = array(
 					"CSS" => array(),
 					"JS" => array()
@@ -928,6 +947,12 @@ if(
 					"pathToUser" => $arParams["PATH_TO_USER"],
 				);
 
+				if ($p->bMobile)
+				{
+					$arParserParams["imageWidth"] = 275;
+					$arParserParams["imageHeight"] = 416;
+				}
+
 				if (!empty($arParams["LOG_ID"]))
 				{
 					$arParserParams["pathToUserEntityType"] = 'LOG_ENTRY';
@@ -947,19 +972,38 @@ if(
 				$p->LAZYLOAD = (isset($arParams["LAZYLOAD"]) && $arParams["LAZYLOAD"] == "Y" ? "Y" : "N");
 				$arResult["Post"]["textFormated"] = $p->convert($arPost["~DETAIL_TEXT"], ($arParams["USE_CUT"] == "Y" ? true : false), $arImages, $arAllow, $arParserParams);
 
-				if (is_array($arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_FILE"]) &&
-					is_array($arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_FILE"]["VALUE"]))
-					$arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_FILE"]["SOURCE_VALUE"] = $arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_FILE"]["VALUE"];
+				if ($arAllow["VIDEO"] == "Y")
+				{
+					$arResult["Post"]["hasVideoInline"] = preg_match(
+						"/<video([^>]*)>(.+?)<\\/video[\\s]*>/is".BX_UTF_PCRE_MODIFIER,
+						$arResult["Post"]["textFormated"]
+					);
+				}
 
-				if ($arParams["USE_CUT"] == "Y" && preg_match("/(\[CUT\])/i",$arPost['~DETAIL_TEXT']))
+				if (
+					is_array($arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_FILE"])
+					&& is_array($arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_FILE"]["VALUE"])
+				)
+				{
+					$arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_FILE"]["SOURCE_VALUE"] = $arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_FILE"]["VALUE"];
+				}
+
+				if (
+					$arParams["USE_CUT"] == "Y"
+					&& preg_match("/(\[CUT\])/i", $arPost['~DETAIL_TEXT'])
+				)
+				{
 					$arResult["Post"]["CUT"] = "Y";
+				}
 
 				if(!empty($p->showedImages) && !empty($arResult["images"]))
 				{
 					foreach($p->showedImages as $val)
 					{
 						if(!empty($arResult["images"][$val]))
+						{
 							unset($arResult["images"][$val]);
+						}
 					}
 				}
 				$arResult["Post"]["DATE_PUBLISH_FORMATED"] = FormatDateFromDB($arResult["Post"]["DATE_PUBLISH"], $arParams["DATE_TIME_FORMAT"], true);
@@ -1268,7 +1312,6 @@ if(
 					|| !$arResult["Post"]["ONLY_CLOSED_GROUPS"]
 					|| COption::GetOptionString("socialnetwork", "work_with_closed_groups", "N") == "Y"
 				)
-				&& $USER->IsAuthorized()
 			);
 
 			$arResult["dest_users"] = array();
@@ -1529,6 +1572,28 @@ if(
 				if (empty($arResult["GRATITUDE"]["USERS_FULL"]))
 				{
 					unset($arResult["GRATITUDE"]);
+				}
+			}
+
+			$arResult["CONTENT_ID"] = (!empty($arParams["CONTENT_ID"]) ? $arParams["CONTENT_ID"] : 'BLOG_POST-'.intval($arResult["Post"]["ID"]));
+			if (isset($arParams["CONTENT_VIEW_CNT"]))
+			{
+				$arResult["CONTENT_VIEW_CNT"] = intval($arParams["CONTENT_VIEW_CNT"]);
+			}
+			else
+			{
+				if (
+					($contentViewData = \Bitrix\Socialnetwork\Item\UserContentView::getViewData(array(
+						'contentId' => array($arResult["CONTENT_ID"])
+					)))
+					&& !empty($contentViewData[$arResult["CONTENT_ID"]])
+				)
+				{
+					$arResult["CONTENT_VIEW_CNT"] = intval($contentViewData[$arResult["CONTENT_ID"]]["CNT"]);
+				}
+				else
+				{
+					$arResult["CONTENT_VIEW_CNT"] = 0;
 				}
 			}
 		}

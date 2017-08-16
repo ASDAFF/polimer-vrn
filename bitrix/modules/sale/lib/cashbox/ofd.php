@@ -19,6 +19,7 @@ abstract class Ofd
 			'\Bitrix\Sale\Cashbox\YarusOfd' => YarusOfd::getName(),
 			'\Bitrix\Sale\Cashbox\TaxcomOfd' => TaxcomOfd::getName(),
 			'\Bitrix\Sale\Cashbox\OfdruOfd' => OfdruOfd::getName(),
+			'\Bitrix\Sale\Cashbox\TenzorOfd' => TenzorOfd::getName(),
 		);
 	}
 

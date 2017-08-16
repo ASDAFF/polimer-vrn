@@ -2144,6 +2144,19 @@ BX.adminList.prototype.DeleteSettings = function(bCommon)
 	}, this));
 };
 
+/****************************** For new grid ********************************/
+BX.adminList.SendSelected = function(gridId)
+{
+	var gridInstance = BX.Main.gridManager.getById(gridId).instance;
+	var values = gridInstance.getActionsPanel().getValues();
+	var selectedRows = gridInstance.getRows().getSelectedIds();
+	var data = {
+		ID: selectedRows,
+		action: values
+	};
+	gridInstance.reloadTable("POST", data);
+};
+
 BX.adminList._onpopupmenushow = function(){BX.addClass(this, 'adm-list-row-active');};
 BX.adminList._onpopupmenuclose = function(){BX.removeClass(this, 'adm-list-row-active');};
 

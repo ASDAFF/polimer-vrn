@@ -178,6 +178,7 @@ Loader::registerAutoLoadClasses(
 		'\Bitrix\Catalog\CatalogViewedProductTable' => 'lib/catalogviewedproduct.php',
 		'\Bitrix\Catalog\DiscountTable' => 'lib/discount.php',
 		'\Bitrix\Catalog\DiscountCouponTable' => 'lib/discountcoupon.php',
+		'\Bitrix\Catalog\DiscountModuleTable' => 'lib/discountmodule.php',
 		'\Bitrix\Catalog\DiscountRestrictionTable' => 'lib/discountrestriction.php',
 		'\Bitrix\Catalog\ExtraTable' => 'lib/extra.php',
 		'\Bitrix\Catalog\GroupTable' => 'lib/group.php',

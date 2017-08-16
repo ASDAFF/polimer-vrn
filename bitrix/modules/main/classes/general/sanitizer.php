@@ -372,7 +372,7 @@
 					break;
 
 				case 'style':
-					$valid = !preg_match("#(behavior|expression|position|javascript)#i".BX_UTF_PCRE_MODIFIER, $attrValue) && !preg_match("#[^\\w\\s)(,:\\.;\\-\\#]#i".BX_UTF_PCRE_MODIFIER, $attrValue) ? true : false;
+					$valid = !preg_match("#(behavior|expression|position|javascript)#i".BX_UTF_PCRE_MODIFIER, $attrValue) && !preg_match("#[^\\w\\s)(!%,:\\.;\\-\\#]#i".BX_UTF_PCRE_MODIFIER, $attrValue) ? true : false;
 					break;
 
 				case 'coords':
@@ -602,7 +602,7 @@
 							}
 
 							//find attributies an erase unallowed
-							preg_match_all('#([a-z_]+)\s*=\s*([\'\"])\s*(.*?)\s*\2#i'.BX_UTF_PCRE_MODIFIER, $matches[3], $arTagAttrs, PREG_SET_ORDER);
+							preg_match_all('#([a-z_-]+)\s*=\s*([\'\"])\s*(.*?)\s*\2#i'.BX_UTF_PCRE_MODIFIER, $matches[3], $arTagAttrs, PREG_SET_ORDER);
 							$attr = array();
 							foreach($arTagAttrs as $arTagAttr)
 							{

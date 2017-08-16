@@ -21,6 +21,7 @@ final class CheckManager
 {
 	const EVENT_ON_GET_CUSTOM_CHECK = 'OnGetCustomCheckList';
 	const EVENT_ON_CHECK_PRINT_SEND = 'OnPrintableCheckSend';
+	const EVENT_ON_BEFORE_CHECK_ADD_VERIFY = 'OnBeforeCheckAddVerify';
 	const MIN_TIME_FOR_SWITCH_CASHBOX = 240;
 
 	/** This is time re-sending a check print in minutes */
@@ -274,9 +275,29 @@ final class CheckManager
 		$map = static::collateDocuments($entities);
 		foreach ($map as $check)
 		{
-			$addResult = static::addByType($check["ENTITIES"], $check["TYPE"]);
-			if (!$addResult->isSuccess())
-				$result->addErrors($addResult->getErrors());
+			$isCorrect = true;
+
+			$event = new Main\Event('sale', static::EVENT_ON_BEFORE_CHECK_ADD_VERIFY, array($check));
+			$event->send();
+
+			if ($event->getResults())
+			{
+				/** @var Main\EventResult $eventResult */
+				foreach ($event->getResults() as $eventResult)
+				{
+					if ($eventResult->getType() !== Main\EventResult::ERROR)
+					{
+						$isCorrect = (bool)$eventResult->getParameters();
+					}
+				}
+			}
+
+			if ($isCorrect)
+			{
+				$addResult = static::addByType($check["ENTITIES"], $check["TYPE"]);
+				if (!$addResult->isSuccess())
+					$result->addErrors($addResult->getErrors());
+			}
 		}
 
 		return $result;

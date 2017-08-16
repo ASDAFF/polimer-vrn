@@ -285,11 +285,13 @@ class ListsElementAttachedCrmComponent extends CBitrixComponent
 				});
 				if(count($tmpArray) == 1)
 					$this->listPropertyIdWithoutPrefix[] = $property['ID'];
+				if ($property['USER_TYPE_SETTINGS'][$this->arParams['ENTITY_TYPE_NAME']] == 'Y')
+				{
+					if(!is_array($listProperty[$property['IBLOCK_ID']]))
+						$listProperty[$property['IBLOCK_ID']] = array();
+					$listProperty[$property['IBLOCK_ID']][] = $property['ID'];
+				}
 			}
-
-			if(!is_array($listProperty[$property['IBLOCK_ID']]))
-				$listProperty[$property['IBLOCK_ID']] = array();
-			$listProperty[$property['IBLOCK_ID']][] = $property['ID'];
 		}
 
 		foreach($listProperty as $iblockId => $listPropertyId)

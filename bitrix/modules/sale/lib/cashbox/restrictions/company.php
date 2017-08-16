@@ -3,7 +3,6 @@ namespace Bitrix\Sale\Cashbox\Restrictions;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Internals\Entity;
-use Bitrix\Sale\Payment;
 use Bitrix\Sale;
 use Bitrix\Sale\Services\Base\Restriction;
 
@@ -59,10 +58,13 @@ class Company extends Restriction
 	{
 		$result = array();
 
-		if (!($entity instanceof Payment) && !($entity instanceof Sale\Shipment))
-			return $result;
-
-		$result[] = $entity->getField('COMPANY_ID');
+		if ($entity instanceof Sale\Payment ||
+			$entity instanceof Sale\Shipment ||
+			$entity instanceof Sale\Order
+		)
+		{
+			$result[] = $entity->getField('COMPANY_ID');
+		}
 
 		return $result;
 	}

@@ -37,7 +37,7 @@ final class Manager
 	 */
 	const INFO_NOT_AVAILABLE = null;
 
-	const COOKIE_NAME = 'BX_MAIN_GEO_IP_DATA';
+	const COOKIE_NAME = 'BX_GEO_IP';
 	const COOKIE_EXPIRED = 86400; //day
 
 	/**
@@ -290,8 +290,8 @@ final class Manager
 		if(!$cookieData)
 			return false;
 
-		if(function_exists('gzdecode'))
-			$cookieData = @\gzdecode($cookieData);
+		if(function_exists('gzuncompress'))
+			$cookieData = @\gzuncompress($cookieData);
 
 		if(!$cookieData)
 			return false;
@@ -307,9 +307,6 @@ final class Manager
 
 		if(!is_array($cookieData))
 			return false;
-
-		if(SITE_CHARSET != 'UTF-8')
-			$cookieData = Encoding::convertEncoding($cookieData, 'UTF-8', SITE_CHARSET);
 
 		$result = array();
 
@@ -346,13 +343,10 @@ final class Manager
 					$cookieData[$class][$attr] = $value;
 		}
 
-		if(SITE_CHARSET != 'UTF-8')
-			$cookieData = Encoding::convertEncoding($cookieData, SITE_CHARSET, 'UTF-8');
-
 		$cookieData = Json::encode($cookieData);
 
-		if(function_exists('gzencode'))
-			$cookieData = \gzencode($cookieData, 9);
+		if(function_exists('gzcompress'))
+			$cookieData = \gzcompress($cookieData, 9);
 
 		return setcookie(
 			self::getCookieName($ip),

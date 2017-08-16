@@ -147,6 +147,8 @@ class Comment
 
 	public static function actionsAfter(array $params)
 	{
+		static $blogPostEventIdList = null;
+
 		if (!Loader::includeModule('socialnetwork'))
 		{
 			return false;
@@ -227,10 +229,16 @@ class Comment
 
 		$connection->query("UPDATE b_blog_image SET COMMENT_ID=".intval($commentId)." WHERE BLOG_ID=".$blogId." AND POST_ID=".$postId." AND IS_COMMENT = 'Y' AND (COMMENT_ID = 0 OR COMMENT_ID is null) AND USER_ID=".$commentAuthorId);
 
+		if ($blogPostEventIdList === null)
+		{
+			$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+			$blogPostEventIdList = $blogPostLivefeedProvider->getEventId();
+		}
+
 		$res = \CSocNetLog::getList(
 			array(),
 			array(
-				"EVENT_ID" => array("blog_post", "blog_post_important"),
+				"EVENT_ID" => $blogPostEventIdList,
 				"SOURCE_ID" => $postId
 			),
 			false,

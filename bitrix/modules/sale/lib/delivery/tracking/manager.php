@@ -32,6 +32,7 @@ class Statuses
 	const HANDED 			= 40; //shipping definitely finished
 	const PROBLEM			= 50;
 	const UNKNOWN			= 60; //Incorrect status mapping made by tracking handler.
+	const RETURNED 			= 70;
 }
 
 /**
@@ -136,6 +137,7 @@ class Manager
 			Statuses::HANDED => Loc::getMessage("SALE_DTM_STATUS_NAME_HANDED"),
 			Statuses::PROBLEM => Loc::getMessage("SALE_DTM_STATUS_NAME_PROBLEM"),
 			Statuses::UNKNOWN => Loc::getMessage("SALE_DTM_STATUS_NAME_UNKNOWN"),
+			Statuses::RETURNED => Loc::getMessage("SALE_DTM_STATUS_NAME_RETURNED"),
 		);
 	}
 
@@ -368,6 +370,7 @@ class Manager
 				array(
 					'LOGIC' => 'OR',
 					array('!=TRACKING_STATUS' => Statuses::HANDED),
+					array('!=TRACKING_STATUS' => Statuses::RETURNED),
 					array('=TRACKING_STATUS' => false)
 				),
 				array(

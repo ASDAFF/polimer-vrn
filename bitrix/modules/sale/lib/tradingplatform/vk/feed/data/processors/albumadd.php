@@ -78,6 +78,7 @@ class AlbumAdd extends DataProcessor
 				"data" => $albumsData,
 				"count" => count($data),
 			));
+			$data = Vk\Api\ApiHelper::addResultToData($data, $albumsAddEditResults, "SECTION_ID");
 
 
 //			MAPPING for success results

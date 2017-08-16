@@ -87,13 +87,12 @@ class Api
 		if (isset($this->response["error"]))
 		{
 			$logger = new Vk\Logger($this->exportId);
-			$logger->addError($this->response["error"]["error_code"], $method);
 			
-//			check if need rich log - add error
 			$vk = Vk\Vk::getInstance();
-			$richLog = $vk->getRichLog($this->exportId);
-			if ($richLog)
+			if ($vk->getRichLog($this->exportId))
 				$logger->addLog('Catch error in method '.$method, array('ERROR'=>$this->response["error"], "PARAMS" => $params));
+			
+			$logger->addError($this->response["error"]["error_code"], $method);
 			
 			throw new Vk\ExecuteException("VK_critical_execution_error " . $this->response["error"]["error_code"] . " in method " . $method);
 		}
@@ -104,6 +103,9 @@ class Api
 			$logger = new Vk\Logger($this->exportId);
 			foreach ($this->response["execute_errors"] as $er)
 			{
+				$vk = Vk\Vk::getInstance();
+				if ($vk->getRichLog($this->exportId))
+					$logger->addLog('Execute error in method '.$method, array('ERROR'=>$er["error_code"], "PARAMS" => $params));
 				$logger->addError($er["error_code"]);
 			}
 		}

@@ -145,9 +145,14 @@ $arParams["PATH_TO_USER_PASSWORDS"] = trim($arParams["PATH_TO_USER_PASSWORDS"]);
 if (strlen($arParams["PATH_TO_USER_PASSWORDS"]) <= 0)
 	$arParams["PATH_TO_USER_PASSWORDS"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=user_passwords&".$arParams["USER_VAR"]."=#user_id#");
 
-$arParams["PATH_TO_USER_SYNCHRONIZE"] = trim($arParams["PATH_TO_USER_SYNCHRONIZE"]);
-if (strlen($arParams["PATH_TO_USER_SYNCHRONIZE"]) <= 0)
-	$arParams["PATH_TO_USER_SYNCHRONIZE"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=user_synchronize&".$arParams["USER_VAR"]."=#user_id#");
+if (\Bitrix\Main\Loader::includeModule('dav'))
+{
+	$arParams["PATH_TO_USER_SYNCHRONIZE"] = trim($arParams["PATH_TO_USER_SYNCHRONIZE"]);
+	if (strlen($arParams["PATH_TO_USER_SYNCHRONIZE"]) <= 0)
+		$arParams["PATH_TO_USER_SYNCHRONIZE"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=user_synchronize&".$arParams["USER_VAR"]."=#user_id#");
+}
+
+
 
 $arParams["PATH_TO_USER_CODES"] = trim($arParams["PATH_TO_USER_CODES"]);
 if (strlen($arParams["PATH_TO_USER_CODES"]) <= 0)
@@ -380,7 +385,12 @@ else
 
 		$arResult["Urls"]["Security"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_SECURITY"], array("user_id" => $arResult["User"]["ID"]));
 		$arResult["Urls"]["Passwords"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_PASSWORDS"], array("user_id" => $arResult["User"]["ID"]));
-		$arResult["Urls"]["Synchronize"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_SYNCHRONIZE"], array("user_id" => $arResult["User"]["ID"]));
+
+		if ($arParams["PATH_TO_USER_SYNCHRONIZE"])
+		{
+			$arResult["Urls"]["Synchronize"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_SYNCHRONIZE"], array("user_id" => $arResult["User"]["ID"]));
+		}
+
 		$arResult["Urls"]["Codes"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_CODES"], array("user_id" => $arResult["User"]["ID"]));
 
 		$arResult["User"]["TYPE"] = '';

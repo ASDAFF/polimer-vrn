@@ -471,6 +471,9 @@
 }
 
 /* pickup */
+#pickUpMap img {
+    max-height: initial;
+}
 .bx-soa-pickup-preview-img {
     height: 76px;
     border: 1px solid #ddd;

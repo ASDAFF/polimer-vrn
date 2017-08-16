@@ -2420,7 +2420,7 @@ class CAllSaleOrder
 		$arFields = array(
 			"STATUS_ID" => $val,
 			"=DATE_STATUS" => $DB->GetNowFunction(),
-			"EMP_STATUS_ID" => ( IntVal($USER->GetID())>0 ? IntVal($USER->GetID()) : false )
+			"EMP_STATUS_ID" => ((isset($USER) && $USER instanceof \CUser) && IntVal($USER->GetID())>0 ? IntVal($USER->GetID()) : false )
 		);
 		$res = CSaleOrder::Update($ID, $arFields);
 

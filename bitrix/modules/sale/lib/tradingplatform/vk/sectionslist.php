@@ -2,6 +2,7 @@
 
 namespace Bitrix\Sale\TradingPlatform\Vk;
 
+use Bitrix\Iblock\SectionElementTable;
 use Bitrix\Sale\TradingPlatform;
 use Bitrix\Main\Localization\Loc;
 
@@ -169,6 +170,25 @@ class SectionsList
 		}
 
 		return array("SECTIONS" => $sectionsToExport, "ALIASES" => $sectionsAliases);
+	}
+	
+	
+	public function getMultiSectionsToProduct($pdoructsIds)
+	{
+		$sections = SectionElementTable::getList(array(
+			"filter" => array(
+				"IBLOCK_ELEMENT_ID" => $pdoructsIds,
+				"ADDITIONAL_PROPERTY_ID" => NULL
+			)
+		));
+		
+		$result = array();
+		while($section = $sections->fetch())
+		{
+			$result[$section["IBLOCK_ELEMENT_ID"]][] = $section["IBLOCK_SECTION_ID"];
+		}
+		
+		return $result;
 	}
 
 

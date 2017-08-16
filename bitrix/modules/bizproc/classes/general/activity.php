@@ -642,8 +642,7 @@ abstract class CBPActivity
 		if (empty($property) || empty($modifiers) || !is_array($property))
 			return $value;
 
-		$typeClass = null;
-		$format = null;
+		$typeName = $typeClass = $format = null;
 
 		$rootActivity = $this->GetRootActivity();
 		$documentId = $rootActivity->GetDocumentId();
@@ -656,9 +655,19 @@ abstract class CBPActivity
 		{
 			$m = strtolower($m);
 			if (isset($typesMap[$m]))
+			{
+				$typeName = $m;
 				$typeClass = $typesMap[$m];
+			}
 			else
+			{
 				$format = $m;
+			}
+		}
+
+		if ($typeName === \Bitrix\Bizproc\FieldType::STRING && $format === 'printable')
+		{
+			$typeClass = null;
 		}
 
 		if ($typeClass || $format)

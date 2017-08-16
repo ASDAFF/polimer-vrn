@@ -2,6 +2,7 @@
 use \Bitrix\Main\Localization\Loc as Loc;
 use \Bitrix\Main\SystemException as SystemException;
 use \Bitrix\Main\Loader as Loader;
+use \Bitrix\Sale\Internals\DiscountCouponTable;
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 Loc::loadMessages(__FILE__);
@@ -50,6 +51,8 @@ class CSaleDiscountCouponMailComponent extends CBitrixComponent
 		$saleDiscountValue = (float) $this->arParams['DISCOUNT_VALUE'];
 		$saleDiscountUnit = (string) $this->arParams['DISCOUNT_UNIT'];
 		$siteId = $this->getSiteId();
+		if (strlen($xmlId) <= 0 && $saleDiscountValue > 0 && strlen($saleDiscountUnit) > 0)
+			$xmlId = "generatedCouponMail_".$saleDiscountValue."_".$saleDiscountUnit;
 		$fieldsAdd = array(
 			'LID' => $siteId ? $siteId : CSite::GetDefSite(),
 			'NAME' => Loc::getMessage("CVP_DISCOUNT_NAME"),
@@ -115,18 +118,19 @@ class CSaleDiscountCouponMailComponent extends CBitrixComponent
 			$wasAdded = true;
 		}
 
+		$type = ($this->arParams['COUPON_TYPE'] === 'Basket') ? DiscountCouponTable::TYPE_BASKET_ROW : DiscountCouponTable::TYPE_ONE_ORDER;
 		$this->arResult['COUPON'] = '';
 		if($saleDiscountId)
 		{
-			$coupon = \Bitrix\Sale\Internals\DiscountCouponTable::generateCoupon(true);
+			$coupon = DiscountCouponTable::generateCoupon(true);
 			//$activeFrom = new \Bitrix\Main\Type\DateTime;
 			//$activeTo = clone $activeFrom;
-			$addDb = \Bitrix\Sale\Internals\DiscountCouponTable::add(array(
+			$addDb = DiscountCouponTable::add(array(
 				'DISCOUNT_ID' => $saleDiscountId,
 				//'ACTIVE_FROM' => $activeFrom,
 				//'ACTIVE_TO' => $activeTo->add('+365 days'),
 				'COUPON' => $coupon,
-				'TYPE' => \Bitrix\Sale\Internals\DiscountCouponTable::TYPE_ONE_ORDER,
+				'TYPE' => $type,
 				'MAX_USE' => 1,
 				'USER_ID' => 0,
 				'DESCRIPTION' => $this->arParams['COUPON_DESCRIPTION'],

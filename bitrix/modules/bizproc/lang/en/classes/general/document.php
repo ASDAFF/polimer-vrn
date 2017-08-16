@@ -20,4 +20,8 @@ $MESS["BPCGDOC_WI_LOCKED_NOTICE_MESSAGE"] = "Some of the workflows you have star
 $MESS["BPCGDOC_DELEGATE_LOG_TITLE"] = "Delegated";
 $MESS["BPCGDOC_DELEGATE_LOG"] = "User #FROM# delegated task \"#NAME#\" to #TO#";
 $MESS["BPCGDOC_WI_B24_LIMITS_MESSAGE"] = "Some of the entities on your portal run more than two simultaneous workflows. A restriction of maximum two simultaneous workflows per entity will soon be introduced. It is recommended that you alter the logic of your workflows. [URL=https://helpdesk.bitrix24.com/open/4838471/]Learn more[/URL]";
+$MESS["BPCGDOC_DELEGATE_NOTIFY_TEXT"] = "A workflow task has been delegated to you: [URL=#TASK_URL#]#TASK_NAME#[/URL]";
+$MESS["BPCGDOC_ERROR_DELEGATE_0"] = "Task \"#NAME#\" cannot be delegated because the selected employee is not your subordinate.";
+$MESS["BPCGDOC_ERROR_DELEGATE_1"] = "Task \"#NAME#\" cannot be delegated because the selected user does not work for this company.";
+$MESS["BPCGDOC_ERROR_DELEGATE_2"] = "Task \"#NAME#\" cannot be delegated because delegation was prohibited in the task preferences.";
 ?>

@@ -122,7 +122,7 @@ class CCatalogDiscount extends CAllCatalogDiscount
 			$DB->DateToCharFunction("CD.ACTIVE_FROM", "FULL")." as ACTIVE_FROM, ".
 			$DB->DateToCharFunction("CD.ACTIVE_TO", "FULL")." as ACTIVE_TO, ".
 			"CD.CREATED_BY, CD.MODIFIED_BY, ".$DB->DateToCharFunction('CD.DATE_CREATE', 'FULL').' as DATE_CREATE, '.
-			"CD.PRIORITY, CD.LAST_DISCOUNT, CD.VERSION, CD.CONDITIONS, CD.UNPACK ".
+			"CD.PRIORITY, CD.LAST_DISCOUNT, CD.VERSION, CD.CONDITIONS, CD.UNPACK, CD.SALE_ID ".
 			"FROM b_catalog_discount CD WHERE CD.ID = ".$ID." AND CD.TYPE = ".self::ENTITY_ID;
 
 		$db_res = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
@@ -214,6 +214,7 @@ class CCatalogDiscount extends CAllCatalogDiscount
 			"VERSION" => array("FIELD" => "CD.VERSION", "TYPE" => "int"),
 			"CONDITIONS" => array("FIELD" => "CD.CONDITIONS", "TYPE" => "string"),
 			"UNPACK" => array("FIELD" => "CD.UNPACK", "TYPE" => "string"),
+			"SALE_ID" => array("FIELD" => "CD.SALE_ID", "TYPE" => "int"),
 
 			"PRODUCT_ID" => array("FIELD" => "CDP.PRODUCT_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_catalog_discount2product CDP ON (CD.ID = CDP.DISCOUNT_ID)"),
 			"SECTION_ID" => array("FIELD" => "CDS.SECTION_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_catalog_discount2section CDS ON (CD.ID = CDS.DISCOUNT_ID)", "WHERE" => array("CCatalogDiscount", "PrepareSection4Where")),

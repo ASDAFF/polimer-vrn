@@ -91,7 +91,7 @@
 	BX.webrtc.prototype.attachMediaStream = function(element, stream)
 	{
 		element.src = URL.createObjectURL(stream);
-		if(this.defaultSpeaker != '' && element.setSinkId)
+		if(BX.type.isNotEmptyString(this.defaultSpeaker) && element.setSinkId)
 		{
 			element.setSinkId(this.defaultSpeaker);
 		}
@@ -811,6 +811,33 @@
 		this.defaultMicrophone = defaultMicrophone;
 	};
 
+	BX.webrtc.prototype.logDevices = function()
+	{
+		var self = this;
+		if(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices)
+		{
+			self.log('Enumerating media devices');
+			navigator.mediaDevices.enumerateDevices().then(function(devices)
+			{
+				devices.forEach(function(device)
+				{
+					try
+					{
+						self.log(JSON.stringify(device));
+					}
+					catch (e)
+					{
+						self.log(device);
+					}
+				});
+			})
+		}
+		else
+		{
+			self.log('Could not enumerate devices, api is not supported');
+		}
+	};
+
 	BX.webrtc.mediaStreamTrackToString = function(track)
 	{
 		var result = '';
@@ -842,6 +869,5 @@
 			});
 		}
 	};
-
 
 })(window);

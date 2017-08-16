@@ -229,9 +229,6 @@ class OrderDiscountManager
 			else
 			{
 				$fields['DISCOUNT_HASH'] = $hash;
-				$fields['ACTIONS_DESCR'] = array();
-				if (isset($discountData['ACTIONS_DESCR']))
-					$fields['ACTIONS_DESCR'] = $discountData['ACTIONS_DESCR'];
 				$tableResult = Internals\OrderDiscountTable::add($fields);
 				if ($tableResult->isSuccess())
 				{
@@ -772,6 +769,7 @@ class OrderDiscountManager
 				continue;
 
 			$resultData['APPLY_BLOCKS'][$blockCounter][$index][$basketCode] = array(
+				'RULE_ID' => (int)$data['ID'],
 				'APPLY' => $data['APPLY'],
 				'ROUND_RULE' => $data['ROUND_RULE']
 			);
@@ -1462,6 +1460,8 @@ class OrderDiscountManager
 		$requiredFields = Internals\OrderDiscountTable::getEmptyFields($discount);
 		if (!empty($requiredFields))
 		{
+			if (in_array('ACTIONS_DESCR', $requiredFields))
+				return false;
 			$requiredFields[] = 'ID';
 			$row = Internals\DiscountTable::getRow(array(
 				'select' => $requiredFields,

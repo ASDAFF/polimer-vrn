@@ -315,7 +315,7 @@ abstract class Check
 					}
 					else
 					{
-						if ($basketItem->getDiscountPrice() > 0)
+						if ((float)$basketItem->getDiscountPrice() != 0)
 							$discountPrice = (float)$basketItem->getDiscountPrice();
 					}
 
@@ -340,7 +340,7 @@ abstract class Check
 					'VAT' => $vatInfo ? $vatInfo['ID'] : 0
 				);
 
-				if (!$entity->isCustomPrice() && $entity->getField('DISCOUNT_PRICE') > 0)
+				if (!$entity->isCustomPrice() && (float)$entity->getField('DISCOUNT_PRICE') != 0)
 				{
 					$item['DISCOUNT'] = array(
 						'PRICE' => $entity->getField('DISCOUNT_PRICE'),

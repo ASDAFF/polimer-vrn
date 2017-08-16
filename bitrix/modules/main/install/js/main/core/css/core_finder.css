@@ -369,6 +369,16 @@
 .bx-finder-box-item-t7-desc-mode .bx-finder-box-item-t7-desc { white-space: nowrap; }
 
 /*==== bx-finder-v2 ====*/
+.bx-finder-popup.bx-finder-v2 .bx-lm-box .bx-finder-box {
+	min-height:auto;
+	max-height:auto !important;
+	overflow: initial;
+}
+
+.bx-finder-popup.bx-finder-v2 .bx-finder-container-content {
+	max-height:350px;
+	overflow: auto;
+}
 .bx-finder-popup.bx-finder-v2 .bx-finder-box-item-t7 {
 	position: relative;
 	display: inline-block;

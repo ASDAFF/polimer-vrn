@@ -292,6 +292,7 @@ BX.Kanban.Grid.prototype =
 			var column = item.getColumn();
 			delete this.items[item.getId()];
 			column.removeItem(item);
+			item.dispose();
 		}
 
 		return item;

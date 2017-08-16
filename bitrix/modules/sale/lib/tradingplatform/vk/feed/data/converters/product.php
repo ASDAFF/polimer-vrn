@@ -16,7 +16,7 @@ class Product extends DataConverter
 	private $result;
 	
 	const DESCRIPTION_LENGHT_MIN = 10;
-	const DESCRIPTION_LENGHT_MAX = 6900;	// it is not correct value, but in doc i can't find true info
+	const DESCRIPTION_LENGHT_MAX = 3300;	// it is not entirely accurate value, but in doc i can't find true info
 	const NAME_LENGHT_MIN = 4;
 	const NAME_LENGHT_MAX = 100;
 	

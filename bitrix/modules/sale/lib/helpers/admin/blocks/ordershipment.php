@@ -1669,9 +1669,17 @@ class OrderShipment
 				'DELIVERY_DOC_NUM' => $item['DELIVERY_DOC_NUM'],
 				'TRACKING_NUMBER' => $item['TRACKING_NUMBER'],
 				'CURRENCY' => $order->getCurrency(),
-				'COMMENTS' => $item['COMMENTS'],
-				'STATUS_ID' =>($isNew) ? DeliveryStatus::getInitialStatus() : $item['STATUS_ID']
+				'COMMENTS' => $item['COMMENTS']
 			);
+
+			if ($isNew)
+			{
+				$shipmentFields['STATUS_ID'] = DeliveryStatus::getInitialStatus();
+			}
+			elseif (isset($item['STATUS_ID']) && $item['STATUS_ID'] !== self::$defaultFields['STATUS_ID'])
+			{
+				$shipmentFields['STATUS_ID'] = $item['STATUS_ID'];
+			}
 
 			if ($isNew && $saleModulePermissions == "P")
 			{

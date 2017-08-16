@@ -648,6 +648,8 @@ HTML;
 				$res["ID"],
 			"#FULL_ID#" =>
 				$arParams["ENTITY_XML_ID"]."-".$res["ID"],
+			"#CONTENT_ID#" =>
+				(!empty($arParams["RATING_TYPE_ID"]) ? $arParams["RATING_TYPE_ID"]."-".$res["ID"] : (!empty($arParams["CONTENT_TYPE_ID"]) ? $arParams["CONTENT_TYPE_ID"]."-".$res["ID"] : "")),
 			"#ENTITY_XML_ID#" =>
 				$arParams["ENTITY_XML_ID"],
 			"#NEW#" =>

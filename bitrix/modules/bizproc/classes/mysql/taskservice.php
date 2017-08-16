@@ -153,6 +153,7 @@ class CBPTaskService
 			"DESCRIPTION" => Array("FIELD" => "T.DESCRIPTION", "TYPE" => "string"),
 			"PARAMETERS" => Array("FIELD" => "T.PARAMETERS", "TYPE" => "string"),
 			"IS_INLINE" => Array("FIELD" => "T.IS_INLINE", "TYPE" => "string"),
+			"DELEGATION_TYPE" => Array("FIELD" => "T.DELEGATION_TYPE", "TYPE" => "int"),
 			"STATUS" => Array("FIELD" => "T.STATUS", "TYPE" => "int"),
 			'DOCUMENT_NAME' => Array("FIELD" => "T.DOCUMENT_NAME", "TYPE" => "string"),
 			"USER_ID" => Array("FIELD" => "TU.USER_ID", "TYPE" => "int", "FROM" => "INNER JOIN b_bp_task_user TU ON (T.ID = TU.TASK_ID)"),

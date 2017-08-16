@@ -1047,7 +1047,7 @@ if ('' == $strImportErrorMessage)
 							else
 							{
 								if (isset($value['PRICE']))
-									$value['PRICE'] = str_replace(' ', '', $value['PRICE']);
+									$value['PRICE'] = str_replace(array(' ', ','), array('', '.'), $value['PRICE']);
 								if (CPrice::Update($arr["ID"], $value))
 								{
 									$bUpdatePrice = 'Y';
@@ -1074,7 +1074,7 @@ if ('' == $strImportErrorMessage)
 							if (!$boolEmptyNewPrice)
 							{
 								if (isset($value['PRICE']))
-									$value['PRICE'] = str_replace(' ', '', $value['PRICE']);
+									$value['PRICE'] = str_replace(array(' ', ','), array('', '.'), $value['PRICE']);
 								if (CPrice::Add($value))
 								{
 									$bUpdatePrice = 'Y';

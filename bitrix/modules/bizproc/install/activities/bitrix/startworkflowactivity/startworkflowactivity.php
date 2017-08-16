@@ -144,9 +144,6 @@ class CBPStartWorkflowActivity
 
 		$parameters[CBPDocument::PARAM_TAGRET_USER] = $this->GetRootActivity()->{CBPDocument::PARAM_TAGRET_USER};
 
-		if ($this->UseSubscription == 'Y')
-			$this->Subscribe($this);
-
 		$this->wfId = CBPDocument::StartWorkflow(
 			$template['ID'],
 			$documentId,
@@ -155,22 +152,31 @@ class CBPStartWorkflowActivity
 			array('workflowId' => $this->GetWorkflowInstanceId(), 'templateId' => $templateId)
 		);
 		$this->WorkflowId = $this->wfId;
+		$workflowIsCompleted = false;
+
+		if ($this->wfId && !$errors)
+		{
+			$info = CBPRuntime::GetRuntime()->GetService('StateService')->getWorkflowStateInfo($this->wfId);
+			if ($info['WORKFLOW_STATUS'] === null)
+			{
+				$workflowIsCompleted = true;
+			}
+		}
+
 		if ($errors)
 		{
 			if ($this->UseSubscription == 'Y')
-			{
-				$this->Unsubscribe($this);
 				throw new Exception($errors[0]['message']);
-			}
 			else
 				$this->WriteToTrackingService(GetMessage("BPSWFA_START_ERROR", array('#MESSAGE#' => $errors[0]['message'])));
 
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		if ($this->UseSubscription != 'Y')
+		if ($workflowIsCompleted || $this->UseSubscription != 'Y')
 			return CBPActivityExecutionStatus::Closed;
 
+		$this->Subscribe($this);
 		return CBPActivityExecutionStatus::Executing;
 	}
 

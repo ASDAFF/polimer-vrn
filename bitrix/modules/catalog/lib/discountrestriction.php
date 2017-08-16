@@ -69,4 +69,46 @@ class DiscountRestrictionTable extends Main\Entity\DataManager
 			)
 		);
 	}
+
+	/**
+	 * Change active flag in table by discount.
+	 *
+	 * @param int $discount			Discount id.
+	 * @param string $active		Discount active flag.
+	 * @return void
+	 */
+	public static function changeActiveByDiscount($discount, $active)
+	{
+		$discount = (int)$discount;
+		$active = (string)$active;
+		if ($discount <= 0 || ($active != 'Y' && $active != 'N'))
+			return;
+		$conn = Main\Application::getConnection();
+		$helper = $conn->getSqlHelper();
+		$conn->queryExecute(
+			'update '.$helper->quote(self::getTableName()).
+			' set '.$helper->quote('ACTIVE').' = \''.$active.'\' where '.
+			$helper->quote('DISCOUNT_ID').' = '.$discount
+		);
+		unset($helper, $conn);
+	}
+
+	/**
+	 * Delete restriction list by discount.
+	 *
+	 * @param int $discount			Discount id.
+	 * @return void
+	 */
+	public static function deleteByDiscount($discount)
+	{
+		$discount = (int)$discount;
+		if ($discount <= 0)
+			return;
+		$conn = Main\Application::getConnection();
+		$helper = $conn->getSqlHelper();
+		$conn->queryExecute(
+			'delete from '.$helper->quote(self::getTableName()).' where '.$helper->quote('DISCOUNT_ID').' = '.$discount
+		);
+		unset($helper, $conn);
+	}
 }

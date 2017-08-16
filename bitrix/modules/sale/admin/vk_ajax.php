@@ -138,4 +138,6 @@ if (strtolower(SITE_CHARSET) != 'utf-8')
 	$arResult = $APPLICATION->ConvertCharsetArray($arResult, SITE_CHARSET, 'utf-8');
 
 header('Content-Type: application/json');
-die(json_encode($arResult));
+print json_encode($arResult);
+$APPLICATION::FinalActions();
+die();

@@ -319,7 +319,7 @@
 
 		onResetButtonClick: function()
 		{
-			this.parent.getActionsPanel().confirmDialog(
+			this.parent.confirmDialog(
 				{
 					CONFIRM: true,
 					CONFIRM_MESSAGE: this.parent.arParams.CONFIRM_RESET_MESSAGE
@@ -351,7 +351,7 @@
 
 		onApplyButtonClick: function()
 		{
-			this.parent.getActionsPanel().confirmDialog(
+			this.parent.confirmDialog(
 				{
 					CONFIRM: this.isForAll(),
 					CONFIRM_MESSAGE: this.parent.getParam('SETTINGS_FOR_ALL_CONFIRM_MESSAGE')

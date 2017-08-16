@@ -527,6 +527,11 @@ BitrixLFFilter.prototype.onClickMenuItem = function(params)
 	}
 };
 
+BitrixLFFilter.prototype.closeHint = function(element)
+{
+
+};
+
 BitrixLFFilterDestinationSelectorManager = {
 	controls: {},
 
@@ -553,7 +558,6 @@ BitrixLFFilterDestinationSelectorManager = {
 		}
 	}
 };
-
 
 BitrixLFFilterDestinationSelector = function ()
 {

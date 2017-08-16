@@ -249,4 +249,21 @@
 			buttonParent.appendChild(button);
 		}
 	};
+
+
+	/**
+	 * Updates group actions panel
+	 * @param {HTMLElement} panel
+	 */
+	BX.Grid.Updater.prototype.updateGroupActions = function(panel)
+	{
+		var GroupActions = this.parent.getActionsPanel();
+
+		if (!!GroupActions && BX.type.isDomNode(panel))
+		{
+			var panelNode = GroupActions.getPanel();
+			panelNode.innerHTML = '';
+			panelNode.appendChild(BX.firstChild(panel));
+		}
+	};
 })();

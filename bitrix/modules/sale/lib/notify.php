@@ -103,7 +103,7 @@ class Notify
 			{
 				foreach ($basketTextList as $basketItemCode => $basketItemData)
 				{
-					$basketList .= $basketItemData."\n";
+					$basketList .= $basketItemData."</br>";
 				}
 			}
 		}
@@ -886,22 +886,24 @@ class Notify
 		}
 
 		$check = CheckManager::getLastPrintableCheckInfo($entity);
+		if (!empty($check['LINK']))
+		{
+			$fields = array(
+				"ORDER_ID" => $order->getField("ACCOUNT_NUMBER"),
+				"ORDER_ACCOUNT_NUMBER_ENCODE" => urlencode(urlencode($order->getField("ACCOUNT_NUMBER"))),
+				"ORDER_USER" => static::getUserName($order),
+				"ORDER_DATE" => $order->getDateInsert()->toString(),
+				"EMAIL" => static::getUserEmail($order),
+				"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"]),
+				"CHECK_LINK" => $check['LINK'],
+			);
 
-		$fields = array(
-			"ORDER_ID" => $order->getField("ACCOUNT_NUMBER"),
-			"ORDER_ACCOUNT_NUMBER_ENCODE" => urlencode(urlencode($order->getField("ACCOUNT_NUMBER"))),
-			"ORDER_USER" => static::getUserName($order),
-			"ORDER_DATE" => $order->getDateInsert()->toString(),
-			"EMAIL" => static::getUserEmail($order),
-			"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"]),
-			"CHECK_LINK" => $check['LINK'],
-		);
+			$eventName = static::EVENT_ON_CHECK_PRINT_SEND_EMAIL;
+			$event = new \CEvent;
+			$event->Send($eventName, $order->getField('LID'), $fields, "N");
 
-		$eventName = static::EVENT_ON_CHECK_PRINT_SEND_EMAIL;
-		$event = new \CEvent;
-		$event->Send($eventName, $order->getField('LID'), $fields, "N");
-
-		static::addSentEvent('p'.$entity->getId(), $eventName);
+			static::addSentEvent('p'.$entity->getId(), $eventName);
+		}
 
 		return $result;
 	}

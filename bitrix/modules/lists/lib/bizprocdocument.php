@@ -1698,7 +1698,10 @@ class BizprocDocument extends CIBlockDocument
 		if (strlen($documentType) <= 0)
 			return false;
 
-		$parameters["IBlockId"] = intval(substr($documentType, strlen("iblock_")));
+		if(is_numeric($documentType))
+			$parameters["IBlockId"] = intval($documentType);
+		else
+			$parameters["IBlockId"] = intval(substr($documentType, strlen("iblock_")));
 		$parameters['sectionId'] = !empty($parameters['sectionId']) ? (int)$parameters['sectionId'] : 0;
 
 		if (!array_key_exists("IBlockRightsMode", $parameters))

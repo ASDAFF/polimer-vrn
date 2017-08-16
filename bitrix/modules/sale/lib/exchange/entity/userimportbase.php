@@ -81,10 +81,13 @@ abstract class UserImportBase extends ImportBase
 
 		if($config === null)
 		{
-			$r = \CSaleExport::GetList(array(), array("PERSON_TYPE_ID" => $this->getListPersonType($this->settings->getSiteId())));
-			while($ar = $r->Fetch())
+			if($personTypes = $this->getListPersonType($this->settings->getSiteId()))
 			{
-				$config[$ar["PERSON_TYPE_ID"]] = unserialize($ar["VARS"]);
+				$r = \CSaleExport::GetList(array(), array("PERSON_TYPE_ID" => $personTypes));
+				while($ar = $r->Fetch())
+				{
+					$config[$ar["PERSON_TYPE_ID"]] = unserialize($ar["VARS"]);
+				}
 			}
 		}
 		return $config;
@@ -115,14 +118,20 @@ abstract class UserImportBase extends ImportBase
 	 */
 	public function resolvePersonTypeId($fields)
 	{
-		foreach($this->getConfig() as $id => $value)
+		$config = $this->getConfig();
+
+		if(is_array($config))
 		{
-			if((($value["IS_FIZ"] == "Y" && $fields["TYPE"] == "FIZ") ||
-				($value["IS_FIZ"] == "N" && $fields["TYPE"] != "FIZ")))
+			foreach($config as $id => $value)
 			{
-				return $id;
+				if((($value["IS_FIZ"] == "Y" && $fields["TYPE"] == "FIZ") ||
+					($value["IS_FIZ"] == "N" && $fields["TYPE"] != "FIZ")))
+				{
+					return $id;
+				}
 			}
 		}
+
 		return null;
 	}
 

@@ -202,7 +202,12 @@ class ApiHelper
 
 //			UPLOAD photo by http
 			if(isset($logger) && $richLog)
-				$logger->addLog("Upload photo HTTP", $item);
+				$logger->addLog("Upload photo HTTP", array(
+					"PRODUCT" => $item["BX_ID"].': '.$item["NAME"],
+					"PHOTO_MAIN_BX_ID" => $item["PHOTO_MAIN_BX_ID"],
+					"PHOTO_MAIN_URL" => $item["PHOTO_MAIN_URL"],
+					"PHOTOS" => $item["PHOTOS"]
+				));
 			$responseHttp = ApiHelper::uploadPhotoHttp($item, $uploadServer, $uploadType, $timer);
 			$responseHttp = Json::decode($responseHttp);
 
@@ -445,6 +450,7 @@ class ApiHelper
 				break;
 			}
 		}
+		$productsFromVk = self::extractItemsFromArray($productsFromVk, array('id'));
 		$productsFromVk = self::changeArrayMainKey($productsFromVk, 'id', 'vk_id');
 		
 		return $productsFromVk;

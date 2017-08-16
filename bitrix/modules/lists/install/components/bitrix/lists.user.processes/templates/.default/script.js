@@ -48,7 +48,7 @@ BX.Lists.ListsProcessesClass = (function ()
 						{
 							tabContainer.appendChild(BX.create('span', {
 								attrs: {
-									'data-name': result.lists[k].name,
+									'data-name': BX.util.htmlspecialchars(result.lists[k].name),
 									'data-picture': result.lists[k].picture,
 									'data-url': 'document.location.href = "'+result.lists[k].url+'"'
 								},

@@ -130,7 +130,7 @@ if (isset($data['kkm']) && count($data['kkm']) > 0)
 		else
 		{
 			if (Cashbox\Manager::DEBUG_MODE === true)
-				Cashbox\Internals\CashboxErrLogTable::add(array('MESSAGE' => 'enable cashbox does not find', 'DATE_INSERT' => new Main\Type\DateTime()));
+				Cashbox\Internals\CashboxErrLogTable::add(array('MESSAGE' => 'enabled cashbox was not found', 'DATE_INSERT' => new Main\Type\DateTime()));
 			$error = true;
 		}
 	}

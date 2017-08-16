@@ -36,6 +36,7 @@ $arParams["USER_ID"] = intval(empty($arParams["USER_ID"]) ? $currentUserId : $ar
 $arResult["ShowMode"] = "Form";
 $arResult['ReadOnly'] = false;
 $arResult['IsComplete'] = false;
+$arResult['isAdmin'] = $isAdmin;
 
 if ($arParams["USER_ID"] != $currentUserId)
 {
@@ -80,7 +81,7 @@ if ($arParams["TASK_ID"] > 0)
 		array("ID" => $arParams["TASK_ID"], "USER_ID" => $arParams["USER_ID"]),
 		false,
 		false,
-		array("ID", "WORKFLOW_ID", "ACTIVITY", "ACTIVITY_NAME", "MODIFIED", "OVERDUE_DATE", "NAME", "DESCRIPTION", "PARAMETERS", 'IS_INLINE', 'STATUS', 'USER_STATUS', 'DOCUMENT_NAME')
+		array("ID", "WORKFLOW_ID", "ACTIVITY", "ACTIVITY_NAME", "MODIFIED", "OVERDUE_DATE", "NAME", "DESCRIPTION", "PARAMETERS", 'IS_INLINE', 'STATUS', 'USER_STATUS', 'DOCUMENT_NAME', 'DELEGATION_TYPE')
 	);
 	$arResult["TASK"] = $dbTask->GetNext();
 }
@@ -92,7 +93,7 @@ if (!$arResult["TASK"] && strlen($arParams["WORKFLOW_ID"]) > 0)
 		array("WORKFLOW_ID" => $arParams["WORKFLOW_ID"], "USER_ID" => $arParams["USER_ID"], 'USER_STATUS' => CBPTaskUserStatus::Waiting),
 		false,
 		false,
-		array("ID", "WORKFLOW_ID", "ACTIVITY", "ACTIVITY_NAME", "MODIFIED", "OVERDUE_DATE", "NAME", "DESCRIPTION", "PARAMETERS", 'IS_INLINE', 'STATUS', 'USER_STATUS', 'DOCUMENT_NAME')
+		array("ID", "WORKFLOW_ID", "ACTIVITY", "ACTIVITY_NAME", "MODIFIED", "OVERDUE_DATE", "NAME", "DESCRIPTION", "PARAMETERS", 'IS_INLINE', 'STATUS', 'USER_STATUS', 'DOCUMENT_NAME', 'DELEGATION_TYPE')
 	);
 	$arResult["TASK"] = $dbTask->GetNext();
 }

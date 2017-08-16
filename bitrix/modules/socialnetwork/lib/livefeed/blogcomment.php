@@ -11,6 +11,7 @@ final class BlogComment extends Provider
 {
 	const PROVIDER_ID = 'BLOG_COMMENT';
 	const TYPE = 'comment';
+	const CONTENT_TYPE_ID = 'BLOG_COMMENT';
 
 	public static function getId()
 	{

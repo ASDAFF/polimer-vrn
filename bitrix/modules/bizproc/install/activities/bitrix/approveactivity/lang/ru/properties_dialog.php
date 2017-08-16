@@ -29,4 +29,5 @@ $MESS["BPAA_PD_TIMEOUT_LIMIT"] = "Минимальный период утвер
 $MESS["BPAR_PD_COMMENT_REQUIRED"] = "Обязательность комментария";
 $MESS["BPAR_PD_COMMENT_REQUIRED_YA"] = "Только при утверждении";
 $MESS["BPAR_PD_COMMENT_REQUIRED_YR"] = "Только при отклонении";
+$MESS["BPAR_PD_DELEGATION_TYPE"] = "Тип делегирования";
 ?>

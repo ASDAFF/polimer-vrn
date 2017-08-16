@@ -531,6 +531,7 @@ class CBlogPost extends CAllBlogPost
 	function GetList($arOrder = Array("ID" => "DESC"), $arFilter = Array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
 	{
 		global $DB, $USER_FIELD_MANAGER, $USER, $APPLICATION;
+		static $blogPostEventIdList = null;
 
 		$obUserFieldsSql = new CUserTypeSQL;
 		$obUserFieldsSql->SetEntity("BLOG_POST", "P.ID");
@@ -647,11 +648,22 @@ class CBlogPost extends CAllBlogPost
 			"SOCNET_BLOG_READ" => array("FIELD" => "BSR.BLOG_ID", "TYPE" => "int", "FROM" => "INNER JOIN b_blog_socnet BSR ON (P.BLOG_ID = BSR.BLOG_ID)"),
 			"BLOG_SOCNET_GROUP_ID" => array("FIELD" => "B.SOCNET_GROUP_ID", "TYPE" => "string", "FROM" => "INNER JOIN b_blog B ON (P.BLOG_ID = B.ID)"),
 			"SOCNET_GROUP_ID" => array("FIELD" => "SR1.ENTITY_ID", "TYPE" => "string", "FROM" => "INNER JOIN b_blog_socnet_rights SR1 ON (P.ID = SR1.POST_ID AND SR1.ENTITY_TYPE = 'SG')"),
-			"SOCNET_SITE_ID" => array("FIELD" => "SLS.SITE_ID", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_log BSL ON (BSL.EVENT_ID in ('blog_post', 'blog_post_micro', 'blog_post_important') AND BSL.SOURCE_ID = P.ID) ".
-				"LEFT JOIN b_sonet_log_site SLS ON BSL.ID = SLS.LOG_ID"),
 
 			"COMMENT_ID" => array("FIELD" => "PC.ID", "TYPE" => "string", "FROM" => "INNER JOIN b_blog_comment PC ON (P.ID = PC.POST_ID)"),
 		);
+
+		if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
+		{
+			if ($blogPostEventIdList === null)
+			{
+				$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+				$blogPostEventIdList = $blogPostLivefeedProvider->getEventId();
+			}
+
+			$arFields["SOCNET_SITE_ID"] = array("FIELD" => "SLS.SITE_ID", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_log BSL ON (BSL.EVENT_ID in ('".implode("', '", $blogPostEventIdList)."') AND BSL.SOURCE_ID = P.ID) ".
+				"LEFT JOIN b_sonet_log_site SLS ON BSL.ID = SLS.LOG_ID");
+		}
+
 		$ii = 0;
 		foreach ($arFilter as $key => $val)
 		{

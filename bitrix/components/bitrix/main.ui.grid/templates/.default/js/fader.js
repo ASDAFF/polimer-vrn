@@ -37,6 +37,7 @@
 			document.addEventListener('scroll', this.debounceScrollHandler, BX.Grid.Utils.listenerParams({passive: true}));
 			this.container.addEventListener('scroll', BX.proxy(this.toggle, this), BX.Grid.Utils.listenerParams({passive: true}));
 			BX.addCustomEvent(window, 'Grid::updated', BX.proxy(this.toggle, this));
+			BX.addCustomEvent(window, 'Grid::resize', BX.proxy(this.toggle, this));
 			BX.addCustomEvent(window, 'Grid::headerUpdated', BX.proxy(this._onHeaderUpdated, this));
 			BX.addCustomEvent(window, 'Grid::columnResize', BX.proxy(this.toggle, this));
 			BX.bind(this.getEarLeft(), this.scrollStartEventName, BX.proxy(this._onMouseoverLeft, this));

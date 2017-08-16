@@ -281,6 +281,10 @@ del {
 	-webkit-transform: translateY(-50%);
 	transform: translateY(-50%);
 }
+
+.mobile-grid-data-phone-container .mobile-grid-data-phone-icon {
+	top: 38%;
+}
 /*Custom*/
 .mobile-grid-data-custom-container {padding: 0}
 .mobile-grid-restricted .mobile-grid-data-custom-container {padding: 7px 0 7px 16px;}

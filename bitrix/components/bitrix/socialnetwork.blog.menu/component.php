@@ -11,6 +11,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @global CMain $APPLICATION */
 /** @global CCacheManager $CACHE_MANAGER */
 
+use \Bitrix\Blog\Item\Permissions;
+
 if (!CModule::IncludeModule("blog"))
 {
 	ShowError(GetMessage("BLOG_MODULE_NOT_INSTALL"));
@@ -123,8 +125,21 @@ if(IntVal($arParams["USER_ID"]) > 0)
 	}
 }
 
-if(!($bGroupMode || ($user_id > 0 && IntVal($arParams["USER_ID"]) == $user_id)))
+if(!(
+	$bGroupMode
+	|| (
+		$user_id > 0
+		&& (
+			IntVal($arParams["USER_ID"]) == $user_id
+			|| CSocNetUser::isCurrentUserModuleAdmin()
+			|| $APPLICATION->getGroupRight("blog") >= "W"
+		)
+	)
+))
+{
+
 	return;
+}
 
 if($bGroupMode)
 {
@@ -160,12 +175,16 @@ elseif(
 {
 	$arResult["showAll"] = "Y";
 	$arResult["PostPerm"] = BLOG_PERMS_FULL;
+	$arResult["PATH_TO_4ME_ALL"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_BLOG"], array("user_id" => $arParams["USER_ID"]));
 
-	$arResult["PATH_TO_4ME_ALL"] = $arResult["PATH_TO_4ME"] = $arResult["PATH_TO_MINE"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_BLOG"], array("user_id" => $arParams["USER_ID"]));
-	$arResult["PATH_TO_4ME"] .= (strpos($arResult["PATH_TO_4ME"], "?") === false ? "?" : "&");
+	if ($arParams["USER_ID"] == $user_id)
+	{
+		$arResult["PATH_TO_4ME"] = $arResult["PATH_TO_MINE"] = $arResult["PATH_TO_4ME_ALL"];
+		$arResult["PATH_TO_4ME"] .= (strpos($arResult["PATH_TO_4ME"], "?") === false ? "?" : "&");
 
-	$arResult["PATH_TO_MINE"] = $arResult["PATH_TO_4ME"]."mine=Y";
-	$arResult["PATH_TO_4ME"] .= "forme=Y";
+		$arResult["PATH_TO_MINE"] = $arResult["PATH_TO_4ME"]."mine=Y";
+		$arResult["PATH_TO_4ME"] .= "forme=Y";
+	}
 
 	$arResult["forme"] = $_REQUEST["forme"];
 
@@ -179,8 +198,9 @@ elseif(
 		$arResult["forme"] = "";
 	}
 
-	$arResult["show4MeAll"] = "Y";
-	$arResult["show4Me"] = "Y";
+
+	$arResult["show4MeAll"] = ($arParams["USER_ID"] == $user_id ? "Y" : "N");
+	$arResult["show4Me"] = ($arParams["USER_ID"] == $user_id ? "Y" : "N");
 }
 
 if($arResult["PostPerm"] >= BLOG_PERMS_WRITE)
@@ -210,7 +230,7 @@ if($arResult["PostPerm"] >= BLOG_PERMS_WRITE)
 		$dbPost = CBlogPost::GetList(
 			array(),
 			array(
-					"AUTHOR_ID" => $user_id,
+					"AUTHOR_ID" => $arParams["USER_ID"],
 					"PUBLISH_STATUS" => BLOG_PUBLISH_STATUS_READY,
 					"BLOG_USE_SOCNET" => "Y",
 					"GROUP_ID" => $arParams["GROUP_ID"],

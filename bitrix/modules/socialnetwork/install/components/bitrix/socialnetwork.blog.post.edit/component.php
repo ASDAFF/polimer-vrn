@@ -29,6 +29,12 @@ if (!CModule::IncludeModule("blog"))
 
 	return false;
 }
+
+if (!CModule::IncludeModule("socialnetwork"))
+{
+	return false;
+}
+
 $feature = "blog";
 $arParams["SOCNET_GROUP_ID"] = IntVal($arParams["SOCNET_GROUP_ID"]);
 $arResult["bExtranetUser"] = (CModule::IncludeModule("extranet") && !CExtranet::IsIntranetUser());
@@ -36,13 +42,10 @@ $arResult["bExtranetSite"] = (CModule::IncludeModule("extranet") && CExtranet::I
 $arResult["ERROR_MESSAGE"] = "";
 
 $arParams["ID"] = IntVal($arParams["ID"]);
-
-$arParams["LAZY_LOAD"] = (isset($arParams["LAZY_LOAD"]) ? $arParams["LAZY_LOAD"] : 'N');
 $arParams["LAZY_LOAD"] = 'Y';
 
 $arResult["SHOW_FULL_FORM"] = (
-	$arParams["LAZY_LOAD"] != 'Y'
-	|| (
+	(
 		!empty($_POST)
 		&& (
 			!isset($_POST["TYPE"])
@@ -78,15 +81,28 @@ if(IntVal($arParams["SOCNET_GROUP_ID"]) > 0)
 {
 	$bCalendar = false;
 }
+elseif (
+	!CSocNetFeaturesPerms::CurrentUserCanPerformOperation(
+		SONET_ENTITY_USER,
+		$USER->getId(),
+		"calendar",
+		"view"
+	)
+)
+{
+	$bCalendar = false;
+}
 
 $arParams["B_CALENDAR"] = $bCalendar;
 
 $arResult["bGroupMode"] = false;
 
-if (CModule::IncludeModule("socialnetwork") && (IntVal($arParams["SOCNET_GROUP_ID"]) > 0 || IntVal($arParams["USER_ID"]) > 0))
+if (
+	IntVal($arParams["SOCNET_GROUP_ID"]) > 0
+	|| IntVal($arParams["USER_ID"]) > 0
+)
 {
-	if(IntVal($arParams["SOCNET_GROUP_ID"]) > 0)
-		$arResult["bGroupMode"] = true;
+	$arResult["bGroupMode"] = (IntVal($arParams["SOCNET_GROUP_ID"]) > 0);
 
 	if($arResult["bGroupMode"])
 	{
@@ -248,8 +264,12 @@ $arResult['BLOG_POST_TASKS'] = IsModuleInstalled("tasks");
 
 if (
 	$arResult['BLOG_POST_TASKS']
-	&& $arResult["bGroupMode"]
-	&& !CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_GROUP, $arParams["SOCNET_GROUP_ID"], "tasks", "create_tasks")
+	&& !CSocNetFeaturesPerms::CurrentUserCanPerformOperation(
+		$arResult["bGroupMode"] ? SONET_ENTITY_GROUP : SONET_ENTITY_USER,
+		$arResult["bGroupMode"] ? $arParams["SOCNET_GROUP_ID"] : $USER->getId(),
+		"tasks",
+		"create_tasks"
+	)
 )
 {
 	$arResult['BLOG_POST_TASKS'] = false;
@@ -259,6 +279,17 @@ if (
 	$arResult['BLOG_POST_TASKS']
 	&& \Bitrix\Main\Loader::includeModule('bitrix24')
 	&& !\CBitrix24BusinessTools::isToolAvailable($USER->getId(), 'tasks')
+)
+{
+	$arResult['BLOG_POST_TASKS'] = false;
+}
+
+if (
+	$arResult['BLOG_POST_TASKS']
+	&& $arResult["bGroupMode"]
+	&& ($arUserActiveFeatures = CSocNetFeatures::GetActiveFeatures(SONET_ENTITY_GROUP, $arParams["SOCNET_GROUP_ID"]))
+	&& is_array($arUserActiveFeatures)
+	&& !in_array('tasks', $arUserActiveFeatures)
 )
 {
 	$arResult['BLOG_POST_TASKS'] = false;
@@ -1510,7 +1541,7 @@ if (
 							}
 							foreach ($arPostFields as $FIELD_NAME => $arPostField)
 							{
-								if(!empty($arPostField["VALUE"]) > 0)
+								if(!empty($arPostField["VALUE"]))
 								{
 									$bHasProps = true;
 									break;
@@ -1547,7 +1578,7 @@ if (
 								"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 								"SHOW_LOGIN" => $arParams["SHOW_LOGIN"],
 							);
-							CBlogPost::Notify($arFields, $arBlog, $arParamsNotify);
+							$logId = CBlogPost::Notify($arFields, $arBlog, $arParamsNotify);
 
 							if(COption::GetOptionString("blog","send_blog_ping", "N") == "Y")
 							{
@@ -1578,6 +1609,61 @@ if (
 						&& strlen($arResult["ERROR_MESSAGE"]) <= 0
 					) // Record saved successfully
 					{
+						$eventId = \Bitrix\Blog\Integration\Socialnetwork\Log::EVENT_ID_POST;
+						$arPostFields = $USER_FIELD_MANAGER->GetUserFields("BLOG_POST", $newID, LANGUAGE_ID);
+
+						if (
+							isset($arPostFields["UF_BLOG_POST_IMPRTNT"])
+							&& isset($arPostFields["UF_BLOG_POST_IMPRTNT"]["VALUE"])
+							&& intval($arPostFields["UF_BLOG_POST_IMPRTNT"]["VALUE"]) > 0
+						)
+						{
+							$eventId = \Bitrix\Blog\Integration\Socialnetwork\Log::EVENT_ID_POST_IMPORTANT;
+						}
+						elseif (
+							isset($arPostFields["UF_BLOG_POST_VOTE"])
+							&& isset($arPostFields["UF_BLOG_POST_VOTE"]["VALUE"])
+							&& intval($arPostFields["UF_BLOG_POST_VOTE"]["VALUE"]) > 0
+						)
+						{
+							$eventId = \Bitrix\Blog\Integration\Socialnetwork\Log::EVENT_ID_POST_VOTE;
+						}
+						elseif (
+							isset($arPostFields["UF_GRATITUDE"])
+							&& isset($arPostFields["UF_GRATITUDE"]["VALUE"])
+							&& intval($arPostFields["UF_GRATITUDE"]["VALUE"]) > 0
+						)
+						{
+							$eventId = \Bitrix\Blog\Integration\Socialnetwork\Log::EVENT_ID_POST_GRAT;
+						}
+
+						if (
+							!isset($logId)
+							|| intval($logId) <= 0
+						)
+						{
+							$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+
+							$res = \Bitrix\Socialnetwork\LogTable::getList(array(
+								'filter' => array(
+									'EVENT_ID' => $blogPostLivefeedProvider->getEventId(),
+									'SOURCE_ID' => $newID
+								),
+								'select' => array('ID')
+							));
+							if ($logFields = $res->fetch())
+							{
+								$logId = $logFields['ID'];
+							}
+						}
+
+						if (intval($logId) > 0)
+						{
+							CSocNetLog::Update(intval($logId), array(
+								"EVENT_ID" => $eventId
+							));
+						}
+
 						$DB->Commit();
 						$postUrl = CComponentEngine::MakePathFromTemplate(htmlspecialcharsBack($arParams["PATH_TO_POST"]), array("post_id" => $newID, "user_id" => $arBlog["OWNER_ID"]));
 

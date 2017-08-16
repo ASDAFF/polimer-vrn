@@ -328,7 +328,7 @@ class AjaxProcessor
 		}
 		elseif(strlen($alreadyInBasketCode) <= 0)
 		{
-			$this->request["formData"]["PRODUCT"]["new"] = $productParams;
+			$this->request["formData"]["PRODUCT"][Admin\OrderEdit::BASKET_CODE_NEW] = $productParams;
 		}
 
 		$this->formDataChanged = true;
@@ -748,7 +748,7 @@ class AjaxProcessor
 			$companies = Company\Manager::getListWithRestrictions($payment, Company\Restrictions\Manager::MODE_MANAGER);
 			$result['PAYMENT_COMPANY_ID'] = Admin\OrderEdit::makeSelectHtmlBodyWithRestricted($companies, $payment->getField('COMPANY_ID'));
 		}
-		$orderBasket = new Admin\Blocks\OrderBasket($order,"", $this->request["formData"]["BASKET_PREFIX"]);
+		$orderBasket = new Admin\Blocks\OrderBasket($order, "", $this->request["formData"]["BASKET_PREFIX"]);
 		$basketPrepareParams = array();
 
 		if((
@@ -781,7 +781,7 @@ class AjaxProcessor
 
 			foreach($formData["PRODUCT"] as $basketCode => $itemParams)
 			{
-				if($basketCode == "new")
+				if($basketCode == Admin\OrderEdit::BASKET_CODE_NEW)
 					continue;
 
 				if(!isset($result["BASKET"]["ITEMS"][$basketCode]["PRICE"]) || !isset($itemParams["PRICE"]))
@@ -1983,6 +1983,7 @@ class AjaxProcessor
 
 	/**
 	 * @param $formData
+	 * @param Result &$result
 	 * @return Sale\Order
 	 * @throws ArgumentNullException
 	 * @throws UserMessageException

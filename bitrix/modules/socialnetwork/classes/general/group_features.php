@@ -618,7 +618,7 @@ class CAllSocNetFeatures
 
 	public static function getActiveFeaturesNames($type, $id)
 	{
-		global $arSocNetAllowedEntityTypes, $APPLICATION, $CACHE_MANAGER;
+		global $arSocNetAllowedEntityTypes, $APPLICATION;
 
 		$type = Trim($type);
 		if ((StrLen($type) <= 0) || !in_array($type, $arSocNetAllowedEntityTypes))

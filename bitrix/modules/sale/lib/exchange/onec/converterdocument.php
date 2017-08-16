@@ -78,11 +78,12 @@ class ConverterDocumentOrder extends Converter
 						$fields[$k] = $params['1C_TIME'];
 					break;
 				case 'STATUS_ID':
-					if(isset($params[$k]))
+					if(isset($params['REK_VALUES']['1C_STATUS_ID']))
 					{
 						$settings = $this->getSettings();
 						if($settings->changeStatusFor(EntityType::ORDER) == 'Y')
 							$fields[$k] = $params['REK_VALUES']['1C_STATUS_ID'];
+
 					}
 
 					break;

@@ -4914,6 +4914,8 @@ class CSocNetLogTools
 
 	public static function GetDataFromRatingEntity($rating_entity_type_id, $rating_entity_id, $bCheckRights = true)
 	{
+		static $blogPostEventIdList = null;
+
 		$rating_entity_type_id = preg_replace("/[^a-z0-9_-]/i", "", $rating_entity_type_id);
 		$rating_entity_id = intval($rating_entity_id);
 		
@@ -4927,7 +4929,12 @@ class CSocNetLogTools
 		{
 			case "BLOG_POST":
 				$log_type = "log";
-				$log_event_id = array("blog_post", "blog_post_important");
+				if ($blogPostEventIdList === null)
+				{
+					$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+					$blogPostEventIdList = $blogPostLivefeedProvider->getEventId();
+				}
+				$log_event_id = array_merge($blogPostEventIdList, array("idea"));
 				break;
 			case "BLOG_COMMENT":
 				$log_type = "comment";
@@ -4976,7 +4983,12 @@ class CSocNetLogTools
 				break;
 			case "VOTING":
 				$log_type = "log";
-				$log_event_id = array("blog_post", "blog_post_important");
+				if ($blogPostEventIdList === null)
+				{
+					$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+					$blogPostEventIdList = $blogPostLivefeedProvider->getEventId();
+				}
+				$log_event_id = $blogPostEventIdList;
 				if (CModule::IncludeModule("blog"))
 				{
 					$rsBlogPost = CBlogPost::GetList(

@@ -1,6 +1,7 @@
 (function() {
 	if (!!window.__blogEditComment)
 		return;
+
 window.checkForQuote = function(e, node, ENTITY_XML_ID, author_id) {
 	if (window.mplCheckForQuote)
 		mplCheckForQuote(e, node, ENTITY_XML_ID, author_id)
@@ -175,6 +176,45 @@ window.onLightEditorShow = function(content, data){
 			}
 		}
 	}
-}
+};
+
+BX.SocialnetworkBlogPostComment = {
+};
+
+BX.SocialnetworkBlogPostComment.registerViewAreaList = function(params)
+{
+	if (
+		typeof params == 'undefined'
+		|| typeof params.containerId == 'undefined'
+		|| typeof params.className == 'undefined'
+	)
+	{
+		return;
+	}
+
+	if (BX(params.containerId))
+	{
+		var
+			viewAreaList = BX.findChildren(BX(params.containerId), {'tag':'div', 'className': params.className}, true),
+			fullContentArea = null;
+
+		for (var i = 0, length = viewAreaList.length; i < length; i++)
+		{
+			if (viewAreaList[i].id.length > 0)
+			{
+				fullContentArea = null;
+				if (BX.type.isNotEmptyString(params.fullContentClassName))
+				{
+					fullContentArea = BX.findChild(viewAreaList[i], {
+						className: params.fullContentClassName
+					});
+				}
+
+				BX.UserContentView.registerViewArea(viewAreaList[i].id, (fullContentArea ? fullContentArea : null));
+			}
+		}
+	}
+};
+
 })(window);
 

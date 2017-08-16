@@ -604,7 +604,11 @@ class SaleOrderAjax extends \CBitrixComponent
 			}
 		}
 
-		$ipAddress = \Bitrix\Main\Service\GeoIp\Manager::getRealIp();
+		$ipAddress = '';
+
+		if($this->arParams['SPOT_LOCATION_BY_GEOIP'] === 'Y')
+			$ipAddress = \Bitrix\Main\Service\GeoIp\Manager::getRealIp();
+
 		$propertyCollection = $order->getPropertyCollection();
 		/** @var Sale\PropertyValue $property */
 		foreach ($propertyCollection as $property)
@@ -658,25 +662,19 @@ class SaleOrderAjax extends \CBitrixComponent
 				}
 			}
 
-			if ($arProperty['TYPE'] == 'LOCATION' && empty($curVal))
+			if ($arProperty['TYPE'] == 'LOCATION' && empty($curVal) && strlen($ipAddress) > 0)
 			{
-				if(strlen($ipAddress) > 0)
-				{
-					$locCode = GeoIp::getLocationCode($ipAddress, LANGUAGE_ID);
+				$locCode = GeoIp::getLocationCode($ipAddress, LANGUAGE_ID);
 
-					if(strlen($locCode) > 0)
-						$curVal = $locCode;
-				}
+				if(strlen($locCode) > 0)
+					$curVal = $locCode;
 			}
-			elseif ($arProperty['IS_ZIP'] == 'Y' && empty($curVal))
+			elseif ($arProperty['IS_ZIP'] == 'Y' && empty($curVal) && strlen($ipAddress) > 0)
 			{
-				if(strlen($ipAddress) > 0)
-				{
-					$zip = GeoIp::getZipCode($ipAddress);
+				$zip = GeoIp::getZipCode($ipAddress);
 
-					if(strlen($zip) > 0)
-						$curVal = $zip;
-				}
+				if(strlen($zip) > 0)
+					$curVal = $zip;
 			}
 
 			if (empty($curVal))
@@ -979,8 +977,16 @@ class SaleOrderAjax extends \CBitrixComponent
 
 	protected function addWarning($res, $type)
 	{
-		if (!empty($type))
-			$this->arResult["WARNING"][$type][] = $res;
+		if (
+		    !empty($type)
+            && (
+                empty($this->arResult['WARNING'][$type])
+                 || (!empty($this->arResult['WARNING'][$type]) && !in_array($res, $this->arResult['WARNING'][$type]))
+            )
+        )
+        {
+            $this->arResult['WARNING'][$type][] = $res;
+        }
 	}
 
 	/**
@@ -2581,11 +2587,8 @@ class SaleOrderAjax extends \CBitrixComponent
 	protected function obtainPaySystem()
 	{
 		$arResult =& $this->arResult;
-		$innerPaySystemId = PaySystem\Manager::getInnerPaySystemId();
-		$innerPayment = $this->getInnerPayment($this->order);
-		$extPayment = $this->getExternalPayment($this->order);
-		$paySystemList = $this->arParams['DELIVERY_TO_PAYSYSTEM'] === 'p2d' ? $this->arPaySystemServiceAll : $this->arActivePaySystems;
 
+		$innerPayment = $this->getInnerPayment($this->order);
 		if (!empty($innerPayment) && $innerPayment->getSum() > 0)
 		{
 			$arResult['PAYED_FROM_ACCOUNT_FORMATED'] = SaleFormatCurrency($innerPayment->getSum(), $this->order->getCurrency());
@@ -2593,9 +2596,11 @@ class SaleOrderAjax extends \CBitrixComponent
 			$arResult['ORDER_TOTAL_LEFT_TO_PAY_FORMATED'] = SaleFormatCurrency($this->order->getPrice() - $innerPayment->getSum(), $this->order->getCurrency());
 		}
 
-		$paymentId = !empty($extPayment) ? $extPayment->getPaymentSystemId() : null;
+		$paySystemList = $this->arPaySystemServiceAll;
 		if (!empty($paySystemList))
 		{
+			$innerPaySystemId = PaySystem\Manager::getInnerPaySystemId();
+
 			if (!empty($paySystemList[$innerPaySystemId]))
 			{
 				$innerPaySystem = $paySystemList[$innerPaySystemId];
@@ -2609,16 +2614,19 @@ class SaleOrderAjax extends \CBitrixComponent
 				unset($paySystemList[$innerPaySystemId]);
 			}
 
-			foreach ($paySystemList as $arPaySystem)
-			{
-				$arPaySystem['PSA_ID'] = $arPaySystem['ID'];
+			$extPayment = $this->getExternalPayment($this->order);
+			$paymentId = !empty($extPayment) ? $extPayment->getPaymentSystemId() : null;
 
-				if ((string)$arPaySystem['PSA_NAME'] === '')
+			foreach ($paySystemList as $paySystem)
+			{
+				$paySystem['PSA_ID'] = $paySystem['ID'];
+
+				if ((string)$paySystem['PSA_NAME'] === '')
 				{
-					$arPaySystem['PSA_NAME'] = $arPaySystem['NAME'];
+					$paySystem['PSA_NAME'] = $paySystem['NAME'];
 				}
 
-				$arPaySystem['PSA_NAME'] = htmlspecialcharsEx($arPaySystem['PSA_NAME']);
+				$paySystem['PSA_NAME'] = htmlspecialcharsEx($paySystem['PSA_NAME']);
 
 				$keyMap = array(
 					'ACTION_FILE', 'RESULT_FILE', 'NEW_WINDOW', 'PERSON_TYPE_ID', 'PARAMS', 'TARIF', 'HAVE_PAYMENT',
@@ -2626,31 +2634,31 @@ class SaleOrderAjax extends \CBitrixComponent
 				);
 				foreach ($keyMap as $key)
 				{
-					$arPaySystem["PSA_{$key}"] = $arPaySystem[$key];
-					unset($arPaySystem[$key]);
+					$paySystem["PSA_{$key}"] = $paySystem[$key];
+					unset($paySystem[$key]);
 				}
 
-				if ($arPaySystem['LOGOTIP'] > 0)
+				if ($paySystem['LOGOTIP'] > 0)
 				{
-					$arPaySystem['PSA_LOGOTIP'] = CFile::GetFileArray($arPaySystem['LOGOTIP']);
+					$paySystem['PSA_LOGOTIP'] = CFile::GetFileArray($paySystem['LOGOTIP']);
 				}
-				unset($arPaySystem['LOGOTIP']);
+				unset($paySystem['LOGOTIP']);
 
-				if ($paymentId == $arPaySystem['ID'])
+				if ($paymentId == $paySystem['ID'])
 				{
-					$arPaySystem['CHECKED'] = 'Y';
+					$paySystem['CHECKED'] = 'Y';
 				}
 
-				$arPaySystem['PRICE'] = 0;
-				if ($arPaySystem['HAVE_PRICE'] === 'Y' && !empty($extPayment))
+				$paySystem['PRICE'] = 0;
+				if ($paySystem['HAVE_PRICE'] === 'Y' && !empty($extPayment))
 				{
-					$service = PaySystem\Manager::getObjectById($arPaySystem['ID']);
+					$service = PaySystem\Manager::getObjectById($paySystem['ID']);
 					if ($service !== null)
 					{
-						$arPaySystem['PRICE'] = $service->getPaymentPrice($extPayment);
-						$arPaySystem['PRICE_FORMATTED'] = SaleFormatCurrency($arPaySystem['PRICE'], $this->order->getCurrency());
+						$paySystem['PRICE'] = $service->getPaymentPrice($extPayment);
+						$paySystem['PRICE_FORMATTED'] = SaleFormatCurrency($paySystem['PRICE'], $this->order->getCurrency());
 
-						if ($paymentId == $arPaySystem['ID'])
+						if ($paymentId == $paySystem['ID'])
 						{
 							$arResult['PAY_SYSTEM_PRICE'] = $extPayment->getField('PRICE_COD');
 							$arResult['PAY_SYSTEM_PRICE_FORMATTED'] = SaleFormatCurrency($arResult['PAY_SYSTEM_PRICE'], $this->order->getCurrency());
@@ -2658,7 +2666,7 @@ class SaleOrderAjax extends \CBitrixComponent
 					}
 				}
 
-				$arResult['PAY_SYSTEM'][] = $arPaySystem;
+				$arResult['PAY_SYSTEM'][] = $paySystem;
 			}
 		}
 
@@ -2810,7 +2818,7 @@ class SaleOrderAjax extends \CBitrixComponent
 	}
 
 	/**
-	 * Set order total prices data from order object to $this->arResult
+	 * Obtains all order fields filled by user.
 	 */
 	protected function obtainUserConsentInfo()
 	{
@@ -2818,8 +2826,22 @@ class SaleOrderAjax extends \CBitrixComponent
 
 		$propertyIterator = Sale\Internals\OrderPropsTable::getList(array(
 			'select' => array('NAME'),
-			'filter' => array('ACTIVE' => 'Y', 'UTIL' => 'N'),
-			'order' => array('SORT' => 'ASC', 'ID' => 'ASC')
+			'filter' => array(
+				'ACTIVE' => 'Y',
+				'UTIL' => 'N',
+				'PERSON_TYPE_SITE.SITE_ID' => SITE_ID
+			),
+			'order' => array(
+				'SORT' => 'ASC',
+				'ID' => 'ASC'
+			),
+			'runtime' => array(
+				new \Bitrix\Main\Entity\ReferenceField(
+					'PERSON_TYPE_SITE',
+					'Bitrix\Sale\Internals\PersonTypeSiteTable',
+					array('=this.PERSON_TYPE_ID' => 'ref.PERSON_TYPE_ID')
+				),
+			)
 		));
 		while ($property = $propertyIterator->fetch())
 		{
@@ -3364,7 +3386,9 @@ class SaleOrderAjax extends \CBitrixComponent
 		foreach ($this->arPaySystemServiceAll as $key => $psService)
 		{
 			if ($paySystemId != $psService['ID'])
+			{
 				unset($this->arPaySystemServiceAll[$key]);
+			}
 		}
 	}
 
@@ -3376,243 +3400,79 @@ class SaleOrderAjax extends \CBitrixComponent
 	 */
 	protected function initPayment(Order $order)
 	{
-		$paySystemId = intval($this->arUserResult['PAY_SYSTEM_ID']);
-		$innerPaySystemId = PaySystem\Manager::getInnerPaySystemId();
-		$paymentCollection = $order->getPaymentCollection();
-		$innerPayment = null;
+		list($sumToSpend, $innerPaySystemList) = $this->getInnerPaySystemInfo($order);
 
-		list($sumToSpend, $arPsFromInner) = $this->getInnerPaySystemInfo($order);
-
-		if ($sumToSpend > 0 && $innerPayment = $this->getInnerPayment($order))
+		if ($sumToSpend > 0)
 		{
-			$this->arPaySystemServiceAll = $arPsFromInner;
-			$this->arActivePaySystems = $arPsFromInner;
-
-			if ($this->arUserResult['PAY_CURRENT_ACCOUNT'] == "Y")
-			{
-				$innerPayment->setField('SUM', $sumToSpend);
-			}
-			else
-			{
-				$innerPayment->delete();
-			}
-		}
-
-		$remainingSum = $order->getPrice() - $paymentCollection->getSum();
-		if ($remainingSum > 0 || $order->getPrice() == 0)
-		{
-			/** @var Payment $innerPayment */
 			$innerPayment = $this->getInnerPayment($order);
-			/** @var Payment $extPayment */
-			$extPayment = $paymentCollection->createItem();
-			$extPayment->setField('SUM', $remainingSum);
-			$arPaySystemServices = PaySystem\Manager::getListWithRestrictions($extPayment);
-			// we already checked restrictions for inner pay system (could be different prices by price restrictions)
-			unset($arPaySystemServices[$innerPaySystemId]);
-
-			// saving inner pay system if exists (array_intersect_key() can delete it)
-			if (isset($this->arActivePaySystems[$innerPaySystemId]))
+			if (!empty($innerPayment))
 			{
-				$innerPaySystem = $this->arActivePaySystems[$innerPaySystemId];
-				$this->arActivePaySystems = array_intersect_key($this->arActivePaySystems, $arPaySystemServices);
-				$this->arActivePaySystems += array($innerPaySystemId => $innerPaySystem);
-				unset($innerPaySystem);
-			}
-			else
-			{
-				$this->arActivePaySystems = $arPaySystemServices;
-			}
-
-			$this->arPaySystemServiceAll += $arPaySystemServices;
-
-			if (array_key_exists($paySystemId, $this->arActivePaySystems))
-			{
-				$arPaySystem = $this->arActivePaySystems[$paySystemId];
-			}
-			else
-			{
-				reset($this->arActivePaySystems);
-
-				if (key($this->arActivePaySystems) == $innerPaySystemId)
+				if ($this->arUserResult['PAY_CURRENT_ACCOUNT'] === 'Y')
 				{
-					if ($sumToSpend > 0)
-					{
-						if (count($this->arActivePaySystems) > 1)
-						{
-							next($this->arActivePaySystems);
-						}
-						elseif (empty($innerPayment))
-						{
-							$remainingSum = $remainingSum > $sumToSpend ? $sumToSpend : $remainingSum;
-							$extPayment->setField('SUM', $remainingSum);
-						}
-						else
-						{
-							$extPayment->delete();
-						}
-
-						$remainingSum = $order->getPrice() - $paymentCollection->getSum();
-						if ($remainingSum > 0)
-						{
-							$this->addWarning(Loc::getMessage("INNER_PAYMENT_BALANCE_ERROR"), self::PAY_SYSTEM_BLOCK);
-							$order->setFields(array(
-								'MARKED' => 'Y',
-								'REASON_MARKED' => Loc::getMessage("INNER_PAYMENT_BALANCE_ERROR")
-							));
-						}
-					}
-					else
-					{
-						unset($this->arActivePaySystems[$innerPaySystemId]);
-						unset($this->arPaySystemServiceAll[$innerPaySystemId]);
-					}
-				}
-
-				$arPaySystem = current($this->arActivePaySystems);
-
-				if (!empty($arPaySystem) && $paySystemId != 0)
-				{
-					$this->addWarning(Loc::getMessage("PAY_SYSTEM_CHANGE_WARNING"), self::PAY_SYSTEM_BLOCK);
-				}
-			}
-
-			if (!empty($arPaySystem))
-			{
-				$extPayment->setFields(array(
-					'PAY_SYSTEM_ID' => $arPaySystem["ID"],
-					'PAY_SYSTEM_NAME' => $arPaySystem["NAME"]
-				));
-				$this->arUserResult['PAY_SYSTEM_ID'] = $arPaySystem["ID"];
-			}
-			else
-			{
-				$extPayment->delete();
-			}
-		}
-
-		if (empty($this->arPaySystemServiceAll))
-		{
-			$this->addError(Loc::getMessage("SOA_ERROR_PAY_SYSTEM"), self::PAY_SYSTEM_BLOCK);
-		}
-
-		if (!empty($this->arUserResult["PREPAYMENT_MODE"]))
-		{
-			$this->showOnlyPrepaymentPs($paySystemId);
-		}
-	}
-
-	/**
-	 * Recalculates payment prices which could change due to shipment/discounts.
-	 *
-	 * @param Order $order
-	 * @throws Main\ObjectNotFoundException
-	 */
-	protected function recalculatePayment(Order $order)
-	{
-		// one more delivery calculation for some cases when payment affect delivery price
-		$res = $order->getShipmentCollection()->calculateDelivery();
-		if (!$res->isSuccess())
-		{
-			$shipment = $this->getCurrentShipment($order);
-			if (!empty($shipment))
-			{
-				$errMessages = '';
-
-				if (count($res->getErrorMessages()) > 0)
-				{
-					foreach ($res->getErrorMessages() as $message)
-					{
-						$errMessages .= $message.'<br />';
-					}
+					$innerPayment->setField('SUM', $sumToSpend);
 				}
 				else
 				{
-					$errMessages = Loc::getMessage('SOA_DELIVERY_CALCULATE_ERROR');
+					$innerPayment->delete();
+					$innerPayment = null;
 				}
 
-				$shipment->setFields(array(
-					'MARKED' => 'Y',
-					'REASON_MARKED' => $errMessages
-				));
+				$this->arPaySystemServiceAll = $this->arActivePaySystems = $innerPaySystemList;
 			}
 		}
 
-		$paySystemId = intval($this->arUserResult['PAY_SYSTEM_ID']);
 		$innerPaySystemId = PaySystem\Manager::getInnerPaySystemId();
+		$extPaySystemId = (int)$this->arUserResult['PAY_SYSTEM_ID'];
+
 		$paymentCollection = $order->getPaymentCollection();
-
-		list($sumToSpend, $arPsFromInner) = $this->getInnerPaySystemInfo($order, true);
-
-		if ($innerPayment = $this->getInnerPayment($order))
+		$remainingSum = $order->getPrice() - $paymentCollection->getSum();
+		if ($remainingSum > 0 || $order->getPrice() === 0)
 		{
-			$this->arActivePaySystems += $arPsFromInner;
-			$this->arPaySystemServiceAll += $arPsFromInner;
-
-			if ($this->arUserResult['PAY_CURRENT_ACCOUNT'] === 'Y' && $sumToSpend > 0)
-			{
-				$innerPayment->setField('SUM', $sumToSpend);
-			}
-			else
-			{
-				$innerPayment->delete();
-			}
-		}
-
-		/** @var Payment $innerPayment */
-		$innerPayment = $this->getInnerPayment($order);
-		/** @var Payment $extPayment */
-		$extPayment = $this->getExternalPayment($order);
-		$remainingSum = empty($innerPayment) ? $order->getPrice() : $order->getPrice() - $innerPayment->getSum();
-		if ($remainingSum > 0 || $order->getPrice() == 0)
-		{
-			if (empty($extPayment))
-			{
-				$extPayment = $paymentCollection->createItem();
-			}
-
+			/** @var Payment $extPayment */
+			$extPayment = $paymentCollection->createItem();
 			$extPayment->setField('SUM', $remainingSum);
 
-			$arPaySystemServices = PaySystem\Manager::getListWithRestrictions($extPayment);
-			// we already checked restrictions for inner pay system (could be different prices by price restrictions)
-			unset($arPaySystemServices[$innerPaySystemId]);
+			$extPaySystemList = PaySystem\Manager::getListWithRestrictions($extPayment);
 
-			// saving inner pay system if exists (array_intersect_key() can delete it)
-			if (isset($this->arActivePaySystems[$innerPaySystemId]))
+			// we already checked restrictions for inner pay system (could be different by price restrictions)
+			if (empty($innerPaySystemList[$innerPaySystemId]))
 			{
-				$innerPaySystem = $this->arActivePaySystems[$innerPaySystemId];
-				$this->arActivePaySystems = array_intersect_key($this->arActivePaySystems, $arPaySystemServices);
-				$this->arActivePaySystems += array($innerPaySystemId => $innerPaySystem);
-				unset($innerPaySystem);
+				unset($extPaySystemList[$innerPaySystemId]);
+			}
+			elseif (empty($extPaySystemList[$innerPaySystemId]))
+			{
+				$extPaySystemList[$innerPaySystemId] = $innerPaySystemList[$innerPaySystemId];
+			}
+
+			$this->arPaySystemServiceAll = $this->arActivePaySystems = $extPaySystemList;
+
+			if ($extPaySystemId !== 0 && array_key_exists($extPaySystemId, $this->arPaySystemServiceAll))
+			{
+				$selectedPaySystem = $this->arPaySystemServiceAll[$extPaySystemId];
 			}
 			else
 			{
-				$this->arActivePaySystems = array_intersect_key($this->arActivePaySystems, $arPaySystemServices);
-			}
+				reset($this->arPaySystemServiceAll);
 
-			$this->arPaySystemServiceAll += $arPaySystemServices;
-
-			if (array_key_exists($paySystemId, $this->arActivePaySystems))
-			{
-				$arPaySystem = $this->arActivePaySystems[$paySystemId];
-			}
-			elseif (array_key_exists($paySystemId, $this->arPaySystemServiceAll))
-			{
-				$arPaySystem = $this->arPaySystemServiceAll[$paySystemId];
-			}
-			else
-			{
-				if (key($this->arActivePaySystems) == $innerPaySystemId)
+				if (key($this->arPaySystemServiceAll) == $innerPaySystemId)
 				{
 					if ($sumToSpend > 0)
 					{
-						if (count($this->arActivePaySystems) > 1)
+						/** @var Payment $innerPayment */
+						$innerPayment = $this->getInnerPayment($order);
+
+						if (count($this->arPaySystemServiceAll) > 1)
 						{
-							next($this->arActivePaySystems);
+							next($this->arPaySystemServiceAll);
 						}
 						elseif (empty($innerPayment))
 						{
 							$remainingSum = $remainingSum > $sumToSpend ? $sumToSpend : $remainingSum;
-							$extPayment->setField('SUM', $remainingSum);
+                            $extPayment->setFields(array(
+                                'PAY_SYSTEM_ID' => $this->arPaySystemServiceAll[$innerPaySystemId]['ID'],
+                                'PAY_SYSTEM_NAME' => $this->arPaySystemServiceAll[$innerPaySystemId]['NAME'],
+                                'SUM' => $remainingSum
+                            ));
 						}
 						else
 						{
@@ -3636,43 +3496,211 @@ class SaleOrderAjax extends \CBitrixComponent
 					}
 				}
 
-				$arPaySystem = current($this->arActivePaySystems);
+				$selectedPaySystem = current($this->arPaySystemServiceAll);
+
+				if (!empty($selectedPaySystem) && $extPaySystemId != 0)
+				{
+					$this->addWarning(Loc::getMessage('PAY_SYSTEM_CHANGE_WARNING'), self::PAY_SYSTEM_BLOCK);
+				}
 			}
 
-			if (!array_key_exists(intval($arPaySystem['ID']), $this->arActivePaySystems))
+			if (!empty($selectedPaySystem) && $selectedPaySystem['ID'] != $innerPaySystemId)
+			{
+				$extPayment->setFields(array(
+					'PAY_SYSTEM_ID' => $selectedPaySystem['ID'],
+					'PAY_SYSTEM_NAME' => $selectedPaySystem['NAME']
+				));
+				$this->arUserResult['PAY_SYSTEM_ID'] = $selectedPaySystem['ID'];
+			}
+			else
+			{
+				$extPayment->delete();
+			}
+		}
+
+		if (empty($this->arPaySystemServiceAll))
+		{
+			$this->addError(Loc::getMessage('SOA_ERROR_PAY_SYSTEM'), self::PAY_SYSTEM_BLOCK);
+		}
+
+		if (!empty($this->arUserResult['PREPAYMENT_MODE']))
+		{
+			$this->showOnlyPrepaymentPs($this->arUserResult['PAY_SYSTEM_ID']);
+		}
+	}
+
+	/**
+	 * Recalculates payment prices which could change due to shipment/discounts.
+	 *
+	 * @param Order $order
+	 * @throws Main\ObjectNotFoundException
+	 */
+	protected function recalculatePayment(Order $order)
+	{
+		// one more delivery calculation for some cases when payment affect delivery price
+		$res = $order->getShipmentCollection()->calculateDelivery();
+		if (!$res->isSuccess())
+		{
+			$shipment = $this->getCurrentShipment($order);
+			if (!empty($shipment))
+			{
+				$errMessages = '';
+				$errors = $res->getErrorMessages();
+
+				if (!empty($errors))
+				{
+					foreach ($errors as $message)
+					{
+						$errMessages .= $message.'<br />';
+					}
+				}
+				else
+				{
+					$errMessages = Loc::getMessage('SOA_DELIVERY_CALCULATE_ERROR');
+				}
+
+				$shipment->setFields(array(
+					'MARKED' => 'Y',
+					'REASON_MARKED' => $errMessages
+				));
+			}
+		}
+
+		list($sumToSpend, $innerPaySystemList) = $this->getInnerPaySystemInfo($order, true);
+
+		$innerPayment = $this->getInnerPayment($order);
+		if (!empty($innerPayment))
+		{
+			if ($this->arUserResult['PAY_CURRENT_ACCOUNT'] === 'Y' && $sumToSpend > 0)
+			{
+				$innerPayment->setField('SUM', $sumToSpend);
+			}
+			else
+			{
+				$innerPayment->delete();
+				$innerPayment = null;
+			}
+
+			if ($sumToSpend > 0)
+			{
+				$this->arPaySystemServiceAll = $this->arActivePaySystems = $innerPaySystemList;
+			}
+		}
+
+		/** @var Payment $innerPayment */
+		$innerPayment = $this->getInnerPayment($order);
+		/** @var Payment $extPayment */
+		$extPayment = $this->getExternalPayment($order);
+
+		$remainingSum = empty($innerPayment) ? $order->getPrice() : $order->getPrice() - $innerPayment->getSum();
+		if ($remainingSum > 0 || $order->getPrice() === 0)
+		{
+			$paymentCollection = $order->getPaymentCollection();
+			$innerPaySystemId = PaySystem\Manager::getInnerPaySystemId();
+			$extPaySystemId = (int)$this->arUserResult['PAY_SYSTEM_ID'];
+
+			if (empty($extPayment))
+			{
+				$extPayment = $paymentCollection->createItem();
+			}
+
+			$extPayment->setField('SUM', $remainingSum);
+
+			$extPaySystemList = PaySystem\Manager::getListWithRestrictions($extPayment);
+			// we already checked restrictions for inner pay system (could be different by price restrictions)
+			if (empty($innerPaySystemList[$innerPaySystemId]))
+			{
+				unset($extPaySystemList[$innerPaySystemId]);
+			}
+			elseif (empty($extPaySystemList[$innerPaySystemId]))
+			{
+				$extPaySystemList[$innerPaySystemId] = $innerPaySystemList[$innerPaySystemId];
+			}
+
+			$this->arPaySystemServiceAll = $this->arActivePaySystems = $extPaySystemList;
+
+			if ($extPaySystemId !== 0 && array_key_exists($extPaySystemId, $this->arPaySystemServiceAll))
+			{
+				$selectedPaySystem = $this->arPaySystemServiceAll[$extPaySystemId];
+			}
+			else
+			{
+				if (key($this->arPaySystemServiceAll) == $innerPaySystemId)
+				{
+					if ($sumToSpend > 0)
+					{
+						if (count($this->arPaySystemServiceAll) > 1)
+						{
+							next($this->arPaySystemServiceAll);
+						}
+						elseif (empty($innerPayment))
+						{
+                            $remainingSum = $remainingSum > $sumToSpend ? $sumToSpend : $remainingSum;
+                            $extPayment->setFields(array(
+                                'PAY_SYSTEM_ID' => $this->arPaySystemServiceAll[$innerPaySystemId]['ID'],
+                                'PAY_SYSTEM_NAME' => $this->arPaySystemServiceAll[$innerPaySystemId]['NAME'],
+                                'SUM' => $remainingSum
+                            ));
+						}
+						else
+						{
+							$extPayment->delete();
+						}
+
+						$remainingSum = $order->getPrice() - $paymentCollection->getSum();
+						if ($remainingSum > 0)
+						{
+							$this->addWarning(Loc::getMessage('INNER_PAYMENT_BALANCE_ERROR'), self::PAY_SYSTEM_BLOCK);
+							$order->setFields(array(
+								'MARKED' => 'Y',
+								'REASON_MARKED' => Loc::getMessage('INNER_PAYMENT_BALANCE_ERROR')
+							));
+						}
+					}
+					else
+					{
+						unset($this->arActivePaySystems[$innerPaySystemId]);
+						unset($this->arPaySystemServiceAll[$innerPaySystemId]);
+					}
+				}
+
+				$selectedPaySystem = current($this->arPaySystemServiceAll);
+			}
+
+			if (!array_key_exists((int)$selectedPaySystem['ID'], $this->arPaySystemServiceAll))
 			{
 				$this->addError(Loc::getMessage('P2D_CALCULATE_ERROR'), self::PAY_SYSTEM_BLOCK);
 				$this->addError(Loc::getMessage('P2D_CALCULATE_ERROR'), self::DELIVERY_BLOCK);
 			}
 
-			if (!empty($arPaySystem))
+			if (!empty($selectedPaySystem) && $selectedPaySystem['ID'] != $innerPaySystemId)
 			{
 				$needSum = !empty($innerPayment) ? $order->getPrice() - $innerPayment->getSum() : $order->getPrice();
 				$codSum = 0;
 
-				$service = PaySystem\Manager::getObjectById($arPaySystem['ID']);
+				$service = PaySystem\Manager::getObjectById($selectedPaySystem['ID']);
 				if ($service !== null)
 				{
 					$codSum = $service->getPaymentPrice($extPayment);
 				}
 
 				$extPayment->setFields(array(
-					'PAY_SYSTEM_ID' => $arPaySystem['ID'],
-					'PAY_SYSTEM_NAME' => $arPaySystem['NAME'],
+					'PAY_SYSTEM_ID' => $selectedPaySystem['ID'],
+					'PAY_SYSTEM_NAME' => $selectedPaySystem['NAME'],
 					'SUM' => $needSum,
 					'PRICE_COD' => $codSum
 				));
 
-				$this->arUserResult['PAY_SYSTEM_ID'] = $arPaySystem["ID"];
+				$this->arUserResult['PAY_SYSTEM_ID'] = $selectedPaySystem['ID'];
 			}
 
 			if (!empty($this->arUserResult['PREPAYMENT_MODE']))
 			{
-				$this->showOnlyPrepaymentPs($paySystemId);
+				$this->showOnlyPrepaymentPs($this->arUserResult['PAY_SYSTEM_ID']);
 			}
 		}
 
-		if (!empty($innerPayment) && !empty($extPayment) && $remainingSum == 0)
+		if (!empty($innerPayment) && !empty($extPayment) && $remainingSum === 0)
 		{
 			$extPayment->delete();
 		}
@@ -4972,12 +5000,14 @@ class SaleOrderAjax extends \CBitrixComponent
 			$event1 = "eStore";
 			$event2 = "order_confirm";
 			$event3 = $this->order->getId();
+			$money = $this->order->getPrice();
+			$currency = $this->order->getCurrency();
 
 			$e = $event1."/".$event2."/".$event3;
 
 			if (!is_array($_SESSION["ORDER_EVENTS"]) || (is_array($_SESSION["ORDER_EVENTS"]) && !in_array($e, $_SESSION["ORDER_EVENTS"])))
 			{
-				CStatistic::Set_Event($event1, $event2, $event3);
+				CStatistic::Set_Event($event1, $event2, $event3, $goto = "", $money, $currency);
 				$_SESSION["ORDER_EVENTS"][] = $e;
 			}
 		}

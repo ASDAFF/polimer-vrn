@@ -719,7 +719,12 @@ class CAllBlogPost
 			}
 
 			$arSoFields = Array(
-				"EVENT_ID" => (intval($arPost["UF_BLOG_POST_IMPRTNT"]) > 0 ? "blog_post_important" : "blog_post"),
+				"EVENT_ID" => (
+					isset($arPost["UF_BLOG_POST_IMPRTNT"])
+					&& intval($arPost["UF_BLOG_POST_IMPRTNT"]) > 0
+						? \Bitrix\Blog\Integration\Socialnetwork\Log::EVENT_ID_POST_IMPORTANT
+						: \Bitrix\Blog\Integration\Socialnetwork\Log::EVENT_ID_POST
+				),
 				"=LOG_DATE" => (
 					strlen($arPost["DATE_PUBLISH"]) > 0
 						? (
@@ -866,6 +871,8 @@ class CAllBlogPost
 
 	public static function UpdateLog($postID, $arPost, $arBlog, $arParams)
 	{
+		static $blogPostEventIdList = null;
+
 		if (!CModule::IncludeModule('socialnetwork'))
 		{
 			return;
@@ -911,13 +918,24 @@ class CAllBlogPost
 			"MESSAGE" => $text4message,
 			"TEXT_MESSAGE" => $text4message,
 			"ENABLE_COMMENTS" => (array_key_exists("ENABLE_COMMENTS", $arPost) && $arPost["ENABLE_COMMENTS"] == "N" ? "N" : "Y"),
-			"EVENT_ID" => (intval($arPost["UF_BLOG_POST_IMPRTNT"]) > 0 ? "blog_post_important" : "blog_post")
+			"EVENT_ID" => (
+				isset($arPost["UF_BLOG_POST_IMPRTNT"])
+				&& intval($arPost["UF_BLOG_POST_IMPRTNT"]) > 0
+					? \Bitrix\Blog\Integration\Socialnetwork\Log::EVENT_ID_POST_IMPORTANT
+					: \Bitrix\Blog\Integration\Socialnetwork\Log::EVENT_ID_POST
+			)
 		);
+
+		if ($blogPostEventIdList === null)
+		{
+			$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+			$blogPostEventIdList = $blogPostLivefeedProvider->getEventId();
+		}
 
 		$dbRes = CSocNetLog::GetList(
 			array("ID" => "DESC"),
 			array(
-				"EVENT_ID" => array("blog_post", "blog_post_important"),
+				"EVENT_ID" => $blogPostEventIdList,
 				"SOURCE_ID" => $postID
 			),
 			false,
@@ -951,8 +969,12 @@ class CAllBlogPost
 
 	public static function DeleteLog($postID, $bMicroblog = false)
 	{
+		static $blogPostEventIdList = null;
+
 		if (!CModule::IncludeModule('socialnetwork'))
+		{
 			return;
+		}
 
 		$dbComment = CBlogComment::GetList(
 			array(),
@@ -980,10 +1002,16 @@ class CAllBlogPost
 				CSocNetLog::Delete($arRes["ID"]);
 		}
 
+		if ($blogPostEventIdList === null)
+		{
+			$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+			$blogPostEventIdList = $blogPostLivefeedProvider->getEventId();
+		}
+
 		$dbRes = CSocNetLog::GetList(
 			array("ID" => "DESC"),
 			array(
-				"EVENT_ID" => array("blog_post_micro", "blog_post", "blog_post_important"),
+				"EVENT_ID" => $blogPostEventIdList,
 				"SOURCE_ID" => $postID
 			),
 			false,
@@ -1725,6 +1753,8 @@ class CAllBlogPost
 
 	public static function NotifyIm($arParams)
 	{
+		static $blogPostEventIdList = null;
+
 		$arUserIDSent = array();
 
 		if (!CModule::IncludeModule("im"))
@@ -1839,10 +1869,16 @@ class CAllBlogPost
 
 		if (CModule::IncludeModule("socialnetwork"))
 		{
+			if ($blogPostEventIdList === null)
+			{
+				$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+				$blogPostEventIdList = $blogPostLivefeedProvider->getEventId();
+			}
+
 			$rsLog = CSocNetLog::GetList(
 				array(),
 				array(
-					"EVENT_ID" => array("blog_post", "blog_post_important", "blog_post_micro"),
+					"EVENT_ID" => $blogPostEventIdList,
 					"SOURCE_ID" => $arParams["ID"]
 				),
 				false,

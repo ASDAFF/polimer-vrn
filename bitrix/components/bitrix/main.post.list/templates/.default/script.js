@@ -168,6 +168,12 @@
 			repo[this.ENTITY_XML_ID].destroy();
 		repo[this.ENTITY_XML_ID] = this;
 
+		BX.ready(function() {
+			setTimeout(BX.delegate(function() {
+				BX.onCustomEvent(window, "OnUCHasBeenInitialized", [this.ENTITY_XML_ID, this]);
+			}, this), 100)
+		});
+
 		return this;
 	};
 	window.FCList.prototype = {
@@ -1328,6 +1334,7 @@
 			replacement = {
 				"ID" : '',
 				"FULL_ID" : '',
+				"CONTENT_ID" : '',
 				"ENTITY_XML_ID" : '',
 				"NEW" : "old",
 				"APPROVED" : 'Y',
@@ -1399,6 +1406,7 @@
 			replacement = {
 				"ID" : res["ID"],
 				"FULL_ID" : res["FULL_ID"].join('-'),
+				"CONTENT_ID" : (res["RATING"] && res["RATING"]["ENTITY_TYPE_ID"] && res["RATING"]["ENTITY_ID"] ? res["RATING"]["ENTITY_TYPE_ID"] + "-" + res["RATING"]["ENTITY_ID"] : ""),
 				"ENTITY_XML_ID" : res["ENTITY_XML_ID"],
 				"NEW" : res["NEW"] == "Y" ? "new" : "old",
 				"APPROVED" : (res["APPROVED"] != "Y" ? "hidden" : "approved"),

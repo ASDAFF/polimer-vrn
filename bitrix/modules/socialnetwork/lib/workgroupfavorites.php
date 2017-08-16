@@ -18,7 +18,7 @@ use Bitrix\Main\NotImplementedException;
  * <ul>
  * <li> GROUP_ID int mandatory
  * <li> GROUP reference to {@link \Bitrix\Socialnetwork\WorkgroupTable}
- * <li> USER_ID ind mandatory
+ * <li> USER_ID int mandatory
  * <li> USER reference to {@link \Bitrix\Main\UserTable}
  * <li> DATE_ADD datetime
  * </ul>

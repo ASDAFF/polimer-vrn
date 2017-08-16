@@ -377,3 +377,14 @@ create table b_sonet_log_index
 	primary key (ITEM_TYPE, ITEM_ID),
 	index IX_SONET_LOG_INDEX_1(LOG_ID)
 );
+
+create table b_sonet_user_content_view
+(
+	USER_ID int(11) not null,
+	RATING_TYPE_ID varchar(50) not null,
+	RATING_ENTITY_ID int(11) not null,
+	CONTENT_ID varchar(50) not null,
+	DATE_VIEW datetime DEFAULT NULL,
+	primary key (USER_ID, RATING_TYPE_ID, RATING_ENTITY_ID),
+	index IX_SONET_USER_CONTENT_VIEW_1(CONTENT_ID)
+);

@@ -527,6 +527,16 @@ setTimeout(BPRIAStart, 0);
 				</td>
 			</tr>
 			<tr>
+				<td align="right" class="adm-detail-content-cell-l"><?= GetMessage("BPRIA_PD_DELEGATION_TYPE") ?>:</td>
+				<td>
+					<select name="delegation_type">
+						<?foreach (CBPTaskDelegationType::getSelectList() as $key => $label):?>
+							<option value="<?=htmlspecialcharsbx($key)?>>"<?= $arCurrentValues["delegation_type"] == $key ? " selected" : "" ?>><?=htmlspecialcharsbx($label)?></option>
+						<?endforeach;?>
+					</select>
+				</td>
+			</tr>
+			<tr>
 				<td colspan="2"><br><b><?= GetMessage("BPSFA_PD_FIELDS") ?></b><br><br></td>
 			</tr>
 		</table>

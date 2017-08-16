@@ -185,6 +185,7 @@
 .main-ui-item-pin .main-ui-filter-sidebar-item-text-container,
 .main-ui-filter-current-item .main-ui-filter-sidebar-item-text-container {
 	display: block;
+	max-height: 39px;
 }
 
 .main-ui-item-pin .main-ui-filter-icon-pin,
@@ -580,10 +581,6 @@
 	margin-left: 5px;
 }
 
-.main-ui-filter-theme-rounded.main-ui-filter-search .main-ui-square.main-ui-filter-search-square:first-child {
-	margin-left: 16px;
-}
-
 .main-ui-filter-search-filter {
 	position: relative;
 	padding: 0 50px 0 15px;
@@ -797,7 +794,7 @@ select::-ms-expand {
 
 .main-ui-item-pin:not(.main-ui-filter-edit) .main-ui-filter-sidebar-item-text-container > .main-ui-filter-icon-pin {
 	display: block;
-	top: -7px;
+	top: 0;
 }
 
 .main-ui-item-pin:not(.main-ui-filter-edit):hover .main-ui-filter-sidebar-item-text-container > .main-ui-filter-icon-pin {

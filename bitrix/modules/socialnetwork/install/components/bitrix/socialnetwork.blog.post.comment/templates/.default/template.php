@@ -8,7 +8,7 @@ use Bitrix\Blog\Item;
  * @var CMain $APPLICATION
  * @var CUser $USER
  */
-CJSCore::Init(array("tooltip", "popup", "fx", "viewer"));
+CJSCore::Init(array("tooltip", "popup", "fx", "viewer", "content_view"));
 
 if(!empty($arResult["FATAL_MESSAGE"]))
 {
@@ -60,6 +60,7 @@ else if (!IsModuleInstalled("intranet"))
 			: "ALL"
 	);
 }
+
 $eventHandlerID = AddEventHandler('main', 'system.field.view.file', Array('CBlogTools', 'blogUFfileShow'));
 $arResult["OUTPUT_LIST"] = $APPLICATION->IncludeComponent(
 	"bitrix:main.post.list",
@@ -144,7 +145,12 @@ BX.ready(function() {
 			__blogOnUCAfterRecordAdd(ENTITY_XML_ID, response);
 		}
 	});
-
+	BX.UserContentView.init();
+	BX.SocialnetworkBlogPostComment.registerViewAreaList({
+		containerId: 'blg-comment-<?=$arParams["ID"]?>',
+		className: 'feed-com-text-inner',
+		fullContentClassName: 'feed-com-text-inner-inner'
+	});
 } );
 </script>
 <?

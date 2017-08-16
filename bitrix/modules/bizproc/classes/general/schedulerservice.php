@@ -239,7 +239,11 @@ class CBPSchedulerService
 
 	public static function sendEvents($eventModule, $eventName, $entityKey)
 	{
-		$eventParameters = array('SchedulerService' => 'OnEvent'); // compatibility
+		$eventParameters = array(
+			'SchedulerService' => 'OnEvent',  // compatibility
+			'eventModule' => $eventModule,
+			'eventName' => $eventName
+		);
 
 		$num = func_num_args();
 		if ($num > 3)

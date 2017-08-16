@@ -41,6 +41,7 @@ class CBPReviewActivity
 			'AccessControl' => 'N',
 			"LastReviewer" => null,
 			"LastReviewerComment" => '',
+			'DelegationType' => 0,
 		);
 
 		$this->SetPropertiesTypes(array(
@@ -148,6 +149,7 @@ class CBPReviewActivity
 				"DESCRIPTION" => $this->Description,
 				"PARAMETERS" => $arParameters,
 				'IS_INLINE' => $arParameters["ShowComment"] == "Y" ? 'N' : 'Y',
+				'DELEGATION_TYPE' => (int)$this->DelegationType,
 				'DOCUMENT_NAME' => $documentService->GetDocumentName($documentId)
 			)
 		);
@@ -559,6 +561,7 @@ class CBPReviewActivity
 			"TimeoutDuration" => "timeout_duration",
 			"TimeoutDurationType" => "timeout_duration_type",
 			"AccessControl" => "access_control",
+			"DelegationType" => "delegation_type",
 		);
 
 		if (!is_array($arWorkflowParameters))
@@ -668,6 +671,7 @@ class CBPReviewActivity
 			"timeout_duration" => "TimeoutDuration",
 			"timeout_duration_type" => "TimeoutDurationType",
 			"access_control" => "AccessControl",
+			"delegation_type" => "DelegationType",
 		);
 
 		$arProperties = array();

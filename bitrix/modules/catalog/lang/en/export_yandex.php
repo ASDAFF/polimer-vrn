@@ -57,7 +57,7 @@ $MESS["YANDEX_PROP_adult"] = "Adult content warning. This item is designed for u
 $MESS["YANDEX_PROP_age"] = "Appropriate age category for item.";
 $MESS["YANDEX_TYPE"] = "Description type";
 $MESS["YANDEX_TYPE_SIMPLE"] = "simple";
-$MESS["YANDEX_TYPE_NOTE"] = "See details at <a href=\"http://partner.market.yandex.ru/legal/tt/\" target=\"_blank\">http://partner.market.yandex.ru/legal/tt/</a>";
+$MESS["YANDEX_TYPE_NOTE"] = "See details at <a href=\"https://yandex.ru/support/market-tech-requirements/\" target=\"_blank\">yandex.ru/support/market-tech-requirements/</a>";
 $MESS["YANDEX_PROPS_COMMON"] = "Common Settings";
 $MESS["YANDEX_PROPS_TYPE"] = "Description Type Settings";
 $MESS["YANDEX_PROPS_NO"] = "no";
@@ -114,4 +114,13 @@ $MESS["CET_ERROR_IBLOCK_PERM"] = "Insufficient permission to perform operations 
 $MESS["CES_ERROR_BAD_EXPORT_FILENAME"] = "The export filename contains invalid characters.";
 $MESS["YANDEX_BASE_CURRENCY"] = "Currency to convert product prices to";
 $MESS["YANDEX_STEP_ERR_DATA_FILE_NOT_READ"] = "Cannot complete export because product data file failed to open";
+$MESS["YANDEX_TAB_VAT_TITLE"] = "Tax rate";
+$MESS["YANDEX_TAB_VAT_DESC"] = "Export tax rates";
+$MESS["YANDEX_VAT_SETTINGS"] = "Export tax rates";
+$MESS["YANDEX_VAT_ATTENTION"] = "Attention! Only the Russian Federation entities that use CPA pricing model with Market prepaid option have to export product tax rates. The following tax rates can be exported: 0, 10%, 18%, no tax.";
+$MESS["YANDEX_USE_VAT_EXPORT"] = "Export product tax rates";
+$MESS["YANDEX_BASE_VAT"] = "Base tax rate for conventional items";
+$MESS["YANDEX_BASE_VAT_ABSENT"] = "not set";
+$MESS["YANDEX_BASE_VAT_EMPTY"] = "Tax exempt";
+$MESS["YANDEX_VAT_ERR_BASE_VAT_ABSENT"] = "Tax rate not specified";
 ?>

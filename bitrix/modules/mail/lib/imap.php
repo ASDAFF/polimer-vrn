@@ -49,7 +49,7 @@ class Imap
 			'host'    => $host,
 			'port'    => $port,
 			'tls'     => $tls,
-			'socket'  => sprintf('%s://%s:%s', ($tls ? 'tls' : 'tcp'), $host, $port),
+			'socket'  => sprintf('%s://%s:%s', ($tls ? 'ssl' : 'tcp'), $host, $port),
 			'timeout' => \COption::getOptionInt('mail', 'connect_timeout', B_MAIL_TIMEOUT),
 			'context' => stream_context_create(array(
 				'ssl' => array(
@@ -341,7 +341,7 @@ class Imap
 			return true;
 
 		$response = $this->executeCommand(sprintf(
-			'SELECT "%s"', $this->encodeUtf7Imap($mailbox)
+			'SELECT "%s"', static::escapeQuoted($this->encodeUtf7Imap($mailbox))
 		), $error);
 
 		if ($error)
@@ -432,7 +432,7 @@ class Imap
 		$mailbox = str_replace('*', '%', $mailbox, $recursive);
 
 		$response = $this->executeCommand(sprintf(
-			'LIST "" "%s"', $this->encodeUtf7Imap($mailbox)
+			'LIST "" "%s"', static::escapeQuoted($this->encodeUtf7Imap($mailbox))
 		), $error);
 
 		if ($error)
@@ -587,7 +587,7 @@ class Imap
 
 		$response = $this->executeCommand(sprintf(
 			'APPEND "%s" (\Seen) %s',
-			$this->encodeUtf7Imap($mailbox),
+			static::escapeQuoted($this->encodeUtf7Imap($mailbox)),
 			static::prepareString($data)
 		), $error);
 
@@ -713,7 +713,8 @@ class Imap
 	{
 		$result = array();
 
-		for ($i = 0; $i < count($this->sessUntagged); $i++)
+		$length = count($this->sessUntagged);
+		for ($i = 0; $i < $length; $i++)
 		{
 			if (!preg_match($regex, $this->sessUntagged[$i], $matches))
 				continue;
@@ -721,11 +722,11 @@ class Imap
 			$result[] = array($this->sessUntagged[$i], $matches);
 
 			if ($unset)
-			{
-				array_splice($this->sessUntagged, $i, 1);
-				$i--;
-			}
+				unset($this->sessUntagged[$i]);
 		}
+
+		if ($unset && !empty($result))
+			$this->sessUntagged = array_values($this->sessUntagged);
 
 		return $result;
 	}
@@ -792,17 +793,19 @@ class Imap
 
 	protected function sendData($data)
 	{
-		while (\CUtil::binStrlen($data) > 0)
+		while (\CUtil::binStrlen($data) > 0 && !feof($this->stream))
 		{
 			$bytes = fputs($this->stream, $data);
-
 			if ($bytes === false)
-			{
-				$this->reset();
-				return false;
-			}
+				break;
 
 			$data = \CUtil::binSubstr($data, $bytes);
+		}
+
+		if (\CUtil::binStrlen($data) > 0)
+		{
+			$this->reset();
+			return false;
 		}
 
 		return true;
@@ -812,25 +815,27 @@ class Imap
 	{
 		$data = '';
 
-		while ($bytes > 0)
+		while ($bytes > 0 && !feof($this->stream))
 		{
 			$buffer = fread($this->stream, $bytes);
-
-			if ($this->options['timeout'] > 0)
-			{
-				$meta = stream_get_meta_data($this->stream);
-				if ($meta['timed_out'])
-					$buffer = false;
-			}
-
 			if ($buffer === false)
-			{
-				$this->reset();
-				return false;
-			}
+				break;
+
+			$meta = $this->options['timeout'] > 0
+				? stream_get_meta_data($this->stream)
+				: array('timed_out' => false);
 
 			$data  .= $buffer;
 			$bytes -= \CUtil::binStrlen($buffer);
+
+			if ($meta['timed_out'])
+				break;
+		}
+
+		if ($bytes > 0)
+		{
+			$this->reset();
+			return false;
 		}
 
 		return $data;
@@ -840,36 +845,43 @@ class Imap
 	{
 		$line = '';
 
-		do
+		while (!feof($this->stream))
 		{
 			$buffer = fgets($this->stream, 4096);
-
-			if ($this->options['timeout'] > 0)
-			{
-				$meta = stream_get_meta_data($this->stream);
-				if ($meta['timed_out'])
-					$buffer = false;
-			}
-
 			if ($buffer === false)
-			{
-				$this->reset();
-				return false;
-			}
+				break;
+
+			$meta = $this->options['timeout'] > 0
+				? stream_get_meta_data($this->stream)
+				: array('timed_out' => false);
 
 			$line .= $buffer;
 
-			if ($literal = preg_match('/\{(?<bytes>\d+)\}\r\n$/', $line, $matches))
+			$eolRegex = '/ (?<literal> \{ (?<bytes> \d+ ) \} )? \r\n $ /x';
+			if (preg_match($eolRegex, $line, $matches))
 			{
-				$data = $this->readBytes($matches['bytes']);
+				if (empty($matches['literal']))
+					break;
 
+				if ($meta['timed_out'])
+					return false;
+
+				$data = $this->readBytes($matches['bytes']);
 				if ($data === false)
 					return false;
 
 				$line .= $data;
 			}
+
+			if ($meta['timed_out'])
+				break;
 		}
-		while ($literal || !preg_match('/\r\n$/', $line));
+
+		if (!preg_match('/\r\n$/', $line, $matches))
+		{
+			$this->reset();
+			return false;
+		}
 
 		return $line;
 	}
@@ -879,7 +891,6 @@ class Imap
 		do
 		{
 			$line = $this->readLine();
-
 			if ($line === false)
 				return false;
 

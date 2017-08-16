@@ -462,9 +462,13 @@ window.SBPETabs.prototype = {
 		}
 		this.inited = true;
 		this.previousTab = false;
-		BX('bx-b-uploadfile-blogPostForm').setAttribute("bx-press", "pressOut");
-		BX.bind(BX('bx-b-uploadfile-blogPostForm'), "mousedown", BX.delegate(function(){
-			BX('bx-b-uploadfile-blogPostForm').setAttribute("bx-press", (BX('bx-b-uploadfile-blogPostForm').getAttribute("bx-press") == "pressOut" ? "pressOn" : "pressOut"));}, this));
+		if (BX('bx-b-uploadfile-blogPostForm'))
+		{
+			BX('bx-b-uploadfile-blogPostForm').setAttribute("bx-press", "pressOut");
+			BX.bind(BX('bx-b-uploadfile-blogPostForm'), "mousedown", BX.delegate(function(){
+				BX('bx-b-uploadfile-blogPostForm').setAttribute("bx-press", (BX('bx-b-uploadfile-blogPostForm').getAttribute("bx-press") == "pressOut" ? "pressOn" : "pressOut"));
+			}, this));
+		}
 		BX.onCustomEvent(this.tabContainer, "onObjectInit", [this]);
 
 		var form = BX('blogPostForm');
@@ -566,7 +570,11 @@ window.SBPETabs.prototype = {
 					hasValuesDocs = false,
 					messageBody = BX('divoPostFormLHE_blogPostForm');
 
-				if (!!messageBody.childNodes && messageBody.childNodes.length > 0)
+				if (
+					!!messageBody
+					&& !!messageBody.childNodes
+					&& messageBody.childNodes.length > 0
+				)
 				{
 					for (ii in messageBody.childNodes)
 					{
@@ -632,7 +640,10 @@ window.SBPETabs.prototype = {
 				}
 			}
 
-			if (BX('divoPostFormLHE_blogPostForm').style.display == "none")
+			if (
+				BX('divoPostFormLHE_blogPostForm')
+				&& BX('divoPostFormLHE_blogPostForm').style.display == "none"
+			)
 			{
 				BX.onCustomEvent(BX('divoPostFormLHE_blogPostForm' ), 'OnShowLHE', ['justShow']);
 			}
@@ -646,7 +657,10 @@ window.SBPETabs.prototype = {
 			{
 				for (jj = 0; jj < this.bodies[type].length; jj++)
 				{
-					BX.adjust(this.bodies[type][jj], {style : {display : "block"}});
+					if (!!this.bodies[type][jj])
+					{
+						BX.adjust(this.bodies[type][jj], {style : {display : "block"}});
+					}
 				}
 			}
 		}
@@ -671,6 +685,10 @@ window.SBPETabs.prototype = {
 		}
 
 		var container = BX("microblog-form", true);
+		if (!container)
+		{
+			return false;
+		}
 
 		if (window.SBPEFullForm.getInstance().animationStartHeight > 0)
 		{
@@ -682,7 +700,6 @@ window.SBPETabs.prototype = {
 			this.animationStartHeight = container.parentNode.offsetHeight;
 		}
 
-
 		container.parentNode.style.height = this.animationStartHeight + "px";
 		container.parentNode.style.overflowY = "hidden";
 		container.parentNode.style.position = "relative";
@@ -692,6 +709,11 @@ window.SBPETabs.prototype = {
 	endAnimation : function()
 	{
 		var container = BX("microblog-form", true);
+		if (!container)
+		{
+			return false;
+		}
+
 		this.animation = new BX.easing({
 			duration : 500,
 			start : { height: this.animationStartHeight, opacity : 0 },
@@ -857,7 +879,7 @@ window.SBPETabs.prototype = {
 										{
 											if(BX('bx-lists-random-string'))
 											{
-												onclick = 'BX["LiveFeedClass_'+BX('bx-lists-random-string').value+'"].errorPopup("'+BX.message('LISTS_CATALOG_PROCESSES_ACCESS_DENIED')+'");';
+												onclick = 'BX.Lists["LiveFeedClass_'+BX('bx-lists-random-string').value+'"].errorPopup("'+BX.message('LISTS_CATALOG_PROCESSES_ACCESS_DENIED')+'");';
 											}
 										}
 									}

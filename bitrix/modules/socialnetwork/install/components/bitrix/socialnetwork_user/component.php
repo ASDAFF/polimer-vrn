@@ -139,7 +139,6 @@ $arDefaultUrlTemplates404 = array(
 	"user_security" => "user/#user_id#/security/",
 	"user_codes" => "user/#user_id#/codes/",
 	"user_passwords" => "user/#user_id#/passwords/",
-	"user_synchronize" => "user/#user_id#/synchronize/",
 );
 
 $diskEnabled = (
@@ -161,6 +160,8 @@ if ($bExtranetEnabled)
 	}
 }
 
+$davEnabled = \Bitrix\Main\Loader::includeModule('dav');
+
 if($diskEnabled)
 {
 	$arDefaultUrlTemplates404["user_disk"] = "user/#user_id#/disk/path/#PATH#";
@@ -174,6 +175,11 @@ if($diskEnabled)
 if ($bExtranetEnabled)
 {
 	unset($arDefaultUrlTemplates404["search"]);
+}
+
+if ($davEnabled)
+{
+	$arDefaultUrlTemplates404["user_synchronize"] = "user/#user_id#/synchronize/";
 }
 
 $arDefaultUrlTemplatesN404 = array(
@@ -295,12 +301,16 @@ $arDefaultUrlTemplatesN404 = array(
 
 	"user_security" => "page=user_security&user_id=#user_id#",
 	"user_passwords" => "page=user_passwords&user_id=#user_id#",
-	"user_synchronize" => "page=user_synchronize&user_id=#user_id#",
 );
 $arDefaultVariableAliases404 = array();
 $arDefaultVariableAliases = array();
 $componentPage = "";
 $arComponentVariables = array("user_id", "group_id", "page", "message_id", "path", "section_id", "element_id", "action", "post_id", "category", "topic_id", "task_id", "view_id", "type", "report_id", "log_id");
+
+if ($davEnabled)
+{
+	$arDefaultUrlTemplatesN404["user_synchronize"] = "user/#user_id#/synchronize/";
+}
 
 if (
 	$_REQUEST["auth"]=="Y" 
@@ -1236,10 +1246,11 @@ if (
 				&& intval($arResult["VARIABLES"]["post_id"]) > 0
 			)
 			{
+				$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost();
 				$rsLog = CSocNetLog::GetList(
 					array(),
 					array(
-						"EVENT_ID" => array("blog_post", "blog_post_important"),
+						"EVENT_ID" => $blogPostLivefeedProvider->getEventId(),
 						"SOURCE_ID" => intval($arResult["VARIABLES"]["post_id"])
 					),
 					false,

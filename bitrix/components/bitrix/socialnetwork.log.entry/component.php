@@ -10,6 +10,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Socialnetwork\Livefeed;
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/socialnetwork.log.entry/include.php");
 
 if (!CModule::IncludeModule("socialnetwork"))
@@ -359,6 +361,57 @@ if ($arEvent)
 		)
 		{
 			$arResult["RATING_COMMENTS"] = CRatings::GetRatingVoteResult($rating_entity_type, $arCommentID);
+		}
+	}
+
+	$contentId = Livefeed\Provider::getContentId($arEvent['EVENT']);
+	$liveFeedEntity = Livefeed\Provider::init(array(
+		'ENTITY_TYPE' => $contentId['ENTITY_TYPE'],
+		'ENTITY_ID' => $contentId['ENTITY_ID'],
+		'LOG_ID' => $arEvent["EVENT"]["ID"]
+	));
+
+	if (
+		(
+			isset($arParams["FROM_LOG"])
+			&& $arParams["FROM_LOG"] == 'N'
+		)
+		&& !empty($arEvent["EVENT"])
+		&& $contentId
+	)
+	{
+		if ($liveFeedEntity)
+		{
+			$liveFeedEntity->setContentView();
+		}
+	}
+
+	if (
+		$liveFeedEntity
+		&& $contentId
+	)
+	{
+		$arResult["CONTENT_ID"] = (!empty($arParams["CONTENT_ID"]) ? $arParams["CONTENT_ID"] : $contentId['ENTITY_TYPE'].'-'.intval($contentId['ENTITY_ID']));
+
+		if (isset($arParams["CONTENT_VIEW_CNT"]))
+		{
+			$arResult["CONTENT_VIEW_CNT"] = intval($arParams["CONTENT_VIEW_CNT"]);
+		}
+		else
+		{
+			if (
+				($contentViewData = \Bitrix\Socialnetwork\Item\UserContentView::getViewData(array(
+					'contentId' => array($arResult["CONTENT_ID"])
+				)))
+				&& !empty($contentViewData[$arResult["CONTENT_ID"]])
+			)
+			{
+				$arResult["CONTENT_VIEW_CNT"] = intval($contentViewData[$arResult["CONTENT_ID"]]["CNT"]);
+			}
+			else
+			{
+				$arResult["CONTENT_VIEW_CNT"] = 0;
+			}
 		}
 	}
 }

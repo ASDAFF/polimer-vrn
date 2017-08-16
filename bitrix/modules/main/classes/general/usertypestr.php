@@ -298,6 +298,15 @@ class CUserTypeString
 			'>';
 	}
 
+	function GetFilterData($arUserField, $arHtmlControl)
+	{
+		return array(
+			"id" => $arHtmlControl["ID"],
+			"name" => $arHtmlControl["NAME"],
+			"filterable" => ""
+		);
+	}
+
 	/**
 	 * Эта функция вызывается при выводе значения свойства в списке элементов.
 	 *

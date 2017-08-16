@@ -2393,8 +2393,12 @@ class CSocNetLogDestination
 					{
 						$selectList[] = 'UF_USER_CRM_ENTITY';
 					}
+					$selectList[] = new \Bitrix\Main\Entity\ExpressionField('MAX_LAST_USE_DATE', 'MAX(%s)', array('\Bitrix\Main\FinderDest:CODE_USER_CURRENT.LAST_USE_DATE'));
 
 					$res = \Bitrix\Main\UserTable::getList(array(
+						'order' => array(
+							"MAX_LAST_USE_DATE" => 'DESC',
+						),
 						'filter' => array(
 							'@ID' => $userIdList
 						),
@@ -2531,7 +2535,8 @@ class CSocNetLogDestination
 			"PERSONAL_PHOTO" => Array("FIELD" => "U.PERSONAL_PHOTO", "TYPE" => "int"),
 			"WORK_POSITION" => Array("FIELD" => "U.WORK_POSITION", "TYPE" => "string"),
 			"CONFIRM_CODE" =>  Array("FIELD" => "U.CONFIRM_CODE", "TYPE" => "string"),
-			"PERSONAL_PROFESSION" => Array("FIELD" => "U.PERSONAL_PROFESSION", "TYPE" => "string")
+			"PERSONAL_PROFESSION" => Array("FIELD" => "U.PERSONAL_PROFESSION", "TYPE" => "string"),
+			"EXTERNAL_AUTH_ID" => Array("FIELD" => "U.EXTERNAL_AUTH_ID", "TYPE" => "string")
 		);
 
 		$currentUserId = $USER->GetId();

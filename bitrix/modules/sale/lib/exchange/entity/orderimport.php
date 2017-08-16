@@ -632,7 +632,7 @@ class OrderImport extends EntityImport
 
 
 				if (isset($vatFields[$basketItem->getProductId()]))
-					$vatRate = (float)$vatFields[$basketItem->getProductId()]['RATE'] * 0.01;
+					$vatRate = (float)$vatFields[$basketItem->getProductId()] * 0.01;
 
 				$result[$basketItem->getBasketCode()] = array('VAT_RATE'=>$vatRate);
 			}

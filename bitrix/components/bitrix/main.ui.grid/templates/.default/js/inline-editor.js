@@ -107,6 +107,21 @@
 			});
 		},
 
+		createCustom: function(editObject)
+		{
+			var className = this.parent.settings.get('classEditorCustom');
+			className = [this.parent.settings.get('classEditor'), className].join(' ');
+			return BX.create('div', {
+				props: {
+					className: className
+				},
+				attrs: {
+					'data-name': editObject.NAME
+				},
+				html: editObject.HTML
+			});
+		},
+
 		createOutput: function(editObject)
 		{
 			return BX.create('output', {
@@ -256,6 +271,11 @@
 
 					case this.types.DROPDOWN : {
 						control = this.createDropdown(editObject);
+						break;
+					}
+
+					case this.types.CUSTOM : {
+						control = this.createCustom(editObject);
 						break;
 					}
 

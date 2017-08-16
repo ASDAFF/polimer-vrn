@@ -356,18 +356,27 @@ $tabControl->Begin();
 
 //TAB order --
 $tabControl->BeginNextTab();
-$blocksOrder = $tabControl->getCurrentTabBlocksOrder($defaultBlocksOrder);
-
+$customFastNavItems = array();
+$customBlocksOrder = array();
 $fastNavItems = array();
-
-foreach($blocksOrder as $item)
-	$fastNavItems[$item] = Loc::getMessage("SALE_OVIEW_BLOCK_TITLE_".toUpper($item));
 
 foreach($customDraggableBlocks->getBlocksBrief() as $blockId => $blockParams)
 {
 	$defaultBlocksOrder[] = $blockId;
-	$fastNavItems[$blockId] = $blockParams['TITLE'];
-	$blocksOrder[] = $blockId;
+	$customFastNavItems[$blockId] = $blockParams['TITLE'];
+	$customBlocksOrder[] = $blockId;
+}
+
+$blocksOrder = $tabControl->getCurrentTabBlocksOrder($defaultBlocksOrder);
+$customNewBlockIds = array_diff($customBlocksOrder, $blocksOrder);
+$blocksOrder = array_merge($blocksOrder, $customNewBlockIds);
+
+foreach($blocksOrder as $item)
+{
+	if(isset($customFastNavItems[$item]))
+		$fastNavItems[$item] = $customFastNavItems[$item];
+	else
+		$fastNavItems[$item] = Loc::getMessage("SALE_OVIEW_BLOCK_TITLE_".toUpper($item));
 }
 
 $statusOnPaid = Bitrix\Main\Config\Option::get('sale', 'status_on_paid');

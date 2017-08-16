@@ -554,12 +554,12 @@ class CAllSocNetGroup
 		}
 	}
 
-	protected function getStaticCache()
+	protected static function getStaticCache()
 	{
 		return self::$staticCache;
 	}
 
-	protected function setStaticCache($cache = array())
+	protected static function setStaticCache($cache = array())
 	{
 		self::$staticCache = $cache;
 	}

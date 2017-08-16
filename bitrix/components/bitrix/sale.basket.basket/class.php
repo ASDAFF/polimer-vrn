@@ -548,6 +548,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 
 		foreach ($arOrder["BASKET_ITEMS"] as &$arOneItem)
 		{
+			$customPrice = isset($arOneItem['CUSTOM_PRICE']) && $arOneItem['CUSTOM_PRICE'] == 'Y';
 			$allWeight += ($arOneItem["WEIGHT"] * $arOneItem["QUANTITY"]);
 			$allSum += ($arOneItem["PRICE"] * $arOneItem["QUANTITY"]);
 
@@ -556,10 +557,19 @@ class CBitrixBasketComponent extends CBitrixComponent
 			$allVATSum += roundEx($arOneItem["PRICE_VAT_VALUE"] * $arOneItem["QUANTITY"], SALE_VALUE_PRECISION);
 			$arOneItem["PRICE_FORMATED"] = CCurrencyLang::CurrencyFormat($arOneItem["PRICE"], $arOneItem["CURRENCY"], true);
 
-			$arOneItem["FULL_PRICE"] = PriceMaths::roundByFormatCurrency($arOneItem["BASE_PRICE"], $arOneItem["CURRENCY"]);
-			$arOneItem["FULL_PRICE_FORMATED"] = CCurrencyLang::CurrencyFormat($arOneItem["FULL_PRICE"], $arOneItem["CURRENCY"], true);
-
 			$arOneItem["SUM"] = CCurrencyLang::CurrencyFormat($arOneItem["PRICE"] * $arOneItem["QUANTITY"], $arOneItem["CURRENCY"], true);
+
+			if ($arOneItem['DISCOUNTS_APPLY'] || $customPrice)
+			{
+				$arOneItem["FULL_PRICE"] = PriceMaths::roundByFormatCurrency($arOneItem["BASE_PRICE"], $arOneItem["CURRENCY"]);
+				$arOneItem["FULL_PRICE_FORMATED"] = CCurrencyLang::CurrencyFormat($arOneItem["FULL_PRICE"], $arOneItem["CURRENCY"], true);
+				$DISCOUNT_PRICE_ALL += $arOneItem["DISCOUNT_PRICE"] * $arOneItem["QUANTITY"];
+			}
+			else
+			{
+				$arOneItem["FULL_PRICE"] = PriceMaths::roundByFormatCurrency($arOneItem["PRICE"], $arOneItem["CURRENCY"]);
+				$arOneItem["FULL_PRICE_FORMATED"] = CCurrencyLang::CurrencyFormat($arOneItem["FULL_PRICE"], $arOneItem["CURRENCY"], true);
+			}
 
 			if (isset($arOneItem['SIMPLE_DISCOUNT_PRICE_PERCENT']))
 			{
@@ -567,7 +577,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 			}
 			else
 			{
-				if ($arOneItem["BASE_PRICE"] > 0 && $arOneItem["DISCOUNT_PRICE"] > 0)
+				if (($customPrice || $arOneItem['DISCOUNTS_APPLY']) && $arOneItem["BASE_PRICE"] > 0 && $arOneItem["DISCOUNT_PRICE"] > 0)
 				{
 					$arOneItem["DISCOUNT_PRICE_PERCENT"] = PriceMaths::roundByFormatCurrency(
 						($arOneItem["DISCOUNT_PRICE"] * 100) / $arOneItem["BASE_PRICE"],
@@ -580,7 +590,6 @@ class CBitrixBasketComponent extends CBitrixComponent
 				}
 			}
 			$arOneItem["DISCOUNT_PRICE_PERCENT_FORMATED"] = CSaleBasketHelper::formatQuantity($arOneItem["DISCOUNT_PRICE_PERCENT"])."%";
-			$DISCOUNT_PRICE_ALL += $arOneItem["DISCOUNT_PRICE"] * $arOneItem["QUANTITY"];
 		}
 		unset($arOneItem);
 

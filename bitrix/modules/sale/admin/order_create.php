@@ -162,6 +162,28 @@ if($isSavingOperation || $needFieldsRestore)
 				if(!empty($errorMessage))
 					$_SESSION['SALE_ORDER_EDIT_ERROR'] = $errorMessage;
 
+				if (
+					isset($_POST["ABANDONED_USER_ID"])
+					&& (int)$_POST["ABANDONED_USER_ID"] === $order->getUserId()
+					&& (int)$_POST["ABANDONED_FUSER_ID"] > 0
+				)
+				{
+					$itemsDataList = Sale\Internals\BasketTable::getList(
+						array(
+							"filter" => array(
+								"=ORDER_ID" => NULL,
+								"=FUSER_ID" => (int)$_POST["ABANDONED_FUSER_ID"],
+							),
+							"select" => array("ID")
+						)
+					);
+
+					while ($item = $itemsDataList->fetch())
+					{
+						Sale\Internals\BasketTable::deleteWithItems($item['ID']);
+					}
+				}
+
 				if(isset($_POST["save"]))
 					LocalRedirect("/bitrix/admin/sale_order.php?lang=".LANGUAGE_ID.GetFilterParams("filter_", false));
 				else
@@ -702,18 +724,27 @@ $tabControl->AddTabs($customTabber);
 $tabControl->Begin();
 //TAB order --
 $tabControl->BeginNextTab();
-$blocksOrder = $tabControl->getCurrentTabBlocksOrder($defaultBlocksOrder);
-
+$customFastNavItems = array();
+$customBlocksOrder = array();
 $fastNavItems = array();
-
-foreach($blocksOrder as $item)
-	$fastNavItems[$item] = Loc::getMessage("SALE_OK_BLOCK_TITLE_".toUpper($item));
 
 foreach($customDraggableBlocks->getBlocksBrief() as $blockId => $blockParams)
 {
 	$defaultBlocksOrder[] = $blockId;
-	$fastNavItems[$blockId] = $blockParams['TITLE'];
-	$blocksOrder[] = $blockId;
+	$customFastNavItems[$blockId] = $blockParams['TITLE'];
+	$customBlocksOrder[] = $blockId;
+}
+
+$blocksOrder = $tabControl->getCurrentTabBlocksOrder($defaultBlocksOrder);
+$customNewBlockIds = array_diff($customBlocksOrder, $blocksOrder);
+$blocksOrder = array_merge($blocksOrder, $customNewBlockIds);
+
+foreach($blocksOrder as $item)
+{
+	if(isset($customFastNavItems[$item]))
+		$fastNavItems[$item] = $customFastNavItems[$item];
+	else
+		$fastNavItems[$item] = Loc::getMessage("SALE_OK_BLOCK_TITLE_".toUpper($item));
 }
 
 ?>
@@ -721,6 +752,15 @@ foreach($customDraggableBlocks->getBlocksBrief() as $blockId => $blockParams)
 	<input type="hidden" id="SITE_ID" name="SITE_ID" value="<?=htmlspecialcharsbx($siteId)?>">
 	<input type="hidden" id="OLD_USER_ID" name="OLD_USER_ID" value="0">
 	<input type="hidden" name="BASKET_PREFIX" value="<?=$basketPrefix?>">
+	<?
+	if ($_REQUEST["ABANDONED"] === 'Y')
+	{
+		?>
+		<input type="hidden" id="ABANDONED_USER_ID" name="ABANDONED_USER_ID" value="<?=(int)$_REQUEST["USER_ID"]?>">
+		<input type="hidden" id="ABANDONED_FUSER_ID" name="ABANDONED_FUSER_ID" value="<?=(int)$_REQUEST["FUSER_ID"]?>">
+		<?
+	}
+	?>
 	<?=bitrix_sessid_post()?>
 	<div style="position: relative; vertical-align: top">
 		<?$tabControl->DraggableBlocksStart();?>

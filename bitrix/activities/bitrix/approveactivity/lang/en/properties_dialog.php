@@ -29,4 +29,5 @@ $MESS["BPAA_PD_TIMEOUT_LIMIT"] = "Minimum approval time";
 $MESS["BPAR_PD_COMMENT_REQUIRED"] = "Comment is required";
 $MESS["BPAR_PD_COMMENT_REQUIRED_YA"] = "Only when approved";
 $MESS["BPAR_PD_COMMENT_REQUIRED_YR"] = "Only when declined";
+$MESS["BPAR_PD_DELEGATION_TYPE"] = "Delegate to";
 ?>

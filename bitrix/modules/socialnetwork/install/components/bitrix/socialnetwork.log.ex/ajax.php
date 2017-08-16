@@ -27,6 +27,9 @@ $ls_arr = isset($_REQUEST["ls_arr"])? $_REQUEST["ls_arr"]: "";
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\Livefeed;
+
+global $USER;
 
 $rsSite = CSite::GetByID($site_id);
 if ($arSite = $rsSite->Fetch())
@@ -65,10 +68,14 @@ if(CModule::IncludeModule("socialnetwork"))
 		CSocNetTools::InitGlobalExtranetArrays();
 	}
 
-	if (!$GLOBALS["USER"]->IsAuthorized())
+	if (!$USER->IsAuthorized())
+	{
 		$arResult[0] = "*";
+	}
 	elseif (!check_bitrix_sessid())
+	{
 		$arResult[0] = "*";
+	}
 	elseif ($action == "get_raw_data")
 	{
 		$provider = \Bitrix\Socialnetwork\Livefeed\Provider::init(array(
@@ -172,7 +179,7 @@ if(CModule::IncludeModule("socialnetwork"))
 		$arSubscribe = array();
 
 		$arFilter = array(
-			"USER_ID" => $GLOBALS["USER"]->GetID(),
+			"USER_ID" => $USER->GetID(),
 			"ENTITY_TYPE" => $entity_type,
 			"ENTITY_ID" => $entity_id,
 			"ENTITY_CB" => "N"
@@ -200,10 +207,10 @@ if(CModule::IncludeModule("socialnetwork"))
 		}
 
 		$arFilter = array(
-			"USER_ID" 		=> $GLOBALS["USER"]->GetID(),
-			"ENTITY_TYPE" 	=> SONET_SUBSCRIBE_ENTITY_USER,
-			"ENTITY_ID" 	=> $cb_id,
-			"ENTITY_CB" 	=> "Y"
+			"USER_ID" => $USER->getID(),
+			"ENTITY_TYPE" => SONET_SUBSCRIBE_ENTITY_USER,
+			"ENTITY_ID" => $cb_id,
+			"ENTITY_CB" => "Y"
 		);
 
 		$dbResultTmp = CSocNetLogEvents::GetList(
@@ -228,7 +235,7 @@ if(CModule::IncludeModule("socialnetwork"))
 		}
 
 		$arFilter = array(
-			"USER_ID" => $GLOBALS["USER"]->GetID(),
+			"USER_ID" => $USER->getId(),
 			"ENTITY_TYPE" => $entity_type,
 			"ENTITY_ID" => 0
 		);
@@ -630,7 +637,7 @@ if(CModule::IncludeModule("socialnetwork"))
 		if (in_array($ls, array("EVENT", "ALL")))
 		{
 			$arFields = array(
-				"USER_ID" => $GLOBALS["USER"]->GetID(),
+				"USER_ID" => $USER->getId(),
 				"ENTITY_TYPE" => $entity_type,
 				"ENTITY_ID" => $entity_id,
 				"ENTITY_CB" => "N"
@@ -645,7 +652,7 @@ if(CModule::IncludeModule("socialnetwork"))
 		elseif (in_array($ls, array("CB_ALL")))
 		{
 			$arFields = array(
-				"USER_ID" => $GLOBALS["USER"]->GetID(),
+				"USER_ID" => $USER->getId(),
 				"ENTITY_TYPE" => SONET_SUBSCRIBE_ENTITY_USER,
 				"ENTITY_ID" => $cb_id,
 				"ENTITY_CB" => "Y"
@@ -714,7 +721,7 @@ if(CModule::IncludeModule("socialnetwork"))
 				if (in_array($ls, array("EVENT", "ALL")))
 				{
 					$arFields = array(
-						"USER_ID" => $GLOBALS["USER"]->GetID(),
+						"USER_ID" => $USER->getId(),
 						"ENTITY_TYPE" => $entity_type,
 						"ENTITY_ID" => $entity_id,
 						"ENTITY_CB" => "N"
@@ -729,7 +736,7 @@ if(CModule::IncludeModule("socialnetwork"))
 				elseif (in_array($ls, array("CB_ALL")))
 				{
 					$arFields = array(
-						"USER_ID" => $GLOBALS["USER"]->GetID(),
+						"USER_ID" => $USER->getId(),
 						"ENTITY_TYPE" => SONET_SUBSCRIBE_ENTITY_USER,
 						"ENTITY_ID" => $cb_id,
 						"ENTITY_CB" => "Y"
@@ -787,12 +794,16 @@ if(CModule::IncludeModule("socialnetwork"))
 			}
 		}
 	}
-	elseif ($action == "change_follow" && $GLOBALS["USER"]->IsAuthorized())
+	elseif (
+		$action == "change_follow"
+		&& $USER->isAuthorized()
+	)
 	{
-		if ($strRes = CSocNetLogFollow::Set($GLOBALS["USER"]->GetID(), "L".intval($_REQUEST["log_id"]), ($_REQUEST["follow"] == "Y" ? "Y" : "N")))
-			$arResult["SUCCESS"] = "Y";
-		else
-			$arResult["SUCCESS"] = "N";
+		$arResult["SUCCESS"] = (
+			($strRes = CSocNetLogFollow::Set($USER->getId(), "L".intval($_REQUEST["log_id"]), ($_REQUEST["follow"] == "Y" ? "Y" : "N")))
+				? "Y"
+				: "N"
+		);
 	}
 
 	if (empty($_REQUEST['mobile_action']))

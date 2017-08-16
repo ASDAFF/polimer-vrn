@@ -1474,6 +1474,9 @@ class CAllSaleDelivery
 			if(!$basketItem)
 				continue;
 
+			if($basketItem->isBundleChild())
+				continue;
+
 			$itemFieldValues = $basketItem->getFieldValues();
 			$itemFieldValues["QUANTITY"] = $shipmentItem->getField("QUANTITY");
 

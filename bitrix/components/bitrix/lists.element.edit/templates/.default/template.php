@@ -246,7 +246,7 @@ if(CModule::IncludeModule("bizproc") && CBPRuntime::isFeatureEnabled() && $arRes
 					$canDeleteWorkflow = CBPDocument::CanUserOperateDocumentType(
 						CBPCanUserOperateOperation::CreateWorkflow,
 						$GLOBALS["USER"]->GetID(),
-						BizProcDocument::getDocumentComplexId($arParams["IBLOCK_TYPE_ID"], $arResult["ELEMENT_ID"]),
+						BizProcDocument::getDocumentComplexId($arParams["IBLOCK_TYPE_ID"], $arResult["IBLOCK_ID"]),
 						array("UserGroups" => $arCurrentUserGroups)
 					);
 

@@ -23,4 +23,5 @@ $MESS["BPAR_PD_COMMENT_REQUIRED"] = "Kommentar ist erforderlich";
 $MESS["BPAR_PD_COMMENT_LABEL_MESSAGE"] = "Label für das Feld zur Kommentarangabe";
 $MESS["BPAR_PD_ACCESS_CONTROL"] = "Kurzbeschreibung anzeigen für alle bis auf den Verantwortlichen";
 $MESS["BPAR_PD_TIMEOUT_LIMIT"] = "Minimale Lesezeit";
+$MESS["BPAR_PD_DELEGATION_TYPE"] = "Delegieren an";
 ?>

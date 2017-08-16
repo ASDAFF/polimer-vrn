@@ -3,11 +3,10 @@
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 use Bitrix\Iblock,
-	Bitrix\Currency\CurrencyTable;
+	Bitrix\Currency;
 
 define("STOP_STATISTICS", true);
 define("BX_SECURITY_SHOW_MESSAGE", true);
-define('NO_AGENT_CHECK', true);
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/catalog/export_yandex.php');
@@ -168,8 +167,20 @@ $arTypesConfig = array(
 
 $arTypesConfigKeys = array_keys($arTypesConfig);
 
+$vatRates = array(
+	'-' => GetMessage('YANDEX_BASE_VAT_EMPTY'),
+	'0%' => '0%',
+	'10%' => '10%',
+	'18%' => '18%'
+);
+
+$defaultVatExport = array(
+	'ENABLE' => 'N',
+	'BASE_VAT' => ''
+);
+
 $dbRes = CIBlockProperty::GetList(
-	array('sort' => 'asc'),
+	array('SORT' => 'ASC'),
 	array('IBLOCK_ID' => $intIBlockID, 'ACTIVE' => 'Y')
 );
 $arIBlock['PROPERTY'] = array();
@@ -266,7 +277,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 
 		foreach ($XML_DATA as $key => $value)
 		{
-			if (!$value) unset($XML_DATA[$key]);
+			if (!$value)
+				unset($XML_DATA[$key]);
 		}
 
 		$arSKUExport = false;
@@ -344,6 +356,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 			}
 		}
 
+		$vatExport = $defaultVatExport;
+		if (isset($_POST['USE_VAT_EXPORT']) && is_string($_POST['USE_VAT_EXPORT']))
+		{
+			if ($_POST['USE_VAT_EXPORT'] == 'Y')
+				$vatExport['ENABLE'] = 'Y';
+			if ($vatExport['ENABLE'] == 'Y')
+			{
+				if (isset($_POST['BASE_VAT']) && is_string($_POST['BASE_VAT']) && $_POST['BASE_VAT'] !== '')
+				{
+					if (isset($vatRates[$_POST['BASE_VAT']]))
+						$vatExport['BASE_VAT'] = $_POST['BASE_VAT'];
+				}
+				if ($vatExport['BASE_VAT'] === '')
+				{
+					$arErrors[] = GetMessage('YANDEX_VAT_ERR_BASE_VAT_ABSENT');
+					$boolCheck = false;
+				}
+			}
+		}
+
 		if (empty($arErrors))
 		{
 			$arXMLData = array(
@@ -351,7 +383,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 				'XML_DATA' => $XML_DATA,
 				'CURRENCY' => $arCurrency,
 				'PRICE' => intval($_POST['PRICE']),
-				'SKU_EXPORT' => $arSKUExport
+				'SKU_EXPORT' => $arSKUExport,
+				'VAT_EXPORT' => $vatExport
 			);
 ?><script type="text/javascript">
 top.BX.closeWait();
@@ -370,21 +403,10 @@ top.setDetailData('<?=CUtil::JSEscape(base64_encode(serialize($arXMLData)));?>')
 	}
 	else
 	{
-/*if ($strError)
-{
-?>
-<script type="text/javascript">
-var obDialog = BX.WindowManager.Get();
-obDialog.Close();
-obDialog.ShowError('<?=CUtil::JSEscape($strError);?>');
-</script>
-<?
-	die();
-}*/
-
 		$aTabs = array(
-			array("DIV" => "edit1", "TAB" => GetMessage('YANDEX_TAB1_TITLE'), "TITLE" => GetMessage('YANDEX_TAB1_DESC')),
-			array("DIV" => "edit2", "TAB" => GetMessage('YANDEX_TAB2_TITLE'), "TITLE" => GetMessage('YANDEX_TAB2_DESC')),
+			array("DIV" => "yandex-settings-types", "TAB" => GetMessage('YANDEX_TAB1_TITLE'), "TITLE" => GetMessage('YANDEX_TAB1_DESC')),
+			array("DIV" => "yandex-settings-prices", "TAB" => GetMessage('YANDEX_TAB2_TITLE'), "TITLE" => GetMessage('YANDEX_TAB2_DESC')),
+			array("DIV" => "yandex-settings-vats", "TAB" => GetMessage('YANDEX_TAB_VAT_TITLE'), "TITLE" => GetMessage('YANDEX_TAB_VAT_DESC')),
 		);
 		$tabControl = new CAdminTabControl("tabControl", $aTabs, true, true);
 
@@ -421,7 +443,6 @@ obDialog.ShowError('<?=CUtil::JSEscape($strError);?>');
 
 		function __addParamName(&$IBLOCK, $intCount, $value)
 		{
-			$strResult = '';
 			ob_start();
 			__yand_show_selector('PARAMS','ID_'.$intCount, $IBLOCK, $value);
 			$strResult = ob_get_contents();
@@ -468,23 +489,19 @@ HTML form
 				'VALUES' => array(),
 			),
 		);
+		$vatExport = $defaultVatExport;
 
 		$arXmlData = array();
-		if (isset($_REQUEST['XML_DATA']))
+		if (!empty($_REQUEST['XML_DATA']))
 		{
-			$strXmlData = '';
-			if ('' != $_REQUEST['XML_DATA'])
-			{
-				$strXmlData = base64_decode($_REQUEST['XML_DATA']);
-				if (true == CheckSerializedData($strXmlData))
-				{
-					$arXmlData = unserialize($strXmlData);
-				}
-			}
+			$xmlData = base64_decode($_REQUEST['XML_DATA']);
+			if (CheckSerializedData($xmlData))
+				$arXmlData = unserialize($xmlData);
+			unset($xmlData);
 		}
 
 		if (isset($arXmlData['PRICE']))
-			$PRICE = intval($arXmlData['PRICE']);
+			$PRICE = (int)$arXmlData['PRICE'];
 		if (isset($arXmlData['CURRENCY']))
 			$CURRENCY = $arXmlData['CURRENCY'];
 		if (isset($arXmlData['TYPE']))
@@ -521,6 +538,16 @@ HTML form
 			if (!empty($arXmlData['SKU_EXPORT']['SKU_PROP_COND']))
 				$arSKUExport['SKU_PROP_COND'] = $arXmlData['SKU_EXPORT']['SKU_PROP_COND'];
 		}
+		if (!empty($arXmlData['VAT_EXPORT']) && is_array($arXmlData['VAT_EXPORT']))
+		{
+			$vatExport['ENABLE'] = $arXmlData['VAT_EXPORT']['ENABLE'];
+			if ($vatExport['ENABLE'] != 'Y' && $vatExport['ENABLE'] != 'N')
+				$vatExport['ENABLE'] = 'N';
+			$vatExport['BASE_VAT'] = $arXmlData['VAT_EXPORT']['BASE_VAT'];
+			if ($vatExport['BASE_VAT'] !== '' && !isset($vatRates[$vatExport['BASE_VAT']]))
+				$vatExport['BASE_VAT'] = '';
+		}
+
 		?>
 		<script type="text/javascript">
 		var currentSelectedType = '<? echo $type; ?>';
@@ -547,7 +574,6 @@ HTML form
 			<td colspan="2" style="text-align: center;">
 				<select name="type" onchange="switchType(this[this.selectedIndex].value)">
 <?
-//foreach ($arTypesConfig as $key => $arConfig):
 		foreach ($arTypesConfigKeys as $key)
 		{
 			if ('none' != $key)
@@ -593,7 +619,6 @@ HTML form
 <?
 		endforeach;
 ?>
-
 			</td>
 		</tr>
 		<tr class="heading">
@@ -628,8 +653,22 @@ HTML form
 				<div style="width: 100%; text-align: center;"><input type="button" onclick="__addYP(); return false;" name="yandex_params_add" value="<? echo GetMessage('YANDEX_PROPS_ADDITIONAL_MORE'); ?>"></div>
 				</div>
 <script type="text/javascript">
-BX.ready(
-	function(){
+function changeVatExport()
+{
+	var vatRates = BX('tr_BASE_VAT');
+
+	if (!BX.type.isElementNode(vatRates))
+		return;
+	BX.style(vatRates, 'display', (this.checked ? 'table-row' : 'none'));
+}
+
+BX.ready(function(){
+	var vatRates = BX('tr_BASE_VAT'),
+		vatEnable = BX('USE_VAT_EXPORT');
+
+	if (BX.type.isElementNode(vatRates) && BX.type.isElementNode(vatEnable))
+		BX.bind(vatEnable, 'click', changeVatExport);
+
 		setTimeout(function(){
 			window.oParamSet = {
 				pTypeTbl: BX("yandex_params_tbl"),
@@ -641,18 +680,22 @@ BX.ready(
 
 function __addYP()
 {
-	var id = window.oParamSet.curCount++;
+	var id = window.oParamSet.curCount++,
+		newRow,
+		oCell,
+		strContent;
+	id = id.toString();
 	window.oParamSet.intCounter.value = window.oParamSet.curCount;
-	var newRow = window.oParamSet.pTypeTbl.insertRow(window.oParamSet.pTypeTbl.rows.length);
+	newRow = window.oParamSet.pTypeTbl.insertRow(window.oParamSet.pTypeTbl.rows.length);
 	newRow.id = 'yandex_params_tbl_'+id;
 
-	var oCell = newRow.insertCell(-1);
+	oCell = newRow.insertCell(-1);
 	oCell.style.textAlign = 'center';
-	var strContent = '<? echo CUtil::JSEscape(__addParamCode()); ?>';
+	strContent = '<? echo CUtil::JSEscape(__addParamCode()); ?>';
 	strContent = strContent.replace(/tmp_xxx/ig, id);
 	oCell.innerHTML = strContent;
-	var oCell = newRow.insertCell(-1);
-	var strContent = '<? echo CUtil::JSEscape(__addParamName($arIBlock, 'tmp_xxx', '')); ?>';
+	oCell = newRow.insertCell(-1);
+	strContent = '<? echo CUtil::JSEscape(__addParamName($arIBlock, 'tmp_xxx', '')); ?>';
 	strContent = strContent.replace(/tmp_xxx/ig, id);
 	oCell.innerHTML = strContent;
 }
@@ -748,10 +791,10 @@ function __addYP()
 				</tr>
 				</tbody></table><?
 				?><script type="text/javascript">
-				var obExportConds = null;
-				var obPropCondCont = null;
-				var obSelectProps = null;
-				var arPropLayers = new Array();
+				var obExportConds = null,
+					obPropCondCont = null,
+					obSelectProps = null,
+					arPropLayers = [];
 				<?
 				$intCount = 0;
 				foreach ($arSelectOfferProps as $intPropID)
@@ -851,13 +894,18 @@ function __addYP()
 		<td colspan="2"><br />
 <?
 	$arCurrencyList = array();
-	$arCurrencyAllowed = array('RUR', 'RUB', 'USD', 'EUR', 'UAH', 'BYR', 'BYN', 'KZT');
-	$dbRes = CCurrency::GetList($by = 'sort', $order = 'asc');
-	while ($arRes = $dbRes->GetNext())
-	{
-		if (in_array($arRes['CURRENCY'], $arCurrencyAllowed))
-			$arCurrencyList[$arRes['CURRENCY']] = $arRes['FULL_NAME'];
-	}
+	$arCurrencyAllowed = array(
+		'RUR' => true,
+		'RUB' => true,
+		'USD' => true,
+		'EUR' => true,
+		'UAH' => true,
+		'BYR' => true,
+		'BYN' => true,
+		'KZT' => true
+	);
+	$existCurrrencies = Currency\CurrencyManager::getCurrencyList();
+	$arCurrencyList = array_intersect_key(Currency\CurrencyManager::getCurrencyList(), $arCurrencyAllowed);
 
 	$arValues = array(
 		'SITE' => GetMessage('YANDEX_CURRENCY_RATE_SITE'),
@@ -882,7 +930,7 @@ function __addYP()
 ?>
 	<tr>
 		<td><input type="checkbox" name="CURRENCY[]" id="CURRENCY_<?=$strCurrency?>" value="<?=$strCurrency?>"<? echo (empty($CURRENCY) || isset($CURRENCY[$strCurrency]) ? ' checked="checked"' : ''); ?> /></td>
-		<td><label for="CURRENCY_<?=$strCurrency?>" class="text">[<?=$strCurrency?>] <?=$strCurrencyName?></label></td>
+		<td><label for="CURRENCY_<?=$strCurrency?>" class="text"><?=$strCurrencyName?></label></td>
 		<td><select name="CURRENCY_RATE[<?=$strCurrency?>]" onchange="BX('CURRENCY_PLUS_<?=$strCurrency?>').disabled = this[this.selectedIndex].value == 'SITE'">
 <?
 		$strRate = 'SITE';
@@ -903,7 +951,7 @@ function __addYP()
 		if (isset($CURRENCY[$strCurrency]) && isset($CURRENCY[$strCurrency]['plus']))
 			$strPlus = $CURRENCY[$strCurrency]['plus'];
 		?>
-		<td>+<input type="text" size="3" id="CURRENCY_PLUS_<?=$strCurrency?>" name="CURRENCY_PLUS[<?=$strCurrency?>]"<? echo ($strRate == 'SITE' ? ' disabled="disabled"' : ''); ?> value="<? echo htmlspecialcharsbx($strPlus); ?>" />%</td>
+		<td>+<input type="text" size="3" id="CURRENCY_PLUS_<?=$strCurrency?>" name="CURRENCY_PLUS[<?=$strCurrency?>]"<? echo ($strRate == 'SITE' ? ' disabled="disabled"' : ''); ?> value="<? echo htmlspecialcharsbx($strPlus); ?>">%</td>
 	</tr>
 <?
 	}
@@ -914,6 +962,37 @@ function __addYP()
 		</td>
 	</tr>
 <?
+		$tabControl->BeginNextTab();
+?>
+	<tr class="heading">
+		<td colspan="2"><? echo GetMessage('YANDEX_VAT_SETTINGS');?></td>
+	</tr>
+	<tr>
+		<td colspan="2" style="text-align: center;">
+			<?echo BeginNote(), GetMessage('YANDEX_VAT_ATTENTION'), EndNote();?>
+		</td>
+	</tr>
+	<tr>
+		<td width="40%"><?=GetMessage('YANDEX_USE_VAT_EXPORT'); ?></td>
+		<td>
+			<input type="hidden" name="USE_VAT_EXPORT" value="N">
+			<input type="checkbox" name="USE_VAT_EXPORT" value="Y" id="USE_VAT_EXPORT"<?=($vatExport['ENABLE'] == 'Y' ? ' checked' : '');?>>
+		</td>
+	</tr>
+	<tr id="tr_BASE_VAT" style="display: <?=($vatExport['ENABLE'] == 'Y' ? 'table-row' : 'none');?>;">
+		<td><?=GetMessage('YANDEX_BASE_VAT') ?></td>
+		<td><select name="BASE_VAT">
+				<option value=""<?=($vatExport['BASE_VAT'] === '' ? ' selected' : '');?>><?=GetMessage('YANDEX_BASE_VAT_ABSENT'); ?></option>
+				<?
+				foreach ($vatRates as $value => $title)
+				{
+					?><option value="<?=htmlspecialcharsbx($value); ?>"<?=($vatExport['BASE_VAT'] === $value ? ' selected' : '');?>><?=htmlspecialcharsbx($title);?></option><?
+				}
+				unset($value, $title);
+				?>
+			</select></td>
+	</tr>
+		<?
 		$tabControl->EndTab();
 		$tabControl->Buttons(array());
 		$tabControl->End();

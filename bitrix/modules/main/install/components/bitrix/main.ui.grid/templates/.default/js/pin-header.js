@@ -28,6 +28,7 @@
 			document.addEventListener('scroll', BX.proxy(this._onScroll, this), BX.Grid.Utils.listenerParams({passive: true}));
 			document.addEventListener('resize', BX.proxy(this._onResize, this), BX.Grid.Utils.listenerParams({passive: true}));
 			BX.addCustomEvent('Grid::updated', BX.proxy(this._onGridUpdate, this));
+			BX.addCustomEvent('Grid::resize', BX.proxy(this._onGridUpdate, this));
 			BX.bind(window, 'resize', BX.proxy(this._onGridUpdate, this));
 		},
 

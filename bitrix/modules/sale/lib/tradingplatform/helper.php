@@ -238,7 +238,7 @@ class Helper
 			$result .= '<option value="">'.GetMessage("SALE_YM_NOT_USE").'</option>';
 
 		foreach($data as $value => $title)
-			$result .= '<option value="'.$value.'"'.($selected == $value ? " selected" : "").'>'.$title.'</option>';
+			$result .= '<option value="'.htmlspecialcharsbx($value).'"'.($selected == $value ? " selected" : "").'>'.htmlspecialcharsbx($title).'</option>';
 
 		$result .= '</select>';
 
@@ -442,8 +442,8 @@ class Helper
 				continue;
 
 			$measure = (isset($val["MEASURE_TEXT"])) ? $val["MEASURE_TEXT"] : GetMessage("SALE_YMH_SHT");
-			$strOrderList .= $val["NAME"] . " - " . $val["QUANTITY"] . " " . $measure . ": " . SaleFormatCurrency($val["PRICE"], $baseLangCurrency);
-			$strOrderList .= "\n";
+			$strOrderList .= $val["NAME"] . " - " . $val["QUANTITY"] . " " . $measure . " x " . SaleFormatCurrency($val["PRICE"], $baseLangCurrency);
+			$strOrderList .= "</br>";
 		}
 
 		//send mail

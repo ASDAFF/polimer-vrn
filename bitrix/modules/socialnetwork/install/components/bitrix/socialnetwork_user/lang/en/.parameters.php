@@ -253,6 +253,7 @@ $MESS["SONET_CALENDAR_SP_GROUPS_IBLOCK_ID"] = "Information Block for Group Calen
 $MESS["SONET_FILES_BASE_URL"] = "Library URL for Network Drive Mapping (relative)";
 $MESS["SONET_SEF_PATH_BIZPROC"] = "User's Business Processes Page";
 $MESS["SONET_SEF_PATH_BIZPROC_EDIT"] = "User's Business Process Event Page";
+$MESS["SONET_SEF_PATH_PROCESSES"] = "User's workflow page";
 $MESS["SONET_CALENDAR_ALLOW_VIDEO_MEETING"] = "Allow Booking Video Meeting Rooms When Creating Events";
 $MESS["SONET_CALENDAR_VIDEO_MEETING_IBLOCK"] = "Information Block for Video Meeting Room Booking";
 $MESS["SONET_CALENDAR_PATH_TO_VIDEO_MEETING"] = "Video Meeting Room Path Template";
@@ -343,5 +344,4 @@ $MESS["SONET_LOG_COMMENT_THUMBNAIL_SIZE"] = "Activity Stream avatar size (for us
 $MESS["SONET_LOG_NEW_TEMPLATE"] = "Use novelty Activity Stream template";
 $MESS["SONET_LOG_AUTH"] = "Don't require authentication to view Activity Stream";
 $MESS["BPC_USE_CUT"] = "Use [CUT] for messages";
-$MESS["SONET_SEF_PATH_PROCESSES"] = "User's workflow page";
 ?>

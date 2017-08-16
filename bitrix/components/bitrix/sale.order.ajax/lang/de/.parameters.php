@@ -54,6 +54,7 @@ $MESS["SOA_SHOW_NOT_CALCULATED_DELIVERIES_N"] = "nicht anzeigen";
 $MESS["SOA_SHOW_NOT_CALCULATED_DELIVERIES_L"] = "Zum Schluss anzeigen";
 $MESS["SOA_SHOW_NOT_CALCULATED_DELIVERIES_Y"] = "Wie gewöhnlich anzeigen";
 $MESS["SHOW_NOT_CALCULATED_DELIVERIES_TIP"] = "Option \"Lieferungen mit dem externen Zugriff auf Services vorher kalkulieren\" aktivieren, um die Lieferungen von diesem Typ sortieren zu können.";
+$MESS["SBB_SPOT_LOCATION_BY_GEOIP"] = "Standort des Kunden nach IP-Adresse bestimmen";
 $MESS["SOA_ACTION_VARIABLE"] = "Variable mit der Aktion";
 $MESS["ACTION_VARIABLE_TIP"] = "Gibt den Namen einer Variable an, die den Aktionsidentifikator enthält: processOrder, showOrder etc. Standardwert: <i>action</i>.";
 $MESS["SOA_ALLOW_APPEND_ORDER"] = "Anbindung einer neuen Bestellung an existierenden Nutzer-Account erlauben";

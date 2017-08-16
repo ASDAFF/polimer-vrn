@@ -652,7 +652,7 @@ class Field
 			foreach($field['VALUE'] as $key => $value)
 			{
 				$file = new \CListFile($iblockId, $sectionId, $elementId, $fieldId,
-					isset($value['VALUE']) ? $value['VALUE'] : $value);
+					is_array($value) && isset($value['VALUE']) ? $value['VALUE'] : $value);
 				$file->setSocnetGroup($socnetGroupId);
 				$fieldControlId = $field['TYPE'] == 'F' && self::$renderForForm ?
 					$fieldId.'['.$key.'][VALUE]' : $fieldId;
@@ -669,7 +669,7 @@ class Field
 				foreach($field['VALUE'] as $key => $value)
 				{
 					$file = new \CListFile($iblockId, $sectionId, $elementId, $fieldId,
-						isset($value['VALUE']) ? $value['VALUE'] : $value);
+						is_array($value) && isset($value['VALUE']) ? $value['VALUE'] : $value);
 					$file->setSocnetGroup($socnetGroupId);
 					$fieldControlId = $field['TYPE'] == 'F' && self::$renderForForm ?
 						$fieldId.'['.$key.'][VALUE]' : $fieldId;
@@ -1598,7 +1598,7 @@ class Field
 				{
 					$html .= '<tr><td>';
 					$file = new \CListFile($iblockId, $sectionId, $elementId, $fieldId,
-						isset($value['VALUE']) ? $value['VALUE'] : $value);
+						is_array($value) && isset($value['VALUE']) ? $value['VALUE'] : $value);
 					$file->setSocnetGroup($socnetGroupId);
 					$fieldControlId = $field['TYPE'] == 'F' && self::$renderForForm ?
 						$fieldId.'['.$key.'][VALUE]' : $fieldId;

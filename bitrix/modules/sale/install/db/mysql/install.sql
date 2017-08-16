@@ -1808,3 +1808,21 @@ create table if not exists b_sale_cashbox_connect (
 	DATE_CREATE datetime NOT NULL,
 	PRIMARY KEY (HASH)
 );
+
+create table if not exists b_sale_buyer_stat (
+	ID INT(11) NOT NULL AUTO_INCREMENT,
+	USER_ID int not null,
+	LID char(2) not null,
+	CURRENCY char(3) not null,
+	LAST_ORDER_DATE datetime not null,
+	COUNT_FULL_PAID_ORDER int null,
+	COUNT_PART_PAID_ORDER int null,
+	SUM_PAID decimal(18, 4) null,
+	PRIMARY KEY (ID),
+	index IXS_CURRENCY_LID_SELECTOR(CURRENCY, LID, USER_ID),
+	index IXS_ORDER_USER_ID(USER_ID),
+	index IXS_LAST_ORDER_DATE(LAST_ORDER_DATE),
+	index IXS_COUNT_FULL_PAID_ORDER(COUNT_FULL_PAID_ORDER),
+	index IXS_COUNT_PART_PAID_ORDER(COUNT_PART_PAID_ORDER),
+	index IXS_SUM_PAID(SUM_PAID)
+);

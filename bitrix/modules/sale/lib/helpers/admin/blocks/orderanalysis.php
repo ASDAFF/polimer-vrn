@@ -89,11 +89,11 @@ class OrderAnalysis
 					/** @var \Bitrix\Sale\ShipmentItem $shipmentItem */
 					foreach ($shipment->getShipmentItemCollection() as $shipmentItem)
 					{
-						$basketItem = $shipmentItem->getBasketItem();
+						$basketCode = $shipmentItem->getBasketCode();
 
-						if (isset($items[$basketItem->getBasketCode()]))
+						if ($basketCode && isset($items[$basketCode]))
 						{
-							$item = &$items[$basketItem->getBasketCode()];
+							$item = &$items[$basketCode];
 							if ($shippedQuantity = &$item['SHIPPED_QUANTITY'])
 								$shippedQuantity += (float) $shipmentItem->getField('QUANTITY');
 							else

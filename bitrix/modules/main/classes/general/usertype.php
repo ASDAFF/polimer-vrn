@@ -1463,6 +1463,31 @@ class CAllUserTypeManager
 		}
 	}
 
+	function AdminListAddFilterFieldsV2($entityId, &$arFilterFields)
+	{
+		$arUserFields = $this->GetUserFields($entityId, 0, $GLOBALS["lang"]);
+		foreach ($arUserFields as $fieldName => $arUserField)
+		{
+			if ($arUserField['SHOW_FILTER']!='N' && $arUserField['USER_TYPE']['BASE_TYPE']!='file')
+			{
+				if(is_callable(array($arUserField['USER_TYPE']['CLASS_NAME'], 'GetFilterData')))
+				{
+					$arFilterFields[] = call_user_func_array(
+						array($arUserField['USER_TYPE']['CLASS_NAME'], 'GetFilterData'),
+						array(
+							$arUserField,
+							array(
+								'ID' => $fieldName,
+								'NAME' => $arUserField['LIST_FILTER_LABEL'] ?
+									$arUserField['LIST_FILTER_LABEL'] : $arUserField['FIELD_NAME'],
+							),
+						)
+					);
+				}
+			}
+		}
+	}
+
 	function IsNotEmpty($value)
 	{
 		if(is_array($value))
@@ -1533,6 +1558,62 @@ class CAllUserTypeManager
 				}
 				elseif($arUserField['SHOW_FILTER']=='S')
 				{
+					$arFilter['%'.$fieldName] = $value;
+				}
+				else
+				{
+					$arFilter[$fieldName] = $value;
+				}
+			}
+		}
+	}
+
+	function AdminListAddFilterV2($entityId, &$arFilter, $filterId, $filterFields)
+	{
+		$filterOption = new Bitrix\Main\UI\Filter\Options($filterId);
+		$filterData = $filterOption->getFilter($filterFields);
+
+		$arUserFields = $this->GetUserFields($entityId);
+		foreach ($arUserFields as $fieldName => $arUserField)
+		{
+			if ($arUserField['SHOW_FILTER'] != 'N' && $arUserField['USER_TYPE']['BASE_TYPE'] == 'datetime')
+			{
+				$value1 = $filterData[$fieldName.'_from'];
+				$value2 = $filterData[$fieldName.'_to'];
+				if ($this->IsNotEmpty($value1) && \Bitrix\Main\Type\Date::isCorrect($value1))
+				{
+					$date = new \Bitrix\Main\Type\Date($value1);
+					$arFilter['>='.$fieldName] = $date;
+				}
+				if ($this->IsNotEmpty($value2) && \Bitrix\Main\Type\Date::isCorrect($value2))
+				{
+					$date = new \Bitrix\Main\Type\Date($value2);
+					if ($arUserField['USER_TYPE_ID'] != 'date')
+					{
+						$date->add('+1 day');
+					}
+					$arFilter['<='.$fieldName] = $date;
+				}
+				continue;
+			}
+			else
+			{
+				$value = $filterData[$fieldName];
+			}
+			if (
+				$arUserField['SHOW_FILTER'] != 'N'
+				&& $arUserField['USER_TYPE']['BASE_TYPE'] != 'file'
+				&& $this->IsNotEmpty($value)
+			)
+			{
+				if ($arUserField['SHOW_FILTER'] == 'I')
+				{
+					unset($arFilter[$fieldName]);
+					$arFilter['='.$fieldName] = $value;
+				}
+				elseif($arUserField['SHOW_FILTER']=='S')
+				{
+					unset($arFilter[$fieldName]);
 					$arFilter['%'.$fieldName] = $value;
 				}
 				else

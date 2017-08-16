@@ -145,16 +145,43 @@ if($_SERVER['REQUEST_METHOD']=='POST' && $_REQUEST['saveajax']=='Y' && check_bit
 	if(!is_array($arFields["CONSTANTS"]))
 		$arFields["CONSTANTS"] = array();
 
+	/**
+	 * @param CBPWorkflowTemplateValidationException $e
+	 */
 	function wfeexception_handler($e)
 	{
-		// PHP 5.2.1 bug http://bugs.php.net/bug.php?id=40456
+		$errors = $e->getErrors();
+		$errorMessages = array();
+		foreach ($errors as $error)
+		{
+			$errorMessages[] = CUtil::JSEscape($error['message']);
+		}
+
 		?><!--SUCCESS--><script>
-			alert('<?=GetMessageJS("BIZPROC_WFEDIT_SAVE_ERROR")?>\n<?=preg_replace('#\.\W?#', ".\\n", CUtil::JSEscape($e->getMessage()))?>');
+			alert('<?=GetMessageJS("BIZPROC_WFEDIT_SAVE_ERROR")?>\n<?=implode('\n', $errorMessages)?>');
+			(function(){
+				var i, setFocus = true, activity, error, errors = [];
+				errors = <?=\Bitrix\Main\Web\Json::encode($errors);?>;
+
+				for (i = 0; i < errors.length; ++i)
+				{
+					error = errors[i];
+					if (error.activityName)
+					{
+						activity = window.rootActivity.findChildById(error.activityName);
+						/** @var BizProcActivity activity */
+						if (activity)
+						{
+							activity.SetError(true, setFocus);
+							setFocus = false;
+						}
+					}
+				}
+			})();
 		</script><?
 		die();
 	}
-
-	set_exception_handler('wfeexception_handler');
+	//set_exception_handler('wfeexception_handler');
 	try
 	{
 		if($ID>0)
@@ -175,7 +202,7 @@ if($_SERVER['REQUEST_METHOD']=='POST' && $_REQUEST['saveajax']=='Y' && check_bit
 	{
 		wfeexception_handler($e);
 	}
-	restore_exception_handler();
+	//restore_exception_handler();
 	?><!--SUCCESS--><script>
 		BPTemplateIsModified = false;
 		window.location = '<?=($_REQUEST["apply"]=="Y"? CUtil::JSEscape($applyUrl) : CUtil::JSEscape($saveUrl))?>';

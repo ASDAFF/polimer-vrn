@@ -622,6 +622,35 @@ class SaleAccountPay extends \CBitrixComponent
 			return;
 		}
 
+		if ($firstProfileId = Sale\OrderUserProperties::getFirstId($order->getPersonTypeId(), $order->getUserId()))
+		{
+			$resultUserProperties = Sale\Internals\UserPropsValueTable::getList(
+				array(
+					'filter' => array("=USER_PROPS_ID" => $firstProfileId),
+					'select' => array("ORDER_PROPS_ID", "VALUE")
+				)
+			);
+			while ($userProperty = $resultUserProperties->fetch())
+			{
+				$propertiesValueList[$userProperty["ORDER_PROPS_ID"]] = $userProperty['VALUE'];
+			}
+
+			if (!empty($propertiesValueList) && is_array($propertiesValueList))
+			{
+				$propertyCollection = $order->getPropertyCollection();
+				/** @var Sale\PropertyValue $property */
+				foreach ($propertyCollection as $property)
+				{
+					$propertyOrderId = (int)($property->getField('ORDER_PROPS_ID'));
+
+					if (!empty($propertiesValueList[$propertyOrderId]))
+					{
+						$property->setValue($propertiesValueList[$propertyOrderId]);
+					}
+				}
+			}
+		}
+
 		$resultSaving = $order->save();
 
 		if ($resultSaving->isSuccess())

@@ -68,15 +68,15 @@ else
 			switch ($baseCurrency)
 			{
 				case 'UAH':
-					$url = 'http://bank.gov.ua/NBUStatService/v1/statdirectory?exchange&date='.$DB->FormatDate($date, CLang::GetDateFormat('SHORT', LANGUAGE_ID), 'YMD');
+					$url = 'https://bank.gov.ua/NBUStatService/v1/statdirectory/exchange/?date='.$DB->FormatDate($date, CLang::GetDateFormat('SHORT', LANGUAGE_ID), 'YMD');
 					break;
 				case 'BYR':
 				case 'BYN':
-					$url = 'http://www.nbrb.by/Services/XmlExRates.aspx?ondate='.$DB->FormatDate($date, CLang::GetDateFormat('SHORT', LANGUAGE_ID), 'Y-M-D');
+					$url = 'https://www.nbrb.by/Services/XmlExRates.aspx?ondate='.$DB->FormatDate($date, CLang::GetDateFormat('SHORT', LANGUAGE_ID), 'Y-M-D');
 					break;
 				case 'RUB':
 				case 'RUR':
-					$url = 'http://www.cbr.ru/scripts/XML_daily.asp?date_req='.$DB->FormatDate($date, CLang::GetDateFormat('SHORT', LANGUAGE_ID), 'D.M.Y');
+					$url = 'https://www.cbr.ru/scripts/XML_daily.asp?date_req='.$DB->FormatDate($date, CLang::GetDateFormat('SHORT', LANGUAGE_ID), 'D.M.Y');
 					break;
 			}
 			$http = new Main\Web\HttpClient();

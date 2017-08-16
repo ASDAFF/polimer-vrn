@@ -250,12 +250,23 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0 && !$arParams['COUNTERS_ONLY'])
 			}
 			if ($action == 'delegate_to' && !empty($_REQUEST['ACTION_DELEGATE_TO_ID']))
 			{
-				if ($isAdmin || CBPHelper::checkUserSubordination($currentUserId, $_REQUEST['ACTION_DELEGATE_TO_ID']))
+				$allowedDelegationType = array(CBPTaskDelegationType::AllEmployees);
+				if ($isAdmin)
 				{
-					CBPDocument::delegateTasks($targetUserId, $_REQUEST['ACTION_DELEGATE_TO_ID'], $ids, $arResult['ERRORS']);
+					$allowedDelegationType = null;
 				}
-				else
-					$arResult['ERRORS'][] = GetMessage('BPATL_ERROR_DELEGATE');
+				elseif (CBPHelper::checkUserSubordination($currentUserId, $_REQUEST['ACTION_DELEGATE_TO_ID']))
+				{
+					$allowedDelegationType[] = CBPTaskDelegationType::Subordinate;
+				}
+
+				CBPDocument::delegateTasks(
+					$targetUserId,
+					$_REQUEST['ACTION_DELEGATE_TO_ID'],
+					$ids,
+					$arResult['ERRORS'],
+					$allowedDelegationType
+				);
 			}
 		}
 	}

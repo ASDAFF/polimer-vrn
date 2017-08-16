@@ -543,7 +543,12 @@ $filterOption = new Bitrix\Main\UI\Filter\Options($arResult["FILTER_ID"]);
 $filterData = $filterOption->getFilter($arResult["FILTER"]);
 foreach($filterData as $key => $value)
 {
-	if(strlen($value) < 0)
+	if (is_array($value))
+	{
+		if (empty($value))
+			continue;
+	}
+	elseif(strlen($value) <= 0)
 		continue;
 
 	if(substr($key, -5) == "_from")
@@ -1006,7 +1011,7 @@ while($obElement = $rsElements->GetNextElement())
 					if(CBPDocument::CanUserOperateDocumentType(
 						CBPCanUserOperateOperation::CreateWorkflow,
 						$GLOBALS["USER"]->GetID(),
-						BizprocDocument::getDocumentComplexId($arIBlock["IBLOCK_TYPE_ID"], $data["ID"]),
+						BizprocDocument::getDocumentComplexId($arIBlock["IBLOCK_TYPE_ID"], $arResult["IBLOCK_ID"]),
 						array("UserGroups" => $currentUserGroups))
 					)
 					{
@@ -1087,18 +1092,22 @@ while($obElement = $rsElements->GetNextElement())
 if(!$arResult["CAN_READ"] && $check)
 	$arResult["CAN_READ"] = true;
 
-/* Create sctructure group actions for grid  */
-$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
-$actionsPanel = array(
-	"GROUPS" => array(
-		array(
-			"ITEMS" => array(
-				$snippet->getRemoveButton(),
+if (!$arResult["IS_SOCNET_GROUP_CLOSED"] && ($lists_perm >= CListPermissions::CAN_WRITE
+	|| CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "element_delete")))
+{
+	/* Create sctructure group actions for grid  */
+	$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
+	$actionsPanel = array(
+		"GROUPS" => array(
+			array(
+				"ITEMS" => array(
+					$snippet->getRemoveButton(),
+				)
 			)
 		)
-	)
-);
-$arResult["GRID_ACTION_PANEL"] = $actionsPanel;
+	);
+	$arResult["GRID_ACTION_PANEL"] = $actionsPanel;
+}
 
 /* Grid navigation */
 $rsElements->bShowAll = false;

@@ -190,7 +190,8 @@ class CBitrixBasketBasketSmallMailComponent extends CBitrixComponent
 		$arSetParentWeight = array();
 		$basketItemsFilter = array(
 			"USER_ID" => $this->userId,
-			"ORDER_ID" => "NULL"
+			"ORDER_ID" => "NULL",
+			"LID" => $this->getSiteId()
 		);
 		if($this->showDelay != 'Y')
 		{

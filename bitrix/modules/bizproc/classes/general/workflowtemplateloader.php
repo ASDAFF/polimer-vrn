@@ -44,20 +44,22 @@ class CAllBPWorkflowTemplateLoader
 
 	private function ValidateTemplate($arActivity, $user)
 	{
-		$arErrors = CBPActivity::CallStaticMethod(
+		$errors = CBPActivity::CallStaticMethod(
 			$arActivity["Type"],
 			"ValidateProperties",
 			array($arActivity["Properties"], $user)
 		);
 
-		$pref = false;
+		$pref = '';
 		if (isset($arActivity["Properties"]) && isset($arActivity["Properties"]["Title"]))
-			$pref = str_replace("#TITLE#", $arActivity["Properties"]["Title"], GetMessage("BPWTL_ERROR_MESSAGE_PREFIX"))." ";
-
-		if ($pref !== false)
 		{
-			foreach ($arErrors as &$e)
-				$e["message"] = $pref.$e["message"];
+			$pref = str_replace("#TITLE#", $arActivity["Properties"]["Title"], GetMessage("BPWTL_ERROR_MESSAGE_PREFIX"))." ";
+		}
+
+		foreach ($errors as $i => $e)
+		{
+			$errors[$i]["message"] = $pref.$e["message"];
+			$errors[$i]["activityName"] = $arActivity['Name'];
 		}
 
 		if (array_key_exists("Children", $arActivity) && count($arActivity["Children"]) > 0)
@@ -65,24 +67,24 @@ class CAllBPWorkflowTemplateLoader
 			$bFirst = true;
 			foreach ($arActivity["Children"] as $arChildActivity)
 			{
-				$arErrorsTmp = CBPActivity::CallStaticMethod(
+				$childErrors = CBPActivity::CallStaticMethod(
 					$arActivity["Type"],
 					"ValidateChild",
 					array($arChildActivity["Type"], $bFirst)
 				);
-				if ($pref !== false)
+				foreach ($childErrors as $i => $e)
 				{
-					foreach ($arErrorsTmp as &$e)
-						$e["message"] = $pref.$e["message"];
+					$childErrors[$i]["message"] = $pref.$e["message"];
+					$childErrors[$i]["activityName"] = $arActivity['Name'];
 				}
-				$arErrors = $arErrors + $arErrorsTmp;
+				$errors = array_merge($errors, $childErrors);
 
 				$bFirst = false;
-				$arErrors = $arErrors + $this->ValidateTemplate($arChildActivity, $user);
+				$errors = array_merge($errors, $this->ValidateTemplate($arChildActivity, $user));
 			}
 		}
 
-		return $arErrors;
+		return $errors;
 	}
 
 	protected function ParseFields(&$arFields, $id = 0, $systemImport = false)
@@ -143,21 +145,18 @@ class CAllBPWorkflowTemplateLoader
 						$userTmp = new CBPWorkflowTemplateUser();
 					}
 
-					$err = array();
+					$errors = array();
 					foreach ($arFields["TEMPLATE"] as $v)
-						$err = $err + $this->ValidateTemplate($v, $userTmp);
+						$errors = array_merge($errors, $this->ValidateTemplate($v, $userTmp));
 
-					if (count($err) > 0)
+					if (count($errors) > 0)
 					{
-						$m = "";
-						foreach ($err as $v)
+						$messages = array();
+						foreach ($errors as $v)
 						{
-							$m = trim($v["message"]);
-							if (substr($m, -1) != ".")
-								$m .= ".";
-
+							$messages[] = trim($v["message"]);
 						}
-						throw new Exception($m);
+						throw new CBPWorkflowTemplateValidationException(implode('.', $messages), $errors);
 					}
 				}
 
@@ -1165,5 +1164,21 @@ class CBPWorkflowTemplateUser
 	public function getFullName()
 	{
 		return $this->fullName;
+	}
+}
+
+class CBPWorkflowTemplateValidationException
+	extends Exception
+{
+	private $errors;
+	public function __construct($message = "", array $errors = array())
+	{
+		parent::__construct($message, 10010);
+		$this->errors = $errors;
+	}
+
+	public function getErrors()
+	{
+		return $this->errors;
 	}
 }

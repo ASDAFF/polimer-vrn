@@ -67,6 +67,10 @@ class ByDimensions extends Restrictions\Base
 			foreach($entity->getShipmentItemCollection() as $shipmentItem)
 			{
 				$basketItem = $shipmentItem->getBasketItem();
+
+				if(!$basketItem)
+					continue;
+
 				$dimensions = $basketItem->getField("DIMENSIONS");
 
 				if(is_string($dimensions))

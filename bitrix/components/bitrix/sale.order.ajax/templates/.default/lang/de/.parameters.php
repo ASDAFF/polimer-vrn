@@ -117,7 +117,6 @@ $MESS["INNER_PS_BALANCE"] = "Informationen zum Guthaben auf dem internen Konto";
 $MESS["INNER_PS_BALANCE_DEFAULT"] = "Ihr Guthaben:";
 $MESS["ORDER_DESC"] = "?berschrift f?r Kommentare zur Bestellung";
 $MESS["ORDER_DESC_DEFAULT"] = "Kommentare zur Bestellung:";
-$MESS["SUCCESS_PRELOAD_TEXT"] = "Text der Benachrichtigung dar?ber, dass die Bestelldaten erfolgreich geladen sind";
 $MESS["SUCCESS_PRELOAD_TEXT"] = "Text der Benachrichtigung darüber, dass die Bestelldaten erfolgreich geladen sind";
 $MESS["SUCCESS_PRELOAD_TEXT_DEFAULT"] = "
 Sie haben bei uns fr?her eingekauft, und wir k?nnen uns an Sie erinnern, deshalb haben wir uns erlaubt, Felder f?r Sie auszuf?llen.<br />
@@ -143,4 +142,7 @@ $MESS["DATA_LAYER_NAME"] = "Name des Datencontainers";
 $MESS["BRAND_PROPERTY"] = "Eigenschaft, die den Namen der Handelsmarke enth?lt";
 $MESS["PAY_SYSTEM_PAYABLE_ERROR_TEXT"] = "Benachrichtigungstext, der angezeigt wird, wenn die Bestellung nicht bezahlt werden kann";
 $MESS["PAY_SYSTEM_PAYABLE_ERROR_DEFAULT"] = "Sie werden die Bestellung bezahlen können, nachdem wir feststellen, dass die von Ihnen bestellte Produkte am Lager sind. Wird Ihre Bestellung erfüllt, erhalten Sie eine E-Mail mit Zahlungsanweisungen. Sie werden dann die Bestellung innerhalb Ihres Accounts abschließen können.";
+$MESS["PICKUP_MAP_TYPE"] = "Karten nutzen";
+$MESS["PICKUP_MAP_TYPE_YANDEX"] = "Yandex.Maps";
+$MESS["PICKUP_MAP_TYPE_GOOGLE"] = "Google Maps";
 ?>

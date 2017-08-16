@@ -2308,7 +2308,7 @@ final class ImportProcess extends Location\Util\Process
 							}
 						}
 					}
-					unset($item['EXT']);
+					unset($item['EXT'], $item['ZIP_LOWER']);
 
 					$res = Location\LocationTable::addExtended(
 						$item,

@@ -84,6 +84,7 @@ if (!function_exists('__GCE_GetFeatures'))
 		}
 
 		$arSocNetFeaturesSettings = CSocNetAllowed::GetAllowedFeatures();
+
 		foreach ($arSocNetFeaturesSettings as $feature => $arFeature)
 		{
 			if (
@@ -96,14 +97,11 @@ if (!function_exists('__GCE_GetFeatures'))
 
 			if (intval($group_id) == 0)
 			{
-				if ($feature == "chat")
-				{
-					$arFeaturesTmp[$feature]["ACTIVE"] = \CUserOptions::getOption("socialnetwork", "default_chat_create_default", "Y");
-				}
-				else
-				{
-					$arFeaturesTmp[$feature]["ACTIVE"] = COption::GetOptionString("socialnetwork", "default_".$feature."_create_default", "Y", SITE_ID);
-				}
+				$arFeaturesTmp[$feature]["ACTIVE"] = (
+					$feature == "chat"
+						? \CUserOptions::getOption("socialnetwork", "default_chat_create_default", "Y")
+						: COption::getOptionString("socialnetwork", "default_".$feature."_create_default", "Y", SITE_ID)
+				);
 			}
 
 			$arFeatures[$feature] = array(
@@ -112,7 +110,7 @@ if (!function_exists('__GCE_GetFeatures'))
 					!empty($arFeaturesTmp)
 					&& array_key_exists($feature, $arFeaturesTmp)
 						? ($arFeaturesTmp[$feature]["ACTIVE"] == "Y") // saved
-						: ($feature != 'chat' || intval($group_id) == 0) // remember about chat in ol groups
+						: true
 				)
 			);
 		}

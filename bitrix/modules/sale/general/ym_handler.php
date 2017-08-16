@@ -4,10 +4,12 @@ use Bitrix\Sale\TradingPlatform\YMarket;
 use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Sale\Internals\OrderTable;
 use Bitrix\Main\Config\Option;
+use Bitrix\Sale\EntityMarker;
 use Bitrix\Main\EventResult;
 use Bitrix\Sale\Delivery;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Event;
+
 
 IncludeModuleLangFile(__FILE__);
 
@@ -940,7 +942,7 @@ class CSaleYMHandler
 
 			$parentsIds = array();
 
-			if($iblockElement = $dbRes->fetch())
+			while($iblockElement = $dbRes->fetch())
 			{
 				$xmls[$iblockElement['ID']] = array();
 
@@ -988,6 +990,12 @@ class CSaleYMHandler
 
 			if(!empty($arPostData["order"]["notes"]))
 				$order->setField('USER_DESCRIPTION', $arPostData["order"]["notes"]);
+
+			//Let's mark order that we don't have info about buyer yet.
+			$r = new \Bitrix\Sale\Result();
+			$r->addWarning(new \Bitrix\Main\Error(GetMessage('SALE_YMH_MARK_BUYER_WAITING'), 'YMARKET_BUYER_INFO_WAITING'));
+			\Bitrix\Sale\EntityMarker::addMarker($order, $order, $r);
+			$order->setField('MARKED', 'Y');
 
 			$res = $order->save();
 
@@ -1183,7 +1191,16 @@ class CSaleYMHandler
 							$userId = $this->createUser($arPostData["order"]["buyer"], null, null);
 
 							if(intval($userId) > 0)
+							{
 								$order->setFieldNoDemand("USER_ID", $userId);
+
+								EntityMarker::deleteByFilter(array(
+									'=ORDER_ID' => $order->getId(),
+									'=ENTITY_TYPE' => EntityMarker::ENTITY_TYPE_ORDER,
+									'=ENTITY_ID' => $order->getId(),
+									'=CODE' => 'YMARKET_BUYER_INFO_WAITING'
+								));
+							}
 						}
 
 						if(!empty($arPostData["order"]["notes"]) && $order->getField('USER_DESCRIPTION') != $arPostData["order"]["notes"])
@@ -1532,6 +1549,18 @@ class CSaleYMHandler
 			$orderId,
 			$message
 		);
+
+		if(!$bResult)
+		{
+			if($order = $this->loadOrderByYandexOrderId($orderId))
+			{				
+				$r = new \Bitrix\Sale\Result();
+				$r->addWarning(new \Bitrix\Main\Error($message, 'YMARKET_STATUS_CHANGE_ERROR'));
+				\Bitrix\Sale\EntityMarker::addMarker($order, $order, $r);
+				$order->setField('MARKED', 'Y');
+				$order->save();
+			}
+		}
 
 		return $bResult;
 	}
@@ -2072,8 +2101,8 @@ class CSaleYMHandler
 				continue;
 
 			$measure = (isset($val["MEASURE_TEXT"])) ? $val["MEASURE_TEXT"] : GetMessage("SALE_YMH_SHT");
-			$strOrderList .= $val["NAME"]." - ".$val["QUANTITY"]." ".$measure.": ".SaleFormatCurrency($val["PRICE"], $baseLangCurrency);
-			$strOrderList .= "\n";
+			$strOrderList .= $val["NAME"]." - ".$val["QUANTITY"]." ".$measure." x ".SaleFormatCurrency($val["PRICE"], $baseLangCurrency);
+			$strOrderList .= "</br>";
 		}
 
 		//send mail
@@ -2436,5 +2465,39 @@ class CSaleYMHandler
 		}
 
 		return '';
+	}
+
+	/**
+	 * @param string $yandexOrderId
+	 * @return \Bitrix\Sale\Order|null
+	 */
+	public function loadOrderByYandexOrderId($yandexOrderId)
+	{
+		if (strlen($yandexOrderId) <= 0)
+			return null;
+
+		$filter = array(
+			'filter' => array(
+				'=SOURCE.EXTERNAL_ORDER_ID' => $yandexOrderId,
+				'=SOURCE.TRADING_PLATFORM_ID' => YMarket\YandexMarket::getInstance()->getId()
+			),
+			'select' => array('*'),
+			'runtime' => array(
+				'SOURCE' => array(
+					'data_type' => '\Bitrix\Sale\TradingPlatform\OrderTable',
+					'reference' => array(
+						'ref.ORDER_ID' => 'this.ID',
+					),
+					'join_type' => 'left'
+				)
+			)
+		);
+
+		$list = \Bitrix\Sale\Order::loadByFilter($filter);
+
+		if (!empty($list) && is_array($list))
+			return reset($list);
+
+		return null;
 	}
 }

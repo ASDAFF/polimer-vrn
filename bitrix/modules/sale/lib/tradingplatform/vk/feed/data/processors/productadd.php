@@ -127,21 +127,30 @@ class ProductAdd extends DataProcessor
 //			adding to ALBUMS
 			$productsToAlbums = array();
 			$sectionsList = new Vk\SectionsList($this->exportId);
-			foreach ($data as $product)
+			
+//			product may have multisections - find all them
+			$productsIds = array_keys($data);
+			$productsMultiSections = $sectionsList->getMultiSectionsToProduct($productsIds);
+			
+			foreach($productsMultiSections as $productId => $product)
 			{
-//				find album to adding current product
-				$toAlbum = $sectionsList->getToAlbumBySection($product["SECTION_ID"]);
-				$product["SECTION_ID"] = $toAlbum;
+				foreach($product as $sectionId)
+				{
+//					find album to adding current product
+					$toAlbumSectionId = $sectionsList->getToAlbumBySection($sectionId);
 
-//				prepare array to ADDING products TO ALBUMS
-				if (isset(self::$albumsMapped[$product["SECTION_ID"]]))
-					$productsToAlbums[] = array(
-						"BX_ID" => $product["BX_ID"],
-						"vk_id" => $product["vk_id"],
-						"album_vk_id" => self::$albumsMapped[$product["SECTION_ID"]]["album_vk_id"],
-					);
+//					prepare array to ADDING products TO ALBUMS
+					if (isset(self::$albumsMapped[$toAlbumSectionId]))
+					{
+						$productsToAlbums[] = array(
+							"BX_ID" => $productId,
+							"vk_id" => $data[$productId]["vk_id"],
+							"album_vk_id" => self::$albumsMapped[$toAlbumSectionId]["album_vk_id"],
+						);
+					}
+				}
 			}
-			unset($product);
+			
 			if ($richLog)
 				$logger->addLog("Add products to albums", $productsToAlbums);
 			$this->executer->executeMarketProductAddToAlbums(array(

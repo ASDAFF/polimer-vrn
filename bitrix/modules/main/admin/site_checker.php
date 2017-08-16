@@ -67,7 +67,7 @@ if ($_REQUEST['unique_id'])
 			echo $buff === '' ? 'SUCCESS' : 'Length: '.strlen($buff).' ('.$buff . ')';
 		break;
 		case 'pcre_recursion_test':
-			$a = str_repeat('a',10000);
+			$a = str_repeat('a',4096);
 			if (preg_match('/(a)+/',$a)) // Segmentation fault (core dumped)
 				echo 'SUCCESS';
 			else

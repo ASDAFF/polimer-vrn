@@ -24,18 +24,16 @@ if($arParams["IBLOCK_TYPE_ID"] == COption::GetOptionString("lists", "livefeed_ib
 	$claim = true;
 }
 $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
-$pagetitleAlignRightContainer = "lists-align-right-container";
 if($isBitrix24Template)
 {
 	$this->SetViewTarget("pagetitle", 100);
-	$pagetitleAlignRightContainer = "";
 }
 elseif(!IsModuleInstalled("intranet"))
 {
 	$APPLICATION->SetAdditionalCSS("/bitrix/js/lists/css/intranet-common.css");
 }
 if($arParams['CAN_EDIT']): ?>
-<div class="pagetitle-container pagetitle-align-right-container <?=$pagetitleAlignRightContainer?>">
+<div class="pagetitle-container pagetitle-align-right-container">
 	<a href="<?= $arResult["LIST_EDIT_URL"] ?>"
 	   class="webform-small-button webform-small-button-accept bp-small-button"
 	   title="<?= $title ?>">

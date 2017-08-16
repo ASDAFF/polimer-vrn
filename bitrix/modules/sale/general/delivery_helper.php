@@ -308,7 +308,7 @@ class CSaleDeliveryHelper
 				}
 
 				$arResultPacksParams[$packCount-1] = array();
-				$arResultPacksParams[$packCount-1]["VOLUME"] = $packVolume;
+				$arResultPacksParams[$packCount-1]["VOLUME"] = intval($packVolume) > 0 ? $packVolume : $tmpPackageVolume;
 				$arResultPacksParams[$packCount-1]["WEIGHT"] = $tmpPackageWeight;
 				$arResultPacksParams[$packCount-1]["PRICE"] = $tmpPackagePrice;
 				$arResultPacksParams[$packCount-1]["DIMENSIONS"] = array(

@@ -88,19 +88,19 @@ final class Share extends Base
 								$renderParts = false;
 						}
 
-						if ($renderParts)
-						{
-							$entityDataFormatted = $renderParts->getData(intval($entityId));
-						}
+						$entityDataFormatted = ($renderParts ? $renderParts->getData(intval($entityId)) : false);
 
 						if (
-							isset($entityDataFormatted['name'])
+							$entityDataFormatted
+							&& isset($entityDataFormatted['name'])
 							&& strlen($entityDataFormatted['name']) > 0
 						)
 						{
 							$newRightsNameList[] = (
 								isset($entityDataFormatted['link'])
 								&& strlen($entityDataFormatted['link']) > 0
+								&& (!isset($options['bPublicPage']) || !$options['bPublicPage'])
+								&& (!isset($options['mail']) || !$options['mail'])
 									? (
 										$entityType == "U"
 										&& intval($entityId) > 0

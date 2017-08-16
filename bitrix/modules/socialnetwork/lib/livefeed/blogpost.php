@@ -2,6 +2,7 @@
 namespace Bitrix\Socialnetwork\Livefeed;
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 
@@ -11,6 +12,7 @@ final class BlogPost extends Provider
 {
 	const PROVIDER_ID = 'BLOG_POST';
 	const TYPE = 'entry';
+	const CONTENT_TYPE_ID = 'BLOG_POST';
 
 	public static function getId()
 	{
@@ -19,7 +21,17 @@ final class BlogPost extends Provider
 
 	public function getEventId()
 	{
-		return array('blog_post', 'blog_post_important', 'blog_post_micro');
+		$result = array('blog_post', 'blog_post_important', 'blog_post_micro');
+		if (ModuleManager::isModuleInstalled('intranet'))
+		{
+			$result[] = 'blog_post_grat';
+		}
+		if (ModuleManager::isModuleInstalled('vote'))
+		{
+			$result[] = 'blog_post_vote';
+		}
+
+		return $result;
 	}
 
 	public function getType()
@@ -98,6 +110,8 @@ final class BlogPost extends Provider
 
 	public static function canRead($params)
 	{
+		static $blogPostProvider = null;
+
 		if (
 			!is_array($params)
 			&& intval($params) > 0
@@ -114,7 +128,12 @@ final class BlogPost extends Provider
 			&& is_array($params["POST"])
 		)
 		{
-			$permissions = self::getPermissions($params["POST"]);
+			if ($blogPostProvider === null)
+			{
+				$blogPostProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+			}
+
+			$permissions = $blogPostProvider->getPermissions($params["POST"]);
 			$result = ($permissions > self::PERMISSION_DENY);
 		}
 

@@ -84,6 +84,8 @@ class MainUserConsentConsentListComponent extends CBitrixComponent
 			$this->arResult['ROWS'][] = $item;
 		}
 
+		$this->arResult['TOTAL_ROWS_COUNT'] = $list->getCount();
+
 		// set rec count to nav
 		$nav->setRecordCount($list->getCount());
 		$this->arResult['NAV_OBJECT'] = $nav;

@@ -183,14 +183,14 @@ class CSaleMobileOrderUtils
 					"ROWS" => array(
 						array("TITLE" => GetMessage("SMOB_LOGIN").":", "VALUE" => $arOrder['USER_LOGIN']),
 						array("TITLE" => GetMessage("SMOB_PAYER_TYPE").":", "VALUE" => $arOrder['PERSON_TYPE_NAME']),
-						array("TITLE" => GetMessage("SMOB_FIO").":", "VALUE" => $arOrder['CUSTOMER_FIO']),
+						array("TITLE" => GetMessage("SMOB_FIO").":", "VALUE" => htmlspecialcharsbx($arOrder['CUSTOMER_FIO'])),
 						array("TITLE" => GetMessage("SMOB_EMAIL").":",
-							"VALUE" => '<a href="mailto:'.$arOrder['CUSTOMER_EMAIL'].'">'.
-							$arOrder['CUSTOMER_EMAIL'].'</a>'),
+							"VALUE" => '<a href="mailto:'.htmlspecialcharsbx($arOrder['CUSTOMER_EMAIL']).'">'.
+								htmlspecialcharsbx($arOrder['CUSTOMER_EMAIL']).'</a>'),
 						array("TITLE" => GetMessage("SMOB_PHONE").":",
-							"VALUE" => '<a href="tel:'.$arOrder['CUSTOMER_PHONE'].'">'.
-							$arOrder['CUSTOMER_PHONE'].'</a>'),
-						array("TITLE" => GetMessage("SMOB_ZIP").":", "VALUE" => $arOrder['CUSTOMER_ZIP']),
+							"VALUE" => '<a href="tel:'.htmlspecialcharsbx($arOrder['CUSTOMER_PHONE']).'">'.
+								htmlspecialcharsbx($arOrder['CUSTOMER_PHONE']).'</a>'),
+						array("TITLE" => GetMessage("SMOB_ZIP").":", "VALUE" => htmlspecialcharsbx($arOrder['CUSTOMER_ZIP'])),
 						array("TITLE" => GetMessage("SMOB_LOCATION").":", "VALUE" => $arOrder['CUSTOMER_LOCATION'])
 						),
 					);
@@ -198,7 +198,7 @@ class CSaleMobileOrderUtils
 		if(strlen(trim($arOrder['CUSTOMER_CITY']))>0)
 			$arSection["ROWS"][] = array("TITLE" => GetMessage("SMOB_CITY").":", "VALUE" => $arOrder['CUSTOMER_CITY']);
 
-		$arSection["ROWS"][] = array("TITLE" => GetMessage("SMOB_ADDRESS").":", "VALUE" => $arOrder['CUSTOMER_ADDRESS']);
+		$arSection["ROWS"][] = array("TITLE" => GetMessage("SMOB_ADDRESS").":", "VALUE" => htmlspecialcharsbx($arOrder['CUSTOMER_ADDRESS']));
 
 		$mad->addSection($arSection);
 
@@ -230,7 +230,7 @@ class CSaleMobileOrderUtils
 		$arSection = array(
 					"TITLE" => GetMessage("SMOB_PAYMENT"),
 					"ROWS" => array(
-						array("TITLE" => GetMessage("SMOB_P_METHOD").":", "VALUE" => $arOrder['PAY_SYSTEM_NAME']),
+						array("TITLE" => GetMessage("SMOB_P_METHOD").":", "VALUE" => htmlspecialcharsbx($arOrder['PAY_SYSTEM_NAME'])),
 						array("TITLE" => GetMessage("SMOB_P_PRICE").":", "VALUE" => $arOrder['PRICE_STR']),
 					));
 
@@ -406,7 +406,7 @@ class CSaleMobileOrderUtils
 			return false;
 
 		$arOrder["STATUS"] = CSaleStatus::GetLangByID($arOrder["STATUS_ID"]);
-		$arOrder["STATUS_NAME"] = $arOrder["STATUS"]["NAME"];
+		$arOrder["STATUS_NAME"] = htmlspecialcharsbx($arOrder["STATUS"]["NAME"]);
 		$arOrder["PRICE_IN_ALL_NUM"] = floatval(($arOrder["~PRICE"])+floatval($arOrder["~PRICE_DELIVERY"]));
 		$arOrder["PRICE_IN_ALL"] = SaleFormatCurrency($arOrder["PRICE_IN_ALL_NUM"], $arOrder["CURRENCY"]);
 		$arOrder["PRICE_STR"] = SaleFormatCurrency($arOrder["PRICE"], $arOrder["CURRENCY"]);

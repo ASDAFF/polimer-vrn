@@ -14,11 +14,11 @@
 
 	BX.UserConsent = {
 		msg: {
-			'title': BX.message('MAIN_USER_CONSENT_REQUEST_TITLE'),
-			'btnAccept': BX.message('MAIN_USER_CONSENT_REQUEST_BTN_ACCEPT'),
-			'btnReject': BX.message('MAIN_USER_CONSENT_REQUEST_BTN_REJECT'),
-			'loading': BX.message('MAIN_USER_CONSENT_REQUEST_LOADING'),
-			'errTextLoad': BX.message('MAIN_USER_CONSENT_REQUEST_ERR_TEXT_LOAD')
+			'title': 'MAIN_USER_CONSENT_REQUEST_TITLE',
+			'btnAccept': 'MAIN_USER_CONSENT_REQUEST_BTN_ACCEPT',
+			'btnReject': 'MAIN_USER_CONSENT_REQUEST_BTN_REJECT',
+			'loading': 'MAIN_USER_CONSENT_REQUEST_LOADING',
+			'errTextLoad': 'MAIN_USER_CONSENT_REQUEST_ERR_TEXT_LOAD'
 		},
 		events: {
 			'save': 'main-user-consent-request-save',
@@ -265,8 +265,8 @@
 
 				this.nodes.buttonAccept = this.nodes.container.querySelector('[data-bx-btn-accept]');
 				this.nodes.buttonReject = this.nodes.container.querySelector('[data-bx-btn-reject]');
-				this.nodes.buttonAccept.textContent = this.caller.msg.btnAccept;
-				this.nodes.buttonReject.textContent = this.caller.msg.btnReject;
+				this.nodes.buttonAccept.textContent = BX.message(this.caller.msg.btnAccept);
+				this.nodes.buttonReject.textContent = BX.message(this.caller.msg.btnReject);
 				BX.bind(this.nodes.buttonAccept, 'click', this.onAccept.bind(this));
 				BX.bind(this.nodes.buttonReject, 'click', this.onReject.bind(this));
 
@@ -331,7 +331,7 @@
 			}
 			else
 			{
-				this.popup.setTitle(this.msg.loading);
+				this.popup.setTitle(BX.message(this.msg.loading));
 				this.popup.show(false);
 				this.sendActionRequest(
 					'getText', sendData,
@@ -343,7 +343,7 @@
 					function ()
 					{
 						this.popup.hide();
-						alert(this.msg.errTextLoad);
+						alert(BX.message(this.msg.errTextLoad));
 					}
 				);
 			}
@@ -360,7 +360,7 @@
 				titleBar = text.substr(0, textTitlePos).trim();
 				titleBar  = titleBar.split(".").map(Function.prototype.call, String.prototype.trim).filter(String)[0];
 			}
-			this.popup.setTitle(titleBar ? titleBar : this.msg.title);
+			this.popup.setTitle(titleBar ? titleBar : BX.message(this.msg.title));
 			this.popup.setContent(text);
 			this.popup.show(true);
 		},

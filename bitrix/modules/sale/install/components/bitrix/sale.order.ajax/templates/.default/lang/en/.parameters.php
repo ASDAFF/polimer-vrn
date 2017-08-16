@@ -142,4 +142,7 @@ $MESS["DATA_LAYER_NAME"] = "Data container name";
 $MESS["BRAND_PROPERTY"] = "Property containing product brand name";
 $MESS["PAY_SYSTEM_PAYABLE_ERROR_TEXT"] = "Notification text to show when order cannot be paid";
 $MESS["PAY_SYSTEM_PAYABLE_ERROR_DEFAULT"] = "You'll be able to pay for the order after we verify that the items you have ordered are in stock. Once your order is fulfilled, you'll receive an email with payment instructions. You'll be able to complete the purchase inside your customer account.";
+$MESS["PICKUP_MAP_TYPE"] = "Use maps";
+$MESS["PICKUP_MAP_TYPE_YANDEX"] = "Yandex.Maps";
+$MESS["PICKUP_MAP_TYPE_GOOGLE"] = "Google Maps";
 ?>

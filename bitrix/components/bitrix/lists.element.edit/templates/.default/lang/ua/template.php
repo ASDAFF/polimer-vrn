@@ -46,4 +46,9 @@ $MESS["CT_BLEE_BIZPROC_NOTIFY_ADMIN_TEXT_TWO"] = "Відправте повід�
 $MESS["CT_BLEE_BIZPROC_NOTIFY_ADMIN_MESSAGE"] = "Повідомити:";
 $MESS["CT_BLEE_BIZPROC_NOTIFY_ADMIN_MESSAGE_BUTTON"] = "Надіслати повідомлення";
 $MESS["CT_BLEE_BIZPROC_NOTIFY_ADMIN_BUTTON_CLOSE"] = "Закрити";
+$MESS["CT_BLEE_TOOLBAR_ACTION"] = "Дії";
+$MESS["CT_BLEE_TOOLBAR_RETURN_LIST_ELEMENT"] = "ДО СПИСКУ";
+$MESS["CT_BLEE_DELETE_POPUP_TITLE"] = "Підтвердження видалення";
+$MESS["CT_BLEE_DELETE_POPUP_ACCEPT_BUTTON"] = "Видалити";
+$MESS["CT_BLEE_DELETE_POPUP_CANCEL_BUTTON"] = "Скасування";
 ?>

@@ -351,7 +351,20 @@ class RusPostSingle
 		 */
 		$rusPostStatuses = array(
 			1 => Statuses::WAITING_SHIPMENT,
-			2 => Statuses::HANDED,
+			2 => array(
+				1 => Statuses::HANDED,
+				2 => Statuses::RETURNED,
+				3 => Statuses::HANDED,
+				4 => Statuses::RETURNED,
+				5 => Statuses::HANDED,
+				6 => Statuses::HANDED,
+				7 => Statuses::RETURNED,
+				8 => Statuses::HANDED,
+				9 => Statuses::RETURNED,
+				10 => Statuses::HANDED,
+				11 => Statuses::HANDED,
+				12 => Statuses::HANDED,
+			),
 			3 => Statuses::PROBLEM,
 			4 => Statuses::ON_THE_WAY,
 			5 => array(

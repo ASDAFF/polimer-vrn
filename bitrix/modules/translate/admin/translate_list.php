@@ -216,89 +216,86 @@ $arDirs = array();
 $arLangDirs = array();
 $IS_LANG_DIR = false;
 
-if(!$SHOW_LANG_DIFF || ($SHOW_LANG_DIFF && check_bitrix_sessid()))
+$go_path = remove_lang_id($path, $arTLangs);
+
+$IS_LANG_DIR = is_lang_dir($path);
+//no lang
+if ($IS_LANG_DIR)
 {
-	$go_path = remove_lang_id($path, $arTLangs);
-
-	$IS_LANG_DIR = is_lang_dir($path);
-	//no lang
-	if ($IS_LANG_DIR)
+	foreach ($arTLangs as $hlang)
 	{
-		foreach ($arTLangs as $hlang)
-		{
-			$ph = add_lang_id($path, $hlang, $arTLangs);
-			if (strlen($ph)>0) GetTDirList($ph, $GET_SUBFOLRERS);
-			$ph = "";
-		}
+		$ph = add_lang_id($path, $hlang, $arTLangs);
+		if (strlen($ph)>0) GetTDirList($ph, $GET_SUBFOLRERS);
+		$ph = "";
 	}
-	else
-	{
-		GetTDirList($path, $GET_SUBFOLRERS);
-	}
-
-	$arrChain = array();
-	$arr = explode("/",$go_path);
-	if (is_array($arr))
-	{
-		$arrP = array();
-		TrimArr($arr);
-		foreach($arr as $d)
-		{
-			$arrP[] = $d;
-			$p = prepare_path("/".implode("/",$arrP)."/");
-			if (remove_lang_id($path, $arTLangs)==$p) $p="";
-			$arrChain[] = array("NAME" => $d, "PATH" => $p);
-		}
-	}
-
-	$show_error = COption::GetOptionString("translate", "ONLY_ERRORS");
-	$show_error = ($show_error=="Y") ? "Y" : "";
-
-	GetLangDirs($arDirs, $SHOW_LANG_DIFF);
-
-	$arLangDirFiles = array_merge($arLangDirs, $arFiles);
-
-	// find
-	if ($arSearchParam)
-	{
-		$_arLangDirFiles = $arLangDirFiles;
-		$arLangDirFiles = array();
-		foreach ($_arLangDirFiles as $_k => $_v)
-		{
-			if ($_v['IS_DIR'] == 'Y')
-				continue ;
-			if ($_v['LANG'] != LANGUAGE_ID)
-				continue ;
-
-			$_coincidence = 0;
-			if (!TSEARCH(CSite::GetSiteDocRoot(false).$_v['PATH'], $_coincidence))
-				continue ;
-
-			$_v['COINCIDENCE'] = $_coincidence;
-			$arLangDirFiles[$_k] = $_v;
-		}
-	}
-
-	$lAdmin->BeginPrologContent();
-	?>
-	<p><?
-	if (!$arSearchParam)
-	{
-		$last_path = "";
-		for ($i=0; $i<=sizeof($arrChain)-1; $i++) :
-			echo " / ";
-			if (strlen($arrChain[$i]["PATH"])>0):
-				$last_path = $arrChain[$i]["PATH"];
-				?><a href="?lang=<?=LANGUAGE_ID; ?>&path=<?=urlencode($last_path)?>&<?=bitrix_sessid_get()?>" title="<?=GetMessage("TR_FOLDER_TITLE")?>"><?=htmlspecialcharsbx($arrChain[$i]["NAME"])?></a><?
-			else:
-				?><?=htmlspecialcharsbx($arrChain[$i]["NAME"])?><?
-			endif;
-		endfor;
-	}
-	?></p>
-	<?
-	$lAdmin->EndPrologContent();
 }
+else
+{
+	GetTDirList($path, $GET_SUBFOLRERS);
+}
+
+$arrChain = array();
+$arr = explode("/",$go_path);
+if (is_array($arr))
+{
+	$arrP = array();
+	TrimArr($arr);
+	foreach($arr as $d)
+	{
+		$arrP[] = $d;
+		$p = prepare_path("/".implode("/",$arrP)."/");
+		if (remove_lang_id($path, $arTLangs)==$p) $p="";
+		$arrChain[] = array("NAME" => $d, "PATH" => $p);
+	}
+}
+
+$show_error = COption::GetOptionString("translate", "ONLY_ERRORS");
+$show_error = ($show_error=="Y") ? "Y" : "";
+
+GetLangDirs($arDirs, $SHOW_LANG_DIFF);
+
+$arLangDirFiles = array_merge($arLangDirs, $arFiles);
+
+// find
+if ($arSearchParam)
+{
+	$_arLangDirFiles = $arLangDirFiles;
+	$arLangDirFiles = array();
+	foreach ($_arLangDirFiles as $_k => $_v)
+	{
+		if ($_v['IS_DIR'] == 'Y')
+			continue ;
+		if ($_v['LANG'] != LANGUAGE_ID)
+			continue ;
+
+		$_coincidence = 0;
+		if (!TSEARCH(CSite::GetSiteDocRoot(false).$_v['PATH'], $_coincidence))
+			continue ;
+
+		$_v['COINCIDENCE'] = $_coincidence;
+		$arLangDirFiles[$_k] = $_v;
+	}
+}
+
+$lAdmin->BeginPrologContent();
+?>
+<p><?
+if (!$arSearchParam)
+{
+	$last_path = "";
+	for ($i=0; $i<=sizeof($arrChain)-1; $i++) :
+		echo " / ";
+		if (strlen($arrChain[$i]["PATH"])>0):
+			$last_path = $arrChain[$i]["PATH"];
+			?><a href="?lang=<?=LANGUAGE_ID; ?>&path=<?=urlencode($last_path)?>" title="<?=GetMessage("TR_FOLDER_TITLE")?>"><?=htmlspecialcharsbx($arrChain[$i]["NAME"])?></a><?
+		else:
+			?><?=htmlspecialcharsbx($arrChain[$i]["NAME"])?><?
+		endif;
+	endfor;
+}
+?></p>
+<?
+$lAdmin->EndPrologContent();
 
 $header = array();
 $header[] = array("id"=>"TRANS_FILE_NAME", "content"=>GetMessage("TRANS_FILE_NAME"),	"default"=>true, "align"=>"left");
@@ -315,9 +312,9 @@ $lAdmin->AddHeaders($header);
 if (strlen($path)>0 && !$arSearchParam)
 {
 	$row =& $lAdmin->AddRow("0", Array());
-	$row->AddViewField("TRANS_FILE_NAME", '<a href="?lang='.LANGUAGE_ID.'&path='.urlencode($last_path)."&".bitrix_sessid_get().'" title="'.GetMessage("TR_UP_TITLE").'">
+	$row->AddViewField("TRANS_FILE_NAME", '<a href="?lang='.LANGUAGE_ID.'&path='.urlencode($last_path).'" title="'.GetMessage("TR_UP_TITLE").'">
 			<img src="/bitrix/images/translate/up.gif" width="11" height="13" border=0 alt=""></a>'.
-			'&nbsp;<a href="?lang='.LANGUAGE_ID.'&path='.urlencode($last_path)."&".bitrix_sessid_get().'" title="'.GetMessage("TR_UP_TITLE").'">..</a>');
+			'&nbsp;<a href="?lang='.LANGUAGE_ID.'&path='.urlencode($last_path).'" title="'.GetMessage("TR_UP_TITLE").'">..</a>');
 	if ($AUTO_CALCULATE || $SHOW_LANG_DIFF)
 	{
 		$row->AddViewField("TRANS_TOTAL_MESSAGES", "&nbsp;");
@@ -368,8 +365,8 @@ if (is_array($arLangDirFiles)) :
 				GetPhraseCounters($arLangDirFiles, $fpath, $fkey);
 			}
 			if ($is_dir=="Y") :
-				$row =& $lAdmin->AddRow($i, Array(), "translate_list.php?lang=".LANGUAGE_ID."&path=".$fpath."&".bitrix_sessid_get(), GetMessage("TR_FOLDER_TITLE"));
-				$row->AddViewField("TRANS_FILE_NAME", '<a href="?lang='.LANGUAGE_ID.'&path='.$fpath."&".bitrix_sessid_get().'" title="'.GetMessage("TR_FOLDER_TITLE").'"><img src="/bitrix/images/translate/folder.gif" width="16" height="16" border=0 alt=""></a>'.'&nbsp;<a href="?lang='.LANGUAGE_ID.'&path='.$fpath."&".bitrix_sessid_get().'" title="'.GetMessage("TR_FOLDER_TITLE").'">'.$ftitle.'</a>');
+				$row =& $lAdmin->AddRow($i, Array(), "translate_list.php?lang=".LANGUAGE_ID."&path=".$fpath, GetMessage("TR_FOLDER_TITLE"));
+				$row->AddViewField("TRANS_FILE_NAME", '<a href="?lang='.LANGUAGE_ID.'&path='.$fpath.'" title="'.GetMessage("TR_FOLDER_TITLE").'"><img src="/bitrix/images/translate/folder.gif" width="16" height="16" border=0 alt=""></a>'.'&nbsp;<a href="?lang='.LANGUAGE_ID.'&path='.$fpath.'" title="'.GetMessage("TR_FOLDER_TITLE").'">'.$ftitle.'</a>');
 			else :
 				$row =& $lAdmin->AddRow($i, Array(), "translate_edit.php?lang=".LANGUAGE_ID."&file=".$fpath."&show_error=".$show_error, GetMessage("TR_FILE_TITLE"));
 				$arAction = array(array('TEXT'=>GetMessage("TR_MESSAGE_EDIT"), 'ACTION'=> $lAdmin->ActionRedirect('translate_edit.php?lang='.LANGUAGE_ID.'&file='.$fpath.'&show_error='.$show_error),
@@ -382,7 +379,7 @@ if (is_array($arLangDirFiles)) :
 				if ($arSearchParam)
 				{
 					$arAction[] = array('SEPARATOR' => true);
-					$arAction[] = array('TEXT'=>GetMessage("TR_PATH_GO"), 'ACTION' => $lAdmin->ActionRedirect('translate_list.php?lang='.LANGUAGE_ID.'&path='.$fparent."&".bitrix_sessid_get()),
+					$arAction[] = array('TEXT'=>GetMessage("TR_PATH_GO"), 'ACTION' => $lAdmin->ActionRedirect('translate_list.php?lang='.LANGUAGE_ID.'&path='.$fparent),
 					'DEFAULT'=>false, 'ICON'=>'go');
 				}
 				$row->AddActions($arAction);
@@ -513,7 +510,7 @@ if (!$AUTO_CALCULATE)
 	{
 		$aContext[] = array(
 				"TEXT"	=> GetMessage('TR_NO_SHOW_DIFF_TEXT'),
-				"LINK"	=> $APPLICATION->GetCurPageParam('SHOW_DIFF=N&' . bitrix_sessid_get() .'&path=' . urlencode($path), array('SHOW_DIFF', 'mode', 'path')),
+				"LINK"	=> $APPLICATION->GetCurPageParam('SHOW_DIFF=N&path='.urlencode($path), array('SHOW_DIFF', 'mode', 'path')),
 				"TITLE"	=> GetMessage('TR_NO_SHOW_DIFF_TITLE'),
 			);
 	}
@@ -521,7 +518,7 @@ if (!$AUTO_CALCULATE)
 	{
 		$aContext[] = array(
 				"TEXT"	=> GetMessage('TR_SHOW_DIFF_TEXT'),
-				"LINK"	=> $APPLICATION->GetCurPageParam('SHOW_DIFF=Y&' . bitrix_sessid_get() .'&path=' . urlencode($path), array('SHOW_DIFF', 'mode', 'path')),
+				"LINK"	=> $APPLICATION->GetCurPageParam('SHOW_DIFF=Y&path=' . urlencode($path), array('SHOW_DIFF', 'mode', 'path')),
 				"TITLE"	=> GetMessage('TR_SHOW_DIFF_TITLE'),
 				"ICON" => "btn_green"
 			);
@@ -532,7 +529,7 @@ if ($IS_LANG_DIR)
 {
 	$aContext[] = array(
 			"TEXT"	=> GetMessage('TR_CHECK_FILES_TEXT'),
-			"LINK"	=> "translate_check_files.php?lang=".LANGUAGE_ID . '&' . bitrix_sessid_get() . "&path=" . htmlspecialcharsbx($path),
+			"LINK"	=> "translate_check_files.php?lang=".LANGUAGE_ID."&path=" . htmlspecialcharsbx($path),
 			"TITLE"	=> GetMessage('TR_CHECK_FILES_TITLE'),
 		);
 }
@@ -577,6 +574,7 @@ if ($TRANS_RIGHT == 'W')
 		<input type="hidden" name="upload_csv" value="1" >
 		<?=bitrix_sessid_post()?>
 		<input id="F_ACTION_1" type="radio" name="rewrite_lang_files" value="N" checked><label for="F_ACTION_1"><?=GetMessage('TR_NO_REWRITE_LANG_FILES')?></label><br>
+		<input id="F_ACTION_3" type="radio" name="rewrite_lang_files" value="U"><label for="F_ACTION_3"><?=GetMessage('TR_UPDATE_LANG_FILES')?></label><br>
 		<input id="F_ACTION_2" type="radio" name="rewrite_lang_files" value="Y"><label for="F_ACTION_2"><?=GetMessage('TR_REWRITE_LANG_FILES')?></label>
 		</td>
 	</tr>

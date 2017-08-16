@@ -204,7 +204,7 @@ if (isset($_REQUEST['action']))
 		{
 			$userID = IntVal($_REQUEST["USER_ID"]);
 			$siteID = $_REQUEST["SITE_ID"];
-			$url = "/bitrix/admin/sale_order_create.php?lang=".LANG."&SITE_ID=".$siteID."&USER_ID=".$userID."&FUSER_ID=".$fuserID;
+			$url = "/bitrix/admin/sale_order_create.php?lang=".LANG."&SITE_ID=".$siteID."&USER_ID=".$userID."&FUSER_ID=".$fuserID."&ABANDONED=Y";
 
 			$dbBasketList = CSaleBasket::GetList(
 				array("ID" => "ASC"),

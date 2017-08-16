@@ -208,6 +208,8 @@ $arPost = $arParams["POST_DATA"];
 
 $arResult["Perm"] = BLOG_PERMS_DENY;
 $arResult["PostPerm"] = BLOG_PERMS_DENY;
+$arResult["PermBySG"] = false;
+
 if(IntVal($_REQUEST["comment_post_id"]) > 0)
 {
 	$arParams["ID"] = IntVal($_REQUEST["comment_post_id"]);
@@ -252,7 +254,7 @@ else
 			&& IsModuleInstalled("bitrix24")
 			&& $arParams["POST_DATA"]["HAVE_ALL_IN_ADR"] == "Y"
 				? ($arPost["AUTHOR_ID"] == $user_id ? BLOG_PERMS_FULL : BLOG_PERMS_WRITE)
-				: CBlogComment::GetSocNetUserPerms($arParams["ID"], $arPost["AUTHOR_ID"])
+				: CBlogComment::GetSocNetUserPermsNew($arParams["ID"], $arPost["AUTHOR_ID"], $USER->getID(), $arResult["PermBySG"])
 		);
 	}
 }
@@ -469,8 +471,7 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 	$arResult["CanUserComment"] = false;
 	$arResult["canModerate"] = false;
 	if (
-		$USER->IsAuthorized()
-		&& $arResult["Perm"] >= BLOG_PERMS_PREMODERATE
+		$arResult["Perm"] >= BLOG_PERMS_PREMODERATE
 		&& $arParams["CAN_USER_COMMENT"] == 'Y'
 	)
 	{
@@ -792,10 +793,12 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 								|| strlen($arFields["PUBLISH_STATUS"]) <= 0
 							)
 							{
+								$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+
 								$dbRes = CSocNetLog::GetList(
 									array("ID" => "DESC"),
 									array(
-										"EVENT_ID" => array("blog_post", "blog_post_important"),
+										"EVENT_ID" => $blogPostLivefeedProvider->getEventId(),
 										"SOURCE_ID" =>$arPost["ID"]
 									),
 									false,
@@ -1551,6 +1554,12 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 					$p->LAZYLOAD = (isset($arParams["LAZYLOAD"]) && $arParams["LAZYLOAD"] == "Y" ? "Y" : "N");
 					$p->bMobile = (isset($arParams["MOBILE"]) && $arParams["MOBILE"] == "Y");
 
+					if ($p->bMobile)
+					{
+						$arConvertParams["imageWidth"] = 275;
+						$arConvertParams["imageHeight"] = 416;
+					}
+
 					$i = 0;
 					if(!empty($arCommentsAll[$i]))
 					{
@@ -1695,6 +1704,7 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 								$arComment,
 								array(
 									"mobile" => (isset($arParams["MOBILE"]) && $arParams["MOBILE"] == "Y"),
+									"bPublicPage" => $arParams["bPublicPage"],
 									"cache" => true
 								)
 							))

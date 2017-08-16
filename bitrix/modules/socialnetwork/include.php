@@ -257,6 +257,16 @@ CJSCore::RegisterExt('render_parts', array(
 	'rel' => array()
 ));
 
+IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/socialnetwork/install/js/content_view.php');
+CJSCore::RegisterExt('content_view', array(
+	'js' => '/bitrix/js/socialnetwork/content_view.js',
+	'css' => '/bitrix/js/socialnetwork/css/content_view.css',
+	'lang_additional' => array(
+		'SONET_CONTENTVIEW_JS_HIDDEN_COUNT' => GetMessage("SONET_CONTENTVIEW_JS_HIDDEN_COUNT"),
+	),
+	'rel' => array('ajax', 'popup')
+));
+
 // forum
 $arFeatureTmp = array(
 	"allowed" => array(),
@@ -606,6 +616,8 @@ if (
 	|| COption::GetOptionString("socialnetwork", "allow_blog_group", "Y") == "Y"
 )
 {
+	$livefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+
 	$arFeatureTmp = array(
 		"allowed" => array(),
 		"operations" => array(
@@ -627,7 +639,7 @@ if (
 				"OPERATION" => "",
 				"NO_SET" => true,
 				"REAL_EVENT_ID" => "blog_post",
-				"FULL_SET"	=> array("blog", "blog_post", "blog_post_important", "blog_comment")
+				"FULL_SET" => array_unique(array_merge($livefeedProvider->getEventId(), array("blog", "blog_comment")))
 			),
 			"blog_post" => array(
 				"ENTITIES" => array(),
@@ -709,7 +721,14 @@ if (
 		$arFeatureTmp["operations"]["full_comment"]["restricted"][SONET_ENTITY_GROUP] = array(SONET_ROLES_ALL);
 	}
 	$arFeatureTmp["subscribe_events"]["blog_post_important"] = $arFeatureTmp["subscribe_events"]["blog_post"];
-
+	if (ModuleManager::isModuleInstalled('vote'))
+	{
+		$arFeatureTmp["subscribe_events"]["blog_post_vote"] = $arFeatureTmp["subscribe_events"]["blog_post"];
+	}
+	if (ModuleManager::isModuleInstalled('intranet'))
+	{
+		$arFeatureTmp["subscribe_events"]["blog_post_grat"] = $arFeatureTmp["subscribe_events"]["blog_post"];
+	}
 	CSocNetAllowed::AddAllowedFeature("blog", $arFeatureTmp);
 }
 

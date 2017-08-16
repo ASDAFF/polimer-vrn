@@ -72,15 +72,21 @@ class TypeTable extends Entity\DataManager
 	{
 		$primary = Assert::expectIntegerPositive($primary, '$primary');
 
-		$res = self::getList(array(
-			'filter' => array('=CODE' => $data['CODE'])
-		));
-
-		if($res->fetch())
+		if(isset($data['CODE']))
 		{
-			$updResult = new Entity\UpdateResult();
-			$updResult->addError(new Main\Error(Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_CODE_FIELD_EXIST_ERROR')));
-			return $updResult;
+			$res = self::getList(array(
+				'filter' => array(
+					'=CODE' => $data['CODE'],
+					'!=ID' => $primary
+				)
+			));
+
+			if($res->fetch())
+			{
+				$updResult = new Entity\UpdateResult();
+				$updResult->addError(new Main\Error(Loc::getMessage('SALE_LOCATION_TYPE_ENTITY_CODE_FIELD_EXIST_ERROR')));
+				return $updResult;
+			}
 		}
 
 		// first update parent, and if it succeed, do updates of the connected data

@@ -49,14 +49,13 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		locations: {},
 		cleanLocations: {},
 		locationsTemplate: '',
-		pickUpMapInitialized: false,
+		pickUpMapFocused: false,
 		basketColumns: [],
 		options: {},
 		activeSectionId: '',
 		firstLoad: true,
 		initialized: {},
 		mapsReady: false,
-		maxWaitTimeExpired: false,
 		lastSelectedDelivery: 0,
 		deliveryLocationInfo: {},
 		deliveryPagination: {},
@@ -67,7 +66,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		pickUpPagination: {},
 		timeOut: {},
 		isMobile: BX.browser.IsMobile(),
-		isHttps: window.location.protocol == "https:",
+		isHttps: window.location.protocol === "https:",
 		orderSaveAllowed: false,
 
 		/**
@@ -178,7 +177,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 			else
 				BX.ajax({
-					timeout: 60,
 					method: 'POST',
 					dataType: 'json',
 					url: this.ajaxUrl,
@@ -293,7 +291,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.prepareLocations(result.locations);
 				this.locationsInitialized = false;
 				this.maxWaitTimeExpired = false;
-				this.pickUpMapInitialized = false;
+				this.pickUpMapFocused = false;
 				this.deliveryLocationInfo = {};
 				this.initialized = {};
 
@@ -1235,8 +1233,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.totalBlockResizeCheck();
 				this.alignBasketColumns();
 				this.basketBlockScrollCheck();
-				if (this.mapsReady)
-					this.resizeMapContainers();
+				this.mapsReady && this.resizeMapContainers();
 			}, 50, this));
 			BX.addCustomEvent('onDeliveryExtraServiceValueChange', BX.proxy(this.sendRequest, this));
 		},
@@ -5482,7 +5479,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			this.pickUpBlockNode.style.display = '';
 			this.pickUpBlockNode.querySelector('h2.bx-soa-section-title').innerHTML =
-				'<span class="bx-soa-section-title-count"></span>' + deliveryName;
+				'<span class="bx-soa-section-title-count"></span>' + BX.util.htmlspecialchars(deliveryName);
 
 			if (BX.hasClass(this.pickUpBlockNode, 'bx-active'))
 				return;
@@ -5528,15 +5525,23 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				BX.remove(BX.lastChild(node));
 				node.appendChild(BX.firstChild(this.pickUpHiddenBlockNode));
 
-				if (this.params.SHOW_NEAREST_PICKUP == 'Y' && !this.maxWaitTimeExpired)
+				if (
+					this.params.SHOW_NEAREST_PICKUP === 'Y'
+					&& this.maps
+					&& !this.maps.maxWaitTimeExpired
+				)
 				{
-					this.maxWaitTimeExpired = true;
+					this.maps.maxWaitTimeExpired = true;
 					this.initPickUpPagination();
 					this.editPickUpList(true);
 					this.pickUpFinalAction();
 				}
 
-				setTimeout(BX.proxy(this.pickUpMapFocusWaiter, this), 200);
+				if (this.maps && !this.pickUpMapFocused)
+				{
+					this.pickUpMapFocused = true;
+					setTimeout(BX.proxy(this.maps.pickUpMapFocusWaiter, this.maps), 200);
+				}
 			}
 			else
 			{
@@ -5554,7 +5559,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.editPickUpMap(pickUpContentCol);
 				pickUpContent.appendChild(pickUpContentRow);
 
-				if (this.params.SHOW_NEAREST_PICKUP != 'Y')
+				if (this.params.SHOW_PICKUP_MAP != 'Y' || this.params.SHOW_NEAREST_PICKUP != 'Y')
 				{
 					this.initPickUpPagination();
 					this.editPickUpList(true);
@@ -5623,41 +5628,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 		},
 
-		setPickUpMapFocus: function()
-		{
-			var bounds, diff0, diff1;
-
-			bounds = this.pickUpMap.geoObjects.getBounds();
-			if (bounds && bounds.length)
-			{
-				diff0 = bounds[1][0] - bounds[0][0];
-				diff1 = bounds[1][1] - bounds[0][1];
-
-				bounds[0][0] -= diff0/10;
-				bounds[0][1] -= diff1/10;
-				bounds[1][0] += diff0/10;
-				bounds[1][1] += diff1/10;
-
-				if (!this.pickUpMapInitialized)
-				{
-					this.pickUpMap.setBounds(bounds, {checkZoomRange: true});
-					this.pickUpMapInitialized = true;
-				}
-			}
-		},
-
-		pickUpMapFocusWaiter: function()
-		{
-			if (this.pickUpMap && this.pickUpMap.geoObjects)
-			{
-				this.setPickUpMapFocus();
-			}
-			else
-			{
-				setTimeout(BX.proxy(this.pickUpMapFocusWaiter, this), 100);
-			}
-		},
-
 		getPickUpInfoArray: function(storeIds)
 		{
 			if (!storeIds || storeIds.length <= 0)
@@ -5723,22 +5693,33 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				this.editSection(this.pickUpBlockNode);
 			}
 			else
+			{
 				this.deactivatePickUp();
+			}
 		},
 
-		geoLocationSuccessCallback: function(result, currentDelivery)
+		geoLocationSuccessCallback: function(result)
 		{
-			var activeStores;
-
-			result.geoObjects.options.set('preset', 'islands#darkGreenCircleDotIcon');
-			this.pickUpMap.geoObjects.add(result.geoObjects);
+			var activeStores,
+				currentDelivery = this.getSelectedDelivery();
 
 			if (currentDelivery && currentDelivery.STORE)
+			{
 				activeStores = this.getPickUpInfoArray(currentDelivery.STORE);
+			}
 
-			if (activeStores.length >= this.options.pickUpMap.minToShowNearestBlock)
+			if (activeStores && activeStores.length >= this.options.pickUpMap.minToShowNearestBlock)
+			{
 				this.editPickUpRecommendList(result.geoObjects.get(0));
+			}
 
+			this.initPickUpPagination();
+			this.editPickUpList(true);
+			this.pickUpFinalAction();
+		},
+
+		geoLocationFailCallback: function()
+		{
 			this.initPickUpPagination();
 			this.editPickUpList(true);
 			this.pickUpFinalAction();
@@ -5746,164 +5727,39 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		initMaps: function()
 		{
-			this.mapsReady = true;
-
-			var that = this,
-				currentDelivery = this.getSelectedDelivery(),
-				pickUpInput = BX('BUYER_STORE'),
-				pickUpDefaults, geoLocation, provider, maxTime,
-				i, storeInfoHtml, geoObj, propsMapData, activeStores, selected;
-
-			this.resizeMapContainers();
-
-			if (this.params.SHOW_PICKUP_MAP === 'Y' && BX('pickUpMap'))
+			this.maps = BX.Sale.OrderAjaxComponent.Maps.init(this);
+			if (this.maps)
 			{
-				if (currentDelivery && currentDelivery.STORE && currentDelivery.STORE.length)
+				this.mapsReady = true;
+				this.resizeMapContainers();
+
+				if (this.params.SHOW_PICKUP_MAP === 'Y' && BX('pickUpMap'))
 				{
-					activeStores = this.getPickUpInfoArray(currentDelivery.STORE);
+					var currentDelivery = this.getSelectedDelivery();
+					if (currentDelivery && currentDelivery.STORE && currentDelivery.STORE.length)
+					{
+						var activeStores = this.getPickUpInfoArray(currentDelivery.STORE);
+					}
+
+					if (activeStores && activeStores.length)
+					{
+						var selected = this.getSelectedPickUp();
+						this.maps.initializePickUpMap(selected);
+
+						if (this.params.SHOW_NEAREST_PICKUP === 'Y')
+						{
+							this.maps.showNearestPickups(BX.proxy(this.geoLocationSuccessCallback, this), BX.proxy(this.geoLocationFailCallback, this));
+						}
+
+						this.maps.buildBalloons(activeStores);
+					}
 				}
 
-				if (activeStores && activeStores.length)
+				if (this.params.SHOW_MAP_IN_PROPS === 'Y' && BX('propsMap'))
 				{
-					selected = this.getSelectedPickUp();
-					pickUpDefaults = this.options.pickUpMap.defaultMapPosition;
-					this.pickUpMap = new ymaps.Map("pickUpMap", {
-						center: !!selected ? [selected.GPS_N, selected.GPS_S] : [pickUpDefaults.lat, pickUpDefaults.lon],
-						zoom: pickUpDefaults.zoom
-					});
-					this.pickUpMap.behaviors.disable('scrollZoom');
-					this.pickUpMap.events.add('click', BX.delegate(function(){
-						if (this.pickUpMap.balloon.isOpen())
-							this.pickUpMap.balloon.close();
-					}, this));
-
-					if (this.params.SHOW_NEAREST_PICKUP === 'Y')
-					{
-						geoLocation = ymaps.geolocation;
-						provider = this.options.pickUpMap.secureGeoLocation && BX.browser.IsChrome() && !this.isHttps ? 'yandex' : 'auto';
-						maxTime = this.options.pickUpMap.geoLocationMaxTime || 5000;
-
-						geoLocation.get({
-							provider: provider,
-							timeOut: maxTime
-						}).then(BX.delegate(function(result) {
-							if (!this.maxWaitTimeExpired)
-							{
-								this.maxWaitTimeExpired = true;
-								this.geoLocationSuccessCallback(result, currentDelivery);
-							}
-						}, this), BX.delegate(function() {
-							if (!this.maxWaitTimeExpired)
-							{
-								this.maxWaitTimeExpired = true;
-								this.initPickUpPagination();
-								this.editPickUpList(true);
-								this.pickUpFinalAction();
-							}
-						}, this));
-					}
-
-					this.pickUpPointsJSON = [];
-					for (i = 0; i < activeStores.length; i++)
-					{
-						storeInfoHtml = this.getStoreInfoHtml(activeStores[i]);
-
-						this.pickUpPointsJSON.push({
-							type: 'Feature',
-							geometry: {type: 'Point', coordinates: [activeStores[i].GPS_N, activeStores[i].GPS_S]},
-							properties: {storeId: activeStores[i].ID}
-						});
-
-						geoObj = new ymaps.Placemark([activeStores[i].GPS_N, activeStores[i].GPS_S], {
-							hintContent: BX.util.htmlspecialchars(activeStores[i].TITLE) + '<br />' + BX.util.htmlspecialchars(activeStores[i].ADDRESS),
-							storeTitle: activeStores[i].TITLE,
-							storeBody: storeInfoHtml,
-							id: activeStores[i].ID,
-							text: this.params.MESS_SELECT_PICKUP
-						}, {
-							balloonContentLayout: ymaps.templateLayoutFactory.createClass(
-								'<h3>{{ properties.storeTitle }}</h3>' +
-								'{{ properties.storeBody|raw }}' +
-								'<br /><a class="btn btn-sm btn-default" data-store="{{ properties.id }}">{{ properties.text }}</a>',
-								{
-									build: function() {
-										this.constructor.superclass.build.call(this);
-
-										var button = document.querySelector('a[data-store]');
-										if (button)
-											BX.bind(button, 'click', this.selectStoreByClick);
-									},
-									clear: function() {
-										var button = document.querySelector('a[data-store]');
-										if (button)
-											BX.unbind(button, 'click', this.selectStoreByClick);
-
-										this.constructor.superclass.clear.call(this);
-									},
-									selectStoreByClick: function(e) {
-										var target = e.target || e.srcElement;
-
-										if (BX.Sale.OrderAjaxComponent.pickUpMap.container.isFullscreen())
-											BX.Sale.OrderAjaxComponent.pickUpMap.container.exitFullscreen();
-
-										that.selectStore(target.getAttribute('data-store'));
-										that.clickNextAction(e);
-										that.pickUpMap.balloon.close();
-									}
-								}
-							)
-						});
-
-						if (pickUpInput.value == activeStores[i].ID)
-							geoObj.options.set('preset', 'islands#redDotIcon');
-
-						this.pickUpMap.geoObjects.add(geoObj);
-					}
+					var propsMapData = this.getPropertyMapData();
+					this.maps.initializePropsMap(propsMapData);
 				}
-			}
-
-			if (this.params.SHOW_MAP_IN_PROPS === 'Y' && BX('propsMap'))
-			{
-				propsMapData = this.getPropertyMapData();
-				this.propsMap = new ymaps.Map("propsMap", {
-					center: [propsMapData.lat, propsMapData.lon],
-					zoom: propsMapData.zoom
-				});
-				this.propsMap.behaviors.disable('scrollZoom');
-
-				this.propsMap.events.add('click', BX.delegate(function(e){
-					var coordinates = e.get('coords'), placeMark;
-
-					if (this.propsMap.geoObjects.getLength() == 0)
-					{
-						placeMark = new ymaps.Placemark([coordinates[0], coordinates[1]], {}, {
-							draggable:true,
-							preset: 'islands#redDotIcon'
-						});
-						placeMark.events.add(['parentchange', 'geometrychange'], function() {
-							var orderDesc = BX('orderDescription'),
-								coordinates = placeMark.geometry.getCoordinates(),
-								ind, before, after, string;
-
-							if (orderDesc)
-							{
-								ind = orderDesc.value.indexOf(BX.message('SOA_MAP_COORDS') + ':');
-								if (ind == -1)
-									orderDesc.value = BX.message('SOA_MAP_COORDS') + ': ' + coordinates[0] + ', ' + coordinates[1] + '\r\n' + orderDesc.value;
-								else
-								{
-									string = BX.message('SOA_MAP_COORDS') + ': ' + coordinates[0] + ', ' + coordinates[1];
-									before = orderDesc.value.substring(0, ind);
-									after = orderDesc.value.substring(ind + string.length);
-									orderDesc.value = before + string + after;
-								}
-							}
-						});
-						this.propsMap.geoObjects.add(placeMark);
-					}
-					else
-						this.propsMap.geoObjects.get(0).geometry.setCoordinates([coordinates[0], coordinates[1]]);
-				}, this));
 			}
 		},
 
@@ -6043,7 +5899,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		pickUpFinalAction: function()
 		{
 			var selectedDelivery = this.getSelectedDelivery(),
-				deliveryChanged, buyerStoreInput = BX('BUYER_STORE');
+				deliveryChanged;
 
 			if (selectedDelivery)
 			{
@@ -6052,20 +5908,16 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 
 			if (deliveryChanged && this.pickUpBlockNode.id !== this.activeSectionId)
-				this.editFadePickUpContent(BX.lastChild(this.pickUpBlockNode));
-
-			if (deliveryChanged)
-				BX.removeClass(this.pickUpBlockNode, 'bx-step-completed');
-
-			if (this.pickUpMap && this.pickUpMap.geoObjects)
 			{
-				this.pickUpMap.geoObjects.each(function(geoObject){
-					if (geoObject.properties.get('id') == buyerStoreInput.value)
-						geoObject.options.set({preset: 'islands#redDotIcon'});
-					else if (parseInt(geoObject.properties.get('id')) > 0)
-						geoObject.options.unset('preset');
-				});
+				if (this.pickUpBlockNode.id !== this.activeSectionId)
+				{
+					this.editFadePickUpContent(BX.lastChild(this.pickUpBlockNode));
+				}
+
+				BX.removeClass(this.pickUpBlockNode, 'bx-step-completed');
 			}
+
+			this.maps && this.maps.pickUpFinalAction();
 		},
 
 		getStoreInfoHtml: function(currentStore)
@@ -6095,7 +5947,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				buttonClassName = 'bx-soa-pickup-l-item-btn',
 				logoNode, logotype, html, storeNode, imgSrc;
 
-			if (this.params.SHOW_STORES_IMAGES == 'Y')
+			if (this.params.SHOW_STORES_IMAGES === 'Y')
 			{
 				logotype = this.getImageSources(currentStore, 'IMAGE_ID');
 				imgSrc = logotype && logotype.src_1x || this.defaultStoreLogo;
@@ -6165,44 +6017,43 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 		editPickUpRecommendList: function(geoLocation)
 		{
-			if (!this.pickUpPointsJSON || !this.pickUpPointsJSON.length || !geoLocation)
+			if (!this.maps || !this.maps.canUseRecommendList() || !geoLocation)
+			{
 				return;
+			}
 
 			var recommendList = BX.create('DIV', {props: {className: 'bx-soa-pickup-list recommend'}}),
 				buyerStoreInput = BX('BUYER_STORE'),
-				selectedDelivery = this.getSelectedDelivery(),
-				length = this.pickUpPointsJSON.length < this.options.pickUpMap.nearestPickUpsToShow ? this.pickUpPointsJSON.length : this.options.pickUpMap.nearestPickUpsToShow,
-				i, pointsGeoQuery, res, storeId, currentStore,
-				distance, storeNode, container;
+				selectedDelivery = this.getSelectedDelivery();
 
-			for (i = 0; i < length; i++)
+			var i, currentStore, currentStoreId, distance, storeNode, container;
+
+			var recommendedStoreIds = this.maps.getRecommendedStoreIds(geoLocation);
+			for (i = 0; i < recommendedStoreIds.length; i++)
 			{
-				pointsGeoQuery = ymaps.geoQuery({
-					type: 'FeatureCollection',
-					features: this.pickUpPointsJSON
-				});
-				res = pointsGeoQuery.getClosestTo(geoLocation);
-				storeId = res.properties.get('storeId');
-				currentStore = this.getPickUpInfoArray([storeId])[0];
+				currentStoreId = recommendedStoreIds[i];
+				currentStore = this.getPickUpInfoArray([currentStoreId])[0];
 
-				if (i == 0 && parseInt(selectedDelivery.ID) !== this.lastSelectedDelivery)
-					buyerStoreInput.value = parseInt(currentStore.ID);
+				if (i === 0 && parseInt(selectedDelivery.ID) !== this.lastSelectedDelivery)
+				{
+					buyerStoreInput.value = parseInt(currentStoreId);
+				}
 
-				distance = ymaps.coordSystem.geo.getDistance(geoLocation.geometry.getCoordinates(), res.geometry.getCoordinates());
-				distance = Math.round(distance / 100) / 10;
+				distance = this.maps.getDistance(geoLocation, currentStoreId);
 				storeNode = this.createPickUpItem(currentStore, {
-					selected: buyerStoreInput.value == currentStore.ID,
+					selected: buyerStoreInput.value === currentStoreId,
 					distance: distance
 				});
 				recommendList.appendChild(storeNode);
 
-				selectedDelivery.STORE_MAIN.splice(selectedDelivery.STORE_MAIN.indexOf(storeId), 1);
-				this.pickUpPointsJSON.splice(pointsGeoQuery.indexOf(res), 1);
+				selectedDelivery.STORE_MAIN.splice(selectedDelivery.STORE_MAIN.indexOf(currentStoreId), 1);
 			}
 
 			container = this.pickUpHiddenBlockNode.querySelector('.bx_soa_pickup>.col-xs-12');
 			if (!container)
+			{
 				container = this.pickUpBlockNode.querySelector('.bx_soa_pickup>.col-xs-12');
+			}
 
 			container.appendChild(
 				BX.create('DIV', {
@@ -6278,20 +6129,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				}).animate();
 
 				storeInput.setAttribute('value', storeItemId);
-
-				if (this.pickUpMap && this.pickUpMap.geoObjects)
-				{
-					this.pickUpMap.geoObjects.each(BX.delegate(function(placeMark){
-						if (placeMark.properties.get('id'))
-							placeMark.options.unset('preset');
-
-						if (placeMark.properties.get('id') == storeItemId)
-						{
-							placeMark.options.set({preset: 'islands#redDotIcon'});
-							this.pickUpMap.panTo([placeMark.geometry.getCoordinates()])
-						}
-					}, this));
-				}
+				this.maps && this.maps.selectBalloon(storeItemId);
 			}
 		},
 
@@ -6357,6 +6195,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				BX.remove(BX.lastChild(node));
 				node.appendChild(BX.firstChild(this.propsHiddenBlockNode));
+				this.maps && setTimeout(BX.proxy(this.maps.propsMapFocusWaiter, this.maps), 200);
 			}
 			else
 			{
@@ -6374,11 +6213,14 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				propsNode = BX.create('DIV', {props: {className: 'row'}});
 				selectedDelivery = this.getSelectedDelivery();
 
-				if (selectedDelivery && this.params.SHOW_MAP_IN_PROPS == 'Y' && this.params.SHOW_MAP_FOR_DELIVERIES && this.params.SHOW_MAP_FOR_DELIVERIES.length)
+				if (
+					selectedDelivery && this.params.SHOW_MAP_IN_PROPS === 'Y'
+					&& this.params.SHOW_MAP_FOR_DELIVERIES && this.params.SHOW_MAP_FOR_DELIVERIES.length
+				)
 				{
 					for (i = 0; i < this.params.SHOW_MAP_FOR_DELIVERIES.length; i++)
 					{
-						if (parseInt(selectedDelivery.ID) == parseInt(this.params.SHOW_MAP_FOR_DELIVERIES[i]))
+						if (parseInt(selectedDelivery.ID) === parseInt(this.params.SHOW_MAP_FOR_DELIVERIES[i]))
 						{
 							showPropMap = true;
 							break;
@@ -6392,7 +6234,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				propsContent.appendChild(propsNode);
 				this.getBlockFooter(propsContent);
 
-				if (this.propsBlockNode.getAttribute('data-visited') == 'true')
+				if (this.propsBlockNode.getAttribute('data-visited') === 'true')
 				{
 					validationErrors = this.isValidPropertiesBlock(true);
 					if (validationErrors.length)
@@ -6444,7 +6286,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				props = this.params[fadeParamName];
 			}
 
-			if (!props || props.length == 0)
+			if (!props || props.length === 0)
 			{
 				node.innerHTML += '<strong>' + BX.message('SOA_ORDER_PROPS') + '</strong>';
 			}
@@ -6463,7 +6305,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				}
 			}
 
-			if (this.propsBlockNode.getAttribute('data-visited') == 'true')
+			if (this.propsBlockNode.getAttribute('data-visited') === 'true')
 			{
 				validPropsErrors = this.isValidPropertiesBlock();
 				if (validPropsErrors.length)
@@ -6490,9 +6332,11 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				propsIterator =  group.getIterator();
 				while (property = propsIterator())
 				{
-					if (this.deliveryLocationInfo.loc == property.getId()
+					if (
+						this.deliveryLocationInfo.loc == property.getId()
 						|| this.deliveryLocationInfo.zip == property.getId()
-						|| this.deliveryLocationInfo.city == property.getId())
+						|| this.deliveryLocationInfo.city == property.getId()
+					)
 						continue;
 
 					this.getPropertyRowNode(property, propsItemsContainer, false);

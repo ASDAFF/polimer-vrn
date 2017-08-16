@@ -69,6 +69,7 @@ $APPLICATION->IncludeComponent(
 		'SHOW_PAGINATION' => true,
 		'SHOW_SELECTED_COUNTER' => false,
 		'SHOW_TOTAL_COUNTER' => true,
+		"TOTAL_ROWS_COUNT" => $arResult['TOTAL_ROWS_COUNT'],
 		'ALLOW_COLUMNS_SORT' => false,
 		'ALLOW_COLUMNS_RESIZE' => false,
 		"AJAX_MODE" => "Y",

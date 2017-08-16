@@ -229,7 +229,7 @@ $bPropsColumn  = false;
 																	$selected = ($selectedIndex == $counter ? ' class="bx_active"' : '');
 																?>
 																	<li style="width:10%;"<?=$selected?>>
-																		<a href="javascript:void(0);" class="cnt"><?=$arSkuValue["NAME"]?></a>
+																		<a href="javascript:void(0);" class="cnt"><?=htmlspecialcharsbx($arSkuValue["NAME"]); ?></a>
 																	</li>
 																<?
 																endforeach;

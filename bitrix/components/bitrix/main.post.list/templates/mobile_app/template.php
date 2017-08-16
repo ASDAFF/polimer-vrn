@@ -49,7 +49,7 @@ BX.ready(function()
 	<!--/noindex-->
 	#AFTER_HEADER#
 	#BEFORE#
-	<div class="post-comment-wrap">
+	<div class="post-comment-wrap" bx-content-view-xml-id="#CONTENT_ID#" id="post-comment-wrap-#CONTENT_ID#" bx-content-view-save="N">
 		<div class="post-comment-text" id="record-#FULL_ID#-text">#TEXT#</div>
 		<div class="post-comment-more" onclick="mobileExpand(this, event)"><div class="post-comment-more-but"></div></div>
 	</div>

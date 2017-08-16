@@ -47,7 +47,7 @@ if ('POST' == $_SERVER['REQUEST_METHOD'] && (isset($_REQUEST["Convert"]) && 'Y' 
 		));
 		?><script type="text/javascript">
 			BX.closeWait();
-			DoNext(<? echo CCatalogDiscountConvert::$intConverted; ?>, <?=$maxMessage?>, <?=CCatalogDiscountConvert::$intNextConvertPerStep; ?>, '<? echo CCatalogDiscountConvert::$strSessID; ?>');
+			DoNext(<?=CCatalogDiscountConvert::$intConverted; ?>, <?=$maxMessage?>, <?=CCatalogDiscountConvert::$intNextConvertPerStep; ?>, '<?=CUtil::JSEscape(CCatalogDiscountConvert::$strSessID); ?>');
 		</script><?
 	}
 	else

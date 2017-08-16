@@ -507,13 +507,6 @@ class CUserCounterPage extends CAllUserCounterPage
 			return;
 		}
 
-		$arSites = array();
-		$res = CSite::GetList($b = "", $o = "", array("ACTIVE" => "Y"));
-		while($row = $res->Fetch())
-		{
-			$arSites[] = $row['ID'];
-		}
-
 		$userSQL = "SELECT USER_ID FROM b_user_counter WHERE SENT='0' GROUP BY USER_ID LIMIT ".intval(CAllUserCounterPage::getPageSizeOption(100));
 		$res = $DB->Query($userSQL, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
 
@@ -527,6 +520,13 @@ class CUserCounterPage extends CAllUserCounterPage
 
 		if ($userString <> '')
 		{
+			$arSites = array();
+			$res = CSite::GetList($b = "", $o = "", array("ACTIVE" => "Y"));
+			while($row = $res->Fetch())
+			{
+				$arSites[] = $row['ID'];
+			}
+
 			$strSQL = "
 				SELECT pc.CHANNEL_ID, uc.USER_ID, uc.SITE_ID, uc.CODE, uc.CNT
 				FROM b_user_counter uc

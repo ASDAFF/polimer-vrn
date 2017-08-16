@@ -251,7 +251,7 @@ class OrderBuyer
 				if(isset($value["VALUES"]))
 				{
 					if($key == $profileId ||  $profileId == 0)
-						return $value["VALUES"];
+						return $value["~VALUES"];
 				}
 			}
 		}

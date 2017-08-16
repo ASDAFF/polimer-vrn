@@ -254,6 +254,12 @@ BX.Kanban.Item.prototype =
 		return this.layout.content;
 	},
 
+	dispose: function()
+	{
+		jsDD.unregisterDest(this.getContainer());
+		jsDD.unregisterObject(this.getContainer());
+	},
+
 	makeDraggable: function()
 	{
 		if (!this.isDraggable())

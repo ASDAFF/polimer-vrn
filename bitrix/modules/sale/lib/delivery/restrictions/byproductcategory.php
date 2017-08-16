@@ -82,6 +82,9 @@ class ByProductCategory extends Base
 			/** @var \Bitrix\Sale\BasketItem $basketItem */
 			$basketItem = $shipmentItem->getBasketItem();
 
+			if(!$basketItem)
+				continue;
+
 			if($basketItem->getField('MODULE') != 'catalog')
 				continue;
 

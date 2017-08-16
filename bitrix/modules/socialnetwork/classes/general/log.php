@@ -151,8 +151,29 @@ class CAllSocNetLog
 			return false;
 		}
 
-		if (!$USER_FIELD_MANAGER->CheckFields("SONET_LOG", $ID, $arFields, (isset($arFields["USER_ID"]) && intval($arFields["USER_ID"]) > 0 ? intval($arFields["USER_ID"]) : false)))
+		if (
+			isset($arFields["CONTEXT_USER_ID"])
+			&& intval($arFields["CONTEXT_USER_ID"]) > 0
+		)
+		{
+			$contextUserId = intval($arFields["CONTEXT_USER_ID"]);
+		}
+		elseif (
+			isset($arFields["USER_ID"])
+			&& intval($arFields["USER_ID"]) > 0
+		)
+		{
+			$contextUserId = intval($arFields["USER_ID"]);
+		}
+		else
+		{
+			$contextUserId = false;
+		}
+
+		if (!$USER_FIELD_MANAGER->CheckFields("SONET_LOG", $ID, $arFields, $contextUserId))
+		{
 			return false;
+		}
 
 		if (is_set($arFields["URL"]) && is_array($arSiteWorkgroupsPage))
 		{

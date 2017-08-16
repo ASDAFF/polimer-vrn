@@ -167,6 +167,22 @@ class CUserTypeEnum
 		return $result;
 	}
 
+	function GetGroupActionData($arUserField, $arHtmlControl)
+	{
+		$result = array();
+		$rsEnum = call_user_func_array(
+			array($arUserField["USER_TYPE"]["CLASS_NAME"], "getlist"),
+			array($arUserField)
+		);
+		if(!$rsEnum)
+			return $result;
+
+		while($arEnum = $rsEnum->GetNext())
+			$result[] = array("NAME" => $arEnum["VALUE"], "VALUE" => $arEnum["ID"]);
+
+		return $result;
+	}
+
 	function GetEditFormHTMLMulty($arUserField, $arHtmlControl)
 	{
 		if(($arUserField["ENTITY_VALUE_ID"]<1) && strlen($arUserField["SETTINGS"]["DEFAULT_VALUE"])>0)
@@ -244,6 +260,23 @@ class CUserTypeEnum
 		}
 		$result .= '</select>';
 		return $result;
+	}
+
+	function GetFilterData($arUserField, $arHtmlControl)
+	{
+		$rsEnum = call_user_func_array(array($arUserField["USER_TYPE"]["CLASS_NAME"], "getlist"), array($arUserField));
+		$items = array();
+		while($arEnum = $rsEnum->GetNext())
+			$items[$arEnum["ID"]] = $arEnum["VALUE"];
+
+		return array(
+			"id" => $arHtmlControl["ID"],
+			"name" => $arHtmlControl["NAME"],
+			"type" => "list",
+			"items" => $items,
+			"params" => array("multiple" => "Y"),
+			"filterable" => ""
+		);
 	}
 
 	function GetAdminListViewHTML($arUserField, $arHtmlControl)

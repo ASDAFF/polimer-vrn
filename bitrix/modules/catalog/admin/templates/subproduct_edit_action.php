@@ -483,14 +483,15 @@ if ($USER->CanDoOperation('catalog_price'))
 						}
 						else
 						{
+							$fields = array(
+								'PRODUCT_ID' => $PRODUCT_ID,
+								'STORE_ID' => $row['ID'],
+								'AMOUNT' => $amount
+							);
 							if (isset($storeProducts[$row['ID']]))
-								$storeRes = CCatalogStoreProduct::Update($storeProducts[$row['ID']]['ID'], array('AMOUNT' => $amount));
+								$storeRes = CCatalogStoreProduct::Update($storeProducts[$row['ID']]['ID'], $fields);
 							else
-								$storeRes = CCatalogStoreProduct::Add(array(
-									'PRODUCT_ID' => $PRODUCT_ID,
-									'STORE_ID' => $row['ID'],
-									'AMOUNT' => $amount
-								));
+								$storeRes = CCatalogStoreProduct::Add($fields);
 						}
 						if (!$storeRes)
 						{
@@ -498,7 +499,7 @@ if ($USER->CanDoOperation('catalog_price'))
 							break;
 						}
 					}
-					unset($row, $iterator);
+					unset($fields, $row, $iterator);
 				}
 			}
 		}

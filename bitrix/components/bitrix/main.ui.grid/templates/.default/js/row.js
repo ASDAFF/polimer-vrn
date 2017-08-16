@@ -69,14 +69,19 @@
 			var self = this;
 			var cells = this.getCells();
 			var values = {};
-			var value;
+			var cellValues;
 
 			[].forEach.call(cells, function(current) {
-				value = self.getCellEditorValue(current);
-
-				if (value)
+				cellValues = self.getCellEditorValue(current);
+				if (BX.type.isArray(cellValues))
 				{
-					values[value.NAME] = value.VALUE !== undefined ? value.VALUE : "";
+					cellValues.forEach(function(cellValue) {
+						values[cellValue.NAME] = cellValue.VALUE !== undefined ? cellValue.VALUE : "";
+					});
+				}
+				else if (cellValues)
+				{
+					values[cellValues.NAME] = cellValues.VALUE !== undefined ? cellValues.VALUE : "";
 				}
 			});
 
@@ -96,6 +101,52 @@
 						'NAME': editor.getAttribute('name'),
 						'VALUE': editor.checked ? 'Y' : 'N'
 					};
+				}
+				else if(BX.hasClass(editor, 'main-grid-editor-custom'))
+				{
+					result = [];
+					editor.querySelectorAll('input, select, checkbox, textarea').forEach(function(element) {
+						if (element.value)
+						{
+							switch (element.tagName)
+							{
+								case "SELECT":
+									if (element.multiple)
+									{
+										var selectValues = [];
+										element.querySelectorAll('option').forEach(function(option) {
+											if (option.selected)
+											{
+												selectValues.push(option.value);
+											}
+										});
+										result.push({
+											'NAME': editor.getAttribute('data-name'),
+											'VALUE': selectValues
+										});
+									}
+									else
+									{
+										result.push({
+											'NAME': editor.getAttribute('data-name'),
+											'VALUE': element.value
+										});
+									}
+									break;
+								case "CHECKBOX":
+									result.push({
+										'NAME': editor.getAttribute('data-name'),
+										'VALUE': element.checked ? 'Y' : 'N'
+									});
+									break;
+								default:
+									result.push({
+										'NAME': editor.getAttribute('data-name'),
+										'VALUE': element.value
+									});
+							}
+						}
+					});
 				}
 				else
 				{

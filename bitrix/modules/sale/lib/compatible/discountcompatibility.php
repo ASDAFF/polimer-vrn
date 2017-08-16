@@ -54,12 +54,12 @@ class DiscountCompatibility
 			/** @var \Bitrix\Sale\BasketItem $basketItem */
 			$basketItem = $parameters['ENTITY'];
 			/** @var array $values */
-			$values = $parameters['VALUES'];
+			$values = $parameters['PREPARED_VALUES'];
 			unset($parameters);
 
 			if (
 				$basketItem instanceof Sale\BasketItem
-				&& $basketItem->getField('DELAY') == 'N'
+				&& $basketItem->canBuy()
 				&& !empty($values)
 				&& is_array($values)
 			)
@@ -580,10 +580,13 @@ class DiscountCompatibility
 			$code = ($publicMode ? $basketItem['ID'] : $basketCode);
 			if (!isset($basketItem['DISCOUNT_PRICE']))
 				$basketItem['DISCOUNT_PRICE'] = 0;
-			$basketItem['BASE_PRICE'] = (isset(self::$basketBasePrice[$code])
-				? self::$basketBasePrice[$code]
-				: $basketItem['PRICE'] + $basketItem['DISCOUNT_PRICE']
-			);
+			if (!isset($basketItem['BASE_PRICE']))
+			{
+				$basketItem['BASE_PRICE'] = (isset(self::$basketBasePrice[$code])
+					? self::$basketBasePrice[$code]
+					: $basketItem['PRICE'] + $basketItem['DISCOUNT_PRICE']
+				);
+			}
 			if (self::isCustomPrice($basketItem))
 			{
 				if (array_key_exists($code, self::$basketDiscountList))
@@ -731,16 +734,20 @@ class DiscountCompatibility
 		if (!self::isSuccess())
 			return false;
 
-		$stepResult = Sale\Discount\Actions::getActionResult();
-		if (!empty($stepResult) && is_array($stepResult))
+		$order['DISCOUNT_RESULT'] = Sale\Discount\Actions::getActionResult();
+		$order['DISCOUNT_DESCR'] = Sale\Discount\Actions::getActionDescription();
+		if (!empty($order['DISCOUNT_RESULT']) && is_array($order['DISCOUNT_RESULT']))
 		{
-			$order['DISCOUNT_RESULT'] = $stepResult;
-			$order['DISCOUNT_DESCR'] = Sale\Discount\Actions::getActionDescription();
 			$stepResult = self::getStepResult($order);
 		}
 		else
 		{
 			$stepResult = self::getStepResultOld($order);
+			if (!empty($stepResult))
+			{
+				if (empty($order['DISCOUNT_DESCR']) || !is_array($order['DISCOUNT_DESCR']))
+					$order['DISCOUNT_DESCR'] = self::getSimpleActionDescription($stepResult);
+			}
 		}
 		Sale\Discount\Actions::fillCompatibleFields($order);
 		$applied = !empty($stepResult);
@@ -752,8 +759,7 @@ class DiscountCompatibility
 		{
 			self::correctStepResult($order, $stepResult, $discount);
 
-			if (!empty($order['DISCOUNT_DESCR']) && is_array($order['DISCOUNT_DESCR']))
-				$discount['ACTIONS_DESCR'] = $order['DISCOUNT_DESCR'];
+			$discount['ACTIONS_DESCR'] = $order['DISCOUNT_DESCR'];
 			$discountResult = self::convertDiscount($discount);
 			if (!$discountResult->isSuccess())
 				return false;
@@ -776,10 +782,8 @@ class DiscountCompatibility
 			}
 		}
 
-		if (array_key_exists('DISCOUNT_DESCR', $order))
-			unset($order['DISCOUNT_DESCR']);
-		if (array_key_exists('DISCOUNT_RESULT', $order))
-			unset($order['DISCOUNT_RESULT']);
+		unset($order['DISCOUNT_DESCR'], $order['DISCOUNT_RESULT']);
+
 		self::$currentOrderData = $order;
 		if ($applied && $orderCouponId != '')
 		{
@@ -1006,7 +1010,7 @@ class DiscountCompatibility
 	 *
 	 * @param string|int $code						Basket code.
 	 * @param array $fields							Basket data.
-	 * @return bool|void
+	 * @return bool
 	 */
 	protected static function calculateBasketItemDiscount($code, $fields)
 	{
@@ -1290,7 +1294,7 @@ class DiscountCompatibility
 				$result['DELIVERY'] = array(
 					'APPLY' => 'Y',
 					'DELIVERY_ID' => (isset($currentOrder['DELIVERY_ID']) ? $currentOrder['DELIVERY_ID'] : false),
-					'SHIPMENT_CODE' => (isset($order['SHIPMENT_CODE']) ? $order['SHIPMENT_CODE'] : false),
+					'SHIPMENT_CODE' => (isset($currentOrder['SHIPMENT_CODE']) ? $currentOrder['SHIPMENT_CODE'] : false),
 					'DESCR' => Sale\OrderDiscountManager::formatArrayDescription($descr),
 					'DESCR_DATA' => $descr
 				);
@@ -1542,5 +1546,60 @@ class DiscountCompatibility
 			'BASKET' => $basket,
 			'DELIVERY' => $delivery
 		);
+	}
+
+	/**
+	 * Get description for old actions.
+	 *
+	 * @param array $stepResult		Action results.
+	 * @return array
+	 */
+	private static function getSimpleActionDescription(array $stepResult)
+	{
+		$result = array();
+		if (!empty($stepResult['BASKET']))
+		{
+			$data = Sale\OrderDiscountManager::prepareDiscountDescription(
+				Sale\OrderDiscountManager::DESCR_TYPE_SIMPLE,
+				Loc::getMessage('BX_SALE_DCL_MESS_SIMPLE_DESCRIPTION_BASKET')
+			);
+			if ($data->isSuccess())
+			{
+				$result['BASKET'] = array(
+					0 => $data->getData()
+				);
+			}
+			unset($data);
+		}
+		if (!empty($stepResult['DELIVERY']))
+		{
+			$data = Sale\OrderDiscountManager::prepareDiscountDescription(
+				Sale\OrderDiscountManager::DESCR_TYPE_SIMPLE,
+				Loc::getMessage('BX_SALE_DCL_MESS_SIMPLE_DESCRIPTION_DELIVERY')
+			);
+			if ($data->isSuccess())
+			{
+				$result['DELIVERY'] = array(
+					0 => $data->getData()
+				);
+			}
+			unset($data);
+		}
+		if (empty($result))
+		{
+			$data = Sale\OrderDiscountManager::prepareDiscountDescription(
+				Sale\OrderDiscountManager::DESCR_TYPE_SIMPLE,
+				Loc::getMessage('BX_SALE_DCL_MESS_SIMPLE_DESCRIPTION_UNKNOWN')
+			);
+			if ($data->isSuccess())
+			{
+				$result['BASKET'] = array(
+					0 => $data->getData()
+				);
+			}
+			unset($data);
+		}
+
+		return $result;
 	}
 }

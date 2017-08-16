@@ -400,6 +400,9 @@
 	vertical-align: middle;
 	height: 16px;
 	line-height: 16px;
+}
+
+.template-bitrix24 .menu-popup .menu-popup-items .main-buttons-submenu-item.main-buttons-submenu-separator .menu-popup-item-text span {
 	top: -19px;
 }
 

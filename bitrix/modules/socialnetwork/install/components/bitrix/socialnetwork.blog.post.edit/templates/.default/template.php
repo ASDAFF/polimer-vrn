@@ -71,9 +71,33 @@ if($arResult["delete_blog_post"] == "Y")
 
 if(!empty($arResult["FATAL_MESSAGE"]))
 {
+	ob_start();
+
 	?><div class="feed-add-error">
 		<span class="feed-add-info-text"><span class="feed-add-info-icon"></span><?=$arResult["FATAL_MESSAGE"]?></span>
 	</div><?
+
+	$strFullForm = ob_get_contents();
+
+	if ($_POST["action"] == "SBPE_get_full_form")
+	{
+		while (ob_end_clean());
+
+		echo CUtil::PhpToJSObject(array(
+			"PROPS" => array(
+				"CONTENT" => $strFullForm,
+				"STRINGS" => array(),
+				"JS" => array(),
+				"CSS" => array()
+			),
+			"success" => true
+		));
+		die();
+	}
+	else
+	{
+		echo $strFullForm;
+	}
 
 	return false;
 }
@@ -145,8 +169,13 @@ else
 	{
 		$bVote = true;
 
-		if (!$bVarsFromForm && !!$arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_VOTE"]["VALUE"])
+		if (
+			!$bVarsFromForm
+			&& !!$arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_VOTE"]["VALUE"]
+		)
+		{
 			$activeTab = "vote";
+		}
 	}
 	if (
 		IsModuleInstalled("intranet")
@@ -169,8 +198,13 @@ else
 	}
 	if (array_key_exists("UF_BLOG_POST_IMPRTNT", $arResult["POST_PROPERTIES"]["DATA"]))
 	{
-		if (!$bVarsFromForm && !!$arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_IMPRTNT"]["VALUE"])
+		if (
+			!$bVarsFromForm
+			&& !!$arResult["POST_PROPERTIES"]["DATA"]["UF_BLOG_POST_IMPRTNT"]["VALUE"]
+		)
+		{
 			$activeTab = "important";
+		}
 	}
 
 	ob_start();
@@ -297,7 +331,10 @@ else
 		{
 			$arTab = $arTabs[$i];
 			$pseudoTabs .= '<span class="feed-add-post-form-link" data-onclick="'.(isset($arTab["ONCLICK"]) ? $arTab["ONCLICK"] : "").'" data-name="'.$arTab["NAME"].'" id="feed-add-post-form-tab-'.$arTab["ID"].'" style="display:none;"></span>';
-			if ($activeTab == $arTab["ID"] && $maxTabs > 0)
+			if (
+				$activeTab == $arTab["ID"]
+				&& $maxTabs > 0
+			)
 			{
 				$moreCaption = $arTab["NAME"];
 				$moreClass = " feed-add-post-form-".$arTab["ID"]."-link";
@@ -407,12 +444,13 @@ HTML;
 			sonetBPECreateTaskSuccessTitle : '<?=GetMessageJS("BLOG_POST_EDIT_T_CREATE_TASK_SUCCESS_TITLE")?>',
 			sonetBPECreateTaskSuccessDescription : '<?=GetMessageJS("BLOG_POST_EDIT_T_CREATE_TASK_SUCCESS_DESCRIPTION")?>',
 			sonetBPECreateTaskButtonTitle : '<?=GetMessageJS("BLOG_POST_EDIT_T_CREATE_TASK_BUTTON_TITLE")?>',
-			PATH_TO_USER_TASKS_TASK : '<?=CUtil::JSEscape($arParams['PATH_TO_USER_TASKS_TASK'])?>'
+			PATH_TO_USER_TASKS_TASK : '<?=CUtil::JSEscape($arParams['PATH_TO_USER_TASKS_TASK'])?>',
+			SBPE_MORE : '<?=GetMessageJS("SBPE_MORE")?>'
 		});
 
 		SBPEFullForm.getInstance().init({
 			lazyLoad: <?=(!$arResult["SHOW_FULL_FORM"] ? 'true' : 'false')?>,
-			ajaxUrl: '<?=(!$arResult["SHOW_FULL_FORM"] ? CUtil::JSEscape($APPLICATION->GetCurPageParam()) : '')?>',
+			ajaxUrl : '<?=CUtil::JSEscape(POST_FORM_ACTION_URI)?>',
 			container: <?=(!$arResult["SHOW_FULL_FORM"] ? "BX('full".$jsObjName."')" : "false")?>,
 			containerMicro: <?=(!$arResult["SHOW_FULL_FORM"] ? "BX('micro".$jsObjName."')" : "false")?>,
 			containerMicroInner: <?=(!$arResult["SHOW_FULL_FORM"] ? "BX('micro".$jsObjName."_inner')" : "false")?>
@@ -968,7 +1006,6 @@ HTML;
 				<script type="text/javascript">
 					BX.message({
 						'BLOG_TITLE' : '<?=GetMessageJS("BLOG_TITLE")?>',
-						'SBPE_MORE' : '<?=GetMessageJS("SBPE_MORE")?>',
 						'BLOG_TAB_GRAT': '<?=GetMessageJS("BLOG_TAB_GRAT")?>',
 						'BLOG_TAB_VOTE': '<?=GetMessageJS("BLOG_TAB_VOTE")?>',
 						'SBPE_IMPORTANT_MESSAGE': '<?=GetMessageJS("SBPE_IMPORTANT_MESSAGE")?>',
@@ -1001,7 +1038,7 @@ HTML;
 						editorID : '<?=$id?>',
 						showTitle : '<?=$bShowTitle?>',
 						autoSave : '<?=(COption::GetOptionString("blog", "use_autosave", "Y") == "Y" ? ($arParams["ID"] > 0 ? "onDemand" : "Y") : 'N')?>',
-						activeTab : '<?=($bVarsFromForm || $arParams["ID"] > 0 ? $activeTab : '')?>',
+						activeTab : '<?=($bVarsFromForm || $arParams["ID"] > 0 ? CUtil::JSEscape($activeTab) : '')?>',
 						text : '<?=CUtil::JSEscape($formParams["TEXT"]["VALUE"])?>',
 						restoreAutosave : <?=(empty($arResult["ERROR_MESSAGE"]) ? 'true' : 'false')?>
 					});

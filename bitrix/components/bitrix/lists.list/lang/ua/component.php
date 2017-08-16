@@ -25,4 +25,6 @@ $MESS["CC_BLL_COMMENTS"] = "Коментарі";
 $MESS["CC_BLL_ELEMENT_ACTION_MENU_RUNNING_BP"] = "Запущені бізнес-процеси";
 $MESS["CT_BLL_BIZPROC_DELETE"] = "Видалити бізнес-процес";
 $MESS["CT_BLL_BIZPROC_STOP"] = "Зупинити бізнес-процес";
+$MESS["CT_BLL_GRID_PAGE_SIZES_ALL"] = "Всі";
+$MESS["CC_BLL_ELEMENT_ACTION_MENU_OPEN"] = "Відкрити";
 ?>

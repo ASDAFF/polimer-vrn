@@ -36,4 +36,6 @@ $MESS["MAIN_UI_FILTER__DRAG_FIELD_TITLE"] = "Ziehen Sie, um die Felderliste zu s
 $MESS["MAIN_UI_FILTER__REMOVE_FIELD"] = "Feld ausblenden";
 $MESS["MAIN_UI_FILTER__CONFIRM_MESSAGE_FOR_ALL"] = "Mit dieser Aktion werden Filtereinstellungen für alle Nutzer aktualisiert. <br>Bereits existierende gespeicherte Filter und Felder werden auch geändert.";
 $MESS["MAIN_UI_FILTER__CONFIRM_APPLY_FOR_ALL"] = "Für alle anwenden";
+$MESS["MAIN_UI_FILTER__DATE_NEXT_DAYS_LABEL"] = "Nächste(n) #N# (Tag/Tage)";
+$MESS["MAIN_UI_FILTER__DATE_PREV_DAYS_LABEL"] = "Letzte(n) #N# (Tag/Tage)";
 ?>

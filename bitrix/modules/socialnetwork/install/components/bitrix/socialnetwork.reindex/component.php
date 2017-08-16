@@ -202,7 +202,7 @@ if($_GET["index"] == "y" && check_bitrix_sessid())
 	else
 		$step = "init";
 
-	if(preg_match('/^.\d+$/', $_GET["last_id"]))
+	if(preg_match('/^[a-zA-Z]\d+$/', $_GET["last_id"]))
 		$last_id = $_GET["last_id"];
 	else
 		$last_id = intval($_GET["last_id"]);

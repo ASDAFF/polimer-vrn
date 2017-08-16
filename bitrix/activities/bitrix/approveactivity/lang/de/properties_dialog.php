@@ -29,4 +29,5 @@ $MESS["BPAA_PD_TIMEOUT_LIMIT"] = "Minimale Genehmigungszeit";
 $MESS["BPAR_PD_COMMENT_REQUIRED"] = "Kommentar ist erforderlich";
 $MESS["BPAR_PD_COMMENT_REQUIRED_YA"] = "Nur wenn genehmigt";
 $MESS["BPAR_PD_COMMENT_REQUIRED_YR"] = "Nur wenn abgelehnt";
+$MESS["BPAR_PD_DELEGATION_TYPE"] = "Delegieren an";
 ?>

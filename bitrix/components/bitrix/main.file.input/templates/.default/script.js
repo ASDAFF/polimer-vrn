@@ -223,6 +223,7 @@
 				item = pointer.item;
 
 				var node = pointer.node;
+				var newInput;
 				if (item.file["justUploaded"] === true && item.file["file_id"] > 0)
 				{
 					var data = {
@@ -241,18 +242,28 @@
 					{
 						var name = n.name,
 							v = n.value,
-							nDelName = name + '_del';
+							nDelNameCompat = name + '_del',
+							nDelName = this.agent.id + '_deleted[]';
+
 						if (name.indexOf('[') > 0)
-							nDelName = name.substr(0, name.indexOf('[')) + '_del' + name.substr(name.indexOf('['));
-						var node1 = BX.create("INPUT", { props : {
+						{
+							nDelNameCompat = name.substr(0, name.indexOf('[')) + '_del' + name.substr(name.indexOf('['));
+						}
+
+						newInput = BX.create("INPUT", { props : {
 							name : name,
+							type : "hidden",
+							value : v}});
+						parentNode.appendChild(newInput);
+						var node1 = BX.create("INPUT", { props : {
+							name : nDelNameCompat,
 							type : "hidden",
 							value : v}});
 						parentNode.appendChild(node1);
 						node1 = BX.create("INPUT", { props : {
 							name : nDelName,
 							type : "hidden",
-							value : "Y"}});
+							value : v}});
 						parentNode.appendChild(node1);
 					}
 				}
@@ -271,6 +282,10 @@
 				{
 					BX.onCustomEvent(this, 'onDeleteFile', [fileId, item, this]);  // for compatibility
 					BX.onCustomEvent(this, 'onFileUploaderChange', [[fileId], this]);  // for compatibility. Do not use
+					if(!!newInput)
+					{
+						BX.fireEvent(newInput, 'change');
+					}
 				}
 			},
 			_deleteFile : function() { // for compatibility. Do not Use
@@ -339,6 +354,7 @@
 					}
 					BX.onCustomEvent(this, 'onAddFile', [file["file_id"], this, file, node]); // for compatibility
 					BX.onCustomEvent(this, 'onUploadDone', [result["file"], item, this]);
+					BX.fireEvent(BX('file-' + file["file_id"]), 'change');
 				}
 				else
 				{

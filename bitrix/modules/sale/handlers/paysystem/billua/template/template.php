@@ -314,13 +314,13 @@ if ($params['BASKET_ITEMS'])
 					$data = '';
 					break;
 				case 'PRICE':
-					$data = SaleFormatCurrency($params['PRICE'], $params['CURRENCY'], true);
+					$data = SaleFormatCurrency($params['DELIVERY_PRICE'], $params['CURRENCY'], true);
 					break;
 				case 'VAT_RATE':
 					$data = roundEx($vat * 100, SALE_VALUE_PRECISION)."%";
 					break;
 				case 'SUM':
-					$data = SaleFormatCurrency($params['PRICE'], $params['CURRENCY'], true);
+					$data = SaleFormatCurrency($params['DELIVERY_PRICE'], $params['CURRENCY'], true);
 					break;
 				default:
 					$data = '';

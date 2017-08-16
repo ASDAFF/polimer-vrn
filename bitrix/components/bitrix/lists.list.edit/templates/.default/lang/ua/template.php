@@ -44,4 +44,16 @@ $MESS["CT_BLLE_TOOLBAR_LIST_COPY_TITLE"] = "Створення копії спи
 $MESS["CT_BLLE_TOOLBAR_LIST_COPY_PROCESS"] = "Копіювати процес";
 $MESS["CT_BLLE_TOOLBAR_LIST_COPY_TITLE_PROCESS"] = "Створення копії процесу";
 $MESS["CT_BLLE_TOOLBAR_LIST_COPY_BUTTON_TITLE"] = "Копіювання...";
+$MESS["CT_BLLE_TOOLBAR_ACTION"] = "Дії";
+$MESS["CT_BLLE_MIGRATE_POPUP_TITLE"] = "Підтвердження перенесення";
+$MESS["CT_BLLE_MIGRATE_POPUP_ACCEPT_BUTTON"] = "Перенести";
+$MESS["CT_BLLE_MIGRATE_POPUP_CANCEL_BUTTON"] = "Скасування";
+$MESS["CT_BLLE_DELETE_POPUP_TITLE"] = "Підтвердження видалення";
+$MESS["CT_BLLE_DELETE_POPUP_ACCEPT_BUTTON"] = "Видалити";
+$MESS["CT_BLLE_DELETE_POPUP_CANCEL_BUTTON"] = "Скасування";
+$MESS["CT_BLLE_COPY_POPUP_TITLE"] = "Підтвердження копіювання";
+$MESS["CT_BLLE_COPY_POPUP_CONTENT"] = "Ви впевнені, що хочете копіювати?";
+$MESS["CT_BLLE_COPY_POPUP_ACCEPT_BUTTON"] = "Копіювати";
+$MESS["CT_BLLE_COPY_POPUP_CANCEL_BUTTON"] = "Скасування";
+$MESS["CT_BLLE_TOOLBAR_RETURN_LIST_ELEMENT"] = "ДО СПИСКУ";
 ?>

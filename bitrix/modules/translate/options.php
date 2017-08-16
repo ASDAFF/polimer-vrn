@@ -1,4 +1,6 @@
 <?
+/** @global CMain $APPLICATION */
+/** @global string $mid */
 $module_id = "translate";
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/options.php");
@@ -6,7 +8,8 @@ IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$module_id."/
 IncludeModuleLangFile(__FILE__);
 
 $TRANS_RIGHT = $APPLICATION->GetGroupRight($module_id);
-if ($TRANS_RIGHT>="R") :
+if ($TRANS_RIGHT < "R")
+	return;
 
 if ($_SERVER["REQUEST_METHOD"] == "GET" && $TRANS_RIGHT=="W" && strlen($RestoreDefaults)>0 && check_bitrix_sessid())
 {
@@ -47,13 +50,21 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($Update.$Apply.$RestoreDefaults)
 				continue;
 
 			$name = $option[0];
-			if (!isset($_POST[$name]))
+			if (!isset($_POST[$name]) && $option[3][0] != "checkbox")
 				continue;
-			$val = (string)$_POST[$name];
-			if($option[3][0] == "checkbox" && $val != "Y")
-				$val = "N";
-			if($option[3][0] == "multiselectbox")
-				$val = @implode(",", $val);
+
+			if ($option[3][0] == "multiselectbox")
+			{
+				if (!is_array($_POST[$name]))
+					continue;
+				$val = implode(",", $_POST[$name]);
+			}
+			else
+			{
+				$val = (isset($_POST[$name]) ? (string)$_POST[$name] : '');
+				if($option[3][0] == "checkbox" && $val != "Y")
+					$val = "N";
+			}
 
 			COption::SetOptionString($module_id, $name, $val);
 		}
@@ -95,4 +106,3 @@ $tabControl->Buttons();?>
 	<?=bitrix_sessid_post();?>
 <?$tabControl->End();?>
 </form>
-<?endif;

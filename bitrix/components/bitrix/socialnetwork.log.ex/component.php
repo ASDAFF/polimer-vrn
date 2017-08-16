@@ -660,10 +660,7 @@ if(
 		) 
 		|| 
 		(
-			(
-				CSocNetFeaturesPerms::CanPerformOperation($user_id, SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "full_post", CSocNetUser::IsCurrentUserModuleAdmin()) 
-				|| $APPLICATION->GetGroupRight("blog") >= "W"
-			)
+			CSocNetFeaturesPerms::CanPerformOperation($user_id, SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "full_post", CSocNetUser::IsCurrentUserModuleAdmin())
 			|| CSocNetFeaturesPerms::CanPerformOperation($user_id, SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "write_post")
 			|| CSocNetFeaturesPerms::CanPerformOperation($user_id, SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "moderate_post")
 			|| CSocNetFeaturesPerms::CanPerformOperation($user_id, SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "premoderate_post")
@@ -1146,7 +1143,15 @@ if (
 			$arFilter["EVENT_ID"] = array();
 			foreach($filterData["EVENT_ID"] as $filterEventId)
 			{
-				$arFilter["EVENT_ID"] = array_merge($arFilter["EVENT_ID"], \CSocNetLogTools::findFullSetByEventID($filterEventId));
+				// if specific blog_post event (important, vote, grat)
+				if (in_array($filterEventId, array('blog_post_important', 'blog_post_grat', 'blog_post_vote')))
+				{
+					$arFilter["EVENT_ID"][] = $filterEventId;
+				}
+				else
+				{
+					$arFilter["EVENT_ID"] = array_merge($arFilter["EVENT_ID"], \CSocNetLogTools::findFullSetByEventID($filterEventId));
+				}
 			}
 			$arFilter["EVENT_ID"] = array_unique($arFilter["EVENT_ID"]);
 		}
@@ -1183,12 +1188,13 @@ if (
 			$arFilter["<=LOG_DATE"] = ConvertTimeStamp(MakeTimeStamp($filterData["DATE_CREATE_to"], CSite::getDateFormat("SHORT")) + 86399, "FULL");
 		}
 
-		if (!empty($filterData["FIND"]))
+		$filterContent = trim($filterData["FIND"]);
+		if (!empty($filterContent))
 		{
 			$filtered = true;
 
 			$operation = \Bitrix\Socialnetwork\LogIndexTable::getEntity()->fullTextIndexEnabled("CONTENT") ? '*' : '*%';
-			$arFilter[$operation."CONTENT"] = \Bitrix\Socialnetwork\Item\LogIndex::prepareToken($filterData["FIND"]);
+			$arFilter[$operation."CONTENT"] = \Bitrix\Socialnetwork\Item\LogIndex::prepareToken($filterContent);
 		}
 
 		if ($filtered)
@@ -1526,7 +1532,8 @@ if (
 	$arSelectFields = array(
 		"ID", "TMP_ID", "MODULE_ID",
 		"LOG_DATE", "LOG_UPDATE", "DATE_FOLLOW", 
-		"ENTITY_TYPE", "ENTITY_ID", "EVENT_ID", "SOURCE_ID", "USER_ID", "FOLLOW"
+		"ENTITY_TYPE", "ENTITY_ID", "EVENT_ID", "SOURCE_ID", "USER_ID", "FOLLOW",
+		"RATING_TYPE_ID", "RATING_ENTITY_ID"
 	);
 	
 	if (
@@ -1718,6 +1725,21 @@ if (
 		$arResult["FatalError"] = GetMessage("SONET_73_ENTRY_NOT_FOUND");
 	}
 
+	$contentIdList = array();
+	foreach ($arResult["Events"] as $i => $eventFields)
+	{
+		if ($contentId = \Bitrix\Socialnetwork\Livefeed\Provider::getContentId($eventFields))
+		{
+			$contentIdList[] = $arResult["Events"][$i]['CONTENT_ID'] = $contentId['ENTITY_TYPE'].'-'.$contentId['ENTITY_ID'];
+		}
+	}
+
+	$arResult["ContentViewData"] = (!empty($contentIdList)
+		? \Bitrix\Socialnetwork\Item\UserContentView::getViewData(array(
+			'contentId' => $contentIdList
+		))
+		: array()
+	);
 
 	if ($arTmpEvent["DATE_FOLLOW"])
 	{

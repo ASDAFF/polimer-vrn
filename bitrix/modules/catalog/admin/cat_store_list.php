@@ -67,10 +67,16 @@ function getSiteTitle($siteId)
 $sTableID = "b_catalog_store";
 $entityId = "CAT_STORE";
 
-$oSort = new CAdminSorting($sTableID, "SORT", "asc");
+$oSort = new CAdminSorting($sTableID, "SORT", "ASC");
 $lAdmin = new CAdminList($sTableID, $oSort);
 
 $arFilter = array();
+$filterFields = array(
+	'filter_site_id'
+);
+$USER_FIELD_MANAGER->AdminListAddFilterFields($entityId, $filterFields);
+$lAdmin->InitFilter($filterFields);
+
 if(strlen($filter_site_id) > 0 && $filter_site_id != "NOT_REF")
 	$arFilter["SITE_ID"] = $filter_site_id;
 
@@ -113,8 +119,8 @@ if(($arID = $lAdmin->GroupAction()) && !$bReadOnly)
 {
 	if($_REQUEST['action_target']=='selected')
 	{
-		$arID = Array();
-		$dbResultList = CCatalogStore::GetList(array($_REQUEST["by"] => $_REQUEST["order"], $arFilter, false, false, array('ID')));
+		$arID = array();
+		$dbResultList = CCatalogStore::GetList(array(), $arFilter, false, false, array('ID'));
 		while ($arResult = $dbResultList->Fetch())
 			$arID[] = $arResult['ID'];
 	}
@@ -170,15 +176,18 @@ $arSelect = array(
 	"UF_*"
 );
 
+if (!isset($by))
+	$by = 'ID';
+if (!isset($order))
+	$order = 'ASC';
+
 if(array_key_exists("mode", $_REQUEST) && $_REQUEST["mode"] == "excel")
 	$arNavParams = false;
 else
 	$arNavParams = array("nPageSize"=>CAdminResult::GetNavSize($sTableID));
 
 $dbResultList = CCatalogStore::GetList(
-	array(
-		$_REQUEST["by"] => $_REQUEST["order"]
-	),
+	array($by => $order),
 	$arFilter,
 	false,
 	$arNavParams,

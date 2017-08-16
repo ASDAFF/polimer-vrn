@@ -49,4 +49,6 @@ $MESS["CT_BLFE_FIELD_SHOW_FIELD_PREVIEW"] = "Показати поле при ф
 $MESS["CT_BLFE_FIELD_CODE"] = "Код";
 $MESS["CT_BLEE_SAVE_BUTTON"] = "Зберегти";
 $MESS["CT_BLEE_CANCEL_BUTTON"] = "Скасування";
+$MESS["CT_BLFE_TOOLBAR_ACTION"] = "Дії";
+$MESS["CT_BLFE_TOOLBAR_RETURN_LIST_ELEMENT"] = "ДО СПИСКУ ПОЛІВ";
 ?>

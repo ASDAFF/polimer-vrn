@@ -90,7 +90,11 @@ class Shipment
 	public function setDeliveryService(Delivery\Services\Base $deliveryService)
 	{
 		$this->deliveryService = $deliveryService;
-		$this->setField("DELIVERY_ID", $deliveryService->getId());
+		$resultSetting = $this->setField("DELIVERY_ID", $deliveryService->getId());
+		if ($resultSetting->isSuccess())
+		{
+			$this->setField("DELIVERY_NAME", $deliveryService->getName());
+		}
 	}
 
 	/**

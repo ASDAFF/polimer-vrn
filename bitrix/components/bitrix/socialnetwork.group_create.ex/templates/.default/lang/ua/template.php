@@ -56,4 +56,5 @@ $MESS["SONET_GCE_T_DEST_EXTRANET_ADD_SEND_PASSWORD_TITLE"] = "Відправит
 $MESS["SONET_GCE_T_DEST_EXTRANET_SELECTOR"] = "та/або #ACTION# нового";
 $MESS["SONET_GCE_T_EMAILS_DESCR"] = "Введіть адреси через кому";
 $MESS["SONET_GCE_T_INVITE_MESSAGE_TEXT"] = "Запрошую вас на корпоративний портал нашої компанії. Тут ми зможемо разом працювати над проектами і завданнями, керувати документами, планувати зустрічі і зборів, спілкуватися в блогах і багато іншого.";
+$MESS["SONET_GCE_T_AJAX_ERROR"] = "Виникла помилка при обробці даних форми. Будь ласка, спробуйте ще раз.";
 ?>

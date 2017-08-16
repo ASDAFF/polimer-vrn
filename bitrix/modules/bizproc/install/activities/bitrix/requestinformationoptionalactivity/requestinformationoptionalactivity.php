@@ -41,6 +41,7 @@ class CBPRequestInformationOptionalActivity
 			"TimeoutDurationType" => "s",
 			"IsTimeout" => 0,
 			'CancelType' => 'any',
+			'DelegationType' => 0,
 		);
 
 		$this->SetPropertiesTypes(array(
@@ -149,6 +150,7 @@ class CBPRequestInformationOptionalActivity
 				"NAME" => $this->Name,
 				"DESCRIPTION" => $this->Description,
 				"PARAMETERS" => $arParameters,
+				'DELEGATION_TYPE' => (int)$this->DelegationType,
 				'DOCUMENT_NAME' => $documentService->GetDocumentName($documentId)
 			)
 		);
@@ -657,7 +659,8 @@ class CBPRequestInformationOptionalActivity
 			'AccessControl' => 'access_control',
 			"TimeoutDuration" => "timeout_duration",
 			"TimeoutDurationType" => "timeout_duration_type",
-			"CancelType" => "cancel_type"
+			"CancelType" => "cancel_type",
+			"DelegationType" => "delegation_type",
 		);
 
 		if (!is_array($arWorkflowParameters))
@@ -764,6 +767,7 @@ class CBPRequestInformationOptionalActivity
 			"timeout_duration" => "TimeoutDuration",
 			"timeout_duration_type" => "TimeoutDurationType",
 			"cancel_type" => "CancelType",
+			"delegation_type" => "DelegationType",
 		);
 
 		$arProperties = array();

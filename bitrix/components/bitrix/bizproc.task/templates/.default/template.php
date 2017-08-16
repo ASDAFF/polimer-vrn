@@ -2,6 +2,12 @@
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/bizproc/tools.js');
 $cmpId = RandString();
 
+$showDelegationButton = (
+	!$arResult['IsComplete']
+	&& ($arResult['isAdmin'] || (int)$arResult['TASK']['DELEGATION_TYPE'] !== CBPTaskDelegationType::None)
+	&& IsModuleInstalled('intranet')
+);
+
 if (empty($arResult['DOCUMENT_ICON']))
 {
 	$moduleIcon = 'default';
@@ -133,7 +139,7 @@ if (empty($arResult['DOCUMENT_ICON']))
 			<?endif;?>
 		</p>
 		<?
-		if ($arResult["TASK"]['IS_INLINE'] == 'Y' && !$arResult['IsComplete'] && CModule::IncludeModule('intranet')):?>
+		if ($showDelegationButton && $arResult["TASK"]['IS_INLINE'] == 'Y'):?>
 			<a href="#" class="bp-button bp-button-transparent bp-button-first" onclick="return BX.Bizproc.showDelegationPopup(this, <?= (int)$arResult["TASK"]["ID"] ?>, <?= (int)$arParams["USER_ID"] ?>)"><span></span><?=GetMessage('BPAT_DELEGATE_LABEL')?></a>
 		<?
 		endif;
@@ -172,7 +178,7 @@ if (empty($arResult['DOCUMENT_ICON']))
 						?>
 					<?else: echo $arResult["TaskFormButtons"]; endif;?>
 
-					<?if (!$arResult['IsComplete'] && CModule::IncludeModule('intranet')):?>
+					<?if ($showDelegationButton):?>
 						<a href="#" class="bp-button bp-button-transparent" onclick="return BX.Bizproc.showDelegationPopup(this, <?= (int)$arResult["TASK"]["ID"] ?>, <?= (int)$arParams["USER_ID"] ?>)"><span></span><?=GetMessage('BPAT_DELEGATE_LABEL')?></a>
 					<?endif?>
 				</div>

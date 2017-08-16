@@ -670,6 +670,10 @@
 	margin: 16px 16px 16px;
 }
 
+.main-grid-cell-content a:hover {
+	text-decoration: underline;
+}
+
 .main-grid-editor-container {
 	margin-top: 11px;
 	margin-bottom: 11px;
@@ -2383,6 +2387,7 @@ label.main-grid-checkbox {
 	font-size: 12px;
 	border-bottom: 0;
 	text-transform: none;
+	margin-left: 10px;
 }
 
 .main-grid-settings-window-for-all .main-grid-settings-window-for-all-label {
@@ -2897,9 +2902,9 @@ label.main-grid-checkbox {
 
 .main-grid-load-animation {
 	display: table!important;
-	-webkit-animation: main-grid-load 0ms;
-	-o-animation: main-grid-load 0ms;
-	animation: main-grid-load 0ms;
+	-webkit-animation: main-grid-load 10ms;
+	-o-animation: main-grid-load 10ms;
+	animation: main-grid-load 10ms;
 }
 
 

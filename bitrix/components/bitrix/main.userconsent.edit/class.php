@@ -197,7 +197,7 @@ class MainUserConsentEditComponent extends CBitrixComponent
 					&&
 					$intl['LANGUAGE_ID'] == $data['LANGUAGE_ID']
 				),
-				'AVAILABLE' => $intl['LANGUAGE_ID'] == $this->getLanguageId(),
+				'AVAILABLE' => $intl['BASE_LANGUAGE_ID'] == $this->getLanguageId(),
 				'FIELDS' => $fields,
 				'IS_SUPPORT_DATA_PROVIDERS' => true
 			);

@@ -478,6 +478,7 @@ class CAllSaleDiscount
 					$arOrder["VAT_SUM"] += $arShoppingCartItem["VAT_VALUE"] * $arShoppingCartItem["QUANTITY"];
 				}
 
+				$itemDiscountsApply = false;
 				$simplePercent = true;
 				$simplePercentValue = null;
 				$code = ($publicMode ? $arShoppingCartItem['ID'] : $index);
@@ -488,6 +489,7 @@ class CAllSaleDiscount
 						if ($row['RESULT']['APPLY'] != 'Y')
 							continue;
 
+						$itemDiscountsApply = true;
 						$descr = $row['RESULT']['DESCR_DATA'][0];
 						$validDiscount = (
 							isset($descr['TYPE']) && $descr['TYPE'] == Sale\OrderDiscountManager::DESCR_TYPE_VALUE
@@ -525,6 +527,7 @@ class CAllSaleDiscount
 						)
 							continue;
 
+						$itemDiscountsApply = true;
 						if (
 							$simplePercentValue !== null
 							|| count($discount['RESULT']['BASKET'][$code]['DESCR_DATA']) != 1
@@ -548,7 +551,8 @@ class CAllSaleDiscount
 				}
 				if ($simplePercent && $simplePercentValue !== null)
 					$arShoppingCartItem['SIMPLE_DISCOUNT_PRICE_PERCENT'] = $simplePercentValue;
-				unset($code, $simplePercentValue, $simplePercent);
+				$arShoppingCartItem['DISCOUNTS_APPLY'] = $itemDiscountsApply;
+				unset($code, $simplePercentValue, $simplePercent, $itemDiscountsApply);
 			}
 
 			foreach ($clearFields as $fieldName)

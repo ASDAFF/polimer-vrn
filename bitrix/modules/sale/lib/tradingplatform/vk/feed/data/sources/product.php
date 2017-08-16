@@ -49,6 +49,11 @@ class Product extends DataSource implements \Iterator
 //		get items only from sections, that was checked to export. And get them iblocksIds
 		$sectionsList = new Vk\SectionsList($this->exportId);
 		$sectionsToExport = $sectionsList->getSectionsToProductExport();
+		if($this->vk->getRichLog($this->exportId) && !empty($sectionsToExport))
+		{
+			$logger = new Vk\Logger($this->exportId);
+			$logger->addLog('Sections to export', $sectionsToExport);
+		}
 		$iblockIds = $sectionsList->getMappedIblocks();
 		
 //		if not products to export - ERROR
@@ -64,6 +69,7 @@ class Product extends DataSource implements \Iterator
 			$exportOfferParams = array(
 				"IBLOCK_ID" => $iblockId,
 				"PRODUCT_GROUPS" => $sectionsToExport[$iblockId],
+				"INCLUDE_SUBSECTION" => false // we have all sections in PRODUCT_GROUPS, subsections is not needed
 			);
 //			set start position, if exist. Set current feed as start
 			if (isset($this->startPosition[$iblockId]))

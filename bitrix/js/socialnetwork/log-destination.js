@@ -2948,7 +2948,7 @@ BX.SocNetLogDestination.selectItem = function(name, element, template, itemId, t
 
 	if (BX.SocNetLogDestination.obItemsLast[name][type] === null)
 	{
-		BX.SocNetLogDestination.obItemsLast[name][type] = [];
+		BX.SocNetLogDestination.obItemsLast[name][type] = {};
 	}
 	BX.SocNetLogDestination.obItemsLast[name][type][itemId] = itemId;
 

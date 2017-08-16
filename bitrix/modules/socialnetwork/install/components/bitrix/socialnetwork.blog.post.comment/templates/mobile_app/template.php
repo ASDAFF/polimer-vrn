@@ -5,7 +5,6 @@
  * @var CMain $APPLICATION
  * @var CUser $USER
  */
-
 $rights = "N";
 if (\CSocNetUser::IsCurrentUserModuleAdmin() ||$APPLICATION->GetGroupRight("blog") >= "W")
 {

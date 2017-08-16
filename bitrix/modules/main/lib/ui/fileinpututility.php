@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Main\UI;
 
+use Bitrix\Main\Context;
+
 class FileInputUtility
 {
 	protected static $instance = null;
@@ -73,6 +75,33 @@ class FileInputUtility
 		}
 
 		return $arFiles;
+	}
+
+	public function checkDeletedFiles($controlId)
+	{
+		$arSessionFilesList = $this->getSessionControlFiles($controlId);
+		$deletedRequestName = $controlId.'_deleted';
+
+		$result = array();
+
+		$request = Context::getCurrent()->getRequest();
+		if(isset($request[$deletedRequestName]) && is_array($request[$deletedRequestName]))
+		{
+			foreach($request[$deletedRequestName] as $deletedFile)
+			{
+				if(
+					in_array($deletedFile, $arSessionFilesList)
+					&& \CFile::SaveFile(array(
+					'old_file' => $deletedFile,
+					'del' => 'Y',
+				), ''))
+				{
+					$result[] = $deletedFile;
+				}
+			}
+		}
+
+		return $result;
 	}
 
 	public function checkFile($CID, $fileId)

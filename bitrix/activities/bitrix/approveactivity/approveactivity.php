@@ -52,6 +52,7 @@ class CBPApproveActivity
 			"ShowComment" => "Y",
 			'CommentRequired' => 'N',
 			'AccessControl' => 'N',
+			'DelegationType' => 0,
 		);
 
 		$this->SetPropertiesTypes(array(
@@ -175,6 +176,7 @@ class CBPApproveActivity
 				"DESCRIPTION" => $this->Description,
 				"PARAMETERS" => $arParameters,
 				'IS_INLINE' => $arParameters["ShowComment"] == "Y" ? 'N' : 'Y',
+				'DELEGATION_TYPE' => (int)$this->DelegationType,
 				'DOCUMENT_NAME' => $documentService->GetDocumentName($documentId)
 			)
 		);
@@ -765,6 +767,7 @@ class CBPApproveActivity
 			"ShowComment" => "show_comment",
 			'CommentRequired' => 'comment_required',
 			"AccessControl" => "access_control",
+			"DelegationType" => "delegation_type",
 		);
 
 		if (!is_array($arWorkflowParameters))
@@ -886,6 +889,7 @@ class CBPApproveActivity
 			"show_comment" => "ShowComment",
 			'comment_required' => 'CommentRequired',
 			"access_control" => "AccessControl",
+			"delegation_type" => "DelegationType",
 		);
 
 		$arProperties = array();

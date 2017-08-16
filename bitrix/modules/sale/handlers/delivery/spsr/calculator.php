@@ -184,6 +184,13 @@ class Calculator
 		foreach($shipment->getShipmentItemCollection() as $item)
 		{
 			$basketItem = $item->getBasketItem();
+
+			if(!$basketItem)
+				continue;
+
+			if($basketItem->isBundleChild())
+				continue;
+
 			$itemWeight = floatval($basketItem->getWeight());
 			$quantityItem = floatval($basketItem->getField('QUANTITY'));
 

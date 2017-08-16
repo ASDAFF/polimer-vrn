@@ -28,4 +28,5 @@ $MESS["SBPE_MULTIPLE_PREMODERATION"] = "Публікація неможлива,
 $MESS["SBPE_EXISTING_POST_PREMODERATION"] = "Публікація неможлива, так як в одержувачі додана група соціальної мережі з включеним режимом премодерації повідомлень.";
 $MESS["B_B_HIDDEN_USER"] = "Прихований користувач";
 $MESS["B_B_HIDDEN_DEPARTMENT"] = "Прихованый підрозділ";
+$MESS["BLOG_EMPTY_TITLE_PLACEHOLDER2"] = "Файл";
 ?>

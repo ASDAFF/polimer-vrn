@@ -260,7 +260,7 @@ class CAdminList
 			return false;
 
 		//AddMessage2Log("GroupAction = ".$_REQUEST['action']." & ".($this->bCanBeEdited?'bCanBeEdited':'ne'));
-		if($_REQUEST['action_button']=="edit")
+		if($_REQUEST['action']=="edit")
 		{
 			if(isset($_REQUEST['ID']))
 			{

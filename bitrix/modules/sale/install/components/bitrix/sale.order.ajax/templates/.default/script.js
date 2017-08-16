@@ -136,7 +136,7 @@ BX.saleOrderAjax = { // bad solution, actually, a singleton at the page
 										ctx.properties[locPropId].control.setValueByLocationIds(locationsData);
 									}, function(){
 										try{
-											ctx.properties[locPropId].control.clearSelected();
+											// ctx.properties[locPropId].control.clearSelected();
 										}catch(e){}
 									});
 								}

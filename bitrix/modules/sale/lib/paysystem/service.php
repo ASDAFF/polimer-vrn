@@ -507,7 +507,7 @@ class Service
 	public function basketButtonAction(array $orderData = array())
 	{
 		if ($this->isPrePayable())
-			return $this->handler->basketButtonAction($orderData = array());
+			return $this->handler->basketButtonAction($orderData);
 
 		throw new NotSupportedException;
 	}

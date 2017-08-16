@@ -26,4 +26,6 @@ $MESS["GD_SONET_USER_DESC_FORWARD_TO"] = "Пересилайте листи в �
 $MESS["GD_SONET_USER_DESC_FORWARD_TO_BLOG_POST"] = "Для створення поста в Живій стрічці";
 $MESS["GD_SONET_USER_DESC_FORWARD_TO_TASK"] = "Для створення завдання";
 $MESS["GD_SONET_USER_DESC_FORWARD_TO_SHOW"] = "показати";
+$MESS["GD_SONET_USER_DESC_SYNCHRONIZE"] = "Синхронізація";
+$MESS["GD_SONET_USER_DESC_SYNCHRONIZE_SETUP"] = "Налаштування";
 ?>

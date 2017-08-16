@@ -294,10 +294,11 @@ class ShipmentItemCollection
 	 */
 	public function getItemByBasketId($itemId)
 	{
+		$itemId = (int)$itemId;
 		foreach ($this->collection as $shippedItem)
 		{
 			/** @var ShipmentItem $shippedItem */
-			$shippedItemId = $shippedItem->getBasketId();
+			$shippedItemId = (int)($shippedItem->getBasketId());
 			if ($itemId === $shippedItemId)
 				return $shippedItem;
 		}

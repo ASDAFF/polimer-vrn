@@ -424,7 +424,7 @@ class CBPDocument
 			if ($documentId)
 			{
 				$d = $workflow->GetDocumentId();
-				if ($d[0] != $documentId[0] || $d[1] != $documentId[1] || $d[2] != $documentId[2])
+				if ($d[0] != $documentId[0] || $d[1] != $documentId[1] || strtolower($d[2]) !== strtolower($documentId[2]))
 					throw new Exception(GetMessage("BPCGDOC_INVALID_WF"));
 			}
 			$workflow->Terminate(null, $stateTitle);
@@ -554,9 +554,10 @@ class CBPDocument
 	 * @param int $toUserId Task target user.
 	 * @param array|int $ids Task ids.
 	 * @param array $errors Error collection.
+	 * @param null | array $allowedDelegationType
 	 * @return bool
 	 */
-	public static function delegateTasks($fromUserId, $toUserId, $ids = array(), &$errors = array())
+	public static function delegateTasks($fromUserId, $toUserId, $ids = array(), &$errors = array(), $allowedDelegationType = null)
 	{
 		$filter = array(
 			'USER_ID' => $fromUserId,
@@ -571,25 +572,38 @@ class CBPDocument
 				$filter['ID'] = $ids;
 		}
 
-		$iterator = CBPTaskService::GetList(array('ID'=>'ASC'), $filter, false, false, array('ID', 'NAME', 'WORKFLOW_ID', 'ACTIVITY_NAME'));
+		$iterator = CBPTaskService::GetList(
+				array('ID'=>'ASC'),
+				$filter,
+				false,
+				false,
+				array('ID', 'NAME', 'WORKFLOW_ID', 'ACTIVITY_NAME', 'DELEGATION_TYPE')
+		);
 		$found = false;
 		$trackingService = null;
+		$sendImNotify = (CModule::IncludeModule("im"));
+
 		while ($task = $iterator->fetch())
 		{
-			if (!$found)
+			if ($allowedDelegationType && !in_array((int)$task['DELEGATION_TYPE'], $allowedDelegationType, true))
 			{
-				$runtime = CBPRuntime::GetRuntime();
-				$runtime->StartRuntime();
-				/** @var CBPTrackingService $trackingService */
-				$trackingService = $runtime->GetService('TrackingService');
+				$errors[] = GetMessage('BPCGDOC_ERROR_DELEGATE_'.$task['DELEGATION_TYPE'], array('#NAME#' => $task['NAME']));
 			}
-			$found = true;
-			if (!CBPTaskService::delegateTask($task['ID'], $fromUserId, $toUserId))
+			elseif (!CBPTaskService::delegateTask($task['ID'], $fromUserId, $toUserId))
 			{
 				$errors[] = GetMessage('BPCGDOC_ERROR_DELEGATE', array('#NAME#' => $task['NAME']));
 			}
 			else
 			{
+				if (!$found)
+				{
+					$runtime = CBPRuntime::GetRuntime();
+					$runtime->StartRuntime();
+					/** @var CBPTrackingService $trackingService */
+					$trackingService = $runtime->GetService('TrackingService');
+				}
+				$found = true;
+
 				$trackingService->Write(
 					$task['WORKFLOW_ID'],
 					CBPTrackingType::Custom,
@@ -603,6 +617,23 @@ class CBPDocument
 						'#TO#' => '{=user:user_'.$toUserId.'}'
 					))
 				);
+
+				if ($sendImNotify)
+				{
+					CIMNotify::Add(array(
+						"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
+						'FROM_USER_ID' => $fromUserId,
+						'TO_USER_ID' => $toUserId,
+						"NOTIFY_TYPE" => IM_NOTIFY_FROM,
+						"NOTIFY_MODULE" => "bizproc",
+						"NOTIFY_EVENT" => "delegate_task",
+						"NOTIFY_TAG" => "BIZPROC|TASK|".$task['ID'],
+						'MESSAGE' => GetMessage('BPCGDOC_DELEGATE_NOTIFY_TEXT', array(
+							'#TASK_URL#' => '/company/personal/bizproc/'.(int)$task['ID'].'/',
+							'#TASK_NAME#' => $task['NAME']
+						))
+					));
+				}
 			}
 		}
 		return $found;

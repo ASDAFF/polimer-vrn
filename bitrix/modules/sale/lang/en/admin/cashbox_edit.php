@@ -43,4 +43,7 @@ $MESS["SALE_CASHBOX_SETTINGS_Z_PRINT_START"] = "Register closing time/Z-report t
 $MESS["ERROR_NO_NAME"] = "Company name not specified";
 $MESS["ERROR_NO_OFD"] = "OFD not specified";
 $MESS["ERROR_NO_HANDLER"] = "Cash register handler not specified";
+$MESS["SALE_CASHBOX_OTHER_HANDLER"] = "Other";
+$MESS["SALE_CASHBOX_EXTERNAL_UUID"] = "External cash register ID";
+$MESS["SALE_CASHBOX_EXTERNAL_UUID_HINT"] = "Use the Group ID as an external ID for ATOL.Online";
 ?>

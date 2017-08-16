@@ -265,18 +265,20 @@ if ($normalCount > 0):
 																	foreach ($arProp["VALUES"] as $valueId => $arSkuValue):
 																		$counter++;
 																		$selected = ($selectedIndex == $counter ? ' bx_active' : '');
+																		$skuValueName = htmlspecialcharsbx($arSkuValue['NAME']);
 																	?>
 																		<li style="width:10%;"
 																			class="sku_prop<?=$selected?>"
 																			data-sku-selector="Y"
-																			data-value-id="<?=($arProp['TYPE'] == 'S' && $arProp['USER_TYPE'] == 'directory' ? $arSkuValue['XML_ID'] : htmlspecialcharsbx($arSkuValue['NAME'])); ?>"
-																			data-sku-name="<?=htmlspecialcharsbx($arSkuValue["NAME"]); ?>"
+																			data-value-id="<?=($arProp['TYPE'] == 'S' && $arProp['USER_TYPE'] == 'directory' ? $arSkuValue['XML_ID'] : $skuValueName); ?>"
+																			data-sku-name="<?=$skuValueName; ?>"
 																			data-element="<?=$arItem["ID"]?>"
 																			data-property="<?=$arProp["CODE"]?>"
 																		>
-																			<a href="javascript:void(0)" class="cnt"><?=htmlspecialcharsbx($arSkuValue["NAME"]); ?></a>
+																			<a href="javascript:void(0)" class="cnt"><?=$skuValueName; ?></a>
 																		</li>
 																	<?
+																		unset($skuValueName);
 																	endforeach;
 																	unset($counter);
 																}

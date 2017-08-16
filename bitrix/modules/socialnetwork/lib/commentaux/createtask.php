@@ -96,6 +96,7 @@ final class CreateTask extends Base
 					$commentPath = (
 						(!isset($options['im']) || !$options['im'])
 						&& (!isset($options['bPublicPage']) || !$options['bPublicPage'])
+						&& (!isset($options['mail']) || !$options['mail'])
 							? str_replace(array("#user_id#", "#USER_ID#"), $post['AUTHOR_ID'], $userPage).'blog/'.$post['ID'].'/?commentId='.$params['sourceid'].'#com'.$params['sourceid']
 							: ''
 					);

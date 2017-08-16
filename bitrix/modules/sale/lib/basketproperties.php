@@ -268,6 +268,7 @@ class BasketPropertiesCollection
 		}
 
 		$found = true;
+		$existedPropertyKeys = array();
 		foreach($requestValues as $key => $val)
 		{
 			if (!array_key_exists($key, $propertyValues) || (array_key_exists($key, $propertyValues) && $propertyValues[$key]['VALUE'] != $val))
@@ -275,6 +276,12 @@ class BasketPropertiesCollection
 				$found = false;
 				break;
 			}
+			$existedPropertyKeys[] = $key;
+		}
+
+		if (count($existedPropertyKeys) !== count($propertyValues))
+		{
+			$found = false;
 		}
 
 		return $found;
@@ -335,7 +342,7 @@ class BasketPropertiesCollection
 	private static function bringingPropertyValue(array $value)
 	{
 		$result = false;
-		if (array_key_exists('VALUE', $value)&& strval($value["VALUE"]) != '')
+		if (array_key_exists('VALUE', $value))
 		{
 			$propID = '';
 			if (array_key_exists('CODE', $value) && strval($value["CODE"]) != '')

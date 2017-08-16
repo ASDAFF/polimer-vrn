@@ -107,6 +107,53 @@ class CUserTypeBoolean
 				';
 		}
 	}
+	//Boolean type intentionally made only single valued.
+	//There are some code commented out in this method which is a try to implement multiple values editing
+	function GetEditFormHTMLMulty($arUserField, $arHtmlControl)
+	{
+		$FIELD_NAME_X = str_replace('_', 'x', $arUserField["FIELD_NAME"]);
+		$form_value = $arHtmlControl["VALUE"];
+		if (!is_array($form_value))
+			$form_value = array($form_value);
+		foreach ($form_value as $key=>$value)
+		{
+			$form_value[$key] = intval($value);
+		}
+		if (!$form_value)
+			$form_value[] = intval($arUserField["SETTINGS"]["DEFAULT_VALUE"]);
+
+		$html = '';
+		foreach ($form_value as $i => $value)
+		{
+			$arHtmlControl["VALUE"] = $value;
+			/*
+			$id = $FIELD_NAME_X.'_'.$i;
+			$html .= '<tr id="'.$id.'"><td>'
+			 */
+			$html .= self::GetEditFormHTML($arUserField, array(
+				"NAME" => $arUserField["FIELD_NAME"]."[".$i."]",
+				"VALUE" => $value,
+			));
+			/*
+			if ($i > 0)
+				$html .= '<a class="bx-action-href" href="javascript:BX(\''.$id.'\').parentNode.removeChild(BX(\''.$id.'\'))">'.GetMessage("MAIN_DELETE").'<a/>';
+			else
+				$html .= '&nbsp;';
+			$html .= '</td></tr>';
+			*/
+			break;
+		}
+		return $html;
+		/*
+		return '<table id="table_'.$arUserField["FIELD_NAME"].'" width="10%">'.$html.
+		'<tr><td style="padding-top: 6px;"><input type="button" value="'.GetMessage("USER_TYPE_PROP_ADD").'" onClick="addNewRow(\'table_'.$arUserField["FIELD_NAME"].'\', \''.$FIELD_NAME_X.'|'.$arUserField["FIELD_NAME"].'|'.$arUserField["FIELD_NAME"].'_old_id\')"></td></tr>'.
+		"<script type=\"text/javascript\">BX.addCustomEvent('onAutoSaveRestore', function(ob, data) {for (var i in data){if (i.substring(0,".(strlen($arUserField['FIELD_NAME'])+1).")=='".CUtil::JSEscape($arUserField['FIELD_NAME'])."['){".
+		'addNewRow(\'table_'.$arUserField["FIELD_NAME"].'\', \''.$FIELD_NAME_X.'|'.$arUserField["FIELD_NAME"].'|'.$arUserField["FIELD_NAME"].'_old_id\')'.
+		"}}})</script>".
+		'</table>'
+		;
+		*/
+	}
 
 	function GetFilterHTML($arUserField, $arHtmlControl)
 	{
@@ -117,6 +164,20 @@ class CUserTypeBoolean
 			<option value="0"'.(strlen($arHtmlControl["VALUE"])>0 && !$arHtmlControl["VALUE"]? ' selected': '').'>'.GetMessage("MAIN_NO").'</option>
 			</select>
 		';
+	}
+
+	function GetFilterData($arUserField, $arHtmlControl)
+	{
+		return array(
+			"id" => $arHtmlControl["ID"],
+			"name" => $arHtmlControl["NAME"],
+			"type" => "list",
+			"items" => array(
+				"1" => GetMessage("MAIN_YES"),
+				"0" => GetMessage("MAIN_NO")
+			),
+			"filterable" => ""
+		);
 	}
 
 	function GetAdminListViewHTML($arUserField, $arHtmlControl)

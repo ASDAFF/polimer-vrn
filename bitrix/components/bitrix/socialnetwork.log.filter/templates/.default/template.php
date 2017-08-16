@@ -634,12 +634,36 @@ else
 	if (isset($_SESSION["SL_SHOW_FOLLOW_HINT"]))
 	{
 		unset($_SESSION["SL_SHOW_FOLLOW_HINT"]);
-		?><div class="feed-smart-follow-hint"><?=GetMessage("SONET_C30_SMART_FOLLOW_HINT");?></div><?
+		?><div id="feed_filter_hint_follow" class="feed-smart-follow-hint-wrap"><?
+		?><div class="feed-smart-follow-hint"><?
+			?><?=GetMessage("SONET_C30_SMART_FOLLOW_HINT");?><?
+			?><span class="popup-window-close-icon feed-smart-follow-hint-close" id="feed_filter_hint_follow_close"></span><?
+		?></div><?
+		?></div><?
+		?><script>
+			BX.ready(function () {
+				BX.bind(BX('feed_filter_hint_follow_close'), 'click', function() {
+					BX.addClass(BX('feed_filter_hint_follow'), 'feed-smart-follow-hint-hidden');
+				});
+			});
+		</script><?
 	}
 	elseif (isset($_SESSION["SL_EXPERT_MODE_HINT"]))
 	{
 		unset($_SESSION["SL_EXPERT_MODE_HINT"]);
-		?><div class="feed-smart-follow-hint"><?=GetMessage("SONET_C30_EXPERT_MODE_HINT");?></div><?
+		?><div id="feed_filter_hint_expert" class="feed-smart-follow-hint-wrap"><?
+		?><div class="feed-smart-follow-hint"><?
+			?><?=GetMessage("SONET_C30_EXPERT_MODE_HINT");?><?
+			?><span class="popup-window-close-icon feed-smart-follow-hint-close" id="feed_filter_hint_expert_close"></span><?
+		?></div><?
+		?></div><?
+		?><script>
+		BX.ready(function () {
+			BX.bind(BX('feed_filter_hint_expert_close'), 'click', function() {
+				BX.addClass(BX('feed_filter_hint_expert'), 'feed-smart-follow-hint-hidden');
+			});
+		});
+		</script><?
 	}
 
 	$isCompositeMode === false ?: $dynamicArea->end();

@@ -725,7 +725,8 @@ BX.Sale.Admin.OrderBasket.prototype.createProductCell = function(basketCode, pro
 		cellNodes = [],
 		fieldValue = product[fieldId],
 		tdClass = "",
-		_this = this;
+		_this = this,
+		isSetItem = (BX.type.isNotEmptyString(product.IS_SET_ITEM) && product.IS_SET_ITEM === 'Y');
 
 	switch(fieldId)
 	{
@@ -735,7 +736,7 @@ BX.Sale.Admin.OrderBasket.prototype.createProductCell = function(basketCode, pro
 					'span',
 					{
 						props:{
-							id: product.IS_SET_ITEM != "Y" ? this.idPrefix+"sale_order_product_"+basketCode+"_number" : "&nbsp;"
+							id: !isSetItem ? this.idPrefix+"sale_order_product_"+basketCode+"_number" : "&nbsp;"
 						},
 						html: "&nbsp;"
 					}
@@ -802,7 +803,7 @@ BX.Sale.Admin.OrderBasket.prototype.createProductCell = function(basketCode, pro
 
 			product['QUANTITY'] = this.roundQuantity(parseFloat(product['QUANTITY']));
 
-			if(product.IS_SET_ITEM == "Y")
+			if(isSetItem)
 			{
 				node = BX.Sale.Admin.OrderBasket.prototype.createFieldQuantity(basketCode, product, fieldId);
 				node.id = this.getQuantityCellId(basketCode);
@@ -820,7 +821,7 @@ BX.Sale.Admin.OrderBasket.prototype.createProductCell = function(basketCode, pro
 			break;
 
 		case "PRICE":
-			if(product.IS_SET_ITEM == "Y")
+			if(isSetItem)
 			{
 				cellNodes.push(BX.Sale.Admin.OrderBasket.prototype.createFieldPrice(basketCode, product, fieldId));
 			}
@@ -951,7 +952,7 @@ BX.Sale.Admin.OrderBasket.prototype.createProductCell = function(basketCode, pro
 		{
 			result.style.minWidth = "250px";
 
-			if(product.IS_SET_ITEM == "Y")
+			if(isSetItem)
 			{
 				result.style.fontStyle = "italic";
 				result.style.paddingLeft = "40px";
@@ -2124,7 +2125,7 @@ BX.Sale.Admin.OrderBasketEdit.prototype.productEdit = function(basketCode)
 
 BX.Sale.Admin.OrderBasketEdit.prototype.createMeasureRatioNode = function(basketCode, quantityInputNode, ratio)
 {
-	if(!quantityInputNode || typeof quantityInputNode.value == "undefined")
+	if(!BX.type.isElementNode(quantityInputNode))
 		return null;
 
 	if(!ratio || ratio == 1)
@@ -2976,8 +2977,8 @@ BX.Sale.Admin.OrderBasketProductEditDialog = function(basketObj)
 		if(!product.BASKET_CODE || product.BASKET_CODE != basketCode)
 			product.BASKET_CODE = basketCode;
 
-		if(isNewProduct && !product.OFFER_ID)
-			product.OFFER_ID = 1;
+		if(isNewProduct)
+			product.OFFER_ID = parseInt(product.OFFER_ID) + basketCode;
 
 		product = setProps(product);
 

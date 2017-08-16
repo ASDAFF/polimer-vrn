@@ -270,7 +270,7 @@ class ListsSelectElementComponent extends CBitrixComponent
 		$componentObject = null;
 		$this->arResult["GRID_ENABLE_NEXT_PAGE"] = ($elementObject->PAGEN < $elementObject->NavPageCount);
 		$this->arResult["NAV_STRING"] = $elementObject->getPageNavStringEx(
-			$componentObject, "", "grid", true, null, $gridOptions->getNavParams());
+			$componentObject, "", "grid", false, null, $gridOptions->getNavParams());
 		$this->arResult["GRID_PAGE_SIZES"] = array(
 			array("NAME" => "5", "VALUE" => "5"),
 			array("NAME" => "10", "VALUE" => "10"),

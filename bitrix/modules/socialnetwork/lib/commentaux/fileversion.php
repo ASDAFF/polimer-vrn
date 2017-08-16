@@ -63,7 +63,7 @@ final class FileVersion extends Base
 			}
 		}
 
-		if(Loader::includeModule('disk') && Configuration::isEnabledKeepVersion())
+		if(Loader::includeModule('disk') && !Configuration::isEnabledKeepVersion())
 		{
 			return Loc::getMessage('SONET_COMMENTAUX_HEAD_FILEVERSION_TEXT'.(!empty($gender) ? '_'.$gender : ''));
 		}

@@ -519,6 +519,10 @@ class CListPropertyField extends CListField
 
 				return new CListPropertyField($this->_property["IBLOCK_ID"], "PROPERTY_".$this->_property["ID"], $arFields["NAME"], $arFields["SORT"]);
 			}
+			elseif (!empty($obProperty->LAST_ERROR))
+			{
+				throw new ArgumentException($obProperty->LAST_ERROR);
+			}
 		}
 
 		return null;
@@ -549,6 +553,10 @@ class CListPropertyField extends CListField
 
 				$obProperty = new CIBlockProperty;
 				$res = $obProperty->Add($arFields);
+				if (!empty($obProperty->LAST_ERROR))
+				{
+					throw new ArgumentException($obProperty->LAST_ERROR);
+				}
 				if($res)
 				{
 					self::resetPropertyArrayCache();

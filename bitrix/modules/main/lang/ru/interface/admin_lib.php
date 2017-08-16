@@ -222,4 +222,5 @@ $MESS["admin_lib_required"] = "Обязательные поля";
 $MESS["admin_lib_menu_marketing"] = "Маркетинг";
 $MESS["admin_lib_sso_auth"] = "Авторизация";
 $MESS["admin_lib_sso_auth_title"] = "Для отображения списка сайтов необходимо авторизоваться с вашим аккаунтом Битрикс24 и разрешить доступ к списку сайтов.";
+$MESS["admin_lib_grid_page_sizes_all_title"] = "Все";
 ?>

@@ -2,16 +2,15 @@ var owner_id = "%OWNER_ID%";
 var offset = %OFFSET%;
 var step = %STEP%;
 var res = [];
-var end = 25;
+var end = 10;   //smaller than 25 to preserve to big request error
 var i = 0;
 var end_products = false;
 
 while(!end_products) {
 
-    var res_curr = API.market.get({"owner_id": owner_id, "offset": offset, "count": step, "extended": 1});
+    var res_curr = API.market.get({"owner_id": owner_id, "offset": offset, "count": step, "extended": 0});
     res_curr.shift();
     offset = offset + step;
-
 
     if(res_curr.items) {
         res = res + res_curr.items;

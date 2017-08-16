@@ -32,14 +32,11 @@ class CBackup
 		{
 			$arBucket = array();
 			$rsData = CCloudStorageBucket::GetList(
-				array("SORT"=>"DESC", "ID"=>"ASC")
-	//			array('ACTIVE'=>'Y','READ_ONLY'=>'N')
+				array("SORT"=>"DESC", "ID"=>"ASC"),
+				array_merge(array('ACTIVE'=>'Y','READ_ONLY'=>'N'), $arFilter)
 			);
 			while($f = $rsData->Fetch())
 			{
-				if ($f['ACTIVE'] != 'Y' || ($f['READ_ONLY'] == 'Y' && $arFilter['READ_ONLY'] == 'N'))
-					continue; // sql filter currently is not supported TODO: remove in future
-
 				$arBucket[] = $f;
 			}
 			return count($arBucket) ? $arBucket : false;
@@ -375,8 +372,7 @@ class CBackup
 						LIMIT ".($arTable["LAST_ID"] ? $arTable["LAST_ID"].", ": "").$LIMIT;
 				}
 
-				$rsSource = $DB->Query($strSelect, false, '', array("fixed_connection"=>true));
-				$cnt = $rsSource->SelectedRowsCount();
+				$rsSource = self::QueryUnbuffered($strSelect);
 				while($arSource = $rsSource->Fetch())
 				{
 					if(!$strInsert)
@@ -415,8 +411,13 @@ class CBackup
 					}
 
 					if (!haveTime())
+					{
+						self::FreeResult();
 						return $strInsert ? $B->file_put_contents_ex($strDumpFile, $strInsert.";\n") : true;
+					}
 				}
+				$cnt = $rsSource->SelectedRowsCount();
+				self::FreeResult();
 			}
 
 			if($strInsert && !$B->file_put_contents_ex($strDumpFile, $strInsert.";\n"))
@@ -431,6 +432,27 @@ class CBackup
 
 		$arState['end'] = true;
 		return true;
+	}
+
+	public function QueryUnbuffered($q)
+	{
+		global $DB;
+		if (defined('BX_USE_MYSQLI') && BX_USE_MYSQLI === true)
+			$DB->result = mysqli_query($DB->db_Conn, $q, MYSQLI_USE_RESULT);
+		else
+			$DB->result = mysql_unbuffered_query($q, $DB->db_Conn);
+		$rsSource = new CDBResult($DB->result);
+		$rsSource->DB = $DB;
+		return $rsSource;
+	}
+
+	public function FreeResult()
+	{
+		global $DB;
+		if (defined('BX_USE_MYSQLI') && BX_USE_MYSQLI === true)
+			mysqli_free_result($DB->result);
+		else
+			mysql_free_result($DB->result);
 	}
 
 	public function file_put_contents_ex($strDumpFile, $str)
@@ -761,10 +783,10 @@ class CPasswordStorage
 		$temporary_cache = '';
 		if ($strVal)
 		{
-			if (function_exists('openssl_encrypt'))
-				$temporary_cache = openssl_encrypt(self::SIGN.$strVal, 'BF-ECB', self::getEncryptKey(), OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
-			else
+			if (function_exists('mcrypt_encrypt'))
 				$temporary_cache = mcrypt_encrypt(MCRYPT_BLOWFISH, self::getEncryptKey(), self::SIGN.$strVal, MCRYPT_MODE_ECB, pack("a8",self::getEncryptKey()));
+			else
+				$temporary_cache = openssl_encrypt(self::SIGN.$strVal, 'BF-ECB', self::getEncryptKey(), OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
 		}
 		return COption::SetOptionString('main', $strName, base64_encode($temporary_cache));
 	}
@@ -775,10 +797,10 @@ class CPasswordStorage
 			return false;
 
 		$temporary_cache = base64_decode(COption::GetOptionString('main', $strName, ''));
-		if (function_exists('openssl_decrypt'))
-			$pass = openssl_decrypt($temporary_cache, 'BF-ECB', self::getEncryptKey(), OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
-		else
+		if (function_exists('mcrypt_decrypt'))
 			$pass = mcrypt_decrypt(MCRYPT_BLOWFISH, self::getEncryptKey(), $temporary_cache, MCRYPT_MODE_ECB, pack("a8",self::getEncryptKey()));
+		else
+			$pass = openssl_decrypt($temporary_cache, 'BF-ECB', self::getEncryptKey(), OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
 		if (CTar::substr($pass, 0, 6) == self::SIGN)
 			return str_replace("\x0","",CTar::substr($pass, 6));
 		return false;
@@ -843,11 +865,13 @@ class CTar
 				$key = $this->getEncryptKey();
 				$this->BlockHeader = $this->Block = 1;
 
-				if (!$key
-					||
-					function_exists('openssl_decrypt') && self::substr($str, 0, 256) != openssl_decrypt($data['enc'], 'BF-ECB', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING)
-					||
-					function_exists('mcrypt_decrypt') && self::substr($str, 0, 256) != mcrypt_decrypt(MCRYPT_BLOWFISH, $key, $data['enc'], MCRYPT_MODE_ECB, pack("a8",$key))
+				if (!$key || self::substr($str, 0, 256) != (
+						function_exists('mcrypt_decrypt')
+						?
+						mcrypt_decrypt(MCRYPT_BLOWFISH, $key, $data['enc'], MCRYPT_MODE_ECB, pack("a8",$key))
+						:
+						openssl_decrypt($data['enc'], 'BF-ECB', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING)
+					)
 				)
 					return $this->Error('Invalid encryption key', 'ENC_KEY');
 			}
@@ -864,10 +888,10 @@ class CTar
 				$str = $this->gzip ? gzread($this->res, $this->BufferSize) : fread($this->res, $this->BufferSize);
 			if ($str !== '' && $key = $this->getEncryptKey())
 			{
-				if (function_exists('openssl_decrypt'))
-					$str = openssl_decrypt($str, 'BF-ECB', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
-				else
+				if (function_exists('mcrypt_decrypt'))
 					$str = mcrypt_decrypt(MCRYPT_BLOWFISH, $key, $str, MCRYPT_MODE_ECB, pack("a8",$key));
+				else
+					$str = openssl_decrypt($str, 'BF-ECB', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
 			}
 			$this->Buffer = $str;
 		}
@@ -1152,10 +1176,10 @@ class CTar
 		if ($res && $this->Block == 0 && ($key = $this->getEncryptKey())) // запишем служебный заголовок для зашифрованного архива
 		{
 			$enc = pack("a100a90a10a56",md5(uniqid(rand(), true)), self::BX_SIGNATURE, "1.0", "");
-			if (function_exists('openssl_encrypt'))
-				$enc .= openssl_encrypt($enc, 'BF-ECB', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
-			else
+			if (function_exists('mcrypt_encrypt'))
 				$enc .= mcrypt_encrypt(MCRYPT_BLOWFISH, $key, $enc, MCRYPT_MODE_ECB, pack("a8",$key));
+			else
+				$enc .= openssl_encrypt($enc, 'BF-ECB', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
 			if (!($this->gzip ? gzwrite($this->res, $enc) : fwrite($this->res, $enc)))
 				return $this->Error('Error writing to file');
 			$this->Block = 1;
@@ -1228,10 +1252,10 @@ class CTar
 
 		if ($key = $this->getEncryptKey())
 		{
-			if (function_exists('openssl_encrypt'))
-				$str = openssl_encrypt($str, 'BF-ECB', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
-			else
+			if (function_exists('mcrypt_encrypt'))
 				$str = mcrypt_encrypt(MCRYPT_BLOWFISH, $key, $str, MCRYPT_MODE_ECB, pack("a8",$key));
+			else
+				$str = openssl_encrypt($str, 'BF-ECB', $key, OPENSSL_RAW_DATA | OPENSSL_NO_PADDING);
 		}
 
 		return $this->gzip ? gzwrite($this->res, $str) : fwrite($this->res, $str);

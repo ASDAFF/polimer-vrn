@@ -79,7 +79,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 				'price' => (float)$item['price'],
 				'sum' => (float)$item['sum'],
 				'quantity' => $item['quantity'],
-				'tax' => ($vat !== null) ? $vat : 'none'
+				'tax' => ($vat !== null) ? $vat : $this->getValueFromSettings('VAT', 'NOT_VAT')
 			);
 		}
 
@@ -368,7 +368,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 					),
 					'P_ADDRESS' => array(
 						'TYPE' => 'STRING',
-						'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_SETTINGS_SERVICE_P_ADDRESS_LABEL')
+						'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_SETTINGS_SERVICE_URL_LABEL')
 					),
 				)
 			)

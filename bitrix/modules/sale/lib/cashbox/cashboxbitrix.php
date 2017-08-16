@@ -31,7 +31,7 @@ class CashboxBitrix extends Cashbox
 		foreach ($data['payments'] as $payment)
 		{
 			$result['payments'][] = array(
-				'type' => $payment['is_cash'] === 'Y' ? 0 : 1,
+				'type' => $this->getValueFromSettings('PAYMENT_TYPE', $payment['is_cash']),
 				'value' => $payment['sum']
 			);
 		}
@@ -48,12 +48,14 @@ class CashboxBitrix extends Cashbox
 		foreach ($data['items'] as $item)
 		{
 			$vat = $this->getValueFromSettings('VAT', $item['vat']);
+			if ($vat === null)
+				$vat = $this->getValueFromSettings('VAT', 'NOT_VAT');
 
 			$value = array(
 				'name' => $item['name'],
 				'price' => $item['base_price'],
 				'quantity' => $item['quantity'],
-				'VAT' => ($vat !== null) ? (int)$vat : 4
+				'VAT' => (int)$vat
 			);
 
 			if (isset($item['discount']) && is_array($item['discount']))

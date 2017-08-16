@@ -54,6 +54,7 @@ $MESS["SOA_SHOW_NOT_CALCULATED_DELIVERIES_N"] = "Don't show";
 $MESS["SOA_SHOW_NOT_CALCULATED_DELIVERIES_L"] = "Move to the bottom";
 $MESS["SOA_SHOW_NOT_CALCULATED_DELIVERIES_Y"] = "Show as usual";
 $MESS["SHOW_NOT_CALCULATED_DELIVERIES_TIP"] = "Enable the \"Pre-calculate deliveries that have external access to services\" option to sort deliveries of this type.";
+$MESS["SBB_SPOT_LOCATION_BY_GEOIP"] = "Determine customer's location by IP address";
 $MESS["SOA_ACTION_VARIABLE"] = "Variable containing the action";
 $MESS["ACTION_VARIABLE_TIP"] = "Specifies the name of a variable that contains the action identifier: processOrder, showOrder etc. Default value: <i>action</i>.";
 $MESS["SOA_ALLOW_APPEND_ORDER"] = "Allow binding new order to existing user account";

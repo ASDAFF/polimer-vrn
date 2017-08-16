@@ -548,9 +548,19 @@ else
 						}
 					}
 				?></div>
-				<div class="feed-post-text-block<?=($arResult["Post"]["IS_IMPORTANT"] ? " feed-info-block" : "")?>" id="blog_post_outer_<?=$arResult["Post"]["ID"]?>">
-					<div class="<?if($arResult["bFromList"]):?>feed-post-text-block-inner<?endif;?>">
+				<div class="feed-post-text-block<?=($arResult["Post"]["IS_IMPORTANT"] ? " feed-info-block" : "")?>" id="blog_post_outer_<?=$arResult["Post"]["ID"]?>"><?
+					$className = "";
+					if ($arResult["bFromList"])
+					{
+						$className .= " feed-post-contentview";
+						if (!$arResult["Post"]["hasVideoInline"])
+						{
+							$className .= " feed-post-text-block-inner";
+						}
+					}
+					?><div class="<?=$className?>"<?if($arResult["bFromList"]) {?> id="feed-post-contentview-BLOG_POST-<?=intval($arResult["Post"]["ID"])?>" bx-content-view-xml-id="BLOG_POST-<?=intval($arResult["Post"]["ID"])?>"<? }?>>
 						<div class="feed-post-text-block-inner-inner" id="blog_post_body_<?=$arResult["Post"]["ID"]?>"><?=$arResult["Post"]["textFormated"]?><?
+
 						if (
 							$arResult["POST_PROPERTIES"]["SHOW"] == "Y"
 							&& array_key_exists("UF_BLOG_POST_VOTE", $arResult["POST_PROPERTIES"]["DATA"])
@@ -616,7 +626,7 @@ else
 						}
 						?></div>
 					</div><?
-					if($arResult["bFromList"])
+					if($arResult["bFromList"] && !$arResult["Post"]["hasVideoInline"])
 					{
 						?><div class="feed-post-text-more" onclick="showBlogPost('<?=$arResult["Post"]["ID"]?>', this)" id="blog_post_more_<?=$arResult["Post"]["ID"]?>"><?
 						?><div class="feed-post-text-more-but"></div><?
@@ -865,6 +875,22 @@ else
 					</script><?
 
 					?><span class="feed-post-time-wrap"><?
+						if (
+							!$arResult["bPublicPage"]
+							&& isset($arResult["CONTENT_ID"])
+						)
+						{
+							$APPLICATION->IncludeComponent(
+								"bitrix:socialnetwork.contentview.count", "",
+								Array(
+									"CONTENT_ID" => $arResult["CONTENT_ID"],
+									"CONTENT_VIEW_CNT" => (isset($arResult["CONTENT_VIEW_CNT"]) ? $arResult["CONTENT_VIEW_CNT"] : 0),
+									"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"]
+								),
+								$component,
+								array("HIDE_ICONS" => "Y")
+							);
+						}
 						$datetime_detail = CComponentUtil::GetDateTimeFormatted(MakeTimeStamp($arResult["Post"]["DATE_PUBLISH"]), $arParams["DATE_TIME_FORMAT"], CTimeZone::GetOffset());
 						if ($arResult["bPublicPage"])
 						{

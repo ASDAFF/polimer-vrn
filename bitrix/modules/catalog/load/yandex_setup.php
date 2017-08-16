@@ -65,7 +65,7 @@ if ($STEP > 1)
 		}
 	}
 
-	if (strlen($SETUP_FILE_NAME)<=0)
+	if (!isset($SETUP_FILE_NAME) || $SETUP_FILE_NAME == '')
 	{
 		$arSetupErrors[] = GetMessage("CET_ERROR_NO_FILENAME");
 	}
@@ -126,7 +126,7 @@ if ($STEP > 1)
 	$arCatalog = CCatalogSku::GetInfoByIBlock($IBLOCK_ID);
 	if (CCatalogSku::TYPE_PRODUCT == $arCatalog['CATALOG_TYPE'] || CCatalogSku::TYPE_FULL == $arCatalog['CATALOG_TYPE'])
 	{
-		if (strlen($XML_DATA) <= 0)
+		if (!isset($XML_DATA) || $XML_DATA == '')
 		{
 			$arSetupErrors[] = GetMessage('YANDEX_ERR_SKU_SETTINGS_ABSENT');
 		}
@@ -134,13 +134,25 @@ if ($STEP > 1)
 
 	if (!isset($USE_HTTPS) || $USE_HTTPS != 'Y')
 		$USE_HTTPS = 'N';
+	if (isset($_POST['FILTER_AVAILABLE']) && is_string($_POST['FILTER_AVAILABLE']))
+		$filterAvalable = $_POST['FILTER_AVAILABLE'];
 	if (!isset($filterAvalable) || $filterAvalable != 'Y')
 		$filterAvalable = 'N';
+	if (isset($_POST['DISABLE_REFERERS']) && is_string($_POST['DISABLE_REFERERS']))
+		$disableReferers = $_POST['DISABLE_REFERERS'];
 	if (!isset($disableReferers) || $disableReferers != 'Y')
 		$disableReferers = 'N';
+	if (isset($_POST['MAX_EXECUTION_TIME']) && is_string($_POST['MAX_EXECUTION_TIME']))
+		$maxExecutionTime = $_POST['MAX_EXECUTION_TIME'];
+	$maxExecutionTime = (!isset($maxExecutionTime) ? 0 : (int)$maxExecutionTime);
+	if ($maxExecutionTime < 0)
+		$maxExecutionTime = 0;
 
-	if (($ACTION=="EXPORT_SETUP" || $ACTION=="EXPORT_EDIT" || $ACTION=="EXPORT_COPY") && strlen($SETUP_PROFILE_NAME)<=0)
-		$arSetupErrors[] = GetMessage("CET_ERROR_NO_PROFILE_NAME");
+	if ($ACTION=="EXPORT_SETUP" || $ACTION=="EXPORT_EDIT" || $ACTION=="EXPORT_COPY")
+	{
+		if (!isset($SETUP_PROFILE_NAME) || $SETUP_PROFILE_NAME == '')
+			$arSetupErrors[] = GetMessage("CET_ERROR_NO_PROFILE_NAME");
+	}
 
 	if (!empty($arSetupErrors))
 	{
@@ -179,6 +191,18 @@ $tabControl->BeginNextTab();
 
 if ($STEP == 1)
 {
+	if (!isset($XML_DATA))
+		$XML_DATA = '';
+	if (!isset($filterAvalable) || $filterAvalable != 'Y')
+		$filterAvalable = 'N';
+	if (!isset($USE_HTTPS) || $USE_HTTPS != 'Y')
+		$USE_HTTPS = 'N';
+	if (!isset($disableReferers) || $disableReferers != 'Y')
+		$disableReferers = 'N';
+	if (!isset($SETUP_SERVER_NAME))
+		$SETUP_SERVER_NAME = '';
+	if (!isset($SETUP_FILE_NAME))
+		$SETUP_FILE_NAME = 'yandex_'.mt_rand(0, 999999).'.php';
 ?><tr>
 	<td width="40%"><? echo GetMessage('CET_SELECT_IBLOCK_EXT'); ?></td>
 	<td width="60%"><?
@@ -411,7 +435,7 @@ if ($STEP == 1)
 		}
 		</script>
 		<input type="button" onclick="showDetailPopup(); return false;" value="<? echo GetMessage('CAT_DETAIL_PROPS_RUN'); ?>">
-		<input type="hidden" id="XML_DATA" name="XML_DATA" value="<? echo (strlen($XML_DATA) > 0 ? $XML_DATA : ''); ?>" />
+		<input type="hidden" id="XML_DATA" name="XML_DATA" value="<?=htmlspecialcharsbx($XML_DATA); ?>">
 	</td>
 </tr>
 <tr>
@@ -449,13 +473,13 @@ if ($STEP == 1)
 <tr>
 	<td width="40%"><?echo GetMessage("CET_SERVER_NAME");?></td>
 	<td width="60%">
-		<input type="text" name="SETUP_SERVER_NAME" value="<?echo (strlen($SETUP_SERVER_NAME)>0) ? htmlspecialcharsbx($SETUP_SERVER_NAME) : '' ?>" size="50" /> <input type="button" onclick="this.form['SETUP_SERVER_NAME'].value = window.location.host;" value="<?echo htmlspecialcharsbx(GetMessage('CET_SERVER_NAME_SET_CURRENT'))?>" />
+		<input type="text" name="SETUP_SERVER_NAME" value="<?=htmlspecialcharsbx($SETUP_SERVER_NAME); ?>" size="50"> <input type="button" onclick="this.form['SETUP_SERVER_NAME'].value = window.location.host;" value="<?echo htmlspecialcharsbx(GetMessage('CET_SERVER_NAME_SET_CURRENT'))?>">
 	</td>
 </tr>
 <tr>
 	<td width="40%"><?echo GetMessage("CET_SAVE_FILENAME");?></td>
 	<td width="60%">
-		<b><? echo htmlspecialcharsbx(COption::GetOptionString("catalog", "export_default_path", "/bitrix/catalog_export/"));?></b><input type="text" name="SETUP_FILE_NAME" value="<?echo (strlen($SETUP_FILE_NAME)>0) ? htmlspecialcharsbx($SETUP_FILE_NAME) : "yandex_".mt_rand(0, 999999).".php" ?>" size="50" />
+		<b><? echo htmlspecialcharsbx(COption::GetOptionString("catalog", "export_default_path", "/bitrix/catalog_export/"));?></b><input type="text" name="SETUP_FILE_NAME" value="<?=htmlspecialcharsbx($SETUP_FILE_NAME); ?>" size="50">
 	</td>
 </tr>
 <?

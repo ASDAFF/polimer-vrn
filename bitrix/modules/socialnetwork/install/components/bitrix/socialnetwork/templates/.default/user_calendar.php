@@ -1,5 +1,4 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
-
 <?
 $pageId = "user_calendar";
 include("util_menu.php");
@@ -7,7 +6,11 @@ include("util_profile.php");
 ?>
 <?
 $ownerId = $arResult["VARIABLES"]["user_id"];
-if (isset($_GET['bx_enable_calendar']) && $_GET['bx_enable_calendar'] == 'Y')
+if (
+	isset($_GET['bx_enable_calendar'])
+	&& $_GET['bx_enable_calendar'] == 'Y'
+	&& $ownerId == $USER->getId()
+)
 {
 	$rsFeatures = CSocNetFeatures::GetList(
 		array(),
@@ -98,9 +101,20 @@ if (CSocNetFeatures::IsActiveFeature(SONET_ENTITY_USER, $ownerId, "calendar"))
 		);
 	}
 }
-elseif(strpos(POST_FORM_ACTION_URI, 'bx_enable_calendar=Y') === false)
+elseif(
+	strpos(POST_FORM_ACTION_URI, 'bx_enable_calendar=Y') === false
+	&& $ownerId == $USER->getId()
+)
 {
-	$url = POST_FORM_ACTION_URI.(strpos(POST_FORM_ACTION_URI, '?') === false ? '?' : '&').'bx_enable_calendar=Y';
-	echo GetMessage('SONET_U_CALENDAR_DIS_MES').' <a href="'.$url.'" title="'.GetMessage('SONET_U_CALENDAR_DIS_TITLE').'">'.GetMessage('SONET_U_CALENDAR_TURN_ON').'</a>';
+	$arSocNetFeaturesSettings = CSocNetAllowed::GetAllowedFeatures();
+	if (
+		array_key_exists('calendar', $arSocNetFeaturesSettings) &&
+		array_key_exists("allowed", $arSocNetFeaturesSettings['calendar']) &&
+		in_array(SONET_ENTITY_USER, $arSocNetFeaturesSettings['calendar']["allowed"])
+	)
+	{
+		$url = POST_FORM_ACTION_URI.(strpos(POST_FORM_ACTION_URI, '?') === false ? '?' : '&').'bx_enable_calendar=Y';
+		echo GetMessage('SONET_U_CALENDAR_DIS_MES').' <a href="'.$url.'" title="'.GetMessage('SONET_U_CALENDAR_DIS_TITLE').'">'.GetMessage('SONET_U_CALENDAR_TURN_ON').'</a>';
+	}
 }
 ?>

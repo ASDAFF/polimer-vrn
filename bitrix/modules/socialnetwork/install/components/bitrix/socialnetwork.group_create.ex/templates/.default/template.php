@@ -728,9 +728,10 @@ else
 										$messageTextDisabled = (
 											\Bitrix\Main\Loader::includeModule('bitrix24')
 											&& (
-												!CBitrix24::IsLicensePaid()
-												|| CBitrix24::IsDemoLicense()
+												!CBitrix24::isLicensePaid()
+												|| CBitrix24::isDemoLicense()
 											)
+											&& !CBitrix24::isNfrLicense()
 												? " disabled readonly"
 												: ""
 										);

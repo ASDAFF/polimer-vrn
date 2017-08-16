@@ -494,19 +494,29 @@ $tabControl->Begin();
 
 //TAB order --
 $tabControl->BeginNextTab();
-$blocksOrder = $tabControl->getCurrentTabBlocksOrder($defaultBlocksOrder);
+	$customFastNavItems = array();
+	$customBlocksOrder = array();
+	$fastNavItems = array();
 
-$fastNavItems = array();
+	foreach($customDraggableBlocks->getBlocksBrief() as $blockId => $blockParams)
+	{
+		$defaultBlocksOrder[] = $blockId;
+		$customFastNavItems[$blockId] = $blockParams['TITLE'];
+		$customBlocksOrder[] = $blockId;
+	}
 
-foreach($blocksOrder as $item)
-	$fastNavItems[$item] = Loc::getMessage("SALE_BLOCK_TITLE_".toUpper($item));
+	$blocksOrder = $tabControl->getCurrentTabBlocksOrder($defaultBlocksOrder);
+	$customNewBlockIds = array_diff($customBlocksOrder, $blocksOrder);
+	$blocksOrder = array_merge($blocksOrder, $customNewBlockIds);
 
-foreach($customDraggableBlocks->getBlocksBrief() as $blockId => $blockParams)
-{
-	$defaultBlocksOrder[] = $blockId;
-	$fastNavItems[$blockId] = $blockParams['TITLE'];
-	$blocksOrder[] = $blockId;
-}
+	foreach($blocksOrder as $item)
+	{
+		if(isset($customFastNavItems[$item]))
+			$fastNavItems[$item] = $customFastNavItems[$item];
+		else
+			$fastNavItems[$item] = Loc::getMessage("SALE_BLOCK_TITLE_".toUpper($item));
+	}
+
 ?>
 <tr><td>
 	<input type="hidden" id="ID" name="ID" value="<?=$ID?>">

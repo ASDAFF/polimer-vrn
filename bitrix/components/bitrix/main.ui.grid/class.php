@@ -1059,8 +1059,6 @@ class CMainUIGrid extends CBitrixComponent
 
 	protected function compatibleActions($actions, &$row)
 	{
-		$row["default_action"] = array();
-
 		foreach ($actions as $key => $action)
 		{
 			if (isset($action["SEPARATOR"]))
@@ -1112,10 +1110,37 @@ class CMainUIGrid extends CBitrixComponent
 				unset($actions[$key]["MENU"]);
 			}
 
-			if ($actions[$key]["default"] === true)
+			if (isset($action["HREF"]))
 			{
-				$row["default_action"]["js"] = $action["onclick"];
-				$row["default_action"]["title"] = $action["text"];
+				$actions[$key]["href"] = $action["HREF"];
+				unset($actions[$key]["HREF"]);
+			}
+
+			if (isset($row["default_action"]) && is_array($row["default_action"]))
+			{
+				if (isset($row["default_action"]["href"]) && is_string($row["default_action"]["href"]))
+				{
+					$row["default_action"]["js"] = "(window.location = '".$row["default_action"]["href"]."')";
+				}
+			}
+			else
+			{
+				if ($action["default"] === true)
+				{
+					$row["default_action"] = array();
+
+					if (isset($action["onclick"]) && is_string($action["onclick"]))
+					{
+						$row["default_action"]["js"] = $action["onclick"];
+					}
+
+					if (isset($action["href"]) && is_string($action["href"]))
+					{
+						$row["default_action"]["js"] = "(window.location = '".$action["href"]."')";
+					}
+
+					$row["default_action"]["title"] = isset($action["text"]) ? $action["text"] : "";
+				}
 			}
 		}
 

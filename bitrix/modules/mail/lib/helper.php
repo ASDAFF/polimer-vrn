@@ -171,7 +171,7 @@ class Helper
 					),
 					array(
 						'MAILBOX_ID' => 0,
-						'SITE_ID'    => $mailbox['SITE_ID'],
+						'SITE_ID'    => $mailbox['LID'],
 					)
 				),
 			),

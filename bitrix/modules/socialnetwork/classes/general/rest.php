@@ -32,6 +32,7 @@ class CSocNetLogRestService extends IRestService
 	public static function getBlogPost($arFields, $n, $server)
 	{
 		global $USER, $USER_FIELD_MANAGER;
+		static $blogPostEventIdList = null;
 
 		$result = array();
 		if (!CModule::IncludeModule("blog"))
@@ -51,7 +52,13 @@ class CSocNetLogRestService extends IRestService
 			}
 		}
 
-		$arEventId = array("blog_post", "blog_post_important");
+		if ($blogPostEventIdList === null)
+		{
+			$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+			$blogPostEventIdList = $blogPostLivefeedProvider->getEventId();
+		}
+
+		$arEventId = $blogPostEventIdList;
 		$arEventIdFullset = array();
 		foreach($arEventId as $eventId)
 		{
@@ -658,7 +665,8 @@ class CSocNetLogRestService extends IRestService
 					array('ID' => 'ASC'),
 					array(
 						'GROUP_ID' => $arGroup['ID'],
-						'<=ROLE' => SONET_ROLES_USER
+						'<=ROLE' => SONET_ROLES_USER,
+						'=USER_ACTIVE' => 'Y'
 					), false, false, array('USER_ID', 'ROLE')
 				);
 

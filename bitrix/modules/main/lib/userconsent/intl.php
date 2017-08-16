@@ -28,6 +28,9 @@ class Intl
 	/** @var array  */
 	protected $data = array();
 
+	/** @var array  */
+	protected static $virtualLanguageMap = array('kz' => 'ru');
+
 
 	/**
 	 * Constructor.
@@ -198,6 +201,35 @@ class Intl
 						'TYPE' => 'text',
 					),
 				),
+			),
+			'kz' => array(
+				'PHRASES' => array('COMPANY_NAME', 'IP_NAME'),
+				'FIELDS' => array(
+					array(
+						'CODE' => 'COMPANY_NAME',
+						'TYPE' => 'text',
+					),
+					array(
+						'CODE' => 'COMPANY_ADDRESS',
+						'TYPE' => 'text',
+					),
+					array(
+						'CODE' => 'PURPOSES',
+						'TYPE' => 'text',
+						'SHOW_BY_CHECKBOX' => true,
+					),
+					array(
+						'CODE' => 'THIRD_PARTIES',
+						'TYPE' => 'text',
+						'SHOW_BY_CHECKBOX' => true,
+					),
+					array(
+						'CODE' => 'EMAIL',
+						'TYPE' => 'string',
+						'PLACEHOLDER' => $email,
+						'DEFAULT_VALUE' => $email,
+					),
+				),
 			)
 		);
 
@@ -218,6 +250,7 @@ class Intl
 			}
 
 			$item['NAME'] = Loc::getMessage('MAIN_USER_CONSENT_INTL_NAME', array('%language_name%' => $languageName));
+			$item['BASE_LANGUAGE_ID'] = isset(self::$virtualLanguageMap[$languageId]) ? self::$virtualLanguageMap[$languageId] : $languageId;
 			$item['LANGUAGE_ID'] = $languageId;
 			$item['LANGUAGE_NAME'] = $languageName;
 
@@ -265,7 +298,7 @@ class Intl
 	 *
 	 * @return array
 	 */
-	protected static function getLanguages()
+	public static function getLanguages()
 	{
 		static $list = null;
 		if (is_array($list))
@@ -274,6 +307,20 @@ class Intl
 		}
 
 		$list = array();
+
+		// set virtual languages
+		foreach (self::$virtualLanguageMap as $virtualLanguageId => $languageId)
+		{
+			$languageName = Loc::getMessage('MAIN_USER_CONSENT_INTL_LANG_NAME_' . strtoupper($virtualLanguageId));
+			if (!$languageName)
+			{
+				$languageName = $virtualLanguageId;
+			}
+			$list[$virtualLanguageId] = $languageName;
+		}
+
+		// read lang dirs
+		$dirLanguages = array();
 		$langDir = Application::getDocumentRoot() . '/bitrix/modules/main/lang/';
 		$dir = new IO\Directory($langDir);
 		if (!$dir->isExists())
@@ -288,23 +335,23 @@ class Intl
 				continue;
 			}
 
-			$list[] = $childDir->getName();
+			$dirLanguages[] = $childDir->getName();
 		}
 
-		if (count($list) == 0)
+		if (count($dirLanguages) == 0)
 		{
 			return $list;
 		}
 
+		// set languages from DB by dir languages
 		$listDb = LanguageTable::getList(array(
 			'select' => array('LID', 'NAME'),
 			'filter' => array(
-				'=LID' => $list,
+				'=LID' => $dirLanguages,
 				'=ACTIVE' => 'Y'
 			),
 			'order' => array('SORT' => 'ASC')
 		));
-		$list = array();
 		while ($item = $listDb->fetch())
 		{
 			$list[$item['LID']] = $item['NAME'];
@@ -320,10 +367,19 @@ class Intl
 	 * @param array $map Message key map.
 	 * @return array
 	 */
-	protected static function getLanguageMessages($languageId, array $map = array())
+	public static function getLanguageMessages($languageId, array $map = array())
 	{
-		$item = array();
+		// rewrite $languageId by real value from virtual language
+		$virtualLanguageId = null;
+		if (isset(self::$virtualLanguageMap[$languageId]))
+		{
+			$virtualLanguageId = $languageId;
+			$languageId = self::$virtualLanguageMap[$virtualLanguageId];
+		}
+
+		// load messages
 		$messages = Loc::loadLanguageFile(__FILE__, $languageId, true);
+		// set map by all message codes
 		if (count($map) === 0)
 		{
 			$keys = array_keys($messages);
@@ -333,6 +389,33 @@ class Intl
 			}
 		}
 
+		// append postfix to message codes from virtual language
+		if ($virtualLanguageId)
+		{
+			$postfix = '_' . strtoupper($virtualLanguageId);
+			foreach ($map as $itemKey => $messageKey)
+			{
+				if (substr($itemKey, -strlen($postfix)) == $postfix)
+				{
+					$oldItemKey = $itemKey;
+					$itemKey = substr($itemKey, 0, -strlen($postfix));
+					unset($map[$oldItemKey]);
+				}
+
+				if (substr($messageKey, -strlen($postfix)) != $postfix)
+				{
+					if (isset($messages[$messageKey . $postfix]))
+					{
+						$messageKey .= $postfix;
+					}
+				}
+
+				$map[$itemKey] = $messageKey;
+			}
+		}
+
+		// set messages by map
+		$item = array();
 		foreach ($map as $itemKey => $messageKey)
 		{
 			$message = isset($messages[$messageKey]) ? $messages[$messageKey] : '';

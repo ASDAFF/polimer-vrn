@@ -36,4 +36,6 @@ $MESS["MAIN_UI_FILTER__DRAG_FIELD_TITLE"] = "Pull to sort the fields list";
 $MESS["MAIN_UI_FILTER__REMOVE_FIELD"] = "Hide field";
 $MESS["MAIN_UI_FILTER__CONFIRM_MESSAGE_FOR_ALL"] = "This action will update filter preferences for all users. <br>Existing saved filters and fields will be changed as well.";
 $MESS["MAIN_UI_FILTER__CONFIRM_APPLY_FOR_ALL"] = "Set for all";
+$MESS["MAIN_UI_FILTER__DATE_NEXT_DAYS_LABEL"] = "Next #N# (day/days)";
+$MESS["MAIN_UI_FILTER__DATE_PREV_DAYS_LABEL"] = "Last #N# (day/days)";
 ?>

@@ -1725,14 +1725,19 @@ BX.Kanban.Pagination.prototype = {
 		}
 
 		var column = this.getColumn();
-		var grid = column.getGrid();
 		column.freezeTotal();
+
+		column.getGrid().setRenderStatus(false);
+		var scrollTop = column.getBody().scrollTop;
 
 		for (var i = 0; i < result.length; i++)
 		{
 			var item = result[i];
-			grid.addItem(item);
+			column.getGrid().addItem(item);
 		}
+
+		column.render();
+		column.getBody().scrollTop = scrollTop;
 
 		column.unfreezeTotal();
 		column.refreshTotal();

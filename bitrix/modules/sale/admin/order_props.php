@@ -222,7 +222,7 @@ if ($saleModulePermissions == "W")
 	$arDDMenu = array();
 
 	$arDDMenu[] = array(
-		"TEXT" => "<b>".GetMessage("SOPAN_4NEW_PROMT")."</b>",
+		"TEXT" => GetMessage("SOPAN_4NEW_PROMT"),
 		"ACTION" => false
 	);
 

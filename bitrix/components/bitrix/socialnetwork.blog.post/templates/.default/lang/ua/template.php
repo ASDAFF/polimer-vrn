@@ -76,4 +76,5 @@ $MESS["BLOG_POST_CREATE_TASK_SUCCESS_DESCRIPTION"] = "Ви можете пере
 $MESS["BLOG_POST_CREATE_TASK_ERROR_GET_DATA"] = "Не вдалося отримати дані для створення завдання";
 $MESS["BLOG_POST_VOTE_EXPORT"] = "Експортувати результати опитування";
 $MESS["BLOG_POST_LINK_COPIED"] = "Посилання скопійовано";
+$MESS["BLOG_LINK2"] = "Скопіювати посилання";
 ?>

@@ -3162,17 +3162,22 @@ class Discount
 	{
 		$result = new Result;
 
-		$stepResult = Discount\Actions::getActionResult();
-		if (!empty($stepResult) && is_array($stepResult))
+		$this->orderData['DISCOUNT_RESULT'] = Discount\Actions::getActionResult();
+		$this->orderData['DISCOUNT_DESCR'] = Discount\Actions::getActionDescription();
+		if (!empty($this->orderData['DISCOUNT_RESULT']) && is_array($this->orderData['DISCOUNT_RESULT']))
 		{
-			$this->orderData['DISCOUNT_RESULT'] = $stepResult;
-			$this->orderData['DISCOUNT_DESCR'] = Discount\Actions::getActionDescription();
 			$stepResult = self::getStepResult($this->orderData);
 		}
 		else
 		{
 			$stepResult = self::getStepResultOld($this->orderData, $this->currentStep['oldData']);
+			if (!empty($stepResult))
+			{
+				if (empty($this->orderData['DISCOUNT_DESCR']) || !is_array($this->orderData['DISCOUNT_DESCR']))
+					$this->orderData['DISCOUNT_DESCR'] = $this->getSimpleActionDescription($stepResult);
+			}
 		}
+
 		Discount\Actions::fillCompatibleFields($this->orderData);
 		$applied = !empty($stepResult);
 
@@ -3183,8 +3188,7 @@ class Discount
 		{
 			$this->correctStepResult($stepResult, $this->currentStep['discount']);
 
-			if (!empty($this->orderData['DISCOUNT_DESCR']) && is_array($this->orderData['DISCOUNT_DESCR']))
-				$this->currentStep['discount']['ACTIONS_DESCR'] = $this->orderData['DISCOUNT_DESCR'];
+			$this->currentStep['discount']['ACTIONS_DESCR'] = $this->orderData['DISCOUNT_DESCR'];
 			$discountResult = $this->convertDiscount($this->currentStep['discount']);
 			if (!$discountResult->isSuccess())
 			{
@@ -3221,11 +3225,7 @@ class Discount
 			}
 			$this->setDiscountStoredActionData($orderDiscountId, Discount\Actions::getStoredData());
 		}
-
-		if (array_key_exists('DISCOUNT_DESCR', $this->orderData))
-			unset($this->orderData['DISCOUNT_DESCR']);
-		if (array_key_exists('DISCOUNT_RESULT', $this->orderData))
-			unset($this->orderData['DISCOUNT_RESULT']);
+		unset($this->orderData['DISCOUNT_DESCR'], $this->orderData['DISCOUNT_RESULT']);
 
 		if ($applied)
 		{
@@ -3385,17 +3385,11 @@ class Discount
 	{
 		$result = new Result;
 
-		$stepResult = Discount\Actions::getActionResult();
-		if (!empty($stepResult) && is_array($stepResult))
-		{
-			$this->orderData['DISCOUNT_RESULT'] = $stepResult;
-			$this->orderData['DISCOUNT_DESCR'] = Discount\Actions::getActionDescription();
+		$this->orderData['DISCOUNT_RESULT'] = Discount\Actions::getActionResult();
+		if (!empty($this->orderData['DISCOUNT_RESULT']) && is_array($this->orderData['DISCOUNT_RESULT']))
 			$stepResult = self::getStepResult($this->orderData);
-		}
 		else
-		{
 			$stepResult = self::getStepResultOld($this->orderData, $this->currentStep['oldData']);
-		}
 		$applied = !empty($stepResult);
 
 		$orderDiscountId = 0;
@@ -3409,10 +3403,7 @@ class Discount
 			$orderCouponId = $this->discountResult['APPLY_BLOCKS'][$this->discountResultCounter]['ORDER'][$this->currentStep['discountIndex']]['COUPON_ID'];
 		}
 
-		if (array_key_exists('DISCOUNT_DESCR', $this->orderData))
-			unset($this->orderData['DISCOUNT_DESCR']);
-		if (array_key_exists('DISCOUNT_RESULT', $this->orderData))
-			unset($this->orderData['DISCOUNT_RESULT']);
+		unset($this->orderData['DISCOUNT_RESULT']);
 
 		if ($applied)
 		{
@@ -3897,7 +3888,7 @@ class Discount
 				$result['DELIVERY'] = array(
 					'APPLY' => 'Y',
 					'DELIVERY_ID' => (isset($currentOrder['DELIVERY_ID']) ? $currentOrder['DELIVERY_ID'] : false),
-					'SHIPMENT_CODE' => (isset($order['SHIPMENT_CODE']) ? $order['SHIPMENT_CODE'] : false),
+					'SHIPMENT_CODE' => (isset($currentOrder['SHIPMENT_CODE']) ? $currentOrder['SHIPMENT_CODE'] : false),
 					'DESCR' => OrderDiscountManager::formatArrayDescription($descr),
 					'DESCR_DATA' => $descr
 				);
@@ -5010,7 +5001,7 @@ class Discount
 					{
 						$currentList[$index]['MODULES'] = $this->cacheDiscountModules[$code];
 					}
-					$currentList[$index]['UNPACK_EXECUTE'] = null;
+/*					$currentList[$index]['UNPACK_EXECUTE'] = null;
 					eval('$currentList[$index]["UNPACK_EXECUTE"]='.$discount['UNPACK'].';');
 					$currentList[$index]['APPLICATION_EXECUTE'] = null;
 					eval('$currentList[$index]["APPLICATION_EXECUTE"]='.$discount['APPLICATION'].';');
@@ -5022,7 +5013,7 @@ class Discount
 						eval('$currentList[$index]["PREDICTIONS_APP_EXECUTE"]='.$discount['PREDICTIONS_APP'].';');
 						if (!is_callable($currentList[$index]['PREDICTIONS_APP_EXECUTE']))
 							$currentList[$index]['PREDICTIONS_APP_EXECUTE'] = null;
-					}
+					} */
 				}
 				unset($code, $discount, $index);
 			}
@@ -5085,11 +5076,11 @@ class Discount
 			}
 			$skipPriorityLevel = null;
 
-			$index++;
 			$this->fillCurrentStep(array('discount' => $discount));
 			if (!$this->checkDiscountConditions())
 				continue;
 
+			$index++;
 			if (!$roundApply && $discount['EXECUTE_MODULE'] == 'sale')
 			{
 				$this->roundFullBasketPriceByIndex(array(
@@ -5637,5 +5628,60 @@ class Discount
 	private function isUsedDiscountCompatibility()
 	{
 		return (Compatible\DiscountCompatibility::isUsed() && Compatible\DiscountCompatibility::isInited());
+	}
+
+	/**
+	 * Get description for old actions.
+	 *
+	 * @param array $stepResult		Action results.
+	 * @return array
+	 */
+	private function getSimpleActionDescription(array $stepResult)
+	{
+		$result = array();
+		if (!empty($stepResult['BASKET']))
+		{
+			$data = OrderDiscountManager::prepareDiscountDescription(
+				OrderDiscountManager::DESCR_TYPE_SIMPLE,
+				Loc::getMessage('BX_SALE_DISCOUNT_MESS_SIMPLE_DESCRIPTION_BASKET')
+			);
+			if ($data->isSuccess())
+			{
+				$result['BASKET'] = array(
+					0 => $data->getData()
+				);
+			}
+			unset($data);
+		}
+		if (!empty($stepResult['DELIVERY']))
+		{
+			$data = OrderDiscountManager::prepareDiscountDescription(
+				OrderDiscountManager::DESCR_TYPE_SIMPLE,
+				Loc::getMessage('BX_SALE_DISCOUNT_MESS_SIMPLE_DESCRIPTION_DELIVERY')
+			);
+			if ($data->isSuccess())
+			{
+				$result['DELIVERY'] = array(
+					0 => $data->getData()
+				);
+			}
+			unset($data);
+		}
+		if (empty($result))
+		{
+			$data = OrderDiscountManager::prepareDiscountDescription(
+				OrderDiscountManager::DESCR_TYPE_SIMPLE,
+				Loc::getMessage('BX_SALE_DISCOUNT_MESS_SIMPLE_DESCRIPTION_UNKNOWN')
+			);
+			if ($data->isSuccess())
+			{
+				$result['BASKET'] = array(
+					0 => $data->getData()
+				);
+			}
+			unset($data);
+		}
+
+		return $result;
 	}
 }

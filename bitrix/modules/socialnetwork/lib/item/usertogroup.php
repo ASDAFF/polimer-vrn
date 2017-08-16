@@ -465,7 +465,13 @@ class UserToGroup
 
 		$res = \CUser::getById($userId);
 		$user = $res->fetch();
-		if (empty($user))
+		if (
+			empty($user)
+			|| (
+				isset($user['ACTIVE'])
+				&& $user['ACTIVE'] == 'N'
+			)
+		)
 		{
 			return $result;
 		}

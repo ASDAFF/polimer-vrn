@@ -18,6 +18,8 @@ class Log
 {
 	const EVENT_ID_POST = 'blog_post';
 	const EVENT_ID_POST_IMPORTANT = 'blog_post_important';
+	const EVENT_ID_POST_VOTE = 'blog_post_vote';
+	const EVENT_ID_POST_GRAT = 'blog_post_grat';
 
 	/**
 	 * Returns set EVENT_ID processed by handler to generate content for full index.
@@ -29,7 +31,9 @@ class Log
 	{
 		return array(
 			self::EVENT_ID_POST,
-			self::EVENT_ID_POST_IMPORTANT
+			self::EVENT_ID_POST_IMPORTANT,
+			self::EVENT_ID_POST_VOTE,
+			self::EVENT_ID_POST_GRAT
 		);
 	}
 

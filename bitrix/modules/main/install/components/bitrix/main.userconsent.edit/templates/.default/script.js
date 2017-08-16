@@ -111,12 +111,13 @@ var MainUserConsentEditManager = function(params)
 			return;
 		}
 
-		var node = document.createElement('TEXTAREA');
-		BX.addClass(node, 'main-user-consent-edit-popup-textarea');
-		node.disabled = true;
-		this.agreementViewPopupContentNode = node;
 		if (!this.agreementViewPopup)
 		{
+			var node = document.createElement('TEXTAREA');
+			BX.addClass(node, 'main-user-consent-edit-popup-textarea');
+			node.disabled = true;
+			this.agreementViewPopupContentNode = node;
+
 			this.agreementViewPopup = BX.PopupWindowManager.create(
 				'main-user-consent-edit-view-agreement',
 				null,
@@ -126,6 +127,7 @@ var MainUserConsentEditManager = function(params)
 					autoHide: true,
 					lightShadow: true,
 					closeByEsc: true,
+					closeIcon: true,
 					overlay: {backgroundColor: 'black', opacity: 500},
 					buttons: [
 						new BX.PopupWindowButton({

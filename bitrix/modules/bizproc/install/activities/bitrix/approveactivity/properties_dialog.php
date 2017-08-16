@@ -139,3 +139,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 		</select>
 	</td>
 </tr>
+<tr>
+	<td align="right"><?= GetMessage("BPAR_PD_DELEGATION_TYPE") ?>:</td>
+	<td>
+		<select name="delegation_type">
+			<?foreach (CBPTaskDelegationType::getSelectList() as $key => $label):?>
+			<option value="<?=htmlspecialcharsbx($key)?>>"<?= $arCurrentValues["delegation_type"] == $key ? " selected" : "" ?>><?=htmlspecialcharsbx($label)?></option>
+			<?endforeach;?>
+		</select>
+	</td>
+</tr>

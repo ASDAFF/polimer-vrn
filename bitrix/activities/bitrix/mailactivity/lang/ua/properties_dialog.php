@@ -12,4 +12,6 @@ $MESS["BPMA_PD_DIRRECT_MAIL_N"] = "Відправка через систему 
 $MESS["BPMA_PD_MAIL_SITE"] = "Сайт шаблону повідомлення";
 $MESS["BPMA_PD_MAIL_SITE_OTHER"] = "інший";
 $MESS["BPMA_PD_MAIL_SEPARATOR"] = "Роздільник поштових адрес";
+$MESS["BPMA_PD_FILE"] = "Вкладення";
+$MESS["BPMA_PD_FILE_DESCRIPTION"] = "Тільки для відправки через систему повідомлень";
 ?>

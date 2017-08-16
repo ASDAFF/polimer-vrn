@@ -152,14 +152,15 @@ if ($bCanProcess)
 			"PS_CURRENCY" => $GLOBALS["SALE_INPUT_PARAMS"]["ORDER"]["CURRENCY"],
 			"PS_RESPONSE_DATE" => Date(CDatabase::DateFormatToPHP(CLang::GetDateFormat("FULL", LANG)))
 		);
-	// You can uncomment this code if you want PAYED flag to be set automatically
-	/*
-	$arOrder = CSaleOrder::GetByID($ORDER_ID);
-	if ($arOrder["PRICE"] == $arFields["PS_SUM"] && $arFields["PS_STATUS"] == "Y")
+
+	if (CSalePaySystemAction::GetParamValue("AUTO_PAY") === 'Y')
 	{
-		CSaleOrder::PayOrder($arOrder["ID"], "Y");
+		$arOrder = CSaleOrder::GetByID($ORDER_ID);
+		if ($arOrder["PRICE"] == $arFields["PS_SUM"] && $arFields["PS_STATUS"] == "Y")
+		{
+			CSaleOrder::PayOrder($arOrder["ID"], "Y");
+		}
 	}
-	*/
 
 	CSaleOrder::Update($ORDER_ID, $arFields);
 

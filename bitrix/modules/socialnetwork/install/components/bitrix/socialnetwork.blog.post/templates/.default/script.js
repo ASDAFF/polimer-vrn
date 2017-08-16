@@ -26,7 +26,7 @@ function showMenuLinkInput(ind, url)
 		)
 		{
 			menuItemIconDone.style.display = 'inline-block';
-			BX.removeClass(BX(id + '-icon-animate'), 'post-menu-link-icon-animate-stroke');
+			BX.removeClass(BX(id + '-icon-animate'), 'post-menu-link-icon-animate');
 
 			BX.adjust(menuItemText, {
 				attrs: {
@@ -35,7 +35,7 @@ function showMenuLinkInput(ind, url)
 			});
 
 			setTimeout(function() {
-				BX.addClass(BX(id + '-icon-animate'), 'post-menu-link-icon-animate-stroke');
+				BX.addClass(BX(id + '-icon-animate'), 'post-menu-link-icon-animate');
 			}, 1);
 
 			setTimeout(function() {
@@ -395,11 +395,9 @@ function __blogPostSetFollow(log_id)
 
 					menuItems.push({
 						text: '<span id="post-menu-' + postData.logId + '-link-text">' + BX.message('BLOG_LINK') + '</span>' +
-							'<span class="post-menu-link-icon-wrap">' +
+							'<span id="post-menu-' + postData.logId + '-link-icon-animate" class="post-menu-link-icon-wrap">' +
 								'<span class="post-menu-link-icon" id="post-menu-' + postData.logId + '-link-icon-done" style="display: none;">' +
-									'<svg class="post-menu-link-icon-check" viewBox="0 -3 15 15">' +
-										'<polyline id="post-menu-' + postData.logId + '-link-icon-animate" points="2,5 5,8 11,2" class="post-menu-link-icon-polyline-path"/>' +
-									'</svg>' +
+
 								'</span>' +
 							'</span>',
 						onclick: function(e) {

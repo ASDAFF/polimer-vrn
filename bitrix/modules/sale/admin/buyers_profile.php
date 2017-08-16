@@ -430,11 +430,8 @@ $APPLICATION->SetTitle(GetMessage("BUYER_TITLE").$pageTitle);
 
 if(!empty($arUser))
 {
-	$dbStatus = CSaleStatus::GetList(array(), array(), false, false, array('ID', 'NAME', 'LID'));
-	$arStatusOrder = array();
-	while ($arStatus = $dbStatus->Fetch())
-		$arStatusOrder[$arStatus["ID"]] = $arStatus;
 
+	$orderStatusNames = \Bitrix\Sale\OrderStatus::getAllStatusesNames(LANGUAGE_ID);
 
 	//MAIN INFORMATION
 	$sTableID_tab1 = "tbl_sale_buyers_profile_tab1";
@@ -487,7 +484,7 @@ if(!empty($arUser))
 				$basketCount++;
 		}
 
-		$status = "[".$arOrderMain["STATUS_ID"]."] ".htmlspecialcharsbx($arStatusOrder[$arOrderMain["STATUS_ID"]]["NAME"])."<br />".$arOrderMain["DATE_STATUS"];
+		$status = "[".$arOrderMain["STATUS_ID"]."] ".htmlspecialcharsbx($orderStatusNames[$arOrderMain["STATUS_ID"]])."<br />".$arOrderMain["DATE_STATUS"];
 		$row->AddField("STATUS_ID", $status);
 
 		$payed = (($arOrderMain["PAYED"] == "Y") ? GetMessage("BUYERS_PAY_YES") : GetMessage("BUYERS_PAY_NO"));
@@ -861,7 +858,7 @@ if(!empty($arUser))
 
 		$row->AddField("ALLOW_DELIVERY", $allowDelivery);
 
-		$status = "[".$arOrder["STATUS_ID"]."] ".htmlspecialcharsbx($arStatusOrder[$arOrder["STATUS_ID"]]["NAME"])."<br />".$arOrder["DATE_STATUS"];
+		$status = "[".$arOrder["STATUS_ID"]."] ".htmlspecialcharsbx($orderStatusNames[$arOrder["STATUS_ID"]])."<br />".$arOrder["DATE_STATUS"];
 		$row->AddField("STATUS_ID", $status);
 
 		$orderProduct = "";

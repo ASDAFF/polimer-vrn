@@ -285,7 +285,7 @@ class Option
 		{
 			$con->queryExecute(
 				"UPDATE b_option SET ".
-				"	VALUE = '".$sqlHelper->forSql($value, 2000)."' ".
+				"	VALUE = '".$sqlHelper->forSql($value)."' ".
 				"WHERE ".$strSqlWhere
 			);
 		}
@@ -298,7 +298,7 @@ class Option
 					($siteId == "") ? "NULL" : "'".$sqlHelper->forSql($siteId, 2)."'",
 					$sqlHelper->forSql($moduleId, 50),
 					$sqlHelper->forSql($name, 50),
-					$sqlHelper->forSql($value, 2000)
+					$sqlHelper->forSql($value)
 				)
 			);
 		}

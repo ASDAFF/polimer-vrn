@@ -580,7 +580,7 @@ function makeSelectorFromPaySystems($psTypeYandex, $psIdValue, $personTypeId, $s
 		));
 
 		while($ps = $dbRes->fetch())
-			$allPaySystems[$ps['ID']] = $ps['NAME'];
+			$allPaySystems[$ps['ID']] = htmlspecialcharsbx($ps['NAME']);
 	}
 
 	if(!isset($paySystems[$siteId]))

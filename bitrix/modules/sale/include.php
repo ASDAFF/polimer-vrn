@@ -6,6 +6,7 @@ global $DBType;
 
 IncludeModuleLangFile(__FILE__);
 
+
 $GLOBALS["SALE_FIELD_TYPES"] = array(
 	"TEXT" => GetMessage("SALE_TYPE_TEXT"),
 	"CHECKBOX" => GetMessage("SALE_TYPE_CHECKBOX"),
@@ -539,6 +540,8 @@ CModule::AddAutoloadClasses(
 		'\Bitrix\Sale\Cashbox\Restrictions\Manager' => 'lib/cashbox/restrictions/manager.php',
 
 		'\Bitrix\Sale\Notify' => 'lib/notify.php',
+		'\Bitrix\Sale\BuyerStatistic'=> '/lib/buyerstatistic.php',
+		'\Bitrix\Sale\Internals\BuyerStatisticTable'=> '/lib/internals/buyerstatistic.php',
 
 		'CAdminSaleList' => 'general/admin_lib.php',
 		'\Bitrix\Sale\Helpers\Admin\SkuProps' => 'lib/helpers/admin/skuprops.php',

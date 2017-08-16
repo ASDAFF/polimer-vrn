@@ -4,6 +4,9 @@ namespace Bitrix\Socialnetwork\Livefeed;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\Item\Subscription;
+use Bitrix\Socialnetwork\UserContentViewTable;
+use Bitrix\Socialnetwork\Item\UserContentView;
 
 Loc::loadMessages(__FILE__);
 
@@ -11,12 +14,23 @@ abstract class Provider
 {
 	const DATA_RESULT_TYPE_SOURCE = 'SOURCE';
 
+	const TYPE_POST = 'POST';
+	const TYPE_COMMENT = 'COMMENT';
+
 	const DATA_ENTITY_TYPE_BLOG_POST = 'BLOG_POST';
 	const DATA_ENTITY_TYPE_BLOG_COMMENT = 'BLOG_COMMENT';
+	const DATA_ENTITY_TYPE_TASKS_TASK = 'TASK';
+	const DATA_ENTITY_TYPE_FORUM_POST = 'FORUM_POST';
+	const DATA_ENTITY_TYPE_CALENDAR_EVENT = 'CALENDAR_EVENT';
+	const DATA_ENTITY_TYPE_LOG_ENTRY = 'LOG_ENTRY';
+	const DATA_ENTITY_TYPE_LOG_COMMENT = 'LOG_COMMENT';
+	const DATA_ENTITY_TYPE_RATING_LIST = 'RATING_LIST';
 
 	const PERMISSION_DENY = 'D';
 	const PERMISSION_READ = 'I';
 	const PERMISSION_FULL = 'W';
+
+	const CONTENT_TYPE_ID = false;
 
 	protected $entityId = 0;
 	protected $logId = 0;
@@ -64,6 +78,14 @@ abstract class Provider
 		return false;
 	}
 
+	final private static function getTypes()
+	{
+		return array(
+			self::TYPE_POST,
+			self::TYPE_COMMENT,
+		);
+	}
+
 	final private static function getProvider($entityType)
 	{
 		switch ($entityType)
@@ -73,6 +95,24 @@ abstract class Provider
 				break;
 			case self::DATA_ENTITY_TYPE_BLOG_COMMENT:
 				$provider = new \Bitrix\Socialnetwork\Livefeed\BlogComment();
+				break;
+			case self::DATA_ENTITY_TYPE_TASKS_TASK:
+				$provider = new \Bitrix\Socialnetwork\Livefeed\TasksTask();
+				break;
+			case self::DATA_ENTITY_TYPE_FORUM_POST:
+				$provider = new \Bitrix\Socialnetwork\Livefeed\ForumPost();
+				break;
+			case self::DATA_ENTITY_TYPE_CALENDAR_EVENT:
+				$provider = new \Bitrix\Socialnetwork\Livefeed\CalendarEvent();
+				break;
+			case self::DATA_ENTITY_TYPE_LOG_ENTRY:
+				$provider = new \Bitrix\Socialnetwork\Livefeed\LogEvent();
+				break;
+			case self::DATA_ENTITY_TYPE_LOG_COMMENT:
+				$provider = new \Bitrix\Socialnetwork\Livefeed\LogComment();
+				break;
+			case self::DATA_ENTITY_TYPE_RATING_LIST:
+				$provider = new \Bitrix\Socialnetwork\Livefeed\RatingVoteList();
 				break;
 			default:
 				$provider = false;
@@ -94,6 +134,13 @@ abstract class Provider
 			)
 			{
 				$provider->cloneDiskObjects = true;
+			}
+			if (
+				isset($params['LOG_ID'])
+				&& intval($params['LOG_ID']) > 0
+			)
+			{
+				$provider->setLogId(intval($params['LOG_ID']));
 			}
 		}
 
@@ -269,6 +316,11 @@ abstract class Provider
 	final protected function getEntityId()
 	{
 		return $this->entityId;
+	}
+
+	final protected function setLogId($logId)
+	{
+		$this->logId = $logId;
 	}
 
 	final protected function setSourceFields(array $fields)
@@ -501,5 +553,197 @@ abstract class Provider
 	public function getLiveFeedUrl()
 	{
 		return '';
+	}
+
+	final function getContentTypeId()
+	{
+		return static::CONTENT_TYPE_ID;
+	}
+
+	public static function getContentId($event = array())
+	{
+		$result = false;
+
+		if (!is_array($event))
+		{
+			return $result;
+		}
+
+		$contentEntityType = $contentEntityId = false;
+
+		if (
+			!empty($event["RATING_TYPE_ID"])
+			&& !empty($event["RATING_ENTITY_ID"])
+			&& intval($event["RATING_ENTITY_ID"]) > 0
+		)
+		{
+			$contentEntityType = $event["RATING_TYPE_ID"];
+			$contentEntityId = intval($event["RATING_ENTITY_ID"]);
+		}
+		elseif (
+			!empty($event["EVENT_ID"])
+			&& !empty($event["SOURCE_ID"])
+			&& intval($event["SOURCE_ID"]) > 0
+		)
+		{
+			switch ($event["EVENT_ID"])
+			{
+				case "tasks":
+					$contentEntityType = self::DATA_ENTITY_TYPE_TASKS_TASK;
+					$contentEntityId = intval($event["SOURCE_ID"]);
+					break;
+				case "calendar":
+					$contentEntityType = self::DATA_ENTITY_TYPE_CALENDAR_EVENT;
+					$contentEntityId = intval($event["SOURCE_ID"]);
+					break;
+				default:
+			}
+		}
+
+		if (
+			$contentEntityType
+			&& $contentEntityId > 0
+		)
+		{
+			$result = array(
+				'ENTITY_TYPE' => $contentEntityType,
+				'ENTITY_ID' => $contentEntityId
+			);
+		}
+
+		return $result;
+	}
+
+	public function setContentView($params = array())
+	{
+		global $USER;
+
+		if (!is_array($params))
+		{
+			$params = array();
+		}
+
+		$userId = (
+			isset($params["user_id"])
+			&& intval($params["user_id"]) > 0
+				? intval($params["user_id"])
+				: (
+					is_object($USER)
+						? $USER->getId()
+						: 0
+				)
+		);
+
+		$contentTypeId = $this->getContentTypeId();
+		$contentEntityId = $this->getEntityId();
+		$logId = $this->getLogId();
+		$save = (!isset($params["save"]) || !!$params["save"]);
+
+		if (
+			intval($userId) <= 0
+			|| !$contentTypeId
+		)
+		{
+			return false;
+		}
+
+		$viewParams = array(
+			'userId' => $userId,
+			'typeId' => $contentTypeId,
+			'entityId' => $contentEntityId,
+			'logId' => $logId,
+			'save' => $save
+		);
+
+		$result = UserContentViewTable::set($viewParams);
+
+		if (
+			$result
+			&& isset($result['success'])
+			&& $result['success']
+		)
+		{
+/*
+			TODO: markAsRead sonet module notifications
+			ContentViewHandler::onContentViewed($viewParams);
+*/
+			if (UserContentView::getAvailability())
+			{
+				if (
+					isset($result['savedInDB'])
+					&& $result['savedInDB']
+				)
+				{
+					if (Loader::includeModule('pull'))
+					{
+						\CPullWatch::addToStack('CONTENTVIEW'.$contentTypeId."-".$contentEntityId,
+							array(
+								'module_id' => 'contentview',
+								'command' => 'add',
+								'expiry' => 60,
+								'params' => array(
+									"USER_ID" => $userId,
+									"TYPE_ID" => $contentTypeId,
+									"ENTITY_ID" => $contentEntityId,
+									"CONTENT_ID" => $contentTypeId."-".$contentEntityId
+								)
+							)
+						);
+					}
+				}
+
+				if ($logId > 0)
+				{
+					Subscription::onContentViewed(array(
+						'userId' => $userId,
+						'logId' => $logId
+					));
+				}
+
+				$event = new Main\Event(
+					'socialnetwork', 'onContentViewed',
+					$viewParams
+				);
+				$event->send();
+			}
+		}
+
+		return $result;
+	}
+
+	final public static function getEntityData(array $params)
+	{
+		$entityType = false;
+		$entityId = false;
+
+		$type = (
+			isset($params['TYPE'])
+			&& in_array($params['TYPE'], self::getTypes())
+				? $params['TYPE']
+				: self::TYPE_POST
+		);
+
+		if (!empty($params['EVENT_ID']))
+		{
+			$blogPostLivefeedProvider = new BlogPost;
+			if (
+				$type == self::TYPE_POST
+				&& in_array($params['EVENT_ID'], $blogPostLivefeedProvider->getEventId())
+			)
+			{
+				$entityType = self::DATA_ENTITY_TYPE_BLOG_POST;
+				$entityId = (isset($params['SOURCE_ID']) ? intval($params['SOURCE_ID']) : false);
+			}
+		}
+
+		return (
+			$entityType
+			&& $entityId
+				? array(
+					'ENTITY_TYPE' => $entityType,
+					'ENTITY_ID' => $entityId
+				)
+				: false
+		);
 	}
 }

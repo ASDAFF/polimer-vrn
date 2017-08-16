@@ -181,43 +181,51 @@ $this->setFrameMode(true);
             <div class="tab tab_nal active">
                <a href="#" class="mtb" onclick="return false">Наличие в магазинах</a>
                <div class="content">
-                  <?$APPLICATION->IncludeComponent("bitrix:catalog.store.amount", "store", Array(
-                      "CACHE_TIME" => "36000",	// Р’СЂРµРјСЏ РєРµС€РёСЂРѕРІР°РЅРёСЏ (СЃРµРє.)
-                      "CACHE_TYPE" => "N",	// РўРёРї РєРµС€РёСЂРѕРІР°РЅРёСЏ
-                      "ELEMENT_CODE" => "",	// РљРѕРґ С‚РѕРІР°СЂР°
-                      "ELEMENT_ID" => $arResult['ID'],	// РўРѕРІР°СЂ
-                      "FIELDS" => array(	// РџРѕР»СЏ
-                          0 => "TITLE",
-                          1 => "ADDRESS",
-                          2 => "DESCRIPTION",
-                          3 => "PHONE",
-                          4 => "EMAIL",
-                          5 => "IMAGE_ID",
-                          6 => "COORDINATES",
-                          7 => "SCHEDULE",
-                          8 => "",
-                      ),
-                      "IBLOCK_ID" => "11",	// Р�РЅС„РѕР±Р»РѕРє
-                      "IBLOCK_TYPE" => "1c_catalog",	// РўРёРї РёРЅС„РѕР±Р»РѕРєР°
-                      "MAIN_TITLE" => "",	// Р—Р°РіРѕР»РѕРІРѕРє
-                      "MIN_AMOUNT" => "0",
-                      "OFFER_ID" => "",	// РўРѕСЂРіРѕРІРѕРµ РїСЂРµРґР»РѕР¶РµРЅРёРµ
-                      "SHOW_EMPTY_STORE" => "Y",	// РћС‚РѕР±СЂР°Р¶Р°С‚СЊ СЃРєР»Р°Рґ РїСЂРё РѕС‚СЃСѓС‚СЃС‚РІРёРё РЅР° РЅРµРј С‚РѕРІР°СЂР°
-                      "SHOW_GENERAL_STORE_INFORMATION" => "N",	// РџРѕРєР°Р·С‹РІР°С‚СЊ РѕР±С‰СѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ РїРѕ СЃРєР»Р°РґР°Рј
-                      "STORES" => array(	// РЎРєР»Р°РґС‹
-                          0 => "1",
-                          1 => "2",
-                          2 => "",
-                      ),
-                      "STORE_PATH" => "",	// URL РЅР° СЃС‚СЂР°РЅРёС†Сѓ, РіРґРµ Р±СѓРґРµС‚ РїРѕРєР°Р·Р°РЅР° РґРµС‚Р°Р»СЊРЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ СЃРєР»Р°РґРµ
-                      "USER_FIELDS" => array(	// РЎРІРѕР№СЃС‚РІР°
-                          0 => "",
-                          1 => "",
-                      ),
-                      "USE_MIN_AMOUNT" => "N",	// РџРѕРєР°Р·С‹РІР°С‚СЊ РІРјРµСЃС‚Рѕ С‚РѕС‡РЅРѕРіРѕ РєРѕР»РёС‡РµСЃС‚РІР° РёРЅС„РѕСЂРјР°С†РёСЋ Рѕ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕСЃС‚Рё
-                  ),
-                      false
-                  );?>
+                  <?$APPLICATION->IncludeComponent(
+	"bitrix:catalog.store.amount", 
+	"store", 
+	array(
+		"CACHE_TIME" => "36000",
+		"CACHE_TYPE" => "N",
+		"ELEMENT_CODE" => "",
+		"ELEMENT_ID" => $arResult["ID"],
+		"FIELDS" => array(
+			0 => "TITLE",
+			1 => "ADDRESS",
+			2 => "DESCRIPTION",
+			3 => "PHONE",
+			4 => "EMAIL",
+			5 => "IMAGE_ID",
+			6 => "COORDINATES",
+			7 => "SCHEDULE",
+			8 => "",
+		),
+		"IBLOCK_ID" => "19",
+		"IBLOCK_TYPE" => "1c_catalog",
+		"MAIN_TITLE" => "",
+		"MIN_AMOUNT" => "0",
+		"OFFER_ID" => "",
+		"SHOW_EMPTY_STORE" => "Y",
+		"SHOW_GENERAL_STORE_INFORMATION" => "N",
+		"STORES" => array(
+			0 => "3",
+			1 => "4",
+			2 => "5",
+			3 => "6",
+			4 => "7",
+			5 => "8",
+			6 => "",
+		),
+		"STORE_PATH" => "",
+		"USER_FIELDS" => array(
+			0 => "",
+			1 => "",
+		),
+		"USE_MIN_AMOUNT" => "N",
+		"COMPONENT_TEMPLATE" => "store"
+	),
+	false
+);?>
                </div>
             </div>
          </div>

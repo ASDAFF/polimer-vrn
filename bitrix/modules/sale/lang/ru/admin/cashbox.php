@@ -24,6 +24,6 @@ $MESS["SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_5_HELP_DRIVER_2_DESC"] = "Став�
 $MESS["SALE_CASHBOX_LOAD_HERE"] = "Скачать здесь";
 $MESS["SALE_CASHBOX_LOAD"] = "Скачать";
 $MESS["SALE_CASHBOX_CONNECT_TO_ESHOP"] = "Подключить ККМ к интернет-магазину";
-$MESS["SALE_CASHBOX_CONNECT_INSTRUCTION_APP_STEP_1"] = "В настройках приложения пропишите данный урл:";
+$MESS["SALE_CASHBOX_CONNECT_INSTRUCTION_APP_STEP_1"] = "В настройках приложения пропишите данный URL:";
 $MESS["SALE_CASHBOX_CONNECT_INSTRUCTION_APP_STEP_2"] = "Запустите наше приложение для работы с кассой на компьютере";
 $MESS["SALE_CASHBOX_CONNECT_INSTRUCTION_APP_STEP_3"] = "Для настройки и активации касс, перейдите на страницу <a href=\"/bitrix/admin/sale_cashbox_list.php?lang=".LANG."\">списка</a>";

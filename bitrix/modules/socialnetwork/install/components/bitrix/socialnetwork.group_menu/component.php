@@ -160,7 +160,6 @@ if (
 
 			$arResult["ActiveFeatures"] = CSocNetFeatures::GetActiveFeaturesNames(SONET_ENTITY_GROUP, $arResult["Group"]["ID"]);
 
-
 			$arResult["CanView"]["files"] = array_key_exists("files", $arResult["ActiveFeatures"]);
 			if($arResult["CanView"]["files"])
 			{

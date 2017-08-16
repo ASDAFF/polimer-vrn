@@ -204,9 +204,8 @@ foreach($arDatePeriods as $key => $arPeriod)
 		$arOrderStats[$key][$status_code] = 0;
 		$arOrderStats[$key]["PRICE_".$status_code] = 0;
 	}
-
 	$obCache = new CPHPCache;
-	$cache_id = $key."_".md5(serialize($arFilterLID))."_".md5(serialize($arFilterPerms))."_".md5(serialize($arGadgetParams["ORDERS_STATUS_1"]));
+	$cache_id = $key."_".md5(serialize($arPeriod))."_".md5(serialize($arFilterLID))."_".md5(serialize($arFilterPerms))."_".md5(serialize($arGadgetParams["ORDERS_STATUS_1"]));
 	if($obCache->InitCache($arPeriod["CACHE_TIME"], $cache_id, "/"))
 	{
 		$vars = $obCache->GetVars();

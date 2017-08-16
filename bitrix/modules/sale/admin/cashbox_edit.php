@@ -211,7 +211,15 @@ $tabControl->BeginCustomField('HANDLER', GetMessage("SALE_CASHBOX_HANDLER"));
 	<tr class="adm-detail-required-field">
 		<td width="40%"><?=Loc::getMessage("SALE_CASHBOX_HANDLER");?>:</td>
 		<td width="60%" valign="top">
-			<select name="HANDLER" id="HANDLER" onchange="BX.Sale.Cashbox.reloadSettings()">
+			<?
+				$disabled = '';
+				if ($id == Cashbox\Cashbox1C::getId())
+				{
+					$disabled = 'disabled';
+					echo '<input type="hidden" name="HANDLER" id="HANDLER" value="'.$cashbox['HANDLER'].'">';
+				}
+			?>
+			<select name="HANDLER" id="HANDLER" onchange="BX.Sale.Cashbox.reloadSettings()" <?=$disabled;?>>
 				<?
 					$handlerList = Bitrix\Sale\Cashbox\Cashbox::getHandlerList();
 				?>
@@ -288,7 +296,21 @@ $tabControl->BeginCustomField('KKM_ID', GetMessage("SALE_CASHBOX_KKM_ID"));
 $tabControl->EndCustomField('KKM_ID', '');
 
 $numberKkm = $request->get('NUMBER_KKM') ? $request->get('NUMBER_KKM') : $cashbox['NUMBER_KKM'];
-$tabControl->AddEditField('NUMBER_KKM', Loc::getMessage("SALE_CASHBOX_EXTERNAL_UUID").':', false, array('SIZE' => 40), $numberKkm);
+$tabControl->BeginCustomField('NUMBER_KKM', GetMessage("SALE_CASHBOX_EXTERNAL_UUID"));
+?>
+	<tr>
+		<td width="40%"><?=Loc::getMessage("SALE_CASHBOX_EXTERNAL_UUID");?>:</td>
+		<td width="60%">
+			<input type="text" ID="NUMBER_KKM" name="NUMBER_KKM" value="<?=$numberKkm;?>">
+			<span id="hint_NUMBER_KKM"></span>
+
+		</td>
+	</tr>
+	<script>
+		BX.hint_replace(BX('hint_NUMBER_KKM'), '<?=Loc::getMessage('SALE_CASHBOX_EXTERNAL_UUID_HINT');?>');
+	</script>
+<?
+$tabControl->EndCustomField('NUMBER_KKM', '');
 
 $isOffline = isset($cashbox['USE_OFFLINE']) ? $cashbox['USE_OFFLINE'] : 'N';
 $tabControl->AddCheckBoxField("USE_OFFLINE", GetMessage("SALE_CASHBOX_USE_OFFLINE").':', false, 'Y', $isOffline === 'Y');

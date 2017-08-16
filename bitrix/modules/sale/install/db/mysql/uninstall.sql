@@ -114,3 +114,4 @@ drop table if exists b_sale_kkm_model;
 drop table if exists b_sale_cashbox;
 drop table if exists b_sale_cashbox_check;
 drop table if exists b_sale_cashbox_z_report;
+drop table if exists b_sale_buyer_stat;

@@ -22,7 +22,8 @@ elseif (strlen($arResult["FatalError"])>0)
 	return;
 }
 
-CUtil::InitJSCore(array("ajax", "window", "tooltip", "popup", "fx", "viewer"));
+CUtil::InitJSCore(array("ajax", "window", "tooltip", "popup", "fx", "viewer", "content_view"));
+
 $APPLICATION->SetUniqueJS('live_feed_v2'.($arParams["IS_CRM"] != "Y" ? "" : "_crm"));
 $APPLICATION->SetUniqueCSS('live_feed_v2'.($arParams["IS_CRM"] != "Y" ? "" : "_crm"));
 
@@ -534,11 +535,17 @@ if (!$arResult["AJAX_CALL"])
 		{
 			if(\Bitrix\Main\Page\Frame::isAjaxRequest())
 			{
-				?>setTimeout(function() { oLF.recalcMoreButton(); }, 1000);<?
+				?>setTimeout(function() {
+					oLF.recalcMoreButton();
+					oLF.registerViewAreaList();
+				}, 1000);<?
 			}
 			else
 			{
-				?>BX.bind(window, 'load', function() { oLF.recalcMoreButton(); });<?
+				?>BX.bind(window, 'load', function() {
+					oLF.recalcMoreButton();
+					oLF.registerViewAreaList();
+				});<?
 			}
 		}
 	}
@@ -547,7 +554,9 @@ if (!$arResult["AJAX_CALL"])
 	{
 		?>
 		BX.ready(function() {
-			window.addEventListener("scroll", BX.throttle(BX.LazyLoad.onScroll, 80));
+			window.addEventListener("scroll", BX.throttle(function() {
+				BX.LazyLoad.onScroll();
+			}, 80));
 		});
 		<?
 	}
@@ -608,6 +617,9 @@ if (
 	&& !empty($arResult["Events"])
 )
 {
+	$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+	$blogPostEventIdList = $blogPostLivefeedProvider->getEventId();
+
 	foreach ($arResult["Events"] as $arEvent)
 	{
 		if (!empty($arEvent))
@@ -624,7 +636,7 @@ if (
 				&& $event_date_log_ts > $arResult["LAST_LOG_TS"]
 			);
 
-			if(in_array($arEvent["EVENT_ID"], Array("blog_post", "blog_post_important", "blog_post_micro", "blog_comment", "blog_comment_micro")))
+			if(in_array($arEvent["EVENT_ID"], array_merge($blogPostEventIdList, array("blog_comment", "blog_comment_micro"))))
 			{
 				if (intval($arEvent["SOURCE_ID"]) <= 0)
 				{
@@ -731,6 +743,16 @@ if (
 					$arComponentParams["FAVORITES_USER_ID"] = (array_key_exists("FAVORITES_USER_ID", $arEvent) && intval($arEvent["FAVORITES_USER_ID"]) > 0 ? intval($arEvent["FAVORITES_USER_ID"]) : 0);
 				}
 
+				if (!empty($arEvent['CONTENT_ID']))
+				{
+					$arComponentParams['CONTENT_ID'] = $arEvent['CONTENT_ID'];
+					$arComponentParams['CONTENT_VIEW_CNT'] = (
+						!empty($arResult["ContentViewData"][$arEvent['CONTENT_ID']])
+							? $arResult["ContentViewData"][$arEvent['CONTENT_ID']]['CNT']
+							: 0
+					);
+				}
+
 				$APPLICATION->IncludeComponent(
 					"bitrix:socialnetwork.blog.post",
 					"",
@@ -741,21 +763,21 @@ if (
 			else
 			{
 				$arComponentParams = array_merge($arParams, array(
-						"COMMENT_ID" => intval($_REQUEST["commentId"]),
-						"LOG_ID" => $arEvent["ID"],
-						"LAST_LOG_TS" => ($arParams["SET_LOG_COUNTER"] == "Y" ? $arResult["LAST_LOG_TS"] : 0),
-						"COUNTER_TYPE" => $arResult["COUNTER_TYPE"],
-						"AJAX_CALL" => $arResult["AJAX_CALL"],
-						"bReload" => $arResult["bReload"],
-						"bGetComments" => $arResult["bGetComments"],
-						"IND" => $ind,
-						"CURRENT_PAGE_DATE" => $arResult["CURRENT_PAGE_DATE"],
-						"EVENT" => array(
-							"IS_UNREAD" => $is_unread
-						),
-						"LAZYLOAD" => "Y"
-					)
-				);
+					"COMMENT_ID" => intval($_REQUEST["commentId"]),
+					"LOG_ID" => $arEvent["ID"],
+					"LAST_LOG_TS" => ($arParams["SET_LOG_COUNTER"] == "Y" ? $arResult["LAST_LOG_TS"] : 0),
+					"COUNTER_TYPE" => $arResult["COUNTER_TYPE"],
+					"AJAX_CALL" => $arResult["AJAX_CALL"],
+					"bReload" => $arResult["bReload"],
+					"bGetComments" => $arResult["bGetComments"],
+					"IND" => $ind,
+					"CURRENT_PAGE_DATE" => $arResult["CURRENT_PAGE_DATE"],
+					"EVENT" => array(
+						"IS_UNREAD" => $is_unread
+					),
+					"LAZYLOAD" => "Y",
+					"FROM_LOG" => (isset($arParams["LOG_ID"]) && intval($arParams["LOG_ID"]) > 0 ? "N" : "Y")
+				));
 
 				if ($USER->isAuthorized())
 				{
@@ -780,7 +802,19 @@ if (
 				}
 
 				if ($arResult["CURRENT_PAGE_DATE"])
+				{
 					$arComponentParams["CURRENT_PAGE_DATE"] = $arResult["CURRENT_PAGE_DATE"];
+				}
+
+				if (!empty($arEvent['CONTENT_ID']))
+				{
+					$arComponentParams['CONTENT_ID'] = $arEvent['CONTENT_ID'];
+
+					if (!empty($arResult["ContentViewData"][$arEvent['CONTENT_ID']]))
+					{
+						$arComponentParams['CONTENT_VIEW_CNT'] = $arResult["ContentViewData"][$arEvent['CONTENT_ID']]['CNT'];
+					}
+				}
 
 				$APPLICATION->IncludeComponent(
 					"bitrix:socialnetwork.log.entry",

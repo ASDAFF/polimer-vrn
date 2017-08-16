@@ -490,12 +490,17 @@ class Payment
 				$originalValues = $this->fields->getOriginalValues();
 				/** @var Sale\PaySystem\Service $ps */
 				$ps = $this->getPaySystem();
-				if (($originalValues["PAID"] != $this->getField("PAID"))
-					&& ($ps->getField("CAN_PRINT_CHECK") == "Y"))
+				if ($originalValues["PAID"] != $this->getField("PAID"))
 				{
 					/** @var PaymentCollection $col */
 					$col = $this->getCollection();
-					Cashbox\Internals\Pool::addDoc($col->getOrder()->getInternalId(), $this);
+					$order = $col->getOrder();
+					if ($ps->getField("CAN_PRINT_CHECK") == "Y")
+					{
+						Cashbox\Internals\Pool::addDoc($order->getInternalId(), $this);
+					}
+
+					BuyerStatistic::calculate($order->getUserId(), $order->getCurrency(), $order->getSiteId());
 				}
 			}
 

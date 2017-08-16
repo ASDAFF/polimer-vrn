@@ -458,67 +458,83 @@ class ComponentHelper
 
 		$comment["ATTACHMENTS"] = $comment["PROPS"] = array();
 
-		if($comment["HAS_PROPS"] != "N")
+		if ($commentAuxProvider = \Bitrix\Socialnetwork\CommentAux\Base::findProvider(
+			$comment,
+			array(
+				"mobile" => (isset($params["MOBILE"]) && $params["MOBILE"] == "Y"),
+				"mail" => (isset($params["MAIL"]) && $params["MAIL"] == "Y"),
+				"cache" => true
+			)
+		))
 		{
-			$userFields = $comment["PROPS"] = $USER_FIELD_MANAGER->getUserFields("BLOG_COMMENT", $comment["ID"], $languageId);
-			$commentUf = array("UF_BLOG_COMMENT_FILE");
-			foreach ($userFields as $fieldName => $userField)
+			$comment["POST_TEXT_FORMATTED"] = $commentAuxProvider->getText();
+			$arComment["AUX_TYPE"] = $commentAuxProvider->getType();
+		}
+		else
+		{
+			if($comment["HAS_PROPS"] != "N")
 			{
-				if (!in_array($fieldName, $commentUf))
+				$userFields = $comment["PROPS"] = $USER_FIELD_MANAGER->getUserFields("BLOG_COMMENT", $comment["ID"], $languageId);
+				$commentUf = array("UF_BLOG_COMMENT_FILE");
+				foreach ($userFields as $fieldName => $userField)
 				{
-					unset($userFields[$fieldName]);
+					if (!in_array($fieldName, $commentUf))
+					{
+						unset($userFields[$fieldName]);
+					}
+				}
+
+				if (
+					!empty($userFields["UF_BLOG_COMMENT_FILE"])
+					&& !empty($userFields["UF_BLOG_COMMENT_FILE"]["VALUE"])
+				)
+				{
+					$comment["ATTACHMENTS"] = self::getAttachmentsData($userFields["UF_BLOG_COMMENT_FILE"]["VALUE"], $comment["BLOG_GROUP_SITE_ID"]);
+				}
+
+				if (
+					$isMail
+					&& isset($comment["PROPS"]["UF_BLOG_COMM_URL_PRV"])
+				)
+				{
+					unset($comment["PROPS"]["UF_BLOG_COMM_URL_PRV"]);
 				}
 			}
 
-			if (
-				!empty($userFields["UF_BLOG_COMMENT_FILE"])
-				&& !empty($userFields["UF_BLOG_COMMENT_FILE"]["VALUE"])
-			)
-			{
-				$comment["ATTACHMENTS"] = self::getAttachmentsData($userFields["UF_BLOG_COMMENT_FILE"]["VALUE"], $comment["BLOG_GROUP_SITE_ID"]);
-			}
+			$comment["POST_TEXT"] = self::convertDiskFileBBCode(
+				$comment["POST_TEXT"],
+				'BLOG_COMMENT',
+				$comment["ID"],
+				$comment["AUTHOR_ID"],
+				$comment["ATTACHMENTS"]
+			);
 
-			if (
-				$isMail
-				&& isset($comment["PROPS"]["UF_BLOG_COMM_URL_PRV"])
-			)
+			$comment["POST_TEXT_FORMATTED"] = preg_replace(
+				array(
+					'|\[DISK\sFILE\sID=[n]*\d+\]|',
+					'|\[DOCUMENT\sID=[n]*\d+\]|'
+				),
+				'',
+				$comment["POST_TEXT"]
+			);
+
+			$comment["POST_TEXT_FORMATTED"] = preg_replace(
+				"/\[USER\s*=\s*([^\]]*)\](.+?)\[\/USER\]/is".BX_UTF_PCRE_MODIFIER,
+				"\\2",
+				$comment["POST_TEXT_FORMATTED"]
+			);
+
+			if ($p)
 			{
-				unset($comment["PROPS"]["UF_BLOG_COMM_URL_PRV"]);
+				$p->arUserfields = array();
 			}
+			$images = array();
+			$allow = array("IMAGE" => "Y");
+			$parserParameters = array();
+
+			$comment["POST_TEXT_FORMATTED"] = $p->convert($comment["POST_TEXT_FORMATTED"], false, $images, $allow, $parserParameters);
 		}
 
-		$comment["POST_TEXT"] = self::convertDiskFileBBCode(
-			$comment["POST_TEXT"],
-			'BLOG_COMMENT',
-			$comment["ID"],
-			$comment["AUTHOR_ID"],
-			$comment["ATTACHMENTS"]
-		);
-
-		$comment["POST_TEXT_FORMATTED"] = preg_replace(
-			array(
-				'|\[DISK\sFILE\sID=[n]*\d+\]|',
-				'|\[DOCUMENT\sID=[n]*\d+\]|'
-			),
-			'',
-			$comment["POST_TEXT"]
-		);
-
-		$comment["POST_TEXT_FORMATTED"] = preg_replace(
-			"/\[USER\s*=\s*([^\]]*)\](.+?)\[\/USER\]/is".BX_UTF_PCRE_MODIFIER,
-			"\\2",
-			$comment["POST_TEXT_FORMATTED"]
-		);
-
-		if ($p)
-		{
-			$p->arUserfields = array();
-		}
-		$images = array();
-		$allow = array("IMAGE" => "Y");
-		$parserParameters = array();
-
-		$comment["POST_TEXT_FORMATTED"] = $p->convert($comment["POST_TEXT_FORMATTED"], false, $images, $allow, $parserParameters);
 		$comment["DATE_CREATE_FORMATTED"] = self::formatDateTimeToGMT($comment['DATE_CREATE'], $comment['AUTHOR_ID']);
 	}
 
@@ -1650,11 +1666,13 @@ class ComponentHelper
 					}
 				}
 
+				$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+
 				/* update socnet log rights*/
 				$res = \CSocNetLog::getList(
 					array("ID" => "DESC"),
 					array(
-						"EVENT_ID" => array("blog_post", "blog_post_important"),
+						"EVENT_ID" => $blogPostLivefeedProvider->getEventId(),
 						"SOURCE_ID" => $postId
 					),
 					false,
@@ -1896,10 +1914,12 @@ class ComponentHelper
 
 		BXClearCache(true, "/blog/comment/".intval($postId / 100)."/".$postId."/");
 
+		$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+
 		$res = \CSocNetLog::getList(
 			array(),
 			array(
-				'EVENT_ID' => array('blog_post', 'blog_post_important'),
+				'EVENT_ID' => $blogPostLivefeedProvider->getEventId(),
 				'SOURCE_ID' => $postId
 			),
 			false,
@@ -2996,6 +3016,10 @@ class ComponentHelper
 		if (ModuleManager::isModuleInstalled('xdimport'))
 		{
 			$res["xdimport"] = array('Bitrix\XDImport\Update\LivefeedIndexLog', 'Bitrix\XDImport\Update\LivefeedIndexComment');
+		}
+		if (ModuleManager::isModuleInstalled('wiki'))
+		{
+			$res["wiki"] = array('Bitrix\Wiki\Update\LivefeedIndexLog', 'Bitrix\Wiki\Update\LivefeedIndexComment');
 		}
 		if (!empty($res))
 		{

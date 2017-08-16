@@ -797,7 +797,7 @@ if(!empty($serviceMessage))
 }
 
 ?>
-<form method="POST" action="<?=$APPLICATION->GetCurPageParam("",array("RESET_HANDLER_SETTINGS"))?>" name="form1" enctype="multipart/form-data">
+<form method="POST" action="<?=$APPLICATION->GetCurPageParam("",array("RESET_HANDLER_SETTINGS", "action"))?>" name="form1" enctype="multipart/form-data">
 <input type="hidden" name="lang" value="<?=LANGUAGE_ID; ?>">
 <input type="hidden" name="ID" value="<?=$ID ?>">
 <input type="hidden" name="CODE" value="<?=(isset($fields["CODE"]) ? htmlspecialcharsbx($fields["CODE"]) : "" )?>">

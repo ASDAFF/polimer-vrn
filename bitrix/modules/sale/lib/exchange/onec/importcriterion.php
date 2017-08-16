@@ -177,79 +177,72 @@ class CriterionShipment extends ImportCriterionOneCCml2
 			return true;
 		}
 
-		if(strlen($entity->getField('VERSION_1C'))<=0 && strlen($fields['VERSION_1C'])>0)
+		$bBasketItemsMatch = true;
+		$basketItemsIndexList = array();
+		$fieldsItemsIndexList = array();
+
+		$basketItems = Exchange\Entity\OrderImport::getGroupItemsBasketFields($fields['ITEMS']);
+		if(count($basketItems)<=0)
 		{
-			$bBasketItemsMatch = true;
-			$basketItemsIndexList = array();
-			$fieldsItemsIndexList = array();
+			return true;
+		}
 
-			$basketItems = Exchange\Entity\OrderImport::getGroupItemsBasketFields($fields['ITEMS']);
-			if(count($basketItems)<=0)
+		/** @var Sale\ShipmentCollection $shipmentCollection */
+		$shipmentCollection = $entity->getCollection();
+		$order = $shipmentCollection->getOrder();
+		$basket = $order->getBasket();
+		/** @var Sale\BasketItem $basketItem */
+		foreach ($basket as $basketItem)
+		{
+			if($entity->isExistBasketItem($basketItem))
 			{
-				return true;
-			}
-
-			/** @var Sale\ShipmentCollection $shipmentCollection */
-			$shipmentCollection = $entity->getCollection();
-			$order = $shipmentCollection->getOrder();
-			$basket = $order->getBasket();
-			/** @var Sale\BasketItem $basketItem */
-			foreach ($basket as $basketItem)
-			{
-				if($entity->isExistBasketItem($basketItem))
+				$quantity = $entity->getBasketItemQuantity($basketItem);
+				if($quantity>0)
 				{
-					$quantity = $entity->getBasketItemQuantity($basketItem);
-					if($quantity>0)
-					{
-						$basketItemsIndexList[$basketItem->getId()] = $quantity;
-					}
+					$basketItemsIndexList[$basketItem->getId()] = $quantity;
 				}
 			}
+		}
 
-			foreach($basketItems as $items)
+		foreach($basketItems as $items)
+		{
+			foreach($items as $productXML_ID => $item)
 			{
-				foreach($items as $productXML_ID => $item)
+				if($basketItem = Exchange\Entity\OrderImport::getBasketItemByItem($basket, $item))
 				{
-					if($basketItem = Exchange\Entity\OrderImport::getBasketItemByItem($basket, $item))
-					{
-						$fieldsItemsIndexList[$basketItem->getId()] = $item['QUANTITY'];
-					}
+					$fieldsItemsIndexList[$basketItem->getId()] = $item['QUANTITY'];
 				}
 			}
+		}
 
-			if(count($basketItemsIndexList)<>count($fieldsItemsIndexList))
-			{
-				$bBasketItemsMatch = false;
-			}
-			else
-			{
-				foreach ($basketItemsIndexList as $basketId=>$quantity)
-				{
-					if(isset($fieldsItemsIndexList[$basketId]) && $fieldsItemsIndexList[$basketId] == $quantity)
-						unset($fieldsItemsIndexList[$basketId]);
-				}
-
-				if(count($fieldsItemsIndexList)>0)
-					$bBasketItemsMatch = false;
-			}
-
-			$itemDeliveryService = Exchange\Entity\ShipmentImport::getFieldsDeliveryService($fields);
-
-			if($bBasketItemsMatch &&
-				($entity->isShipped()? $fields['DEDUCTED']=='Y':true) &&
-				$entity->getPrice() == $itemDeliveryService['PRICE']
-			)
-			{
-				return false;
-			}
-			else
-			{
-				return true;
-			}
+		if(count($basketItemsIndexList)<>count($fieldsItemsIndexList))
+		{
+			$bBasketItemsMatch = false;
 		}
 		else
 		{
-			return parent::equals($fields);
+			foreach ($basketItemsIndexList as $basketId=>$quantity)
+			{
+				if(isset($fieldsItemsIndexList[$basketId]) && $fieldsItemsIndexList[$basketId] == $quantity)
+					unset($fieldsItemsIndexList[$basketId]);
+			}
+
+			if(count($fieldsItemsIndexList)>0)
+				$bBasketItemsMatch = false;
+		}
+
+		$itemDeliveryService = Exchange\Entity\ShipmentImport::getFieldsDeliveryService($fields);
+
+		if($bBasketItemsMatch &&
+			($entity->isShipped()? $fields['DEDUCTED']=='Y':true) &&
+			$entity->getPrice() == $itemDeliveryService['PRICE']
+		)
+		{
+			return false;
+		}
+		else
+		{
+			return true;
 		}
 	}
 }
@@ -281,22 +274,15 @@ class CriterionPayment extends ImportCriterionOneCCml2
 			return true;
 		}
 
-		if(strlen($entity->getField('VERSION_1C'))<=0 && strlen($fields['VERSION_1C'])>0)
+		if(($entity->isPaid()? $fields['PAID']=='Y':true) &&
+			$entity->getSum() == $fields['SUM']
+			)
 		{
-			if(($entity->isPaid()? $fields['PAID']=='Y':true) &&
-				$entity->getSum() == $fields['SUM']
-				)
-			{
-				return false;
-			}
-			else
-			{
-				return true;
-			}
+			return false;
 		}
 		else
 		{
-			return parent::equals($fields);
+			return true;
 		}
 	}
 }

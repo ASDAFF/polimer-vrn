@@ -685,14 +685,8 @@ class CAllBlogComment
 		$perms = BLOG_PERMS_DENY;
 
 		$blogModulePermissions = $APPLICATION->GetGroupRight("blog", ($bCurrent ? false : CUser::GetUserGroup($userId)));
+
 		if (
-			$authorId > 0
-			&& $userId == $authorId
-		)
-		{
-			$perms = BLOG_PERMS_FULL;
-		}
-		elseif (
 			$blogModulePermissions >= "W"
 			|| ($bCurrent ? CSocNetUser::IsCurrentUserModuleAdmin() : CSocNetUser::IsUserModuleAdmin($userId))
 		)
@@ -702,9 +696,31 @@ class CAllBlogComment
 			reset($AR_BLOG_PERMS);
 		}
 
+		$arPerms = CBlogPost::GetSocNetPerms($postId);
+		$arGroupsId = array();
+		if (
+			!empty($arPerms["SG"])
+			&& is_array($arPerms["SG"])
+		)
+		{
+			foreach($arPerms["SG"] as $gid => $val)
+			{
+				//if(!empty($arEntities["SG"][$gid]))
+				$arGroupsId[] = $gid;
+			}
+		}
+
+		if (
+			empty($arGroupsId)
+			&& $authorId > 0
+			&& $userId == $authorId
+		)
+		{
+			$perms = BLOG_PERMS_FULL;
+		}
+
 		if($perms <= BLOG_PERMS_DENY)
 		{
-			$arPerms = CBlogPost::GetSocNetPerms($postId);
 			$arEntities = Array();
 
 			if (!empty(CBlogPost::$arUACCache[$userId]))
@@ -794,74 +810,63 @@ class CAllBlogComment
 				}
 			}
 
-			if ($perms <= BLOG_PERMS_FULL)
+			if (
+				$perms <= BLOG_PERMS_FULL
+				&& !empty($arGroupsId)
+			)
 			{
-				$arGroupsId = $operation = Array();
-
-				if(!empty($arPerms["SG"]))
+				$operation = Array("full_comment", "moderate_comment", "write_comment", "premoderate_comment");
+				if ($perms < BLOG_PERMS_READ)
 				{
-					foreach($arPerms["SG"] as $gid => $val)
-					{
-						//if(!empty($arEntities["SG"][$gid]))
-						$arGroupsId[] = $gid;
-					}
-
-					$operation = Array("full_comment", "moderate_comment", "write_comment", "premoderate_comment");
-					if ($perms < BLOG_PERMS_READ)
-					{
-						$operation[] = "view_comment";
-					}
+					$operation[] = "view_comment";
 				}
 
-				if (!empty($arGroupsId))
+				foreach ($operation as $v)
 				{
-					foreach ($operation as $v)
+					if ($perms <= BLOG_PERMS_READ)
 					{
-						if ($perms <= BLOG_PERMS_READ)
+						$f = CSocNetFeaturesPerms::GetOperationPerm(SONET_ENTITY_GROUP, $arGroupsId, "blog", $v);
+						if (
+							is_array($f)
+							&& !empty($f)
+						)
 						{
-							$f = CSocNetFeaturesPerms::GetOperationPerm(SONET_ENTITY_GROUP, $arGroupsId, "blog", $v);
-							if (
-								is_array($f)
-								&& !empty($f)
-							)
+							foreach($f as $gid => $val)
 							{
-								foreach($f as $gid => $val)
-								{
-									if (
-										(
-											!empty($arEntities["SG"][$gid])
-											&& in_array($val, $arEntities["SG"][$gid])
-										)
-										|| $val == SONET_ROLES_ALL
-										|| (
-											$userId > 0
-											&& $val == SONET_ROLES_AUTHORIZED
-										)
+								if (
+									(
+										!empty($arEntities["SG"][$gid])
+										&& in_array($val, $arEntities["SG"][$gid])
 									)
+									|| $val == SONET_ROLES_ALL
+									|| (
+										$userId > 0
+										&& $val == SONET_ROLES_AUTHORIZED
+									)
+								)
+								{
+									switch($v)
 									{
-										switch($v)
-										{
-											case "full_comment":
-												$perms = BLOG_PERMS_FULL;
-												$permsBySG = true;
-												break;
-											case "moderate_comment":
-												$perms = BLOG_PERMS_MODERATE;
-												$permsBySG = true;
-												break;
-											case "write_comment":
-												$perms = BLOG_PERMS_WRITE;
-												$permsBySG = true;
-												break;
-											case "premoderate_comment":
-												$perms = BLOG_PERMS_PREMODERATE;
-												$permsBySG = true;
-												break;
-											case "view_comment":
-												$perms = BLOG_PERMS_READ;
-												$permsBySG = true;
-												break;
-										}
+										case "full_comment":
+											$perms = BLOG_PERMS_FULL;
+											$permsBySG = true;
+											break;
+										case "moderate_comment":
+											$perms = BLOG_PERMS_MODERATE;
+											$permsBySG = true;
+											break;
+										case "write_comment":
+											$perms = BLOG_PERMS_WRITE;
+											$permsBySG = true;
+											break;
+										case "premoderate_comment":
+											$perms = BLOG_PERMS_PREMODERATE;
+											$permsBySG = true;
+											break;
+										case "view_comment":
+											$perms = BLOG_PERMS_READ;
+											$permsBySG = true;
+											break;
 									}
 								}
 							}

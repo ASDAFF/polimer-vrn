@@ -600,13 +600,19 @@ class BasketComponentHelper
 	{
 		if ($basket->count() == 0)
 			return 0;
+
+		$oldApiStatus = Compatible\DiscountCompatibility::isUsed(); // TODO: remove this code after refactoring DiscountCompatibility
+		if ($oldApiStatus)
+			Compatible\DiscountCompatibility::stopUsageCompatible();
 		DiscountCouponsManager::freezeCouponStorage();
-		$discounts = Discount::loadByBasket($basket);
 		$basket->refreshData(array('PRICE', 'COUPONS'));
+		$discounts = Discount::loadByBasket($basket);
 		$discounts->calculate();
 		$discountResult = $discounts->getApplyResult();
-
 		DiscountCouponsManager::unFreezeCouponStorage();
+		if ($oldApiStatus)
+			Compatible\DiscountCompatibility::revertUsageCompatible();
+
 		if (empty($discountResult['PRICES']['BASKET']))
 			return 0;
 

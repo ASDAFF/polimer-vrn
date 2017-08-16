@@ -65,9 +65,10 @@ $post = $postItem->getFields();
 if ($action == 'get_data')
 {
 	$logFavoritesUserId = $logId = false;
+	$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
 
 	$filter = array(
-		"EVENT_ID" => array("blog_post", "blog_post_micro", "blog_post_important"),
+		"EVENT_ID" => $blogPostLivefeedProvider->getEventId(),
 		"SOURCE_ID" => $postId,
 	);
 

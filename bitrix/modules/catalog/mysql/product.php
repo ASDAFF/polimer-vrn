@@ -200,7 +200,7 @@ class CCatalogProduct extends CAllCatalogProduct
 		{
 			foreach ($val as $by => $order)
 			{
-				if ($arField = CCatalogProduct::ParseQueryBuildField($by))
+				if ($arField = static::ParseQueryBuildField($by))
 				{
 					$res = '';
 					$join = true;
@@ -284,7 +284,7 @@ class CCatalogProduct extends CAllCatalogProduct
 			$key = $res["FIELD"];
 			$cOperationType = $res["OPERATION"];
 
-			if ($arField = CCatalogProduct::ParseQueryBuildField($key))
+			if ($arField = static::ParseQueryBuildField($key))
 			{
 				$res = '';
 				$join = true;
@@ -524,7 +524,7 @@ class CCatalogProduct extends CAllCatalogProduct
 			" CAT_PR.AVAILABLE as CATALOG_AVAILABLE, ".
 			" CAT_PR.WEIGHT as CATALOG_WEIGHT, CAT_PR.WIDTH as CATALOG_WIDTH, CAT_PR.LENGTH as CATALOG_LENGTH, CAT_PR.HEIGHT as CATALOG_HEIGHT, ".
 			" CAT_PR.MEASURE as CATALOG_MEASURE, ".
-			" CAT_VAT.RATE as CATALOG_VAT, CAT_PR.VAT_INCLUDED as CATALOG_VAT_INCLUDED, ".
+			" CAT_VAT.RATE as CATALOG_VAT, CAT_PR.VAT_ID as CATALOG_VAT_ID, CAT_PR.VAT_INCLUDED as CATALOG_VAT_INCLUDED, ".
 			" CAT_PR.PRICE_TYPE as CATALOG_PRICE_TYPE, CAT_PR.RECUR_SCHEME_TYPE as CATALOG_RECUR_SCHEME_TYPE, ".
 			" CAT_PR.RECUR_SCHEME_LENGTH as CATALOG_RECUR_SCHEME_LENGTH, CAT_PR.TRIAL_PRICE_ID as CATALOG_TRIAL_PRICE_ID, ".
 			" CAT_PR.WITHOUT_ORDER as CATALOG_WITHOUT_ORDER, CAT_PR.SELECT_BEST_PRICE as CATALOG_SELECT_BEST_PRICE, ".

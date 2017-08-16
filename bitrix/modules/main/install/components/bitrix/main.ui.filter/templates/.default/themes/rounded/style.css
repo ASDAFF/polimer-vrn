@@ -94,4 +94,8 @@
 	right: 7px;
 }
 
+.main-ui-filter-theme-rounded.main-ui-filter-search .main-ui-square.main-ui-filter-search-square:first-child {
+	margin-left: 16px;
+}
+
 /* END OF ROUNDED FILTER */

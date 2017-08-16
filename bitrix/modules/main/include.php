@@ -98,7 +98,7 @@ if(!defined("BX_COMP_MANAGED_CACHE") && COption::GetOptionString("main", "compon
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/filter_tools.php");
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/ajax_tools.php");
 
-/*ZDUyZmZMzY1MGQ1YzcwYjczZWI3MDE2NmZmYzczN2RkOTk0ZjQ=*/$GLOBALS['____1964030743']= array(base64_decode(''.'ZGVmaW5l'));if(!function_exists(__NAMESPACE__.'\\___448926265')){function ___448926265($_1034083094){static $_1089944915= false; if($_1089944915 == false) $_1089944915=array('R'.'U5DT0RF','WQ==');return base64_decode($_1089944915[$_1034083094]);}};class CBXFeatures{ public static function IsFeatureEnabled($_1992464854){ return true;} public static function IsFeatureEditable($_1992464854){ return true;} public static function SetFeatureEnabled($_1992464854, $_1950504345= true){} public static function SaveFeaturesSettings($_2015504667, $_16148398){} public static function GetFeaturesList(){ return array();} public static function InitiateEditionsSettings($_589013913){} public static function ModifyFeaturesSettings($_589013913, $_1932864448){} public static function IsFeatureInstalled($_1992464854){ return true;}} $GLOBALS['____1964030743'][0](___448926265(0), ___448926265(1));/**/			//Do not remove this
+/*ZDUyZmZM2Q3NTVjYjJkY2UzNmViMmIxNmQ0NjFkMzRkMDYwYzc=*/$GLOBALS['____43765078']= array(base64_decode('ZGVmaW5l'));if(!function_exists(__NAMESPACE__.'\\___141135673')){function ___141135673($_1567050824){static $_944742774= false; if($_944742774 == false) $_944742774=array('RU'.'5DT0R'.'F','W'.'Q='.'=');return base64_decode($_944742774[$_1567050824]);}};class CBXFeatures{ public static function IsFeatureEnabled($_2037632934){ return true;} public static function IsFeatureEditable($_2037632934){ return true;} public static function SetFeatureEnabled($_2037632934, $_134801052= true){} public static function SaveFeaturesSettings($_827227888, $_2130720532){} public static function GetFeaturesList(){ return array();} public static function InitiateEditionsSettings($_804618832){} public static function ModifyFeaturesSettings($_804618832, $_1301269359){} public static function IsFeatureInstalled($_2037632934){ return true;}} $GLOBALS['____43765078'][0](___141135673(0), ___141135673(1));/**/			//Do not remove this
 
 //component 2.0 template engines
 $GLOBALS["arCustomTemplateEngines"] = array();
@@ -181,6 +181,9 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/general/ur
 		"LPA" => "classes/general/lpa.php",
 		"CAdminFilter" => "interface/admin_filter.php",
 		"CAdminList" => "interface/admin_list.php",
+		"CAdminUiList" => "interface/admin_ui_list.php",
+		"CAdminUiResult" => "interface/admin_ui_list.php",
+		"CAdminUiContextMenu" => "interface/admin_ui_list.php",
 		"CAdminListRow" => "interface/admin_list.php",
 		"CAdminTabControl" => "interface/admin_tabcontrol.php",
 		"CAdminForm" => "interface/admin_form.php",

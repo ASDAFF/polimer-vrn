@@ -386,7 +386,7 @@ if ($arGadgetParams['CAN_VIEW_PROFILE'])
 				</tr>
 			<?endif?>
 
-			<?if ($USER->GetID() == $arParams["USER_ID"]):?>
+			<?if (!empty($arParams["G_SONET_USER_LINKS_URL_SYNCHRONIZE"]) && $USER->GetID() == $arParams["USER_ID"]):?>
                 <tr>
                     <td class="user-profile-nowrap" style="width: 40%"><?=GetMessage("GD_SONET_USER_DESC_SYNCHRONIZE")?>:</td>
                     <td style="width: 60%">

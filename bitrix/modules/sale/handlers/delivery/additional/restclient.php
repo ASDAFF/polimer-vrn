@@ -243,6 +243,9 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 			if(!$basketItem)
 				continue;
 
+			if($basketItem->isBundleChild())
+				continue;
+
 			//$itemFieldValues = $basketItem->getFieldValues();
 			$itemFieldValues = array(
 				"PRICE" => $basketItem->getPrice(),

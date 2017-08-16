@@ -111,9 +111,7 @@ Class mail extends CModule
 							500  => 'exchange',
 							600  => 'yahoo',
 							700  => 'aol',
-							800  => 'yandex',
-							900  => 'mail.ru',
-							1000 => 'other',
+							800  => 'other',
 						),
 						'en' => array(
 							100 => 'gmail',

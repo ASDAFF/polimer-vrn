@@ -503,15 +503,17 @@ class RestService extends \IRestService
 		if(empty($errors))
 		{
 			$elementObject = new \CIBlockElement;
-			$params['ELEMENT_ID'] = $elementObject->update($element['ID'], $element, false, true, true);
-			if($params['ELEMENT_ID'])
+			$isUpdateSuccess = $elementObject->update($element['ID'], $element, false, true, true);
+			if($isUpdateSuccess && is_array($elementFields[$element['ID']]))
 			{
 				if($params['ENABLED_BIZPROC'] && $params['TEMPLATES_ON_STARTUP'])
 				{
 					$changedElementFields = \CLists::checkChangedFields(
-						$params['IBLOCK_ID'], $params['ELEMENT_ID'], $elementSelect,
-						$elementFields[$params['ELEMENT_ID']], $elementProperty);
+						$params['IBLOCK_ID'], $element['ID'], $elementSelect,
+						$elementFields[$element['ID']], $elementProperty);
 
+					$params['ELEMENT_ID'] = $element['ID'];
+					$params['ELEMENT_NAME'] = $element['NAME'];
 					self::startBizproc($params, $documentStates, $bizprocParameters, $changedElementFields, $errors);
 				}
 			}
@@ -602,7 +604,7 @@ class RestService extends \IRestService
 			{
 				$isField = true;
 				if(is_array($fieldValue))
-					$fieldValue = $fieldValue[0];
+					$fieldValue = current($fieldValue);
 			}
 			else
 			{
@@ -971,7 +973,7 @@ class RestService extends \IRestService
 		return true;
 	}
 
-	private function checkElementPermission(array &$params)
+	private static function checkElementPermission(array &$params)
 	{
 		global $USER;
 
@@ -1031,6 +1033,20 @@ class RestService extends \IRestService
 		}
 	}
 
+	private static function prepareOrderArray(array $order, array $availableFieldsId, array $availableParams)
+	{
+		foreach ($order as $fieldId => $orderParams)
+		{
+			if (!in_array(strtoupper($fieldId), $availableFieldsId)
+				|| !in_array(strtolower($orderParams), $availableParams))
+			{
+				unset($order[$fieldId]);
+			}
+		}
+
+		return $order;
+	}
+
 	private static function getIblocksData(&$params)
 	{
 		$listIblock = array();
@@ -1046,7 +1062,15 @@ class RestService extends \IRestService
 			$filter['=SOCNET_GROUP_ID'] = $params['SOCNET_GROUP_ID'];
 		else
 			$filter['SITE_ID'] = SITE_ID;
-		$queryObject = \CIBlock::getList(array(), $filter);
+		$order = array('ID' => 'ASC');
+		if (is_array($params['IBLOCK_ORDER']))
+		{
+			$availableFieldsId = array('ID', 'IBLOCK_TYPE', 'NAME',
+				'ACTIVE', 'CODE', 'SORT', 'ELEMENT_CNT', 'TIMESTAMP_X');
+			$availableParams = array("asc", "desc");
+			$order = self::prepareOrderArray($params['IBLOCK_ORDER'], $availableFieldsId, $availableParams);
+		}
+		$queryObject = \CIBlock::getList($order, $filter);
 		while($result = $queryObject->fetch())
 			$listIblock[] = $result;
 
@@ -1080,7 +1104,16 @@ class RestService extends \IRestService
 				$elementSelect[] = 'USER_NAME';
 		}
 
-		$queryObject = \CIBlockElement::getList(array(), array(
+		$order = array('ID' => 'ASC');
+		if (is_array($params['ELEMENT_ORDER']))
+		{
+			$availableFieldsId = array('ID', 'SORT', 'TIMESTAMP_X', 'NAME', 'ACTIVE_FROM',
+				'ACTIVE_TO', 'STATUS', 'CODE', 'IBLOCK_ID', 'MODIFIED_BY', 'ACTIVE', 'IBLOCK_SECTION_ID');
+			$availableParams = array("nulls,asc", "asc,nulls", "nulls,desc", "desc,nulls", "asc", "desc");
+			$order = self::prepareOrderArray($params['ELEMENT_ORDER'], $availableFieldsId, $availableParams);
+		}
+
+		$queryObject = \CIBlockElement::getList($order, array(
 			'IBLOCK_TYPE' => $params['IBLOCK_TYPE_ID'],
 			'IBLOCK_ID' => $params['IBLOCK_ID'],
 			'ID' => $params['ELEMENT_ID'] ? $params['ELEMENT_ID'] : '',

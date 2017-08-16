@@ -11,6 +11,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @global CMain $APPLICATION */
 /** @global CCacheManager $CACHE_MANAGER */
 /** @global CUserTypeManager $USER_FIELD_MANAGER */
+
+use Bitrix\Main\ModuleManager;
+use Bitrix\Socialnetwork\UserToGroupTable;
+
 global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
 if (!CModule::IncludeModule("socialnetwork"))
@@ -342,32 +346,30 @@ else
 			{
 				$arResult["ENTITY_TYPE"] = SONET_ENTITY_GROUP;
 				$arResult["PermsVar"] = array(
-					SONET_ROLES_OWNER => GetMessage("SONET_C3_PVG_OWNER"),
-					SONET_ROLES_MODERATOR => GetMessage("SONET_C3_PVG_MOD"),
-					SONET_ROLES_USER => GetMessage("SONET_C3_PVG_USER"),
-					SONET_ROLES_AUTHORIZED => GetMessage("SONET_C3_PVG_AUTHORIZED"),
-					SONET_ROLES_ALL => GetMessage("SONET_C3_PVG_ALL"),
+					UserToGroupTable::ROLE_OWNER => GetMessage("SONET_C3_PVG_OWNER"),
+					UserToGroupTable::ROLE_MODERATOR => GetMessage("SONET_C3_PVG_MOD"),
+					UserToGroupTable::ROLE_USER => GetMessage("SONET_C3_PVG_USER"),
+					SONET_ROLES_AUTHORIZED => GetMessage("SONET_C3_PVG_AUTHORIZED")
 				);
+				if (!ModuleManager::isModuleInstalled('bitrix24'))
+				{
+					$arResult["PermsVar"][SONET_ROLES_ALL] = GetMessage("SONET_C3_PVG_ALL");
+				}
 			}
 			else
 			{
 				$arResult["ENTITY_TYPE"] = SONET_ENTITY_USER;
+				$arResult["PermsVar"] = array(
+					SONET_RELATIONS_TYPE_NONE => GetMessage("SONET_C3_PVU_NONE")
+				);
 				if (CSocNetUser::IsFriendsAllowed())
 				{
-					$arResult["PermsVar"] = array(
-						SONET_RELATIONS_TYPE_NONE => GetMessage("SONET_C3_PVU_NONE"),
-						SONET_RELATIONS_TYPE_FRIENDS => GetMessage("SONET_C3_PVU_FR"),
-						SONET_RELATIONS_TYPE_AUTHORIZED => GetMessage("SONET_C3_PVU_AUTHORIZED"),
-						SONET_RELATIONS_TYPE_ALL => GetMessage("SONET_C3_PVU_ALL"),
-					);
+					$arResult["PermsVar"][SONET_RELATIONS_TYPE_FRIENDS] = GetMessage("SONET_C3_PVU_FR");
 				}
-				else
+				$arResult["PermsVar"][SONET_RELATIONS_TYPE_AUTHORIZED] = GetMessage("SONET_C3_PVU_AUTHORIZED");
+				if (!ModuleManager::isModuleInstalled('bitrix24'))
 				{
-					$arResult["PermsVar"] = array(
-						SONET_RELATIONS_TYPE_NONE => GetMessage("SONET_C3_PVU_NONE"),
-						SONET_RELATIONS_TYPE_AUTHORIZED => GetMessage("SONET_C3_PVU_AUTHORIZED"),
-						SONET_RELATIONS_TYPE_ALL => GetMessage("SONET_C3_PVU_ALL"),
-					);
+					$arResult["PermsVar"][SONET_RELATIONS_TYPE_ALL] = GetMessage("SONET_C3_PVU_ALL");
 				}
 			}
 		}

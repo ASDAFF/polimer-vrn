@@ -45,4 +45,5 @@ $MESS["BPSFA_PD_TIMEOUT_LIMIT"] = "Minimum wait time";
 $MESS["BPRIA_PD_CANCEL_TYPE"] = "Can be declined by";
 $MESS["BPRIA_PD_CANCEL_TYPE_ANY"] = "Any employee";
 $MESS["BPRIA_PD_CANCEL_TYPE_ALL"] = "All employees";
+$MESS["BPRIA_PD_DELEGATION_TYPE"] = "Delegate to";
 ?>

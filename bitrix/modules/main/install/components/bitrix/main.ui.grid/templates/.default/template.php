@@ -434,6 +434,7 @@ $displayedCount = count(
 		endif; ?><?
 	?></div><?
 ?></form><?
+?><iframe height="0" width="100%" id="main-grid-tmp-frame-<?=$arParams["GRID_ID"]?>" name="main-grid-tmp-frame-<?=$arParams["GRID_ID"]?>" style="position: absolute; z-index: -1; opacity: 0; border: 0;"></iframe><?
 ?></div>
 
 <?

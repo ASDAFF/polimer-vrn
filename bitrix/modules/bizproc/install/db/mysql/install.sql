@@ -84,6 +84,7 @@ CREATE TABLE b_bp_task (
 	PARAMETERS text NULL,
 	STATUS int NOT NULL default 0,
 	IS_INLINE char(1) NOT NULL default 'N',
+	DELEGATION_TYPE int NOT NULL default 0,
 	DOCUMENT_NAME varchar(255) null,
 	primary key (ID),
 	index ix_bp_tasks_sort(OVERDUE_DATE, MODIFIED),

@@ -368,6 +368,14 @@ if (ModuleManager::isModuleInstalled('blog'))
 {
 	$eventIdList['blog_post'] = Loc::getMessage('SONET_C30_FILTER_EVENT_ID_BLOG_POST');
 	$eventIdList['blog_post_important'] = Loc::getMessage('SONET_C30_FILTER_EVENT_ID_BLOG_POST_IMPORTANT');
+	if (ModuleManager::isModuleInstalled('intranet'))
+	{
+		$eventIdList['blog_post_grat'] = Loc::getMessage('SONET_C30_FILTER_EVENT_ID_BLOG_POST_GRAT');
+	}
+	if (ModuleManager::isModuleInstalled('vote'))
+	{
+		$eventIdList['blog_post_vote'] = Loc::getMessage('SONET_C30_FILTER_EVENT_ID_BLOG_POST_VOTE');
+	}
 }
 
 if (ModuleManager::isModuleInstalled('forum'))

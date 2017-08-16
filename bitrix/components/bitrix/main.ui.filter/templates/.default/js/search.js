@@ -33,8 +33,25 @@
 			BX.bind(this.getInput(), 'keydown', BX.delegate(this._onKeyDown, this));
 			BX.bind(this.getFindButton(), 'click', BX.delegate(this._onSearchClick, this));
 			BX.bind(this.getContainer(), 'click', BX.delegate(this._onSearchContainerClick, this));
+			this.removeAutofocus();
 			this.firstInit = true;
 		},
+
+
+		/**
+		 * Removes autofocus attr from search input
+		 */
+		removeAutofocus: function()
+		{
+			var input = this.getInput();
+
+			if (!!input)
+			{
+				input.blur();
+				input.autofocus = null;
+			}
+		},
+
 
 		getFindButton: function()
 		{
@@ -126,17 +143,24 @@
 			return !!node && BX.hasClass(node, this.parent.settings.classSearchButton);
 		},
 
+
+		/**
+		 * Adjust focus on search input
+		 */
 		adjustFocus: function()
 		{
-			var searchInput = this.getInput();
-
-			if (document.activeElement !== searchInput && window.scrollY < BX.pos(searchInput).top)
+			if (!BX.browser.IsMobile())
 			{
-				//Puts cursor after last character
-				//noinspection SillyAssignmentJS
-				searchInput.value = searchInput.value;
-				searchInput.blur();
-				searchInput.focus();
+				var searchInput = this.getInput();
+
+				if (document.activeElement !== searchInput && window.scrollY < BX.pos(searchInput).top)
+				{
+					//Puts cursor after last character
+					//noinspection SillyAssignmentJS
+					searchInput.value = searchInput.value;
+					searchInput.blur();
+					searchInput.focus();
+				}
 			}
 		},
 

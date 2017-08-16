@@ -634,6 +634,7 @@ class CAllCatalogSku
 					continue;
 				$offer['ID'] = (int)$offer['ID'];
 				$offer['IBLOCK_ID'] = (int)$offer['IBLOCK_ID'];
+				$offer['PARENT_ID'] = $offerProduct;
 				$offer['PROPERTIES'] = array();
 				$result[$offerProduct][$offer['ID']] = $offer;
 				$offersLinks[$offer['ID']] = &$result[$offerProduct][$offer['ID']];

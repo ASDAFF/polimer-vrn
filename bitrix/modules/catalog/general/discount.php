@@ -44,20 +44,18 @@ class CAllCatalogDiscount
 		{
 			case self::TYPE_PERCENT:
 				$discountValue = roundEx(
-					(self::$getPercentFromBasePrice ? $basePrice : $currentPrice) * $oneDiscount['VALUE'] / 100,
+					-(self::$getPercentFromBasePrice ? $basePrice : $currentPrice) * $oneDiscount['VALUE'] / 100,
 					CATALOG_VALUE_PRECISION
 				);
 				if (isset($oneDiscount['DISCOUNT_CONVERT']) && $oneDiscount['DISCOUNT_CONVERT'] > 0)
 				{
-					if ($discountValue > $oneDiscount['DISCOUNT_CONVERT'])
-					{
-						$discountValue = $oneDiscount['DISCOUNT_CONVERT'];
-					}
+					if ($discountValue + $oneDiscount['DISCOUNT_CONVERT'] <= 0)
+						$discountValue = -$oneDiscount['DISCOUNT_CONVERT'];
 				}
-				$needErase = ($currentPrice < $discountValue);
+				$needErase = ($currentPrice + $discountValue < 0);
 				if (!$needErase)
 				{
-					$calculatePrice = $currentPrice - $discountValue;
+					$calculatePrice = $currentPrice + $discountValue;
 				}
 				unset($discountValue);
 				break;
@@ -2127,6 +2125,7 @@ class CAllCatalogDiscount
 		);
 		$arCatFields = array(
 			'ID',
+			'TYPE',
 			'QUANTITY',
 			'WEIGHT',
 			'VAT_ID',
@@ -2194,6 +2193,7 @@ class CAllCatalogDiscount
 
 			if (!empty($arIDS))
 			{
+				$offerIds = array();
 				$arBasketResult = array();
 				$iblockGroup = array();
 				$arIDS = array_keys($arIDS);
@@ -2308,10 +2308,20 @@ class CAllCatalogDiscount
 							'ID' => $iblockItems,
 							'IBLOCK_ID' =>$iblockID
 						);
-						CIBlockElement::GetPropertyValuesArray($arBasketResult, $iblockID, $filter, $propertyFilter);
+						CIBlockElement::GetPropertyValuesArray(
+							$arBasketResult,
+							$iblockID,
+							$filter,
+							$propertyFilter,
+							array(
+								'ID' => true,
+								'PROPERTY_TYPE' => true,
+								'MULTIPLE' => true,
+								'USER_TYPE' => true,
+							)
+						);
 					}
 					unset($iblockItems, $iblockID);
-					unset($propertyFilter);
 					foreach ($arBasketResult as &$basketItem)
 					{
 						self::__ConvertProperties($basketItem, $basketItem['PROPERTIES'], array('TIME_ZONE' => 'N'));
@@ -2342,17 +2352,80 @@ class CAllCatalogDiscount
 				$rsProducts = CCatalogProduct::GetList(array(), array('@ID' => $arIDS), false, false, $arCatFields);
 				while ($arProduct = $rsProducts->Fetch())
 				{
-					$arProduct['ID'] = (int)$arProduct['ID'];
-					if (!isset($arBasketResult[$arProduct['ID']]))
-						$arBasketResult[$arProduct['ID']] = array();
+					$productId = (int)$arProduct['ID'];
+					$arProduct['TYPE'] = (int)$arProduct['TYPE'];
+					if ($arProduct['TYPE'] == Catalog\ProductTable::TYPE_OFFER)
+						$offerIds[$productId] = $productId;
+					if (!isset($arBasketResult[$productId]))
+						$arBasketResult[$productId] = array();
+					unset($arProduct['ID'], $arProduct['TYPE']);
+
 					foreach ($arProduct as $productKey => $productValue)
-					{
-						if ($productKey == 'ID')
-							continue;
-						$arBasketResult[$arProduct['ID']]['CATALOG_'.$productKey] = $productValue;
-					}
+						$arBasketResult[$productId]['CATALOG_'.$productKey] = $productValue;
 					unset($productKey, $productValue);
 				}
+				unset($productId, $arProduct, $rsProducts);
+
+				if (!empty($offerIds))
+				{
+					$products = array();
+					$productIds = array();
+					$productList = CCatalogSku::getProductList($offerIds);
+					if (!empty($productList))
+					{
+						foreach (array_keys($productList) as $index)
+						{
+							$id = $productList[$index]['ID'];
+							$iblockId = $productList[$index]['IBLOCK_ID'];
+							if (!isset($products[$iblockId]))
+							{
+								$products[$iblockId] = array();
+								$productIds[$iblockId] = array();
+							}
+							$products[$iblockId][$id] = array();
+							$productIds[$iblockId][] = $id;
+						}
+						unset($iblockId, $id, $index);
+					}
+					unset($productList);
+					if (!empty($products))
+					{
+						self::initDiscountSettings();
+						$stackData = self::$useSaleDiscount;
+						self::$useSaleDiscount = false;
+						foreach (array_keys($products) as $iblockId)
+						{
+							if (!empty($propertyFilter))
+							{
+								$arPropFilter = array(
+									'ID' => $productIds[$iblockId],
+									'IBLOCK_ID' => $iblockId
+								);
+								CIBlockElement::GetPropertyValuesArray(
+									$products[$iblockId],
+									$iblockId,
+									$arPropFilter,
+									$propertyFilter,
+									array(
+										'ID' => true,
+										'PROPERTY_TYPE' => true,
+										'MULTIPLE' => true,
+										'USER_TYPE' => true,
+									)
+								);
+							}
+
+							foreach (array_keys($products[$iblockId]) as $id)
+								CCatalogDiscount::SetProductPropertiesCache($id, $products[$iblockId][$id]);
+							unset($id);
+
+							CCatalogDiscount::SetProductSectionsCache($productIds[$iblockId]);
+							CCatalogDiscount::SetDiscountProductCache($productIds[$iblockId], array('IBLOCK_ID' => $iblockId, 'GET_BY_ID' => 'Y'));
+						}
+						self::$useSaleDiscount = $stackData;
+					}
+				}
+
 				if (!empty($iblockGroup))
 				{
 					foreach ($iblockGroup as $iblockID => $iblockItems)
@@ -2380,6 +2453,11 @@ class CAllCatalogDiscount
 						}
 					}
 				}
+				CCatalogDiscount::ClearDiscountCache(array(
+					'PRODUCT' => true,
+					'SECTIONS' => true,
+					'PROPERTIES' => true
+				));
 			}
 		}
 	}
@@ -2959,9 +3037,11 @@ class CAllCatalogDiscount
 
 	protected static function __GenerateParent(&$product, $sku)
 	{
-		if (!isset($product['PROPERTY_'.$sku['SKU_PROPERTY_ID'].'_VALUE']))
-			return false;
-		$parentID = (int)current($product['PROPERTY_'.$sku['SKU_PROPERTY_ID'].'_VALUE']);
+		$parentID = 0;
+		if (isset($product['PARENT_ID']))
+			$parentID = (int)$product['PARENT_ID'];
+		elseif (isset($product['PROPERTY_'.$sku['SKU_PROPERTY_ID'].'_VALUE']))
+			$parentID = (int)current($product['PROPERTY_'.$sku['SKU_PROPERTY_ID'].'_VALUE']);
 		if ($parentID <= 0)
 			return false;
 		if (!isset(self::$arCacheProduct[$parentID]))
@@ -3530,10 +3610,10 @@ class CAllCatalogDiscount
 		if (empty($arItem) || !is_array($arItem))
 			return;
 
-		if(\Bitrix\Main\Config\Option::get('sale', 'use_sale_discount_only', false) === 'Y')
+		if(self::isUsedSaleDiscountOnly())
 		{
 			global $USER;
-			\Bitrix\Catalog\Discount\DiscountManager::preloadProductDataToExtendOrder($arItem, $USER->GetUserGroupArray());
+			Catalog\Discount\DiscountManager::preloadProductDataToExtendOrder($arItem, $USER->GetUserGroupArray());
 			return;
 		}
 
@@ -3632,7 +3712,14 @@ class CAllCatalogDiscount
 					CIBlockElement::GetPropertyValuesArray(
 						$propsList,
 						$arProduct['IBLOCK_ID'],
-						array('ID' => $arProduct['ID'], 'IBLOCK_ID' => $arProduct['IBLOCK_ID'])
+						array('ID' => $arProduct['ID'], 'IBLOCK_ID' => $arProduct['IBLOCK_ID']),
+						array(),
+						array(
+							'ID' => true,
+							'PROPERTY_TYPE' => true,
+							'MULTIPLE' => true,
+							'USER_TYPE' => true,
+						)
 					);
 					self::$arCacheProductProperties[$arProduct['ID']] = $propsList[$arProduct['ID']];
 					unset($propsList);
@@ -3767,17 +3854,15 @@ class CAllCatalogDiscount
 			Catalog\Discount\DiscountManager::clearProductPropertiesCache();
 			Catalog\Discount\DiscountManager::clearProductPricesCache();
 		}
-		else
-		{
-			if (isset($arTypes['PRODUCT']))
-				self::$arCacheProduct = array();
-			if (isset($arTypes['SECTIONS']))
-				self::$arCacheProductSections = array();
-			if (isset($arTypes['SECTION_CHAINS']))
-				self::$arCacheProductSectionChain = array();
-			if (isset($arTypes['PROPERTIES']))
-				self::$arCacheProductProperties = array();
-		}
+
+		if (isset($arTypes['PRODUCT']))
+			self::$arCacheProduct = array();
+		if (isset($arTypes['SECTIONS']))
+			self::$arCacheProductSections = array();
+		if (isset($arTypes['SECTION_CHAINS']))
+			self::$arCacheProductSectionChain = array();
+		if (isset($arTypes['PROPERTIES']))
+			self::$arCacheProductProperties = array();
 	}
 
 	public static function isUsedSaleDiscountOnly()

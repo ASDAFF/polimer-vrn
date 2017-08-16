@@ -256,6 +256,14 @@ $arComponentParameters = array(
 			"ADDITIONAL_VALUES" => "N",
 			"PARENT" => "BASE",
 		),
+		"SPOT_LOCATION_BY_GEOIP" => array(
+			"NAME" => GetMessage("SBB_SPOT_LOCATION_BY_GEOIP"),
+			"TYPE" => "CHECKBOX",
+			"MULTIPLE" => "N",
+			"DEFAULT" => "Y",
+			"ADDITIONAL_VALUES" => "N",
+			"PARENT" => "BASE",
+		),
 		"DELIVERY_TO_PAYSYSTEM" => array(
 			"NAME" => GetMessage("SBB_DELIVERY_PAYSYSTEM"),
 			"TYPE" => "LIST",

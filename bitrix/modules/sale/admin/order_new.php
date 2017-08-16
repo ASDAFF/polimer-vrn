@@ -1196,8 +1196,8 @@ if (
 							continue;
 
 						$measure = (isset($val["MEASURE_TEXT"])) ? $val["MEASURE_TEXT"] : GetMessage("SOA_SHT");
-						$strOrderList .= $val["NAME"]." - ".$val["QUANTITY"]." ".$measure.": ".SaleFormatCurrency($val["PRICE"], $BASE_LANG_CURRENCY);
-						$strOrderList .= "\n";
+						$strOrderList .= $val["NAME"]." - ".$val["QUANTITY"]." ".$measure." x ".SaleFormatCurrency($val["PRICE"], $BASE_LANG_CURRENCY);
+						$strOrderList .= "</br>";
 					}
 
 					$arOrderNew = CSaleOrder::GetByID($ID);

@@ -242,11 +242,9 @@ function __logShowPostMenu(bindElement, ind, entity_type, entity_id, event_id, f
 			bindElement.getAttribute("data-log-entry-url").length > 0
 			? {
 				text : '<span id="post-menu-' + ind + '-link-text">' + BX.message("sonetLMenuLink") + '</span>' +
-					'<span class="post-menu-link-icon-wrap">' +
+					'<span id="post-menu-' + ind + '-link-icon-animate" class="post-menu-link-icon-wrap">' +
 						'<span class="post-menu-link-icon" id="post-menu-' + ind + '-link-icon-done" style="display: none;">' +
-							'<svg class="post-menu-link-icon-check" viewBox="0 -3 15 15">' +
-								'<polyline id="post-menu-' + ind + '-link-icon-animate" points="2,5 5,8 11,2" class="post-menu-link-icon-polyline-path"/>' +
-							'</svg>' +
+
 						'</span>' +
 					'</span>',
 				className : "menu-popup-no-icon feed-entry-popup-menu feed-entry-popup-menu-link", 
@@ -270,7 +268,7 @@ function __logShowPostMenu(bindElement, ind, entity_type, entity_id, event_id, f
 						)
 						{
 							menuItemIconDone.style.display = 'inline-block';
-							BX.removeClass(BX(id + '-icon-animate'), 'post-menu-link-icon-animate-stroke');
+							BX.removeClass(BX(id + '-icon-animate'), 'post-menu-link-icon-animate');
 
 							BX.adjust(BX(id + '-text'), {
 								attrs: {
@@ -279,7 +277,7 @@ function __logShowPostMenu(bindElement, ind, entity_type, entity_id, event_id, f
 							});
 
 							setTimeout(function() {
-								BX.addClass(BX(id + '-icon-animate'), 'post-menu-link-icon-animate-stroke');
+								BX.addClass(BX(id + '-icon-animate'), 'post-menu-link-icon-animate');
 							}, 1);
 
 							setTimeout(function() {
@@ -985,6 +983,7 @@ BitrixLF.prototype.initOnce = function()
 		}
 	}, this));
 
+	BX.UserContentView.init();
 };
 
 BitrixLF.prototype.init = function(params)
@@ -1172,6 +1171,7 @@ BitrixLF.prototype.getNextPage = function()
 						BX.unbind(BX('sonet_log_more_container_first'), 'click', f);
 						BX('feed-new-message-inf-wrap-first').style.display = 'none';
 						oLF.recalcMoreButton();
+						oLF.registerViewAreaList();
 					};
 					BX.bind(BX('sonet_log_more_container_first'), 'click', f);
 				}
@@ -1184,6 +1184,7 @@ BitrixLF.prototype.getNextPage = function()
 					}
 					setTimeout(function() {
 						oLF.recalcMoreButton();
+						oLF.registerViewAreaList();
 					}, 1000);
 				}
 
@@ -1318,6 +1319,7 @@ BitrixLF.prototype.refresh = function(params, filterPromise)
 				{
 					oLF.clearContainerExternal(false);
 					oLF.processAjaxBlock(data.PROPS);
+					oLF.registerViewAreaList();
 
 					oLF.bStopTrackNextPage = false;
 
@@ -1930,6 +1932,33 @@ BitrixLF.prototype.formatTaskDescription = function(taskDescription, livefeedUrl
 	}
 
 	return result;
+};
+
+BitrixLF.prototype.registerViewAreaList = function()
+{
+	var
+		container = BX('log_internal_container'),
+		fullContentArea = null;
+
+	if (container)
+	{
+		var viewAreaList = BX.findChildren(container, {
+			tag: 'div',
+			className: 'feed-post-contentview'
+		}, true);
+		for (var i = 0, length = viewAreaList.length; i < length; i++)
+		{
+			if (viewAreaList[i].id.length > 0)
+			{
+				fullContentArea = BX.findChild(viewAreaList[i], {
+					tag: 'div',
+					className: 'feed-post-text-block-inner-inner'
+				});
+				BX.UserContentView.registerViewArea(viewAreaList[i].id, (fullContentArea ? fullContentArea : null));
+
+			}
+		}
+	}
 };
 
 if (typeof oLF == 'undefined')

@@ -691,7 +691,6 @@ $bShowBasketProps = ((string)\Bitrix\Main\Config\Option::get('sale', 'show_baske
 if(isset($arFilterTmp["NAME_SEARCH"]) && strlen($arFilterTmp["NAME_SEARCH"]) > 0)
 {
 	$nameSearch = $arFilterTmp["NAME_SEARCH"];
-	unset($arFilterTmp["NAME_SEARCH"]);
 
 	$arFilterTmp[] = array(
 		"LOGIC" => "OR",
@@ -702,6 +701,8 @@ if(isset($arFilterTmp["NAME_SEARCH"]) && strlen($arFilterTmp["NAME_SEARCH"]) > 0
 		"%USER.EMAIL" => $nameSearch,
 	);
 }
+unset($arFilterTmp["NAME_SEARCH"]);
+
 
 $propIterator = 0;
 //Order props params
@@ -1592,6 +1593,7 @@ if (!empty($orderList) && is_array($orderList))
 	 */
 	if(\Bitrix\Main\Analytics\Catalog::isOn() || $bNeedBasket)
 	{
+		$basketItemIds = array();
 		$dbItemsList = \Bitrix\Sale\Internals\BasketTable::getList(array(
 						   'order' => array('ID' => 'ASC'),
 						   'filter' => array('=ORDER_ID' => array_keys($orderList))
@@ -1613,25 +1615,35 @@ if (!empty($orderList) && is_array($orderList))
 			{
 				if (!empty($basketList[$item['ORDER_ID']]) && is_array($basketList[$item['ORDER_ID']]))
 				{
-					$resProp = \Bitrix\Sale\Internals\BasketPropertyTable::getList(array(
-																					   'order' => array("SORT" => "ASC", "ID" => "ASC"),
-																					   'filter' => array(
-																						   "BASKET_ID" => array_keys($basketList[$item['ORDER_ID']]),
-																						   "!CODE" => array("CATALOG.XML_ID", "PRODUCT.XML_ID"))
-																				   ));
-
-					while($prop = $resProp->fetch())
-					{
-						if(strval($prop["VALUE"]) != "")
-						{
-							$basketPropertyList[$prop['BASKET_ID']][$prop['ID']] = $prop;
-						}
-					}
+					$basketItemIds = array_merge($basketItemIds, array_keys($basketList[$item['ORDER_ID']]));
 				}
 			}
 		}
 	}
 
+	if ($bShowBasketProps && !empty($basketItemIds))
+	{
+		$basketItemIds = array_unique($basketItemIds);
+		$basketItemIdsChunk = array_chunk($basketItemIds, 1000);
+		foreach ($basketItemIdsChunk as $basketIds)
+		{
+			$resProp = \Bitrix\Sale\Internals\BasketPropertyTable::getList(array(
+				'order' => array("SORT" => "ASC", "ID" => "ASC"),
+				'filter' => array(
+					"BASKET_ID" => $basketIds,
+					"!CODE" => array("CATALOG.XML_ID", "PRODUCT.XML_ID"))
+			));
+
+			while($prop = $resProp->fetch())
+			{
+				if(strval($prop["VALUE"]) != "")
+				{
+					$basketPropertyList[$prop['BASKET_ID']][$prop['ID']] = $prop;
+				}
+			}
+		}
+		unset($basketItemIdsChunk, $basketItemIds);
+	}
 	$permUpdateOrderList = CSaleOrder::checkUserPermissionOrderList(array_keys($orderList), 'update', $arUserGroups);
 	$permDeleteOrderList = CSaleOrder::checkUserPermissionOrderList(array_keys($orderList), 'delete', $arUserGroups, $USER->GetID());
 
@@ -1685,7 +1697,7 @@ if (!empty($orderList) && is_array($orderList))
 		//ID
 		$idTmp = '<table><tr><td valign="top">';
 		if(!$bExport)
-			$idTmp .= "<img src='".$lamp."' hspace='4' alt='".htmlspecialcharsbx($lamp_alt)."' title='".htmlspecialcharsbx($lamp_alt)."' />";
+			$idTmp .= "<img src=\"".$lamp."\" hspace='4' alt=\"".htmlspecialcharsbx($lamp_alt)."\" title=\"".htmlspecialcharsbx($lamp_alt)."\" />";
 
 		$idTmp .= "</td><td><b><a ";
 

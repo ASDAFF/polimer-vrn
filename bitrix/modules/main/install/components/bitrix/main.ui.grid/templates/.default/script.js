@@ -48,6 +48,7 @@
 	 * @param {object} panelActions
 	 * @param {object} panelTypes
 	 * @param {object} editorTypes
+	 * @param {object} messageTypes
 	 * @constructor
 	 */
 	BX.Main.grid = function(
@@ -110,7 +111,10 @@
 			this.initArguments = [].slice.call(arguments);
 			this.container = BX(containerId);
 
-			if (!BX.browser.IsSafari() && BX.Main.grid.isNeedResourcesReady(this.container))
+			var isSafari = BX.browser.IsSafari() && !BX.browser.IsChrome();
+			var resourcesIsLoaded = !!BX.Main.gridManager && BX.Main.gridManager.data.length > 0;
+
+			if (!isSafari && !resourcesIsLoaded && BX.Main.grid.isNeedResourcesReady(this.container))
 			{
 				BX.bind(this.container, 'animationend', BX.proxy(this._onResourcesReady, this));
 			}
@@ -164,16 +168,11 @@
 			}
 
 			this.pageSize = new BX.Grid.Pagesize(this);
-
-			if (this.getParam('SHOW_ACTION_PANEL'))
-			{
-				this.actionPanel = new BX.Grid.ActionPanel(this, panelActions, panelTypes);
-			}
-
 			this.editor = new BX.Grid.InlineEditor(this, editorTypes);
 
 			if (this.getParam('SHOW_ACTION_PANEL'))
 			{
+				this.actionPanel = new BX.Grid.ActionPanel(this, panelActions, panelTypes);
 				this.pinPanel = new BX.Grid.PinPanel(this);
 			}
 
@@ -216,6 +215,7 @@
 			BX.addCustomEvent(window, 'Grid::unselectRow', BX.proxy(this._onUnselectRows, this));
 			BX.addCustomEvent(window, 'Grid::unselectRows', BX.proxy(this._onUnselectRows, this));
 			BX.addCustomEvent(window, 'Grid::allRowsUnselected', BX.proxy(this._onUnselectRows, this));
+			window.frames[this.getFrameId()].onresize = BX.throttle(this._onFrameResize, 20, this);
 		},
 
 		destroy: function()
@@ -232,23 +232,43 @@
 			this.getSettingsWindow() && this.getSettingsWindow().destroy();
 		},
 
+		_onFrameResize: function()
+		{
+			BX.onCustomEvent(window, 'Grid::resize', [this]);
+		},
+
+		/**
+		 * @private
+		 * @return {string}
+		 */
+		getFrameId: function()
+		{
+			return "main-grid-tmp-frame-"+this.getContainerId();
+		},
+
 		enableActionsPanel: function()
 		{
-			var panel = this.getActionsPanel().getPanel();
-
-			if (BX.type.isDomNode(panel))
+			if (this.getParam('SHOW_ACTION_PANEL'))
 			{
-				BX.removeClass(panel, this.settings.get('classDisable'));
+				var panel = this.getActionsPanel().getPanel();
+
+				if (BX.type.isDomNode(panel))
+				{
+					BX.removeClass(panel, this.settings.get('classDisable'));
+				}
 			}
 		},
 
 		disableActionsPanel: function()
 		{
-			var panel = this.getActionsPanel().getPanel();
-
-			if (BX.type.isDomNode(panel))
+			if (this.getParam('SHOW_ACTION_PANEL'))
 			{
-				BX.addClass(panel, this.settings.get('classDisable'));
+				var panel = this.getActionsPanel().getPanel();
+
+				if (BX.type.isDomNode(panel))
+				{
+					BX.addClass(panel, this.settings.get('classDisable'));
+				}
 			}
 		},
 
@@ -635,7 +655,11 @@
 				self.updateCounterSelected();
 				self.disableActionsPanel();
 				self.disableForAllCounter();
-				self.getActionsPanel().resetForAllCheckbox();
+
+				if (self.getParam('SHOW_ACTION_PANEL'))
+				{
+					self.getUpdater().updateGroupActions(this.getActionPanel());
+				}
 
 				if (self.getParam('ALLOW_COLUMNS_SORT'))
 				{
@@ -839,7 +863,11 @@
 						self.updateCounterSelected();
 						self.disableActionsPanel();
 						self.disableForAllCounter();
-						self.getActionsPanel().resetForAllCheckbox();
+
+						if (self.getParam('SHOW_ACTION_PANEL'))
+						{
+							self.getActionsPanel().resetForAllCheckbox();
+						}
 
 						if (self.getParam('ALLOW_ROWS_SORT'))
 						{
@@ -1257,7 +1285,11 @@
 					self.updateCounterSelected();
 					self.disableActionsPanel();
 					self.disableForAllCounter();
-					self.getActionsPanel().resetForAllCheckbox();
+
+					if (self.getParam('SHOW_ACTION_PANEL'))
+					{
+						self.getActionsPanel().resetForAllCheckbox();
+					}
 
 					if (self.getParam('ALLOW_ROWS_SORT'))
 					{
@@ -1556,6 +1588,102 @@
 			}
 
 			return this.loader;
+		},
+
+		confirmDialog: function(action, then, cancel)
+		{
+			var dialog, popupContainer, applyButton, cancelButton;
+
+			if ('CONFIRM' in action && action.CONFIRM)
+			{
+				action.CONFIRM_MESSAGE = action.CONFIRM_MESSAGE || this.arParams.CONFIRM_MESSAGE;
+				action.CONFIRM_APPLY_BUTTON = action.CONFIRM_APPLY_BUTTON || this.arParams.CONFIRM_APPLY;
+				action.CONFIRM_CANCEL_BUTTON = action.CONFIRM_CANCEL_BUTTON || this.arParams.CONFIRM_CANCEL;
+
+				dialog = new BX.PopupWindow(
+					this.getContainerId() + '-confirm-dialog',
+					null,
+					{
+						content: '<div class="main-grid-confirm-content">'+action.CONFIRM_MESSAGE+'</div>',
+						titleBar: 'CONFIRM_TITLE' in action ? action.CONFIRM_TITLE : '',
+						autoHide: false,
+						zIndex: 9999,
+						overlay: 0.4,
+						offsetTop: -100,
+						closeIcon : true,
+						closeByEsc : true,
+						events: {
+							onClose: function()
+							{
+								BX.unbind(window, 'keydown', hotKey);
+							}
+						},
+						buttons: [
+							new BX.PopupWindowButton({
+								text: action.CONFIRM_APPLY_BUTTON,
+								id: this.getContainerId() + '-confirm-dialog-apply-button',
+								events: {
+									click: function()
+									{
+										BX.type.isFunction(then) ? then() : null;
+										this.popupWindow.close();
+										this.popupWindow.destroy();
+										BX.onCustomEvent(window, 'Grid::confirmDialogApply', [this]);
+										BX.unbind(window, 'keydown', hotKey);
+									}
+								}
+							}),
+							new BX.PopupWindowButtonLink({
+								text: action.CONFIRM_CANCEL_BUTTON,
+								id: this.getContainerId() + '-confirm-dialog-cancel-button',
+								events: {
+									click: function()
+									{
+										BX.type.isFunction(cancel) ? cancel() : null;
+										this.popupWindow.close();
+										this.popupWindow.destroy();
+										BX.onCustomEvent(window, 'Grid::confirmDialogCancel', [this]);
+										BX.unbind(window, 'keydown', hotKey);
+									}
+								}
+							})
+						]
+					}
+				);
+
+				if (!dialog.isShown())
+				{
+					dialog.show();
+					popupContainer = dialog.popupContainer;
+					BX.removeClass(popupContainer, this.settings.get('classCloseAnimation'));
+					BX.addClass(popupContainer, this.settings.get('classShowAnimation'));
+					applyButton = BX(this.getContainerId() + '-confirm-dialog-apply-button');
+					cancelButton = BX(this.getContainerId() + '-confirm-dialog-cancel-button');
+
+					BX.bind(window, 'keydown', hotKey);
+				}
+			}
+			else
+			{
+				BX.type.isFunction(then) ? then() : null;
+			}
+
+			function hotKey(event)
+			{
+				if (event.code === 'Enter')
+				{
+					event.preventDefault();
+					event.stopPropagation();
+					BX.fireEvent(applyButton, 'click');
+				}
+
+				if (event.code === 'Escape')
+				{
+					event.preventDefault();
+					event.stopPropagation();
+					BX.fireEvent(cancelButton, 'click');
+				}
+			}
 		}
 	};
 })();

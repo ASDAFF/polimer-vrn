@@ -2865,6 +2865,33 @@ class CSaleExport
 		return $arFields['PERSON_TYPE_ID'];
 	}
 
+	static function deleteREKV($typeId)
+    {
+        $r = new \Bitrix\Main\Result();
+
+        $res = \Bitrix\Sale\Internals\BusinessValueCode1CTable::getList(array(
+                'select'=>array('CODE_INDEX', 'PERSON_TYPE_ID'),
+                'filter'=>array('PERSON_TYPE_ID'=>$typeId)
+        ));
+        while($row=$res->fetch())
+        {
+			$r = \Bitrix\Sale\Internals\BusinessValueCode1CTable::delete(array(
+				'PERSON_TYPE_ID' => $row['PERSON_TYPE_ID'],
+				'CODE_INDEX'     => $row['CODE_INDEX'],
+			));
+
+			if($r->isSuccess())
+            {
+                $r = \Bitrix\Sale\Internals\BusinessValueTable::delete(array(
+                    'CODE_KEY'       => BusinessValueConsumer1C::getRekvCodeKey($row['PERSON_TYPE_ID'], $row['CODE_INDEX']),
+                    'CONSUMER_KEY'   => BusinessValueConsumer1C::CONSUMER_KEY,
+                    'PERSON_TYPE_ID' => $row['PERSON_TYPE_ID'],
+                ));
+			}
+        }
+		return $r;
+    }
+
 	function Delete($ID)
 	{
 		$ID = IntVal($ID);
@@ -2879,7 +2906,10 @@ class CSaleExport
 		{
 			foreach ($consumer['CODES'] as $codeKey => $code)
 			{
-				BusinessValueConsumer1C::setMapping($codeKey, $ID);
+				if(!isset($code['CODE_INDEX']))
+                {
+					BusinessValueConsumer1C::setMapping($codeKey, $ID, array());
+                }
 			}
 		}
 

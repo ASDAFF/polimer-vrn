@@ -35,4 +35,7 @@ $MESS["SONET_C30_T_CREATE_TASK_LINK"] = "Завдання створено на 
 $MESS["SONET_C30_T_CREATE_TASK_LINK_BLOG_POST"] = "повідомлення Живої стрічки";
 $MESS["SONET_C30_T_CREATE_TASK_LINK_BLOG_COMMENT"] = "коментар до повідомлення Живої стрічки";
 $MESS["SONET_C30_T_LINK_COPIED"] = "Посилання скопійовано";
+$MESS["SONET_C30_MENU_TITLE_LINK2"] = "Скопіювати посилання";
+$MESS["SONET_C30_T_EMPTY"] = "Повідомлень у стрічці поки немає";
+$MESS["SONET_C30_T_EMPTY_SEARCH"] = "Повідомлення не знайдені";
 ?>

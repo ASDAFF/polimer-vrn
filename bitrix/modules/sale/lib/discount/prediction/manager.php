@@ -461,7 +461,7 @@ final class Manager
 		$discount->enableCheckingPrediction();
 		if(!$order->setBasket($basket)->isSuccess())
 		{
-			return null;
+			return array();
 		}
 		$calcResults = $discount->getApplyResult(true);
 

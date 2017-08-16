@@ -53,6 +53,8 @@ class OrderEdit
 	public static $needUpdateNewProductPrice = false;
 	public static $isBuyerIdChanged = false;
 
+	const BASKET_CODE_NEW = 'new';
+
 	/**
 	 * @param string $name
 	 * @param array $data
@@ -337,7 +339,6 @@ class OrderEdit
 	/**
 	 * @param Order $order
 	 * @param array $formData
-	 * @param array $files
 	 * @return bool|int|string
 	 * @throws UserMessageException
 	 */
@@ -370,7 +371,6 @@ class OrderEdit
 
 		return $userId;
 	}
-
 
 	protected static function getUserId($order, $formData, $createUserIfNeed, \Bitrix\Sale\Result &$result)
 	{
@@ -511,7 +511,7 @@ class OrderEdit
 
 				$item = $basket->getExistsItem($productData["MODULE"], $productData["OFFER_ID"], $productData["PROPS"]);
 
-				if($item == null && $basketCode != "new")
+				if($item == null && $basketCode != self::BASKET_CODE_NEW)
 					$item = $basket->getItemByBasketCode($basketCode);
 
 				if($item && $item->isBundleChild())
@@ -536,7 +536,7 @@ class OrderEdit
 				}
 				else
 				{
-					if($basketCode != "new")
+					if($basketCode != self::BASKET_CODE_NEW)
 						$setBasketCode = $basketCode;
 					elseif(intval($maxBasketCodeIdx) > 0)
 						$setBasketCode = 'n'.strval($maxBasketCodeIdx+1); //Fix collision part 2.
@@ -548,7 +548,7 @@ class OrderEdit
 					if ($basketCode != $productData["BASKET_CODE"])
 						$productData["BASKET_CODE"] = $item->getBasketCode();
 
-					if($basketCode == "new")
+					if($basketCode == self::BASKET_CODE_NEW)
 					{
 						$opResult->setData(array("NEW_ITEM_BASKET_CODE" => $productData["BASKET_CODE"]));
 						$needDataUpdate[] = $item->getBasketCode();
@@ -613,7 +613,7 @@ class OrderEdit
 
 	protected static function isBasketItemNew($basketCode)
 	{
-		return (strpos($basketCode, 'n') === 0) && ($basketCode != 'new');
+		return (strpos($basketCode, 'n') === 0) && ($basketCode != self::BASKET_CODE_NEW);
 	}
 
 	public static function saveCoupons($userId, $formData)
@@ -625,7 +625,7 @@ class OrderEdit
 		DiscountCouponsManager::init(DiscountCouponsManager::MODE_MANAGER, array("userId" => $userId));
 
 		if(!DiscountCouponsManager::isSuccess())
-			throw new UserMessageException(print_r(DiscountCouponsManager::getErrors(), true));
+			throw new UserMessageException(implode(" \n", DiscountCouponsManager::getErrors()));
 
 		if(isset($formData["COUPONS"]) && strlen($formData["COUPONS"]) > 0)
 		{
@@ -777,7 +777,7 @@ class OrderEdit
 				if ($item == null)
 					DiscountCouponsManager::useSavedCouponsForApply(false);
 
-				if($item == null && $basketCode != "new")
+				if($item == null && $basketCode != self::BASKET_CODE_NEW)
 					$item = $basket->getItemByBasketCode($basketCode);
 
 				if($item && $item->isBundleChild())
@@ -838,7 +838,7 @@ class OrderEdit
 					$item = $basket->getItemByBasketCode($basketCode);
 
 				//sku was changed
-				if($item == null && $basketCode != "new")
+				if($item == null && $basketCode != self::BASKET_CODE_NEW)
 				{
 					if($item = $basket->getItemByBasketCode($basketCode))
 					{
@@ -859,7 +859,7 @@ class OrderEdit
 
 				if(!$item)
 				{
-					if($basketCode != "new")
+					if($basketCode != self::BASKET_CODE_NEW)
 						$setBasketCode = $basketCode;
 					elseif(intval($maxBasketCodeIdx) > 0)
 						$setBasketCode = 'n'.strval($maxBasketCodeIdx+1); //Fix collision part 2.
@@ -875,7 +875,7 @@ class OrderEdit
 					if ($basketCode != $productData["BASKET_CODE"])
 						$productData["BASKET_CODE"] = $item->getBasketCode();
 
-					if($basketCode == "new")
+					if($basketCode == self::BASKET_CODE_NEW)
 					{
 						$result->setData(array("NEW_ITEM_BASKET_CODE" => $productData["BASKET_CODE"]));
 						$needDataUpdate[] = $item->getBasketCode();

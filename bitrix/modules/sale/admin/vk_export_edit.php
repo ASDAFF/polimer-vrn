@@ -64,7 +64,7 @@ if (isset($request["VK"]))
 		$errorRequiredFields[] = Loc::getMessage("SALE_VK_SETTINGS_NO_SECRET");
 
 //	todo: somtehing wrong...
-	if ($exportId && strlen($errorRequiredFields) <= 0 && isset($vkSettings["OAUTH"]["ACCESS_TOKEN"]) && !empty($vkSettings["OAUTH"]["ACCESS_TOKEN"]))
+	if ($exportId && empty($errorRequiredFields) && isset($vkSettings["OAUTH"]["ACCESS_TOKEN"]) && !empty($vkSettings["OAUTH"]["ACCESS_TOKEN"]))
 	{
 		if (!isset($request["VK"]["VK_SETTINGS"]["GROUP_ID"]) || $request["VK"]["VK_SETTINGS"]["GROUP_ID"] <= 0)
 			$errorRequiredFields[] = Loc::getMessage("SALE_VK_SETTINGS_NO_GROUP_ID");
@@ -124,34 +124,39 @@ if (isset($request["code"]) && !empty($request["code"]) && $exportId)
 	$http = new HttpClient();
 	$responseStr = $http->get($tokenUrl);
 
-//		check answer from VK
+//	check answer from VK
 	if (strlen($responseStr) <= 0)
 	{
-//			logger my throw exception
+//		logger my throw exception
 		try
 		{
 			$logger = new Vk\Logger($exportId);
 			$logger->addError('VK_NOT_AVAILABLE');
 			unset($logger);
 		}
-		catch (Vk\ExecuteException $e)
-		{
-		}
+		catch (Vk\ExecuteException $e){}
 	}
 	else
 	{
 		$response = Bitrix\Main\Web\Json::decode($responseStr);
 		if (isset($response["error"]))
 		{
-//				todo: maybe other error. hotya vse ravno error na storone vk
-			echo CAdminMessage::ShowMessage(Loc::getMessage("SALE_VK_SETTINGS_ACCESS_TOKEN_ERROR") . $response["error_description"]);
+			try
+			{
+//				if catch error - must clear access_token and unset activity
+				unset($vkSettings["OAUTH"]["ACCESS_TOKEN"], $vkSettings["OAUTH"]["ACCESS_TOKEN_TIME"]);
+				$vk->unsetActiveById($exportId);
+				$logger = new Vk\Logger($exportId);
+				$logger->addError(ToUpper(str_replace(' ','_',$response["error_description"])));
+			}
+			catch (Vk\ExecuteException $e){}
 		}
 		elseif (isset($response["access_token"]))
 		{
 			$vkSettings["OAUTH"]["ACCESS_TOKEN"] = $response["access_token"];
 			$vkSettings["OAUTH"]["ACCESS_TOKEN_TIME"] = time();
 
-//				clear error about access token
+//			clear error about access token
 			$logger = new Vk\Logger($exportId);
 			$logger->clearOneError("WRONG_ACCESS_TOKEN");
 			unset($logger);
@@ -298,8 +303,8 @@ catch (Vk\ExecuteException $e)
 {
 	$vkCategorySelector = '';
 	$vkGroupsSelector = '';
-	$vk->unsetActiveById($exportId);            // if error - set vk-export is not active
-	$vkSettings = $vk->getSettings($exportId);    // and get new settings
+	$vk->unsetActiveById($exportId);				// if error - set vk-export is not active
+	$vkSettings = $vk->getSettings($exportId);		// and get new settings
 }
 catch (ArgumentNullException $e)
 {
@@ -359,7 +364,7 @@ $tabControl = new CAdminTabControl("tabControl", $arrTabs);
 
 <div id="vk_export_notify__error_critical">
 	<?php
-//		check error log - show if not empty
+//	check error log - show if not empty
 	$logger = new Vk\Logger($exportId);
 	$errorsCritical = $logger->getErrorsList(true);
 	if (strlen($errorsCritical) > 0)

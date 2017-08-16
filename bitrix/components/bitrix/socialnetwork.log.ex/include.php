@@ -97,8 +97,10 @@ if (!function_exists('__SLLogGetIds'))
 			$arResult["arLogTmpID"][] = $arEventsID["ID"];
 			$arTmpEventsNew[] = $arEventsID;
 
+			$livefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+
 			if (
-				in_array($arEventsID["EVENT_ID"], array("blog_post", "blog_post_important", "idea"))
+				in_array($arEventsID["EVENT_ID"], array_merge($livefeedProvider->getEventId(), array("idea")))
 				&& intval($arEventsID["SOURCE_ID"]) > 0
 			)
 			{

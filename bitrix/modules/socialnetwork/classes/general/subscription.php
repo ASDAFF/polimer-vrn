@@ -350,6 +350,11 @@ class CAllSocNetSubscription
 		foreach($arUserToSend as $arUser)
 		{
 			$arMessageFields["TO_USER_ID"] = $arUser["USER_ID"];
+			if (intval($arFields["LOG_ID"]) > 0)
+			{
+				$arMessageFields["NOTIFY_SUB_TAG"] = "SONET|EVENT|".intval($arFields["LOG_ID"])."|".intval($arUser["USER_ID"]);
+			}
+
 			$arTmp = CSocNetLogTools::ProcessPath(
 				array(
 					"URL" => $arFields["URL"],

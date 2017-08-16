@@ -159,19 +159,23 @@ class AutomaticProfile extends Base
 
 			/** @var \Bitrix\Sale\Delivery\Services\AutomaticProfile $service */
 			$service = Manager::getPooledObject($fields);
-			$config = $service->getConfig();
-			$serviceProfileId = $config['MAIN']['ITEMS']['PROFILE_ID']['VALUE'];
 
-			if($serviceProfileId == $this->profileId)
-				continue;
+			if($service)
+			{
+				$config = $service->getConfig();
+				$serviceProfileId = $config['MAIN']['ITEMS']['PROFILE_ID']['VALUE'];
 
-			$profileOldConfig = $service->getOldConfig();
+				if($serviceProfileId == $this->profileId)
+					continue;
 
-			foreach($profileOldConfig['CONFIG'] as $k => $v)
-				if(isset($v['GROUP']) && $v['GROUP'] == $serviceProfileId)
-					$oldConfig['CONFIG'][$k] = $v;
+				$profileOldConfig = $service->getOldConfig();
 
-			$actualizedCodes[] = $fields['CODE'];
+				foreach($profileOldConfig['CONFIG'] as $k => $v)
+					if(isset($v['GROUP']) && $v['GROUP'] == $serviceProfileId)
+						$oldConfig['CONFIG'][$k] = $v;
+
+				$actualizedCodes[] = $fields['CODE'];
+			}
 		}
 
 		return $oldConfig;

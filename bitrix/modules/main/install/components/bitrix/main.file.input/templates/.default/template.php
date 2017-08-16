@@ -25,7 +25,13 @@
 <?*/
 
 if ($arParams["SHOW_AVATAR_EDITOR"] == "Y")
-	CJSCore::Init(array("webrtc_adapter", "avatar_editor"));
+{
+	\CJSCore::Init(array("webrtc_adapter", "avatar_editor"));
+}
+else
+{
+	\CJSCore::Init(array("uploader"));
+}
 
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 if ($arParams["ALLOW_UPLOAD"] == "N" && empty($arResult['FILES']))
@@ -81,7 +87,7 @@ HTML;
 			}
 			else
 			{
-				?><input type="file" id="file_input_<?=$arParams['CONTROL_ID']?>" /><?
+				?><input type="file" id="file_input_<?=$arParams['CONTROL_ID']?>" <?=$arParams["MULTIPLE"] === 'Y' ? ' multiple="multiple"' : ''?> /><?
 			}
 		?></div><?
 		if (!empty($arParams["ALLOW_UPLOAD_EXT"]) || $arParams['MAX_FILE_SIZE'] > 0)

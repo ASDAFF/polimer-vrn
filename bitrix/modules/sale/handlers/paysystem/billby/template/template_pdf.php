@@ -933,7 +933,7 @@ if ($params['BILLBY_TOTAL_SHOW'] == 'Y')
 	$pdf->Ln(5);
 	$text = Loc::getMessage('SALE_HPS_BILLBY_TOTAL_VAT').': ';
 	if ($inWords)
-		$text .= Number2Word_Rus($totalVatSum, "Y", $params['CURRENCY']);
+		$text .= Number2Word_Rus(roundEx($totalVatSum, 2), "Y", $params['CURRENCY']);
 	else
 		$text .= SaleFormatCurrency($totalVatSum, $params['CURRENCY'], false);
 	unset($totalVatSum);

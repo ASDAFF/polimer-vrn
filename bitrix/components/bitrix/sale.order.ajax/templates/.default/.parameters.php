@@ -183,6 +183,17 @@ $arTemplateParameters = array(
 		"REFRESH" => "Y",
 		"PARENT" => "VISUAL",
 	),
+	"PICKUP_MAP_TYPE" => array(
+		"NAME" => GetMessage("PICKUP_MAP_TYPE"),
+		"TYPE" => "LIST",
+		"MULTIPLE" => "N",
+		"VALUES" => array(
+			"yandex" => GetMessage("PICKUP_MAP_TYPE_YANDEX"),
+			"google" => GetMessage("PICKUP_MAP_TYPE_GOOGLE")
+		),
+		"DEFAULT" => "yandex",
+		"PARENT" => "VISUAL"
+	),
 	"SERVICES_IMAGES_SCALING" =>  array(
 		"NAME" => GetMessage("SERVICES_IMAGES_SCALING"),
 		"TYPE" => "LIST",

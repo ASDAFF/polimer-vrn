@@ -99,6 +99,8 @@ class VkExportedData
 
 //		add new data to existing
 		$dataToSave = $savedData + $newData;
+		$cacheManager->clean($this->cacheId);
+		$cacheManager->read(self::CACHE_TTL, $this->cacheId);
 		$cacheManager->set($this->cacheId, $dataToSave);
 	}
 	

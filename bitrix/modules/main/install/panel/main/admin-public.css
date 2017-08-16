@@ -666,7 +666,7 @@
 .bx-ie8 #bx-admin-prefix .adm-designed-checkbox-label {display: none;}
 
 .adm-workarea .adm-input,
-.adm-workarea input[type="text"],
+.adm-workarea input[type="text"]:not(.main-ui-filter-search-filter),
 .adm-workarea input[type="password"],
 .adm-workarea input[type="email"] {
 	background:#fff;
@@ -683,7 +683,7 @@
 }
 
 .adm-workarea .adm-input,
-.adm-workarea input[type="text"],
+.adm-workarea input[type="text"]:not(.main-ui-filter-search-filter),
 .adm-workarea input[type="password"],
 .adm-workarea input[type="email"] {font-size:13px; height:25px; padding:0 5px; margin: 0; }
 
@@ -2080,3 +2080,45 @@
 .adm-list-control { float: left; }
 .adm-list-label { display: block; overflow: hidden; padding: 0 0 0 4px; margin: 0; }
 .adm-list-radio .adm-list-label { padding-top: 2px;}
+
+/* ========================================== For new grid and filter ============================================ */
+.adm-toolbar-panel-container {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	-ms-flex-align: center;
+	align-items: center;
+	-ms-flex-wrap: wrap;
+	flex-wrap: wrap;
+	-webkit-box-pack: justify;
+	-ms-flex-pack: justify;
+	justify-content: space-between;
+	overflow: hidden;
+	margin: 18px 0;
+}
+
+.adm-toolbar-panel-flexible-space {
+	-webkit-box-flex: 1;
+	-ms-flex: 1 0 auto;
+	flex: 1 0 auto;
+	margin: 0 19px 0 0;
+}
+
+.adm-toolbar-panel-container .main-ui-filter-search {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	margin: auto 19px auto 0;
+	width: 100%;
+	max-width: 813px;
+	min-width: 300px;
+}
+
+.adm-toolbar-panel-container .webform-small-button-separate-wrap a:hover {
+	text-decoration: none;
+}
+
+.adm-toolbar-panel-button:last-child {
+	margin-right: 0 !important;
+}

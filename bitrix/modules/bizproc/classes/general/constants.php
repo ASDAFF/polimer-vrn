@@ -1,4 +1,7 @@
 <?
+use Bitrix\Main\Localization\Loc;
+Loc::loadMessages(__FILE__);
+
 class CBPActivityExecutionStatus
 {
 	const Initialized = 0;
@@ -253,4 +256,20 @@ class CBPTaskChangedStatus
 	const Update = 2;
 	const Delegate = 3;
 	const Delete = 4;
+}
+
+class CBPTaskDelegationType
+{
+	const Subordinate = 0; // default value
+	const AllEmployees = 1;
+	const None = 2;
+
+	public static function getSelectList()
+	{
+		return array(
+			self::Subordinate => Loc::getMessage('BPCG_CONSTANTS_DELEGATION_TYPE_SUBORDINATE'),
+			self::AllEmployees => Loc::getMessage('BPCG_CONSTANTS_DELEGATION_TYPE_ALL_EMPLOYEES'),
+			self::None => Loc::getMessage('BPCG_CONSTANTS_DELEGATION_TYPE_NONE')
+		);
+	}
 }

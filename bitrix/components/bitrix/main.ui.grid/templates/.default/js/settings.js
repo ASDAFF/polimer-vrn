@@ -68,6 +68,7 @@
 			classEditorRange: 'main-grid-editor-range',
 			classEditorCheckbox: 'main-grid-editor-checkbox',
 			classEditorTextarea: 'main-grid-editor-textarea',
+			classEditorCustom: 'main-grid-editor-custom',
 			classCellContainer: 'main-grid-cell-content',
 			classEditorOutput: 'main-grid-editor-output',
 			classSettingsWindow: 'main-grid-settings-window',

@@ -465,7 +465,8 @@ diskController.prototype = {
 					isImage : false,
 					place : BX(result.place, true),
 					xmlID : BX(result.place, true).getAttribute("bx-attach-xml-id"),
-					fileID : BX(result.place, true).getAttribute("bx-attach-file-id")
+					fileID : BX(result.place, true).getAttribute("bx-attach-file-id"),
+					fileType: BX(result.place, true).getAttribute("bx-attach-file-type")
 				},
 				preview;
 			if (/(\.png|\.jpg|\.jpeg|\.gif|\.bmp)$/i.test(result.element_name) &&
@@ -876,6 +877,10 @@ fileController.prototype.checkFile = function(id, result, param)
 		{
 			return false;
 		}
+		if(BX(data.place, true).getAttribute("bx-attach-file-type"))
+		{
+			data.fileType = BX(data.place, true).getAttribute("bx-attach-file-type");
+		}
 
 		this.values[id] = data;
 	}
@@ -1028,6 +1033,15 @@ LHEPostForm.prototype = {
 				regexp : /\[(IMG ID)=((?:\s|\S)*?)(?:\s*?WIDTH=(\d+)\s*?HEIGHT=(\d+))?\]/ig,
 				code : '[IMG ID=#ID##ADDITIONAL#]',
 				wysiwyg : '<img id="#ID#" src="' + '#SRC#" lowsrc="' + '#LOWSRC#" title=""#ADDITIONAL# />'
+			},
+			player : {
+				exist : false,
+				bxTag : 'player',
+				tag : "FILE ID",
+				tags : ["FILE ID"],
+				regexp : /\[(FILE ID)=((?:\s|\S)*?)?\]/ig,
+				code : '[FILE ID=#ID##ADDITIONAL#]',
+				wysiwyg : '<img class="bxhtmled-player-surrogate" id="#ID#" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" contenteditable="false" title=""#ADDITIONAL# />'
 			}
 		};
 		var parsers = (params["parsers"] ? params["parsers"] : {});
@@ -1367,6 +1381,10 @@ LHEPostForm.prototype = {
 				editorMode = editor.GetViewMode(),
 				pattern = this.parser[parser.bxTag][editorMode];
 
+			if (file['fileType'] && this.parser[file['fileType']] && editorMode == "wysiwyg")
+			{
+				pattern = this.parser[file['fileType']][editorMode];
+			}
 			if (file['isImage'])
 			{
 				pattern = (editorMode == "wysiwyg" ? this.parser["postimage"][editorMode] : pattern);
@@ -1501,6 +1519,11 @@ LHEPostForm.prototype = {
 							strAdditional = "",
 							template = (file.isImage ? obj.parser.postimage.wysiwyg : arParser.wysiwyg);
 						obj.monitoringStart();
+
+						if (file.fileType && obj.parser[file.fileType] && obj.parser[file.fileType].wysiwyg)
+						{
+							template = obj.parser[file.fileType].wysiwyg;
+						}
 
 						if (file.isImage)
 						{

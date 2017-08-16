@@ -9,6 +9,8 @@ class SaleBasketLineComponent extends CBitrixComponent
 	protected $readyForOrderFilter = array("CAN_BUY" => "Y", "DELAY" => "N", "SUBSCRIBE" => "N");
 	protected $disableUseBasket = false;
 
+	protected $currentFuser = null;
+
 	public function onPrepareComponentParams($arParams)
 	{
 		// common
@@ -102,9 +104,9 @@ class SaleBasketLineComponent extends CBitrixComponent
 		return $arParams;
 	}
 
-	private function getUserFilter()
+	protected function getUserFilter()
 	{
-		$fUserID = (int)CSaleBasket::GetBasketUserID(true);
+		$fUserID = (int)$this->currentFuser;
 		return ($fUserID > 0)
 			? array("FUSER_ID" => $fUserID, "LID" => SITE_ID, "ORDER_ID" => "NULL")
 			: null; // no basket for current user
@@ -154,6 +156,8 @@ class SaleBasketLineComponent extends CBitrixComponent
 			return;
 		}
 
+		$this->loadCurrentFuser();
+
 		if (isset($_POST['sbblRemoveItemFromCart']))
 			$this->removeItemFromCart();
 
@@ -191,13 +195,12 @@ class SaleBasketLineComponent extends CBitrixComponent
 			$this->arResult = $this->getProducts() + $this->arResult;
 		else
 		{
-			$fuserId = \Bitrix\Sale\Fuser::getId(true);
 			if($this->arParams["SHOW_TOTAL_PRICE"] == "Y")
 			{
-				$this->arResult["TOTAL_PRICE"] = \Bitrix\Sale\BasketComponentHelper::getFUserBasketPrice($fuserId, SITE_ID);
+				$this->arResult["TOTAL_PRICE"] = \Bitrix\Sale\BasketComponentHelper::getFUserBasketPrice($this->currentFuser, SITE_ID);
 			}
 
-			$this->arResult["NUM_PRODUCTS"] = \Bitrix\Sale\BasketComponentHelper::getFUserBasketQuantity($fuserId, SITE_ID);
+			$this->arResult["NUM_PRODUCTS"] = \Bitrix\Sale\BasketComponentHelper::getFUserBasketQuantity($this->currentFuser, SITE_ID);
 		}
 
 		if($this->arParams["SHOW_TOTAL_PRICE"] == "Y")
@@ -513,6 +516,11 @@ class SaleBasketLineComponent extends CBitrixComponent
 		}
 
 		return $basketQuantity;
+	}
+
+	protected function loadCurrentFuser()
+	{
+		$this->currentFuser = \Bitrix\Sale\Fuser::getId(true);
 	}
 }
 

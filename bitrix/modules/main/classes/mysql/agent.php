@@ -153,8 +153,7 @@ class CAgent extends CAllAgent
 
 			CTimeZone::Disable();
 
-			global $USER;
-			unset($USER);
+			$USER = null;
 			try
 			{
 				$eval_result = "";
@@ -170,7 +169,6 @@ class CAgent extends CAllAgent
 
 				continue;
 			}
-			unset($USER);
 
 			CTimeZone::Enable();
 

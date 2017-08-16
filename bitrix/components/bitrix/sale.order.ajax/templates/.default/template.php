@@ -287,11 +287,6 @@ $APPLICATION->SetAdditionalCSS($templateFolder.'/style.css', true);
 $this->addExternalJs($templateFolder.'/order_ajax.js');
 \Bitrix\Sale\PropertyValueCollection::initJs();
 $this->addExternalJs($templateFolder.'/script.js');
-
-if ($arParams['SHOW_PICKUP_MAP'] === 'Y' || $arParams['SHOW_MAP_IN_PROPS'] === 'Y')
-{
-	$this->addExternalJs($scheme.'://api-maps.yandex.ru/2.1.34/?load=package.full&lang='.$locale);
-}
 ?>
 	<NOSCRIPT>
 		<div style="color:red"><?=Loc::getMessage('SOA_NO_JS')?></div>
@@ -620,23 +615,50 @@ else
 			)
 		))?>);
 	</script>
-	<script>
 	<?
 	if ($arParams['SHOW_PICKUP_MAP'] === 'Y' || $arParams['SHOW_MAP_IN_PROPS'] === 'Y')
 	{
-		?>
-		(function bx_ymaps_waiter(){
-			if (typeof ymaps !== 'undefined')
-				ymaps.ready(BX.proxy(BX.Sale.OrderAjaxComponent.initMaps, BX.Sale.OrderAjaxComponent));
-			else
-				setTimeout(bx_ymaps_waiter, 100);
-			})();
-		<?
+		if ($arParams['PICKUP_MAP_TYPE'] === 'yandex')
+		{
+			$this->addExternalJs($templateFolder.'/scripts/yandex_maps.js');
+			?>
+			<script src="<?=$scheme?>://api-maps.yandex.ru/2.1.50/?load=package.full&lang=<?=$locale?>"></script>
+			<script>
+				(function bx_ymaps_waiter(){
+					if (typeof ymaps !== 'undefined' && BX.Sale && BX.Sale.OrderAjaxComponent)
+						ymaps.ready(BX.proxy(BX.Sale.OrderAjaxComponent.initMaps, BX.Sale.OrderAjaxComponent));
+					else
+						setTimeout(bx_ymaps_waiter, 100);
+				})();
+			</script>
+			<?
+		}
+
+		if ($arParams['PICKUP_MAP_TYPE'] === 'google')
+		{
+			$this->addExternalJs($templateFolder.'/scripts/google_maps.js');
+			$apiKey = htmlspecialcharsbx(Main\Config\Option::get('fileman', 'google_map_api_key', ''));
+			?>
+			<script async defer
+				src="<?=$scheme?>://maps.googleapis.com/maps/api/js?key=<?=$apiKey?>&callback=bx_gmaps_waiter">
+			</script>
+			<script>
+				function bx_gmaps_waiter()
+				{
+					if (BX.Sale && BX.Sale.OrderAjaxComponent)
+						BX.Sale.OrderAjaxComponent.initMaps();
+					else
+						setTimeout(bx_gmaps_waiter, 100);
+				}
+			</script>
+			<?
+		}
 	}
 
 	if ($arParams['USE_YM_GOALS'] === 'Y')
 	{
 		?>
+		<script>
 			(function bx_counter_waiter(i){
 				i = i || 0;
 				if (i > 50)
@@ -647,10 +669,8 @@ else
 				else
 					setTimeout(function(){bx_counter_waiter(++i)}, 100);
 			})();
+		</script>
 		<?
 	}
-	?>
-	</script>
-	<?
 }
 ?>

@@ -676,6 +676,12 @@ class Actions
 
 		if ($applyIfMoreProfitable)
 		{
+			if ($filter === null)
+			{
+				$filter = function(){
+					return true;
+				};
+			}
 			$filter = self::wrapFilterToFindMoreProfitableForCumulative($filter, $unit, $value, $limitValue, $maxBound);
 		}
 

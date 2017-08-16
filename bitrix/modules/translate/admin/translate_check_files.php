@@ -61,14 +61,14 @@ if($strError == "")
 			$i++;
 			if ($i==1)
 			{
-				$chain .= '<a href="translate_list.php?lang='.LANGUAGE_ID."&path=/"."&".bitrix_sessid_get().'" title="'.GetMessage("TRANS_CHAIN_FOLDER_ROOT").'">..</a> / ';
+				$chain .= '/ ';
 			}
 			else
 			{
 				$arPath[] = htmlspecialcharsbx($dir);
 				if ($i>2)
 					$chain .= " / ";
-				$chain .= '<a href="translate_list.php?lang='.LANGUAGE_ID."&path="."/".implode('/',$arPath)."/"."&".bitrix_sessid_get().'" title="'.GetMessage("TRANS_CHAIN_FOLDER").'">'.htmlspecialcharsbx($dir).'</a>';
+				$chain .= '<a href="translate_list.php?lang='.LANGUAGE_ID."&path="."/".implode('/',$arPath)."/".'" title="'.GetMessage("TRANS_CHAIN_FOLDER").'">'.htmlspecialcharsbx($dir).'</a>';
 			}
 		}
 	}
@@ -101,7 +101,7 @@ $aMenu = array();
 
 $aMenu[] = Array(
 	"TEXT"	=> GetMessage("TRANS_LIST"),
-	"LINK"	=> "/bitrix/admin/translate_list.php?lang=".LANGUAGE_ID."&path=/".implode("/",$arPath)."/"."&".bitrix_sessid_get(),
+	"LINK"	=> "/bitrix/admin/translate_list.php?lang=".LANGUAGE_ID."&path=/".implode("/",$arPath)."/",
 	"TITLE"	=> GetMessage("TRANS_LIST_TITLE"),
 	"ICON"	=> "btn_list"
 	);
