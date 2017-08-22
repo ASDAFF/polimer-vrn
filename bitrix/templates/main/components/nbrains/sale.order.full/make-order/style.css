@@ -57,3 +57,34 @@ textarea{
 	text-align: left;
 	color: #333;
 }
+
+.or__content .methods_detail .group .table{
+	display: inline-block;
+	margin: 5px 0px;
+}
+.or__content .methods_detail .group .table.lines span{
+	font: 500 14px/35px 'Fira Sans',sans-serif;
+	margin-right: 30px;
+}
+.or__content .methods_detail .group .table.lines .inp{
+	float: right;
+}
+.or__content .methods_detail .group .table.lines:first-child .inp input{
+	width: 90%;
+}
+
+
+.or__content .methods_detail .group .table input[type=text]{
+	border: 1px solid #ced5d9;
+	-webkit-border-radius: 5px;
+	border-radius: 5px;
+	outline: 0;
+	padding: 8px 10px;
+	font: 400 14px/18px 'Fira Sans',sans-serif;
+	width: 60px;
+}
+
+.phone-add{
+	margin: 10px 0px;
+}
+

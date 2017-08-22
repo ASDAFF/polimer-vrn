@@ -8,7 +8,7 @@ if (!$USER->IsAuthorized())
 else
 {
 	if ($arResult["CurrentStep"] < 6):?>
-		<form method="post" action="<?= htmlspecialcharsbx($arParams["PATH_TO_ORDER"]) ?>" name="order_form">
+		<form method="post" action="<?= htmlspecialcharsbx($arParams["PATH_TO_ORDER"]) ?>" name="order_form" id="order_form">
 			<?=bitrix_sessid_post()?>
 	<?endif;?>
 
