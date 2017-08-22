@@ -129,20 +129,12 @@ if (!function_exists('PrintPropsForm'))
 									print "*";
 								} ?>:</span>
 							<div class="inp date"><input type="text" placeholder="Выбрать дату" value="<?= $group['ROWS'][0]["VALUE"] ?>" name="<?= $group['ROWS'][0]["FIELD_NAME"] ?>" id="date"></div>
-							<span class="span_time">Время</span>
-							<span class="span_from"><?= $group['ROWS'][1]["NAME"];
+							<span class="span_time"><?= $group['ROWS'][1]["NAME"];
 								if ($group['ROWS'][1]["REQUIED_FORMATED"] == "Y") {
 									print "*";
 								} ?></span>
 							<div class="inp time from">
 								<input type="text" value="<?= $group['ROWS'][1]["VALUE"] ?>" name="<?= $group['ROWS'][1]["FIELD_NAME"] ?>">
-							</div>
-							<span class="span_to"><?= $group['ROWS'][2]["NAME"];
-								if ($group['ROWS'][2]["REQUIED_FORMATED"] == "Y") {
-									print "*";
-								} ?></span>
-							<div class="inp time to">
-								<input type="text" value="<?= $group['ROWS'][2]["VALUE"] ?>" name="<?= $group['ROWS'][2]["FIELD_NAME"] ?>">
 							</div>
 						</div>
 					</div>
