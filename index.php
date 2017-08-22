@@ -184,7 +184,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 			<div class="slider_product" id="mp__product__new">
 				<?
 				$arSelect = Array("ID","IBLOCK_ID", "NAME", "DETAIL_PAGE_URL","PREVIEW_PICTURE","PROPERTY_SALE");
-				$arFilter = array('IBLOCK_ID' => 11, 'ACTIVE' => 'Y','>=TIMESTAMP_X' => date($DB->DateFormatToPHP(CLang::GetDateFormat("SHORT")), strtotime('-30 day')));
+				$arFilter = array('IBLOCK_ID' => 21, 'ACTIVE' => 'Y','>=TIMESTAMP_X' => date($DB->DateFormatToPHP(CLang::GetDateFormat("SHORT")), strtotime('-30 day')));
 				$res = CIBlockElement::GetList(Array(), $arFilter, false, Array("nPageSize" => 20), $arSelect);
 				while($ob = $res->GetNextElement()):
 					$arFields = $ob->GetFields();
@@ -211,7 +211,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 			<div class="slider_product" id="mp__product__action">
 				<?
 				$arSelect = Array("ID","IBLOCK_ID", "NAME", "DETAIL_PAGE_URL","PREVIEW_PICTURE","PROPERTY_SALE");
-				$arFilter = Array("IBLOCK_ID" => 11, "ACTIVE" => "Y", "PROPERTY_SALE_VALUE" => "Y");
+				$arFilter = Array("IBLOCK_ID" => 21, "ACTIVE" => "Y", "PROPERTY_SALE_VALUE" => "Y");
 				$res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
 				while($ob = $res->GetNextElement()):
 				$arFields = $ob->GetFields();
