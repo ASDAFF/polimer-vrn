@@ -60,7 +60,7 @@ textarea{
 
 .or__content .methods_detail .group .table{
 	display: inline-block;
-	margin: 5px 0px;
+	margin: 5px 5px;
 }
 .or__content .methods_detail .group .table.lines span{
 	font: 500 14px/35px 'Fira Sans',sans-serif;
