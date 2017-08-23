@@ -1031,30 +1031,102 @@ else
 			// mail message
 			if (strlen($arResult["ERROR_MESSAGE"]) <= 0)
 			{
-				$strOrderList = "";
 				$dbBasketItems = CSaleBasket::GetList(
 						array("ID" => "ASC"),
 						array("ORDER_ID" => $arResult["ORDER_ID"]),
 						false,
 						false,
-						array("ID", "NAME", "QUANTITY")
+						array("ID", "NAME", "QUANTITY","DETAIL_PAGE_URL","PRODUCT_ID","PRICE")
 					);
+
+
+				$allPrice = array();
+				ob_start();
+				?>
+				<table width="100%" align="center" cellspacing="0" cellpadding="0" border="0" class="">
+					<tbody>
+					<!-- title -->
+					<tr style="background: #F5F6F8;border: 1px solid #DADADA;font-size: 13px;">
+						<td style="padding: 20px 10px;" width="" height=""></td>
+						<td style="padding: 20px 10px;" width="" height="">Наименование</td>
+						<td style="padding: 20px 10px;white-space: nowrap;" width="" height="">Кол-во</td>
+						<td style="padding: 20px 10px;" width="" height="">Стоимость</td>
+					</tr>
+				<?
 				while ($arBasketItems = $dbBasketItems->Fetch())
 				{
-					$strOrderList .= $arBasketItems["NAME"]." - ".$arBasketItems["QUANTITY"]." ".GetMessage("SALE_QUANTITY_UNIT");
-					$strOrderList .= "\n";
+
+					$res = CIBlockElement::GetByID($arBasketItems["PRODUCT_ID"]);
+					$ar_res = $res->GetNext();
+					$img = CFile::GetPath($ar_res['PREVIEW_PICTURE']);
+					$link_img = $_SERVER['SERVER_NAME'].$img;
+					$ar_res = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N');
+					$format_price = SaleFormatCurrency($ar_res['DISCOUNT_PRICE'], $arResult["BASE_LANG_CURRENCY"],true);
+					$price = SaleFormatCurrency($ar_res['DISCOUNT_PRICE']*$arBasketItems["QUANTITY"], $arResult["BASE_LANG_CURRENCY"],true);
+					$allPrice[] = $ar_res['DISCOUNT_PRICE']*$arBasketItems["QUANTITY"];
+					?>
+					<tr style="font-size: 13px;">
+						<td style="padding: 20px 10px;" width="" height="">
+							<img src="http://<?=$link_img;?>" style="max-height: 80px">
+						</td>
+						<td style="padding: 20px 10px;" width="" height="">
+							<a href="#" style="text-decoration: none;color: #0464bb"><?=$arBasketItems["NAME"];?></a>
+						</td>
+						<td style="padding: 20px 10px;text-align: center;" width="" height=""><?=$arBasketItems["QUANTITY"];?></td>
+						<td style="padding: 20px 10px;text-align: right;" width="" height="">
+							<p style="white-space: nowrap;font-weight: bold;font-size: 16px;"><?=$price;?> <i style="font-weight: 100;font-style: initial;">руб.</i></p>
+							<p style="white-space: nowrap;font-size: 12px;color: #939191;"><?=$arBasketItems["QUANTITY"];?> шт. X <?=$format_price?> руб.</i></p>
+						</td>
+					</tr>
+					<?
 				}
+
+				?>
+					<!-- Spacing -->
+					</tbody>
+				</table>
+				<?
+				$strOrderList = ob_get_contents();
+				ob_end_clean();
 
 				$arFields = Array(
 					"ORDER_ID" => $arOrder["ACCOUNT_NUMBER"],
 					"ORDER_DATE" => Date($DB->DateFormatToPHP(CLang::GetDateFormat("SHORT", SITE_ID))),
 					"ORDER_USER" => ( (strlen($arResult["PAYER_NAME"]) > 0) ? $arResult["PAYER_NAME"] : $USER->GetFormattedName(false) ),
-					"PRICE" => SaleFormatCurrency($totalOrderPrice, $arResult["BASE_LANG_CURRENCY"]),
+					"PRICE" => SaleFormatCurrency(array_sum($allPrice), $arResult["BASE_LANG_CURRENCY"],true),
 					"BCC" => COption::GetOptionString("sale", "order_email", "order@".$SERVER_NAME),
 					"EMAIL" => $arResult["USER_EMAIL"],
 					"ORDER_LIST" => $strOrderList,
 					"SALE_EMAIL" => COption::GetOptionString("sale", "order_email", "order@".$SERVER_NAME)
 				);
+
+				$arOrder = CSaleOrder::GetByID($arResult["ORDER_ID"]);
+				//-- получаем название службы доставки
+				$arDeliv = CSaleDelivery::GetByID($arOrder["DELIVERY_ID"]);
+				if ($arDeliv)
+				{
+					$arFields['DELIVERY_NAME'] = $arDeliv["NAME"];
+				}
+				$arPaySystem = CSalePaySystem::GetByID($arOrder["PAY_SYSTEM_ID"]);
+				$pay_system_name = "";
+				if ($arPaySystem)
+				{
+					$arFields['PAY_SYSTEM_NAME'] = $arPaySystem["NAME"];
+				}
+
+				$order_props = CSaleOrderPropsValue::GetOrderProps($arResult["ORDER_ID"]);
+				while ($arProps = $order_props->Fetch())
+				{
+					if($arProps["TYPE"] == "FILE"){
+						$arFile = array();
+						foreach(unserialize($arProps['VALUE']) as $file){
+							$arFile[] = SITE_SERVER_NAME.CFile::GetPath($file);
+						}
+						$arFields[$arProps['CODE']] = implode("<br>", $arFile);
+					}else{
+						$arFields[$arProps['CODE']] = $arProps['VALUE'];
+					}
+				}
 
 				$eventName = "SALE_NEW_ORDER";
 
