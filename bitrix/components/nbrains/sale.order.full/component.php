@@ -1089,13 +1089,14 @@ else
 				$strOrderList = ob_get_contents();
 				ob_end_clean();
 
+				global $USER;
 				$arFields = Array(
 					"ORDER_ID" => $arOrder["ACCOUNT_NUMBER"],
 					"ORDER_DATE" => Date($DB->DateFormatToPHP(CLang::GetDateFormat("SHORT", SITE_ID))),
 					"ORDER_USER" => ( (strlen($arResult["PAYER_NAME"]) > 0) ? $arResult["PAYER_NAME"] : $USER->GetFormattedName(false) ),
 					"PRICE" => SaleFormatCurrency(array_sum($allPrice), $arResult["BASE_LANG_CURRENCY"],true),
 					"BCC" => COption::GetOptionString("sale", "order_email", "order@".$SERVER_NAME),
-					"EMAIL" => $arResult["USER_EMAIL"],
+					"EMAIL" => $USER->GetEmail(),
 					"ORDER_LIST" => $strOrderList,
 					"SALE_EMAIL" => COption::GetOptionString("sale", "order_email", "order@".$SERVER_NAME)
 				);
