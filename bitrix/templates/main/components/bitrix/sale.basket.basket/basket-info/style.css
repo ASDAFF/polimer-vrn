@@ -23,7 +23,7 @@
     margin: 0px 25px;
     padding: 30px;
     position: absolute;
-    background: #F5F6F8;
+    background: rgba(218, 218, 218, 0.43);
     border: 1px solid #CDD5D8;
 }
 .basket-info .list-info ul li ol,.basket-info .list-info ul{
