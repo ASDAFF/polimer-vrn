@@ -134,7 +134,7 @@ if (!function_exists('PrintPropsForm'))
 									print "*";
 								} ?></span>
 							<div class="inp time from">
-								<input type="text" value="<?= $group['ROWS'][1]["VALUE"] ?>" name="<?= $group['ROWS'][1]["FIELD_NAME"] ?>">
+								<input type="text" class="call_time" value="<?= $group['ROWS'][1]["VALUE"] ?>" name="<?= $group['ROWS'][1]["FIELD_NAME"] ?>">
 							</div>
 						</div>
 					</div>
