@@ -25,11 +25,11 @@ if ($normalCount > 0)
 							<div></div>
 							<div><?=$arResult["ITEMS"]["AnDelCanBuy"][0]['DISCOUNT_PRICE_PERCENT']?> %</div>
 						</li>
-						<li>
-							<div>Доставка:</div>
-							<div></div>
-							<div>бесплатно</div>
-						</li>
+<!--						<li>-->
+<!--							<div>Доставка:</div>-->
+<!--							<div></div>-->
+<!--							<div>бесплатно</div>-->
+<!--						</li>-->
 					</ol>
 				</li>
 			</ul>
