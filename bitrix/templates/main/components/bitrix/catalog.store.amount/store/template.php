@@ -31,7 +31,7 @@ $this->setFrameMode(true);
             <div class="qbar cl">
 			<!--Условия остатка на складе-->
 				<? $str_count = '';?>
-				<? if($arProperty["AMOUNT"] >= 50):
+				<? if($arProperty["AMOUNT"] >= 11):
 					$str_count = 'Много';
 					?>
 				   <span class="green"></span>
@@ -39,19 +39,19 @@ $this->setFrameMode(true);
 				   <span class="green"></span>
 				   <span class="green"></span>
 				   <span class="green"></span>
-				<? elseif($arProperty["AMOUNT"] <= 10):
+				<? elseif($arProperty["AMOUNT"] == 0): ?>
+					<?$str_count = 'Отсутствует';?>
+				<? elseif($arProperty["AMOUNT"] <= 5):
 					$str_count = 'Мало';
 					?>
 					<span class="red"></span>
 					<span class="red"></span>
-				<? elseif($arProperty["AMOUNT"] < 50):
+				<? elseif($arProperty["AMOUNT"] <= 10):
 					$str_count = 'Достаточно';
 					?>
 					<span class="yellow"></span>
 					<span class="yellow"></span>
 					<span class="yellow"></span>
-				<? elseif($arProperty["AMOUNT"] == 0): ?>
-					<?=$str_count = 'Отсутствует';?>
 				<? endif; ?>
 			<!--Условия остатка на складе END-->
 
