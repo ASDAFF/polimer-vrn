@@ -61,7 +61,7 @@ $this->setFrameMode(true);
 		</div>
 		<div class="tab-cell">
 			<div class="mtn">Забрать</div>
-			<div class="when"><?if($str_count != "Отсутствует"):?>Сегодня<?endif?></div>
+			<div class="when"><?if($str_count != "Отсутствует"):?>Сегодня<?endif?>&nbsp;&nbsp;&nbsp;</div>
 			<div class="time"></div>
 		</div>
 		<div class="tab-cell"><div class="mtn">Режим работы</div><?=$arProperty["SCHEDULE"]?></div>
