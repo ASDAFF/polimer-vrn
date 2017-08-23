@@ -67,7 +67,7 @@
 	<div class="payment_types cl">
 
 		<? foreach($arResult["PAY_SYSTEM"] as $key => $arPaySystem): ?>
-		<a href="#" class="type t1" <? if($key == 0){print 'style="border:5px solid #000"';}?>>
+		<a href="#" class="type t<?=$key+1;?>" <? if($key == 0){print 'style="border:5px solid #000"';}?>>
 			<?= str_replace(' ','<br>',$arPaySystem["PSA_NAME"]) ?>
 			<input type="radio" hidden id="ID_PAY_SYSTEM_ID_<?= $arPaySystem["ID"] ?>" name="PAY_SYSTEM_ID" value="<?= $arPaySystem["ID"] ?>"<?if ($arPaySystem["CHECKED"]=="Y") echo " checked";?>>
 		</a>
