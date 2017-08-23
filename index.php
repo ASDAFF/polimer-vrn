@@ -25,7 +25,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 	<ul class="tabslist cl">
 
 		<?
-		$arFilter = array('IBLOCK_ID' => 11,'DEPTH_LEVEL' => 1,"ACTIVE" => "Y");
+		$arFilter = array('IBLOCK_ID' => 21,'DEPTH_LEVEL' => 1,"ACTIVE" => "Y");
 		$rsSect = CIBlockSection::GetList(array('left_margin' => 'asc'),$arFilter);
 		$inc = 1;
 		$arrIdSection = array();
@@ -52,7 +52,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 		<div class="tabitem">
 
 			<?
-			$arFilter = array('IBLOCK_ID' => 11,"SECTION_ID" => $sect,'DEPTH_LEVEL' => 2,"ACTIVE" => "Y");
+			$arFilter = array('IBLOCK_ID' => 21,"SECTION_ID" => $sect,'DEPTH_LEVEL' => 2,"ACTIVE" => "Y");
 			$rsSect = CIBlockSection::GetList(array('left_margin' => 'asc'),$arFilter);
 			$inc = 1;
 			$arrIdSection = array();
@@ -140,8 +140,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 		"MESS_BTN_DETAIL" => "Подробнее",
 		"MESS_BTN_SUBSCRIBE" => "Подписаться",
 		"MESS_NOT_AVAILABLE" => "Нет в наличии",
-		"OFFER_TREE_PROPS_12" => array(
-		),
+		"OFFER_TREE_PROPS_12" => "",
 		"PAGE_ELEMENT_COUNT" => "30",
 		"PARTIAL_PRODUCT_PROPERTIES" => "N",
 		"PERIOD" => "0",
@@ -174,7 +173,29 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 		"SHOW_PRODUCTS_11" => "Y",
 		"TEMPLATE_THEME" => "blue",
 		"USE_PRODUCT_QUANTITY" => "N",
-		"COMPONENT_TEMPLATE" => "sale-bestsellers"
+		"COMPONENT_TEMPLATE" => "sale-bestsellers",
+		"SHOW_PRODUCTS_21" => "Y",
+		"PROPERTY_CODE_21" => array(
+			0 => "",
+			1 => "",
+		),
+		"CART_PROPERTIES_21" => array(
+			0 => "",
+			1 => "",
+		),
+		"ADDITIONAL_PICT_PROP_21" => "MORE_PHOTO",
+		"LABEL_PROP_21" => "-",
+		"PROPERTY_CODE_22" => array(
+			0 => "",
+			1 => "",
+		),
+		"CART_PROPERTIES_22" => array(
+			0 => "",
+			1 => "",
+		),
+		"ADDITIONAL_PICT_PROP_22" => "MORE_PHOTO",
+		"OFFER_TREE_PROPS_22" => array(
+		)
 	),
 	false
 );?>
