@@ -1047,10 +1047,10 @@ else
 					<tbody>
 					<!-- title -->
 					<tr style="background: #F5F6F8;border: 1px solid #DADADA;font-size: 13px;">
-						<td style="padding: 20px 10px;" width="" height=""></td>
-						<td style="padding: 20px 10px;" width="" height="">Наименование</td>
-						<td style="padding: 20px 10px;white-space: nowrap;" width="" height="">Кол-во</td>
-						<td style="padding: 20px 10px;" width="" height="">Стоимость</td>
+						<td style="border-top: 1px solid #DADADA;border-bottom: 1px solid #DADADA;border-left: 1px solid #DADADA;padding: 20px 10px;" width="" height=""></td>
+						<td style="border-top: 1px solid #DADADA;border-bottom: 1px solid #DADADA;padding: 20px 10px;" width="" height="">Наименование</td>
+						<td style="border-top: 1px solid #DADADA;border-bottom: 1px solid #DADADA;padding: 20px 10px;white-space: nowrap;" width="" height="">Кол-во</td>
+						<td style="border-right: 1px solid #DADADA;border-top: 1px solid #DADADA;border-bottom: 1px solid #DADADA;padding: 20px 10px;" width="" height="">Стоимость</td>
 					</tr>
 				<?
 				while ($arBasketItems = $dbBasketItems->Fetch())
@@ -1067,7 +1067,7 @@ else
 					?>
 					<tr style="font-size: 13px;">
 						<td style="padding: 20px 10px;" width="" height="">
-							<img src="http://<?=$link_img;?>" style="max-height: 80px">
+							<img src="http://<?=$link_img;?>" style="max-width: 80px">
 						</td>
 						<td style="padding: 20px 10px;" width="" height="">
 							<a href="#" style="text-decoration: none;color: #0464bb"><?=$arBasketItems["NAME"];?></a>
