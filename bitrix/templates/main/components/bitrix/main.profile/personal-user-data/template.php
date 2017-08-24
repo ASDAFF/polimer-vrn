@@ -16,7 +16,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 		<input type="hidden" id="i_login" name="LOGIN" value="<? echo $arResult["arUser"]["LOGIN"]?>" />
 
 		<div class="lk_block cl">
-			<a href="?logout=yes" class="exit">Выйти</a>
+			<a href="/?logout=yes" class="exit">Выйти</a>
 			<div class="lk_leftbar">
 				<a href="#" class="lk_sandwich">
 					<span></span>

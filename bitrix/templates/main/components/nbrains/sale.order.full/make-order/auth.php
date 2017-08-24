@@ -32,7 +32,7 @@ if($cntBasketItems > 0):
 			<form method="post" action="<?= $arParams["PATH_TO_ORDER"] ?>" name="order_auth_form">
 				<?=bitrix_sessid_post()?>
 
-				<div class="line"><span>Логин</span>
+				<div class="line"><span>E-mail</span>
 					<input type="text" name="USER_LOGIN" maxlength="30" size="30" value="<?=$arResult["USER_LOGIN"]?>">
 				</div>
 
@@ -105,9 +105,9 @@ if($cntBasketItems > 0):
 			</div>
 			-->
 
-			<div class="line"><span><?echo GetMessage("STOF_LOGIN")?></span>
-				<input type="text" name="NEW_LOGIN" size="30" value="<?=$arResult["POST"]["NEW_LOGIN"]?>">
-			</div>
+<!--			<div class="line"><span>--><?//echo GetMessage("STOF_LOGIN")?><!--</span>-->
+<!--				<input type="text" name="NEW_LOGIN" size="30" value="--><?//=$arResult["POST"]["NEW_LOGIN"]?><!--">-->
+<!--			</div>-->
 			<div class="line"><span><?echo GetMessage("STOF_PASSWORD")?></span>
 				<input type="password" class="pass" name="NEW_PASSWORD" size="30">
 			</div>

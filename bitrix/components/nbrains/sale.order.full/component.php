@@ -302,7 +302,7 @@ if (!$USER->IsAuthorized())
 			else
 			{
 				if (strlen($arResult["POST"]["NEW_LOGIN"]) <= 0)
-					$arResult["ERROR_MESSAGE"] .= GetMessage("STOF_ERROR_REG_FLAG").".<br />";
+					//$arResult["ERROR_MESSAGE"] .= GetMessage("STOF_ERROR_REG_FLAG").".<br />";
 
 				if (strlen($arResult["POST"]["NEW_PASSWORD"]) <= 0)
 					$arResult["ERROR_MESSAGE"] .= GetMessage("STOF_ERROR_REG_FLAG1").".<br />";
@@ -318,7 +318,7 @@ if (!$USER->IsAuthorized())
 
 			if (strlen($arResult["ERROR_MESSAGE"]) <= 0)
 			{
-				$arAuthResult = $USER->Register($arResult["POST"]["~NEW_LOGIN"], $arResult["POST"]["~NEW_NAME"], $arResult["POST"]["~NEW_LAST_NAME"], $arResult["POST"]["~NEW_PASSWORD"], $arResult["POST"]["~NEW_PASSWORD_CONFIRM"], $arResult["POST"]["~NEW_EMAIL"], LANG, $arResult["POST"]["~captcha_word"], $arResult["POST"]["~captcha_sid"]);
+				$arAuthResult = $USER->Register($arResult["POST"]["~NEW_EMAIL"], $arResult["POST"]["~NEW_NAME"], $arResult["POST"]["~NEW_LAST_NAME"], $arResult["POST"]["~NEW_PASSWORD"], $arResult["POST"]["~NEW_PASSWORD_CONFIRM"], $arResult["POST"]["~NEW_EMAIL"], LANG, $arResult["POST"]["~captcha_word"], $arResult["POST"]["~captcha_sid"]);
 
 				$update_prop_user = new CUser;
 				$update_prop_user->Update($arAuthResult['ID'], array("WORK_DEPARTMENT" => $arResult["POST"]["PERSON_TYPE"], "WORK_PHONE" => $arResult["POST"]["WORK_PHONE"], "WORK_POSITION" => $arResult["POST"]["WORK_POSITION"]));

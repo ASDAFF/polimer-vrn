@@ -3,8 +3,8 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("1");
 ?>
 <? $APPLICATION->IncludeComponent(
-	"nbrains:sale.order.full", 
-	"make-order", 
+	"nbrains:sale.order.full",
+	"make-order",
 	array(
 		"ALLOW_PAY_FROM_ACCOUNT" => "Y",
 		"CITY_OUT_LOCATION" => "Y",
