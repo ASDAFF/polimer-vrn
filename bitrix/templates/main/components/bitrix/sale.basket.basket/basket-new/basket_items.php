@@ -57,7 +57,6 @@ if ($normalCount > 0)
 					<div class="line"></div>
 					<div class="name">Общая скидка:</div>
 					<div class="value"><span><?=$arResult['DISCOUNT_PRICE_ALL']?></span> р.</div>
-
 				</div>
 				<div class="t-row cl t-quan">
 					<div class="line"></div>
@@ -67,7 +66,7 @@ if ($normalCount > 0)
 				<div class="t-row cl t-cost">
 					<div class="line"></div>
 					<div class="name">Общая стоимость:</div>
-					<div class="value"><span><?=$arResult["allSum"]-$arResult['DISCOUNT_PRICE_ALL']?></span> руб.</div>
+					<div class="value"><span><?=$arResult["allSum"]?></span> руб.</div>
 				</div>
 			</div>
 		</div>
