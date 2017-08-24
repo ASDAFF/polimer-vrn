@@ -182,7 +182,7 @@ $this->setFrameMode(true);
                <a href="#" class="mtb" onclick="return false">Наличие в магазинах</a>
                <div class="content">
                   <?$APPLICATION->IncludeComponent(
-	"bitrix:catalog.store.amount", 
+	"nbrains:catalog.store.amount",
 	"store", 
 	array(
 		"CACHE_TIME" => "36000",
