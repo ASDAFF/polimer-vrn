@@ -72,7 +72,7 @@ if ($normalCount > 0)
 			</div>
 		</div>
 	</div><!--end::basket-->
-	
+
 <?}
 else
 {?>

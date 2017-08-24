@@ -43,7 +43,7 @@ if($cntBasketItems > 0):
 				<input type="submit" class="login_enter" value="Войти">
 				<input type="hidden" name="do_authorize" value="Y">
 
-				<a href="/bitrix/admin/?forgot_password=yes/#forgot_password" class="remind_pass">Напомнить пароль</a>
+				<a href="/personal/info.php?forgot_password=yes" class="remind_pass">Напомнить пароль</a>
 
 <!--				<div class="login_social cl">-->
 <!--					<span>Войти через социальные сети</span>-->
