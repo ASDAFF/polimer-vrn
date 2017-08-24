@@ -291,32 +291,36 @@ if($ob = $res->GetNextElement()):?>
 		<?endif?>
 
 		<?
-		$APPLICATION->IncludeComponent("bitrix:catalog.section.list", "catalog-menu", Array(
-			"ADD_SECTIONS_CHAIN" => "Y",	// Р’РєР»СЋС‡Р°С‚СЊ СЂР°Р·РґРµР» РІ С†РµРїРѕС‡РєСѓ РЅР°РІРёРіР°С†РёРё
-			"CACHE_GROUPS" => "Y",	// РЈС‡РёС‚С‹РІР°С‚СЊ РїСЂР°РІР° РґРѕСЃС‚СѓРїР°
-			"CACHE_TIME" => "36000000",	// Р’СЂРµРјСЏ РєРµС€РёСЂРѕРІР°РЅРёСЏ (СЃРµРє.)
-			"CACHE_TYPE" => "A",	// РўРёРї РєРµС€РёСЂРѕРІР°РЅРёСЏ
-			"COUNT_ELEMENTS" => "Y",	// РџРѕРєР°Р·С‹РІР°С‚СЊ РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РІ СЂР°Р·РґРµР»Рµ
-			"IBLOCK_ID" => "11",	// Р�РЅС„РѕР±Р»РѕРє
-			"IBLOCK_TYPE" => "1c_catalog",	// РўРёРї РёРЅС„РѕР±Р»РѕРєР°
-			"SECTION_CODE" => "",	// РљРѕРґ СЂР°Р·РґРµР»Р°
-			"SECTION_FIELDS" => array(	// РџРѕР»СЏ СЂР°Р·РґРµР»РѕРІ
-				0 => "",
-				1 => "",
-			),
-			"SECTION_ID" => $_REQUEST["SECTION_ID"],	// ID СЂР°Р·РґРµР»Р°
-			"SECTION_URL" => "",	// URL, РІРµРґСѓС‰РёР№ РЅР° СЃС‚СЂР°РЅРёС†Сѓ СЃ СЃРѕРґРµСЂР¶РёРјС‹Рј СЂР°Р·РґРµР»Р°
-			"SECTION_USER_FIELDS" => array(	// РЎРІРѕР№СЃС‚РІР° СЂР°Р·РґРµР»РѕРІ
-				0 => "",
-				1 => "",
-			),
-			"VARIABLES" => $arResult["VARIABLES"]["SECTION_CODE"],
-			"SHOW_PARENT_NAME" => "Y",	// РџРѕРєР°Р·С‹РІР°С‚СЊ РЅР°Р·РІР°РЅРёРµ СЂР°Р·РґРµР»Р°
-			"TOP_DEPTH" => "3",	// РњР°РєСЃРёРјР°Р»СЊРЅР°СЏ РѕС‚РѕР±СЂР°Р¶Р°РµРјР°СЏ РіР»СѓР±РёРЅР° СЂР°Р·РґРµР»РѕРІ
-			"VIEW_MODE" => "LINE",	// Р’РёРґ СЃРїРёСЃРєР° РїРѕРґСЂР°Р·РґРµР»РѕРІ
+		$APPLICATION->IncludeComponent(
+	"bitrix:catalog.section.list", 
+	"catalog-menu", 
+	array(
+		"ADD_SECTIONS_CHAIN" => "Y",
+		"CACHE_GROUPS" => "Y",
+		"CACHE_TIME" => "36000000",
+		"CACHE_TYPE" => "A",
+		"COUNT_ELEMENTS" => "Y",
+		"IBLOCK_ID" => "21",
+		"IBLOCK_TYPE" => "1c_catalog",
+		"SECTION_CODE" => "",
+		"SECTION_FIELDS" => array(
+			0 => "",
+			1 => "",
 		),
-			false
-		);?>
+		"SECTION_ID" => $_REQUEST["SECTION_ID"],
+		"SECTION_URL" => "",
+		"SECTION_USER_FIELDS" => array(
+			0 => "",
+			1 => "",
+		),
+		"VARIABLES" => $arResult["VARIABLES"]["SECTION_CODE"],
+		"SHOW_PARENT_NAME" => "Y",
+		"TOP_DEPTH" => "3",
+		"VIEW_MODE" => "LINE",
+		"COMPONENT_TEMPLATE" => "catalog-menu"
+	),
+	false
+);?>
 
 
 		<div class="cat pricel">
