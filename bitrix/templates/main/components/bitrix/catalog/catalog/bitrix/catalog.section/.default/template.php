@@ -100,6 +100,7 @@ if (!empty($arResult['ITEMS']))
 								   </span>
 								</a>
 								<a href="<?=$arItem['DETAIL_PAGE_URL']?>" class="title"><?=$arItem['NAME']?></a>
+								<div class="cost-old"><span><?=$arItem['ITEM_PRICES'][0]['BASE_PRICE']?></span> Руб.</div>
 								<div class="cost">
 										<?
 										$ar_res = CCatalogProduct::GetOptimalPrice($arItem['ID'], 1, $USER->GetUserGroupArray(), 'N');

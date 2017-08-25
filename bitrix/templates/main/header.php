@@ -58,6 +58,7 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/vendor.min.js');
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/slick.min.js');
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/jquery-ui.min.js');
+		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/datepicker-ru.js');
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/ion.rangeSlider.min.js');
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/jquery.fancybox.min.js');
 		Asset::getInstance()->addJs(SITE_TEMPLATE_PATH.'/js/jquery.kinetic.min.js');
