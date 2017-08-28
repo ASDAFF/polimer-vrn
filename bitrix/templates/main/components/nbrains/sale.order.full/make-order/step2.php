@@ -18,7 +18,7 @@ if (!function_exists('PrintPropsForm'))
 					$group['NAME'] != "date_time_fis" AND
 					$group['NAME'] != "group_store"
 				):
-				?><div class="group"><?
+				?><div class="group <?=$group['NAME']?>"><?
 				 endif;
 
 				$line = 0;
@@ -129,7 +129,7 @@ if (!function_exists('PrintPropsForm'))
 				<? endif; ?>
 
 				<? if($group['NAME'] == 'date_time_fis'): ?>
-					<div class="group tall">
+					<div class="group tall date_time_fis">
 						<div class="line dateline">
 							<span class="g-title">Выбрать удобную дату и интервал времени доставки</span>
 							<span><?= $group['ROWS'][0]["NAME"];
