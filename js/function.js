@@ -55,6 +55,11 @@ function setCupon(){
 }
 
 function inputQuntly(max,count,id){
+    if(count < 1){
+        $('.quantity#'+id+' input').val(1);
+        alertify.error("Запрашиваемое кол-во превышает остаток. На складе: " + max);
+        return false;
+    }
     if(count > max){
         $('.quantity#'+id+' input').val(max);
         alertify.error("Запрашиваемое кол-во превышает остаток. На складе: " + max);
@@ -68,7 +73,7 @@ function inputQuntly(max,count,id){
 
 function basketPlus(max,count,id){
     var increm = parseInt(count)+1;
-    
+
     if(increm > max){
         $('.quantity#'+id+' input').val(max-1);
         alertify.error("Запрашиваемое кол-во превышает остаток. На складе: " + max);
