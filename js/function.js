@@ -57,7 +57,7 @@ function setCupon(){
 function inputQuntly(max,count,id){
     if(count < 1){
         $('.quantity#'+id+' input').val(1);
-        alertify.error("Запрашиваемое кол-во превышает остаток. На складе: " + max);
+        alertify.error("Запрашиваемое кол-во. На складе нет");
         return false;
     }
     if(count > max){
