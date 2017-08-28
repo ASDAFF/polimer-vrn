@@ -100,18 +100,10 @@ if (!empty($arResult['ITEMS']))
 								   </span>
 								</a>
 								<a href="<?=$arItem['DETAIL_PAGE_URL']?>" class="title"><?=$arItem['NAME']?></a>
-								<div class="cost-old"><span><?=$arItem['ITEM_PRICES'][0]['BASE_PRICE']?></span> Руб.</div>
 								<div class="cost">
-										<?
-										$ar_res = CCatalogProduct::GetOptimalPrice($arItem['ID'], 1, $USER->GetUserGroupArray(), 'N');
-										if($ar_res['DISCOUNT_PRICE']){
-											echo "<span>";
-											echo $ar_res['DISCOUNT_PRICE'];
-											echo "</span> Руб.";
-										}
-										?>
+									<span><?=price($arItem['ID']);?></span> Руб.
 								</div>
-								<?if(!$ar_res['DISCOUNT_PRICE']){
+								<?if(!price($arItem['ID'])){
 									print '<span class="noprice">Цену уточняйте у менеджера</span>';
 								}?>
 
@@ -159,7 +151,7 @@ if (!empty($arResult['ITEMS']))
 
 
 									</script>
-								<div class="cost_total"><span><?=$ar_res['DISCOUNT_PRICE'];?></span> Руб.</div>
+								<div class="cost_total"><span><?=price($arItem['ID'])?></span> Руб.</div>
 								<a href="javascript:void(0)" class="add2cart">
 									<span class="txt1" onclick="if(document.body.clientWidth < 659){addToBasket2(<?=$arItem['ID']?>, $('#count_<?=$arItem['ID']?> input').val())};">В корзину</span>
 									<span class="txt2" onclick="addToBasket2(<?=$arItem['ID']?>, $('#count_<?=$arItem['ID']?> input').val());">Добавить в корзину</span>

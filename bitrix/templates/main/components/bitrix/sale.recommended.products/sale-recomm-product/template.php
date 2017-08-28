@@ -19,13 +19,7 @@ $this->setFrameMode(true);
 				<div>
 					<div class="item cl">
 						<a href="<?=$arItem['DETAIL_PAGE_URL']?>"><span><img src="<?=$arItem['PREVIEW_PICTURE']['SRC']?>" alt=""></span></a>
-						<div class="cost">
-                            <span>
-                               <?
-							   $ar_res = CCatalogProduct::GetOptimalPrice($arItem['ID'], 1, $USER->GetUserGroupArray(), 'N');
-							   echo $ar_res['DISCOUNT_PRICE'];
-							   ?>
-                            </span> Руб.</div>
+						<div class="cost"><span><?=price($arItem['ID']);?></span> Руб.</div>
 						<a href="<?=$arItem['DETAIL_PAGE_URL']?>" class="txt"><?=$arItem['NAME']?></a>
 						<a href="javascript:void(0)" onclick="addToBasket2(<?=$arItem['ID']?>,1);" class="add2cart">В корзину</a>
 					</div>

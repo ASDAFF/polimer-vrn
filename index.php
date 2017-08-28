@@ -216,12 +216,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 								<img src="<?=CFile::GetPath($arFields["PREVIEW_PICTURE"]);?>" alt="" height="110" style="max-height: 110px;margin: 0 auto;" class="img">
 							</a>
 							<a href="<?=$arFields['DETAIL_PAGE_URL']?>" class="name"><?=$arFields['NAME']?></a>
-							<div class="price"><span>
-								<?
-								$ar_res = CCatalogProduct::GetOptimalPrice($arFields['ID'], 1, $USER->GetUserGroupArray(), 'N');
-								echo $ar_res['DISCOUNT_PRICE'];
-								?>
-							</span> Руб</div>
+							<div class="price"><span><?=price($arFields['ID']);?></span> Руб</div>
 							<a href="javascript:void(0)" onclick="addToBasket2(<?=$arFields['ID']?>, 1);" class="cart">В корзину</a>
 						</div>
 					</div>
@@ -243,12 +238,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 							<img src="<?=CFile::GetPath($arFields["PREVIEW_PICTURE"]);?>" alt="" height="110" style="max-height: 110px;margin: 0 auto;" class="img">
 						</a>
 						<a href="<?=$arFields['DETAIL_PAGE_URL']?>" class="name"><?=$arFields['NAME']?></a>
-						<div class="price"><span>
-								<?
-								$ar_res = CCatalogProduct::GetOptimalPrice($arFields['ID'], 1, $USER->GetUserGroupArray(), 'N');
-								echo $ar_res['DISCOUNT_PRICE'];
-								?>
-							</span> Руб</div>
+						<div class="price"><span><?=price($arFields['ID']);?></span> Руб</div>
 						<a href="javascript:void(0)" onclick="addToBasket2(<?=$arFields['ID']?>, 1);" class="cart">В корзину</a>
 					</div>
 				</div>

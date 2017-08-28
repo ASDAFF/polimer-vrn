@@ -17,12 +17,7 @@ $this->setFrameMode(true);
 				<img src="<?=$item["PREVIEW_PICTURE"]["SRC"]?>" alt="" height="110" style="max-height: 110px;margin: 0 auto;" class="img">
 			</a>
 			<a href="<?=$item['DETAIL_PAGE_URL']?>" class="name"><?=$item['NAME']?></a>
-			<div class="price"><span>
-					<?
-					$ar_res = CCatalogProduct::GetOptimalPrice($item['ID'], 1, $USER->GetUserGroupArray(), 'N');
-					echo $ar_res['DISCOUNT_PRICE'];
-					?>
-				</span> Руб</div>
+			<div class="price"><span><?=price($item['ID']);?></span> Руб</div>
 			<a href="javascript:void(0)" onclick="addToBasket2(<?=$item['ID']?>, 1);" class="cart">В корзину</a>
 		</div>
 	</div>

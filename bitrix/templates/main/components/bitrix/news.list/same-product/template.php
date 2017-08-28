@@ -24,16 +24,9 @@ if($arResult["ITEMS"]):
 			</a>
 			<a href="<?=$arItem["DETAIL_PAGE_URL"]?>" class="name"><?=$arItem["NAME"]?></a>
 			<div class="price">
-				<?
-				$ar_res = CCatalogProduct::GetOptimalPrice($arItem['ID'], 1, $USER->GetUserGroupArray(), 'N');
-				if($ar_res['DISCOUNT_PRICE']){
-					echo "<span>";
-					echo $ar_res['DISCOUNT_PRICE'];
-					echo "</span> Руб.";
-					}
-					?>
+				<span><?=price($arItem['ID']);?></span> Руб.
 			</div>
-			<?if(!$ar_res['DISCOUNT_PRICE']){
+			<?if(!price($arItem['ID'])){
 				print '<span class="noprice" style="font-size: 11px;margin: 17px 0">Цену уточняйте у менеджера</span>';
 			}?>
 
