@@ -27,9 +27,9 @@ if ($normalCount > 0)
 					<div class="l-cell quan">
 						<div class="txt qn">Кол-во</div>
 						<div class="quantity" id="<?=$arItem['ID']?>">
-							<a class="minus" href="javascript:void(0);" onclick="basketMinus(<?=$arItem['AVAILABLE_QUANTITY']?>,<?=$arItem['QUANTITY']?>,<?=$arItem['ID']?>)"></a>
-							<input type="text" limit-count="<?=$arItem['AVAILABLE_QUANTITY']?>" value="<?=$arItem['QUANTITY']?>"/>
-							<a class="plus" href="javascript:void(0)" onclick="basketPlus(<?=$arItem['AVAILABLE_QUANTITY']?>,<?=$arItem['QUANTITY']?>,<?=$arItem['ID']?>)"></a>
+							<a class="minus" href="javascript:void(0);" onclick="basketMinus(<?=$arItem['AVAILABLE_QUANTITY']?>,$('.quantity#<?=$arItem['ID']?> input').val(),<?=$arItem['ID']?>)"></a>
+							<input type="text" onblur="inputQuntly(<?=$arItem['AVAILABLE_QUANTITY']?>,this.value,<?=$arItem['ID']?>)" limit-count="<?=$arItem['AVAILABLE_QUANTITY']?>" value="<?=$arItem['QUANTITY']?>"/>
+							<a class="plus" href="javascript:void(0)" onclick="basketPlus(<?=$arItem['AVAILABLE_QUANTITY']?>,$('.quantity#<?=$arItem['ID']?> input').val(),<?=$arItem['ID']?>)"></a>
 						</div>
 					</div>
 					<div class="l-cell cost"><div class="txt ct">Стоимость</div><span><?=$arItem["QUANTITY"]*$arItem["PRICE"]?></span> Руб.</div>

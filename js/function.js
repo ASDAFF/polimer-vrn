@@ -54,11 +54,23 @@ function setCupon(){
 
 }
 
+function inputQuntly(max,count,id){
+    if(count > max){
+        $('.quantity#'+id+' input').val(max);
+        alertify.error("Запрашиваемое кол-во превышает остаток. На складе: " + max);
+        return false;
+    }else{
+        var data="id="+id+"&quant="+count;
+        ChangeCount(data);
+    }
+}
 
 
 function basketPlus(max,count,id){
-    var increm = count+1;
+    var increm = parseInt(count)+1;
+    
     if(increm > max){
+        $('.quantity#'+id+' input').val(max-1);
         alertify.error("Запрашиваемое кол-во превышает остаток. На складе: " + max);
         return false;
     }else{
@@ -68,8 +80,9 @@ function basketPlus(max,count,id){
 }
 
 function basketMinus(max,count,id){
-    var increm = count-1;
+    var increm = parseInt(count)-1;
     if(increm < 1){
+        $('.quantity#'+id+' input').val(1);
         alertify.error("Запрашиваемое кол-во. На складе нет");
         return false;
     }else{
