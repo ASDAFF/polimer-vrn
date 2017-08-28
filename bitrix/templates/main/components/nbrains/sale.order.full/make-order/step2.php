@@ -14,7 +14,10 @@ if (!function_exists('PrintPropsForm'))
 
 			foreach($arSource["ITEM"] as $group) {
 
-				if($group['NAME'] != "date_time_fis"):
+				if(
+					$group['NAME'] != "date_time_fis" AND
+					$group['NAME'] != "group_store"
+				):
 				?><div class="group"><?
 				 endif;
 
@@ -24,6 +27,8 @@ if (!function_exists('PrintPropsForm'))
 
 					switch ($group['NAME']) {
 						case "date_time_fis":
+							break;
+						case "group_store":
 							break;
 						case "personal_data_fis":
 							?>
@@ -116,7 +121,10 @@ if (!function_exists('PrintPropsForm'))
 					<?
 				}
 
-				if($group['NAME'] != "date_time_fis"):?>
+				if(
+					$group['NAME'] != "date_time_fis" AND
+					$group['NAME'] != "group_store"
+				):?>
 				</div>
 				<? endif; ?>
 
@@ -211,16 +219,24 @@ if (!function_exists('PrintPropsForm'))
 
 </div>
 
+
+
 <div class="or__content cl s2">
 
 	<div class="title">Выберите удобный способ получения заказа</div>
 	<div class="methods cl">
-		<?foreach($arResult["DELIVERY"] as $arDelivery):?>
+		<?
+		foreach($arResult['PRINT_PROPS_FORM']['USER_PROPS_Y'] as $group){
+			if($group['GROUP_NAME'] == 'group_store'){
+				$name_field_store = $group['FIELD_NAME'];
+			}
+		}
+		foreach($arResult["DELIVERY"] as $arDelivery):?>
 		<a href="#" class="meth <?if ($arDelivery["CHECKED"]=="Y") echo "active";?>">
 			<div class="inner">
 				<?=$arDelivery['NAME']?><span><?=$arDelivery['DESCRIPTION']?></span>
 			</div>
-			<input style="display:none" type="radio" class="<?if ($arDelivery["CHECKED"]=="Y") echo "active";?>" id="ID_DELIERY_ID_<?= $arDelivery["ID"] ?>" name="<?=$arDelivery["FIELD_NAME"]?>" value="<?= $arDelivery["ID"] ?>" <?if ($arDelivery["CHECKED"]=="Y") echo "checked";?>>
+			<input style="display:none" type="radio" id-field="<?=$name_field_store;?>" id-store="<?=$arDelivery['STORE']?>" class="<?if ($arDelivery["CHECKED"]=="Y") echo "active";?>" id="ID_DELIERY_ID_<?= $arDelivery["ID"] ?>" name="<?=$arDelivery["FIELD_NAME"]?>" value="<?= $arDelivery["ID"] ?>" <?if ($arDelivery["CHECKED"]=="Y") echo "checked";?>>
 		</a>
 		<?endforeach;?>
 	</div>
