@@ -217,7 +217,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 							</a>
 							<a href="<?=$arFields['DETAIL_PAGE_URL']?>" class="name"><?=$arFields['NAME']?></a>
 							<div class="price"><span><?=price($arFields['ID']);?></span> Руб</div>
-							<a href="javascript:void(0)" onclick="addToBasket2(<?=$arFields['ID']?>, 1);" class="cart">В корзину</a>
+							<a href="javascript:void(0)" onclick="addToBasket2(<?=$arFields['ID']?>, 1,this);" class="cart">В корзину</a>
 						</div>
 					</div>
 				<? endwhile; ?>
@@ -239,7 +239,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 						</a>
 						<a href="<?=$arFields['DETAIL_PAGE_URL']?>" class="name"><?=$arFields['NAME']?></a>
 						<div class="price"><span><?=price($arFields['ID']);?></span> Руб</div>
-						<a href="javascript:void(0)" onclick="addToBasket2(<?=$arFields['ID']?>, 1);" class="cart">В корзину</a>
+						<a href="javascript:void(0)" onclick="addToBasket2(<?=$arFields['ID']?>, 1,this);" class="cart">В корзину</a>
 					</div>
 				</div>
 				<? endwhile; ?>

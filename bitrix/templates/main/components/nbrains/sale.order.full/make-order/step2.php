@@ -51,13 +51,24 @@ if (!function_exists('PrintPropsForm'))
 								<input type="hidden" class="phone_hidden" maxlength="250" size="<?= $arProperties["SIZE1"] ?>" value="<?= $arProperties["VALUE"] ?>" name="<?= $arProperties["FIELD_NAME"] ?>">
 								<span>Контактный телефон:</span>
 								<?
-								if($arProperties["VALUE"]){
-								$num = explode(';',$arProperties["VALUE"]);
+								global $USER;
+								$order = array('sort' => 'asc');
+								$tmp = 'sort'; // параметр проигнорируется методом, но обязан быть
+								$rsUsers = CUser::GetList($order, $tmp,array("ID" => $USER->GetID()),array("WORK_PHONE"));
+								if($user_phone = $rsUsers->NavNext()){
+									if($user_phone['WORK_PHONE']){
+										$phone_user = $user_phone['WORK_PHONE'];
+									}else{
+										if($arProperties["VALUE"]){
+											$num = explode(';',$arProperties["VALUE"]);
+											$phone_user = $num[0];
+										}
+									}
 								}
 								?>
 								<div class="phone-add first">
 									<div class="inp phone">
-										<input class="phone" type="text" value="<?if($num){print $num[0];}?>">
+										<input class="phone" type="text" value="<?if($phone_user){print $phone_user;}?>">
 									</div>
 
 									<a href="#" class="addphone"><span></span><span></span>Добавить телефон</a>
@@ -77,6 +88,18 @@ if (!function_exists('PrintPropsForm'))
 							<?
 							break;
 						default:
+
+							if($arProperties['CODE'] == 'PHONE'){
+								global $USER;
+								$order = array('sort' => 'asc');
+								$tmp = 'sort'; // параметр проигнорируется методом, но обязан быть
+								$rsUsers = CUser::GetList($order, $tmp,array("ID" => $USER->GetID()),array("WORK_PHONE"));
+								if($user_phone = $rsUsers->NavNext()){
+									if($user_phone['WORK_PHONE']){
+										$arProperties["VALUE"] = $user_phone['WORK_PHONE'];
+									}
+								}
+							}
 							if ($arProperties["TYPE"] == "TEXT") {
 								?>
 								<div class="line">

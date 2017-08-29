@@ -8,7 +8,7 @@ function replaseBasketTop() {
         }
     })
 }
-function addToBasket2(idel, quantity) {
+function addToBasket2(idel, quantity,el) {
     $href = "/ajax/add.php?id="+idel;
     var _result = true;
     $.ajax({
@@ -24,6 +24,12 @@ function addToBasket2(idel, quantity) {
             }
         }
     })
+
+    if(el){
+        $(el).text('Перейти в корзину');
+        $(el).attr('onclick','window.location.href="/personal/cart/"');
+    }
+
 
     return _result;
 }
