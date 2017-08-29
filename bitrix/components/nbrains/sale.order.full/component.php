@@ -1060,11 +1060,11 @@ else
 					$ar_res = $res->GetNext();
 					$img = CFile::GetPath($ar_res['PREVIEW_PICTURE']);
 					$link_img = $_SERVER['SERVER_NAME'].$img;
+					$link_prod = 'http://'.$_SERVER['SERVER_NAME'].$ar_res['DETAIL_PAGE_URL'];
 					$ar_res = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N');
 					$format_price = SaleFormatCurrency($ar_res['DISCOUNT_PRICE'], $arResult["BASE_LANG_CURRENCY"],true);
 					$price = SaleFormatCurrency($ar_res['DISCOUNT_PRICE']*$arBasketItems["QUANTITY"], $arResult["BASE_LANG_CURRENCY"],true);
 					$allPrice[] = $ar_res['DISCOUNT_PRICE']*$arBasketItems["QUANTITY"];
-					$link_prod = 'http://'.$_SERVER['SERVER_NAME'].$ar_res['DETAIL_PAGE_URL'];
 					?>
 					<tr style="font-size: 13px;">
 						<td style="padding: 20px 10px;" width="" height="">
