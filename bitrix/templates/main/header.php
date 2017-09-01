@@ -159,20 +159,20 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 							<a href="/sale/" class="mm__action">Акции</a>
 							<a href="/calc/" class="mm__calculation">Бесплатный расчет</a>
 						</div>
-						<div class="mm__phone">+7 (473) 250-22-33</div>
+						<div class="mm__phone"><?= tplvar('phone_top', true);?></div>
 						<div class="cl">
 							<div class="mm__timework header__timework">
 								<div class="line cl">
 									<div class="days">ПН-ПТ</div>
-									<div class="hours">8:00 - 17:00</div>
+									<div class="hours"><?= tplvar('week', true);?></div>
 								</div>
 								<div class="line cl">
 									<div class="days">CБ</div>
-									<div class="hours">8:30 - 16:30</div>
+									<div class="hours"><?= tplvar('saturday', true);?></div>
 								</div>
 								<div class="line cl">
 									<div class="days">ВС</div>
-									<div class="hours"><span class="weekend">выходной</span></div>
+									<div class="hours"><span class="weekend"><?= tplvar('sun', true);?></span></div>
 								</div>
 							</div><!--end::mm__timework-->
 							<a href="#" class="header__letter show-popup" data-id="mailus">Написать письмо</a>
@@ -223,19 +223,19 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 						<a href="/" class="header__logo">
 							<img src="<?=SITE_TEMPLATE_PATH?>/img/h_logo.jpg" alt="Полимер" width="206" height="44">
 						</a>
-						<div class="header__phone">+7 (473) 250-22-33</div>
+						<div class="header__phone"><?= tplvar('phone_top', true);?></div>
 						<div class="header__timework">
 							<div class="line cl">
 								<div class="days">ПН-ПТ</div>
-								<div class="hours">8:00 - 17:00</div>
+								<div class="hours"><?= tplvar('week', true);?></div>
 							</div>
 							<div class="line cl">
 								<div class="days">CБ</div>
-								<div class="hours">8:30 - 16:30</div>
+								<div class="hours"><?= tplvar('saturday', true);?></div>
 							</div>
 							<div class="line cl">
 								<div class="days">ВС</div>
-								<div class="hours"><span class="weekend">выходной</span></div>
+								<div class="hours"><span class="weekend"><?= tplvar('sun', true);?></span></div>
 							</div>
 						</div>
 						<a href="/calc/" class="header__calculation">Бесплатный<br>расчет</a>

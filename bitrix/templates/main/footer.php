@@ -13,8 +13,8 @@
 						<div class="footer__col col--2">
 							<div class="footer__title">Контакты</div>
 							<ul class="footer__list cl">
-								<li>+7 (473) 250-22-33</li>
-								<li>+7 (473) 250-22-33</li>
+								<li><?= tplvar('phone_bottom_one', true);?></li>
+								<li><?= tplvar('phone_bottom_two', true);?></li>
 								<li><a href="/contacts/">Адреса магазинов</a>
 							</li>
 							</ul>
