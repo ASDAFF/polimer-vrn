@@ -8,3 +8,4 @@ bitrix/cache/*
 bitrix/stack_cache/*
 access/*
 bitrix/html_pages/*
+bitrix/backup/*
