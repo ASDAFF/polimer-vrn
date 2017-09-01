@@ -156,6 +156,16 @@ if($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_se
 			}
 
 			break;
+		case "reload_ofd_settings":
+			$cashbox = array('OFD' => $request->get('handler'));
+			$handler = $cashbox['OFD'];
+
+			ob_start();
+			require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/sale/admin/cashbox_ofd_settings.php");
+			$arResult["HTML"] = ob_get_contents();
+			ob_end_clean();
+
+			break;
 		default:
 			$arResult["ERROR"] = "Error! Wrong action!";
 			break;

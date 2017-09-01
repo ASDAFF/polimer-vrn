@@ -909,6 +909,22 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 		},
 
+		notifyAboutWarnings: function(node)
+		{
+			if (!BX.type.isDomNode(node))
+				return;
+
+			switch (node.id)
+			{
+				case this.deliveryBlockNode.id:
+					this.showBlockWarning(this.deliveryBlockNode, this.result.WARNING.DELIVERY, true);
+					break;
+				case this.paySystemBlockNode.id:
+					this.showBlockWarning(this.paySystemBlockNode, this.result.WARNING.PAY_SYSTEM, true);
+					break;
+			}
+		},
+
 		showBlockWarning: function(node, warnings, hide)
 		{
 			var errorNode = node.querySelector('.alert.alert-danger'),
@@ -1741,6 +1757,40 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		},
 
 		/**
+		 * Checks possibility to skip section
+		 */
+		shouldSkipSection: function(section)
+		{
+			var skip = false;
+
+			if (this.params.SKIP_USELESS_BLOCK === 'Y')
+			{
+				if (section.id === this.pickUpBlockNode.id)
+				{
+					var delivery = this.getSelectedDelivery();
+					if (delivery)
+					{
+						skip = this.getPickUpInfoArray(delivery.STORE).length === 1;
+					}
+				}
+
+				if (section.id === this.deliveryBlockNode.id)
+				{
+					skip = this.result.DELIVERY && this.result.DELIVERY.length === 1
+						&& this.result.DELIVERY[0].EXTRA_SERVICES.length === 0
+						&& !this.result.DELIVERY[0].CALCULATE_ERRORS;
+				}
+
+				if (section.id === this.paySystemBlockNode.id)
+				{
+					skip = this.result.PAY_SYSTEM && this.result.PAY_SYSTEM.length === 1 && this.result.PAY_FROM_ACCOUNT !== 'Y';
+				}
+			}
+			
+			return skip;
+		},
+
+		/**
 		 * Returns next available block node (node skipped while have one pay system, delivery or pick up)
 		 */
 		getNextSection: function(actionSection, skippedSection)
@@ -1749,58 +1799,19 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				return {};
 
 			var allSections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'),
-				nextSection, i, onePickUp, oneDelivery, onePaySystem, delivery, titleNode;
+				nextSection, i;
 
 			for (i = 0; i < allSections.length; i++)
 			{
-				if (allSections[i].id == actionSection.id && allSections[i + 1])
+				if (allSections[i].id === actionSection.id && allSections[i + 1])
 				{
 					nextSection = allSections[i + 1];
-					onePickUp = false;
-					oneDelivery = false;
-					onePaySystem = false;
 
-					if (this.params.SKIP_USELESS_BLOCK == 'Y')
+					if (this.shouldSkipSection(nextSection))
 					{
-						if (nextSection.id == this.pickUpBlockNode.id)
-						{
-							if (delivery = this.getSelectedDelivery())
-								onePickUp = this.getPickUpInfoArray(delivery.STORE).length == 1;
-						}
+						this.markSectionAsCompleted(nextSection);
 
-						if (nextSection.id == this.deliveryBlockNode.id)
-						{
-							oneDelivery = this.result.DELIVERY
-								&& this.result.DELIVERY.length == 1 && this.result.DELIVERY[0].EXTRA_SERVICES.length === 0
-								&& !this.result.DELIVERY[0].CALCULATE_ERRORS;
-						}
-
-						if (nextSection.id == this.paySystemBlockNode.id)
-						{
-							onePaySystem = this.result.PAY_SYSTEM
-								&& this.result.PAY_SYSTEM.length == 1
-								&& this.result.PAY_FROM_ACCOUNT != 'Y';
-						}
-
-						if (onePickUp || oneDelivery || onePaySystem)
-						{
-							if (
-								(!this.result.IS_AUTHORIZED || typeof this.result.LAST_ORDER_DATA.FAIL !== 'undefined')
-								&& nextSection.getAttribute('data-visited') == 'false'
-							)
-							{
-								this.changeVisibleSection(nextSection, true);
-								titleNode = nextSection.querySelector('.bx-soa-section-title-container');
-								BX.bind(titleNode, 'click', BX.proxy(this.showByClick, this));
-							}
-
-							nextSection.setAttribute('data-visited', 'true');
-							BX.addClass(nextSection, 'bx-step-completed');
-							BX.remove(nextSection.querySelector('.alert.alert-warning.alert-hide'));
-							this.checkBlockErrors(nextSection);
-
-							return this.getNextSection(nextSection, nextSection);
-						}
+						return this.getNextSection(nextSection, nextSection);
 					}
 
 					return {
@@ -1810,6 +1821,28 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					};
 				}
 			}
+
+			return {next: actionSection};
+		},
+
+		markSectionAsCompleted: function(section)
+		{
+			var titleNode;
+
+			if (
+				(!this.result.IS_AUTHORIZED || typeof this.result.LAST_ORDER_DATA.FAIL !== 'undefined')
+				&& section.getAttribute('data-visited') === 'false'
+			)
+			{
+				this.changeVisibleSection(section, true);
+				titleNode = section.querySelector('.bx-soa-section-title-container');
+				BX.bind(titleNode, 'click', BX.proxy(this.showByClick, this));
+			}
+
+			section.setAttribute('data-visited', 'true');
+			BX.addClass(section, 'bx-step-completed');
+			BX.remove(section.querySelector('.alert.alert-warning.alert-hide'));
+			this.checkBlockErrors(section);
 		},
 
 		/**
@@ -1818,33 +1851,21 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		getPrevSection: function(actionSection)
 		{
 			if (!this.orderBlockNode || !actionSection)
-				return;
+				return {};
 
 			var allSections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'),
-				prevSection, i, onePickUp, delivery;
+				prevSection, i;
 
 			for (i = 0; i < allSections.length; i++)
-				if (allSections[i].id == actionSection.id && allSections[i - 1])
+			{
+				if (allSections[i].id === actionSection.id && allSections[i - 1])
 				{
-					onePickUp = false;
 					prevSection = allSections[i - 1];
-					if (prevSection.id == this.pickUpBlockNode.id)
-					{
-						if (delivery = this.getSelectedDelivery())
-							onePickUp = this.getPickUpInfoArray(delivery.STORE).length == 1;
-					}
 
-					if (
-						(prevSection.id == this.deliveryBlockNode.id
-							&& this.result.DELIVERY.length == 1 && this.result.DELIVERY[0].EXTRA_SERVICES.length === 0
-							&& !this.result.DELIVERY[0].CALCULATE_ERRORS)
-						|| (prevSection.id == this.paySystemBlockNode.id && this.result.PAY_SYSTEM.length == 1
-							&& this.result.PAY_FROM_ACCOUNT != 'Y')
-						|| (prevSection.id == this.pickUpBlockNode.id && onePickUp)
-					)
+					if (this.shouldSkipSection(prevSection))
 					{
-						prevSection.setAttribute('data-visited', 'true');
-						BX.addClass(prevSection, 'bx-step-completed');
+						this.markSectionAsCompleted(prevSection);
+
 						return this.getPrevSection(prevSection);
 					}
 
@@ -1853,6 +1874,9 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						next: prevSection
 					};
 				}
+			}
+
+			return {next: actionSection};
 		},
 
 		addAnimationEffect: function(node, className, timeout)
@@ -2018,7 +2042,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 
 			if (node.getAttribute('data-visited') === 'false')
+			{
 				this.showBlockErrors(node);
+				this.notifyAboutWarnings(node);
+			}
 
 			node.setAttribute('data-visited', 'true');
 			BX.addClass(node, 'bx-selected');
@@ -2093,7 +2120,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				buttons.push(
 					BX.create('A', {
 						props: {
-							href: '',
+							href: 'javascript:void(0)',
 							className: 'pull-left btn btn-default btn-md'
 						},
 						html: this.params.MESS_BACK,
@@ -2111,7 +2138,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				buttons.push(
 					BX.create('A', {
-						props: {href: '', className: 'pull-right btn btn-default btn-md'},
+						props: {href: 'javascript:void(0)', className: 'pull-right btn btn-default btn-md'},
 						html: this.params.MESS_FURTHER,
 						events: {click: BX.proxy(this.clickNextAction, this)}
 					})
@@ -2238,18 +2265,25 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			for (i = 0; i < sections.length; i++)
 			{
-				state = false;
+				state = this.firstLoad && isAuthorized && orderDataLoaded && this.params.USE_PRELOAD === 'Y';
+				state = state || this.shouldBeSectionVisible(sections, i);
+
+				this.changeVisibleSection(sections[i], state);
 
 				if (this.firstLoad)
-					state = isAuthorized && orderDataLoaded && this.params.USE_PRELOAD === 'Y'
-
-				state = state || this.shouldBeSectionVisible(sections, i);
-				this.changeVisibleSection(sections[i], state);
+				{
+					if (state && sections[i + 1] && this.shouldSkipSection(sections[i]))
+					{
+						this.fade(sections[i]);
+						this.markSectionAsCompleted(sections[i]);
+						this.show(sections[i + 1]);
+					}
+				}
 			}
 
 			if (
 				(!this.result.IS_AUTHORIZED || typeof this.result.LAST_ORDER_DATA.FAIL !== 'undefined')
-				&& this.params.SHOW_ORDER_BUTTON == 'final_step'
+				&& this.params.SHOW_ORDER_BUTTON === 'final_step'
 			)
 			{
 				this.switchOrderSaveButtons(this.shouldBeSectionVisible(sections, sections.length - 1));
@@ -2302,14 +2336,20 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			var sections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'), i;
 			for (i in sections)
+			{
 				if (sections.hasOwnProperty(i))
+				{
 					this.editSection(sections[i]);
+				}
+			}
 
 			this.editTotalBlock();
 			this.totalBlockFixFont();
 
 			if (!this.result.SHOW_AUTH)
+			{
 				this.changeVisibleContent();
+			}
 
 			this.showErrors(this.result.ERROR, false);
 			this.showWarnings();
@@ -5554,10 +5594,15 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				BX.cleanNode(pickUpContent);
 
 				pickUpContentCol = BX.create('DIV', {props: {className: 'col-xs-12'}});
-				pickUpContentRow = BX.create('DIV', {props: {className: 'bx_soa_pickup row'}, children: [pickUpContentCol]});
-
 				this.editPickUpMap(pickUpContentCol);
-				pickUpContent.appendChild(pickUpContentRow);
+				this.editPickUpLoader(pickUpContentCol);
+
+				pickUpContent.appendChild(
+					BX.create('DIV', {
+						props: {className: 'bx_soa_pickup row'},
+						children: [pickUpContentCol]
+					})
+				);
 
 				if (this.params.SHOW_PICKUP_MAP != 'Y' || this.params.SHOW_NEAREST_PICKUP != 'Y')
 				{
@@ -5827,10 +5872,22 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}));
 		},
 
+		editPickUpLoader: function(pickUpContent)
+		{
+			pickUpContent.appendChild(
+				BX.create('DIV', {
+					props: {id: 'pickUpLoader', className: 'text-center'},
+					children: [BX.create('IMG', {props: {src: this.templateFolder + '/images/loader.gif'}})]
+				})
+			);
+		},
+
 		editPickUpList: function(isNew)
 		{
 			if (!this.pickUpPagination.currentPage || !this.pickUpPagination.currentPage.length)
 				return;
+
+			BX.remove(BX('pickUpLoader'));
 
 			var pickUpList = BX.create('DIV', {props: {className: 'bx-soa-pickup-list main'}}),
 				buyerStoreInput = BX('BUYER_STORE'),
@@ -6021,6 +6078,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				return;
 			}
+
+			BX.remove(BX('pickUpLoader'));
 
 			var recommendList = BX.create('DIV', {props: {className: 'bx-soa-pickup-list recommend'}}),
 				buyerStoreInput = BX('BUYER_STORE'),

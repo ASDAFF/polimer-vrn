@@ -25,3 +25,4 @@ $MESS["SALE_HPS_PAYPAL_LC_ENGLISH"] = "Английский";
 $MESS["SALE_HPS_PAYPAL_DESC_RETURN"] = "Возвраты платежей не поддерживаются";
 $MESS["SALE_HPS_PAYPAL_DESC_RESTRICTION"] = "Нет ограничений по сумме платежей";
 $MESS["SALE_HPS_PAYPAL_DESC_COMMISSION"] = "Покупки в России без комиссии";
+?>

@@ -1417,9 +1417,27 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 					$cachedData['PAYSYS'][$paySystem["ID"]] = $paySystem;
 				}
 
-				foreach ($this->dbResult['SHIPMENT'] as $shipment)
+				$cachedData['DELIVERY'] = array();
+				$dbDelivery = \Bitrix\Sale\Delivery\Services\Table::getList();
+
+				$deliveryService = array();
+				while ($delivery = $dbDelivery->fetch())
+					$deliveryService[$delivery['ID']] = $delivery;
+
+				foreach ($deliveryService as $delivery)
 				{
-					$cachedData['DELIVERY'][$shipment["DELIVERY_ID"]] = Sale\Delivery\Services\Manager::getById($shipment['DELIVERY_ID']);
+					$cachedData['DELIVERY'][$delivery["ID"]] = $delivery;
+
+					if ($delivery['PARENT_ID'])
+					{
+						$cachedData['DELIVERY'][$delivery["ID"]]['NAME'] = htmlspecialcharsbx($deliveryService[$delivery['PARENT_ID']]['NAME'].':'.$delivery['NAME']);
+						if (empty($delivery['LOGOTIP']))
+							$cachedData['DELIVERY'][$delivery["ID"]]['LOGOTIP'] = $deliveryService[$delivery['PARENT_ID']]['LOGOTIP'];
+					}
+					else
+					{
+						$cachedData['DELIVERY'][$delivery["ID"]]['NAME'] = htmlspecialcharsbx($delivery['NAME']);
+					}
 				}
 			}
 			catch (Exception $e)

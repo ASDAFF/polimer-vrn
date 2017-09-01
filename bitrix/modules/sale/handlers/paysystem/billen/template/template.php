@@ -444,7 +444,7 @@ if ($params['BASKET_ITEMS'])
 				$arCells[$n][$arColumnKeys[$i]] = null;
 
 			$arCells[$n][$arColumnKeys[$columnCount-2]] = "Payment made:";
-			$arCells[$n][$arColumnKeys[$columnCount-1]] = SaleFormatCurrency($sumPaid, $params['CURRENCY'], false);
+			$arCells[$n][$arColumnKeys[$columnCount-1]] = SaleFormatCurrency($params['SUM_PAID'], $params['CURRENCY'], false);
 		}
 
 		if ($params['DISCOUNT_PRICE'])

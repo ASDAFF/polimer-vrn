@@ -700,6 +700,23 @@ class OrderEdit
 		if(!$res->isSuccess())
 			$result->addErrors($res->getErrors());
 
+		$currentUserId = $order->getUserId();
+		if ($currentUserId && ((int)$currentUserId !== (int)$formData['USER_ID']))
+		{
+			$paymentCollection = $order->getPaymentCollection();
+			/** @var \Bitrix\Sale\Payment $payment */
+			foreach ($paymentCollection as $payment)
+			{
+				if ($payment->isPaid())
+				{
+					$result->addError(new EntityError(
+						Loc::getMessage("SALE_ORDEREDIT_ERROR_CHANGE_USER_WITH_PAID_PAYMENTS")
+					, 'SALE_ORDEREDIT_ERROR_CHANGE_USER_WITH_PAID_PAYMENTS'));
+					return null;
+				}
+			}
+		}
+
 		$order->setFieldNoDemand(
 			"USER_ID",
 			self::getUserId($order, $formData, $createUserIfNeed, $result)
@@ -713,6 +730,7 @@ class OrderEdit
 		$itemsBasketCodes = array();
 		$maxBasketCodeIdx = 0;
 		$productAdded = false;
+		$productDeleted = false;
 
 		if(isset($formData["PRODUCT"]) && is_array($formData["PRODUCT"]) && !empty($formData["PRODUCT"]))
 		{
@@ -811,6 +829,10 @@ class OrderEdit
 
 					$result->addError(new Error($errMess));
 					return null;
+				}
+				else
+				{
+					$productDeleted = true;
 				}
 			}
 		}
@@ -980,7 +1002,7 @@ class OrderEdit
 			$result->addError(new EntityError(Loc::getMessage("SALE_ORDEREDIT_ERROR_NO_PRODUCTS")));
 		}
 
-		if($productAdded)
+		if($productAdded || $productDeleted)
 		{
 			$res = $basket->refreshData(array('PRICE', 'COUPONS'));
 

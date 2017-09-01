@@ -96,33 +96,42 @@ final class DiscountCache
 		{
 			return array();
 		}
-
 		Collection::normalizeArrayValuesByInt($discountIds);
-
-		$needToLoad = $discountIds;
-		$resultEntities = array();
-		foreach($this->discountEntities as $data)
+		if(empty($discountIds))
 		{
-			list($loadedDiscountIds, $entities) = $data;
-
-			$needToLoadPortion = array_diff($needToLoad, $loadedDiscountIds);
-			if(count($needToLoad) > count($needToLoadPortion))
-			{
-				$resultEntities = array_merge($resultEntities, $entities);
-			}
-
-			$needToLoad = $needToLoadPortion;
-			if(empty($needToLoad))
-			{
-				break;
-			}
+			return array();
 		}
 
-		$resultEntities = array_merge($resultEntities, DiscountEntitiesTable::getByDiscount($needToLoad));
+		$cacheKey = 'D' . implode('_', $discountIds);
+		if (!isset($this->discountEntities[$cacheKey]))
+		{
+			$needToLoad = $discountIds;
+			$resultEntities = array();
 
-		$this->discountEntities[] = array($discountIds, $resultEntities);
+			foreach ($this->discountEntities as $data)
+			{
+				list($loadedDiscountIds, $entities) = $data;
 
-		return $resultEntities;
+				$needToLoadPortion = array_diff($needToLoad, $loadedDiscountIds);
+
+				if (count($needToLoad) > count($needToLoadPortion))
+				{
+					$resultEntities = array_merge($resultEntities, $entities);
+				}
+
+				$needToLoad = $needToLoadPortion;
+				if (empty($needToLoad))
+				{
+					break;
+				}
+			}
+
+			if (!empty($needToLoad))
+				$resultEntities = array_merge_recursive($resultEntities, DiscountEntitiesTable::getByDiscount($needToLoad));
+
+			$this->discountEntities[$cacheKey] = array($discountIds, $resultEntities);
+		}
+		return $this->discountEntities[$cacheKey][1];
 	}
 
 	public function getDiscounts(array $discountIds, array $executeModuleFilter, $siteId, array $couponList = array())

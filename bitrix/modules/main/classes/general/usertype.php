@@ -33,6 +33,7 @@ CModule::AddAutoloadClasses(
 		"CUserTypeIBlockSection" => "classes/general/usertypesection.php",
 		"CUserTypeIBlockElement" => "classes/general/usertypeelement.php",
 		"CUserTypeStringFormatted" => "classes/general/usertypestrfmt.php",
+		"CUserTypeUrl" => "classes/general/usertypeurl.php",
 	)
 );
 
@@ -887,6 +888,13 @@ class CAllUserTypeEntity extends CDBResult
  */
 class CAllUserTypeManager
 {
+	const BASE_TYPE_INT = "int";
+	const BASE_TYPE_FILE = "file";
+	const BASE_TYPE_ENUM = "enum";
+	const BASE_TYPE_DOUBLE = "double";
+	const BASE_TYPE_DATETIME = "datetime";
+	const BASE_TYPE_STRING = "string";
+
 	//must be extended
 	function DateTimeToChar($FIELD_NAME)
 	{
@@ -2092,6 +2100,164 @@ class CAllUserTypeManager
 		}
 
 		return strlen($html) ? $html : '&nbsp;';
+	}
+
+	function CallUserTypeComponent($componentName, $componentTemplate, $arUserField, $arAdditionalParameters = array())
+	{
+		global $APPLICATION;
+		$arParams = $arAdditionalParameters;
+		$arParams['arUserField'] = $arUserField;
+		ob_start();
+		$APPLICATION->IncludeComponent(
+			$componentName,
+			$componentTemplate,
+			$arParams,
+			null,
+			array("HIDE_ICONS" => "Y")
+		);
+		return ob_get_clean();
+	}
+
+	function GetPublicView($arUserField, $arAdditionalParameters = array())
+	{
+		$event = new \Bitrix\Main\Event("main", "onBeforeGetPublicView", array(&$arUserField, &$arAdditionalParameters));
+		$event->send();
+
+		$arType = $this->GetUserType($arUserField["USER_TYPE_ID"]);
+
+		$html = null;
+		$event = new \Bitrix\Main\Event("main", "onGetPublicView", array($arUserField, $arAdditionalParameters));
+		$event->send();
+		foreach ($event->getResults() as $evenResult)
+		{
+			if ($evenResult->getType() == \Bitrix\Main\EventResult::SUCCESS)
+			{
+				$html = $evenResult->getParameters();
+				break;
+			}
+		}
+
+		if ($html !== null)
+		{
+			//All done
+		}
+		elseif($arUserField["VIEW_CALLBACK"] && is_callable($arUserField['VIEW_CALLBACK']))
+		{
+			$html = call_user_func_array($arUserField["VIEW_CALLBACK"], array(
+				$arUserField,
+				$arAdditionalParameters
+			));
+		}
+		elseif($arType && $arType["VIEW_CALLBACK"] && is_callable($arType['VIEW_CALLBACK']))
+		{
+			$html = call_user_func_array($arType["VIEW_CALLBACK"], array(
+				$arUserField,
+				$arAdditionalParameters
+			));
+		}
+		elseif ($arUserField["VIEW_COMPONENT_NAME"])
+		{
+			$html = $this->CallUserTypeComponent(
+				$arUserField["VIEW_COMPONENT_NAME"],
+				$arUserField["VIEW_COMPONENT_TEMPLATE"],
+				$arUserField,
+				$arAdditionalParameters
+			);
+		}
+		elseif ($arType && $arType["VIEW_COMPONENT_NAME"])
+		{
+			$html = $this->CallUserTypeComponent(
+				$arType["VIEW_COMPONENT_NAME"],
+				$arType["VIEW_COMPONENT_TEMPLATE"],
+				$arUserField,
+				$arAdditionalParameters
+			);
+		}
+		else
+		{
+			$html = $this->CallUserTypeComponent(
+				"bitrix:system.field.view",
+				$arUserField["USER_TYPE_ID"],
+				$arUserField,
+				$arAdditionalParameters
+			);
+		}
+
+		$event = new \Bitrix\Main\Event("main", "onAfterGetPublicView", array($arUserField, $arAdditionalParameters, &$html));
+		$event->send();
+
+		return $html;
+	}
+
+	function GetPublicEdit($arUserField, $arAdditionalParameters = array())
+	{
+		$event = new \Bitrix\Main\Event("main", "onBeforeGetPublicEdit", array(&$arUserField, &$arAdditionalParameters));
+		$event->send();
+
+		$arType = $this->GetUserType($arUserField["USER_TYPE_ID"]);
+
+		$html = null;
+		$event = new \Bitrix\Main\Event("main", "onGetPublicEdit", array($arUserField, $arAdditionalParameters));
+		$event->send();
+		foreach ($event->getResults() as $evenResult)
+		{
+			if ($evenResult->getType() == \Bitrix\Main\EventResult::SUCCESS)
+			{
+				$html = $evenResult->getParameters();
+				break;
+			}
+		}
+
+		if ($html !== null)
+		{
+			//All done
+		}
+		elseif ($arUserField["EDIT_CALLBACK"] && is_callable($arUserField['EDIT_CALLBACK']))
+		{
+			$html = call_user_func_array($arUserField["EDIT_CALLBACK"], array(
+				$arUserField,
+				$arAdditionalParameters
+			));
+		}
+		elseif ($arType && $arType["EDIT_CALLBACK"] && is_callable($arType['EDIT_CALLBACK']))
+		{
+			$html = call_user_func_array($arType["EDIT_CALLBACK"], array(
+				$arUserField,
+				$arAdditionalParameters
+			));
+		}
+		elseif ($arUserField["EDIT_COMPONENT_NAME"])
+		{
+			$html = $this->CallUserTypeComponent(
+				$arUserField["EDIT_COMPONENT_NAME"],
+				$arUserField["EDIT_COMPONENT_TEMPLATE"],
+				$arUserField,
+				$arAdditionalParameters
+			);
+		}
+		elseif ($arType && $arType["EDIT_COMPONENT_NAME"])
+		{
+			$html = $this->CallUserTypeComponent(
+				$arType["EDIT_COMPONENT_NAME"],
+				$arType["EDIT_COMPONENT_TEMPLATE"],
+				$arUserField,
+				$arAdditionalParameters
+			);
+		}
+		else
+		{
+			$html = $this->CallUserTypeComponent(
+				"bitrix:system.field.edit",
+				$arUserField["USER_TYPE_ID"],
+				$arUserField,
+				$arAdditionalParameters
+			);
+		}
+
+		$event = new \Bitrix\Main\Event("main", "onAfterGetPublicEdit", array($arUserField, $arAdditionalParameters, &$html));
+		$event->send();
+
+		return $html;
 	}
 
 	function GetSettingsHTML($arUserField, $bVarsFromForm = false)

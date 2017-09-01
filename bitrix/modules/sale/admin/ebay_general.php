@@ -327,6 +327,17 @@ elseif($ebay->isActive())
 	</tr>
 	<tr class="heading"><td colspan="2"><?=Loc::getMessage("SALE_EBAY_SFTP")?></td></tr>
 	<tr>
+		<td width="40%"><span class="adm-required-field"><?=Loc::getMessage("SALE_EBAY_SFTP_HOST_PORT");?></span></td>
+		<td width="60%">
+			<input type="text" name="EBAY_SETTINGS[SFTP_HOST]" size="30" maxlength="255" value="<?=isset($siteSettings["SFTP_HOST"]) ? htmlspecialcharsbx($siteSettings["SFTP_HOST"]) : "mip.ebay.com"?>">&nbsp:&nbsp;
+			<input type="text" name="EBAY_SETTINGS[SFTP_PORT]" size="10" maxlength="255" value="<?=isset($siteSettings["SFTP_PORT"]) ? htmlspecialcharsbx($siteSettings["SFTP_PORT"]) : "22"?>">
+		</td>
+	</tr>
+	<tr>
+		<td width="40%"><span class="adm-required-field"><?=Loc::getMessage("SALE_EBAY_SFTP_HOST_FINGERPRINT");?>:</span></td>
+		<td width="60%"><input type="text" name="EBAY_SETTINGS[SFTP_HOST_FINGERPRINT]" size="45" maxlength="255" value="<?=isset($siteSettings["SFTP_HOST_FINGERPRINT"]) ? htmlspecialcharsbx($siteSettings["SFTP_HOST_FINGERPRINT"]) : "DD1FEE728C2E1FF2AACC2724929C3CF1"?>"></td>
+	</tr>
+	<tr>
 		<td width="40%"><span class="adm-required-field"><?=Loc::getMessage("SALE_EBAY_SFTP_LOGIN");?>:</span></td>
 		<td width="60%"><input id="SALE_EBAY_SETTINGS_SFTP_USER_NAME" type="text" name="EBAY_SETTINGS[SFTP_LOGIN]" size="45" maxlength="255" value="<?=isset($siteSettings["SFTP_LOGIN"]) ? htmlspecialcharsbx($siteSettings["SFTP_LOGIN"]) : ""?>"></td>
 	</tr>

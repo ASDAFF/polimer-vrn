@@ -228,4 +228,8 @@ $MESS["SALE_ALLOW_GUEST_ORDER_VIEW_PATH"] = "Order view page path for \"#SITE_ID
 $MESS["SALE_ALLOW_GUEST_ORDER_VIEW_EXAMPLE"] = "Path template example";
 $MESS["SALE_ORDER_GUEST_VIEW"] = "Public link";
 $MESS["SALE_ORDER_GUEST_VIEW_STATUS"] = "Orders in these statuses can be viewed without logging in";
+$MESS["SALE_ORDER_HISTORY_CLEANER_TITLE"] = "Order Update History Preferences";
+$MESS["SALE_ORDER_HISTORY_CLEANER_SWITCHER"] = "Delete outdated history entries";
+$MESS["SALE_ORDER_HISTORY_CLEANER_DAYS"] = "Delete entries older than (days)";
+$MESS["SALE_ORDER_HISTORY_CLEANER_BY_HIT"] = "Number of entries to delete at a single agent run";
 ?>

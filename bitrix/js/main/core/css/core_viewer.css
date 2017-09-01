@@ -361,6 +361,7 @@
 	-webkit-border-radius: 100%;
 	-moz-border-radius: 100%;
 	border-radius: 100%;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2255%22%20height%3D%2271%22%20viewBox%3D%220%200%2055%2071%22%3E%0A%20%20%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%0A%20%20%20%20%3Cpolygon%20fill%3D%22%23E5E8EB%22%20points%3D%220%20.121%2039.194%20.121%2054.887%2016.3%2054.887%2070.901%200%2070.901%22/%3E%0A%20%20%20%20%3Cpolygon%20fill%3D%22%23535C69%22%20points%3D%2239.018%20.121%2054.887%2015.996%2039.018%2015.996%22%20opacity%3D%22.3%22/%3E%0A%20%20%3C/g%3E%0A%3C/svg%3E%0A');
 }
 
 .bx-viewer-folder .bx-viewer-icon {
@@ -1110,6 +1111,10 @@
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
 	flex: 1;
+}
+.bx-viewer-video .vjs-error .vjs-error-display .vjs-modal-dialog-content
+{
+	margin-top: 30px;
 }
 
 

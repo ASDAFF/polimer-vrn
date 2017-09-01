@@ -101,8 +101,18 @@ class askaron_pro1c extends CModule
 			RegisterModuleDependences('catalog', 'OnSuccessCatalogImport1C', $this->MODULE_ID, "CAskaronPro1C", "OnSuccessCatalogImport1CHandler", "500000");
 			
 			RegisterModuleDependences("pull", "OnGetDependentModule", $this->MODULE_ID, "CAskaronPro1C", "OnGetDependentModuleHandler" );
-			
-			
+
+			RegisterModuleDependences("main", "OnAfterSetOption_secure_1c_exchange", $this->MODULE_ID, "CAskaronPro1C", "OnAfterSetOption_secure_1c_exchange" );
+			RegisterModuleDependences("main", "OnAfterSetOption_DEFAULT_SKIP_SOURCE_CHECK", $this->MODULE_ID, "CAskaronPro1C", "OnAfterSetOption_DEFAULT_SKIP_SOURCE_CHECK" );
+
+			RegisterModuleDependences("main", "OnBeforeUserAdd", $this->MODULE_ID, "CAskaronPro1C", "OnBeforeUserAdd", "500000");
+			RegisterModuleDependences("main", "OnAfterUserAdd", $this->MODULE_ID, "CAskaronPro1C", "OnAfterUserAdd", "20");
+
+			RegisterModuleDependences("main", "OnBeforeUserUpdate", $this->MODULE_ID, "CAskaronPro1C", "OnBeforeUserUpdate", "500000");
+			RegisterModuleDependences("main", "OnAfterUserUpdate", $this->MODULE_ID, "CAskaronPro1C", "OnAfterUserUpdate", "20");
+
+
+
 			//$random_value = COption::GetOptionString( $this->MODULE_ID, "random_value" );
 			//if ( $random_value != "" && $random_value != "11111111")
 			//{
@@ -110,7 +120,12 @@ class askaron_pro1c extends CModule
 			//}
 			
 			$this->InstallDB();
-			$this->InstallFiles();			
+			$this->InstallFiles();
+
+			if ( CModule::IncludeModule( $this->MODULE_ID ) )
+			{
+				CAskaronPro1CCache::SetAgentByOptions();
+			}
 		}
 		
 		$APPLICATION->IncludeAdminFile( GetMessage("ASKARON_PRO1C_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/".$this->MY_DIR."/modules/".$this->MODULE_ID."/install/step.php");
@@ -120,10 +135,14 @@ class askaron_pro1c extends CModule
 	public function DoUninstall()
 	{
 		global $APPLICATION;
-		
+
+		CAgent::RemoveModuleAgents( $this->MODULE_ID );
+
 		$this->UnInstallFiles();
 		$this->UnInstallDB();
-				
+
+
+
 		UnRegisterModuleDependences("main", "OnPageStart", $this->MODULE_ID, "CAskaronPro1C", "OnPageStartHandler");
 		//UnRegisterModuleDependences("main", "OnBeforeProlog", $this->MODULE_ID, "CAskaronPro1C", "OnBeforePrologHandler");
 		UnRegisterModuleDependences("main", "OnProlog", $this->MODULE_ID, "CAskaronPro1C", "OnPrologHandler");
@@ -157,7 +176,17 @@ class askaron_pro1c extends CModule
 		UnRegisterModuleDependences('catalog', 'OnSuccessCatalogImport1C', $this->MODULE_ID, "CAskaronPro1C", "OnSuccessCatalogImport1CHandler");
 		
 		UnRegisterModuleDependences("pull", "OnGetDependentModule", $this->MODULE_ID, "CAskaronPro1C", "OnGetDependentModuleHandler" );
-		
+
+		UnRegisterModuleDependences("main", "OnAfterSetOption_secure_1c_exchange", $this->MODULE_ID, "CAskaronPro1C", "OnAfterSetOption_secure_1c_exchange" );
+		UnRegisterModuleDependences("main", "OnAfterSetOption_DEFAULT_SKIP_SOURCE_CHECK", $this->MODULE_ID, "CAskaronPro1C", "OnAfterSetOption_DEFAULT_SKIP_SOURCE_CHECK" );
+
+		UnRegisterModuleDependences("main", "OnBeforeUserAdd", $this->MODULE_ID, "CAskaronPro1C", "OnBeforeUserAdd");
+		UnRegisterModuleDependences("main", "OnAfterUserAdd", $this->MODULE_ID, "CAskaronPro1C", "OnAfterUserAdd");
+
+		UnRegisterModuleDependences("main", "OnBeforeUserUpdate", $this->MODULE_ID, "CAskaronPro1C", "OnBeforeUserUpdate");
+		UnRegisterModuleDependences("main", "OnAfterUserUpdate", $this->MODULE_ID, "CAskaronPro1C", "OnAfterUserUpdate");
+
+
 		UnRegisterModule('askaron.pro1c');
 
 		$APPLICATION->IncludeAdminFile( GetMessage("ASKARON_PRO1C_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/".$this->MY_DIR."/modules/".$this->MODULE_ID."/install/unstep.php");
@@ -169,6 +198,7 @@ class askaron_pro1c extends CModule
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/".$this->MY_DIR."/modules/".$this->MODULE_ID."/install/admin/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin/");
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/".$this->MY_DIR."/modules/".$this->MODULE_ID."/install/templates/",	$_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/", true, true);
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/".$this->MY_DIR."/modules/".$this->MODULE_ID."/install/themes/", $_SERVER["DOCUMENT_ROOT"]."/bitrix/themes/", true, true);
+		CheckDirPath( $_SERVER["DOCUMENT_ROOT"]."/upload/1c_catalog_copy_askaron_pro1c/" );
 	}
 
 	function UnInstallFiles( $arParams = array() )

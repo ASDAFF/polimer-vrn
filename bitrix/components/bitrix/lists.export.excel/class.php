@@ -259,7 +259,12 @@ class ListExportExcelComponent extends CBitrixComponent
 		global $DB;
 		foreach($filterData as $key => $value)
 		{
-			if (strlen($value) <= 0)
+			if (is_array($value))
+			{
+				if (empty($value))
+					continue;
+			}
+			elseif(strlen($value) <= 0)
 				continue;
 
 			if(substr($key, -5) == "_from")

@@ -5,6 +5,7 @@ namespace Bitrix\Sale\Cashbox;
 use Bitrix\Main;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaySystem;
+use Bitrix\Sale\Result;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
 
@@ -68,48 +69,54 @@ class SellCheck extends Check
 				);
 			}
 
-			foreach ($entitiesData['PRODUCTS'] as $product)
+			if (isset($entitiesData['PRODUCTS']))
 			{
-				$item = array(
-					'name' => $product['NAME'],
-					'base_price' => $product['BASE_PRICE'],
-					'price' => $product['PRICE'],
-					'sum' => $product['SUM'],
-					'quantity' => $product['QUANTITY'],
-					'vat' => $product['VAT']
-				);
-
-				if ($product['DISCOUNT'])
+				foreach ($entitiesData['PRODUCTS'] as $product)
 				{
-					$item['discount'] = array(
-						'discount' => $product['DISCOUNT']['PRICE'],
-						'discount_type' => $product['DISCOUNT']['TYPE'],
+					$item = array(
+						'name' => $product['NAME'],
+						'base_price' => $product['BASE_PRICE'],
+						'price' => $product['PRICE'],
+						'sum' => $product['SUM'],
+						'quantity' => $product['QUANTITY'],
+						'vat' => $product['VAT']
 					);
-				}
 
-				$result['items'][] = $item;
+					if ($product['DISCOUNT'])
+					{
+						$item['discount'] = array(
+							'discount' => $product['DISCOUNT']['PRICE'],
+							'discount_type' => $product['DISCOUNT']['TYPE'],
+						);
+					}
+
+					$result['items'][] = $item;
+				}
 			}
 
-			foreach ($entitiesData['DELIVERY'] as $delivery)
+			if (isset($entitiesData['DELIVERY']))
 			{
-				$item = array(
-					'name' => $delivery['NAME'],
-					'base_price' => $delivery['BASE_PRICE'],
-					'price' => $delivery['PRICE'],
-					'sum' => $delivery['SUM'],
-					'quantity' => $delivery['QUANTITY'],
-					'vat' => $delivery['VAT']
-				);
-
-				if ($delivery['DISCOUNT'])
+				foreach ($entitiesData['DELIVERY'] as $delivery)
 				{
-					$item['discount'] = array(
-						'discount' => $delivery['DISCOUNT']['PRICE'],
-						'discount_type' => $delivery['DISCOUNT']['TYPE'],
+					$item = array(
+						'name' => $delivery['NAME'],
+						'base_price' => $delivery['BASE_PRICE'],
+						'price' => $delivery['PRICE'],
+						'sum' => $delivery['SUM'],
+						'quantity' => $delivery['QUANTITY'],
+						'vat' => $delivery['VAT']
 					);
-				}
 
-				$result['items'][] = $item;
+					if ($delivery['DISCOUNT'])
+					{
+						$item['discount'] = array(
+							'discount' => $delivery['DISCOUNT']['PRICE'],
+							'discount_type' => $delivery['DISCOUNT']['TYPE'],
+						);
+					}
+
+					$result['items'][] = $item;
+				}
 			}
 
 			if (isset($entitiesData['BUYER']))
@@ -125,6 +132,57 @@ class SellCheck extends Check
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @return Result
+	 */
+	public function validate()
+	{
+		$result = new Result();
+
+		$data = $this->extractDataFromEntities($this->getEntities());
+
+		if (!isset($data['PRODUCTS']))
+		{
+			$result->addError(new Main\Error(Main\Localization\Loc::getMessage('SALE_CASHBOX_SELL_ERROR_NO_PRODUCTS')));
+			return $result;
+		}
+
+		if (!$this->isCorrectSum($data))
+		{
+			$result->addError(new Main\Error(Main\Localization\Loc::getMessage('SALE_CASHBOX_SELL_ERROR_CHECK_SUM')));
+			return $result;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $data
+	 * @return bool
+	 */
+	private function isCorrectSum($data)
+	{
+		$eps = 0.00001;
+
+		$productSum = 0;
+		foreach ($data['PRODUCTS'] as $item)
+			$productSum += $item['SUM'];
+
+		if (isset($data['DELIVERY']))
+		{
+			foreach ($data['DELIVERY'] as $delivery)
+				$productSum += $delivery['PRICE'];
+		}
+
+		$paymentSum = 0;
+		foreach ($data['PAYMENTS'] as $payment)
+		{
+			$paymentSum += $payment['SUM'];
+		}
+
+		return abs($productSum - $paymentSum) < $eps;
 	}
 
 }

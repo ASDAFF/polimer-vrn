@@ -2000,6 +2000,8 @@ class OrderBasket
 
 				if(isset($discounts["PRICES"]["BASKET"][$basketCode]))
 					$params["PRICE"] = $discounts["PRICES"]["BASKET"][$basketCode]["PRICE"];
+				else
+					$params["PRICE"] = $item->getPrice();
 
 				//alias for backward compatibility.
 				$params["PRICE_BASE"] = $params["BASE_PRICE"] = $item->getField("BASE_PRICE");

@@ -63,5 +63,6 @@ if($arParams["arUserField"]["USER_TYPE"])
 		}
 		$arResult["VALUE"][$key] = $res;
 	}
+
 	$this->IncludeComponentTemplate();
 }

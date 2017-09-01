@@ -444,28 +444,10 @@ class Order
 		}
 		elseif ($name == "REASON_MARKED")
 		{
-			if (!empty($value))
+			$r = $this->setReasonMarked($value);
+			if (!$r->isSuccess())
 			{
-				$orderReasonMarked = $this->getField('REASON_MARKED');
-				if (is_array($value))
-				{
-					$newOrderReasonMarked = '';
-					foreach ($value as $err)
-					{
-						$newOrderReasonMarked .= (strval($newOrderReasonMarked) != '' ? "\n" : "") . $err;
-					}
-				}
-				else
-				{
-					$newOrderReasonMarked = $value;
-				}
-
-				/** @var Result $r */
-				$r = $this->setField('REASON_MARKED', $orderReasonMarked. (strval($orderReasonMarked) != '' ? "\n" : ""). $newOrderReasonMarked);
-				if (!$r->isSuccess())
-				{
-					$result->addErrors($r->getErrors());
-				}
+				$result->addErrors($r->getErrors());
 			}
 		}
 		elseif ($name == "BASE_PRICE_DELIVERY")
@@ -505,9 +487,10 @@ class Order
 				throw new Main\ObjectNotFoundException('Entity "ShipmentCollection" not found');
 			}
 
+			$deliveryPrice = ($this->isNew()) ? $value : $this->getField("PRICE_DELIVERY") - $oldValue + $value;
 			$this->setFieldNoDemand(
 				"PRICE_DELIVERY",
-				$this->getField("PRICE_DELIVERY") - $oldValue + $value
+				$deliveryPrice
 			);
 
 			/** @var Result $r */
@@ -1156,6 +1139,27 @@ class Order
 		$isNew = $this->isNew;
 		$isChanged = $this->isChanged();
 
+		$updateFields = array(
+			'RUNNING' => 'N'
+		);
+
+		$now = new Type\DateTime();
+		if(!isset($fieldsRunning['DATE_UPDATE']))
+		{
+			$updateFields['DATE_UPDATE'] = $now;
+			$this->setFieldNoDemand('DATE_UPDATE', $updateFields['DATE_UPDATE']);
+		}
+
+		if($this->isNew && !isset($fieldsRunning['DATE_INSERT']))
+		{
+			$updateFields['DATE_INSERT'] = $now;
+			$updateFields['DATE_STATUS'] = $now;
+			$this->setFieldNoDemand('DATE_INSERT', $updateFields['DATE_INSERT']);
+			$this->setFieldNoDemand('DATE_STATUS', $updateFields['DATE_STATUS']);
+		}
+
+		Internals\OrderTable::update($id, $updateFields);
+
 		static::clearChanged();
 
 		$event = new Main\Event('sale', EventActions::EVENT_ON_ORDER_SAVED, array(
@@ -1193,38 +1197,18 @@ class Order
 				'REASON_MARKED' => $errorMsg
 			);
 
+			Internals\OrderTable::update($id, $updateFields);
+
 			OrderHistory::addLog('ORDER', $this->getId(), 'ORDER_EVENT_ON_ORDER_SAVED_ERROR', null, null, array("ERROR" => $errorMsg), OrderHistory::SALE_ORDER_HISTORY_LOG_LEVEL_1);
 		}
 		else
 		{
-			$updateFields = array(
-				'RUNNING' => 'N'
-			);
-
-			if(!isset($fieldsRunning['DATE_UPDATE']))
-			{
-				$updateFields['DATE_UPDATE'] = new Type\DateTime();
-				$this->setFieldNoDemand('DATE_UPDATE', $updateFields['DATE_UPDATE']);
-			}
-
-			if($this->isNew)
-			{
-				if(!isset($fieldsRunning['DATE_INSERT']))
-				{
-					$updateFields['DATE_INSERT'] = new Type\DateTime();
-					$this->setFieldNoDemand('DATE_INSERT', $updateFields['DATE_INSERT']);
-				}
-			}
-
 			if(defined("CACHED_b_sale_order") && ($this->isNew || ($isChanged && $fields["UPDATED_1C"] != "Y")))
 			{
 				$CACHE_MANAGER->Read(CACHED_b_sale_order, "sale_orders");
 				$CACHE_MANAGER->SetImmediate("sale_orders", true);
 			}
 		}
-
-		if(!empty($updateFields))
-			Internals\OrderTable::update($id, $updateFields);
 
 		EntityMarker::saveMarkers($this);
 
@@ -1355,16 +1339,20 @@ class Order
 			$return = null;
 			if ($eventResult->getType() == Main\EventResult::ERROR)
 			{
-				continue;
-			}
-
-			if ($eventResult->getType() == Main\EventResult::SUCCESS)
-			{
-				$return = $eventResult->getParameters('return');
-				if ($return !== null)
+				if ($eventResultData = $eventResult->getParameters())
 				{
-					return $result;
+					if (isset($eventResultData) && $eventResultData instanceof ResultError)
+					{
+						/** @var ResultError $errorMsg */
+						$errorMsg = $eventResultData;
+					}
 				}
+
+				if (!isset($errorMsg))
+					$errorMsg = new ResultError('EVENT_ORDER_DELETE_ERROR');
+
+				$result->addError($errorMsg);
+				return $result;
 			}
 		}
 
@@ -1683,12 +1671,57 @@ class Order
 				}
 			}
 		}
+		elseif ($name == "REASON_MARKED")
+		{
+			$r = $this->setReasonMarked($value);
+			if (!$r->isSuccess())
+			{
+				$result->addErrors($r->getErrors());
+			}
+		}
 
 		if ($value != $oldValue)
 		{
 			$fields = $this->fields->getChangedValues();
 			if (!array_key_exists("UPDATED_1C", $fields))
 				parent::setField("UPDATED_1C", "N");
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $value
+	 *
+	 * @return Result
+	 */
+	private function setReasonMarked($value)
+	{
+		$result = new Result();
+
+		if (!empty($value))
+		{
+			$orderReasonMarked = $this->getField('REASON_MARKED');
+			if (is_array($value))
+			{
+				$newOrderReasonMarked = '';
+
+				foreach ($value as $err)
+				{
+					$newOrderReasonMarked .= (strval($newOrderReasonMarked) != '' ? "\n" : "") . $err;
+				}
+			}
+			else
+			{
+				$newOrderReasonMarked = $value;
+			}
+
+			/** @var Result $r */
+			$r = $this->setField('REASON_MARKED', $orderReasonMarked. (strval($orderReasonMarked) != '' ? "\n" : ""). $newOrderReasonMarked);
+			if (!$r->isSuccess())
+			{
+				$result->addErrors($r->getErrors());
+			}
 		}
 
 		return $result;

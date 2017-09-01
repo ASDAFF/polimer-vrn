@@ -24,6 +24,7 @@ if($APPLICATION->GetGroupRight("sender") == "D")
 use Bitrix\Sender\Stat\Statistics;
 use Bitrix\Sender\MailingChainTable;
 use Bitrix\Sender\PostingTable;
+use Bitrix\Fileman\Block\Editor as BlockEditor;
 
 
 
@@ -78,7 +79,9 @@ $action = $request->get('action');
 if($action == 'get_template' && $chainId)
 {
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
-	echo MailingChainTable::getMessageById($chainId);
+	$message = MailingChainTable::getMessageById($chainId);
+	$message = BlockEditor::getHtmlForEditor($message, Context::getCurrent()->getCulture()->getCharset());
+	echo $message;
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");
 	exit;
 }

@@ -4,6 +4,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Error;
 use Bitrix\Main\Context;
+use Bitrix\Main\UserConsent\Agreement;
 use Bitrix\Main\UserConsent\AgreementLink;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
@@ -25,6 +26,10 @@ class MainUserConsentViewComponent extends CBitrixComponent
 
 	protected function initParams()
 	{
+		$this->arParams['ID'] = isset($this->arParams['ID']) ? intval($this->arParams['ID']) : null;
+		$this->arParams['REPLACE'] = is_array($this->arParams['REPLACE']) ? $this->arParams['REPLACE'] : array();
+		$this->arParams['SECURITY_CODE'] = isset($this->arParams['SECURITY_CODE']) ? $this->arParams['SECURITY_CODE'] : null;
+
 		if (!isset($this->arParams['PARAMS']))
 		{
 			$this->arParams['PARAMS'] = Context::getCurrent()->getRequest()->toArray();
@@ -37,7 +42,20 @@ class MainUserConsentViewComponent extends CBitrixComponent
 
 	protected function prepareResult()
 	{
-		$agreement = AgreementLink::getAgreementFromUriParameters($this->arParams['PARAMS']);
+		if ($this->arParams['ID'])
+		{
+			$agreement = new Agreement($this->arParams['ID'], $this->arParams['REPLACE']);
+			$agreementData = $agreement->getData();
+			if ($agreementData['SECURITY_CODE'] != $this->arParams['SECURITY_CODE'])
+			{
+				$agreement = null;
+			}
+		}
+		else
+		{
+			$agreement = AgreementLink::getAgreementFromUriParameters($this->arParams['PARAMS']);
+		}
+
 		if (!$agreement)
 		{
 			//use user-friendly text instead of AgreementLink::getErrors();

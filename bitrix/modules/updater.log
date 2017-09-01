@@ -2871,3 +2871,192 @@ ModulesUpdates
 2017-08-18 10:57:10 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.12&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=new.polimer-vrn.ru&CHHB=new.polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.12&bitm_webservice=17.0.0&bitm_lists=17.0.8&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.2&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.5&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.28&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=N&SALE_15=Y&query_type=counter&cntr_result[141]=X
 2017-08-18 10:57:10 -  - exec CUpdateClient::GetHTTPPage
 2017-08-18 10:57:10 -  - TIME executeCounters 0.168 sec
+2017-08-25 16:01:07 -  - exec CUpdateClient::GetUpdatesList
+2017-08-25 16:01:07 -  - exec CUpdateClient::CollectRequestData
+2017-08-25 16:01:07 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.12&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=new.polimer-vrn.ru&CHHB=new.polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.12&bitm_webservice=17.0.0&bitm_lists=17.0.8&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.2&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.5&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.28&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=N&SALE_15=Y
+2017-08-25 16:01:07 -  - exec CUpdateClient::GetHTTPPage
+2017-08-25 16:01:08 -  - TIME GetUpdatesList(request) 0.766 sec
+2017-08-25 16:01:08 -  - exec CUpdateClient::ParseServerData
+2017-08-29 19:49:45 -  - exec CUpdateClient::GetUpdatesList
+2017-08-29 19:49:45 -  - exec CUpdateClient::CollectRequestData
+2017-08-29 19:49:45 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.12&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=polimer-vrn.ru&CHHB=polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.12&bitm_webservice=17.0.0&bitm_lists=17.0.8&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.2&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.5&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.28&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=Y&SALE_15=Y
+2017-08-29 19:49:45 -  - exec CUpdateClient::GetHTTPPage
+2017-08-29 19:49:45 -  - TIME GetUpdatesList(request) 0.159 sec
+2017-08-29 19:49:45 -  - exec CUpdateClient::ParseServerData
+2017-08-29 19:49:45 -  - exec CUpdateClient::executeCounters
+2017-08-29 19:49:45 -  - exec CUpdateClient::CollectRequestData
+2017-08-29 19:49:45 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.12&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=polimer-vrn.ru&CHHB=polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.12&bitm_webservice=17.0.0&bitm_lists=17.0.8&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.2&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.5&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.28&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=Y&SALE_15=Y&query_type=counter&cntr_result[141]=X
+2017-08-29 19:49:45 -  - exec CUpdateClient::GetHTTPPage
+2017-08-29 19:49:46 -  - TIME executeCounters 0.116 sec
+2017-08-31 16:31:54 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504186314/askaron.pro1c/updater2.0.0.php': CopyFiles(install/admin, admin/)
+2017-09-01 10:40:22 -  - exec CUpdateClient::GetUpdatesList
+2017-09-01 10:40:22 -  - exec CUpdateClient::CollectRequestData
+2017-09-01 10:40:22 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.12&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=polimer-vrn.ru&CHHB=polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.12&bitm_webservice=17.0.0&bitm_lists=17.0.8&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.2&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.5&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.28&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=Y&SALE_15=Y
+2017-09-01 10:40:22 -  - exec CUpdateClient::GetHTTPPage
+2017-09-01 10:40:22 -  - TIME GetUpdatesList(request) 0.179 sec
+2017-09-01 10:40:22 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:25 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:25 -  - exec CUpdateClient::CollectRequestData
+2017-09-01 10:40:25 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.12&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=polimer-vrn.ru&CHHB=polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.12&bitm_webservice=17.0.0&bitm_lists=17.0.8&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.2&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.5&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.28&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=Y&SALE_15=Y
+2017-09-01 10:40:25 -  - exec CUpdateClient::GetHTTPPage
+2017-09-01 10:40:25 -  - TIME LoadModulesUpdates(request) 0.115 sec
+2017-09-01 10:40:25 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:25 - S - STEP
+2017-09-01 10:40:25 - LMU01 - LoadModulesUpdates-Step
+2017-09-01 10:40:26 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:26 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:26 -  - loadFile
+2017-09-01 10:40:26 - U - RETURN
+2017-09-01 10:40:26 -  - exec CUpdateClient::UnGzipArchive
+2017-09-01 10:40:26 -  - TIME UnGzipArchive 0.043 sec
+2017-09-01 10:40:26 - CSURUS1 - Run updater '/bitrix/updates/update_m1504251626/main/updater17.0.13.php'
+2017-09-01 10:40:26 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504251626/main/updater17.0.13.php': CopyFiles(install/js, js)
+2017-09-01 10:40:26 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504251626/main/updater17.0.13.php': CopyFiles(install/components, components)
+2017-09-01 10:40:26 -  - TIME UpdateStepModules 0.073 sec
+2017-09-01 10:40:26 - UPD_SUCCESS - Updated: main (17.0.13)<br><li>Добавлено отображение заглушки видео в редакторе. <li>Исправления ошибок в просмотрщике файлов.
+2017-09-01 10:40:26 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:26 -  - exec CUpdateClient::CollectRequestData
+2017-09-01 10:40:26 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.13&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=polimer-vrn.ru&CHHB=polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.13&bitm_webservice=17.0.0&bitm_lists=17.0.8&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.2&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.5&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.28&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=Y&SALE_15=Y
+2017-09-01 10:40:26 -  - exec CUpdateClient::GetHTTPPage
+2017-09-01 10:40:26 -  - TIME LoadModulesUpdates(request) 0.264 sec
+2017-09-01 10:40:26 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:26 - S - STEP
+2017-09-01 10:40:26 - LMU01 - LoadModulesUpdates-Step
+2017-09-01 10:40:27 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:27 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:27 -  - loadFile
+2017-09-01 10:40:27 - U - RETURN
+2017-09-01 10:40:27 -  - exec CUpdateClient::UnGzipArchive
+2017-09-01 10:40:27 -  - TIME UnGzipArchive 0.533 sec
+2017-09-01 10:40:28 - CSURUS1 - Run updater '/bitrix/updates/update_m1504251627/main/updater17.0.14.php'
+2017-09-01 10:40:28 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504251627/main/updater17.0.14.php': CopyFiles(install/components, components)
+2017-09-01 10:40:28 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504251627/main/updater17.0.14.php': CopyFiles(install/js, js)
+2017-09-01 10:40:28 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504251627/main/updater17.0.14.php': CopyFiles(install/tools, tools)
+2017-09-01 10:40:28 -  - TIME UpdateStepModules 0.722 sec
+2017-09-01 10:40:28 - UPD_SUCCESS - Updated: main (17.0.14)<br><li>Изменения в механизме пользовательских полей. <li>Новый тип поля \"Ссылка\". <li>Новое представление для поля типа \"Список\". <li>Возможность задавать подписи для пользовательских полей типа \"Да/Нет\". 
+2017-09-01 10:40:28 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:28 -  - exec CUpdateClient::CollectRequestData
+2017-09-01 10:40:28 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.14&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=polimer-vrn.ru&CHHB=polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.14&bitm_webservice=17.0.0&bitm_lists=17.0.8&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.2&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.5&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.28&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=Y&SALE_15=Y
+2017-09-01 10:40:28 -  - exec CUpdateClient::GetHTTPPage
+2017-09-01 10:40:29 -  - TIME LoadModulesUpdates(request) 0.204 sec
+2017-09-01 10:40:29 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:29 - S - STEP
+2017-09-01 10:40:29 - LMU01 - LoadModulesUpdates-Step
+2017-09-01 10:40:29 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:29 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:29 -  - loadFile
+2017-09-01 10:40:29 - U - RETURN
+2017-09-01 10:40:29 -  - exec CUpdateClient::UnGzipArchive
+2017-09-01 10:40:29 -  - TIME UnGzipArchive 0.124 sec
+2017-09-01 10:40:29 - CSURUS1 - Run updater '/bitrix/updates/update_m1504251629/sale/updater17.0.29.php'
+2017-09-01 10:40:29 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504251629/sale/updater17.0.29.php': CopyFiles(install/components, components)
+2017-09-01 10:40:29 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504251629/sale/updater17.0.29.php': CopyFiles(install/js, js)
+2017-09-01 10:40:29 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504251629/sale/updater17.0.29.php': CopyFiles(install/tools, tools)
+2017-09-01 10:40:30 -  - TIME UpdateStepModules 0.457 sec
+2017-09-01 10:40:30 - UPD_SUCCESS - Updated: sale (17.0.29)<br><li>Добавлена поддержка OFD.RU. <li>Исправления ошибок и улучшения в компоненте sale.order.ajax. <li>Добавлены настройки для очистки устаревших записей истории изменения заказов. <li>Исправлен механизм работы с множественными свойcтвами в профиле покупателя. <li>Исправлен вывод нестандартных пользовательских свойств заказа на странице редактирования в административном разделе. <li>Восстановлена работа события OnSalePropertyValueEntitySaved. <li>Исправлена логика работы события OnSaleBeforeOrderDelete. <li>Исправлен ввод значения по умолчанию для свойства заказа при наличии регулярного выражения для проверки. <li>Исправлен пересчет стоимости доставки при удалении товара из заказа. <li>Исправлена ошибка переноса строки в письме созданного заказа. 
+2017-09-01 10:40:30 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:30 -  - exec CUpdateClient::CollectRequestData
+2017-09-01 10:40:30 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.14&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=polimer-vrn.ru&CHHB=polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.14&bitm_webservice=17.0.0&bitm_lists=17.0.8&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.2&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.5&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.29&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=Y&SALE_15=Y
+2017-09-01 10:40:30 -  - exec CUpdateClient::GetHTTPPage
+2017-09-01 10:40:30 -  - TIME LoadModulesUpdates(request) 0.158 sec
+2017-09-01 10:40:30 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:30 - S - STEP
+2017-09-01 10:40:30 - LMU01 - LoadModulesUpdates-Step
+2017-09-01 10:40:30 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:30 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:30 -  - loadFile
+2017-09-01 10:40:30 - U - RETURN
+2017-09-01 10:40:30 -  - exec CUpdateClient::UnGzipArchive
+2017-09-01 10:40:30 -  - TIME UnGzipArchive 0.035 sec
+2017-09-01 10:40:30 - CSURUS1 - Run updater '/bitrix/updates/update_m1504251630/sale/updater17.0.30.php'
+2017-09-01 10:40:30 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504251630/sale/updater17.0.30.php': CopyFiles(install/components, components)
+2017-09-01 10:40:30 -  - TIME UpdateStepModules 0.043 sec
+2017-09-01 10:40:30 - UPD_SUCCESS - Updated: sale (17.0.30)<br><li>Исправлена ошибка отображения свойств типа \"Перечисление [ENUM]\" в компоненте sale.order.ajax. <li>Исправлена ошибка, не позволяющая оформить заказ с нулевой стоимостью в компоненте sale.order.ajax. <li>Исправлена ошибка, из-за которой был недоступен выбор обработчика кассы при ее создании. <li>Исправлена ошибка, возникающая при проверке суммы чека.
+2017-09-01 10:40:31 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:31 -  - exec CUpdateClient::CollectRequestData
+2017-09-01 10:40:31 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.14&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=polimer-vrn.ru&CHHB=polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.14&bitm_webservice=17.0.0&bitm_lists=17.0.8&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.2&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.5&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.30&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=Y&SALE_15=Y
+2017-09-01 10:40:31 -  - exec CUpdateClient::GetHTTPPage
+2017-09-01 10:40:31 -  - TIME LoadModulesUpdates(request) 0.122 sec
+2017-09-01 10:40:31 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:31 - S - STEP
+2017-09-01 10:40:31 - LMU01 - LoadModulesUpdates-Step
+2017-09-01 10:40:31 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:31 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:31 -  - loadFile
+2017-09-01 10:40:31 - U - RETURN
+2017-09-01 10:40:31 -  - exec CUpdateClient::UnGzipArchive
+2017-09-01 10:40:31 -  - TIME UnGzipArchive 0.001 sec
+2017-09-01 10:40:31 - CSURUS1 - Run updater '/bitrix/updates/update_m1504251631/lists/updater17.0.9.php'
+2017-09-01 10:40:31 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504251631/lists/updater17.0.9.php': CopyFiles(install/components, components)
+2017-09-01 10:40:31 -  - TIME UpdateStepModules 0.005 sec
+2017-09-01 10:40:31 - UPD_SUCCESS - Updated: lists (17.0.9)<br><li>Исправлена работа фильтра по свойствам типа \"Список\" при экспорте в \"Excel\".
+2017-09-01 10:40:31 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:31 -  - exec CUpdateClient::CollectRequestData
+2017-09-01 10:40:31 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.14&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=polimer-vrn.ru&CHHB=polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.14&bitm_webservice=17.0.0&bitm_lists=17.0.9&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.2&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.5&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.30&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=Y&SALE_15=Y
+2017-09-01 10:40:31 -  - exec CUpdateClient::GetHTTPPage
+2017-09-01 10:40:31 -  - TIME LoadModulesUpdates(request) 0.131 sec
+2017-09-01 10:40:31 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:31 - S - STEP
+2017-09-01 10:40:31 - LMU01 - LoadModulesUpdates-Step
+2017-09-01 10:40:32 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:32 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:32 -  - loadFile
+2017-09-01 10:40:32 - U - RETURN
+2017-09-01 10:40:32 -  - exec CUpdateClient::UnGzipArchive
+2017-09-01 10:40:32 -  - TIME UnGzipArchive 0.077 sec
+2017-09-01 10:40:32 - CSURUS1 - Run updater '/bitrix/updates/update_m1504251632/im/updater17.1.6.php'
+2017-09-01 10:40:32 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504251632/im/updater17.1.6.php': CopyFiles(install/js, js)
+2017-09-01 10:40:32 -  - TIME UpdateStepModules 0.064 sec
+2017-09-01 10:40:32 - UPD_SUCCESS - Updated: im (17.1.6)<br><li>Исправлена ошибка, приводившая к задваиванию гудков во время звонка.
+2017-09-01 10:40:32 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:32 -  - exec CUpdateClient::CollectRequestData
+2017-09-01 10:40:32 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.14&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=polimer-vrn.ru&CHHB=polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.14&bitm_webservice=17.0.0&bitm_lists=17.0.9&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.2&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.6&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.30&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=Y&SALE_15=Y
+2017-09-01 10:40:32 -  - exec CUpdateClient::GetHTTPPage
+2017-09-01 10:40:32 -  - TIME LoadModulesUpdates(request) 0.197 sec
+2017-09-01 10:40:32 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:32 - S - STEP
+2017-09-01 10:40:32 - LMU01 - LoadModulesUpdates-Step
+2017-09-01 10:40:32 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:32 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:32 -  - loadFile
+2017-09-01 10:40:33 - U - RETURN
+2017-09-01 10:40:33 -  - exec CUpdateClient::UnGzipArchive
+2017-09-01 10:40:33 -  - TIME UnGzipArchive 0.022 sec
+2017-09-01 10:40:33 - CSURUS1 - Run updater '/bitrix/updates/update_m1504251633/sender/updater17.1.3.php'
+2017-09-01 10:40:33 - CRUPDCF1 - Run updater '/bitrix/updates/update_m1504251633/sender/updater17.1.3.php': CopyFiles(install/js, js)
+2017-09-01 10:40:33 -  - TIME UpdateStepModules 0.022 sec
+2017-09-01 10:40:33 - UPD_SUCCESS - Updated: sender (17.1.3)<br><li>Исправлена ошибка вывода кода компонента на странице статистики. <li>Исправлена ошибка изменения способа отправки рассылки с ручного на периодическую. <li>Исправлена ошибка работоспособности блочного редактора при добавлении собственных кнопок в панель визуального редактора. <li>Добавлена подсказка о деактивированной рассылке в статусе выпуска.
+2017-09-01 10:40:33 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:33 -  - exec CUpdateClient::CollectRequestData
+2017-09-01 10:40:33 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.14&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=polimer-vrn.ru&CHHB=polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.14&bitm_webservice=17.0.0&bitm_lists=17.0.9&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.0.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.3&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.6&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.30&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=Y&SALE_15=Y
+2017-09-01 10:40:33 -  - exec CUpdateClient::GetHTTPPage
+2017-09-01 10:40:33 -  - TIME LoadModulesUpdates(request) 0.159 sec
+2017-09-01 10:40:33 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:33 - S - STEP
+2017-09-01 10:40:33 - LMU01 - LoadModulesUpdates-Step
+2017-09-01 10:40:33 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:33 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:33 -  - loadFile
+2017-09-01 10:40:33 - U - RETURN
+2017-09-01 10:40:33 -  - exec CUpdateClient::UnGzipArchive
+2017-09-01 10:40:33 -  - TIME UnGzipArchive 0.002 sec
+2017-09-01 10:40:33 -  - TIME UpdateStepModules 0.002 sec
+2017-09-01 10:40:33 - UPD_SUCCESS - Updated: abtest (17.5.0)<br><li>Исправления ошибок.
+2017-09-01 10:40:33 -  - exec CUpdateClient::LoadModulesUpdates
+2017-09-01 10:40:33 -  - exec CUpdateClient::CollectRequestData
+2017-09-01 10:40:33 -  - LICENSE_KEY=X&lang=ru&SUPD_VER=17.0.7&VERSION=17.0.14&TYPENC=E&SUPD_STS=1&SUPD_URS=0&SUPD_DBS=MYSQL&XE=N&CLIENT_SITE=polimer-vrn.ru&CHHB=polimer-vrn.ru&CSAB=178.62.194.244&SUID=89b337c10fc6c3868cbceac0361505fc&CANGZIP=Y&CLIENT_PHPVER=5.4.42&stable=Y&NGINX=Y&rerere=Y&bitm_main=17.0.14&bitm_webservice=17.0.0&bitm_lists=17.0.9&bitm_storeassist=16.0.1&bitm_subscribe=17.0.0&bitm_eshopapp=16.5.0&bitm_form=17.0.1&bitm_wiki=16.0.3&bitm_abtest=17.5.0&bitm_socialnetwork=17.5.7&bitm_blog=17.5.4&bitm_scale=17.0.0&bitm_fileman=17.5.0&bitm_perfmon=17.0.0&bitm_support=16.0.0&bitm_vote=17.5.0&bitm_clouds=17.0.0&bitm_workflow=17.0.0&bitm_mail=17.5.0&bitm_currency=17.0.4&bitm_cluster=17.0.0&bitm_ldap=17.0.0&bitm_search=17.0.1&bitm_catalog=17.0.10&bitm_advertising=17.0.0&bitm_forum=17.5.1&bitm_statistic=17.0.0&bitm_compression=16.0.0&bitm_mobileapp=17.0.1&bitm_socialservices=17.1.5&bitm_translate=15.5.0&bitm_sender=17.1.3&bitm_idea=17.5.0&bitm_pull=17.1.0&bitm_report=16.5.1&bitm_conversion=17.5.0&bitm_bizproc=17.5.3&bitm_bizprocdesigner=17.5.0&bitm_iblock=17.0.10&bitm_security=17.0.1&bitm_learning=17.5.0&bitm_photogallery=17.0.2&bitm_im=17.1.6&bitm_b24connector=17.0.1&bitm_calendar=17.5.2&bitm_sale=17.0.30&bitm_highloadblock=17.0.2&bitm_seo=17.0.7&bitm_bitrixcloud=17.0.0&bitl_en=&bitl_ru=&SUPD_SRS=0&SUPD_CMP=Y&SALE_15=Y
+2017-09-01 10:40:33 -  - exec CUpdateClient::GetHTTPPage
+2017-09-01 10:40:34 -  - TIME LoadModulesUpdates(request) 0.184 sec
+2017-09-01 10:40:34 -  - exec CUpdateClient::ParseServerData
+2017-09-01 10:40:34 - STEP - Finish - NOUPDATES
+2017-09-01 10:40:34 - STEP - Finish - NOUPDATES
+2017-09-01 16:37:38 - CRUPDCDF2 - Run updater '/bitrix/updates/update_m1504273058/asd.tplvars/updater1.5.0.php': Query(create table if not exists b_asd_option_descr
+(
+	ID INT not null auto_increment,
+	NAME VARCHAR(50) not null,
+	DESCRIPTION VARCHAR(255),
+	SITE_ID CHAR(2),
+	PRIMARY KEY (ID),
+	INDEX ASD_OPTION_NAME (NAME),
+	INDEX ASD_OPTION_SITE (SITE_ID)
+);, )

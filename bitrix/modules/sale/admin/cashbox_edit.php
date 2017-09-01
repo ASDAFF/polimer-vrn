@@ -40,10 +40,10 @@ if ($server->getRequestMethod() == "POST"
 		'NUMBER_KKM' => $request->getPost('NUMBER_KKM'),
 		'KKM_ID' => $request->get('KKM_ID'),
 		'ACTIVE' => ($request->get('ACTIVE') == 'Y') ? 'Y' : 'N',
-		'OFD_TEST_MODE' => ($request->get('OFD_TEST_MODE') == 'Y') ? 'Y' : 'N',
 		'USE_OFFLINE' => ($request->get('USE_OFFLINE') == 'Y') ? 'Y' : 'N',
 		'SORT' => $request->getPost('SORT') ?: 100,
 		'SETTINGS' => $request->getPost('SETTINGS') ?: array(),
+		'OFD_SETTINGS' => $request->getPost('OFD_SETTINGS') ?: array(),
 	);
 
 	if ($cashbox['HANDLER'] === '\Bitrix\Sale\Cashbox\CashboxBitrix')
@@ -73,12 +73,37 @@ if ($server->getRequestMethod() == "POST"
 	}
 	else
 	{
-		$result = $handler::validateSettings($cashbox);
+		$handlerList = Cashbox\Cashbox::getHandlerList();
+		if (isset($handlerList[$cashbox['HANDLER']]))
+		{
+			$result = $handler::validateSettings($cashbox);
+			if (!$result->isSuccess())
+			{
+				foreach ($result->getErrors() as $error)
+					$errorMessage .= $error->getMessage()."<br>\n";
+			}
+		}
+		else
+		{
+			$errorMessage .= GetMessage('ERROR_NO_HANDLER_EXIST')."<br>\n";
+		}
+	}
+
+	/** @var Cashbox\Ofd $ofd */
+	$ofd = $cashbox['OFD'];
+	$ofdList = Cashbox\Ofd::getHandlerList();
+	if (class_exists($ofd) && isset($ofdList[$cashbox['OFD']]))
+	{
+		$result = $ofd::validateSettings($cashbox['OFD_SETTINGS']);
 		if (!$result->isSuccess())
 		{
 			foreach ($result->getErrors() as $error)
 				$errorMessage .= $error->getMessage()."<br>\n";
 		}
+	}
+	else
+	{
+		$errorMessage .= GetMessage('ERROR_NO_OFD_EXIST')."<br>\n";
 	}
 
 	if ($errorMessage === '')
@@ -150,6 +175,13 @@ $aTabs[] = array(
 	"ICON" => "sale",
 	"TITLE" => GetMessage("SALE_CASHBOX_TAB_TITLE_SETTINGS_DESC"),
 );
+
+$aTabs[] = array(
+	"DIV" => "edit4",
+	"TAB" => GetMessage("SALE_CASHBOX_TAB_TITLE_OFD_SETTINGS"),
+	"ICON" => "sale",
+	"TITLE" => GetMessage("SALE_CASHBOX_TAB_TITLE_OFD_SETTINGS_DESC"),
+);
 $tabControl = new CAdminForm("tabControl", $aTabs);
 
 $restrictionsHtml = '';
@@ -213,7 +245,7 @@ $tabControl->BeginCustomField('HANDLER', GetMessage("SALE_CASHBOX_HANDLER"));
 		<td width="60%" valign="top">
 			<?
 				$disabled = '';
-				if ($id == Cashbox\Cashbox1C::getId())
+				if (Cashbox\Cashbox1C::getId() > 0 && $id == Cashbox\Cashbox1C::getId())
 				{
 					$disabled = 'disabled';
 					echo '<input type="hidden" name="HANDLER" id="HANDLER" value="'.$cashbox['HANDLER'].'">';
@@ -248,7 +280,7 @@ $tabControl->BeginCustomField('OFD', GetMessage("SALE_CASHBOX_OFD"));
 	<tr>
 		<td width="40%"><?=Loc::getMessage("SALE_CASHBOX_OFD");?>:</td>
 		<td width="60%">
-			<select name="OFD" id="OFD">
+			<select name="OFD" id="OFD" onchange="BX.Sale.Cashbox.reloadOfdSettings()">
 				<?
 				$ofdList = Bitrix\Sale\Cashbox\Ofd::getHandlerList();
 				foreach ($ofdList as $handler => $name)
@@ -257,7 +289,7 @@ $tabControl->BeginCustomField('OFD', GetMessage("SALE_CASHBOX_OFD"));
 					echo '<option value="'.$handler.'" '.$selected.'>'.$name.'</option>';
 				}
 
-				$selected = ($cashbox['OFD'] === '') ? 'selected' : '';
+				$selected = ($cashbox['OFD'] == '') ? 'selected' : '';
 				?>
 				<option value="" <?=$selected;?>><?=Loc::getMessage("SALE_CASHBOX_OTHER_HANDLER");?></option>
 			</select>
@@ -266,9 +298,6 @@ $tabControl->BeginCustomField('OFD', GetMessage("SALE_CASHBOX_OFD"));
 
 <?
 $tabControl->EndCustomField('OFD', '');
-
-$ofdTestMode = isset($cashbox['OFD_TEST_MODE']) ? $cashbox['OFD_TEST_MODE'] : 'Y';
-$tabControl->AddCheckBoxField("OFD_TEST_MODE", GetMessage("SALE_CASHBOX_OFD_TEST_MODE").':', false, 'Y', $ofdTestMode === 'Y');
 
 $name = $request->get('NAME') ? $request->get('NAME') : $cashbox['NAME'];
 $tabControl->AddEditField('NAME', Loc::getMessage("SALE_CASHBOX_NAME").':', true, array('SIZE' => 40), $name);
@@ -286,7 +315,7 @@ $tabControl->BeginCustomField('KKM_ID', GetMessage("SALE_CASHBOX_KKM_ID"));
 					while ($kkm = $dbRes->fetch())
 					{
 						$selected = ($kkm['ID'] === $cashbox['KKM_ID']) ? 'selected' : '';
-						echo '<option value="'.$kkm['ID'].'" '.$selected.'>'.$kkm['NAME'].'</option>';
+						echo '<option value="'.$kkm['ID'].'" '.$selected.'>'.htmlspecialcharsbx($kkm['NAME']).'</option>';
 					}
 				?>
 			</select>
@@ -301,7 +330,7 @@ $tabControl->BeginCustomField('NUMBER_KKM', GetMessage("SALE_CASHBOX_EXTERNAL_UU
 	<tr>
 		<td width="40%"><?=Loc::getMessage("SALE_CASHBOX_EXTERNAL_UUID");?>:</td>
 		<td width="60%">
-			<input type="text" ID="NUMBER_KKM" name="NUMBER_KKM" value="<?=$numberKkm;?>">
+			<input type="text" ID="NUMBER_KKM" name="NUMBER_KKM" value="<?=htmlspecialcharsbx($numberKkm);?>">
 			<span id="hint_NUMBER_KKM"></span>
 
 		</td>
@@ -334,6 +363,17 @@ ob_end_clean();
 $tabControl->BeginCustomField('CASHBOX_SETTINGS', GetMessage("CASHBOX_SETTINGS"));?>
 	<tbody id="sale-cashbox-settings-container"><?=$cashboxSettings?></tbody>
 <?$tabControl->EndCustomField('CASHBOX_SETTINGS');
+
+$tabControl->BeginNextFormTab();
+
+ob_start();
+require_once($documentRoot."/bitrix/modules/sale/admin/cashbox_ofd_settings.php");
+$cashboxOfdSettings = ob_get_contents();
+ob_end_clean();
+
+$tabControl->BeginCustomField('OFD_SETTINGS', GetMessage("CASHBOX_OFD_SETTINGS"));?>
+	<tbody id="sale-cashbox-ofd-settings-container"><?=$cashboxOfdSettings?></tbody>
+<?$tabControl->EndCustomField('OFD_SETTINGS');
 
 $tabControl->Buttons(
 	array(

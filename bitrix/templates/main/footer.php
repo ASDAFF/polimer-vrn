@@ -98,6 +98,67 @@
 				</script>
 				<!— {/literal} END JIVOSITE CODE —>
 
+<!-- Yandex.Metrika counter Prime -->
+<script type="text/javascript" >
+    (function (d, w, c) {
+        (w[c] = w[c] || []).push(function() {
+            try {
+                w.yaCounter29722775 = new Ya.Metrika({
+                    id:29722775,
+                    clickmap:true,
+                    trackLinks:true,
+                    accurateTrackBounce:true,
+                    webvisor:true
+                });
+            } catch(e) { }
+        });
+
+        var n = d.getElementsByTagName("script")[0],
+            s = d.createElement("script"),
+            f = function () { n.parentNode.insertBefore(s, n); };
+        s.type = "text/javascript";
+        s.async = true;
+        s.src = "https://mc.yandex.ru/metrika/watch.js";
+
+        if (w.opera == "[object Opera]") {
+            d.addEventListener("DOMContentLoaded", f, false);
+        } else { f(); }
+    })(document, window, "yandex_metrika_callbacks");
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/29722775" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+
+<!-- Yandex.Metrika counter Веброст -->
+<script type="text/javascript" >
+    (function (d, w, c) {
+        (w[c] = w[c] || []).push(function() {
+            try {
+                w.yaCounter45640992 = new Ya.Metrika({
+                    id:45640992,
+                    clickmap:true,
+                    trackLinks:true,
+                    accurateTrackBounce:true,
+                    webvisor:true,
+                    ecommerce:"dataLayer"
+                });
+            } catch(e) { }
+        });
+
+        var n = d.getElementsByTagName("script")[0],
+            s = d.createElement("script"),
+            f = function () { n.parentNode.insertBefore(s, n); };
+        s.type = "text/javascript";
+        s.async = true;
+        s.src = "https://mc.yandex.ru/metrika/watch.js";
+
+        if (w.opera == "[object Opera]") {
+            d.addEventListener("DOMContentLoaded", f, false);
+        } else { f(); }
+    })(document, window, "yandex_metrika_callbacks");
+</script>
+<noscript><div><img src="https://mc.yandex.ru/watch/45640992" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+<!-- /Yandex.Metrika counter -->
+
 
 			<?$APPLICATION->IncludeComponent(
 				"nbrains:main.feedback",
@@ -121,62 +182,76 @@
 				false
 			);?>
 
-			<?$APPLICATION->IncludeComponent("nbrains:main.feedback", "write-mail", Array(
-				"EMAIL_TO" => "sale@polimer-vrn",	// E-mail, на который будет отправлено письмо
-				"EVENT_MESSAGE_ID" => array(	// Почтовые шаблоны для отправки письма
-					0 => "88",
-				),
-				"IBLOCK_ID" => "14",	// Код информационного блока
-				"IBLOCK_TYPE" => "feedback",	// Тип информационного блока (используется только для проверки)
-				"OK_TEXT" => "Спасибо, ваше сообщение принято.",	// Сообщение, выводимое пользователю после отправки
-				"PROPERTY_CODE" => array(	// Поля формы
-					0 => "FIO",
-					1 => "PHONE",
-					2 => "EMAIL",
-					3 => "DESC",
-					4 => "RULE",
-				),
-				"USE_CAPTCHA" => "N",	// Использовать защиту от автоматических сообщений (CAPTCHA) для неавторизованных пользователей
-			),
-				false
-			);?>
+			<?$APPLICATION->IncludeComponent(
+	"nbrains:main.feedback", 
+	"write-mail", 
+	array(
+		"EMAIL_TO" => "sale@polimer-vrn",
+		"EVENT_MESSAGE_ID" => array(
+			0 => "92",
+		),
+		"IBLOCK_ID" => "14",
+		"IBLOCK_TYPE" => "feedback",
+		"OK_TEXT" => "Спасибо, ваше сообщение принято.",
+		"PROPERTY_CODE" => array(
+			0 => "FIO",
+			1 => "PHONE",
+			2 => "EMAIL",
+			3 => "DESC",
+			4 => "RULE",
+		),
+		"USE_CAPTCHA" => "N",
+		"COMPONENT_TEMPLATE" => "write-mail"
+	),
+	false
+);?>
 
 
-				<?$APPLICATION->IncludeComponent("nbrains:main.feedback", "buy-one-click", Array(
-					"EMAIL_TO" => "sale@polimer-vrn",	// E-mail, на который будет отправлено письмо
-					"EVENT_MESSAGE_ID" => array(	// Почтовые шаблоны для отправки письма
-						0 => "88",
-					),
-					"IBLOCK_ID" => "15",	// Код информационного блока
-					"IBLOCK_TYPE" => "feedback",	// Тип информационного блока (используется только для проверки)
-					"OK_TEXT" => "Спасибо, ваше сообщение принято.",	// Сообщение, выводимое пользователю после отправки
-					"PROPERTY_CODE" => array(	// Поля формы
-						0 => "FIO",
-						1 => "PHONE",
-						2 => "EMAIL",
-						3 => "RULE",
-					),
-					"USE_CAPTCHA" => "N",	// Использовать защиту от автоматических сообщений (CAPTCHA) для неавторизованных пользователей
-				),
-					false
-				);?>
+				<?$APPLICATION->IncludeComponent(
+	"nbrains:main.feedback", 
+	"buy-one-click", 
+	array(
+		"EMAIL_TO" => "sale@polimer-vrn",
+		"EVENT_MESSAGE_ID" => array(
+			0 => "90",
+		),
+		"IBLOCK_ID" => "15",
+		"IBLOCK_TYPE" => "feedback",
+		"OK_TEXT" => "Спасибо, ваше сообщение принято.",
+		"PROPERTY_CODE" => array(
+			0 => "FIO",
+			1 => "PHONE",
+			2 => "EMAIL",
+			3 => "RULE",
+		),
+		"USE_CAPTCHA" => "N",
+		"COMPONENT_TEMPLATE" => "buy-one-click"
+	),
+	false
+);?>
 
-				<?$APPLICATION->IncludeComponent("nbrains:main.feedback", "free-consultant", Array(
-					"EMAIL_TO" => "sale@polimer-vrn",	// E-mail, на который будет отправлено письмо
-					"EVENT_MESSAGE_ID" => "",	// Почтовые шаблоны для отправки письма
-					"IBLOCK_ID" => "16",	// Код информационного блока
-					"IBLOCK_TYPE" => "feedback",	// Тип информационного блока (используется только для проверки)
-					"OK_TEXT" => "Спасибо, ваше сообщение принято.",	// Сообщение, выводимое пользователю после отправки
-					"PROPERTY_CODE" => array(	// Поля формы
-						0 => "FIO",
-						1 => "PHONE",
-						2 => "EMAIL",
-						3 => "RULE",
-					),
-					"USE_CAPTCHA" => "N",	// Использовать защиту от автоматических сообщений (CAPTCHA) для неавторизованных пользователей
-				),
-					false
-				);?>
+				<?$APPLICATION->IncludeComponent(
+	"nbrains:main.feedback", 
+	"free-consultant", 
+	array(
+		"EMAIL_TO" => "sale@polimer-vrn",
+		"EVENT_MESSAGE_ID" => array(
+			0 => "91",
+		),
+		"IBLOCK_ID" => "16",
+		"IBLOCK_TYPE" => "feedback",
+		"OK_TEXT" => "Спасибо, ваше сообщение принято.",
+		"PROPERTY_CODE" => array(
+			0 => "FIO",
+			1 => "PHONE",
+			2 => "EMAIL",
+			3 => "RULE",
+		),
+		"USE_CAPTCHA" => "N",
+		"COMPONENT_TEMPLATE" => "free-consultant"
+	),
+	false
+);?>
 
 
 	</body>

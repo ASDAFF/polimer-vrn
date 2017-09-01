@@ -23,6 +23,9 @@ ErrorDocument 404 /404.php
   Redirect 301 /articles/polypropylene-pipes/ /catalog/truby_i_fitingi/
   Redirect 301 /articles/disk-shutter/ /catalog/zatvor_povorotnyy_diskovyy_tecofi_frantsiya/
 
+# от 31.08.2017
+  Redirect 301 /catalog/inzhenernaya_santekhnika_otoplenie_vodoprovod_kanalizatsiya/ /catalog/inzhenernaya_santekhnika/
+  Redirect 301 /catalog/stroitelnye_materialy/ /catalog/stroitelno_otdelochnye_materialy/
 
 <IfModule mod_rewrite.c>
   Options +FollowSymLinks

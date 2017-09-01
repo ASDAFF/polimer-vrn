@@ -2957,7 +2957,13 @@ window.MPFMentionInit = function(formId, params)
 					sender.blockFocus = true;
 				}
 			});
-			BX.SocNetLogDestination.selectItem(window.BXSocNetLogDestinationFormName, null, null, item.id, 'users', false);
+			if (
+				typeof (BX.SocNetLogDestination.obItemsSelected[window.BXSocNetLogDestinationFormName][item.id]) == 'undefined'
+				|| !BX.SocNetLogDestination.obItemsSelected[window.BXSocNetLogDestinationFormName][item.id]
+			)
+			{
+				BX.SocNetLogDestination.selectItem(window.BXSocNetLogDestinationFormName, null, null, item.id, 'users', false);
+			}
 		});
 
 		if (params["itemsHidden"])

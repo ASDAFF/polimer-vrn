@@ -20071,8 +20071,7 @@ BX.IM.WebRTC.prototype.phoneApiInit = function()
 		useRTCOnly: true,
 		micRequired: true,
 		videoSupport: false,
-		progressTone: true,
-		progressToneCountry: progressToneCountry
+		progressTone: false
 	};
 
 	if(this.debug)

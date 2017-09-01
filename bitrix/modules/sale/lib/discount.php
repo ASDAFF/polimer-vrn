@@ -837,6 +837,8 @@ class Discount
 
 		if ($this->isUsedDiscountCompatibility())
 		{
+			if (Compatible\DiscountCompatibility::isRepeatSave())
+				return $result;
 			$compatibleResult = Compatible\DiscountCompatibility::getResult();
 			if ($compatibleResult === false)
 				return $result;
@@ -2042,7 +2044,7 @@ class Discount
 
 		$deleteList = array();
 		$rulesIterator = Internals\OrderRulesTable::getList(array(
-			'select' => array('ID', 'ORDER_ID'),
+			'select' => array('ID'),
 			'filter' => array('=ORDER_ID' => $orderId)
 		));
 		while ($rule = $rulesIterator->fetch())
@@ -2051,8 +2053,20 @@ class Discount
 			$deleteList[$rule['ID']] = $rule['ID'];
 		}
 		unset($rule, $rulesIterator);
-		$rulesList = array();
 
+		$deleteRoundList = array();
+		$iterator = Internals\OrderRoundTable::getList(array(
+			'select' => array('ID'),
+			'filter' => array('=ORDER_ID' => $orderId)
+		));
+		while ($row = $iterator->fetch())
+		{
+			$row['ID'] = (int)$row['ID'];
+			$deleteRoundList[$row['ID']] = $row['ID'];
+		}
+		unset($row, $iterator);
+
+		$rulesList = array();
 		foreach ($this->discountResult['APPLY_BLOCKS'] as $counter => $applyBlock)
 		{
 			if ($counter == $this->discountResultCounter)
@@ -2163,6 +2177,16 @@ class Discount
 				}
 				unset($discount);
 			}
+
+			if (!empty($applyBlock['BASKET_ROUND']))
+			{
+				foreach ($applyBlock['BASKET_ROUND'] as $row)
+				{
+					if (isset($deleteRoundList[$row['RULE_ID']]))
+						unset($deleteRoundList[$row['RULE_ID']]);
+				}
+				unset($row);
+			}
 		}
 
 		if ($process && !empty($rulesList))
@@ -2219,22 +2243,33 @@ class Discount
 			unset($ruleRow);
 		}
 
-		if ($process && !empty($deleteList))
+		if ($process && (!empty($deleteList) || !empty($deleteRoundList)))
 		{
 			$conn = Main\Application::getConnection();
 			$helper = $conn->getSqlHelper();
-			$ruleRows = array_chunk($deleteList, 500);
-			$mainQuery = 'delete from '.$helper->quote(Internals\OrderRulesTable::getTableName()).' where '.$helper->quote('ID');
-			$descrQuery = 'delete from '.$helper->quote(Internals\OrderRulesDescrTable::getTableName()).' where '.$helper->quote('RULE_ID');
-			foreach ($ruleRows as $row)
+			if (!empty($deleteList))
 			{
-				$conn->queryExecute($mainQuery.' in ('.implode(', ', $row).')');
-				$conn->queryExecute($descrQuery.' in ('.implode(', ', $row).')');
+				$mainQuery = 'delete from '.$helper->quote(Internals\OrderRulesTable::getTableName()).' where '.$helper->quote('ID');
+				$descrQuery = 'delete from '.$helper->quote(Internals\OrderRulesDescrTable::getTableName()).' where '.$helper->quote('RULE_ID');
+				foreach (array_chunk($deleteList, 500) as $row)
+				{
+					$conn->queryExecute($mainQuery.' in ('.implode(', ', $row).')');
+					$conn->queryExecute($descrQuery.' in ('.implode(', ', $row).')');
+				}
+				unset($row, $descrQuery, $mainQuery);
 			}
-			unset($row, $descrQuery, $mainQuery, $ruleRows);
+			if (!empty($deleteRoundList))
+			{
+				$query = 'delete from '.$helper->quote(Internals\OrderRoundTable::getTableName()).' where '.$helper->quote('ID');
+				foreach (array_chunk($deleteRoundList, 500) as $row)
+				{
+					$conn->queryExecute($query.' in ('.implode(', ', $row).')');
+				}
+				unset($row, $query);
+			}
 			unset($helper, $conn);
 		}
-		unset($deleteList);
+		unset($deleteRoundList, $deleteList);
 
 		if ($process)
 		{
@@ -2650,6 +2685,10 @@ class Discount
 			if (!is_callable($checkOrder))
 				return false;
 			$result = $checkOrder($this->orderData);
+			if (isset($this->currentStep['cacheIndex']))
+			{
+				$this->saleDiscountCache[$this->saleDiscountCacheKey][$this->currentStep['cacheIndex']][$executeKey] = $checkOrder;
+			}
 			unset($checkOrder);
 		}
 		else
@@ -2657,6 +2696,7 @@ class Discount
 			if (!is_callable($this->currentStep['discount'][$executeKey]))
 				return false;
 			$result = $this->currentStep['discount'][$executeKey]($this->orderData);
+			unset($this->currentStep['discount'][$executeKey]);
 		}
 		return $result;
 	}
@@ -2688,12 +2728,15 @@ class Discount
 				));
 			}
 		}
+
 		if (!empty($discount['APPLICATION']))
 		{
+			$updateApplicationExecute = false;
 			if (!array_key_exists('APPLICATION_EXECUTE', $discount))
 			{
 				$discount['APPLICATION_EXECUTE'] = null;
 				eval('$discount["APPLICATION_EXECUTE"]='.$discount['APPLICATION'].';');
+				$updateApplicationExecute = true;
 			}
 			if (is_callable($discount['APPLICATION_EXECUTE']))
 			{
@@ -2714,6 +2757,10 @@ class Discount
 				{
 					case self::USE_MODE_COUPONS:
 					case self::USE_MODE_FULL:
+						if ($updateApplicationExecute && !isset($this->currentStep['discountIndex']))
+						{
+							$this->saleDiscountCache[$this->saleDiscountCacheKey][$this->currentStep['cacheIndex']][$executeKey] = $discount['APPLICATION_EXECUTE'];
+						}
 						$actionsResult = $this->calculateFullSaleDiscountResult();
 						break;
 					case self::USE_MODE_APPLY:
@@ -2732,6 +2779,7 @@ class Discount
 		}
 		unset($discount);
 		Discount\Actions::clearAction();
+
 		return $result;
 	}
 
@@ -3969,8 +4017,8 @@ class Discount
 	/**
 	 * Fill additional discount data.
 	 *
-	 * @param $orderDiscountId int Converted discount id.
-	 * @param array $data Discount data.
+	 * @param int $orderDiscountId	Converted discount id.
+	 * @param array $data Discount	data.
 	 *
 	 * @return void
 	 */
@@ -4126,55 +4174,31 @@ class Discount
 	 */
 	protected function getApplyPrices()
 	{
-		$customPrice = isset($this->orderData['CUSTOM_PRICE_DELIVERY']) && $this->orderData['CUSTOM_PRICE_DELIVERY'] == 'Y';
-		/** @noinspection PhpInternalEntityUsedInspection */
-		$delivery = array(
-			'BASE_PRICE' => $this->orderData['BASE_PRICE_DELIVERY'],
-			'PRICE' => $this->orderData['PRICE_DELIVERY'],
-			'DISCOUNT' => (
-				!$customPrice
-				? PriceMaths::roundPrecision($this->orderData['PRICE_DELIVERY_DIFF'])
-				: 0
-			)
-		);
-		if (!$customPrice)
-		{
-			if ($delivery['DISCOUNT'] > 0)
-				$delivery['PRICE'] = $delivery['BASE_PRICE'] - $delivery['DISCOUNT'];
-			else
-				$delivery['PRICE'] = PriceMaths::roundPrecision($delivery['PRICE']);
-		}
-		unset($customPrice);
+		$this->normalizeDiscountResult();
 
 		$basket = array();
 		if (!empty($this->orderData['BASKET_ITEMS']))
 		{
 			foreach ($this->orderData['BASKET_ITEMS'] as $basketCode => $basketItem)
 			{
-				$customPrice = $this->isCustomPrice($basketItem);
 				$basket[$basketCode] = array(
 					'BASE_PRICE' => $basketItem['BASE_PRICE'],
 					'PRICE' => $basketItem['PRICE'],
-					'DISCOUNT' => (!$customPrice ? PriceMaths::roundPrecision($basketItem['DISCOUNT_PRICE']) : 0)
+					'DISCOUNT' => $basketItem['DISCOUNT_PRICE']
 				);
-				if (!$customPrice)
-				{
-					if ($basket[$basketCode]['DISCOUNT'] > 0)
-						$basket[$basketCode]['PRICE'] = $basket[$basketCode]['BASE_PRICE'] - $basket[$basketCode]['DISCOUNT'];
-					else
-						$basket[$basketCode]['PRICE'] = PriceMaths::roundPrecision($basket[$basketCode]['PRICE']);
-				}
-				unset($customPrice);
 			}
 			unset($basketCode, $basketItem);
 		}
 
 		$this->discountResult['PRICES'] = array(
 			'BASKET' => $basket,
-			'DELIVERY' => $delivery
+			'DELIVERY' => array(
+				'BASE_PRICE' => $this->orderData['BASE_PRICE_DELIVERY'],
+				'PRICE' => $this->orderData['PRICE_DELIVERY'],
+				'DISCOUNT' => $this->orderData['PRICE_DELIVERY_DIFF']
+			)
 		);
-
-		unset($basket, $delivery);
+		unset($basket);
 	}
 
 	/**
@@ -4353,10 +4377,9 @@ class Discount
 	 */
 	protected function isCustomPriceByCode($code)
 	{
-		$result = false;
 		if (!empty($this->orderData['BASKET_ITEMS'][$code]['CUSTOM_PRICE']) && $this->orderData['BASKET_ITEMS'][$code]['CUSTOM_PRICE'] == 'Y')
-			$result = true;
-		return $result;
+			return true;
+		return false;
 	}
 
 	/**
@@ -4367,10 +4390,9 @@ class Discount
 	 */
 	protected static function isCustomPrice($item)
 	{
-		$result = false;
 		if (!empty($item['CUSTOM_PRICE']) && $item['CUSTOM_PRICE'] == 'Y')
-			$result = true;
-		return $result;
+			return true;
+		return false;
 	}
 
 	/**
@@ -4381,10 +4403,9 @@ class Discount
 	 */
 	protected function isInSetByCode($code)
 	{
-		$result = false;
 		if (!empty($this->orderData['BASKET_ITEMS'][$code]['IN_SET']) && $this->orderData['BASKET_ITEMS'][$code]['IN_SET'] == 'Y')
-			$result = true;
-		return $result;
+			return true;
+		return false;
 	}
 
 	/**
@@ -4395,10 +4416,9 @@ class Discount
 	 */
 	protected static function isInSet($item)
 	{
-		$result = false;
 		if (!empty($item['IN_SET']) && $item['IN_SET'] == 'Y')
-			$result = true;
-		return $result;
+			return true;
+		return false;
 	}
 
 	/**
@@ -4527,16 +4547,23 @@ class Discount
 			case self::USE_MODE_COUPONS:
 				foreach ($this->orderData['BASKET_ITEMS'] as $code => $item)
 				{
-					if (!$this->isCustomPrice($item) && !$this->isInSet($item))
-						$result[] = $code;
+					if ($this->isCustomPrice($item) || $this->isInSet($item))
+						continue;
+					$result[] = $code;
 				}
 				unset($code, $item);
 				break;
 			case self::USE_MODE_APPLY:
 				foreach ($this->orderData['BASKET_ITEMS'] as $code => $item)
 				{
-					if (!$this->isNewBasketItem($item) && !$this->isBasketItemChanged($code) && !$this->isInSet($item))
-						$result[] = $code;
+					if (
+						$this->isCustomPrice($item)
+						|| $this->isNewBasketItem($item)
+						|| $this->isBasketItemChanged($code)
+						|| $this->isInSet($item)
+					)
+						continue;
+					$result[] = $code;
 				}
 				unset($code, $item);
 				break;
@@ -4546,7 +4573,11 @@ class Discount
 				{
 					foreach ($this->orderData['BASKET_ITEMS'] as $code => $item)
 					{
-						if (!$this->isCustomPrice($item) && !$this->isInSet($item) && ($this->isNewBasketItem($item) || $this->isBasketItemChanged($code)))
+						if (
+							!$this->isCustomPrice($item)
+							&& !$this->isInSet($item)
+							&& ($this->isNewBasketItem($item) || $this->isBasketItemChanged($code))
+						)
 							$result[] = $code;
 					}
 					unset($code, $item);
@@ -4555,8 +4586,14 @@ class Discount
 				{
 					foreach ($this->orderData['BASKET_ITEMS'] as $code => $item)
 					{
-						if (!$this->isNewBasketItem($item) && !$this->isBasketItemChanged($code) && !$this->isInSet($item))
-							$result[] = $code;
+						if (
+							$this->isCustomPrice($item)
+							|| $this->isNewBasketItem($item)
+							|| $this->isBasketItemChanged($code)
+							|| $this->isInSet($item)
+						)
+							continue;
+						$result[] = $code;
 					}
 					unset($code, $item);
 				}
@@ -4622,6 +4659,7 @@ class Discount
 	 */
 	protected function fillDiscountResult()
 	{
+		$this->normalizeDiscountResult();
 		$orderKeys = array('PRICE_DELIVERY', 'PRICE_DELIVERY_DIFF', 'CURRENCY');
 		$basketKeys = array('PRICE', 'DISCOUNT_PRICE', 'VAT_RATE', 'VAT_VALUE', 'CURRENCY');
 		$result = array();
@@ -5001,19 +5039,6 @@ class Discount
 					{
 						$currentList[$index]['MODULES'] = $this->cacheDiscountModules[$code];
 					}
-/*					$currentList[$index]['UNPACK_EXECUTE'] = null;
-					eval('$currentList[$index]["UNPACK_EXECUTE"]='.$discount['UNPACK'].';');
-					$currentList[$index]['APPLICATION_EXECUTE'] = null;
-					eval('$currentList[$index]["APPLICATION_EXECUTE"]='.$discount['APPLICATION'].';');
-					if (!is_callable($currentList[$index]['UNPACK_EXECUTE']) || !is_callable($currentList[$index]['APPLICATION_EXECUTE']))
-						continue;
-					$currentList[$index]['PREDICTIONS_APP_EXECUTE'] = null;
-					if (!empty($discount['PREDICTIONS_APP']))
-					{
-						eval('$currentList[$index]["PREDICTIONS_APP_EXECUTE"]='.$discount['PREDICTIONS_APP'].';');
-						if (!is_callable($currentList[$index]['PREDICTIONS_APP_EXECUTE']))
-							$currentList[$index]['PREDICTIONS_APP_EXECUTE'] = null;
-					} */
 				}
 				unset($code, $discount, $index);
 			}
@@ -5068,7 +5093,7 @@ class Discount
 
 		$index = -1;
 		$skipPriorityLevel = null;
-		foreach ($currentList as $discount)
+		foreach ($currentList as $discountIndex => $discount)
 		{
 			if($skipPriorityLevel == $discount['PRIORITY'])
 			{
@@ -5076,7 +5101,10 @@ class Discount
 			}
 			$skipPriorityLevel = null;
 
-			$this->fillCurrentStep(array('discount' => $discount));
+			$this->fillCurrentStep(array(
+				'discount' => $discount,
+				'cacheIndex' => $discountIndex
+			));
 			if (!$this->checkDiscountConditions())
 				continue;
 
@@ -5544,6 +5572,52 @@ class Discount
 	}
 
 	/* instance tools */
+
+	/**
+	 * Round and correct discount calculation results.
+	 * @internal
+	 *
+	 * @return void
+	 */
+	protected function normalizeDiscountResult()
+	{
+		$customPrice = isset($this->orderData['CUSTOM_PRICE_DELIVERY']) && $this->orderData['CUSTOM_PRICE_DELIVERY'] == 'Y';
+		/** @noinspection PhpInternalEntityUsedInspection */
+		$this->orderData['PRICE_DELIVERY_DIFF'] = (!$customPrice
+			? PriceMaths::roundPrecision($this->orderData['PRICE_DELIVERY_DIFF'])
+			: 0
+		);
+		if (!$customPrice)
+		{
+			if ($this->orderData['PRICE_DELIVERY_DIFF'] > 0)
+				$this->orderData['PRICE_DELIVERY'] = $this->orderData['BASE_PRICE_DELIVERY'] - $this->orderData['PRICE_DELIVERY_DIFF'];
+			else
+				$this->orderData['PRICE_DELIVERY'] = PriceMaths::roundPrecision($this->orderData['PRICE_DELIVERY']);
+		}
+		unset($customPrice);
+
+		if (!empty($this->orderData['BASKET_ITEMS']))
+		{
+			foreach (array_keys($this->orderData['BASKET_ITEMS']) as $basketCode)
+			{
+				$customPrice = $this->isCustomPriceByCode($basketCode);
+				$basketItem = $this->orderData['BASKET_ITEMS'][$basketCode];
+				$basketItem['DISCOUNT_PRICE'] = (!$customPrice
+					? PriceMaths::roundPrecision($basketItem['DISCOUNT_PRICE'])
+					: 0
+				);
+				if (!$customPrice)
+				{
+					if ($basketItem['DISCOUNT_PRICE'] > 0)
+						$basketItem['PRICE'] = $basketItem['BASE_PRICE'] - $basketItem['DISCOUNT_PRICE'];
+					else
+						$basketItem['PRICE'] = PriceMaths::roundPrecision($basketItem['PRICE']);
+				}
+				$this->orderData['BASKET_ITEMS'][$basketCode] = $basketItem;
+			}
+			unset($basketItem, $customPrice, $basketCode);
+		}
+	}
 
 	/**
 	 * Return instance index for order.

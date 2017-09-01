@@ -256,9 +256,9 @@ if (($isItReloadingProcess || $isItSavingProcess) && $saleModulePermissions == "
  */
 if(empty($fields) && $ID <= 0)
 {
-	$fields["PARENT_ID"] = $_REQUEST["PARENT_ID"] ? $_REQUEST["PARENT_ID"] : 0;
-	$fields["PROFILE_ID"] = $_REQUEST["PROFILE_ID"] ? $_REQUEST["PROFILE_ID"] : "";
-	$fields["SERVICE_TYPE"] = $_REQUEST["SERVICE_TYPE"] ? $_REQUEST["SERVICE_TYPE"] : "";
+	$fields["PARENT_ID"] = $_REQUEST["PARENT_ID"] ? intval($_REQUEST["PARENT_ID"]) : 0;
+	$fields["PROFILE_ID"] = $_REQUEST["PROFILE_ID"] ? htmlspecialcharsbx($_REQUEST["PROFILE_ID"]) : "";
+	$fields["SERVICE_TYPE"] = $_REQUEST["SERVICE_TYPE"] ? htmlspecialcharsbx($_REQUEST["SERVICE_TYPE"]) : "";
 	$fields["CURRENCY"] = COption::GetOptionString("sale", "default_currency", "RUB");
 	$fields["RIGHTS"] = "YYY"; //Admin Manager Client
 	$fields["ACTIVE"] = "Y";
@@ -581,7 +581,7 @@ if($canHasProfiles)
 		{
 			$menu[] = array(
 				"TEXT" => $profileName,
-				"LINK" => "sale_delivery_service_edit.php?lang=".LANG."&PARENT_ID=".$ID."&PROFILE_ID=".$profileId."&back_url=".$backUrl,
+				"LINK" => "sale_delivery_service_edit.php?lang=".LANG."&PARENT_ID=".$ID."&PROFILE_ID=".htmlspecialcharsbx($profileId)."&back_url=".$backUrl,
 			);
 		}
 

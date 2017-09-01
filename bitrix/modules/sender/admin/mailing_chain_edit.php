@@ -113,7 +113,7 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && ($save!="" || $apply!="") && $POST_RI
 				$arMailingChainOld = \Bitrix\Sender\MailingChainTable::getRowById(array('ID' => $ID));
 				$arFields["AUTO_SEND_TIME"] = $arMailingChainOld["AUTO_SEND_TIME"];
 				if($arMailingChainOld['STATUS'] == \Bitrix\Sender\MailingChainTable::STATUS_NEW)
-					$arFields["STATUS"] = \Bitrix\Sender\MailingChainTable::STATUS_SEND;
+					$arFields["STATUS"] = \Bitrix\Sender\MailingChainTable::STATUS_WAIT;
 			}
 			break;
 		default:
@@ -616,6 +616,14 @@ $tabControl->BeginNextTab();
 								value="<?echo GetMessage("sender_chain_edit_btn_send_err")?>"
 								onclick="window.location='/bitrix/admin/sender_mailing_chain_admin.php?MAILING_ID=<?=$MAILING_ID?>&ID=<?=$ID?>&action=send_error&lang=<?=LANGUAGE_ID?>'"
 								title="<?echo GetMessage("sender_chain_edit_btn_send_err_desc")?>" />
+							<?
+						}
+						elseif($arMailing && $arMailing['ACTIVE'] == 'N')
+						{
+							?>
+							<span class="errortext">
+								<?=Loc::getMessage('sender_chain_edit_status_deactivated');?>
+							</span>
 							<?
 						}
 

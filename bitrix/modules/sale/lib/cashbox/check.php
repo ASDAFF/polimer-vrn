@@ -10,6 +10,7 @@ use Bitrix\Sale\Internals\CollectableEntity;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaymentCollection;
+use Bitrix\Sale\Result;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
 use Bitrix\Sale\PaySystem;
@@ -330,25 +331,29 @@ abstract class Check
 					$result['PRODUCTS'][] = $item;
 				}
 
-				$vatInfo = $this->getDeliveryVatInfo($entity);
-				$item = array(
-					'NAME' => Main\Localization\Loc::getMessage('SALE_CASHBOX_SELL_DELIVERY'),
-					'BASE_PRICE' => (float)$entity->getField('BASE_PRICE_DELIVERY'),
-					'PRICE' => (float)$entity->getPrice(),
-					'SUM' => (float)$entity->getPrice(),
-					'QUANTITY' => 1,
-					'VAT' => $vatInfo ? $vatInfo['ID'] : 0
-				);
-
-				if (!$entity->isCustomPrice() && (float)$entity->getField('DISCOUNT_PRICE') != 0)
+				$baseDeliveryPrice = (float)$entity->getField('BASE_PRICE_DELIVERY');
+				if ($baseDeliveryPrice > 0)
 				{
-					$item['DISCOUNT'] = array(
-						'PRICE' => $entity->getField('DISCOUNT_PRICE'),
-						'TYPE' => 'C',
+					$vatInfo = $this->getDeliveryVatInfo($entity);
+					$item = array(
+						'NAME' => Main\Localization\Loc::getMessage('SALE_CASHBOX_SELL_DELIVERY'),
+						'BASE_PRICE' => $baseDeliveryPrice,
+						'PRICE' => (float)$entity->getPrice(),
+						'SUM' => (float)$entity->getPrice(),
+						'QUANTITY' => 1,
+						'VAT' => $vatInfo ? $vatInfo['ID'] : 0
 					);
-				}
 
-				$result['DELIVERY'][] = $item;
+					if (!$entity->isCustomPrice() && (float)$entity->getField('DISCOUNT_PRICE') != 0)
+					{
+						$item['DISCOUNT'] = array(
+							'PRICE' => $entity->getField('DISCOUNT_PRICE'),
+							'TYPE' => 'C',
+						);
+					}
+
+					$result['DELIVERY'][] = $item;
+				}
 			}
 		}
 
@@ -436,5 +441,13 @@ abstract class Check
 		}
 
 		return $vatInfoList[$basketItem->getProductId()];
+	}
+
+	/**
+	 * @return Result
+	 */
+	public function validate()
+	{
+		return new Result();
 	}
 }

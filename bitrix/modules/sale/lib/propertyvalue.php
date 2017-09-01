@@ -15,6 +15,7 @@ use	Bitrix\Sale\Internals\Input,
 	Bitrix\Sale\Internals\OrderPropsValueTable,
 	Bitrix\Sale\Internals\OrderPropsVariantTable,
 	Bitrix\Main\Entity,
+	Bitrix\Main\Event,
 	Bitrix\Main\SystemException,
 	Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Internals\OrderPropsRelationTable;
@@ -203,6 +204,8 @@ class PropertyValue
 		$result = new Result();
 		$value = self::getValueForDB($this->fields->get('VALUE'));
 
+		$eventName = static::getEntityEventName();
+
 		if ($valueId = $this->getId())
 		{
 			if ($value != $this->savedValue)
@@ -237,6 +240,16 @@ class PropertyValue
 					$result->addErrors($r->getErrors());
 				}
 			}
+		}
+
+		if ($this->isChanged() && $eventName)
+		{
+			/** @var Event $event */
+			$event = new Event('sale', 'On'.$eventName.'EntitySaved', array(
+				'ENTITY' => $this,
+				'VALUES' => $this->fields->getOriginalValues(),
+			));
+			$event->send();
 		}
 
 		return $result;

@@ -557,12 +557,16 @@ function canShowDiscountInCatalog(array $discount)
 			return true;
 		}
 
-		foreach ($discount['ACTIONS_LIST']['CHILDREN'] as $childAction)
+		$actionConfiguration = \Bitrix\Sale\Discount\Actions::getActionConfiguration($discount);
+		if (!$actionConfiguration ||
+			$actionConfiguration['VALUE_TYPE'] === \Bitrix\Sale\Discount\Actions::VALUE_TYPE_SUMM)
 		{
-			if ($childAction['CLASS_ID'] === 'ActSaleBsktGrp' && $childAction['DATA']['Type'] === 'Extra')
-			{
-				return false;
-			}
+			return false;
+		}
+
+		if ($actionConfiguration['TYPE'] == 'Extra')
+		{
+			return false;
 		}
 
 		return true;

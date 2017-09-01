@@ -713,9 +713,7 @@ class CBitrixPersonalOrderListComponent extends CBitrixComponent
 				}
 
 				$cachedData['DELIVERY'] = array();
-				$dbDelivery = \Bitrix\Sale\Delivery\Services\Table::getList(array(
-					'select' => array('ID', 'NAME', 'PARENT_ID')
-				));
+				$dbDelivery = \Bitrix\Sale\Delivery\Services\Table::getList();
 
 				$deliveryService = array();
 				while ($delivery = $dbDelivery->fetch())
@@ -723,12 +721,18 @@ class CBitrixPersonalOrderListComponent extends CBitrixComponent
 
 				foreach ($deliveryService as $delivery)
 				{
-					$cachedData['DELIVERY'][$delivery["ID"]] = array();
+					$cachedData['DELIVERY'][$delivery["ID"]] = $delivery;
 
 					if ($delivery['PARENT_ID'])
+					{
 						$cachedData['DELIVERY'][$delivery["ID"]]['NAME'] = htmlspecialcharsbx($deliveryService[$delivery['PARENT_ID']]['NAME'].':'.$delivery['NAME']);
+						if (empty($delivery['LOGOTIP']))
+							$cachedData['DELIVERY'][$delivery["ID"]]['LOGOTIP'] = $deliveryService[$delivery['PARENT_ID']]['LOGOTIP'];
+					}
 					else
+					{
 						$cachedData['DELIVERY'][$delivery["ID"]]['NAME'] = htmlspecialcharsbx($delivery['NAME']);
+					}
 				}
 
 				/////////////////////

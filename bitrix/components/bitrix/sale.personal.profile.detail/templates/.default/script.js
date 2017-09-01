@@ -2,8 +2,11 @@ BX.namespace('BX.Sale.PersonalProfileComponent');
 
 (function() {
 	BX.Sale.PersonalProfileComponent.PersonalProfileDetail = {
-		init: function ()
+		init: function (params)
 		{
+			if (BX.type.isPlainObject(params))
+				this.ajaxUrl = params.ajaxUrl;
+
 			var propertyFileList = document.getElementsByClassName('sale-personal-profile-detail-property-file');
 			Array.prototype.forEach.call(propertyFileList, function(propertyFile)
 			{
@@ -71,6 +74,72 @@ BX.namespace('BX.Sale.PersonalProfileComponent');
 					}, this)
 				);
 			});
+
+			var multiLocationList = document.getElementsByClassName('input-add-multiple');
+			for (var key in multiLocationList)
+			{
+				var hiddenLocation = multiLocationList[key];
+				if (!BX.type.isDomNode(hiddenLocation) && BX.type.isNotEmptyString(this.ajaxUrl))
+					continue;
+				BX.bind(hiddenLocation, 'click', BX.delegate(
+					function(event)
+					{
+						switch (event.target.getAttribute('data-add-type'))
+						{
+							case "LOCATION" : this.createLocationInput(event);
+								break;
+							case "TEXT" : this.createTextInput(event);
+								break;
+						}
+					}, this)
+				);
+			}
+		},
+		createTextInput : function(event)
+		{
+			if (!BX.type.isDomNode(event.target))
+				return;
+
+			var newInput = BX.create('input',{attrs:{
+				className: 'form-control',
+				type: 'text',
+				name: event.target.getAttribute('data-add-name')
+			}});
+
+			event.target.parentNode.insertBefore(newInput, event.target);
+		},
+		createLocationInput : function(event)
+		{
+			var newKey = parseInt(event.target.getAttribute('data-add-last-key')) + 1;
+			BX.ajax(
+				{
+					method: 'POST',
+					dataType: 'html',
+					url: this.ajaxUrl,
+					data:
+						{
+							sessid: BX.bitrix_sessid(),
+							params: {
+								LOCATION_NAME: event.target.getAttribute('data-add-name'),
+								LOCATION_TEMPLATE: event.target.getAttribute('data-add-template'),
+								LOCATION_KEY: newKey,
+								ACTION: 'getLocationHtml'
+							},
+							signedParamsString: this.signedParams
+						},
+					onsuccess: BX.proxy(function(result)
+					{
+						var wrapper = BX.create("div");
+						wrapper.innerHTML = result;
+						event.target.parentNode.insertBefore(wrapper,event.target);
+						event.target.setAttribute('data-add-last-key', newKey)
+					},this),
+					onfailure: BX.proxy(function()
+					{
+						return this;
+					}, this)
+				}, this
+			);
 		}
 	}
 })();

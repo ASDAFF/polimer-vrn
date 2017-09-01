@@ -93,7 +93,7 @@ if (isset($data['kkm']) && count($data['kkm']) > 0)
 				$result->reports = $reports;
 
 			$buildResult = Cashbox\Manager::buildChecksQuery($cashboxIds);
-			$printed = !empty($buildResult);
+			$printed = !empty($buildResult) || !empty($reports);
 
 			while (!$printed)
 			{

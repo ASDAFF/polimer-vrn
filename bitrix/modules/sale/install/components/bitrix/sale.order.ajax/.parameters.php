@@ -145,7 +145,7 @@ $arComponentParameters = array(
 			"NAME" => GetMessage('SOA_ACTION_VARIABLE'),
 			"TYPE" => "STRING",
 			"MULTIPLE" => "N",
-			"DEFAULT" => "action",
+			"DEFAULT" => "soa-action",
 			"PARENT" => "ADDITIONAL_SETTINGS",
 		),
 		"PATH_TO_BASKET" => array(

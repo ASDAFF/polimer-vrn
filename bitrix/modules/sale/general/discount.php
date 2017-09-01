@@ -1069,6 +1069,10 @@ class CAllSaleDiscount
 			{
 				$arFields['SHORT_DESCRIPTION'] = serialize($actionConfiguration);
 			}
+			else
+			{
+				$arFields['SHORT_DESCRIPTION'] = null;
+			}
 		}
 
 		$intUserID = 0;

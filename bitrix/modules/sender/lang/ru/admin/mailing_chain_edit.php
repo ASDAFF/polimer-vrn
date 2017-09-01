@@ -69,6 +69,7 @@ $MESS["sender_chain_edit_field_AUTO_SEND_TIME"] = "Время отправки:"
 
 $MESS["sender_chain_edit_field_title"] = "Название выпуска";
 $MESS["sender_chain_edit_field_title_desc"] = "Это название видите только вы.";
+$MESS["sender_chain_edit_status_deactivated"] = "Рассылка деактивирована. Для отправки выпуска активировируйте рассылку.";
 
 
 $MESS["rubric_mon"] = "Пн";

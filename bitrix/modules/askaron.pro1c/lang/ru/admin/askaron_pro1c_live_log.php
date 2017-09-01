@@ -21,11 +21,11 @@ $MESS ['askaron_pro1c_live_log_warning_nginx'] = '
 
 $MESS ['askaron_pro1c_live_log_test'] = 'Проверить работу Живого лога';
 $MESS ['askaron_pro1c_live_log_off'] = 'Живой лог выключен';
-$MESS ['askaron_pro1c_live_log_off_details'] = 'Включите Живой лог в <a href="settings.php?mid=askaron.pro1c&amp;lang=#LANG#">настройках модуля</a>.';
+$MESS ['askaron_pro1c_live_log_off_details'] = 'Включите Живой лог в <a href="settings.php?mid=askaron.pro1c&amp;lang=#LANG#&amp;mid_menu=2">настройках модуля</a> (раздел Отладка обмена).';
 $MESS ['askaron_pro1c_live_log_clean'] = 'Очистить область';
 $MESS ['askaron_pro1c_live_log_counter'] = 'Счетчик: ';
 $MESS ['askaron_pro1c_live_log_pull_install'] = '<a href="module_admin.php?lang=#LANG#">Установить модуль</a> Push and Pull';
 
-$MESS ['askaron_pro1c_live_log_settings'] = 'Настройки модуля «<a href="settings.php?mid=askaron.pro1c&amp;lang=#LANG#">Продвинутый обмен с 1С</a>».';
+$MESS ['askaron_pro1c_live_log_settings'] = 'Настройки модуля «<a href="settings.php?mid=askaron.pro1c&amp;lang=#LANG#&amp;mid_menu=2">Продвинутый обмен с 1С</a>».';
 
 ?>

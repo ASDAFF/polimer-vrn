@@ -95,15 +95,46 @@ class Notify
 			return $result;
 		}
 
+		$by = $sort = '';
+
+		$separator = "<br/>";
+
+		$eventName = static::EVENT_ORDER_NEW_SEND_EMAIL_EVENT_NAME;
+
+		$filter = array(
+			"EVENT_NAME" => $eventName,
+			'ACTIVE' => 'Y',
+		);
+
+		if ($entity instanceof OrderBase)
+		{
+			$filter['SITE_ID'] = $entity->getSiteId();
+		}
+		elseif (defined('SITE_ID') && SITE_ID != '')
+		{
+			$filter['SITE_ID'] = SITE_ID;
+		}
+
+		$res = \CEventMessage::GetList($by, $sort, $filter);
+		if ($eventMessage = $res->Fetch())
+		{
+			if ($eventMessage['BODY_TYPE'] == 'text')
+			{
+				$separator = "\n";
+			}
+		}
+
 		$basketList = '';
 		/** @var Basket $basket */
-		if ($basket = $entity->getBasket())
+		$basket = $entity->getBasket();
+		if ($basket)
 		{
-			if ($basketTextList = $basket->getListOfFormatText())
+			$basketTextList = $basket->getListOfFormatText();
+			if (!empty($basketTextList))
 			{
 				foreach ($basketTextList as $basketItemCode => $basketItemData)
 				{
-					$basketList .= $basketItemData."</br>";
+					$basketList .= $basketItemData.$separator;
 				}
 			}
 		}
@@ -122,7 +153,6 @@ class Notify
 			"DELIVERY_PRICE" => $entity->getDeliveryPrice(),
 		);
 
-		$eventName = static::EVENT_ORDER_NEW_SEND_EMAIL_EVENT_NAME;
 		$send = true;
 
 		foreach(GetModuleEvents("sale", static::EVENT_ON_ORDER_NEW_SEND_EMAIL, true) as $oldEvent)
@@ -136,7 +166,7 @@ class Notify
 		if($send)
 		{
 			$event = new \CEvent;
-			$event->Send($eventName, $entity->getField('LID'), $fields, "N");
+			$event->Send($eventName, $entity->getField('LID'), $fields, "Y", "", array(),static::getOrderLanguageId($entity));
 		}
 
 		static::addSentEvent($entity->getId(), static::EVENT_ORDER_NEW_SEND_EMAIL_EVENT_NAME);
@@ -202,7 +232,7 @@ class Notify
 		if($send)
 		{
 			$event = new \CEvent;
-			$event->Send($eventName, $entity->getField('LID'), $fields, "N");
+			$event->Send($eventName, $entity->getField('LID'), $fields, "Y", "", array(), static::getOrderLanguageId($entity));
 		}
 
 		\CSaleMobileOrderPush::send(static::EVENT_MOBILE_PUSH_ORDER_CANCELED, array("ORDER" => static::getOrderFields($entity)));
@@ -266,7 +296,7 @@ class Notify
 		if($send)
 		{
 			$event = new \CEvent;
-			$event->Send($eventName, $entity->getField('LID'), $fields, "N");
+			$event->Send($eventName, $entity->getField('LID'), $fields, "Y", "", array(), static::getOrderLanguageId($entity));
 		}
 
 		\CSaleMobileOrderPush::send(static::EVENT_MOBILE_PUSH_ORDER_PAID, array("ORDER" => static::getOrderFields($entity)));
@@ -380,7 +410,7 @@ class Notify
 
 				unset($o, $b);
 				$event = new \CEvent;
-				$event->Send($eventName, $entity->getSiteId(), $fields, "N");
+				$event->Send($eventName, $entity->getSiteId(), $fields, "Y", "", array(),  $siteData['LANGUAGE_ID']);
 			}
 		}
 
@@ -544,7 +574,7 @@ class Notify
 
 				unset($o, $b);
 				$event = new \CEvent;
-				$event->Send($statusEventName, $order->getSiteId(), $fields, "N");
+				$event->Send($statusEventName, $order->getSiteId(), $fields, "Y", "", array(),  $siteData['LANGUAGE_ID']);
 			}
 		}
 
@@ -689,7 +719,7 @@ class Notify
 
 				unset($o, $b);
 				$event = new \CEvent;
-				$event->Send($statusEventName, $entity->getSiteId(), $fields, "N");
+				$event->Send($statusEventName, $entity->getSiteId(), $fields, "Y", "", array(), $siteData['LANGUAGE_ID']);
 			}
 		}
 
@@ -762,7 +792,7 @@ class Notify
 		);
 
 		$event = new \CEvent;
-		$event->send(static::EVENT_SHIPMENT_TRACKING_NUMBER_SEND_EMAIL_EVENT_NAME, $order->getField("LID"), $emailFields, "N");
+		$event->send(static::EVENT_SHIPMENT_TRACKING_NUMBER_SEND_EMAIL_EVENT_NAME, $order->getField("LID"), $emailFields, "Y", "", array(), static::getOrderLanguageId($order));
 
 		static::addSentEvent('s'.$entity->getId(), static::EVENT_SHIPMENT_TRACKING_NUMBER_SEND_EMAIL_EVENT_NAME);
 
@@ -840,7 +870,7 @@ class Notify
 		if($send)
 		{
 			$event = new \CEvent;
-			$event->Send($eventName, $order->getField('LID'), $fields, "N");
+			$event->Send($eventName, $order->getField('LID'), $fields, "Y", "", array(), static::getOrderLanguageId($order));
 		}
 
 		\CSaleMobileOrderPush::send(static::EVENT_MOBILE_PUSH_SHIPMENT_ALLOW_DELIVERY, array("ORDER" => static::getOrderFields($order)));
@@ -999,7 +1029,7 @@ class Notify
 			if ($userData = $userRes->fetch())
 			{
 				$userData['PAYER_NAME'] = \CUser::FormatName(\CSite::GetNameFormat(null, $order->getSiteId()), $userData, true);
-				static::$cacheUserData[$order->getUserId()] = $userData;
+				static::$cacheUserData[$order->getUserId()]['PAYER_NAME'] = $userData['PAYER_NAME'];
 				$userName = $userData['PAYER_NAME'];
 			}
 		}
@@ -1210,7 +1240,16 @@ class Notify
 		return $fields;
 	}
 
-
+	/**
+	 * @param Order $order
+	 *
+	 * @return mixed
+	 */
+	public static function getOrderLanguageId(Order $order)
+	{
+		$siteData = Main\SiteTable::GetById($order->getSiteId())->fetch();
+		return $siteData['LANGUAGE_ID'];
+	}
 
 	/**
 	 * Convert an array of dates from the object to a string

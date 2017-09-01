@@ -19,8 +19,8 @@ use Bitrix\Main\Localization\Loc;
 	<form method="post" name="form1" action="<?=$APPLICATION->GetCurUri()?>" enctype="multipart/form-data" role="form">
 		<?=$arResult["BX_SESSION_CHECK"]?>
 		<input type="hidden" name="lang" value="<?=LANG?>" />
-		<input type="hidden" name="ID" value=<?=$arResult["ID"]?> />
-		<input type="hidden" name="LOGIN" value=<?=$arResult["arUser"]["LOGIN"]?> />
+		<input type="hidden" name="ID" value="<?=$arResult["ID"]?>" />
+		<input type="hidden" name="LOGIN" value="<?=$arResult["arUser"]["LOGIN"]?>" />
 		<div class="main-profile-block-shown" id="user_div_reg">
 			<div class="main-profile-block-date-info">
 				<?

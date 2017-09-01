@@ -1,15 +1,19 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
-class CUserTypeDouble
+class CUserTypeDouble extends \Bitrix\Main\UserField\TypeBase
 {
+	const USER_TYPE_ID = 'double';
+
 	function GetUserTypeDescription()
 	{
 		return array(
-			"USER_TYPE_ID" => "double",
-			"CLASS_NAME" => "CUserTypeDouble",
+			"USER_TYPE_ID" => static::USER_TYPE_ID,
+			"CLASS_NAME" => __CLASS__,
 			"DESCRIPTION" => GetMessage("USER_TYPE_DOUBLE_DESCRIPTION"),
-			"BASE_TYPE" => "double",
+			"BASE_TYPE" => \CUserTypeManager::BASE_TYPE_DOUBLE,
+			"EDIT_CALLBACK" => array(__CLASS__, 'GetPublicEdit'),
+			"VIEW_CALLBACK" => array(__CLASS__, 'GetPublicView'),
 		);
 	}
 
@@ -216,4 +220,86 @@ class CUserTypeDouble
 		}
 		return null;
 	}
+
+
+	public static function GetPublicView($arUserField, $arAdditionalParameters = array())
+	{
+		$value = static::normalizeFieldValue($arUserField["VALUE"]);
+
+		$html = '';
+		$first = true;
+		foreach($value as $res)
+		{
+			if(!$first)
+			{
+				$html .= static::getHelper()->getMultipleValuesSeparator();
+			}
+			$first = false;
+
+			if(strlen($arUserField['PROPERTY_VALUE_LINK']) > 0)
+			{
+				$res = '<a href="'.htmlspecialcharsbx(str_replace('#VALUE#', urlencode($res), $arUserField['PROPERTY_VALUE_LINK'])).'">'.$res.'</a>';
+			}
+
+			$html .= static::getHelper()->wrapSingleField($res);
+		}
+
+		static::initDisplay();
+
+		return static::getHelper()->wrapDisplayResult($html);
+	}
+
+
+	public function getPublicEdit($arUserField, $arAdditionalParameters = array())
+	{
+		$fieldName = static::getFieldName($arUserField, $arAdditionalParameters);
+		$value = static::getFieldValue($arUserField, $arAdditionalParameters);
+
+		$html = '';
+
+		foreach($value as $res)
+		{
+			$attrList = array();
+
+			if($arUserField["EDIT_IN_LIST"] != "Y")
+			{
+				$attrList['disabled'] = 'disabled';
+			}
+
+			if($arUserField["SETTINGS"]["SIZE"] > 0)
+			{
+				$attrList['size'] = intval($arUserField["SETTINGS"]["SIZE"]);
+			}
+
+			if(array_key_exists('attribute', $arAdditionalParameters))
+			{
+				$attrList = array_merge($attrList, $arAdditionalParameters['attribute']);
+			}
+
+			if(isset($attrList['class']) && is_array($attrList['class']))
+			{
+				$attrList['class'] = implode(' ', $attrList['class']);
+			}
+
+			$attrList['class'] = static::getHelper()->getCssClassName().(isset($attrList['class']) ? ' '.$attrList['class'] : '');
+
+			$attrList['name'] = $fieldName;
+
+			$attrList['type'] = 'text';
+			$attrList['value'] = $res;
+
+			$html .= static::getHelper()->wrapSingleField('<input '.static::buildTagAttributes($attrList).'/>');
+		}
+
+		if($arUserField["MULTIPLE"] == "Y" && $arAdditionalParameters["SHOW_BUTTON"] != "N")
+		{
+			$html .= static::getHelper()->getCloneButton($fieldName);
+		}
+
+		static::initDisplay();
+
+		return static::getHelper()->wrapDisplayResult($html);
+	}
+
+
 }

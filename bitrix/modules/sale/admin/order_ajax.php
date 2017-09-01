@@ -874,6 +874,7 @@ class AjaxProcessor
 					|| $error->getCode() == "SALE_BASKET_AVAILABLE_QUANTITY"
 					|| $error->getCode() == "SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY"
 					|| $error->getCode() == "SALE_BASKET_ITEM_REMOVE_IMPOSSIBLE_BECAUSE_SHIPPED"
+					|| $error->getCode() == "SALE_ORDEREDIT_ERROR_CHANGE_USER_WITH_PAID_PAYMENTS"
 				)
 					$this->addResultError($error->getMessage());
 			}

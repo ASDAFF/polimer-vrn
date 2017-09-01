@@ -197,6 +197,8 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 		$props = $order->getPropertyCollection();
 		$loc = $props->getDeliveryLocation();
 		$locToInternalCode = !!$loc ? $loc->getValue() : "";
+		$zipTo = $props->getDeliveryLocationZip();
+		$zipTo = !!$zipTo ? $zipTo->getValue() : "";
 		$locFromRequest = array();
 		$locToRequest = array();
 
@@ -204,6 +206,7 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 			$locToRequest = self::getLocationForRequest($locToInternalCode);
 
 		$shopLocation = \CSaleHelper::getShopLocation();
+		$zipFrom = \CSaleHelper::getShopLocationZIP();
 
 		if(!empty($shopLocation['CODE']))
 			$locFromRequest = self::getLocationForRequest($shopLocation['CODE']);
@@ -218,7 +221,11 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 
 		if($serviceType == "RUSPOST" )
 		{
-			if(!empty($shopLocation['CODE']))
+			if(strlen($zipFrom) > 0)
+			{
+				$result["ZIP_FROM"] = $zipFrom;
+			}
+			elseif(!empty($shopLocation['CODE']))
 			{
 				$extLoc = LocationHelper::getZipByLocation($shopLocation['CODE'], array('limit' => 1))->fetch();
 
@@ -226,7 +233,11 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 					$result["ZIP_FROM"] = $extLoc['XML_ID'];
 			}
 
-			if(!empty($locToInternalCode))
+			if(strlen($zipTo) > 0)
+			{
+				$result["ZIP_TO"] = $zipTo;
+			}
+			elseif(!empty($locToInternalCode))
 			{
 				$extLoc = LocationHelper::getZipByLocation($locToInternalCode, array('limit' => 1))->fetch();
 

@@ -2003,7 +2003,7 @@ class CAllSaleBasket
 		}
 		$boolRecurring = $arOrder['RECURRING_ID'] > 0;
 
-		$needSaveCoupons = false;
+		$found = false;
 		$dbBasketList = CSaleBasket::GetList(
 			array("PRICE" => "DESC"),
 			array("FUSER_ID" => $fuserID, "LID" => $strLang, "ORDER_ID" => 0),
@@ -2087,7 +2087,6 @@ class CAllSaleBasket
 							if (array_key_exists('DISCOUNT', $arFields))
 								unset($arFields['DISCOUNT']);
 						}
-						$needSaveCoupons = true;
 					}
 					else
 					{
@@ -2104,15 +2103,17 @@ class CAllSaleBasket
 				else
 				{
 					$arFields["ORDER_ID"] = $orderID;
-					$needSaveCoupons = true;
 				}
 
 				if (!empty($arFields))
 				{
 					if ($isOrderConverted)
 					{
+						$found = true;
 						if (!\Bitrix\Sale\Compatible\DiscountCompatibility::isInited())
 							\Bitrix\Sale\Compatible\DiscountCompatibility::init();
+						if (\Bitrix\Sale\Compatible\DiscountCompatibility::isInited())
+							\Bitrix\Sale\Compatible\DiscountCompatibility::setRepeatSave(true);
 					}
 					if (CSaleBasket::Update($arBasket["ID"], $arFields))
 					{
@@ -2130,10 +2131,17 @@ class CAllSaleBasket
 			ExecuteModuleEventEx($arEvent, array($orderID, $fuserID, $strLang, $arDiscounts));
 		}
 
-		if ($needSaveCoupons)
+		if ($isOrderConverted && $found)
 		{
-			DiscountCouponsManager::finalApply();
-			DiscountCouponsManager::saveApplied();
+			if ($order = Sale\Order::load($orderID))
+			{
+				if (\Bitrix\Sale\Compatible\DiscountCompatibility::isInited())
+					\Bitrix\Sale\Compatible\DiscountCompatibility::setRepeatSave(false);
+				$discounts = $order->getDiscount();
+				$discounts->save();
+				unset($discounts);
+			}
+			unset($order);
 		}
 		//reservation
 		if ($arOrder['RESERVED'] != "Y" && COption::GetOptionString("sale", "product_reserve_condition") == "O")

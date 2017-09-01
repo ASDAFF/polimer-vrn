@@ -2216,6 +2216,7 @@ class CSaleCondCtrlCommon extends CSaleCondCtrlComplex
 	public static function GetControlDescr()
 	{
 		$description = parent::GetControlDescr();
+		$description['EXECUTE_MODULE'] = 'sale';
 		$description['SORT'] = 2000;
 		return $description;
 	}

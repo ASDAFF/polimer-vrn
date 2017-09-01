@@ -2281,10 +2281,10 @@ final class ImportProcess extends Location\Util\Process
 
 								if($code == 'ZIP_LOWER')
 								{
-									if(strlen($values) <= 0)
+									if(strlen($values[0]) <= 0)
 										continue;
 
-									$values = explode(',', $values);
+									$values = explode(',', $values[0]);
 
 									if(!is_array($values))
 										continue;

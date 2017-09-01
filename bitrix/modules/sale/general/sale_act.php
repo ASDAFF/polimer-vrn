@@ -282,7 +282,7 @@ class CSaleCumulativeAction extends CGlobalCondCtrl
 	{
 		return new \Bitrix\Main\EventResult(
 			\Bitrix\Main\EventResult::SUCCESS,
-			static::getControlDescr() + array('GROUP' => 'Y',  'EXECUTE_MODULE' => 'sale'),
+			static::getControlDescr() + array('GROUP' => 'Y', 'EXECUTE_MODULE' => 'sale'),
 			'sale'
 		);
 	}
@@ -687,6 +687,7 @@ class CSaleActionCtrlDelivery extends CSaleActionCtrl
 	public static function GetControlDescr()
 	{
 		$description = parent::GetControlDescr();
+		$description['EXECUTE_MODULE'] = 'sale';
 		$description['SORT'] = 200;
 		return $description;
 	}

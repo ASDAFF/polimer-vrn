@@ -9,6 +9,7 @@ $MESS["SALE_PNAME"] = "Überschrift";
 $MESS["SPPD_DOWNLOAD_FILE"]="Datei #FILE_NAME# herunterladen";
 $MESS["SPPD_DELETE_FILE"]="Datei löschen";
 $MESS ["SPPD_SELECT"]="Auswählen";
+$MESS ["SPPD_ADD"]="Hinzufügen";
 $MESS ["SPPD_FILE_NOT_SELECTED"]="Es wurde keine Datei ausgewählt";
 $MESS ["SPPD_FILE_COUNT"]="Dateien ausgewählt: ";
 ?>

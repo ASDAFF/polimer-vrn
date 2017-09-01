@@ -6,4 +6,6 @@ $MESS["USER_TYPE_ENUM_LIST"] = "List";
 $MESS["USER_TYPE_ENUM_LIST_HEIGHT"] = "List control height";
 $MESS["USER_TYPE_ENUM_CAPTION_NO_VALUE"] = "Use caption when value is empty";
 $MESS["MAIN_NO"] = "no";
+$MESS["USER_TYPE_ENUM_UI"] = "Multiselect list";
+$MESS["USER_TYPE_ENUM_NO_VALUE"] = "not selected";
 ?>

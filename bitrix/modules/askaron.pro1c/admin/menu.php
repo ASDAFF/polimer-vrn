@@ -24,7 +24,13 @@ if($APPLICATION->GetGroupRight("askaron.pro1c")!="D")
 					//"askaron_pro1c_event_edit.php",
 
 				),
-				"title" => GetMessage("ASKARON_PRO1C_MENU_LAST_TITLE"),
+				"title" => GetMessage("ASKARON_PRO1C_MENU_LIVE_LOG_TITLE"),
+			),
+			array(
+				"text" => GetMessage("ASKARON_PRO1C_LOG_VIEW_PAGE"),
+				"url" => "askaron_pro1c_log_view.php?lang=" . LANGUAGE_ID,
+				"more_url" => Array(),
+				"title" => GetMessage("ASKARON_PRO1C_LOG_VIEW_PAGE_TITLE"),
 			),
 			array(
 				"text" => GetMessage("ASKARON_PRO1C_MENU_LAST"),
@@ -36,6 +42,23 @@ if($APPLICATION->GetGroupRight("askaron.pro1c")!="D")
 				),
 				"title" => GetMessage("ASKARON_PRO1C_MENU_LAST_TITLE"),
 			),			
+			array(
+				"text" => GetMessage("ASKARON_PRO1C_MENU_CHECK"),
+				"url" => "askaron_pro1c_check.php?lang=".LANGUAGE_ID,
+				"more_url" => Array(
+					//"askaron_pro1c_event_admin.php",
+					//"askaron_pro1c_event_edit.php",
+
+				),
+				"title" => GetMessage("ASKARON_PRO1C_MENU_CHECK_TITLE"),
+			),
+			array(
+				"text" => GetMessage("ASKARON_PRO1C_SETTINGS_PAGE"),
+				"url" => "settings.php?mid=askaron.pro1c&lang=".LANGUAGE_ID."&mid_menu=2",
+				"more_url" => Array(
+				),
+				"title" => GetMessage("ASKARON_PRO1C_SETTINGS_PAGE_TITLE"),
+			),
 		),
 	);
 	return $aMenu;

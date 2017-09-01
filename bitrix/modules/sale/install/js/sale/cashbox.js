@@ -383,6 +383,28 @@
 			});
 		},
 
+		reloadOfdSettings: function()
+		{
+			BX.ajax({
+				data: {
+					'action': 'reload_ofd_settings',
+					'handler': BX('OFD').value || '',
+					'sessid': BX.bitrix_sessid()
+				},
+				method: 'POST',
+				dataType: 'json',
+				url: this.ajaxUrl,
+				onsuccess: BX.delegate(function(result)
+					{
+						BX.closeWait();
+						if (result && result.hasOwnProperty('HTML'))
+							BX('sale-cashbox-ofd-settings-container').innerHTML = result.HTML;
+					}, this
+				),
+				onfailure: function() {BX.debug('onfailure: reloadOfdSettings');}
+			});
+		},
+
 		showCreateCheckWindow: function(type)
 		{
 			var data = {

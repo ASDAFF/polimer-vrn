@@ -57,11 +57,11 @@ class CashboxTable extends DataManager
 				'data_type' => 'string',
 				'serialized' => true
 			),
-			'USE_OFFLINE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y')
+			'OFD_SETTINGS' => array(
+				'data_type' => 'string',
+				'serialized' => true
 			),
-			'OFD_TEST_MODE' => array(
+			'USE_OFFLINE' => array(
 				'data_type' => 'boolean',
 				'values' => array('N', 'Y')
 			),

@@ -4,15 +4,19 @@ IncludeModuleLangFile(__FILE__);
 use Bitrix\Main;
 use Bitrix\Main\Type;
 
-class CUserTypeDateTime
+class CUserTypeDateTime extends Main\UserField\TypeBase
 {
+	const USER_TYPE_ID = 'datetime';
+
 	function GetUserTypeDescription()
 	{
 		return array(
-			"USER_TYPE_ID" => "datetime",
-			"CLASS_NAME" => "CUserTypeDateTime",
+			"USER_TYPE_ID" => static::USER_TYPE_ID,
+			"CLASS_NAME" => __CLASS__,
 			"DESCRIPTION" => GetMessage("USER_TYPE_DT_DESCRIPTION"),
-			"BASE_TYPE" => "datetime",
+			"BASE_TYPE" => \CUserTypeManager::BASE_TYPE_DATETIME,
+			"VIEW_CALLBACK" => array(__CLASS__, 'GetPublicView'),
+			"EDIT_CALLBACK" => array(__CLASS__, 'GetPublicEdit'),
 		);
 	}
 
@@ -216,6 +220,97 @@ class CUserTypeDateTime
 		}
 
 		return $value;
+	}
+
+
+	public static function GetPublicView($arUserField, $arAdditionalParameters = array())
+	{
+		$value = static::normalizeFieldValue($arUserField["VALUE"]);
+
+		$html = '';
+		$first = true;
+		foreach($value as $res)
+		{
+			if(!$first)
+			{
+				$html .= static::getHelper()->getMultipleValuesSeparator();
+			}
+			$first = false;
+
+			if(strlen($arUserField['PROPERTY_VALUE_LINK']) > 0)
+			{
+				$res = '<a href="'.htmlspecialcharsbx(str_replace('#VALUE#', urlencode($res), $arUserField['PROPERTY_VALUE_LINK'])).'">'.$res.'</a>';
+			}
+
+			$html .= static::getHelper()->wrapSingleField($res);
+		}
+
+		return static::getHelper()->wrapDisplayResult($html);
+	}
+
+
+	public static function GetPublicEdit($arUserField, $arAdditionalParameters = array())
+	{
+		$fieldName = static::getFieldName($arUserField, $arAdditionalParameters);
+		$value = static::getFieldValue($arUserField, $arAdditionalParameters);
+
+		$html = '';
+
+		$first = true;
+		foreach($value as $res)
+		{
+			$tag = '';
+
+			if(!$first)
+			{
+				$html .= static::getHelper()->getMultipleValuesSeparator();
+			}
+			$first = false;
+
+			$attrList = array();
+
+			if(array_key_exists('attribute', $arAdditionalParameters))
+			{
+				$attrList = array_merge($attrList, $arAdditionalParameters['attribute']);
+			}
+
+			if($arUserField["EDIT_IN_LIST"] != "Y")
+			{
+				$attrList['disabled'] = 'disabled';
+			}
+			else
+			{
+				$attrList['onclick'] = 'BX.calendar({node: this, field: this, bTime: true, bSetFocus: false})';
+			}
+
+			if(isset($attrList['class']) && is_array($attrList['class']))
+			{
+				$attrList['class'] = implode(' ', $attrList['class']);
+			}
+
+			$attrList['name'] = $fieldName;
+
+			$attrList['type'] = 'text';
+			$attrList['value'] = $res;
+
+			$tag .= '<input '.static::buildTagAttributes($attrList).'/>';
+			$tag .= '<i '.static::buildTagAttributes(array(
+					'class' => static::getHelper()->getCssClassName().' icon',
+					'onclick' => 'BX.calendar({node: this.previousSibling, field: this.previousSibling, bTime: true, bSetFocus: false});',
+				)).'></i>';
+
+			$html .= static::getHelper()->wrapSingleField($tag);
+		}
+
+		if($arUserField["MULTIPLE"] == "Y" && $arAdditionalParameters["SHOW_BUTTON"] != "N")
+		{
+			$html .= static::getHelper()->getCloneButton($fieldName);
+		}
+
+		static::initDisplay(array('date'));
+
+		return static::getHelper()->wrapDisplayResult($html);
+
 	}
 }
 ?>

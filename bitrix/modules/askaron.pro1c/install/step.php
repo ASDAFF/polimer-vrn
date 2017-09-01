@@ -16,7 +16,7 @@ else
 	echo CAdminMessage::ShowNote(GetMessage("MOD_INST_OK"));
 	
 	?>
-	<p><a href="settings.php?lang=<?=LANG?>&amp;mid_menu=1&amp;mid=askaron.pro1c"><?=GetMessage("ASKARON_PRO1C_SETTINGS_PAGE" )?></a></p>
+	<p><a href="settings.php?lang=<?=LANG?>&amp;mid=askaron.pro1c&amp;mid_menu=2"><?=GetMessage("ASKARON_PRO1C_SETTINGS_PAGE" )?></a></p>
 	<?	
 }
 ?>

@@ -200,8 +200,8 @@ class DiscountCompatibility
 	}
 
 	/**
-	 * Return saved flag.
-	 * @deprecated deprecated since sale 17.0.13
+	 * Return saved flag (for old components only). Use ONLY kernel developers.
+	 * @internal
 	 *
 	 * @return bool
 	 */
@@ -211,8 +211,8 @@ class DiscountCompatibility
 	}
 
 	/**
-	 * Set save flag.
-	 * @deprecated deprecated since sale 17.0.13
+	 * Set save flag (for old components only). Use ONLY kernel developers.
+	 * @internal
 	 *
 	 * @param bool $save		Save flag.
 	 * @return void
@@ -225,8 +225,8 @@ class DiscountCompatibility
 	}
 
 	/**
-	 * Return repeat save flag (for old components only).
-	 * @deprecated deprecated since sale 17.0.13
+	 * Return repeat save flag (for old components only). Use ONLY kernel developers.
+	 * @internal
 	 *
 	 * @return bool
 	 */
@@ -236,8 +236,8 @@ class DiscountCompatibility
 	}
 
 	/**
-	 * Set repeat flag.
-	 * @deprecated deprecated since sale 17.0.13
+	 * Set repeat flag (for old components only). Use ONLY kernel developers.
+	 * @internal
 	 *
 	 * @param bool $repeat		Repeat flag.
 	 * @return void

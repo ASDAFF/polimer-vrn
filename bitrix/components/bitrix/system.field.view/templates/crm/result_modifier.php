@@ -4,8 +4,6 @@ if (is_array($arResult['VALUE']) && count($arResult['VALUE']) > 0)
 {
 	if(!CModule::IncludeModule("crm"))
 		return;
-
-
 		
 	$arParams['ENTITY_TYPE'] = Array();
 	if ($arParams['arUserField']['SETTINGS']['LEAD'] == 'Y')
@@ -65,6 +63,7 @@ if (is_array($arResult['VALUE']) && count($arResult['VALUE']) > 0)
 				? array('ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME')
 				: array('ID', 'FULL_NAME')
 		);
+
 		while ($arRes = $dbRes->Fetch())
 		{
 			if($hasNameFormatter)

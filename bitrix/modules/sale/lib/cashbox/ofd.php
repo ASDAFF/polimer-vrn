@@ -2,12 +2,16 @@
 
 namespace Bitrix\Sale\Cashbox;
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
+use Bitrix\Sale\Result;
 
+/**
+ * Class Ofd
+ * @package Bitrix\Sale\Cashbox
+ */
 abstract class Ofd
 {
-	protected $testMode = false;
-
 	/**
 	 * @return array
 	 */
@@ -24,25 +28,25 @@ abstract class Ofd
 	}
 
 	/**
-	 * @param $handler
-	 * @param bool $testMode
+	 * @param Cashbox $cashbox
 	 * @return null
 	 */
-	public static function create($handler, $testMode = false)
+	public static function create(Cashbox $cashbox)
 	{
+		$handler = $cashbox->getField('OFD');
 		if (class_exists($handler))
-			return new $handler($testMode);
+			return new $handler($cashbox);
 
 		return null;
 	}
 
 	/**
 	 * Ofd constructor.
-	 * @param $testMode
+	 * @param Cashbox $cashbox
 	 */
-	private function __construct($testMode)
+	private function __construct(Cashbox $cashbox)
 	{
-		$this->testMode = $testMode;
+		$this->cashbox = $cashbox;
 	}
 
 	/**
@@ -90,5 +94,65 @@ abstract class Ofd
 	public static function getName()
 	{
 		throw new NotImplementedException();
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function getSettings()
+	{
+		return array(
+			'OFD_MODE' => array(
+				'LABEL' => Loc::getMessage('SALE_CASHBOX_OFD_SETTINGS'),
+				'ITEMS' => array(
+					array(
+						'TYPE' => 'Y/N',
+						'LABEL' => Loc::getMessage('SALE_CASHBOX_OFD_TEST_MODE'),
+						'VALUE' => 'N'
+					)
+				)
+			)
+		);
+	}
+
+	/**
+	 * @param $settings
+	 * @return Result
+	 */
+	public static function validateSettings($settings)
+	{
+		return new Result();
+	}
+
+	/**
+	 * @param $name
+	 * @param $code
+	 * @return mixed
+	 */
+	public function getValueFromSettings($name, $code = null)
+	{
+		$map = $this->cashbox->getField('OFD_SETTINGS');
+		if (isset($map[$name]))
+		{
+			if (is_array($map[$name]))
+			{
+				if (isset($map[$name][$code]))
+					return $map[$name][$code];
+			}
+			else
+			{
+				return $map[$name];
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function isTestMode()
+	{
+		return $this->getValueFromSettings('OFD_MODE') === 'Y';
 	}
 }

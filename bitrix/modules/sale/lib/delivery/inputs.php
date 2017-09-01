@@ -439,7 +439,7 @@ class ProductCategories extends Input\Base
 		));
 
 		while($section = $res->fetch())
-			$result[$section['ID']]  = $section['NAME'];
+			$result[$section['ID']]  = htmlspecialcharsbx($section['NAME']);
 
 		return $result;
 	}

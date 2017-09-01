@@ -716,20 +716,37 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && $SALE_RIGHT =
 		$filter = serialize($filter);
 		Option::set("sale", "archive_params", $filter);
 
+		$agentsList = CAgent::GetList(array("ID"=>"DESC"), array(
+			"MODULE_ID" => "sale",
+			"NAME" => "\\Bitrix\\Sale\\Archive\\Manager::archiveOnAgent(%",
+		));
+		while($agent = $agentsList->Fetch())
+		{
+			CAgent::Delete($agent["ID"]);
+		}
+
 		if (isset($_POST['archive_regular_accept']))
 		{
 			CAgent::AddAgent("\\Bitrix\\Sale\\Archive\\Manager::archiveOnAgent(".$archiveLimit.",".$archiveTimeLimit.");", "sale", "N", 24*60*60, "", "Y");
 		}
-		else
+
+		Option::set("sale", "order_changes_cleaner_active", $_POST['order_changes_cleaner_active']);
+		$orderChangesCleanerDays = (int)$_POST['order_changes_cleaner_days'];
+		Option::set("sale", "order_changes_cleaner_days", $orderChangesCleanerDays);
+		$orderChangesCleanerLimit = (int)$_POST['order_changes_cleaner_limit'];
+		Option::set("sale", "order_changes_cleaner_limit",$orderChangesCleanerLimit);
+		$agentsList = CAgent::GetList(array("ID"=>"DESC"), array(
+			"MODULE_ID" => "sale",
+			"NAME" => "\\Bitrix\\Sale\\OrderHistory::deleteOldAgent(%",
+		));
+		while($agent = $agentsList->Fetch())
 		{
-			$agentsList = CAgent::GetList(array("ID"=>"DESC"), array(
-				"MODULE_ID" => "sale",
-				"NAME" => "\\Bitrix\\Sale\\Archive\\Manager::archiveOnAgent(%",
-			));
-			while($agent = $agentsList->Fetch())
-			{
-				CAgent::Delete($agent["ID"]);
-			}
+			CAgent::Delete($agent["ID"]);
+		}
+
+		if (isset($_POST['order_changes_cleaner_active']))
+		{
+			CAgent::AddAgent("\\Bitrix\\Sale\\OrderHistory::deleteOldAgent(\"$orderChangesCleanerDays\",\"$orderChangesCleanerLimit\");", "sale", "N", 60, "", "Y");
 		}
 
 		ob_start();
@@ -1322,6 +1339,37 @@ $tabControl->BeginNextTab();
 		</td>
 		<td>
 			<input type="text" size="5" value="<?=htmlspecialcharsbx(COption::GetOptionString("sale", "p2p_del_exp", "10"))?>" name="p2p_del_exp">
+		</td>
+	</tr>
+
+	<!-- Order history cleaner -->
+	<tr class="heading">
+		<td colspan="2"><?=GetMessage("SALE_ORDER_HISTORY_CLEANER_TITLE")?></td>
+	</tr>
+	<tr>
+		<td align="right" width="40%">
+			<label for="order_changes_cleaner_active"><?=GetMessage("SALE_ORDER_HISTORY_CLEANER_SWITCHER")?></label>
+		</td>
+		<td width="60%">
+			<input type="checkbox" name="order_changes_cleaner_active" value="Y" id="order_changes_cleaner_active"<? echo (Option::get("sale", "order_changes_cleaner_active", "N") == 'Y' ? ' checked' : ''); ?>>
+		</td>
+	</tr>
+
+	<tr>
+		<td>
+			<?echo GetMessage("SALE_ORDER_HISTORY_CLEANER_DAYS")?>
+		</td>
+		<td>
+			<input type="text" size="5" value="<?=(int)(Option::get("sale", "order_changes_cleaner_days", "365"))?>" name="order_changes_cleaner_days">
+		</td>
+	</tr>
+
+	<tr>
+		<td>
+			<?echo GetMessage("SALE_ORDER_HISTORY_CLEANER_BY_HIT")?>
+		</td>
+		<td>
+			<input type="text" size="5" value="<?=(int)(Option::get("sale", "order_changes_cleaner_limit", "10000"))?>" name="order_changes_cleaner_limit">
 		</td>
 	</tr>
 	<!-- /Recommended products -->

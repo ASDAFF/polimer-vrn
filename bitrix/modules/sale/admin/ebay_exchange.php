@@ -215,7 +215,7 @@ $tabControl->BeginNextTab();
 					}
 					else
 					{
-						$tmp = Xml2Array::convert($results[$smallFeedType]["RESULTS"]);
+						$tmp = Xml2Array::convert($results[$smallFeedType]["RESULTS"], false);
 
 						if(strpos($results[$smallFeedType]["RESULTS"], "<Errors>") !== false)
 						{

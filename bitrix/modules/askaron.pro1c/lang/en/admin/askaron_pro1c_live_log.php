@@ -1,22 +1,31 @@
 <?
-$MESS ['askaron_pro1c_live_log_title'] = "Live log";
-$MESS ['askaron_pro1c_live_log_pull_not_installed'] = 'Module Push and Pull is not instaled!';
-$MESS ['askaron_pro1c_live_log_alert_message'] = 'Please, wait answer from server. Delay is 5 seconds.';
-$MESS ['askaron_pro1c_live_log_alert_message_nginx'] = 'Request was sent to nginx.';
-$MESS ['askaron_pro1c_live_log_alert_message_nginx_error'] = 'No answer from nginx while 5 seconds. Try refresh this page. Try disable option of module Push and Pull Р’В«nginx-push-stream-module is installedР’В» and try use module without nginx.';
-$MESS ['askaron_pro1c_live_log_message'] = 'Live log displays pages activity in real-time.';
+$MESS ['askaron_pro1c_live_log_title'] = "Живой лог";
+$MESS ['askaron_pro1c_live_log_pull_not_installed'] = 'Модуль Push and Pull не установлен!';
+$MESS ['askaron_pro1c_live_log_alert_message'] = 'Задержка получения ответа составляет 5 секунд. Пожалуйста, дождитесь ответа и не закрывайте эту страницу.';
+$MESS ['askaron_pro1c_live_log_alert_message_nginx'] = 'Запрос отправлен на сервер nginx. Скоро должен быть ответ.';
+$MESS ['askaron_pro1c_live_log_alert_message_nginx_error'] = 'Ответ от nginx не пришел в течение 5 секунд. Попробуйте обновить страницу и проверить еще раз. Если не работает, скорее всего на хостинге не настроен nginx. Ничего страшного, отключите опцию модуля Push and Pull «На сервере установлен "Cервер очередей" (nginx-push-stream-module)» и пользутесь модулем в режиме без nginx.';
+
+$MESS ['askaron_pro1c_live_log_message'] = 'Живой лог позволяет в реальном времени наблюдать за выполненнием страниц.';
+
 $MESS ['askaron_pro1c_live_log_warning'] = '
-	<strong>Attention:</strong> delay is 5 seconds.<br /><br />Option of <a href="settings.php?lang=#LANG#&amp;mid=pull&amp;mid_menu=1">Push and Pull</a> Р’В«nginx-push-stream-module is installedР’В» is off.';
+	<strong>Внимание:</strong> задержка получения ответа от  сервера составляет 5 секунд.<br /><br />Опция модуля Push and Pull «На сервере установлен "Cервер очередей" (nginx-push-stream-module)» выключена.
+	<br /><br />Чтобы Живой лог работал без задержек, рекомендуется в <a href="settings.php?lang=#LANG#&amp;mid=pull&amp;mid_menu=1"> настойках модуля Push and Pull</a> включить опцию <em>«На сервере установлен "Сервер очередей" (nginx-push-stream-module)»</em>.
+	<br /><br />Важно: настройка nginx-push-stream-module на вашем сервере в обязаннности разработчика модуля не входит. nginx-push-stream-module уже настроен на Виртуальной машине Битрикса 4.2 и выше.';
 
 $MESS ['askaron_pro1c_live_log_warning_nginx'] = '
-	option of module Push and Pull <em>nginx-push-stream-module is installed</em> <strong> is enabled</strong>.';
+	Опция модуля Push and Pull <em>«На сервере установлен "Cервер очередей" (nginx-push-stream-module)»</em> <strong>включена</strong>.
+	<br /><br />Если живой лог не работает, то скорее всего на вашем сервере не настроен nginx.
+	<br /><br />Отключите опцию <em>«На сервере установлен "Cервер очередей" (nginx-push-stream-module)»</em> в <a href="settings.php?lang=#LANG#&amp;mid=pull&amp;mid_menu=1"> настойках модуля Push and Pull</a> и пользуйтесь модулем в режиме без nginx.
+	<br /><br />Важно: настройка nginx-push-stream-module на вашем сервере в обязаннности разработчика модуля не входит. nginx-push-stream-module уже настроен на Виртуальной машине Битрикса 4.2 и выше.';
 
-$MESS ['askaron_pro1c_live_log_test'] = 'Test Live log';
-$MESS ['askaron_pro1c_live_log_off'] = 'Live log is off';
-$MESS ['askaron_pro1c_live_log_off_details'] = 'Turn on Live log in the <a href="settings.php?mid=askaron.pro1c&amp;lang=#LANG#">module settings</a>.';
-$MESS ['askaron_pro1c_live_log_clean'] = 'Clean area';
-$MESS ['askaron_pro1c_live_log_counter'] = 'Counter: ';
-$MESS ['askaron_pro1c_live_log_pull_install'] = '<a href="module_admin.php?lang=#LANG#">Install module</a> Push and Pull';
 
-$MESS ['askaron_pro1c_live_log_settings'] = '<a href="settings.php?mid=askaron.pro1c&amp;lang=#LANG#">Settings</a> of solution "Advanced exchange with 1C".';
+$MESS ['askaron_pro1c_live_log_test'] = 'Проверить работу Живого лога';
+$MESS ['askaron_pro1c_live_log_off'] = 'Живой лог выключен';
+$MESS ['askaron_pro1c_live_log_off_details'] = 'Включите Живой лог в <a href="settings.php?mid=askaron.pro1c&amp;lang=#LANG#&amp;mid_menu=2">настройках модуля</a> (раздел Отладка обмена).';
+$MESS ['askaron_pro1c_live_log_clean'] = 'Очистить область';
+$MESS ['askaron_pro1c_live_log_counter'] = 'Счетчик: ';
+$MESS ['askaron_pro1c_live_log_pull_install'] = '<a href="module_admin.php?lang=#LANG#">Установить модуль</a> Push and Pull';
+
+$MESS ['askaron_pro1c_live_log_settings'] = 'Настройки модуля «<a href="settings.php?mid=askaron.pro1c&amp;lang=#LANG#&amp;mid_menu=2">Продвинутый обмен с 1С</a>».';
+
 ?>

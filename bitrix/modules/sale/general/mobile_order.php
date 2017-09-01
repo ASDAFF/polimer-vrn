@@ -196,7 +196,7 @@ class CSaleMobileOrderUtils
 					);
 
 		if(strlen(trim($arOrder['CUSTOMER_CITY']))>0)
-			$arSection["ROWS"][] = array("TITLE" => GetMessage("SMOB_CITY").":", "VALUE" => $arOrder['CUSTOMER_CITY']);
+			$arSection["ROWS"][] = array("TITLE" => GetMessage("SMOB_CITY").":", "VALUE" => htmlspecialcharsbx($arOrder['CUSTOMER_CITY']));
 
 		$arSection["ROWS"][] = array("TITLE" => GetMessage("SMOB_ADDRESS").":", "VALUE" => htmlspecialcharsbx($arOrder['CUSTOMER_ADDRESS']));
 

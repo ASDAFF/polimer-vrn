@@ -17,6 +17,11 @@ if (!function_exists('htmlspecialcharsbx'))
 	}
 }
 
+CModule::AddAutoloadClasses("askaron.pro1c", array(
+	"CAskaronPro1CTools" => "classes/general/tools.php",
+	"CAskaronPro1COptions" => "classes/general/options.php",
+	"CAskaronPro1CCache" => "classes/general/cache.php",
+));
 
 class CAskaronPro1C
 {
@@ -33,79 +38,38 @@ class CAskaronPro1C
 			"USE" => Array("ADMIN_SECTION")
 		);
 	}
-	
+
+	public static function OnAfterSetOption_secure_1c_exchange( $value )
+	{
+		$check = COption::GetOptionString( "askaron.pro1c", "check_orders" );
+		if ( $check == "D"  && $value != "N" )
+		{
+			COption::SetOptionString("sale", "secure_1c_exchange", "N" );
+		}
+	}
+
+	public static function OnAfterSetOption_DEFAULT_SKIP_SOURCE_CHECK( $value )
+	{
+		$check = COption::GetOptionString( "askaron.pro1c", "check_catalog" );
+		if ( $check == "D" && $value != "Y" )
+		{
+			COption::SetOptionString("catalog", "DEFAULT_SKIP_SOURCE_CHECK", "Y" );
+		}
+	}
+
 	public static function OnPageStartHandler()
 	{
 		self::$microtime_page_start = getmicrotime();
 		
 		if (self::IsExchange())
 		{
-			//global $APPLICATION;
-			
-			if ( !defined("ADMIN_SECTION") || ADMIN_SECTION !== true )
-			{
-				// do not use default template
-				define('SITE_TEMPLATE_ID', 'askaron_pro1c_empty');
-				define("SITE_TEMPLATE_PATH", "/bitrix/templates/askaron_pro1c_empty");				
-			}
-			
-			
-			// strange code for future connections
-			// display mysql errors. Before 14.0.0
-			global $DBDebug;
-			$DBDebug = true;			
-			
-			// display errors. Since 14.0.0
-			if ( CheckVersion( SM_VERSION, '14.0.0' ) )
-			{
-				$exception_handling = \Bitrix\Main\Config\Configuration::getValue("exception_handling");
-				
-				if ( !is_array( $exception_handling ) )
-				{
-					$exception_handling = array();
-				}
-				
-				$exception_handling["debug"] = true;
-				
-				$obConfig = \Bitrix\Main\Config\Configuration::getInstance();
-				$obConfig->delete("exception_handling");
-				$obConfig->add("exception_handling", $exception_handling);
-			}
-			// end strange code
-			
-			
-			// display mysql errors
-			global $DB;
-			if ( is_object( $DB ) )
-			{
-				$DB->debug = true;
-			}
+			CAskaronPro1CTools::OnPageStartDebugSettings();
 
-			
-			$time_limit = COption::GetOptionString("askaron.pro1c", "time_limit");
-			if ( strlen( $time_limit ) > 0 )
+			if ( COption::GetOptionString( "askaron.pro1c", "disable_clear_tag_cache_for_script") == "Y" )
 			{
-				@set_time_limit( $time_limit );
+				CModule::IncludeModule("iblock");
+				CIBlock::disableClearTagCache();
 			}
-
-			$memory_limit = COption::GetOptionString("askaron.pro1c", "memory_limit");
-			if ( strlen( $memory_limit ) > 0 )
-			{
-				$memory_limit_value = intval( $memory_limit );
-				if ( $memory_limit_value > 0 )
-				{
-					@ini_set( "memory_limit", $memory_limit."M" );
-				}
-				elseif ( $memory_limit_value == -1 )
-				{
-					@ini_set( "memory_limit", -1 );
-				}
-			}
-			
-			
-			
-			//:TODO
-			//ini_get("session.gc_maxlifetime");
 		}
 	}
 	
@@ -119,21 +83,24 @@ class CAskaronPro1C
 		if (self::IsExchange())
 		{
 			//self::log($_SESSION, '$_SESSION');
-			
-			global $APPLICATION;
-			
-			self::log( $_SERVER["REQUEST_URI"], 'Step start' );
 
-			if ( COption::GetOptionString("askaron.pro1c", "forbidden") == "Y" )
+			global $APPLICATION;
+			global $USER;
+
+			$log_str = self::GetIp()." ".$USER->GetLogin()." ". $_SERVER["REQUEST_URI"];
+
+			self::log( $log_str, 'Step start');
+
+			if (COption::GetOptionString("askaron.pro1c", "forbidden") == "Y")
 			{
 				$APPLICATION->RestartBuffer();
-				$contents = "failure\n".GetMessage(	"askaron_pro1c_forbidden_page", array(
-					"#THIS_PAGE#" => $APPLICATION->GetCurPage( true ),
-					"#SERVER_NAME#" => $_SERVER["SERVER_NAME"],
-					"#LANG#" => LANG
-				));
+				$contents = "failure\n" . GetMessage("askaron_pro1c_forbidden_page", array(
+						"#THIS_PAGE#" => $APPLICATION->GetCurPage(true),
+						"#SERVER_NAME#" => $_SERVER["SERVER_NAME"],
+						"#LANG#" => LANG
+					));
 
-				if(toUpper(LANG_CHARSET) != "WINDOWS-1251")
+				if (toUpper(LANG_CHARSET) != "WINDOWS-1251")
 				{
 					$contents = $APPLICATION->ConvertCharset($contents, LANG_CHARSET, "windows-1251");
 				}
@@ -142,63 +109,105 @@ class CAskaronPro1C
 				header("Content-Type: text/html; charset=windows-1251");
 
 				echo $contents;
-				die();			
-			}				
-			
-			if( $_GET['type'] == 'catalog' && $_GET['mode'] == 'import' )
+				die();
+			}
+
+			if ($_GET['type'] == 'catalog')
 			{
-				$LAST_STEP = "";
-				$NEW_STEP = "";
-				
-				if ( isset( $_SESSION["ASKARON_PRO1C_STEP"] ) )
+				if ( $_GET['mode'] == 'import' )
 				{
-					$LAST_STEP = $_SESSION["ASKARON_PRO1C_LAST_STEP"];
-				}
-				
-				if ( isset( $_SESSION["BX_CML2_IMPORT"]["NS"]["STEP"] ) )
-				{
-					$NEW_STEP = $_SESSION["BX_CML2_IMPORT"]["NS"]["STEP"];
-				}
-				
-				if ( $NEW_STEP > 0 &&  $NEW_STEP != $LAST_STEP )
-				{
-					self::log( $_SESSION["BX_CML2_IMPORT"]["NS"], GetMessage( "askaron_pro1c_new_step", array("#STEP#" => $NEW_STEP ) )  );
-					$_SESSION["ASKARON_PRO1C_LAST_STEP"] = $NEW_STEP;
-				}				
-				
-				
-				$import_pause = intval( COption::GetOptionString( "askaron.pro1c", "import_pause") );
-				if ( $import_pause > 0 )
-				{
-					//self::log($import_pause );
-					sleep( $import_pause );
+					//self::log($_SESSION, "session any step");
+
+
+					$LAST_STEP = "";
+					$NEW_STEP = "";
+
+					if (isset($_SESSION["ASKARON_PRO1C_STEP"]))
+					{
+						$LAST_STEP = $_SESSION["ASKARON_PRO1C_LAST_STEP"];
+					}
+
+					if (isset($_SESSION["BX_CML2_IMPORT"]["NS"]["STEP"]))
+					{
+						$NEW_STEP = $_SESSION["BX_CML2_IMPORT"]["NS"]["STEP"];
+					}
+
+					if ($NEW_STEP > 0 && $NEW_STEP != $LAST_STEP)
+					{
+						self::log($_SESSION["BX_CML2_IMPORT"]["NS"], GetMessage("askaron_pro1c_new_step", array("#STEP#" => $NEW_STEP)));
+						$_SESSION["ASKARON_PRO1C_LAST_STEP"] = $NEW_STEP;
+					}
+
+					$import_pause = intval(COption::GetOptionString("askaron.pro1c", "import_pause"));
+					if ($import_pause > 0)
+					{
+						//self::log($import_pause );
+						sleep($import_pause);
+					}
+
+					if ( COption::GetOptionString("askaron.pro1c", "copy_exchange_files") == "Y" )
+					if ( $_SESSION["BX_CML2_IMPORT"]["NS"]["STEP"] == 1 )
+					{
+						$dir_from = $_SERVER["DOCUMENT_ROOT"]."/upload/1c_catalog";
+						if ( file_exists( $dir_from.'/'.$_GET["filename"] ) )
+						{
+							$dir_to = $_SERVER["DOCUMENT_ROOT"]."/upload/1c_catalog_copy_askaron_pro1c";
+							CheckDirPath( $dir_from.'/'.$_GET["filename"] );
+							CopyDirFiles(  $dir_from.'/'.$_GET["filename"],  $dir_to.'/'.$_GET["filename"]);
+
+							$ht_name = $dir_to."/.htaccess";
+							CheckDirPath($ht_name);
+							file_put_contents($ht_name, "Deny from All");
+							@chmod($ht_name, BX_FILE_PERMISSIONS);
+						}
+					}
 				}
 
-				if( strstr($_GET['filename'], 'import') )
+				$arExchangeSettings = self::GetExchangeSettings();
+				if (isset($arExchangeSettings["SKIP_PRODUCTS"]) && $arExchangeSettings["SKIP_PRODUCTS"] == "Y")
 				{
-					$arExchangeSettings = self::GetExchangeSettings();
-					if ( isset( $arExchangeSettings["SKIP_PRODUCTS"] ) && $arExchangeSettings["SKIP_PRODUCTS"] == "Y" )
+					if (
+							($_GET['mode'] == 'deactivate')
+						||
+							( $_GET['mode'] == 'import' && strstr($_GET['filename'], 'import') )
+					)
 					{
 						$APPLICATION->RestartBuffer();
-						$contents = "success\n".GetMessage(	"askaron_pro1c_skip_products", array(
-							"#THIS_PAGE#" => $APPLICATION->GetCurPage( true ),
-							"#SERVER_NAME#" => $_SERVER["SERVER_NAME"],
-							"#LANG#" => LANG
-						));
 
-						if(toUpper(LANG_CHARSET) != "WINDOWS-1251")
+						if ( $_GET['mode'] == 'deactivate' )
+						{
+							$contents = "success\n".
+								GetMessage("askaron_pro1c_skip_deactivate")."\n".
+								GetMessage("askaron_pro1c_skip_description", array(
+									"#THIS_PAGE#" => $APPLICATION->GetCurPage(true),
+									"#SERVER_NAME#" => $_SERVER["SERVER_NAME"],
+									"#LANG#" => LANG
+								));
+						}
+						else
+						{
+							$contents = "success\n".
+								GetMessage("askaron_pro1c_skip_products")."\n".
+								GetMessage("askaron_pro1c_skip_description", array(
+									"#THIS_PAGE#" => $APPLICATION->GetCurPage(true),
+									"#SERVER_NAME#" => $_SERVER["SERVER_NAME"],
+									"#LANG#" => LANG
+								));
+						}
+
+						if (toUpper(LANG_CHARSET) != "WINDOWS-1251")
 						{
 							$contents = $APPLICATION->ConvertCharset($contents, LANG_CHARSET, "windows-1251");
 						}
-						
+
 						header("Pragma: no-cache");
 						header("Content-Type: text/html; charset=windows-1251");
-						
+
 						echo $contents;
-						die();							
+						die();
 					}
 				}
-			}	
+			}
 		}
 	}	
 		
@@ -431,41 +440,47 @@ class CAskaronPro1C
 	{
 		if ( COption::GetOptionString( "askaron.pro1c", "quantity_set_to_zero") == "Y" )
 		{
-			if ( !isset( $arFields["QUANTITY"] ) )
+			// skip import.xml file
+			if( !($_GET['type'] == 'catalog' && $_GET['mode'] == 'import' && strstr($_GET['filename'], 'import') ) )
 			{
-				$ELEMENT_ID = intval($ID);
-				if ($ELEMENT_ID == 0)
+				if (!isset($arFields["QUANTITY"]))
 				{
-					$ELEMENT_ID = intval($arFields["ID"]);
-				}
+					// must be current iblock or offers iblock
 
-				if ( $ELEMENT_ID > 0 && CModule::IncludeModule( "iblock" ) )
-				{
-					$arFilter = array(
-						"ID" => $ELEMENT_ID,
-					);
-
-					$arSelect = array(
-						"ID",
-						"IBLOCK_ID",
-						//"ACTIVE",
-					);
-
-					$res = CIBlockElement::GetList( array(), $arFilter, false, array("nTopCount" => 1), $arSelect );
-					if ( $arElementFileds = $res->Fetch() )
+					$ELEMENT_ID = intval($ID);
+					if ($ELEMENT_ID == 0)
 					{
-						$arCatalogInfo = self::GetCatalogInfo( $_SESSION["BX_CML2_IMPORT"]["NS"]["IBLOCK_ID"] );
+						$ELEMENT_ID = intval($arFields["ID"]);
+					}
 
-						// check if element or offer
-						if ( isset( $arCatalogInfo["ADDITIONAL"]["LIST"][   $arElementFileds["IBLOCK_ID"]   ] ) )
+					if ($ELEMENT_ID > 0 && CModule::IncludeModule("iblock"))
+					{
+						$arFilter = array(
+							"ID" => $ELEMENT_ID,
+						);
+
+						$arSelect = array(
+							"ID",
+							"IBLOCK_ID",
+							//"ACTIVE",
+						);
+
+						$res = CIBlockElement::GetList(array(), $arFilter, false, array("nTopCount" => 1), $arSelect);
+						if ($arElementFileds = $res->Fetch())
 						{
-							self::log($arFields, GetMessage( "askaron_pro1c_empty_quantity" ) );
-							$arFields["QUANTITY"] = 0;						
+							$arCatalogInfo = self::GetCatalogInfo($_SESSION["BX_CML2_IMPORT"]["NS"]["IBLOCK_ID"]);
+
+							// check if element or offer
+							if (isset($arCatalogInfo["ADDITIONAL"]["LIST"][$arElementFileds["IBLOCK_ID"]]))
+							{
+								self::log($arFields, GetMessage("askaron_pro1c_empty_quantity"));
+								$arFields["QUANTITY"] = 0;
+							}
 						}
 					}
-				}
 
-				//self::log($_SESSION, "\$_SESSION");
+					//self::log($_SESSION, "\$_SESSION");
+				}
 			}
 		}
 	}	
@@ -631,7 +646,10 @@ class CAskaronPro1C
 			if ( CheckVersion( SM_VERSION, '11.0.14' ) )
 			{
 				// main module new version 11.0.14
-				AddMessage2Log( $text, "askaron.pro1c", 0, false );
+				$log_trace = COption::GetOptionString( "askaron.pro1c", "log_trace");
+				$log_trace = intval($log_trace);
+
+				AddMessage2Log( $text, "askaron.pro1c", $log_trace, false );
 			}
 			else
 			{
@@ -932,6 +950,103 @@ class CAskaronPro1C
 		}
 		
 		return $arResult;
-	}	
+	}
+
+	private static function GetIp()
+	{
+		//$ip = $_SERVER["REMOTE_ADDR"]; // right way! But:
+
+		// My IP example
+		//[REMOTE_ADDR] => 86.2.2.2
+		//[HTTP_X_REAL_IP] => 86.2.2.2
+		//[HTTP_X_FORWARDED_FOR] => 86.2.2.2
+
+		// Opera Turbo Proxy O_o
+		//[REMOTE_ADDR] => 141.0.12.130
+		//[HTTP_X_REAL_IP] => 141.0.12.130
+		//[HTTP_X_FORWARDED_FOR] => 86.2.2.2, 141.0.12.130
+
+
+//			if ( strlen( $_SERVER["HTTP_X_REAL_IP"] ) > 0 ) // crazy admin
+//			{
+//				$ip = $_SERVER["HTTP_X_REAL_IP"];
+//			}
+
+		$ip = false;
+
+		//from bitrix statistic get_realip() or ForumGetRealIP()
+
+		$real_ip_proxy = false;
+
+		if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+		{
+			$ips = explode(", ", $_SERVER['HTTP_X_FORWARDED_FOR']);
+			foreach ($ips as $ipst)
+			{
+				// Skip RFC 1918 IP's 10.0.0.0/8, 172.16.0.0/12 and 192.168.0.0/16
+				if (!preg_match("/^(10|172\\.16|192\\.168)\\./", $ipst) && preg_match("/^[^.]+\\.[^.]+\\.[^.]+\\.[^.]+/", $ipst))
+				{
+					$real_ip_proxy = $ipst;
+					break;
+				}
+			}
+		}
+
+//			if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+//			{
+//				$ips = explode (", ", $_SERVER['HTTP_X_FORWARDED_FOR']);
+//				for ($i = 0; $i < count($ips); $i++)
+//				{
+//					if (!preg_match("/^(10|172\\.16|192\\.168)\\./", $ips[$i]))
+//					{
+//						$real_ip_proxy = $ips[$i];
+//						break;
+//					}
+//				}
+//			}
+
+		if ( $real_ip_proxy !== false )
+		{
+			$ip = $real_ip_proxy;
+		}
+		else
+		{
+			$ip = $_SERVER['REMOTE_ADDR'];
+		}
+
+		return $ip;
+	}
+
+	public static function OnBeforeUserAdd(&$arFields)
+	{
+		if (self::IsExchange())
+		{
+			self::log( $arFields, "OnBeforeUserAdd");
+		}
+	}
+
+	public static function OnAfterUserAdd(&$arFields)
+	{
+		if (self::IsExchange())
+		{
+			self::log( $arFields, "OnAfterUserAdd");
+		}
+	}
+
+	public static function OnBeforeUserUpdate(&$arFields)
+	{
+		if (self::IsExchange())
+		{
+			self::log( $arFields, "OnBeforeUserUpdate");
+		}
+	}
+
+	public static function OnAfterUserUpdate(&$arFields)
+	{
+		if (self::IsExchange())
+		{
+			self::log( $arFields, "OnAfterUserUpdate");
+		}
+	}
 }
 ?>

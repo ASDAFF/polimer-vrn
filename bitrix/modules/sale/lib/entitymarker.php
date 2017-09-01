@@ -48,16 +48,6 @@ class EntityMarker
 			$fields['ENTITY_ID'] = $entity->getId();
 		}
 
-		if (!empty($comment))
-		{
-			$fields['COMMENT'] = $comment;
-		}
-
-		if (!empty($type))
-		{
-			$fields['TYPE'] = $type;
-		}
-
 		$entityType = static::getEntityType($entity);
 
 		if ($entityType !== null)

@@ -76,7 +76,7 @@
 					</tr>
 					<tr>
 						<td><?=GetMessage('SPOD_EMAIL')?>:</td>
-						<td><a href="mailto:<?=htmlspecialcharsbx($arResult["USER"]["EMAIL"])?>"><?=$arResult["USER"]["EMAIL"]?></a></td>
+						<td><a href="mailto:<?=htmlspecialcharsbx($arResult["USER"]["EMAIL"])?>"><?=htmlspecialcharsbx($arResult["USER"]["EMAIL"])?></a></td>
 					</tr>
 
 					<tr><td><br></td><td></td></tr>
@@ -110,7 +110,7 @@
 						<td><?=$prop['NAME']?>:</td>
 						<td>
 
-							<?if($prop["TYPE"] == "CHECKBOX"):?>
+							<?if($prop["TYPE"] == "Y/N"):?>
 								<?=GetMessage('SPOD_'.($prop["VALUE"] == "Y" ? 'YES' : 'NO'))?>
 							<?else:?>
 								<?=htmlspecialcharsbx($prop["VALUE"])?>

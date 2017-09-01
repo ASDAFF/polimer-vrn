@@ -896,7 +896,7 @@ if ($APPLICATION->GetGroupRight("sale") != "D" && $USER->CanDoOperation('install
 		"text" => GetMessage("SALE_MENU_MARKETPLACE_READY_SHOPS"),
 		"title" => GetMessage("SALE_MENU_MARKETPLACE_READY_SHOPS"),
 		"url" => "update_system_market.php?category=14&lang=".LANGUAGE_ID,
-		"more_url" => array("update_system_market.php"),
+		"more_url" => array("update_system_market.php?category=14"),
 		"icon" => "sale_menu_icon_marketplace",
 		"page_icon" => ""
 	);

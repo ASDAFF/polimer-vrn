@@ -9,6 +9,7 @@ $MESS ['SPPD_PROFILE_NO'] = "Profile no. #ID#";
 $MESS ["SPPD_DOWNLOAD_FILE"]="Download file #FILE_NAME#";
 $MESS ["SPPD_DELETE_FILE"]="Delete file";
 $MESS ["SPPD_SELECT"]="Select";
+$MESS ["SPPD_ADD"]="Add";
 $MESS ["SPPD_FILE_NOT_SELECTED"]="No file has been selected";
 $MESS ["SPPD_FILE_COUNT"]="Files selected: ";
 ?>

@@ -3859,7 +3859,7 @@ $tabControl->BeginCustomField("BASKET_CONTAINER", GetMessage("NEWO_BASKET_CONTAI
 			<tr>
 				<td width="88%" align="left" class="heading" ><?=GetMessage("NEWO_TITLE_ORDER")?></td>
 				<td align="right" nowrap>
-					<a title="<?=GetMessage("SOE_ADD_ITEMS")?>" onClick="AddProductSearch();" class="adm-btn adm-btn-green adm-btn-add"  style="white-space:nowrap;" href="javascript:void(0);"><?=GetMessage("SOE_ADD_ITEMS")?></a>
+					<span title="<?=GetMessage("SOE_ADD_ITEMS")?>" onClick="AddProductSearch();" class="adm-btn adm-btn-green adm-btn-add"  style="display:inline;white-space:nowrap;"><?=GetMessage("SOE_ADD_ITEMS")?></span>
 				</td>
 			</tr>
 		</table>
@@ -5016,9 +5016,9 @@ $tabControl->BeginCustomField("BASKET_CONTAINER", GetMessage("NEWO_BASKET_CONTAI
 			$productAddBool = COption::GetOptionString('sale', 'SALE_ADMIN_NEW_PRODUCT');
 			?>
 			<?if ($productAddBool == "Y"):?>
-				<a title="<?=GetMessage("SOE_NEW_ITEMS")?>" onClick="ShowProductEdit('', 'Y');" class="adm-btn adm-btn-green" href="javascript:void(0);"><?=GetMessage("SOE_NEW_ITEMS")?></a>
+				<span title="<?=GetMessage("SOE_NEW_ITEMS")?>" onClick="ShowProductEdit('', 'Y');" style="display:inline;" class="adm-btn adm-btn-green"><?=GetMessage("SOE_NEW_ITEMS")?></span>
 			<?endif;?>
-			<a title="<?=GetMessage("SOE_ADD_ITEMS")?>" onClick="AddProductSearch();" class="adm-btn adm-btn-green adm-btn-add" href="javascript:void(0);"><?=GetMessage("SOE_ADD_ITEMS")?></a>
+			<span title="<?=GetMessage("SOE_ADD_ITEMS")?>" onClick="AddProductSearch();" style="display:inline;" class="adm-btn adm-btn-green adm-btn-add"><?=GetMessage("SOE_ADD_ITEMS")?></span>
 		</div>
 
 <script type="text/javascript">
@@ -5152,6 +5152,7 @@ $tabControl->BeginCustomField("BASKET_CONTAINER", GetMessage("NEWO_BASKET_CONTAI
 		div.id = "product_edit";
 		div.style.visible = 'hidden';
 		div.style.position = 'absolute';
+		div.style.zIndex = 1000;
 		div.innerHTML = '<?=CUtil::JSEscape($formTemplateTableStart);?>' +
 			'<?=CUtil::JSEscape($formTemplateMain); ?>' +
 			'<?=CUtil::JSEscape($formTemplateProduct); ?>' +

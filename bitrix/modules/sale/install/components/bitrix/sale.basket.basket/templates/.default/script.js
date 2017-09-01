@@ -1244,10 +1244,10 @@ function deleteCoupon()
 	var target = this,
 		value;
 
-	if (!!target && target.hasAttribute('data-coupon'))
+	if (BX.type.isElementNode(target) && target.hasAttribute('data-coupon'))
 	{
 		value = target.getAttribute('data-coupon');
-		if (!!value && value.length > 0)
+		if (BX.type.isNotEmptyString(value))
 		{
 			recalcBasketAjax({'delete_coupon' : value});
 		}

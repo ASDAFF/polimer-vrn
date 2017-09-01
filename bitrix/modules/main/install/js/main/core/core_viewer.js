@@ -984,12 +984,14 @@ BX.CViewEditableElement = function(params)
 	this.version = parseInt(params.version) || 0;
 	this.dateModify = params.dateModify;
 	this.currentModalWindow = params.currentModalWindow || false;
+	this.editInProcess = false;
 }
 
 BX.extend(BX.CViewEditableElement, BX.CViewCoreElement);
 
 BX.CViewEditableElement.prototype.runAction = function(action, params){
 
+	this.editInProcess = false;
 	//todo normalize this! check params, add action class. Return result action.
 	action = action.toLowerCase();
 	switch(action)
@@ -1166,6 +1168,7 @@ BX.CViewEditableElement.prototype.getExtensionAfterConvert = function()
 
 BX.CViewEditableElement.prototype.editFile = function(obElementViewer)
 {
+	this.editInProcess = true;
 	if((/*!this.isFromUserLib || */!BX.CViewer.isLocalEditService(obElementViewer.initEditService())) && this.askConvert)
 	{
 		var convertDialog = BX.create('div', {
@@ -1214,6 +1217,7 @@ BX.CViewEditableElement.prototype.editFile = function(obElementViewer)
 				text : BX.message('JS_CORE_VIEWER_IFRAME_CONVERT_DECLINE'),
 				events : { click : BX.delegate(function() {
 						this.closeConfirm();
+						this.editInProcess = false;
 					}, obElementViewer
 				)}
 			})
@@ -2136,10 +2140,13 @@ BX.CViewIframeElement.prototype.load = function(successLoadCallback, errorLoadCa
 					{
 						// check for 204 status
 						this.addTimeoutId(setTimeout(BX.proxy(function(){
-							if(!!this.domElement.contentDocument && this.domElement.contentDocument.URL == 'about:blank')
+							try
 							{
-								BX.onCustomEvent(this, 'onIframeDocError', [this]);
-							}
+								if(!!this.domElement.contentDocument && this.domElement.contentDocument.URL == 'about:blank')
+								{
+									BX.onCustomEvent(this, 'onIframeDocError', [this]);
+								}
+							} catch(e) {}
 						}, this), 15000));
 					}
 
@@ -2307,6 +2314,7 @@ BX.CViewAjaxElement.prototype.load = function(successLoadCallback)
 					{
 						this.innerElementId = data.innerElementId;
 						BX.addCustomEvent('onElementViewClose', BX.delegate(function(){
+							var player;
 							if ((typeof videojs !== 'undefined') && (player = BX(this.innerElementId)))
 							{
 								videojs(player.id).pause();
@@ -3767,6 +3775,20 @@ BX.CViewer.prototype._keypress = function(e)
 	var key = (e||window.event).keyCode || (e||window.event).charCode;
 	if (!!this.params.keyMap && !!this.params.keyMap[key] && !!this[this.params.keyMap[key]])
 	{
+		var current = this.getCurrent();
+		if(current.wrapClassName && current.wrapClassName === 'bx-viewer-video' && current.innerElementId && key != 27)
+		{
+			if(typeof BX.Fileman.PlayerManager !== 'undefined' && BX.Fileman.PlayerManager.getPlayerById)
+			{
+				var player = BX.Fileman.PlayerManager.getPlayerById(current.innerElementId);
+				if(player && player.isReady())
+				{
+					player.onKeyDown(e);
+					e.preventDefault();
+					return;
+				}
+			}
+		}
 		this[this.params.keyMap[key]].apply(this);
 		return BX.PreventDefault(e);
 	}
@@ -4088,6 +4110,7 @@ BX.CViewer.prototype.setList = function(list)
 BX.CViewer.prototype.show = function(element, force)
 {
 	BX.CViewer.temporaryServiceEditDoc = '';
+	this.initEditService();
 	this.closeConfirm();
 	if(BX.PopupWindowManager.getCurrentPopup())
 	{
@@ -4774,6 +4797,10 @@ BX.CViewer.prototype.helpDiskDialog = function(title, message, downloadUrl){
 };
 
 BX.CViewer.prototype.createPopupWindowFromErrorElement = function(errorElement){
+	if(errorElement.editInProcess && errorElement.editInProcess === true)
+	{
+		return;
+	}
 	var titleBar = {content: BX.create('div', {
 		props: {
 			className: 'popup-window-titlebar'
@@ -4855,8 +4882,6 @@ BX.CViewer.prototype.createPopupWindowFromErrorElement = function(errorElement){
 		]
 	});
 
-	var hasLock = BX.CViewer.hasLockScroll();
-	BX.CViewer.lockScroll();
 	this.openConfirm(content, [
 		(errorElement.downloadUrl? new BX.PopupWindowButton({
 			text : BX.message('JS_CORE_VIEWER_DOWNLOAD_DOCUMENT'),
@@ -4874,10 +4899,6 @@ BX.CViewer.prototype.createPopupWindowFromErrorElement = function(errorElement){
 				{
 					this.destroyMenu();
 					this.closeConfirm();
-					if(!hasLock)
-					{
-						BX.CViewer.unlockScroll();
-					}
 				}, this
 			)}
 		})
@@ -5248,7 +5269,9 @@ BX.CViewer.prototype.createAjaxElement = function(element, params)
 			pdfFallback: element.getAttribute('data-bx-pdfFallback'),
 			width: element.getAttribute('data-bx-width'),
 			height: element.getAttribute('data-bx-height'),
-			hideEdit: element.getAttribute('data-bx-hideEdit')
+			hideEdit: element.getAttribute('data-bx-hideEdit'),
+			iframeSrc: element.getAttribute('data-bx-iframeSrc'),
+			transformTimeout: element.getAttribute('data-bx-transformTimeout')
 		});
 
 		if(!ajaxElement.hideEdit)

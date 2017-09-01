@@ -93,6 +93,7 @@
 		element.src = URL.createObjectURL(stream);
 		if(BX.type.isNotEmptyString(this.defaultSpeaker) && element.setSinkId)
 		{
+			this.log('Trying to set output device: ' + this.defaultSpeaker);
 			element.setSinkId(this.defaultSpeaker);
 		}
 	};
@@ -380,7 +381,7 @@
 					return false;
 				}
 
-				this.log("Adding local stream.", userId, JSON.stringify(this.pc[userId]));
+				//this.log("Adding local stream.", userId, JSON.stringify(this.pc[userId]));
 
 				this.pcStart[userId] = true;
 

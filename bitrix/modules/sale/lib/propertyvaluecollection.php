@@ -601,9 +601,6 @@ class PropertyValueCollection
 			)
 		);
 
-		if (!EntityMarker::hasErrors($order))
-			$order->setField('MARKED', 'N');
-
 		/** @var PropertyValue $propertyValue */
 		foreach ($this->collection as $propertyValue)
 		{

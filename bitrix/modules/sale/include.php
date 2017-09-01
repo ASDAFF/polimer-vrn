@@ -6,7 +6,6 @@ global $DBType;
 
 IncludeModuleLangFile(__FILE__);
 
-
 $GLOBALS["SALE_FIELD_TYPES"] = array(
 	"TEXT" => GetMessage("SALE_TYPE_TEXT"),
 	"CHECKBOX" => GetMessage("SALE_TYPE_CHECKBOX"),
@@ -485,11 +484,29 @@ CModule::AddAutoloadClasses(
 		'Bitrix\Sale\Services\Base\RestrictionManager' => 'lib/services/base/restrictionmanager.php',
 
 		'\Bitrix\Sale\Compatible\DiscountCompatibility' => 'lib/compatible/discountcompatibility.php',
+		'\Bitrix\Sale\Discount\Context\BaseContext' => 'lib/discount/context/basecontext.php',
+		'\Bitrix\Sale\Discount\Context\Fuser' => 'lib/discount/context/fuser.php',
+		'\Bitrix\Sale\Discount\Context\User' => 'lib/discount/context/user.php',
+		'\Bitrix\Sale\Discount\Context\UserGroup' => 'lib/discount/context/usergroup.php',
 		'\Bitrix\Sale\Discount\Gift\Collection' => 'lib/discount/gift/collection.php',
 		'\Bitrix\Sale\Discount\Gift\Gift' => 'lib/discount/gift/gift.php',
 		'\Bitrix\Sale\Discount\Gift\Manager' => 'lib/discount/gift/manager.php',
 		'\Bitrix\Sale\Discount\Gift\RelatedDataTable' => 'lib/discount/gift/relateddata.php',
+		'\Bitrix\Sale\Discount\Index\IndexElementTable' => 'lib/discount/index/indexelement.php',
+		'\Bitrix\Sale\Discount\Index\IndexSectionTable' => 'lib/discount/index/indexsection.php',
+		'\Bitrix\Sale\Discount\Index\Manager' => 'lib/discount/index/manager.php',
+		'\Bitrix\Sale\Discount\Prediction\Manager' => 'lib/discount/prediction/manager.php',
+		'\Bitrix\Sale\Discount\Preset\ArrayHelper' => 'lib/discount/preset/arrayhelper.php',
+		'\Bitrix\Sale\Discount\Preset\BasePreset' => 'lib/discount/preset/basepreset.php',
+		'\Bitrix\Sale\Discount\Preset\HtmlHelper' => 'lib/discount/preset/htmlhelper.php',
+		'\Bitrix\Sale\Discount\Preset\Manager' => 'lib/discount/preset/manager.php',
+		'\Bitrix\Sale\Discount\Preset\SelectProductPreset' => 'lib/discount/preset/selectproductpreset.php',
+		'\Bitrix\Sale\Discount\Preset\State' => 'lib/discount/preset/state.php',
+		'\Bitrix\Sale\Discount\RuntimeCache\DiscountCache' => 'lib/discount/runtimecache/discountcache.php',
+		'\Bitrix\Sale\Discount\RuntimeCache\FuserCache' => 'lib/discount/runtimecache/fusercache.php',
 		'\Bitrix\Sale\Discount\Actions' => 'lib/discount/actions.php',
+		'\Bitrix\Sale\Discount\Analyzer' => 'lib/discount/analyzer.php',
+		'\Bitrix\Sale\Discount\CumulativeCalculator' => 'lib/discount/cumulativecalculator.php',
 		'\Bitrix\Sale\Internals\DiscountTable' => 'lib/internals/discount.php',
 		'\Bitrix\Sale\Internals\DiscountCouponTable' => 'lib/internals/discountcoupon.php',
 		'\Bitrix\Sale\Internals\DiscountEntitiesTable' => 'lib/internals/discountentities.php',

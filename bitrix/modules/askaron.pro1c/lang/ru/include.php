@@ -5,10 +5,16 @@ $MESS ['askaron_pro1c_forbidden_page'] =
 	"Информация о модуле http://marketplace.1c-bitrix.ru/solutions/askaron.pro1c/\n";
 
 $MESS ['askaron_pro1c_skip_products'] = 
-	"Импорт описаний товаров пропущен.\n".
-	"Опция пропускать описания товаров указана в модуле \"Продвинутый обмен с 1С\" для страницы #THIS_PAGE#.\n".
+	"Импорт описаний товаров пропущен.";
+
+$MESS ['askaron_pro1c_skip_deactivate'] =
+	"Деактивация товаров и разделов товаров пропущена.";
+
+$MESS ['askaron_pro1c_skip_description'] = 	"Опция пропускать описания товаров указана в модуле \"Продвинутый обмен с 1С\" для страницы #THIS_PAGE#.\n".
 	"Страница настроек http://#SERVER_NAME#/bitrix/admin/settings.php?mid=askaron.pro1c&lang=#LANG#\n".
 	"Информация о модуле http://marketplace.1c-bitrix.ru/solutions/askaron.pro1c/\n";
+
+
 
 $MESS ['askaron_pro1c_live_log_works'] = 'Живой лог работает';
 

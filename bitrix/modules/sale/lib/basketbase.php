@@ -294,7 +294,7 @@ abstract class BasketBase
 	 * Getting Customer ID
 	 *
 	 * @param bool $skipCreate - Creating a buyer if it is not found
-	 * @return int|void
+	 * @return int|null
 	 */
 	public function getFUserId($skipCreate = false)
 	{

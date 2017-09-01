@@ -104,6 +104,11 @@ class PersonalProfileDetail extends CBitrixComponent
 
 		$request = Main\Application::getInstance()->getContext()->getRequest();
 
+		if ($this->arParams['AJAX_CALL'] === 'Y')
+		{
+			return $this->responseAjax();
+		}
+
 		if ($this->arParams["SET_TITLE"] === 'Y')
 		{
 			$APPLICATION->SetTitle(Loc::getMessage("SPPD_TITLE").$this->idProfile);
@@ -155,6 +160,65 @@ class PersonalProfileDetail extends CBitrixComponent
 		{
 			throw new Main\SystemException(Loc::getMessage("SALE_MODULE_NOT_INSTALL"), self::E_SALE_MODULE_NOT_INSTALLED);
 		}
+	}
+
+	/**
+	 * @return string|void
+	 */
+	protected function responseAjax()
+	{
+
+		if ($this->arParams['ACTION'] === 'getLocationHtml')
+		{
+			$name = $this->arParams['LOCATION_NAME'];
+			$key = $this->arParams['LOCATION_KEY'];
+			$locationTemplate = $this->arParams['LOCATION_TEMPLATE'];
+			$resultHtml =  $this->getLocationHtml($name, $key, $locationTemplate);
+			echo $resultHtml;
+		}
+
+		require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
+		die();
+	}
+
+	/**
+	 * Load html for multiply location input
+	 *
+	 * @param $name
+	 * @param $key
+	 * @param $locationTemplate
+	 *
+	 * @return string
+	 */
+	protected function getLocationHtml($name, $key, $locationTemplate)
+	{
+		$name = strlen($name) > 0 ? $name : "" ;
+		$key = (int)$key >= 0 ? (int)$this->arParams['LOCATION_KEY'] : 0;
+		$locationTemplate = strlen($locationTemplate) > 0 ? $locationTemplate : '';
+		$locationClassName = 'location-block-wrapper';
+		if (empty($locationTemplate))
+		{
+			$locationClassName .= ' location-block-wrapper-delimeter';
+		}
+		ob_start();
+		CSaleLocation::proxySaleAjaxLocationsComponent(
+			array(
+				"ID" => "propertyLocation".$name."[$key]",
+				"AJAX_CALL" => "N",
+				'CITY_OUT_LOCATION' => 'Y',
+				'COUNTRY_INPUT_NAME' => $name.'_COUNTRY',
+				'CITY_INPUT_NAME' => $name."[$key]",
+				'LOCATION_VALUE' => ''
+			),
+			array(
+			),
+			$locationTemplate,
+			true,
+			$locationClassName
+		);
+		$resultHtml = ob_get_contents();
+		ob_end_clean();
+		return $resultHtml;
 	}
 
 	/**
@@ -218,7 +282,7 @@ class PersonalProfileDetail extends CBitrixComponent
 		}
 
 		$arrayTmp = array();
-
+		$propertyIds = array();
 		$orderPropertiesListGroup = CSaleOrderPropsGroup::GetList(
 			array("SORT" => "ASC", "NAME" => "ASC"),
 			array("PERSON_TYPE_ID" => $property["PERSON_TYPE_ID"]),
@@ -257,27 +321,38 @@ class PersonalProfileDetail extends CBitrixComponent
 					$orderProperty["VALUES"] = $locationValue;
 				}
 				$arrayTmp[$orderPropertyGroup["ID"]]["PROPS"][] = $orderProperty;
+				$orderPropertyList[$orderProperty['ID']] = $orderProperty;
 			}
 
 			$this->arResult["ORDER_PROPS"] = $arrayTmp;
-
-			// get prop values
-			$propertiesValueList = Array();
-
-			$resultUserProperties = CSaleOrderUserPropsValue::GetList(
-				array("SORT" => "ASC"),
-				array("USER_PROPS_ID" => $property["ID"]),
-				false,
-				false,
-				array("ID", "ORDER_PROPS_ID", "VALUE", "SORT", "USER_PROPS_ID")
-			);
-			while ($userProperty = $resultUserProperties->GetNext())
-			{
-				$propertiesValueList["ORDER_PROP_" . $userProperty["ORDER_PROPS_ID"]] = $userProperty["VALUE"];
-			}
-
-			$this->arResult["ORDER_PROPS_VALUES"] = $propertiesValueList;
 		}
+		// get prop values
+		$propertiesValueList = Array();
+		$profileData = Sale\OrderUserProperties::getProfileValues((int)($this->idProfile));
+		if (!empty($profileData))
+		{
+			foreach ($profileData as $propertyId => $value)
+			{
+				if ($orderPropertyList[$propertyId]['TYPE'] === 'LOCATION')
+				{
+					$locationMap = array();
+					$locationData = Sale\Location\LocationTable::getList(
+						array(
+							'filter' => array('=CODE' => $value),
+							'select' => array('ID', 'CODE')
+						)
+					);
+					while ($location = $locationData->fetch())
+					{
+						$locationMap[] = $location['ID'];
+					}
+					$value = ($orderPropertyList[$propertyId]['MULTIPLE'] === 'Y') ? $locationMap : $locationMap[0];
+				}
+				$propertiesValueList["ORDER_PROP_" . $propertyId] = $value;
+			}
+		}
+
+		$this->arResult["ORDER_PROPS_VALUES"] = $propertiesValueList;
 	}
 
 	/**
@@ -331,7 +406,7 @@ class PersonalProfileDetail extends CBitrixComponent
 				if ((int)($currentValue) <= 0)
 					return false;
 			}
-			elseif ($property["TYPE"] == "MULTISELECT")
+			elseif ($property["TYPE"] == "MULTISELECT" || $property["MULTIPLE"] == "Y")
 			{
 				if (!is_array($currentValue) || count($currentValue) <= 0)
 					return false;
@@ -384,6 +459,30 @@ class PersonalProfileDetail extends CBitrixComponent
 					'MULTIPLE' => $orderProperty["MULTIPLE"]
 				);
 
+				if ($orderProperty['TYPE'] == "LOCATION")
+				{
+					$changedLocation = array();
+					$locationResult = Sale\Location\LocationTable::getList(
+						array(
+							'filter' => array('=ID' => $currentValue),
+							'select' => array('ID', 'CODE')
+						)
+					);
+
+					while ($location = $locationResult->fetch())
+					{
+						if ($orderProperty['MULTIPLE'] === "Y")
+						{
+							$changedLocation[] = $location['CODE'];
+						}
+						else
+						{
+							$changedLocation = $location['CODE'];
+						}
+					}
+					$currentValue = !empty($changedLocation) ? $changedLocation : "";
+				}
+
 				if ($orderProperty["TYPE"] === 'FILE')
 				{
 					$fileIdList = array();
@@ -411,6 +510,14 @@ class PersonalProfileDetail extends CBitrixComponent
 				elseif ($orderProperty['TYPE'] == "MULTISELECT")
 				{
 					$fieldValues[$orderProperty["ID"]]['VALUE'] = implode(',',$currentValue);
+				}
+				elseif ($orderProperty['MULTIPLE'] == "Y")
+				{
+					if (is_array($currentValue))
+					{
+						$currentValue = array_diff($currentValue, array("", NULL, false));
+					}
+					$fieldValues[$orderProperty["ID"]]['VALUE'] = serialize($currentValue);
 				}
 				else
 				{
@@ -495,7 +602,7 @@ class PersonalProfileDetail extends CBitrixComponent
 
 			if (isset($fieldValues[$propertyValues["ORDER_PROPS_ID"]]['VALUE']))
 			{
-				$saleOrderUserPropertiesValue->Update(
+				Sale\Internals\UserPropsValueTable::update(
 					$propertyValues["ID"],
 					array("VALUE" => $fieldValues[$propertyValues["ORDER_PROPS_ID"]]['VALUE'])
 				);
@@ -522,7 +629,16 @@ class PersonalProfileDetail extends CBitrixComponent
 	 */
 	protected function deleteFromPropertyTypeFile($idFileDeletingList, $baseArray)
 	{
-		$idFileDeletingList = explode(';', $idFileDeletingList);
+		if (CheckSerializedData($idFileDeletingList)
+			&& ($serialisedValue = @unserialize($idFileDeletingList)) !== false)
+		{
+			$idFileDeletingList = $serialisedValue;
+		}
+		else
+		{
+			$idFileDeletingList = explode(';', $idFileDeletingList);
+		}
+
 		foreach ($idFileDeletingList as $idDelete)
 		{
 			$key = array_search($idDelete, $baseArray);

@@ -105,12 +105,7 @@ abstract class Cashbox
 
 		if ($ofd === null)
 		{
-			$handler = $this->getField('OFD');
-			if (class_exists($handler))
-			{
-				$testMode = $this->getField('OFD_TEST_MODE') === 'Y';
-				$ofd = Ofd::create($handler, $testMode);
-			}
+			$ofd = Ofd::create($this);
 		}
 
 		return $ofd;

@@ -249,6 +249,12 @@ class PaymentTable extends Main\Entity\DataManager
 				array('join_type' => 'INNER')
 			),
 
+			'REASON_MARKED' => array(
+				'data_type' => 'string',
+				'validation' => array(__CLASS__, 'validateReasonMarked'),
+				'title' => Loc::getMessage('ORDER_PAYMENT_ENTITY_REASON_MARKED_FIELD'),
+			),
+
 			new Main\Entity\BooleanField(
 				'UPDATED_1C',
 				array(
@@ -388,6 +394,17 @@ class PaymentTable extends Main\Entity\DataManager
 	{
 		return array(
 			new Main\Entity\Validator\Length(null, 128),
+		);
+	}
+	/**
+	 * Returns validators for REASON_MARKED field.
+	 *
+	 * @return array
+	 */
+	public static function validateReasonMarked()
+	{
+		return array(
+			new Main\Entity\Validator\Length(null, 255),
 		);
 	}
 }

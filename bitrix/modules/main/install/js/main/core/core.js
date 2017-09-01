@@ -1103,6 +1103,42 @@ BX.clone = function(obj, bCopyObj)
 	return _obj;
 };
 
+BX.getCaretPosition = function(node)
+{
+	var pos = 0;
+
+	if(node.selectionStart || node.selectionStart == 0)
+	{
+		pos = node.selectionStart;
+	}
+	else if(document.selection)
+	{
+		node.focus();
+		var selection = document.selection.createRange();
+		selection.moveStart('character', -node.value.length);
+		pos = selection.text.length;
+	}
+
+	return (pos);
+};
+
+BX.setCaretPosition = function(node, pos)
+{
+	if(node.setSelectionRange)
+	{
+		node.focus();
+		node.setSelectionRange(pos, pos);
+	}
+	else if(node.createTextRange)
+	{
+		var range = node.createTextRange();
+		range.collapse(true);
+		range.moveEnd('character', pos);
+		range.moveStart('character', pos);
+		range.select();
+	}
+};
+
 // access private. use BX.mergeEx instead.
 // todo: refactor BX.merge, make it work through BX.mergeEx
 BX.merge = function(){
@@ -2290,17 +2326,40 @@ BX.util = {
 
 		return first;
 	},
-	
-	array_flip: function ( object ) 
+
+	array_flip: function ( object )
 	{
 	    var newObject = {};
-		
-	    for (var key in object) 
+
+	    for (var key in object)
 		{
 	        newObject[object[key]] = key;
 	    }
-		
+
 	    return newObject;
+	},
+
+	array_diff: function(ar1, ar2, hash)
+	{
+		hash = BX.type.isFunction(hash) ? hash : null;
+		var i, length, v, h, map = {}, result = [];
+		for(i = 0, length = ar2.length; i < length; i++)
+		{
+			v = ar2[i];
+			h = hash ? hash(v) : v;
+			map[h] = true;
+		}
+
+		for(i = 0, length = ar1.length; i < length; i++)
+		{
+			v = ar1[i];
+			h = hash ? hash(v) : v;
+			if(typeof(map[h]) === "undefined")
+			{
+				result.push(v);
+			}
+		}
+		return result;
 	},
 
 	array_unique: function(ar)
@@ -2486,22 +2545,22 @@ BX.util = {
 		}
 		return window.open(url, '', 'status=no,scrollbars=yes,resizable=yes,width='+width+',height='+height+',top='+Math.floor((h - height)/2-14)+',left='+Math.floor((w - width)/2-5));
 	},
-	
-	shuffle: function(array) 
+
+	shuffle: function(array)
 	{
 		var temporaryValue, randomIndex;
 		var currentIndex = array.length;
-		
-		while (0 !== currentIndex) 
+
+		while (0 !== currentIndex)
 		{
 			randomIndex = Math.floor(Math.random() * currentIndex);
 			currentIndex -= 1;
-			
+
 			temporaryValue = array[currentIndex];
 			array[currentIndex] = array[randomIndex];
 			array[randomIndex] = temporaryValue;
 		}
-		
+
 		return array;
 	},
 
@@ -2800,8 +2859,8 @@ BX.util = {
 
 		return enable;
 	},
-	
-	escapeRegExp: function(str) 
+
+	escapeRegExp: function(str)
 	{
 		return str.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
 	}
@@ -2861,6 +2920,114 @@ BX.type = {
 		{
 		}
 		return typeof(key) === "undefined" || hasProp.call(item, key);
+	},
+	ensureInteger: function(value)
+	{
+		if(BX.type.isNumber(value))
+		{
+			return value;
+		}
+
+		value = parseInt(value);
+		return !isNaN(value) ? value : 0;
+	},
+	stringToInt: function(s)
+	{
+		var i = parseInt(s);
+		return !isNaN(i) ? i : 0;
+	}
+};
+
+BX.prop =
+{
+	get: function(object, key, defaultValue)
+	{
+		return object && object.hasOwnProperty(key) ? object[key] : defaultValue;
+	},
+	getObject: function(object, key, defaultValue)
+	{
+		return object && BX.type.isPlainObject(object[key]) ? object[key] : defaultValue;
+	},
+	getElementNode: function(object, key, defaultValue)
+	{
+		return object && BX.type.isElementNode(object[key]) ? object[key] : defaultValue;
+	},
+	getArray: function(object, key, defaultValue)
+	{
+		return object && BX.type.isArray(object[key]) ? object[key] : defaultValue;
+	},
+	getFunction: function(object, key, defaultValue)
+	{
+		return object && BX.type.isFunction(object[key]) ? object[key] : defaultValue;
+	},
+	getNumber: function(object, key, defaultValue)
+	{
+		if(!(object && object.hasOwnProperty(key)))
+		{
+			return defaultValue;
+		}
+
+		var value = object[key];
+		if(BX.type.isNumber(value))
+		{
+			return value;
+		}
+
+		value = parseFloat(value);
+		return !isNaN(value) ? value : defaultValue;
+	},
+	getInteger: function(object, key, defaultValue)
+	{
+		if(!(object && object.hasOwnProperty(key)))
+		{
+			return defaultValue;
+		}
+
+		var value = object[key];
+		if(BX.type.isNumber(value))
+		{
+			return value;
+		}
+
+		value = parseInt(value);
+		return !isNaN(value) ? value : defaultValue;
+	},
+	getBoolean: function(object, key, defaultValue)
+	{
+		if(!(object && object.hasOwnProperty(key)))
+		{
+			return defaultValue;
+		}
+
+		var value = object[key];
+		return (BX.type.isBoolean(value)
+			? value
+			: (BX.type.isString(value) ? (value.toLowerCase() === "true") : !!value)
+		);
+	},
+	getString: function(object, key, defaultValue)
+	{
+		if(!(object && object.hasOwnProperty(key)))
+		{
+			return defaultValue;
+		}
+
+		var value = object[key];
+		return BX.type.isString(value) ? value : value.toString();
+	},
+	extractDate: function(datetime)
+	{
+		if(!BX.type.isDate(datetime))
+		{
+			datetime = new Date();
+		}
+
+		datetime.setHours(0);
+		datetime.setMinutes(0);
+		datetime.setSeconds(0);
+		datetime.setMilliseconds(0);
+
+		return datetime;
 	}
 };
 
@@ -5671,7 +5838,7 @@ if(typeof(BX.Promise) === "undefined")
 
 		return this.next;
 	};
-	
+
 	BX.Promise.prototype.catch = function(onRejected)
 	{
 		if(BX.type.isFunction(onRejected))
@@ -5691,7 +5858,7 @@ if(typeof(BX.Promise) === "undefined")
 
 		return this.next;
 	};
-	
+
 	BX.Promise.prototype.setAutoResolve = function(way, ms)
 	{
 		this.timer = setTimeout(BX.delegate(function(){

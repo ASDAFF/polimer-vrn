@@ -91,7 +91,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent.Maps');
 					title: activeStores[i].TITLE
 				});
 				marker.info = new google.maps.InfoWindow({
-					content: '<h3>' + activeStores[i].TITLE + '</h3>' + this.getStoreInfoHtml(activeStores[i]) + '<br />'
+					content: '<h3>' + BX.util.htmlspecialchars(activeStores[i].TITLE) + '</h3>' + this.getStoreInfoHtml(activeStores[i]) + '<br />'
 					+ '<a class="btn btn-sm btn-default" data-store="' + activeStores[i].ID + '">'
 					+ this.context.params.MESS_SELECT_PICKUP + '</a>'
 				});

@@ -99,7 +99,7 @@ class SaleOrderAjax extends \CBitrixComponent
 		$arParams['ACTION_VARIABLE'] = isset($arParams['ACTION_VARIABLE']) ? trim($arParams['ACTION_VARIABLE']) : '';
 		if ($arParams['ACTION_VARIABLE'] == '')
 		{
-			$arParams['ACTION_VARIABLE'] = 'action';
+			$arParams['ACTION_VARIABLE'] = 'soa-action';
 		}
 
 		$arParams['PATH_TO_BASKET'] = isset($arParams['PATH_TO_BASKET']) ? trim($arParams['PATH_TO_BASKET']) : '';
@@ -560,48 +560,7 @@ class SaleOrderAjax extends \CBitrixComponent
 		$useProfileProperties = ($loadFromProfile || $justAuthorized) && $haveProfileId;
 		if ($useProfileProperties)
 		{
-			$dbUserPropsValues = CSaleOrderUserPropsValue::GetList(
-				array('SORT' => 'ASC'),
-				array(
-					'USER_PROPS_ID' => intval($this->arUserResult['PROFILE_ID']),
-					'USER_ID' => intval($order->getUserId()),
-				),
-				false,
-				false,
-				array('VALUE', 'PROP_TYPE', 'VARIANT_NAME', 'SORT', 'ORDER_PROPS_ID')
-			);
-			while ($propValue = $dbUserPropsValues->Fetch())
-			{
-				if ($propValue['PROP_TYPE'] === 'ENUM')
-				{
-					$propValue['VALUE'] = explode(',', $propValue['VALUE']);
-				}
-
-				if ($propValue['PROP_TYPE'] === 'LOCATION' && !empty($propValue['VALUE']))
-				{
-					$arLoc = LocationTable::getById($propValue['VALUE'])->fetch();
-					if (!empty($arLoc))
-					{
-						$propValue['VALUE'] = $arLoc['CODE'];
-					}
-				}
-
-				if ($propValue['PROP_TYPE'] === 'FILE' && !empty($propValue['VALUE']))
-				{
-					if (CheckSerializedData($propValue['VALUE'])
-						&& ($values = @unserialize($propValue['VALUE'])) !== false)
-					{
-						$propValue['VALUE'] = array();
-
-						foreach ($values as $value)
-						{
-							$propValue['VALUE'][] = CFile::GetFileArray($value);
-						}
-					}
-				}
-
-				$profileProperties[$propValue['ORDER_PROPS_ID']] = $propValue['VALUE'];
-			}
+			$profileProperties = Sale\OrderUserProperties::getProfileValues((int)($this->arUserResult['PROFILE_ID']));
 		}
 
 		$ipAddress = '';
@@ -932,27 +891,47 @@ class SaleOrderAjax extends \CBitrixComponent
 			if (count($basket) == 0)
 			{
 				global $APPLICATION;
+				
+				if ($this->action === 'saveOrderAjax')
+				{
+					$APPLICATION->RestartBuffer();
+					echo json_encode(array(
+						'order' => array(
+							'REDIRECT_URL' => $this->arParams['~CURRENT_PAGE']
+						)
+					));
+					die();
+				}
 
-				if ($this->arParams["DISABLE_BASKET_REDIRECT"] == 'Y')
+				if ($this->arParams['DISABLE_BASKET_REDIRECT'] == 'Y')
 				{
 					$this->arResult['SHOW_EMPTY_BASKET'] = true;
-					if ($this->request->get('json') == "Y" || $this->isRequestViaAjax)
+					if ($this->request->get('json') == 'Y' || $this->isRequestViaAjax)
 					{
 						$APPLICATION->RestartBuffer();
-						echo json_encode(array("success" => "N", "redirect" => $this->arParams['~CURRENT_PAGE']));
+						echo json_encode(array(
+							'success' => 'N',
+							'redirect' => $this->arParams['~CURRENT_PAGE']
+						));
 						die();
 					}
 				}
 				else
 				{
-					if ($this->request->get('json') == "Y" || $this->isRequestViaAjax)
+					if ($this->request->get('json') == 'Y' || $this->isRequestViaAjax)
 					{
 						$APPLICATION->RestartBuffer();
-						echo json_encode(array("success" => "N", "redirect" => $this->arParams["PATH_TO_BASKET"]));
+						echo json_encode(array(
+							'success' => 'N',
+							'redirect' => $this->arParams['PATH_TO_BASKET']
+						));
 						die();
 					}
-					LocalRedirect($this->arParams["PATH_TO_BASKET"]);
-					die();
+					else
+					{
+						LocalRedirect($this->arParams['PATH_TO_BASKET']);
+						die();
+					}
 				}
 			}
 		}
@@ -964,29 +943,43 @@ class SaleOrderAjax extends \CBitrixComponent
 		{
 			foreach ($res->getErrorMessages() as $error)
 			{
-				$this->arResult["ERROR"][] = $error;
-				$this->arResult["ERROR_SORTED"][$type][] = $error;
+				$this->arResult['ERROR'][] = $error;
+
+				if (
+					empty($this->arResult['ERROR_SORTED'][$type])
+					|| (!empty($this->arResult['ERROR_SORTED'][$type]) && !in_array($error, $this->arResult['ERROR_SORTED'][$type]))
+				)
+				{
+					$this->arResult['ERROR_SORTED'][$type][] = $error;
+				}
 			}
 		}
 		else
 		{
-			$this->arResult["ERROR"][] = $res;
-			$this->arResult["ERROR_SORTED"][$type][] = $res;
+			$this->arResult['ERROR'][] = $res;
+
+			if (
+				empty($this->arResult['ERROR_SORTED'][$type])
+				|| (!empty($this->arResult['ERROR_SORTED'][$type]) && !in_array($res, $this->arResult['ERROR_SORTED'][$type]))
+			)
+			{
+				$this->arResult['ERROR_SORTED'][$type][] = $res;
+			}
 		}
 	}
 
 	protected function addWarning($res, $type)
 	{
 		if (
-		    !empty($type)
-            && (
-                empty($this->arResult['WARNING'][$type])
-                 || (!empty($this->arResult['WARNING'][$type]) && !in_array($res, $this->arResult['WARNING'][$type]))
-            )
-        )
-        {
-            $this->arResult['WARNING'][$type][] = $res;
-        }
+			!empty($type)
+			&& (
+				empty($this->arResult['WARNING'][$type])
+				|| (!empty($this->arResult['WARNING'][$type]) && !in_array($res, $this->arResult['WARNING'][$type]))
+			)
+		)
+		{
+			$this->arResult['WARNING'][$type][] = $res;
+		}
 	}
 
 	/**
@@ -3220,28 +3213,7 @@ class SaleOrderAjax extends \CBitrixComponent
 				$deliveryObj->getExtraServices()->setValues($deliveryExtraServices[$deliveryObj->getId()]);
 			}
 
-			$res = $shipmentCollection->calculateDelivery();
-			if (!$res->isSuccess())
-			{
-				$errMessages = '';
-
-				if (count($res->getErrorMessages()) > 0)
-				{
-					foreach ($res->getErrorMessages() as $message)
-					{
-						$errMessages .= $message.'<br />';
-					}
-				}
-				else
-				{
-					$errMessages = Loc::getMessage("SOA_DELIVERY_CALCULATE_ERROR");
-				}
-
-				$shipment->setFields(array(
-					'MARKED' => 'Y',
-					'REASON_MARKED' => $errMessages
-				));
-			}
+			$shipmentCollection->calculateDelivery();
 		}
 		else
 		{
@@ -3426,7 +3398,7 @@ class SaleOrderAjax extends \CBitrixComponent
 
 		$paymentCollection = $order->getPaymentCollection();
 		$remainingSum = $order->getPrice() - $paymentCollection->getSum();
-		if ($remainingSum > 0 || $order->getPrice() === 0)
+		if ($remainingSum > 0 || $order->getPrice() == 0)
 		{
 			/** @var Payment $extPayment */
 			$extPayment = $paymentCollection->createItem();
@@ -3456,38 +3428,24 @@ class SaleOrderAjax extends \CBitrixComponent
 
 				if (key($this->arPaySystemServiceAll) == $innerPaySystemId)
 				{
-					if ($sumToSpend > 0)
+					if (count($this->arPaySystemServiceAll) > 1)
 					{
+						next($this->arPaySystemServiceAll);
+					}
+					elseif ($sumToSpend > 0)
+					{
+						$extPayment->delete();
+						$extPayment = null;
+
 						/** @var Payment $innerPayment */
 						$innerPayment = $this->getInnerPayment($order);
-
-						if (count($this->arPaySystemServiceAll) > 1)
+						if (empty($innerPayment))
 						{
-							next($this->arPaySystemServiceAll);
-						}
-						elseif (empty($innerPayment))
-						{
-							$remainingSum = $remainingSum > $sumToSpend ? $sumToSpend : $remainingSum;
-                            $extPayment->setFields(array(
-                                'PAY_SYSTEM_ID' => $this->arPaySystemServiceAll[$innerPaySystemId]['ID'],
-                                'PAY_SYSTEM_NAME' => $this->arPaySystemServiceAll[$innerPaySystemId]['NAME'],
-                                'SUM' => $remainingSum
-                            ));
-						}
-						else
-						{
-							$extPayment->delete();
+							$innerPayment = $paymentCollection->getInnerPayment();
 						}
 
-						$remainingSum = $order->getPrice() - $paymentCollection->getSum();
-						if ($remainingSum > 0)
-						{
-							$this->addWarning(Loc::getMessage('INNER_PAYMENT_BALANCE_ERROR'), self::PAY_SYSTEM_BLOCK);
-							$order->setFields(array(
-								'MARKED' => 'Y',
-								'REASON_MARKED' => Loc::getMessage('INNER_PAYMENT_BALANCE_ERROR')
-							));
-						}
+						$sumToPay = $remainingSum > $sumToSpend ? $sumToSpend : $remainingSum;
+						$innerPayment->setField('SUM', $sumToPay);
 					}
 					else
 					{
@@ -3504,17 +3462,22 @@ class SaleOrderAjax extends \CBitrixComponent
 				}
 			}
 
-			if (!empty($selectedPaySystem) && $selectedPaySystem['ID'] != $innerPaySystemId)
+			if (!empty($selectedPaySystem))
 			{
-				$extPayment->setFields(array(
-					'PAY_SYSTEM_ID' => $selectedPaySystem['ID'],
-					'PAY_SYSTEM_NAME' => $selectedPaySystem['NAME']
-				));
-				$this->arUserResult['PAY_SYSTEM_ID'] = $selectedPaySystem['ID'];
+				if ($selectedPaySystem['ID'] != $innerPaySystemId)
+				{
+					$extPayment->setFields(array(
+						'PAY_SYSTEM_ID' => $selectedPaySystem['ID'],
+						'PAY_SYSTEM_NAME' => $selectedPaySystem['NAME']
+					));
+
+					$this->arUserResult['PAY_SYSTEM_ID'] = $selectedPaySystem['ID'];
+				}
 			}
-			else
+			elseif (!empty($extPayment))
 			{
 				$extPayment->delete();
+				$extPayment = null;
 			}
 		}
 
@@ -3537,7 +3500,7 @@ class SaleOrderAjax extends \CBitrixComponent
 	 */
 	protected function recalculatePayment(Order $order)
 	{
-		// one more delivery calculation for some cases when payment affect delivery price
+		// one more delivery calculation for some cases when payment affects delivery price
 		$res = $order->getShipmentCollection()->calculateDelivery();
 		if (!$res->isSuccess())
 		{
@@ -3559,10 +3522,14 @@ class SaleOrderAjax extends \CBitrixComponent
 					$errMessages = Loc::getMessage('SOA_DELIVERY_CALCULATE_ERROR');
 				}
 
-				$shipment->setFields(array(
-					'MARKED' => 'Y',
-					'REASON_MARKED' => $errMessages
+				$r = new Result();
+				$r->addError(new Sale\ResultWarning(
+					$errMessages,
+					'SALE_DELIVERY_CALCULATE_ERROR'
 				));
+
+				Sale\EntityMarker::addMarker($order, $shipment, $r);
+				$shipment->setField('MARKED', 'Y');
 			}
 		}
 
@@ -3593,7 +3560,7 @@ class SaleOrderAjax extends \CBitrixComponent
 		$extPayment = $this->getExternalPayment($order);
 
 		$remainingSum = empty($innerPayment) ? $order->getPrice() : $order->getPrice() - $innerPayment->getSum();
-		if ($remainingSum > 0 || $order->getPrice() === 0)
+		if ($remainingSum > 0 || $order->getPrice() == 0)
 		{
 			$paymentCollection = $order->getPaymentCollection();
 			$innerPaySystemId = PaySystem\Manager::getInnerPaySystemId();
@@ -3625,36 +3592,41 @@ class SaleOrderAjax extends \CBitrixComponent
 			}
 			else
 			{
+				reset($this->arPaySystemServiceAll);
+
 				if (key($this->arPaySystemServiceAll) == $innerPaySystemId)
 				{
-					if ($sumToSpend > 0)
+					if (count($this->arPaySystemServiceAll) > 1)
 					{
-						if (count($this->arPaySystemServiceAll) > 1)
+						next($this->arPaySystemServiceAll);
+					}
+					elseif ($sumToSpend > 0)
+					{
+						$extPayment->delete();
+						$extPayment = null;
+
+						/** @var Payment $innerPayment */
+						$innerPayment = $this->getInnerPayment($order);
+						if (empty($innerPayment))
 						{
-							next($this->arPaySystemServiceAll);
-						}
-						elseif (empty($innerPayment))
-						{
-                            $remainingSum = $remainingSum > $sumToSpend ? $sumToSpend : $remainingSum;
-                            $extPayment->setFields(array(
-                                'PAY_SYSTEM_ID' => $this->arPaySystemServiceAll[$innerPaySystemId]['ID'],
-                                'PAY_SYSTEM_NAME' => $this->arPaySystemServiceAll[$innerPaySystemId]['NAME'],
-                                'SUM' => $remainingSum
-                            ));
-						}
-						else
-						{
-							$extPayment->delete();
+							$innerPayment = $paymentCollection->getInnerPayment();
 						}
 
-						$remainingSum = $order->getPrice() - $paymentCollection->getSum();
-						if ($remainingSum > 0)
+						$sumToPay = $remainingSum > $sumToSpend ? $sumToSpend : $remainingSum;
+						$innerPayment->setField('SUM', $sumToPay);
+
+						if ($order->getPrice() - $paymentCollection->getSum() > 0)
 						{
 							$this->addWarning(Loc::getMessage('INNER_PAYMENT_BALANCE_ERROR'), self::PAY_SYSTEM_BLOCK);
-							$order->setFields(array(
-								'MARKED' => 'Y',
-								'REASON_MARKED' => Loc::getMessage('INNER_PAYMENT_BALANCE_ERROR')
+
+							$r = new Result();
+							$r->addError(new Sale\ResultWarning(
+								Loc::getMessage('INNER_PAYMENT_BALANCE_ERROR'),
+								'SALE_INNER_PAYMENT_BALANCE_ERROR'
 							));
+
+							Sale\EntityMarker::addMarker($order, $innerPayment, $r);
+							$innerPayment->setField('MARKED', 'Y');
 						}
 					}
 					else
@@ -3665,6 +3637,11 @@ class SaleOrderAjax extends \CBitrixComponent
 				}
 
 				$selectedPaySystem = current($this->arPaySystemServiceAll);
+
+				if (!empty($selectedPaySystem) && $extPaySystemId != 0)
+				{
+					$this->addWarning(Loc::getMessage('PAY_SYSTEM_CHANGE_WARNING'), self::PAY_SYSTEM_BLOCK);
+				}
 			}
 
 			if (!array_key_exists((int)$selectedPaySystem['ID'], $this->arPaySystemServiceAll))
@@ -3673,25 +3650,30 @@ class SaleOrderAjax extends \CBitrixComponent
 				$this->addError(Loc::getMessage('P2D_CALCULATE_ERROR'), self::DELIVERY_BLOCK);
 			}
 
-			if (!empty($selectedPaySystem) && $selectedPaySystem['ID'] != $innerPaySystemId)
+			if (!empty($selectedPaySystem))
 			{
-				$needSum = !empty($innerPayment) ? $order->getPrice() - $innerPayment->getSum() : $order->getPrice();
-				$codSum = 0;
-
-				$service = PaySystem\Manager::getObjectById($selectedPaySystem['ID']);
-				if ($service !== null)
+				if ($selectedPaySystem['ID'] != $innerPaySystemId)
 				{
-					$codSum = $service->getPaymentPrice($extPayment);
+					$codSum = 0;
+					$service = PaySystem\Manager::getObjectById($selectedPaySystem['ID']);
+					if ($service !== null)
+					{
+						$codSum = $service->getPaymentPrice($extPayment);
+					}
+
+					$extPayment->setFields(array(
+						'PAY_SYSTEM_ID' => $selectedPaySystem['ID'],
+						'PAY_SYSTEM_NAME' => $selectedPaySystem['NAME'],
+						'PRICE_COD' => $codSum
+					));
+
+					$this->arUserResult['PAY_SYSTEM_ID'] = $selectedPaySystem['ID'];
 				}
-
-				$extPayment->setFields(array(
-					'PAY_SYSTEM_ID' => $selectedPaySystem['ID'],
-					'PAY_SYSTEM_NAME' => $selectedPaySystem['NAME'],
-					'SUM' => $needSum,
-					'PRICE_COD' => $codSum
-				));
-
-				$this->arUserResult['PAY_SYSTEM_ID'] = $selectedPaySystem['ID'];
+			}
+			elseif (!empty($extPayment))
+			{
+				$extPayment->delete();
+				$extPayment = null;
 			}
 
 			if (!empty($this->arUserResult['PREPAYMENT_MODE']))
@@ -3700,9 +3682,10 @@ class SaleOrderAjax extends \CBitrixComponent
 			}
 		}
 
-		if (!empty($innerPayment) && !empty($extPayment) && $remainingSum === 0)
+		if (!empty($innerPayment) && !empty($extPayment) && $remainingSum == 0)
 		{
 			$extPayment->delete();
+			$extPayment = null;
 		}
 	}
 
@@ -4273,6 +4256,11 @@ class SaleOrderAjax extends \CBitrixComponent
 						{
 							$arr['properties'][$index]['PROPS_GROUP_ID'] = 0;
 						}
+					}
+
+					if ($propertyData['TYPE'] === 'ENUM' && is_array($propertyData['OPTIONS']))
+					{
+						$arr['properties'][$index]['OPTIONS_SORT'] = array_keys($propertyData['OPTIONS']);
 					}
 				}
 			}

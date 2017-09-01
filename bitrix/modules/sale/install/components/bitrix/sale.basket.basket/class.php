@@ -1251,7 +1251,7 @@ class CBitrixBasketComponent extends CBitrixComponent
 
 		if ($this->hideCoupon != "Y")
 		{
-			if (!empty($arPost['delete_coupon']))
+			if (isset($arPost['delete_coupon']) && is_string($arPost['delete_coupon']) && $arPost['delete_coupon'] !== '')
 			{
 				$arRes['VALID_COUPON'] = DiscountCouponsManager::delete($arPost['delete_coupon']);
 			}

@@ -2,7 +2,7 @@
 $aMenuLinks = Array(
     Array(
         "Инженерная<br> сантехника",
-        "/catalog/inzhenernaya_santekhnika_otoplenie_vodoprovod_kanalizatsiya/",
+        "/catalog/inzhenernaya_santekhnika/",
         Array(),
         Array(),
         ""
@@ -10,7 +10,7 @@ $aMenuLinks = Array(
 
     Array(
         "Cтроительные<br> материалы",
-        "/catalog/stroitelnye_materialy/",
+        "/catalog/stroitelno_otdelochnye_materialy/",
         Array(),
         Array(),
         ""

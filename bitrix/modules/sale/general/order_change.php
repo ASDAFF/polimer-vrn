@@ -76,6 +76,42 @@ class CAllSaleOrderChange
 		return $DB->Query("DELETE FROM b_sale_order_change WHERE ORDER_ID = ".$id." ", true);
 	}
 
+	/**
+	 * Delete records from history which older then count days
+	 *
+	 * @param $days
+	 * @param null $limit
+	 *
+	 * @return bool
+	 */
+	public static function deleteOld($days, $limit = null)
+	{
+		$days = (int)($days);
+
+		if ($days <= 0)
+			return false;
+
+		$expired = new \Bitrix\Main\Type\DateTime();
+		$expired->add('-'.$days.' days');
+		$expiredValue = $expired->format('Y-m-d H:i:s');
+
+		/** @var \Bitrix\Main\DB\Connection $connection */
+		$connection = \Bitrix\Main\Application::getConnection();
+		/** @var \Bitrix\Main\DB\SqlHelper $sqlHelper */
+		$sqlHelper = $connection->getSqlHelper();
+		$sqlExpiredDate = $sqlHelper->getDateToCharFunction("'" . $expiredValue . "'");
+
+		if ($connection instanceof \Bitrix\Main\DB\MysqlCommonConnection)
+		{
+			$query = "DELETE FROM b_sale_order_change WHERE DATE_CREATE < $sqlExpiredDate";
+			if ((int)$limit > 0)
+				$query .= " LIMIT ".(int)$limit;
+			$connection->queryExecute($query);
+		}
+
+		return true;
+	}
+
 	/*
 	 * Adds record to the order change history
 	 * Wrapper around CSaleOrderChange::Add method

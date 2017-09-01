@@ -242,6 +242,11 @@ class CashboxBitrix extends Cashbox
 			$linkParams[Check::PARAM_CALCULATION_ATTR] = $check::getCalculatedSign();
 		}
 
+		if (isset($data['rn']))
+		{
+			$linkParams[Check::PARAM_REG_NUMBER_KKT] = $data['rn'];
+		}
+
 		return $linkParams;
 	}
 

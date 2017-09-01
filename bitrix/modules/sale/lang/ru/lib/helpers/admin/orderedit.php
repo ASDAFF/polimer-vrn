@@ -3,6 +3,7 @@ $MESS["SALE_ORDEREDIT_ORDER_PROBLEM"] = "Проблемы с заказом";
 $MESS["SALE_ORDEREDIT_NAVIGATION"] = "Навигация";
 $MESS["SALE_ORDEREDIT_NAME_NULL"] = "Не задан";
 $MESS["SALE_ORDEREDIT_ERROR_NO_PRODUCTS"] = "Необходимо добавить хотя бы один товар";
+$MESS["SALE_ORDEREDIT_ERROR_CHANGE_USER_WITH_PAID_PAYMENTS"] = "Нельзя сменить покупателя. У заказа имеются оплаченные оплаты";
 $MESS["SALE_ORDEREDIT_CLOSE"] = "Удалить метку";
 $MESS["SALE_ORDEREDIT_DISCOUNT_UNKNOWN"] = "неизвестный";
 $MESS["SALE_ORDEREDIT_REFRESHING_DATA"] = "Обновляем ...";

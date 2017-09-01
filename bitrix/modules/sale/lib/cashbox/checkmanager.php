@@ -22,6 +22,7 @@ final class CheckManager
 	const EVENT_ON_GET_CUSTOM_CHECK = 'OnGetCustomCheckList';
 	const EVENT_ON_CHECK_PRINT_SEND = 'OnPrintableCheckSend';
 	const EVENT_ON_BEFORE_CHECK_ADD_VERIFY = 'OnBeforeCheckAddVerify';
+	const EVENT_ON_CHECK_PRINT_ERROR = 'OnCheckPrintError';
 	const MIN_TIME_FOR_SWITCH_CASHBOX = 240;
 
 	/** This is time re-sending a check print in minutes */
@@ -75,8 +76,14 @@ final class CheckManager
 		$check->setEntities($entities);
 		$check->setAvailableCashbox($cashboxList);
 
-		$saveResult = $check->save();
+		$validateResult = $check->validate();
+		if (!$validateResult->isSuccess())
+		{
+			$result->addErrors($validateResult->getErrors());
+			return $result;
+		}
 
+		$saveResult = $check->save();
 		if ($saveResult->isSuccess())
 		{
 			$checkId = $saveResult->getId();
@@ -222,6 +229,10 @@ final class CheckManager
 			}
 
 			Manager::writeToLog($check['CASHBOX_ID'], $error);
+
+			$event = new Main\Event('sale', static::EVENT_ON_CHECK_PRINT_ERROR, array($data));
+			$event->send();
+
 			$result->addError($error);
 		}
 		else

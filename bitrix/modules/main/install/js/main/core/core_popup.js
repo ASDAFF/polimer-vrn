@@ -813,7 +813,10 @@ BX.PopupWindow.prototype.bindAutoHide = function()
 	{
 		this.isAutoHideBinded = true;
 		BX.bind(this.popupContainer, "click", this.cancelBubble);
-		BX.bind(document, "click", BX.proxy(this.close, this));
+		if(this.overlay && this.overlay.element)
+			BX.bind(this.overlay.element, "click", BX.proxy(this.close, this));
+		else
+			BX.bind(document, "click", BX.proxy(this.close, this));
 	}
 };
 
@@ -823,7 +826,10 @@ BX.PopupWindow.prototype.unbindAutoHide = function()
 	{
 		this.isAutoHideBinded = false;
 		BX.unbind(this.popupContainer, "click", this.cancelBubble);
-		BX.unbind(document, "click", BX.proxy(this.close, this));
+		if(this.overlay && this.overlay.element)
+			BX.unbind(this.overlay.element, "click", BX.proxy(this.close, this));
+		else
+			BX.unbind(document, "click", BX.proxy(this.close, this));
 	}
 };
 
@@ -1589,6 +1595,22 @@ BX.PopupWindowButtonLink = function(params)
 };
 
 BX.extend(BX.PopupWindowButtonLink, BX.PopupWindowButton);
+
+BX.PopupWindowCustomButton = function(params)
+{
+	BX.PopupWindowCustomButton.superclass.constructor.apply(this, arguments);
+
+	this.buttonNode = BX.create(
+		"span",
+		{
+			props : { className :  (this.className.length > 0 ? " " + this.className : ""), id : this.id },
+			events : this.contextEvents,
+			text : this.text
+		}
+	);
+};
+
+BX.extend(BX.PopupWindowCustomButton, BX.PopupWindowButton);
 
 BX.PopupMenu = {
 

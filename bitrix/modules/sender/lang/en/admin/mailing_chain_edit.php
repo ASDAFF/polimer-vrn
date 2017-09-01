@@ -85,4 +85,5 @@ $MESS["sender_chain_edit_field_title_desc"] = "This title is visible only to you
 $MESS["sender_chain_edit_copied"] = "Newsletter message has been copied. Now viewing the copy.";
 $MESS["sender_chain_edit_recommended_sent_time"] = "Recommended send time: %send_time% accounting for %delivery_time% hours required to send and deliver messages.";
 $MESS["sender_chain_edit_recommended_sent_time_hint"] = "Time calculated using delivery and view statistics of the previous messages.";
+$MESS["sender_chain_edit_status_deactivated"] = "Newsletter is inactive. Activate it to send newsletter messages.";
 ?>

@@ -77,6 +77,7 @@ class Payment
 			'EXTERNAL_PAYMENT',
 			'PS_INVOICE_ID',
 			'MARKED',
+			'REASON_MARKED',
 			'DATE_MARKED',
 			'EMP_MARKED_ID',
 		);
@@ -329,6 +330,10 @@ class Payment
 				$this->setField('DATE_MARKED', new Main\Type\DateTime());
 				$this->setField('EMP_MARKED_ID', $USER->GetID());
 			}
+			elseif ($value == "N")
+			{
+				$this->setField('REASON_MARKED', '');
+			}
 		}
 
 		return parent::onFieldModify($name, $oldValue, $value);
@@ -378,6 +383,13 @@ class Payment
 
 			if (!empty($fields) && is_array($fields))
 			{
+				if (array_key_exists('REASON_MARKED', $fields) && strlen($fields['REASON_MARKED']) > 255)
+				{
+					$fields['REASON_MARKED'] = substr($fields['REASON_MARKED'], 0, 255);
+
+					$this->setFieldNoDemand('REASON_MARKED', $fields['REASON_MARKED']);
+				}
+
 				//$fields['DATE_UPDATE'] = new Main\Type\DateTime();
 
 				$r = Internals\PaymentTable::update($id, $fields);
@@ -415,6 +427,13 @@ class Payment
 			{
 				$fields['DATE_BILL'] = new Main\Type\DateTime();
 				$this->setFieldNoDemand('DATE_BILL', $fields['DATE_BILL']);
+			}
+
+			if (array_key_exists('REASON_MARKED', $fields) && strlen($fields['REASON_MARKED']) > 255)
+			{
+				$fields['REASON_MARKED'] = substr($fields['REASON_MARKED'], 0, 255);
+
+				$this->setFieldNoDemand('REASON_MARKED', $fields['REASON_MARKED']);
 			}
 
 			$r = Internals\PaymentTable::add($fields);

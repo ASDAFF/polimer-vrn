@@ -290,10 +290,16 @@ class Helper
 		{
 			$ebay = \Bitrix\Sale\TradingPlatform\Ebay\Ebay::getInstance();
 			$settings = $ebay->getSettings();
+			$host = isset($settings[$siteId]["SFTP_HOST"]) ? $settings[$siteId]["SFTP_HOST"] : "mip.ebay.com";
+			$port = isset($settings[$siteId]["SFTP_PORT"]) ? $settings[$siteId]["SFTP_PORT"] : 22;
+			$fingerprint = strlen($settings[$siteId]["SFTP_HOST_FINGERPRINT"]) > 0 ? $settings[$siteId]["SFTP_HOST_FINGERPRINT"] : "DD1FEE728C2E1FF2AACC2724929C3CF1";
 
 			$sftp[$siteId] = new Sftp(
 				$settings[$siteId]["SFTP_LOGIN"],
-				$settings[$siteId]["SFTP_PASS"]
+				$settings[$siteId]["SFTP_PASS"],
+				$host,
+				$port,
+				$fingerprint
 			);
 		}
 

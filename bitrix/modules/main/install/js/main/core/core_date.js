@@ -582,7 +582,8 @@ BX.date.format = function(format, timestamp, now, utc)
 			}
 		}
 
-		return formats.length > 0 ? BX.date.format(formats.pop()[1], date, nowDate, isUTC) : "";
+		//return formats.length > 0 ? BX.date.format(formats.pop()[1], date, nowDate, isUTC) : "";
+		return formats.length > 0 ? BX.date.format(formats[formats.length - 1][1], date, nowDate, isUTC) : "";
 	}
 
 
@@ -1632,7 +1633,22 @@ BX.JCCalendar.prototype.Show = function(params)
 
 	this.params.bSetFocus = typeof this.params.bSetFocus == 'undefined' ? true : !!this.params.bSetFocus;
 	if(this.params.bSetFocus)
+	{
 		params.node.blur();
+	}
+	else
+	{
+		BX.bind(params.node, 'keyup', BX.defer(function(){
+			this.SetValue(params.node.value);
+			if(!!this.params.bTime)
+			{
+				if(this.value.getUTCHours() <= 0 && this.value.getUTCMinutes() <= 0)
+					BX.removeClass(this.PARTS.TIME, 'bx-calendar-set-time-opened');
+				else
+					BX.addClass(this.PARTS.TIME, 'bx-calendar-set-time-opened');
+			}
+		}, this));
+	}
 
 	return this;
 };

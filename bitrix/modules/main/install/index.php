@@ -360,6 +360,7 @@ class main extends CModule
 		RegisterModuleDependences("main", "OnUserTypeBuildList", "main", "CUserTypeDateTime", "GetUserTypeDescription", 140);
 		RegisterModuleDependences("main", "OnUserTypeBuildList", "main", "CUserTypeDate", "GetUserTypeDescription", 145);
 		RegisterModuleDependences("main", "OnUserTypeBuildList", "main", "CUserTypeBoolean", "GetUserTypeDescription", 150);
+		RegisterModuleDependences("main", "OnUserTypeBuildList", "main", "CUserTypeUrl", "GetUserTypeDescription", 155);
 		RegisterModuleDependences("main", "OnUserTypeBuildList", "main", "CUserTypeFile", "GetUserTypeDescription", 160);
 		RegisterModuleDependences("main", "OnUserTypeBuildList", "main", "CUserTypeEnum", "GetUserTypeDescription", 170);
 		RegisterModuleDependences("main", "OnUserTypeBuildList", "main", "CUserTypeIBlockSection", "GetUserTypeDescription", 180);

@@ -21,7 +21,7 @@ class FirstOfd extends Ofd
 	 */
 	protected function getUrl()
 	{
-		return $this->testMode ? static::TEST_URL : static::ACTIVE_URL;
+		return $this->isTestMode() ? static::TEST_URL : static::ACTIVE_URL;
 	}
 
 	/**

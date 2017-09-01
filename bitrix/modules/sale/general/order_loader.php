@@ -3666,6 +3666,10 @@ class CSaleOrderLoader
 							}
 						}
 
+						$importSettings = Sale\Exchange\OneC\ImportSettings::getCurrent();
+						$deliverySystemId = $importSettings->shipmentServiceFor(Sale\Exchange\EntityType::SHIPMENT);
+						$orderFields['DELIVERY_ID'] = ($deliverySystemId? $deliverySystemId : null);
+
 						if($arOrder["ID"] = CSaleOrder::DoSaveOrder($orderFields, $arAditFields, 0, $arErrors))
 						{
 							$arAditFields = array("UPDATED_1C" => "Y");
