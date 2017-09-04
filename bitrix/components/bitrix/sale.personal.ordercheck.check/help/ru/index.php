@@ -95,8 +95,8 @@ Array
     [~USER_NAME] => Anton
     [~USER_LAST_NAME] => Ezhkov
     [~USER_EMAIL] => anton@bitrixsoft.ru
-    [PRICE_FORMATED] => 12 450.00 РЎР‚.
-    [DISCOUNT_VALUE_FORMATED] => 0.00 РЎР‚.
+    [PRICE_FORMATED] => 12 450.00 СЂ.
+    [DISCOUNT_VALUE_FORMATED] => 0.00 СЂ.
     [CAN_CANCEL] => N
     [URL_TO_LIST] => index.php&filter_history=Y&filter=Y&set_filter=Y
     [SITE_ID] => ru
@@ -105,7 +105,7 @@ Array
             [ID] => F
             [SORT] => 100
             [LID] => ru
-            [NAME] => Р вЂќР С•РЎРѓРЎвЂљР В°Р Р†Р В»Р ВµР Р…
+            [NAME] => Р”РѕСЃС‚Р°РІР»РµРЅ
             [DESCRIPTION] => 
         )
 
@@ -221,7 +221,7 @@ Array
         (
             [ID] => 1
             [LID] => ru
-            [NAME] => Р В¤Р С‘Р В·Р С‘РЎвЂЎР ВµРЎРѓР С”Р С•Р Вµ Р В»Р С‘РЎвЂ Р С•
+            [NAME] => Р¤РёР·РёС‡РµСЃРєРѕРµ Р»РёС†Рѕ
             [SORT] => 0
         )
 
@@ -230,12 +230,12 @@ Array
             [ID] => 1
             [LID] => ru
             [CURRENCY] => RUR
-            [NAME] => Р СњР В°Р В»Р С‘РЎвЂЎР Р…РЎвЂ№Р Вµ
+            [NAME] => РќР°Р»РёС‡РЅС‹Рµ
             [ACTIVE] => Y
             [SORT] => 100
             [DESCRIPTION] => 
             [PSA_ID] => 1
-            [PSA_NAME] => Р СњР В°Р В»Р С‘РЎвЂЎР Р…РЎвЂ№Р С?Р С‘ Р С”РЎС“РЎР‚РЎРЉР ВµРЎР‚РЎС“
+            [PSA_NAME] => РќР°Р»РёС‡РЅС‹РјРё РєСѓСЂСЊРµСЂСѓ
             [PSA_ACTION_FILE] => c:/projects/siteman/bitrix/modules/sale/payment/cash/payment.php
             [PSA_RESULT_FILE] => 
             [PSA_NEW_WINDOW] => N
@@ -253,24 +253,24 @@ Array
                 (
                     [ID] => 51
                     [DETAIL_PAGE_URL] => 
-                    [NAME] => Р вЂ?Р С‘РЎвЂљРЎР‚Р С‘Р С”РЎРѓ: Р Р€Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р С‘Р Вµ РЎРѓР В°Р в„–РЎвЂљР С•Р С? - Р СљР В°Р В»РЎвЂ№Р в„– Р В±Р С‘Р В·Р Р…Р ВµРЎРѓ (MySQL/OracleXE/MS SQL Express)
+                    [NAME] => Р‘РёС‚СЂРёРєСЃ: РЈРїСЂР°РІР»РµРЅРёРµ СЃР°Р№С‚РѕРј - РњР°Р»С‹Р№ Р±РёР·РЅРµСЃ (MySQL/OracleXE/MS SQL Express)
                     [NOTES] => 
                     [QUANTITY] => 1
                     [PRICE] => 12450.00
                     [CURRENCY] => RUR
                     [~ID] => 51
                     [~DETAIL_PAGE_URL] => 
-                    [~NAME] => Р вЂ?Р С‘РЎвЂљРЎР‚Р С‘Р С”РЎРѓ: Р Р€Р С—РЎР‚Р В°Р Р†Р В»Р ВµР Р…Р С‘Р Вµ РЎРѓР В°Р в„–РЎвЂљР С•Р С? - Р СљР В°Р В»РЎвЂ№Р в„– Р В±Р С‘Р В·Р Р…Р ВµРЎРѓ (MySQL/OracleXE/MS SQL Express)
+                    [~NAME] => Р‘РёС‚СЂРёРєСЃ: РЈРїСЂР°РІР»РµРЅРёРµ СЃР°Р№С‚РѕРј - РњР°Р»С‹Р№ Р±РёР·РЅРµСЃ (MySQL/OracleXE/MS SQL Express)
                     [~NOTES] => 
                     [~QUANTITY] => 1
                     [~PRICE] => 12450.00
                     [~CURRENCY] => RUR
-                    [PRICE_FORMATED] => 12 450.00 РЎР‚.
+                    [PRICE_FORMATED] => 12 450.00 СЂ.
                 )
 
         )
 
-    [TAX_VALUE_FORMATED] => 0.00 РЎР‚.
-    [PRICE_DELIVERY_FORMATED] => 0.00 РЎР‚.
+    [TAX_VALUE_FORMATED] => 0.00 СЂ.
+    [PRICE_DELIVERY_FORMATED] => 0.00 СЂ.
 )
 </pre>
