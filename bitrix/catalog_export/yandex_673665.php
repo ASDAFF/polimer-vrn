@@ -6,7 +6,7 @@ $strReferer2 = htmlspecialchars($_GET["referer2"]);
 header("Content-Type: text/xml; charset=windows-1251");
 echo "<"."?xml version=\"1.0\" encoding=\"windows-1251\"?".">"?>
 <!DOCTYPE yml_catalog SYSTEM "shops.dtd">
-<yml_catalog date="2017-09-01 15:31">
+<yml_catalog date="2017-09-04 14:01">
 <shop>
 <name>Современная Одежда+</name>
 <company>Современная Одежда+</company>
@@ -234,8 +234,6 @@ echo "<"."?xml version=\"1.0\" encoding=\"windows-1251\"?".">"?>
 <category id="1360" parentId="1153">Подводка гибкая (вода, газ)</category>
 <category id="1361" parentId="1360">Подводка для воды</category>
 <category id="1362" parentId="1360">Подводка для газа</category>
-<category id="1698" parentId="1153">ПРОДАНО</category>
-<category id="1699" parentId="1698">Унитазы ~ Шишкова~( Vidima)</category>
 <category id="1363" parentId="1153">Радиаторы отопления, арматура</category>
 <category id="1364" parentId="1363">Арматура радиаторная</category>
 <category id="1365" parentId="1364">Арматура радиаторная Luxor</category>
@@ -72582,15 +72580,6 @@ echo "<"."?xml version=\"1.0\" encoding=\"windows-1251\"?".">"?>
 <name>Эмаль ПФ-115 Status красная 30кг</name>
 <description>Эмаль ПФ-115 Status красная 30кг</description>
 </offer>
-<offer id="22674" available="false">
-<url>http://polimer-vrn.ru/catalog/unitazy_shishkova_vidima/sirius_elegans_box_unitaz_kompakt_gorizontalnyy_vypusk_sidene_i_kryshka_s_mikroliftom/?r1=<?=$strReferer1; ?>&amp;r2=<?=$strReferer2; ?></url>
-<price>7120.25</price>
-<oldprice>7495</oldprice>
-<currencyId>RUB</currencyId>
-<categoryId>1699</categoryId>
-<name>&quot;Сириус Элеганс&quot;(BOX)унитаз-компакт, горизонтальный выпуск,сиденье и крышка с микролифтом</name>
-<description>&quot;Сириус Элеганс&quot;(BOX)унитаз-компакт, горизонтальный выпуск,сиденье и крышка с микролифтом</description>
-</offer>
 <offer id="22675" available="true">
 <url>http://polimer-vrn.ru/catalog/unitazy_i_umyvalniki/soedinitelnoe_koleno_dlya_standart_110_90gr/?r1=<?=$strReferer1; ?>&amp;r2=<?=$strReferer2; ?></url>
 <price>691.6</price>
@@ -72618,24 +72607,6 @@ echo "<"."?xml version=\"1.0\" encoding=\"windows-1251\"?".">"?>
 <categoryId>1424</categoryId>
 <name>Унитаз напольный &quot;Стандарт&quot; (4004.152) отдельно</name>
 <description>Унитаз напольный &quot;Стандарт&quot; (4004.152) отдельно</description>
-</offer>
-<offer id="22678" available="false">
-<url>http://polimer-vrn.ru/catalog/unitazy_shishkova_vidima/sevaduo_box_unitaz_kompakt_gorizontalnyy_vypusk/?r1=<?=$strReferer1; ?>&amp;r2=<?=$strReferer2; ?></url>
-<price>4322.5</price>
-<oldprice>4550</oldprice>
-<currencyId>RUB</currencyId>
-<categoryId>1699</categoryId>
-<name>&quot;СеваДуо&quot;(BOX)унитаз-компакт, горизонтальный выпуск</name>
-<description>&quot;СеваДуо&quot;(BOX)унитаз-компакт, горизонтальный выпуск</description>
-</offer>
-<offer id="22679" available="false">
-<url>http://polimer-vrn.ru/catalog/unitazy_shishkova_vidima/seva_miks_box_unitaz_kompakt_gorizontalnyy_vypusk_belyy/?r1=<?=$strReferer1; ?>&amp;r2=<?=$strReferer2; ?></url>
-<price>5415</price>
-<oldprice>5700</oldprice>
-<currencyId>RUB</currencyId>
-<categoryId>1699</categoryId>
-<name>&quot;Сева-Микс&quot;(BOX) унитаз-компакт, горизонтальный выпуск, белый</name>
-<description>&quot;Сева-Микс&quot;(BOX) унитаз-компакт, горизонтальный выпуск, белый</description>
 </offer>
 </offers>
 </shop>
