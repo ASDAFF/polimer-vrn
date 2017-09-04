@@ -25,8 +25,8 @@ $this->setFrameMode(true);
 				<div class="title cl">
 					<div class="name"><?=str_replace(' ','<br>',$arItem['NAME'])?></div>
 					<div class="download">
-						<a target="_blank" href="<?=CFile::GetPath($arItem['PROPERTIES']['TITLE_PRICE']['VALUE'])?>">Скачать</a>
-						<span><?=CFile::FormatSize(CFile::GetByID($arItem['PROPERTIES']['TITLE_PRICE']['VALUE'])->arResult[0]['FILE_SIZE']);?></span>
+						<a target="_blank" href="<?=$arItem['PROPERTIES']['TITLE_PRICE']['VALUE'];?>">Скачать</a>
+						<span><?=CFile::FormatSize($arItem['PROPERTIES']['TITLE_PRICE']['VALUE']);?></span>
 					</div>
 				</div>
 				<div class="list">
