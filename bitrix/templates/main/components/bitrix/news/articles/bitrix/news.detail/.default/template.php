@@ -27,7 +27,7 @@ $this->setFrameMode(true);
 				<?
 				$arSelect = Array("ID", "NAME","PREVIEW_PICTURE","DETAIL_PAGE_URL");
 				foreach($arResult['PROPERTIES']['ADD_PROD']['VALUE'] as $id){
-					$arFilter = Array("IBLOCK_ID"=> 11,"ID" => $id);
+					$arFilter = Array("IBLOCK_ID"=> 21,"ID" => $id);
 					$res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
 					if($ob = $res->GetNextElement())
 					{$arFields = $ob->GetFields();
