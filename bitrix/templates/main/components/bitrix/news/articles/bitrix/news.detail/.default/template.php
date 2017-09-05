@@ -23,7 +23,7 @@ $this->setFrameMode(true);
 		if($arResult['PROPERTIES']['ADD_PROD']['VALUE']):
 
 			?>
-			<div class="slider_product" id="mp__product__action" style="max-width: 840px;margin-bottom: 10px;border: 0px">
+			<div class="slider_product articles" id="mp__product__action" style="max-width: 840px;margin-bottom: 10px;border: 0px">
 				<?
 				$arSelect = Array("ID", "NAME","PREVIEW_PICTURE","DETAIL_PAGE_URL");
 				foreach($arResult['PROPERTIES']['ADD_PROD']['VALUE'] as $id){
@@ -55,7 +55,7 @@ $this->setFrameMode(true);
 		</div>
 		<h1 class="title"><?=$arResult['PROPERTIES']['DETALI_TITLE']['VALUE']?></h1>
 		<div class="txt">
-			<a href="<?=$arParams['SECTION_URL']?>" class="back2allnews"><span></span><span></span>Назад к списку акций</a>
+			<a href="<?=$arParams['SECTION_URL']?>" class="back2allnews"><span></span><span></span>Назад к списку статьи</a>
 
 			<?if(strlen($arResult["DETAIL_TEXT"])>0):?>
 				<?echo $arResult["DETAIL_TEXT"];?>
@@ -63,7 +63,7 @@ $this->setFrameMode(true);
 
 		</div>
 		<div class="bottombar cl">
-			<a href="<?=$arParams['SECTION_URL']?>" class="back2allnews"><span></span><span></span>Назад к списку акций</a>
+			<a href="<?=$arParams['SECTION_URL']?>" class="back2allnews"><span></span><span></span>Назад к списку статьи</a>
 			<div class="soc_share">
 				<div class="ss_social">
 					<div class="social-likes">
