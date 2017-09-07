@@ -44,13 +44,14 @@
 			}else{
 				$prod = 'товара';
 			}
+			//var_dump($arResult);
 			?>
 			<div class="line">
 				<div class="name">Ваш заказ:</div>
 				<div class="val"><span><?=count($arResult["BASKET_ITEMS"])?> <?=$prod?> на сумму <?=$arResult["ORDER_TOTAL_PRICE_FORMATED"]?></span></div>
 			</div>
 			<?
-			//echo "<pre>"; print_r($arResult); echo "</pre>";
+			//echo "<pre>"; print_r($arResult); echo "</pre>";$arBasketItems["DISCOUNT_PRICE"] = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N')['RESULT_PRICE']['PERCENT'];
 			if (is_array($arResult["DELIVERY"]))
 			{
 				?>

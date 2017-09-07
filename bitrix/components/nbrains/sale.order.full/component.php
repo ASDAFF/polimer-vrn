@@ -388,6 +388,7 @@ else
 			);
 		while ($arBasketItems = $dbBasketItems->GetNext())
 		{
+			$arBasketItems["DISCOUNT_PRICE"] = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N')['DISCOUNT']['VALUE'];
 			if ($arBasketItems["DELAY"] == "N" && $arBasketItems["CAN_BUY"] == "Y")
 			{
 				$arBasketItems["PRICE"] = roundEx($arBasketItems["PRICE"], SALE_VALUE_PRECISION);
@@ -459,8 +460,11 @@ else
 
 		while ($arDiscount = $dbDiscount->Fetch())
 		{
+
+			$arDiscount["DISCOUNT_VALUE"] = unserialize(CSaleDiscount::GetByID($arDiscount['ID'])['ACTIONS'])['CHILDREN'][0]['DATA']['Value'];
 			$dblDiscount = 0;
 			$allSum_tmp = $allSum;
+
 
 			if ($arDiscount["DISCOUNT_TYPE"] == "P")
 			{
@@ -494,7 +498,6 @@ else
 			}
 			$allSum = $allSum_tmp;
 		}
-
 		if (!empty($arMinDiscount))
 		{
 			if ($arMinDiscount["DISCOUNT_TYPE"] == "P")
@@ -522,6 +525,8 @@ else
 				$arResult["DISCOUNT_PRICE"] = roundEx($arResult["DISCOUNT_PRICE"], SALE_VALUE_PRECISION);
 			}
 		}
+
+		//var_dump($arResult);
 
 		if (strlen($arResult["ERROR_MESSAGE"]) <= 0 && $arResult["CurrentStep"] > 1)
 		{
@@ -878,6 +883,7 @@ else
 						}
 					}
 				}
+
 
 				\Bitrix\Sale\Notify::setNotifyDisable(true);
 
@@ -2277,8 +2283,11 @@ if ($USER->IsAuthorized())
 						"ORDER_ID" => "NULL"
 					)
 			);
+		$arDiscount = array();
 		while ($arBasketItems = $dbBasketItems->Fetch())
 		{
+			$arBasketItems["DISCOUNT_PRICE"] = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N')['RESULT_PRICE']['PERCENT'];
+			$arDiscount[] = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N')['RESULT_PRICE']['DISCOUNT']*$arBasketItems["QUANTITY"];
 			if ($arBasketItems["DELAY"] == "N" && $arBasketItems["CAN_BUY"] == "Y")
 			{
 				$arBasketItems['NAME'] = htmlspecialcharsEx($arBasketItems['NAME']);
@@ -2328,6 +2337,8 @@ if ($USER->IsAuthorized())
 				$arResult["arTaxList"][$key]["VALUE_MONEY_FORMATED"] = SaleFormatCurrency($val["VALUE_MONEY"], $arResult["BASE_LANG_CURRENCY"]);
 			}
 		}
+
+
 
 		if(IntVal($arResult["DELIVERY_PRICE"])>0)
 			$arResult["DELIVERY_PRICE_FORMATED"] = SaleFormatCurrency($arResult["DELIVERY_PRICE"], $arResult["BASE_LANG_CURRENCY"]);
