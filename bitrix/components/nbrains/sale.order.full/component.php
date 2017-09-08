@@ -420,6 +420,7 @@ else
 			}
 		}
 
+
 		if (!$bProductsInBasket)
 		{
 			LocalRedirect($arParams["PATH_TO_BASKET"]);
@@ -427,106 +428,16 @@ else
 		}
 
 		// DISCOUNT
-		$countProdInBaket = count($arProductsInBasket);
-		for ($i = 0; $i < $countProdInBaket; $i++)
-			$arProductsInBasket[$i]["DISCOUNT_PRICE"] = DoubleVal($arProductsInBasket[$i]["PRICE"]);
-
-		$arMinDiscount = array();
-		$allSum = 0;
-		foreach ($arProductsInBasket as &$arResultItem)
-		{
-			$allSum += ($arResultItem["PRICE"] * $arResultItem["QUANTITY"]);
-		}
-		$dblMinPrice = $allSum;
-
-		$dbDiscount = CSaleDiscount::GetList(
-				array("SORT" => "ASC"),
-				array(
-						"LID" => SITE_ID,
-						"ACTIVE" => "Y",
-						"!>ACTIVE_FROM" => Date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL"))),
-						"!<ACTIVE_TO" => Date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL"))),
-						"<=PRICE_FROM" => $arResult["ORDER_PRICE"],
-						">=PRICE_TO" => $arResult["ORDER_PRICE"],
-						"USER_GROUPS" => $USER->GetUserGroupArray(),
-					),
-				false,
-				false,
-				array("*")
-			);
 		$arResult["DISCOUNT_PRICE"] = 0;
 		$arResult["DISCOUNT_PERCENT"] = 0;
-		$arDiscounts = array();
 
-		while ($arDiscount = $dbDiscount->Fetch())
+		foreach ($arProductsInBasket as &$arBasketItem)
 		{
-
-			$arDiscount["DISCOUNT_VALUE"] = unserialize(CSaleDiscount::GetByID($arDiscount['ID'])['ACTIONS'])['CHILDREN'][0]['DATA']['Value'];
-			$dblDiscount = 0;
-			$allSum_tmp = $allSum;
-
-
-			if ($arDiscount["DISCOUNT_TYPE"] == "P")
-			{
-				if($arParams["COUNT_DISCOUNT_4_ALL_QUANTITY"] == "Y")
-				{
-					foreach ($arProductsInBasket as &$arBasketItem)
-					{
-						$curDiscount = roundEx($arBasketItem["PRICE"] * $arBasketItem["QUANTITY"] * $arDiscount["DISCOUNT_VALUE"] / 100, SALE_VALUE_PRECISION);
-						$dblDiscount += $curDiscount;
-					}
-				}
-				else
-				{
-					foreach ($arProductsInBasket as &$arBasketItem)
-					{
-						$curDiscount = roundEx($arBasketItem["PRICE"] * $arDiscount["DISCOUNT_VALUE"] / 100, SALE_VALUE_PRECISION);
-						$dblDiscount += $curDiscount * $arBasketItem["QUANTITY"];
-					}
-				}
-			}
-			else
-			{
-				$dblDiscount = roundEx(CCurrencyRates::ConvertCurrency($arDiscount["DISCOUNT_VALUE"], $arDiscount["CURRENCY"], $arResult["BASE_LANG_CURRENCY"]), SALE_VALUE_PRECISION);
-			}
-
-			$allSum = $allSum - $dblDiscount;
-			if ($dblMinPrice > $allSum)
-			{
-				$dblMinPrice = $allSum;
-				$arMinDiscount = $arDiscount;
-			}
-			$allSum = $allSum_tmp;
-		}
-		if (!empty($arMinDiscount))
-		{
-			if ($arMinDiscount["DISCOUNT_TYPE"] == "P")
-			{
-				$arResult["DISCOUNT_PERCENT"] = $arMinDiscount["DISCOUNT_VALUE"];
-				$countProdBasket = count($arProductsInBasket);
-				for ($bi = 0; $bi < $countProdBasket; $bi++)
-				{
-					if($arParams["COUNT_DISCOUNT_4_ALL_QUANTITY"] == "Y")
-					{
-						$curDiscount = roundEx($arProductsInBasket[$bi]["PRICE"] * $arProductsInBasket[$bi]["QUANTITY"] * $arMinDiscount["DISCOUNT_VALUE"] / 100, SALE_VALUE_PRECISION);
-						$arResult["DISCOUNT_PRICE"] += $curDiscount;
-					}
-					else
-					{
-						$curDiscount = roundEx($arProductsInBasket[$bi]["PRICE"] * $arMinDiscount["DISCOUNT_VALUE"] / 100, SALE_VALUE_PRECISION);
-						$arResult["DISCOUNT_PRICE"] += $curDiscount * $arProductsInBasket[$bi]["QUANTITY"];
-					}
-					$arProductsInBasket[$bi]["DISCOUNT_PRICE"] = $arProductsInBasket[$bi]["PRICE"] - $curDiscount;
-				}
-			}
-			else
-			{
-				$arResult["DISCOUNT_PRICE"] = CCurrencyRates::ConvertCurrency($arMinDiscount["DISCOUNT_VALUE"], $arMinDiscount["CURRENCY"], $arResult["BASE_LANG_CURRENCY"]);
-				$arResult["DISCOUNT_PRICE"] = roundEx($arResult["DISCOUNT_PRICE"], SALE_VALUE_PRECISION);
+			if($arBasketItem["DISCOUNT_PRICE"]){
+				$curDiscount = roundEx($arBasketItem["PRICE"] * $arBasketItem["QUANTITY"] * $arBasketItem["DISCOUNT_PRICE"] / 100, SALE_VALUE_PRECISION);
+				$arResult["DISCOUNT_PRICE"] += $curDiscount;
 			}
 		}
-
-		//var_dump($arResult);
 
 		if (strlen($arResult["ERROR_MESSAGE"]) <= 0 && $arResult["CurrentStep"] > 1)
 		{
@@ -812,8 +723,11 @@ else
 				$arResult["CurrentStep"] = 4;
 		}
 
+
+
 		if (strlen($arResult["ERROR_MESSAGE"]) <= 0 && $arResult["CurrentStep"] > 5)
 		{
+
 
 			if (strlen($arResult["ERROR_MESSAGE"]) > 0)
 				$arResult["CurrentStep"] = 5;
@@ -883,6 +797,7 @@ else
 						}
 					}
 				}
+
 
 
 				\Bitrix\Sale\Notify::setNotifyDisable(true);
@@ -1164,6 +1079,7 @@ else
 	}
 }
 
+
 /*******************************************************************************/
 /*****************  BODY  ******************************************************/
 /*******************************************************************************/
@@ -1441,6 +1357,7 @@ if ($USER->IsAuthorized())
 			//}
 		//}
 	}
+
 
 	//------------------ STEP 1 ----------------------------------------------
 	if ($arResult["CurrentStep"] == 1)
@@ -2270,6 +2187,7 @@ if ($USER->IsAuthorized())
 		{
 			$arResult["PAY_SYSTEM"] = "ERROR";
 		}
+
 
 		$arResult["BASKET_ITEMS"] = Array();
 		$arResult["ORDER_WEIGHT"] = 0;
