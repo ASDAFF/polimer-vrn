@@ -17,7 +17,7 @@ $this->setFrameMode(true);
 				<img src="<?=$item["PREVIEW_PICTURE"]["SRC"]?>" alt="" height="110" style="max-height: 110px;margin: 0 auto;" class="img">
 			</a>
 			<a href="<?=$item['DETAIL_PAGE_URL']?>" class="name"><?=$item['NAME']?></a>
-			<div class="price"><span><?=price($item['ID']);?></span> Руб</div>
+			<div class="price"><span><?=price($item['ID']);?></span> Руб./<?=$item['PROPERTIES']['CML2_BASE_UNIT']['VALUE'];?></div>
 			<a href="javascript:void(0)" onclick="addToBasket2(<?=$item['ID']?>, 1,this);" class="cart">В корзину</a>
 		</div>
 	</div>

@@ -204,11 +204,12 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 		<div class="tab_item">
 			<div class="slider_product" id="mp__product__new">
 				<?
-				$arSelect = Array("ID","IBLOCK_ID", "NAME", "DETAIL_PAGE_URL","PREVIEW_PICTURE","PROPERTY_SALE");
+				$arSelect = Array("ID","IBLOCK_ID", "NAME", "DETAIL_PAGE_URL","PREVIEW_PICTURE","PROPERTY_SALE","PROPERTY_CML2_BASE_UNIT");
 				$arFilter = array('IBLOCK_ID' => 21, 'ACTIVE' => 'Y','>=TIMESTAMP_X' => date($DB->DateFormatToPHP(CLang::GetDateFormat("SHORT")), strtotime('-30 day')));
 				$res = CIBlockElement::GetList(Array(), $arFilter, false, Array("nPageSize" => 20), $arSelect);
 				while($ob = $res->GetNextElement()):
 					$arFields = $ob->GetFields();
+					$arProps = $ob->GetProperties();
 					?>
 					<div>
 						<div class="product">
@@ -216,7 +217,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 								<img src="<?=CFile::GetPath($arFields["PREVIEW_PICTURE"]);?>" alt="" height="110" style="max-height: 110px;margin: 0 auto;" class="img">
 							</a>
 							<a href="<?=$arFields['DETAIL_PAGE_URL']?>" class="name"><?=$arFields['NAME']?></a>
-							<div class="price"><span><?=price($arFields['ID']);?></span> Руб</div>
+							<div class="price"><span><?=price($arFields['ID']);?></span> Руб./<?=$arProps['CML2_BASE_UNIT']['VALUE'];?></div>
 							<a href="javascript:void(0)" onclick="addToBasket2(<?=$arFields['ID']?>, 1,this);" class="cart">В корзину</a>
 						</div>
 					</div>
@@ -226,11 +227,12 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 		<div class="tab_item">
 			<div class="slider_product" id="mp__product__action">
 				<?
-				$arSelect = Array("ID","IBLOCK_ID", "NAME", "DETAIL_PAGE_URL","PREVIEW_PICTURE","PROPERTY_SALE");
+				$arSelect = Array("ID","IBLOCK_ID", "NAME", "DETAIL_PAGE_URL","PREVIEW_PICTURE","PROPERTY_SALE","PROPERTY_CML2_BASE_UNIT");
 				$arFilter = Array("IBLOCK_ID" => 21, "ACTIVE" => "Y", "PROPERTY_SALE_VALUE" => "Y");
 				$res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
 				while($ob = $res->GetNextElement()):
 				$arFields = $ob->GetFields();
+					$arProps = $ob->GetProperties();
 				?>
 				<div>
 					<div class="product">
@@ -238,7 +240,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 							<img src="<?=CFile::GetPath($arFields["PREVIEW_PICTURE"]);?>" alt="" height="110" style="max-height: 110px;margin: 0 auto;" class="img">
 						</a>
 						<a href="<?=$arFields['DETAIL_PAGE_URL']?>" class="name"><?=$arFields['NAME']?></a>
-						<div class="price"><span><?=price($arFields['ID']);?></span> Руб</div>
+						<div class="price"><span><?=price($arFields['ID']);?></span> Руб./<?=$arProps['CML2_BASE_UNIT']['VALUE'];?></div>
 						<a href="javascript:void(0)" onclick="addToBasket2(<?=$arFields['ID']?>, 1,this);" class="cart">В корзину</a>
 					</div>
 				</div>

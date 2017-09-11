@@ -141,7 +141,7 @@ $areaIds = array();
 					</a>
 					<a href="<?=$item['DETAIL_PAGE_URL']?>" class="name"><?=$item['NAME']?></a>
 					<div class="price">
-							<span><?=price($item['ID']);?></span> Руб.
+							<span><?=price($item['ID']);?></span> Руб./<?=$item['PROPERTIES']['CML2_BASE_UNIT']['VALUE'];?>
 					</div>
 					<?if(!price($item['ID'])){
 						print '<span class="noprice" style="font-size: 11px;margin: 17px 0">Цену уточняйте у менеджера</span>';
