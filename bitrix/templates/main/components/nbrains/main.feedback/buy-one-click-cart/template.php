@@ -90,8 +90,8 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 							$link_img = $_SERVER['SERVER_NAME'].$img;
 							$link_prod = 'http://'.$_SERVER['SERVER_NAME'].$ar_res['DETAIL_PAGE_URL'];
 							$ar_res = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N');
-							$format_price = SaleFormatCurrency($ar_res['DISCOUNT_PRICE'], $arResult["BASE_LANG_CURRENCY"],true);
-							$price = SaleFormatCurrency($ar_res['DISCOUNT_PRICE']*$arBasketItems["QUANTITY"], $arResult["BASE_LANG_CURRENCY"],true);
+							$format_price = SaleFormatCurrency($ar_res['DISCOUNT_PRICE'], 'RUB',true);
+							$price = SaleFormatCurrency($ar_res['DISCOUNT_PRICE']*$arBasketItems["QUANTITY"], 'RUB',true);
 							$allPrice[] = $ar_res['DISCOUNT_PRICE']*$arBasketItems["QUANTITY"];
 							?>
 							<tr style="font-size: 13px;">
