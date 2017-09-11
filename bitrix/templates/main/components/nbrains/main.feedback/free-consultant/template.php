@@ -46,20 +46,23 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 
 			<? foreach($arResult['USER_FIELD'] as $field):?>
 
+				<? if($field['XML_ID'] == 'hidden'):?>
+					<?
+					$prod = getUrlProd($APPLICATION->GetCurPage(false));
+					?>
+					<?if($field['CODE'] == 'PRODUCT'):?>
+						<input type="hidden" name="<?=$field['CODE']?>" value="<?=$prod['NAME']?>">
+					<? else:?>
+						<input type="hidden" name="<?=$field['CODE']?>" value="<?=$prod['DETAIL_PAGE_URL']?>">
+					<?endif;?>
+				<? else: ?>
+
 				<?if($field['PROPERTY_TYPE'] == "S"):?>
 
 					<span class="line cl">
      					<span class="label"><?=$field['NAME']?></span>
      					<span class="value"><input type="text" class="<?if($field['CODE'] == "PHONE"){print "phone";}elseif($field['CODE'] == "FIO"){print "name";}?>" placeholder="<?if($field['CODE'] == "PHONE"){print "+7 (473) 234-03-01";}else{print $field['NAME'];}?>" name="<?=$field['CODE']?>" value="<?=$arResult[$field['CODE']]?>"/></span>
      				</span>
-
-
-				<? elseif($field['PROPERTY_TYPE'] == "E"):?>
-				<?
-				$prod = getUrlProd($APPLICATION->GetCurPage(false));
-				?>
-				<input type="hidden" name="PRODUCT" value="<?=$prod['NAME']?>">
-				<input type="hidden" name="LINK_PRODUCT" value="<?=$prod['DETAIL_PAGE_URL']?>">
 
 				<? elseif($field['PROPERTY_TYPE'] == "L"):?>
 					<div class="rule">
@@ -71,6 +74,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 				</span>
 					</div>
 				<? endif; ?>
+			<? endif; ?>
 
 			<? endforeach; ?>
 
