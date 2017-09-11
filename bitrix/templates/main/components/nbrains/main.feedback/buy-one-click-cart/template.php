@@ -103,8 +103,8 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 								</td>
 								<td style="padding: 20px 10px;text-align: center;" width="" height=""><?=$arBasketItems["QUANTITY"];?></td>
 								<td style="padding: 20px 10px;text-align: right;" width="" height="">
-									<p style="white-space: nowrap;font-weight: bold;font-size: 16px;"><?=$price;?> <i style="font-weight: 100;font-style: initial;">руб.</i></p>
-									<p style="white-space: nowrap;font-size: 12px;color: #939191;"><?=$arBasketItems["QUANTITY"];?> шт. X <?=$format_price?> руб.</i></p>
+									<p style="white-space: nowrap;font-weight: bold;font-size: 16px;"><?=$price;?> <i style="font-weight: 100;font-style: initial;">&#8381;</i></p>
+									<p style="white-space: nowrap;font-size: 12px;color: #939191;"><?=$arBasketItems["QUANTITY"];?> шт. X <?=$format_price?> &#8381;</i></p>
 								</td>
 							</tr>
 							<?
