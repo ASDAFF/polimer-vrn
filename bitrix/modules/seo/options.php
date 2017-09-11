@@ -90,7 +90,7 @@ if (strlen($searchers) > 0 && CModule::IncludeModule('statistic'))
 	$arSearchersList = explode(',', $searchers);
 
 	$dbRes = CSearcher::GetList($by = 's_name', $order = 'asc', array('ID' => implode('|', $arSearchersList)), $is_filtered);
-	while ($arRes = $dbRes->Fetch())
+	while ($arRes = $dbRes->GetNext())
 	{
 		$arCurrentSearchers[$arRes['ID']] = $arRes['NAME'];
 	}

@@ -516,7 +516,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			var phrases, i, output = [];
 
 			text = text || '';
-			separator = separator || '<br />';
+			separator = separator || '<br>';
 
 			phrases = text.split(separator);
 			phrases = BX.util.array_unique(phrases);
@@ -557,7 +557,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		showError: function(node, msg, border)
 		{
 			if (BX.type.isArray(msg))
-				msg = msg.join('<br />');
+				msg = msg.join('<br>');
 
 			var errorContainer = node.querySelector('.alert.alert-danger'), animate;
 			if (errorContainer && msg.length)
@@ -863,7 +863,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				warningString = '<strong>' + this.params.MESS_DELIVERY_CALC_ERROR_TITLE + '</strong>';
 				if (this.params.MESS_DELIVERY_CALC_ERROR_TEXT.length)
-					warningString += '<br /><small>' + this.params.MESS_DELIVERY_CALC_ERROR_TEXT + '</small>';
+					warningString += '<br><small>' + this.params.MESS_DELIVERY_CALC_ERROR_TEXT + '</small>';
 
 				this.showBlockWarning(this.deliveryBlockNode, warningString);
 				this.showBlockWarning(this.deliveryHiddenBlockNode, warningString);
@@ -928,6 +928,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		showBlockWarning: function(node, warnings, hide)
 		{
 			var errorNode = node.querySelector('.alert.alert-danger'),
+				existedWarningNode = node.querySelector('.alert.alert-warning'),
 				warnStr = '', i, warningNode;
 
 			if (errorNode)
@@ -942,13 +943,20 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					{
 						if (warnings.hasOwnProperty(i) && warnings[i])
 						{
-							warnStr += warnings[i] + '<br />';
+							warnStr += warnings[i] + '<br>';
 						}
 					}
 				}
 
 				if (!warnStr)
+				{
 					return;
+				}
+
+				if (BX.type.isDomNode(existedWarningNode) && existedWarningNode.innerHTML === warnStr)
+				{
+					return;
+				}
 
 				warningNode = BX.create('DIV', {
 					props: {className: 'alert alert-warning' + (!!hide ? ' alert-hide' : ' alert-show')},
@@ -1469,7 +1477,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				for (i = 0; i < this.result.DELIVERY.length; i++)
 				{
-					if (this.result.DELIVERY[i].CHECKED == 'Y')
+					if (this.result.DELIVERY[i].CHECKED === 'Y' && this.result.DELIVERY[i].STORE_MAIN)
 					{
 						usePickUp = this.result.DELIVERY[i].STORE_MAIN.length > 0;
 						usePickUpPagination = this.result.DELIVERY[i].STORE_MAIN.length > this.options.pickUpsPerPage;
@@ -1739,8 +1747,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			if (!showNode || BX.hasClass(showNode, 'bx-selected'))
 				return;
 
-			this.show(showNode);
 			fadeNode && this.fade(fadeNode);
+			this.show(showNode);
 		},
 
 		/**
@@ -1907,7 +1915,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		fade: function(node, nextSection)
 		{
-			if (!node || !node.id)
+			if (!node || !node.id || this.activeSectionId != node.id)
 				return;
 
 			this.hasErrorSection[node.id] = false;
@@ -2064,8 +2072,8 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			this.reachGoal('edit', showNode);
 
-			this.show(showNode);
 			fadeNode && this.fade(fadeNode);
+			this.show(showNode);
 
 			setTimeout(BX.delegate(function(){
 				if (BX.pos(showNode).top < scrollTop)
@@ -2260,23 +2268,35 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			var sections = this.orderBlockNode.querySelectorAll('.bx-soa-section[data-visited]'),
 				i, state;
 
-			var isAuthorized = !!this.result.IS_AUTHORIZED,
-				orderDataLoaded = this.result.LAST_ORDER_DATA.FAIL !== true;
+			var orderDataLoaded = !!this.result.IS_AUTHORIZED && this.params.USE_PRELOAD === 'Y' && this.result.LAST_ORDER_DATA.FAIL !== true,
+				skipFlag = true;
 
 			for (i = 0; i < sections.length; i++)
 			{
-				state = this.firstLoad && isAuthorized && orderDataLoaded && this.params.USE_PRELOAD === 'Y';
+				state = this.firstLoad && orderDataLoaded;
 				state = state || this.shouldBeSectionVisible(sections, i);
 
 				this.changeVisibleSection(sections[i], state);
 
-				if (this.firstLoad)
+				if (this.firstLoad && skipFlag)
 				{
-					if (state && sections[i + 1] && this.shouldSkipSection(sections[i]))
+					if (
+						state
+						&& sections[i + 1]
+						&& this.checkBlockErrors(sections[i])
+						&& (
+							(orderDataLoaded && this.checkPreload(sections[i]))
+							|| (!orderDataLoaded && this.shouldSkipSection(sections[i]))
+						)
+					)
 					{
 						this.fade(sections[i]);
 						this.markSectionAsCompleted(sections[i]);
 						this.show(sections[i + 1]);
+					}
+					else
+					{
+						skipFlag = false;
 					}
 				}
 			}
@@ -4040,7 +4060,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			if (selectedPersonType && selectedPersonType.NAME && this.result.PERSON_TYPE.length > 1)
 			{
 				addedHtml += '<strong>' + this.params.MESS_PERSON_TYPE + ':</strong> '
-					+ BX.util.htmlspecialchars(selectedPersonType.NAME) + '<br />';
+					+ BX.util.htmlspecialchars(selectedPersonType.NAME) + '<br>';
 			}
 
 			if (selectedPersonType)
@@ -4077,7 +4097,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			locationString = this.getLocationString(this.regionHiddenBlockNode);
 			if (locationProperty && locationString.length)
-				addedHtml += '<strong>' + BX.util.htmlspecialchars(locationProperty.NAME) + ':</strong> ' + locationString + '<br />';
+				addedHtml += '<strong>' + BX.util.htmlspecialchars(locationProperty.NAME) + ':</strong> ' + locationString + '<br>';
 
 			if (zipProperty && zipValue.length)
 				addedHtml += '<strong>' + BX.util.htmlspecialchars(zipProperty.NAME) + ':</strong> ' + zipValue;
@@ -4866,7 +4886,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			});
 
 			htmlString = this.params.MESS_INNER_PS_BALANCE + ' <b class="wsnw">' + this.result.CURRENT_BUDGET_FORMATED
-				+ '</b><br />' + (accountOnly ? BX.message('SOA_PAY_ACCOUNT3') : '');
+				+ '</b><br>' + (accountOnly ? BX.message('SOA_PAY_ACCOUNT3') : '');
 			innerPsDesc = BX.create('DIV', {props: {className: 'bx-soa-pp-company-desc'}, html: htmlString});
 
 			return BX.create('DIV', {
@@ -4897,7 +4917,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				addedHtml += '<div class="bx-soa-pp-company-selected">';
 				addedHtml += '<img src="' + imgSrc + '" style="height:18px;" alt="">';
-				addedHtml += '<strong>' + this.result.INNER_PAY_SYSTEM.NAME + '</strong><br />';
+				addedHtml += '<strong>' + this.result.INNER_PAY_SYSTEM.NAME + '</strong><br>';
 				addedHtml += '</div>';
 			}
 
@@ -5558,7 +5578,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		editActivePickUpBlock: function(activeNodeMode)
 		{
 			var node = activeNodeMode ? this.pickUpBlockNode : this.pickUpHiddenBlockNode,
-				pickUpContent, pickUpContentCol, pickUpContentRow;
+				pickUpContent, pickUpContentCol;
 
 			if (this.initialized.pickup)
 			{
@@ -5651,16 +5671,16 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				html += '<strong>' + BX.util.htmlspecialchars(selectedPickUp.TITLE) + '</strong>';
 				if (selectedPickUp.ADDRESS)
-					html += '<br /><strong>' + BX.message('SOA_PICKUP_ADDRESS') + ':</strong> ' + BX.util.htmlspecialchars(selectedPickUp.ADDRESS);
+					html += '<br><strong>' + BX.message('SOA_PICKUP_ADDRESS') + ':</strong> ' + BX.util.htmlspecialchars(selectedPickUp.ADDRESS);
 
 				if (selectedPickUp.PHONE)
-					html += '<br /><strong>' + BX.message('SOA_PICKUP_PHONE') + ':</strong> ' + BX.util.htmlspecialchars(selectedPickUp.PHONE);
+					html += '<br><strong>' + BX.message('SOA_PICKUP_PHONE') + ':</strong> ' + BX.util.htmlspecialchars(selectedPickUp.PHONE);
 
 				if (selectedPickUp.SCHEDULE)
-					html += '<br /><strong>' + BX.message('SOA_PICKUP_WORK') + ':</strong> ' + BX.util.htmlspecialchars(selectedPickUp.SCHEDULE);
+					html += '<br><strong>' + BX.message('SOA_PICKUP_WORK') + ':</strong> ' + BX.util.htmlspecialchars(selectedPickUp.SCHEDULE);
 
 				if (selectedPickUp.DESCRIPTION)
-					html += '<br /><strong>' + BX.message('SOA_PICKUP_DESC') + ':</strong> ' + BX.util.htmlspecialchars(selectedPickUp.DESCRIPTION);
+					html += '<br><strong>' + BX.message('SOA_PICKUP_DESC') + ':</strong> ' + BX.util.htmlspecialchars(selectedPickUp.DESCRIPTION);
 
 				pickUpContainer.innerHTML = html;
 
@@ -5982,16 +6002,16 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			var html = '';
 
 			if (currentStore.ADDRESS)
-				html += BX.message('SOA_PICKUP_ADDRESS') + ': ' + BX.util.htmlspecialchars(currentStore.ADDRESS) + '<br />';
+				html += BX.message('SOA_PICKUP_ADDRESS') + ': ' + BX.util.htmlspecialchars(currentStore.ADDRESS) + '<br>';
 
 			if (currentStore.PHONE)
-				html += BX.message('SOA_PICKUP_PHONE') + ': ' + BX.util.htmlspecialchars(currentStore.PHONE) + '<br />';
+				html += BX.message('SOA_PICKUP_PHONE') + ': ' + BX.util.htmlspecialchars(currentStore.PHONE) + '<br>';
 
 			if (currentStore.SCHEDULE)
-				html += BX.message('SOA_PICKUP_WORK') + ': ' + BX.util.htmlspecialchars(currentStore.SCHEDULE) + '<br />';
+				html += BX.message('SOA_PICKUP_WORK') + ': ' + BX.util.htmlspecialchars(currentStore.SCHEDULE) + '<br>';
 
 			if (currentStore.DESCRIPTION)
-				html += BX.message('SOA_PICKUP_DESC') + ': ' + BX.util.htmlspecialchars(currentStore.DESCRIPTION) + '<br />';
+				html += BX.message('SOA_PICKUP_DESC') + ': ' + BX.util.htmlspecialchars(currentStore.DESCRIPTION) + '<br>';
 
 			return html;
 		},
@@ -6105,7 +6125,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				});
 				recommendList.appendChild(storeNode);
 
-				selectedDelivery.STORE_MAIN.splice(selectedDelivery.STORE_MAIN.indexOf(currentStoreId), 1);
+				if (selectedDelivery.STORE_MAIN)
+				{
+					selectedDelivery.STORE_MAIN.splice(selectedDelivery.STORE_MAIN.indexOf(currentStoreId), 1);
+				}
 			}
 
 			container = this.pickUpHiddenBlockNode.querySelector('.bx_soa_pickup>.col-xs-12');
@@ -6482,7 +6505,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 							values.push(locationString.length ? locationString : BX.message('SOA_NOT_SELECTED'));
 						}
 					}
-					propsItemNode.innerHTML += values.join('<br />');
+					propsItemNode.innerHTML += values.join('<br>');
 				}
 				else
 				{
@@ -7100,7 +7123,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				inputErrors = data.func(data.inputs[i], !!fieldName);
 				if (inputErrors.length)
-					propErrors[i] = inputErrors.join('<br />');
+					propErrors[i] = inputErrors.join('<br>');
 			}
 
 			this.showValidationResult(data.inputs, propErrors);
@@ -7243,7 +7266,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			var tooltip = BX('tooltip-' + tooltipId),
 				tooltipInner, quickLocation;
 
-			text = this.uniqueText(text, '<br />');
+			text = this.uniqueText(text, '<br>');
 
 			if (tooltip)
 			{
@@ -7335,7 +7358,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 
 			if (errors.length)
-				this.showErrorTooltip(tooltipId, label, errors.join('<br />'));
+				this.showErrorTooltip(tooltipId, label, errors.join('<br>'));
 			else
 				this.closeErrorTooltip(tooltipId);
 		},
@@ -7618,7 +7641,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			if (this.options.showPriceWithoutDiscount)
 			{
-				priceHtml += '<br /><span class="bx-price-old">' + total.PRICE_WITHOUT_DISCOUNT + '</span>';
+				priceHtml += '<br><span class="bx-price-old">' + total.PRICE_WITHOUT_DISCOUNT + '</span>';
 			}
 
 			this.totalInfoBlockNode.appendChild(this.createTotalUnit(BX.message('SOA_SUM_SUMMARY'), priceHtml, params));
@@ -7668,7 +7691,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					&& parseFloat(curDelivery.PRICE) > parseFloat(curDelivery.DELIVERY_DISCOUNT_PRICE)
 				)
 				{
-					deliveryValue += '<br /><span class="bx-price-old">' + curDelivery.PRICE_FORMATED + '</span>';
+					deliveryValue += '<br><span class="bx-price-old">' + curDelivery.PRICE_FORMATED + '</span>';
 				}
 			}
 

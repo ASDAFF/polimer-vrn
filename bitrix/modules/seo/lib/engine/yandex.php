@@ -135,7 +135,10 @@ class Yandex extends Engine\YandexBase implements IEngine
 			$result = Json::decode($queryResult->getResult());
 			foreach ($result['hosts'] as $host)
 			{
-				$hostUrl = str_replace(array('http://', 'https://', '/'), '', $host['unicode_host_url']);
+//				ascii_host_url must be equal unicode_host_url for latin URLs.
+//				if it cyrillic URL - we need ASCII host.
+				$hostUrl = str_replace(array('http://', 'https://'), '', $host['ascii_host_url']);
+				$hostUrl = rtrim($hostUrl, '/');
 				$resultConverted[$hostUrl] = $host;
 //				convert verified status in correct format
 				if ($host['verified'])
@@ -143,6 +146,9 @@ class Yandex extends Engine\YandexBase implements IEngine
 //				save hostId in local var
 				$this->hostIds[$hostUrl] = $host['host_id'];
 			}
+			
+//			save found hosts to table
+			$this->processHosts();
 			
 			return $resultConverted;
 		}
@@ -163,7 +169,7 @@ class Yandex extends Engine\YandexBase implements IEngine
 		
 		$result += $this->getSiteInfoGeneral($domain);
 		$result += $this->getSiteInfoStats($domain);
-
+		
 		return array($domain => $result);
 	}
 	
@@ -250,6 +256,26 @@ class Yandex extends Engine\YandexBase implements IEngine
 			'TOTAL_SHOWS' => $totalShows,
 			'TOTAL_CLICKS' => $totalClicks,
 		);
+	}
+	
+	private function processHosts()
+	{
+		$existedDomains = \CSeoUtils::getDomainsList();
+		
+		foreach($existedDomains as $domain)
+		{
+			$domain['DOMAIN'] = ToLower($domain['DOMAIN']);
+
+			if(isset($this->hostIds[$domain['DOMAIN']]))
+			{
+				if(!is_array($this->engineSettings['SITES']))
+					$this->engineSettings['SITES'] = array();
+
+				$this->engineSettings['SITES'][$domain['DOMAIN']] = $this->hostIds[$domain['DOMAIN']];
+			}
+		}
+		
+		$this->saveSettings();
 	}
 	
 	public function getOriginalTexts($domain)

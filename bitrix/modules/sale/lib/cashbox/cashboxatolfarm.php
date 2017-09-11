@@ -13,8 +13,12 @@ Localization\Loc::loadMessages(__FILE__);
  * Class CashboxAtolFarm
  * @package Bitrix\Sale\Cashbox
  */
-class CashboxAtolFarm extends Cashbox implements IPrintImmediately
+class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 {
+	const OPERATION_CHECK_REGISTRY = 'registry';
+	const OPERATION_CHECK_CHECK = 'check';
+	const REQUEST_TYPE_GET = 'get';
+	const REQUEST_TYPE_POST = 'post';
 	const TOKEN_OPTION_NAME = 'atol_access_token';
 	const SERVICE_URL = 'https://online.atol.ru/possystem/v3';
 	const RESPONSE_HTTP_CODE_401 = 401;
@@ -193,15 +197,26 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 	}
 
 	/**
-	 * @param $checkType
+	 * @param $operation
 	 * @param $token
+	 * @param array $queryData
 	 * @return string
+	 * @throws Main\SystemException
 	 */
-	private function createUrlOperation($checkType, $token)
+	private function getUrl($operation, $token, array $queryData = array())
 	{
 		$groupCode = $this->getField('NUMBER_KKM');
 
-		return static::SERVICE_URL.'/'.$groupCode.'/'.$checkType.'?tokenid='.$token;
+		if ($operation === static::OPERATION_CHECK_REGISTRY)
+		{
+			return static::SERVICE_URL.'/'.$groupCode.'/'.$queryData['CHECK_TYPE'].'?tokenid='.$token;
+		}
+		elseif ($operation === static::OPERATION_CHECK_CHECK)
+		{
+			return static::SERVICE_URL.'/'.$groupCode.'/report/'.$queryData['EXTERNAL_UUID'].'?tokenid='.$token;
+		}
+
+		throw new Main\SystemException();
 	}
 
 	/**
@@ -233,9 +248,9 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 		$checkTypeMap = $this->getCheckTypeMap();
 		$checkType = $checkTypeMap[$check::getType()];
 
-		$url = $this->createUrlOperation($checkType, $token);
+		$url = $this->getUrl(static::OPERATION_CHECK_REGISTRY, $token, array('CHECK_TYPE' => $checkType));
 
-		$result = $this->send($url, $checkQuery);
+		$result = $this->send(static::REQUEST_TYPE_POST, $url, $checkQuery);
 		if (!$result->isSuccess())
 			return $result;
 
@@ -249,8 +264,8 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 				return $printResult;
 			}
 
-			$url = $this->createUrlOperation($checkType, $token);
-			$result = $this->send($url, $checkQuery);
+			$url = $this->getUrl(static::OPERATION_CHECK_REGISTRY, $token, array('CHECK_TYPE' => $checkType));
+			$result = $this->send(static::REQUEST_TYPE_POST, $url, $checkQuery);
 			if (!$result->isSuccess())
 				return $result;
 
@@ -284,6 +299,48 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 	}
 
 	/**
+	 * @param Check $check
+	 * @return Result
+	 */
+	public function check(Check $check)
+	{
+		$url = $this->getUrl(
+			static::OPERATION_CHECK_CHECK,
+			$this->getAccessToken(),
+			array('EXTERNAL_UUID' => $check->getField('EXTERNAL_UUID'))
+		);
+
+		$result = $this->send(static::REQUEST_TYPE_GET, $url);
+		if (!$result->isSuccess())
+			return $result;
+
+		$response = $result->getData();
+		if ($response['http_code'] === static::RESPONSE_HTTP_CODE_401)
+		{
+			$token = $this->requestAccessToken();
+			if ($token === '')
+			{
+				$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_CASHBOX_ATOL_REQUEST_TOKEN_ERROR')));
+				return $result;
+			}
+
+			$url = $this->getUrl(
+				static::OPERATION_CHECK_CHECK,
+				$this->getAccessToken(),
+				array('EXTERNAL_UUID' => $check->getField('EXTERNAL_UUID'))
+			);
+
+			$result = $this->send(static::REQUEST_TYPE_GET, $url);
+			if (!$result->isSuccess())
+				return $result;
+
+			$response = $result->getData();
+		}
+
+		return static::applyCheckResult($response);
+	}
+
+	/**
 	 * @param array $checkData
 	 * @return Result
 	 */
@@ -300,16 +357,27 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 	}
 
 	/**
+	 * @param $method
 	 * @param $url
 	 * @param array $data
 	 * @return Result
 	 */
-	private function send($url, array $data)
+	private function send($method, $url, array $data = array())
 	{
 		$result = new Result();
 
-		$http = new Main\Web\HttpClient(array('disableSslVerification' => true));
-		$response = $http->post($url, $this->encode($data));
+		$http = new Main\Web\HttpClient();
+
+		if ($method === static::REQUEST_TYPE_POST)
+		{
+			$http->disableSslVerification();
+			$data = $this->encode($data);
+			$response = $http->post($url, $data);
+		}
+		else
+		{
+			$response = $http->get($url);
+		}
 
 		if ($response !== false)
 		{
@@ -389,23 +457,23 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 			);
 		}
 
+		$settings['VAT'] = array(
+			'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_VAT'),
+			'ITEMS' => array(
+				'NOT_VAT' => array(
+					'TYPE' => 'STRING',
+					'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_VAT_LABEL_NOT_VAT'),
+					'VALUE' => 'none'
+				)
+			)
+		);
+
 		if (Main\Loader::includeModule('catalog'))
 		{
 			$dbRes = Catalog\VatTable::getList(array('filter' => array('ACTIVE' => 'Y')));
 			$vatList = $dbRes->fetchAll();
 			if ($vatList)
 			{
-				$settings['VAT'] = array(
-					'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_VAT'),
-					'ITEMS' => array()
-				);
-
-				$settings['VAT']['ITEMS']['NOT_VAT'] = array(
-					'TYPE' => 'STRING',
-					'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_VAT_LABEL_NOT_VAT'),
-					'VALUE' => 'none'
-				);
-
 				$defaultVat = array(0 => 'vat0', 10 => 'vat10', 18 => 'vat18');
 				foreach ($vatList as $vat)
 				{
@@ -523,7 +591,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately
 			'pass' => $this->getValueFromSettings('AUTH', 'PASS')
 		);
 
-		$result = $this->send($url, $data);
+		$result = $this->send(static::REQUEST_TYPE_POST, $url, $data);
 		if ($result->isSuccess())
 		{
 			$response = $result->getData();

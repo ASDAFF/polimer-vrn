@@ -765,7 +765,12 @@ final class CheckManager
 		$dbRes = CashboxCheckTable::getById($id);
 		if ($checkInfo = $dbRes->fetch())
 		{
-			return static::createByType($checkInfo['TYPE']);
+			$check = static::createByType($checkInfo['TYPE']);
+			if ($check)
+			{
+				$check->init($checkInfo);
+				return $check;
+			}
 		}
 
 		return null;

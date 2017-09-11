@@ -1019,6 +1019,34 @@ BX.Sale.Admin.OrderPayment.prototype.showCreateCheckWindow = function(paymentId)
 	BX.Sale.Admin.OrderAjaxer.sendRequest(request, true);
 };
 
+BX.Sale.Admin.OrderPayment.prototype.sendQueryCheckStatus = function(checkId)
+{
+	ShowWaitWindow();
+	var request = {
+		'action': 'sendQueryCheckStatus',
+		'checkId': checkId,
+		'callback' : BX.proxy(function(result)
+		{
+			if (result.ERROR && result.ERROR.length > 0)
+			{
+				BX.Sale.Admin.OrderEditPage.showDialog(result.ERROR);
+			}
+			else
+			{
+				CloseWaitWindow();
+				var paymentId = result.PAYMENT_ID;
+				BX('PAYMENT_CHECK_LIST_ID_' + paymentId).innerHTML = result.CHECK_LIST_HTML;
+				if (BX('PAYMENT_CHECK_LIST_ID_SHORT_VIEW' + paymentId) !== undefined && BX('PAYMENT_CHECK_LIST_ID_SHORT_VIEW' + paymentId) !== null)
+				{
+					BX('PAYMENT_CHECK_LIST_ID_SHORT_VIEW' + paymentId).innerHTML = result.CHECK_LIST_HTML;
+				}
+			}
+		}, this)
+	};
+
+	BX.Sale.Admin.OrderAjaxer.sendRequest(request, true);
+};
+
 BX.namespace("BX.Sale.Admin.GeneralPayment");
 
 BX.Sale.Admin.GeneralPayment = {

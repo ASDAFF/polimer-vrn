@@ -144,6 +144,13 @@ elseif (isset($_REQUEST['get']))
 		case 'original_text_form':
 			$arSettings = $engine->getSettings();
 			$arDomains = \CSeoUtils::getDomainsList();
+			
+//			if empty - save list of webmaster-sites in settings
+			if(empty($arSettings['SITES']))
+			{
+				$engine->getFeeds();
+				$arSettings = $engine->getSettings();
+			}
 
 			foreach($arDomains as $key => $domain)
 			{

@@ -1298,9 +1298,11 @@ class SaleOrderAjax extends \CBitrixComponent
 		if ($userEmail == '')
 		{
 			$newEmail = false;
-			if (!empty($userProps['PHONE']))
+			$normalizedPhone = NormalizePhone((string)$userProps['PHONE'], 6);
+
+			if (!empty($normalizedPhone))
 			{
-				$newLogin = NormalizePhone($userProps['PHONE'], 6);
+				$newLogin = $normalizedPhone;
 			}
 			else
 			{
@@ -1511,19 +1513,24 @@ class SaleOrderAjax extends \CBitrixComponent
 				}
 			}
 
-			if ($existingUserId === 0 && $userProps['PHONE'] != '')
+			if ($existingUserId === 0 && !empty($userProps['PHONE']))
 			{
-				$res = Bitrix\Main\UserTable::getRow(array(
-					'filter' => array(
-						'LOGIC' => 'OR',
-						'=PERSONAL_PHONE' => NormalizePhone($userProps['PHONE'], 6),
-						'=PERSONAL_MOBILE' => NormalizePhone($userProps['PHONE'], 6)
-					),
-					'select' => array('ID')
-				));
-				if (isset($res['ID']))
+				$normalizedPhone = NormalizePhone((string)$userProps['PHONE'], 6);
+
+				if (!empty($normalizedPhone))
 				{
-					$existingUserId = (int)$res['ID'];
+					$res = Bitrix\Main\UserTable::getRow(array(
+						'filter' => array(
+							'LOGIC' => 'OR',
+							'=PERSONAL_PHONE' => $normalizedPhone,
+							'=PERSONAL_MOBILE' => $normalizedPhone
+						),
+						'select' => array('ID')
+					));
+					if (isset($res['ID']))
+					{
+						$existingUserId = (int)$res['ID'];
+					}
 				}
 			}
 

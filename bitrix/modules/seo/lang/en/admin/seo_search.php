@@ -109,4 +109,5 @@ $MESS["SEO_DETAIL_QUERY_AVG_CLICK_POSITION"] = "Average click position";
 $MESS["SEO_DETAIL_CRAWLING"] = "Crawling";
 $MESS["SEO_ERROR_CODE"] = "error code";
 $MESS["SEO_ERROR_HOST_NOT_VERIFIED"] = "You have to verify your site ownership to view information";
+$MESS["SEO_ERROR_HOST_NOT_INDEXED"] = "The site has not yet been indexed. Please try again later.";
 ?>

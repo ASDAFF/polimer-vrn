@@ -1063,7 +1063,12 @@ class OrderPayment
 			}
 			else
 			{
-				$result .='<tspan>'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_LINK', array('#CHECK_ID#' => $check['ID'])).'</tspan>';
+				$result .='<tspan>'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_LINK', array('#CHECK_ID#' => $check['ID']));
+				if ($check['STATUS'] === 'P')
+				{
+					$result .= ' (<a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderPayment.prototype.sendQueryCheckStatus('.$check['ID'].');">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_CHECK_STATUS').'</a>)';
+				}
+				$result .= '</tspan>';
 			}
 
 			$result .= '</div>';

@@ -389,23 +389,23 @@ class CashboxBitrix extends Cashbox
 				}
 			}
 
+			$settings['VAT'] = array(
+				'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_VAT'),
+				'ITEMS' => array(
+					'NOT_VAT' => array(
+						'TYPE' => 'STRING',
+						'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_VAT_LABEL_NOT_VAT'),
+						'VALUE' => 4
+					)
+				)
+			);
+
 			if (Main\Loader::includeModule('catalog'))
 			{
 				$dbRes = Catalog\VatTable::getList(array('filter' => array('ACTIVE' => 'Y')));
 				$vatList = $dbRes->fetchAll();
 				if ($vatList)
 				{
-					$settings['VAT'] = array(
-						'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_VAT'),
-						'ITEMS' => array()
-					);
-
-					$settings['VAT']['ITEMS']['NOT_VAT'] = array(
-						'TYPE' => 'STRING',
-						'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_VAT_LABEL_NOT_VAT'),
-						'VALUE' => 4
-					);
-
 					foreach ($vatList as $vat)
 					{
 						$value = '';

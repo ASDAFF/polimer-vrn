@@ -3,6 +3,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Cashbox\Internals;
+use Bitrix\Sale\Cashbox;
 use Bitrix\Main\Page;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\Shipment;
@@ -47,6 +48,17 @@ if (($ids = $lAdmin->GroupAction()) && $saleModulePermissions >= "W")
 				$lAdmin->AddGroupError(Loc::getMessage('SALE_CHECK_DELETE_ERR_INCORRECT_STATUS'), $id);
 			}
 		}
+		elseif ($_REQUEST['action'] === 'check_status')
+		{
+			$check = Cashbox\CheckManager::getObjectById($id);
+			$cashbox = Cashbox\Manager::getObjectById($check->getField('CASHBOX_ID'));
+			if ($cashbox->isCheckable())
+			{
+				$r = $cashbox->check($check);
+				if ($r->isSuccess())
+					$lAdmin->AddGroupError(!Loc::getMessage('SALE_CHECK_DELETE_ERR_INCORRECT_STATUS'), $id);
+			}
+		}
 	}
 }
 
@@ -61,7 +73,7 @@ if (strlen($filter_date_create_from)>0)
 {
 	$filter[">=DATE_CREATE"] = trim($filter_date_create_from);
 }
-elseif($set_filter!="Y" && $del_filter != "Y")
+elseif($set_filter!="Y" && $del_filter != "Y" && !$ids)
 {
 	$filter_date_create_from_FILTER_PERIOD = 'day';
 	$filter_date_create_from_FILTER_DIRECTION = 'current';
@@ -284,10 +296,8 @@ while ($shipment = $shipmentData->fetch())
 	
 while ($check = $dbResultList->Fetch())
 {
-//	$row =& $lAdmin->AddRow($check['ID'], $check, "sale_cashbox_check_edit.php?ID=".$check['ID']."&lang=".LANG, GetMessage("SALE_EDIT_DESCR"));
 	$row =& $lAdmin->AddRow($check['ID'], $check, false, GetMessage("SALE_EDIT_DESCR"));
 
-//	$row->AddField("ID", "<a href=\"sale_cashbox_check_edit.php?ID=".$check['ID']."&lang=".LANG."\">".$check['ID']."</a>");
 	$row->AddField("ID", $check['ID']);
 	$row->AddField("ORDER_ID",  "<a href=\"sale_order_view.php?ID=".(int)$check['ORDER_ID']."&lang=".LANG."\">".(int)$check['ORDER_ID']."</a>");
 	$row->AddField("PAYMENT_ID",  "<a href=\"sale_order_payment_edit.php?order_id=".(int)$check['ORDER_ID']."&payment_id=".(int)$check['PAYMENT_ID']."&lang=".LANG."\">".(int)$check['PAYMENT_ID']."</a>");
@@ -298,6 +308,7 @@ while ($check = $dbResultList->Fetch())
 	$row->AddField("SUM", SaleFormatCurrency($check['SUM'], $check['CURRENCY']));
 	$row->AddField("CASHBOX_ID", htmlspecialcharsbx($cashboxList[$check['CASHBOX_ID']]['NAME']));
 
+	$cashbox = null;
 	$checkLink = '';
 	if ($check['CASHBOX_ID'] > 0)
 	{
@@ -311,17 +322,28 @@ while ($check = $dbResultList->Fetch())
 	}
 	$row->AddField("LINK_PARAMS", $checkLink);
 	$row->AddField("STATUS", Loc::getMessage('SALE_CASHBOX_STATUS_'.$check['STATUS']));
+
+	$arActions = array();
 	if ($check['STATUS'] === 'E' || $check['STATUS'] == 'N')
 	{
-		$arActions = array(
-			array(
-				"ICON" => "delete",
-				"TEXT" => GetMessage("SALE_CHECK_DELETE"),
-				"ACTION" => "if(confirm('".Loc::getMessage('SALE_CHECK_DELETE_CONFIRM', array('#CHECK_ID#' => $check['ID']))."')) ".$lAdmin->ActionDoGroup($check["ID"], "delete")
-			)
+		$arActions[] = array(
+			"ICON" => "delete",
+			"TEXT" => GetMessage("SALE_CHECK_DELETE"),
+			"ACTION" => "if(confirm('".Loc::getMessage('SALE_CHECK_DELETE_CONFIRM', array('#CHECK_ID#' => $check['ID']))."')) ".$lAdmin->ActionDoGroup($check["ID"], "delete")
 		);
-		$row->AddActions($arActions);
 	}
+
+	if ($check['STATUS'] === 'P' && $cashbox && $cashbox->isCheckable() )
+	{
+		$arActions[] = array(
+			"ICON" => "check_status",
+			"TEXT" => GetMessage("SALE_CHECK_CHECK_STATUS"),
+			"ACTION" => $lAdmin->ActionDoGroup($check["ID"], "check_status", GetFilterParams())
+		);
+	}
+
+	if ($arActions)
+		$row->AddActions($arActions);
 }
 
 $lAdmin->AddFooter(

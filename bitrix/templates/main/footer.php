@@ -161,29 +161,31 @@
 
 
 			<?$APPLICATION->IncludeComponent(
-				"nbrains:main.feedback",
-				"order-product",
-				array(
-					"EMAIL_TO" => "sale@polimer-vrn",
-					"EVENT_MESSAGE_ID" => array(
-					),
-					"IBLOCK_ID" => "18",
-					"IBLOCK_TYPE" => "feedback",
-					"OK_TEXT" => "Спасибо, ваше сообщение принято.",
-					"PROPERTY_CODE" => array(
-						0 => "FIO",
-						1 => "EMAIL",
-						2 => "PHONE",
-						3 => "RULE",
-						4 => "PRODUCT",
-						5 => "LINK_PRODUCT",
-
-					),
-					"USE_CAPTCHA" => "N",
-					"COMPONENT_TEMPLATE" => "order-product"
-				),
-				false
-			);?>
+	"nbrains:main.feedback", 
+	"order-product", 
+	array(
+		"EMAIL_TO" => "sale@polimer-vrn",
+		"EVENT_MESSAGE_ID" => array(
+			0 => "103",
+		),
+		"IBLOCK_ID" => "18",
+		"IBLOCK_TYPE" => "feedback",
+		"OK_TEXT" => "Спасибо, ваше сообщение принято.",
+		"PROPERTY_CODE" => array(
+			0 => "EMAIL",
+			1 => "PHONE",
+			2 => "FIO",
+			3 => "PRODUCT",
+			4 => "LINK_PRODUCT",
+			5 => "RULE",
+		),
+		"USE_CAPTCHA" => "N",
+		"COMPONENT_TEMPLATE" => "order-product",
+		"COMPOSITE_FRAME_MODE" => "A",
+		"COMPOSITE_FRAME_TYPE" => "AUTO"
+	),
+	false
+);?>
 
 			<?$APPLICATION->IncludeComponent(
 	"nbrains:main.feedback", 

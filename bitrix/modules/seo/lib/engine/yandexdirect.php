@@ -958,11 +958,6 @@ class YandexDirect extends Engine\YandexBase implements IEngine
 					)
 				);
 			}
-			
-			if (count($newCampaigns) <= static::MAX_CAMPAIGNS_BANNER_UPDATE)
-			{
-				$res['banner'] = $this->updateBannersManual($newCampaigns);
-			}
 		}
 		
 		return $res;

@@ -1700,7 +1700,7 @@ class CAllMailMessage
 			$atchCnt = 0;
 			if (\Bitrix\Main\Config\Option::get('mail', 'save_attachments', B_MAIL_SAVE_ATTACHMENTS) == 'Y')
 			{
-				foreach ($arMessageParts as $part)
+				foreach ($arMessageParts as $i => $part)
 				{
 					$attachFields = array(
 						'MESSAGE_ID'   => $message_id,
@@ -1710,7 +1710,8 @@ class CAllMailMessage
 						'CONTENT_ID'   => $part['CONTENT-ID'],
 					);
 
-					if (!\CMailMessage::addAttachment($attachFields))
+					$arMessageParts[$i]['ATTACHMENT-ID'] = \CMailMessage::addAttachment($attachFields);
+					if (!$arMessageParts[$i]['ATTACHMENT-ID'])
 					{
 						\CMailMessage::delete($message_id);
 						return false;
@@ -1736,8 +1737,37 @@ class CAllMailMessage
 			$arFields['MSG_HASH']   = $params['hash'];
 			if ($message_body_html)
 			{
-				$msg = array('html' => $message_body_html);
+				$msg = array(
+					'html'        => $message_body_html,
+					'attachments' => array(),
+				);
+				foreach ($arMessageParts as $part)
+				{
+					$msg['attachments'][] = array(
+						'contentId' => $part['CONTENT-ID'],
+						'uniqueId'  => sprintf('attachment_%u', $part['ATTACHMENT-ID']),
+					);
+				}
+
 				$arFields['BODY_BB'] = \Bitrix\Mail\Message::parseMessage($msg);
+
+				$msg = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $message_body_html);
+				$msg = preg_replace('/<title[^>]*>.*?<\/title>/is', '', $msg);
+
+				$sanitizer = new \CBXSanitizer();
+				$sanitizer->setLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
+				$sanitizer->applyHtmlSpecChars(false);
+				$sanitizer->addTags(array('style' => array()));
+				$arFields['BODY_HTML'] = $sanitizer->sanitizeHtml($msg);
+
+				foreach ($arMessageParts as $part)
+				{
+					$arFields['BODY_HTML'] = preg_replace(
+						sprintf('/<img([^>]+)src\s*=\s*(\'|\")?\s*(http:\/\/cid:%s)\s*\2([^>]*)>/is', preg_quote($part['CONTENT-ID'], '/')),
+						sprintf('<img\1src="aid:%u"\4>', $part['ATTACHMENT-ID']),
+						$arFields['BODY_HTML']
+					);
+				}
 			}
 
 			\CMailFilter::filter($arFields, 'R');
@@ -2130,9 +2160,6 @@ class CAllMailUtil
 		$from = trim(strtolower($from));
 		$to   = trim(strtolower($to));
 
-		if ($from == $to)
-			return $str;
-
 		if (in_array($from, array('utf-8', 'utf8')))
 		{
 			$regex = '/
@@ -2151,6 +2178,9 @@ class CAllMailUtil
 					: $matches[1];
 			}, $str);
 		}
+
+		if ($from == $to)
+			return $str;
 
 		if ($result = Bitrix\Main\Text\Encoding::convertEncoding($str, $from, $to, $error))
 			$str = $result;

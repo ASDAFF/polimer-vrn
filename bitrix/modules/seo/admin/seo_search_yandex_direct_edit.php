@@ -48,27 +48,19 @@ $currentUser = $engine->getCurrentUser();
 $bNeedAuth = !is_array($currentUser);
 
 //get string of campaign CURRENCY name
-//todo: del debug - after update socialservices to 17.0.0 delete this statement
-$socservissesVersion = Main\ModuleManager::getVersion('socialservices');
-$socservissesVersion = explode('.',$socservissesVersion);
-$socservissesVersion = $socservissesVersion[0];
-$clientCurrency = '';
-if(!$bNeedAuth && $socservissesVersion >= 17)
+try
 {
-	try
-	{
-		$clientsSettings = $engine->getClientsSettings();
-		$clientCurrency = current($clientsSettings);
-		$clientCurrency = Loc::getMessage('SEO_YANDEX_CURRENCY__'.$clientCurrency['Currency']);
-	}
-	catch(Engine\YandexDirectException $e)
-	{
-		$seoproxyAuthError = new CAdminMessage(array(
-			"TYPE" => "ERROR",
-			"MESSAGE" => Loc::getMessage('SEO_YANDEX_SEOPROXY_AUTH_ERROR'),
-			"DETAILS" => $e->getMessage(),
-		));
-	}
+	$clientsSettings = $engine->getClientsSettings();
+	$clientCurrency = current($clientsSettings);
+	$clientCurrency = Loc::getMessage('SEO_YANDEX_CURRENCY__'.$clientCurrency['Currency']);
+}
+catch(Engine\YandexDirectException $e)
+{
+	$seoproxyAuthError = new CAdminMessage(array(
+		"TYPE" => "ERROR",
+		"MESSAGE" => Loc::getMessage('SEO_YANDEX_SEOPROXY_AUTH_ERROR'),
+		"DETAILS" => $e->getMessage(),
+	));
 }
 
 $bReadOnly = $bNeedAuth;

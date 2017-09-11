@@ -47,4 +47,5 @@ $MESS["SALE_CHECK_DELETE_ERR_INCORRECT_STATUS"] = "Only unprinted or failed-to-p
 $MESS["SALE_CHECK_DELETE"] = "Delete";
 $MESS["SALE_CHECK_DELETE_CONFIRM"] = "Are you sure you want to delete receipt ##CHECK_ID#";
 $MESS["SALE_CASHBOX_STATUS_E"] = "Error";
+$MESS["SALE_CHECK_CHECK_STATUS"] = "Update status";
 ?>

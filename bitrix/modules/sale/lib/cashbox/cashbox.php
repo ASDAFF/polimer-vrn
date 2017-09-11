@@ -268,4 +268,12 @@ abstract class Cashbox
 
 		return array('type' => $info[0], 'id' => $info[2]);
 	}
+
+	/**
+	 * @return bool
+	 */
+	public function isCheckable()
+	{
+		return $this instanceof ICheckable;
+	}
 }

@@ -2674,30 +2674,36 @@ class Discount
 	 */
 	protected function checkDiscountConditions()
 	{
+		if (
+			!isset($this->currentStep['cacheIndex'])
+			|| !isset($this->saleDiscountCache[$this->saleDiscountCacheKey][$this->currentStep['cacheIndex']])
+		)
+			return false;
 		$key = $this->enableCheckingPrediction? 'PREDICTIONS_APP' : 'UNPACK';
 		$executeKey = $key.'_EXECUTE';
-		if (empty($this->currentStep['discount'][$key]))
+		if (empty($this->saleDiscountCache[$this->saleDiscountCacheKey][$this->currentStep['cacheIndex']][$key]))
 			return false;
-		if (!array_key_exists($executeKey, $this->currentStep['discount']))
+
+		$discountLink = &$this->saleDiscountCache[$this->saleDiscountCacheKey][$this->currentStep['cacheIndex']];
+
+		if (!array_key_exists($executeKey, $discountLink))
 		{
 			$checkOrder = null;
-			eval('$checkOrder='.$this->currentStep['discount'][$key].';');
+			eval('$checkOrder='.$discountLink[$key].';');
 			if (!is_callable($checkOrder))
 				return false;
 			$result = $checkOrder($this->orderData);
-			if (isset($this->currentStep['cacheIndex']))
-			{
-				$this->saleDiscountCache[$this->saleDiscountCacheKey][$this->currentStep['cacheIndex']][$executeKey] = $checkOrder;
-			}
+			//$discountLink[$executeKey] = $checkOrder;
 			unset($checkOrder);
 		}
 		else
 		{
-			if (!is_callable($this->currentStep['discount'][$executeKey]))
+			if (!is_callable($discountLink[$executeKey]))
 				return false;
-			$result = $this->currentStep['discount'][$executeKey]($this->orderData);
-			unset($this->currentStep['discount'][$executeKey]);
+
+			$result = $discountLink[$executeKey]($this->orderData);
 		}
+		unset($discountLink);
 		return $result;
 	}
 

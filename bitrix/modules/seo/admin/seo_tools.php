@@ -40,7 +40,7 @@ IncludeModuleLangFile(__FILE__);
 //Check permissions
 if (!$io->FileExists($absoluteFilePath))
 {
-	CAdminMessage::ShowMessage(GetMessage('SEO_TOOLS_ERROR_FILE_NOT_FOUND')." (".htmlspecialcharsbx($path).")");
+	CAdminMessage::ShowMessage(GetMessage('SEO_TOOLS_ERROR_FILE_NOT_FOUND')." (".HtmlFilter::encode($path).")");
 	die();
 }
 elseif (!$USER->CanDoFileOperation('fm_edit_existent_file',array($_REQUEST['site'], $path)))
@@ -190,7 +190,7 @@ if (isset($_REQUEST['loadtab']))
 						if ($count > 0):
 ?>
 	<tr>
-		<td width="50%" align="right"><?echo htmlspecialcharsbx($arSearchers[$key]['NAME'])?>:&nbsp;&nbsp;</td>
+		<td width="50%" align="right"><?echo HtmlFilter::encode($arSearchers[$key]['NAME'])?>:&nbsp;&nbsp;</td>
 		<td width="50%"><?echo $count;?></td>
 	</tr>
 <?
@@ -315,53 +315,46 @@ if (isset($_REQUEST['loadtab']))
 				{
 					$cnt = count($arWords);
 ?>
-<table width="100%">
-	<tr>
-		<td colspan="2" align="center"><table class="phrases-table">
-<?
-					$color = null;
-					foreach ($arWords as $word => $arData)
-					{
-						$arData['ID'] = rand(0, 65535);
-						$percent = number_format($arData['PERCENT'], 2);
-?>
-		<tr>
-			<td align="left" width="30%"><a href="javascript:void(0)" onclick="BXToggle('bx_phrase_ex_<? echo $arData['ID']?>'); return false;" title="<?echo GetMessage('SEO_PAGE_REFERERS_SEO_PAGE_PHRASES_ALT')?>"><?echo htmlspecialcharsbx($word)?></td>
-			<td width="70%">
-				<div style="height: 15px; border: solid 1px #<?echo $color = GetNextRGB($color, $cnt)?> !important; width: 100%; position: relative; cursor: pointer; text-align: left !important;" onclick="BXToggle('bx_phrase_ex_<? echo $arData['ID']?>'); return false;">
-					<div style="float: left; height: 15px; width: <?echo $percent?>%; background-color: #<?echo $color; ?>; white-space: nowrap; position: absolute;">
-						<?echo intval($arData['TOTAL'])?> (<?echo $percent?>%)
+					<table width="100%" class="referers-table bx-seo-words-table internal" id="bx_seo_words_table">
+						<thead>
+							<tr class="heading">
+								<td width="30%" style="text-align:left !important;"><?=GetMessage('SEO_PAGE_REFERERS_PHRASE');?></td>
+								<td width="70%" style="text-align:left !important;"><?=GetMessage('SEO_PAGE_REFERERS_SEARCHERS_COUNT');?></td>
+							</tr>
+						</thead>
+						<tbody>
+						<?
+						$color = null;
+						foreach ($arWords as $word => $arData)
+						{
+							$arData['ID'] = rand(0, 65535);
+							$percent = number_format($arData['PERCENT'], 2);
+							?>
+							<tr>
+								<td style="text-align:left !important;"><?=HtmlFilter::encode($word)?></td>
+								<td style="text-align:left !important;">
+									<div style="height: 15px; border: solid 1px #<?echo $color = GetNextRGB($color, $cnt)?> !important; width: 100%; position: relative; text-align: left !important;" class="bx-seo-words-table-link-element">
+										<div style="float: left; height: 15px; width: <?echo $percent?>%; background-color: #<?echo $color; ?>; white-space: nowrap; position: absolute;">
+											<?echo intval($arData['TOTAL'])?> (<?echo $percent?>%)
+										</div>
+										<?echo intval($arData['TOTAL'])?> (<?echo $percent?>%)
+									</div>
+									<? foreach ($arData['SEARCHERS'] as $searcher_id => $arSearcherData): ?>
+										<div style="text-align: left !important;" class="bx-seo-words-table-link-element">
+											<? echo HtmlFilter::encode($arSearcherData['SEARCHER_NAME']);?> &mdash;
+											<?echo intval($arSearcherData['COUNT']);?>
+										</div>
+									<?endforeach;?>
+								</td>
+							</tr>
+							<?
+						}
+						?>
+						</tbody>
+					</table>
+					<div>
+						<a href="/bitrix/admin/phrase_list.php?lang=<?echo LANGUAGE_ID?>"><?echo GetMessage('SEO_PAGE_GOTO_CP')?></a>
 					</div>
-					<?echo intval($arData['TOTAL'])?> (<?echo $percent?>%)
-				</div>
-			</td>
-		</tr>
-		<tr id="bx_phrase_ex_<? echo $arData['ID']?>" style="display: none;">
-			<td colspan="2" align="center"><table>
-				<tr class="bx-th">
-					<td style="text-align: left !important;"><?echo GetMessage('SEO_PAGE_PHRASES_SEARCHER')?></td>
-					<td><?echo GetMessage('SEO_PAGE_PHRASES_HITS')?></td>
-				</tr>
-<?
-						foreach ($arData['SEARCHERS'] as $searcher_id => $arSearcherData):
-?>
-				<tr>
-					<td style="text-align: left !important;"><? echo htmlspecialcharsbx($arSearcherData['SEARCHER_NAME']);?></td>
-					<td align="center"><?echo intval($arSearcherData['COUNT']);?></td>
-				</tr>
-<?
-						endforeach;
-?>
-			</table></td>
-		</tr>
-<?
-					}
-?>
-		</table></td>
-	</tr><tr>
-		<td colspan="2" align="right"><a href="/bitrix/admin/phrase_list.php?lang=<?echo LANGUAGE_ID?>"><?echo GetMessage('SEO_PAGE_GOTO_CP')?></a></td>
-	</tr>
-</table>
 <?
 				}
 				else
@@ -438,59 +431,52 @@ if (isset($_REQUEST['loadtab']))
 				}
 			}
 
-			if ($total > 0)
-			{
-				$cnt = count($arReferers);
-?><table width="100%">
-	<tr>
-		<td colspan="2" align="center"><table class="referers-table">
+			if ($total > 0):?>
+			
+			<table width="100%" class="referers-table bx-seo-words-table internal" id="bx_seo_words_table">
+				<thead>
+					<tr class="heading">
+						<td width="30%" style="text-align:left !important;"><?=GetMessage('SEO_PAGE_REFERERS_SITE');?></td>
+						<td width="70%" style="text-align:left !important; text-transform: capitalize;"><?=GetMessage('SEO_PAGE_REFERERS_COUNT');?></td>
+					</tr>
+				</thead>
+				<tbody>
+				<?
+					$cnt = count($arReferers);
+					$color = null;
+					foreach ($arReferers as $domain => $arData)
+					{
+						$percent = number_format($arData['PERCENT'], 2);
+						$domainEnc = \Bitrix\Main\Text\Converter::getHtmlConverter()->encode($domain);
+						?>
+						<tr>
+							<td style="text-align:left !important;"><?=$domainEnc?></td>
+							<td style="text-align:left !important;">
+								<div style="height: 15px; border: solid 1px #<?echo $color = GetNextRGB($color, $cnt)?> !important; width: 100%; position: relative; text-align: left !important;" class="bx-seo-words-table-link-element">
+									<div style="float: left; height: 15px; width: <?echo $percent?>%; background-color: #<?echo $color; ?>; white-space: nowrap; position: absolute;">
+										<?echo intval($arData['TOTAL'])?> (<?echo $percent?>%)
+									</div>
+									<?echo intval($arData['TOTAL'])?> (<?echo $percent?>%)
+								</div>
+								<? foreach ($arData['URL_FROM'] as $url => $count): ?>
+									<div style="text-align: left !important;" class="bx-seo-words-table-link-element">
+										<a href="<?echo HtmlFilter::encode($url)?>"><? echo HtmlFilter::encode(TruncateText($url, 100));?></a> &mdash;
+										<?echo intval($count);?>
+									</div>
+								<? endforeach;?>
+							</td>
+						</tr>
+						<?
+					}
+				?>
+				</tbody>
+			</table>
+			<div>
+				<a href="/bitrix/admin/referer_list.php?lang=<?echo LANGUAGE_ID?>"><?echo GetMessage('SEO_PAGE_GOTO_CP')?></a>
+			</div>
 <?
-				$color = null;
-				foreach ($arReferers as $domain => $arData)
-				{
-					$percent = number_format($arData['PERCENT'], 2);
-					$domainEnc = \Bitrix\Main\Text\Converter::getHtmlConverter()->encode($domain);
-?>
-		<tr>
-			<td width="30%" align="left"><a href="javascript:void(0)" onclick="BXToggle('bx_referer_ex_<?echo CUtil::JSEscape($domainEnc)?>'); return false;" title="<?echo GetMessage('SEO_PAGE_REFERERS_SEO_PAGE_REFERERS_ALT')?>"><?echo $domainEnc;?></td>
-			<td width="70%">
-				<div style="height: 15px; border: solid 1px #<?echo $color = GetNextRGB($color, $cnt)?> !important; width: 100%; position: relative; cursor: pointer; text-align: left !important;" onclick="BXToggle('bx_referer_ex_<?echo CUtil::JSEscape($domainEnc)?>'); return false;">
-					<div style="float: left; height: 15px; width: <?echo $percent?>%; background-color: #<?echo $color; ?>; white-space: nowrap; position: absolute;">
-						<?echo intval($arData['TOTAL'])?> (<?echo $percent?>%)
-					</div>
-					<?echo intval($arData['TOTAL'])?> (<?echo $percent?>%)
-				</div>
-			</td>
-		</tr>
-		<tr id="bx_referer_ex_<?echo CUtil::JSEscape($domainEnc)?>" style="display: none;">
-			<td colspan="2" align="center"><table>
-				<tr class="bx-th">
-					<td width="90%" style="text-align: left !important;"><?echo GetMessage('SEO_PAGE_REFERERS_LINK')?></td>
-					<td width="10%"><?echo GetMessage('SEO_PAGE_REFERERS_COUNT')?></td>
-				</tr>
-<?
-					foreach ($arData['URL_FROM'] as $url => $count):
-?>
-				<tr>
-					<td style="text-align: left !important;"><a href="<?echo htmlspecialcharsbx($url)?>"><? echo htmlspecialcharsbx(TruncateText($url, 100));?></td>
-					<td align="center"><?echo intval($count);?></td>
-				</tr>
-<?
-					endforeach;
-?>
-			</table></td>
-		</tr>
-<?
-				}
-?>
-	</table></td>
-</tr><tr>
-	<td colspan="2" align="right"><a href="/bitrix/admin/referer_list.php?lang=<?echo LANGUAGE_ID?>"><?echo GetMessage('SEO_PAGE_GOTO_CP')?></a></td>
-</tr></table>
-<?
-			}
-			else
-			{
+//			have not references
+			else:
 ?>
 	<table width="100%"><tr>
 		<td colspan="2" align="center">
@@ -500,7 +486,7 @@ if (isset($_REQUEST['loadtab']))
 		</td>
 	</tr></table>
 <?
-			}
+			endif;
 
 		break;
 	}
@@ -623,7 +609,7 @@ $counters = COption::GetOptionString('seo', 'counters', SEO_COUNTERS_DEFAULT);
 
 //HTML output
 $aTabs = array(
-	array("DIV" => "seo_edit1", "TAB" => GetMessage('SEO_TOOLS_TAB_PAGE'), "ICON" => "main_settings", "TITLE" => GetMessage('SEO_TOOLS_TAB_PAGE_TITLE').' '.htmlspecialcharsbx($back_url, ENT_QUOTES)),
+	array("DIV" => "seo_edit1", "TAB" => GetMessage('SEO_TOOLS_TAB_PAGE'), "ICON" => "main_settings", "TITLE" => GetMessage('SEO_TOOLS_TAB_PAGE_TITLE').' '.HtmlFilter::encode($back_url, ENT_QUOTES)),
 	array("DIV" => "seo_edit2", "TAB" => GetMessage('SEO_TOOLS_INTERNAL_KEYWORDS'), "ICON" => "main_settings", "TITLE" => GetMessage('SEO_TOOLS_INTERNAL_KEYWORDS_TITLE')),
 	array("DIV" => "seo_edit3", "TAB" => GetMessage('SEO_TOOLS_TAB_EDIT'), "ICON" => "main_settings", "TITLE" => GetMessage('SEO_TOOLS_TAB_EDIT_TITLE')),
 	array("DIV" => "seo_edit4", "TAB" => GetMessage('SEO_TOOLS_TAB_INDEX'), "ICON" => "main_settings", "TITLE" => GetMessage('SEO_TOOLS_TAB_INDEX_TITLE'), 'ONSELECT' => ($bStatsIncluded && $bStatsRights ? 'window.BXLoadTab(\'indexing\')' : '')),
@@ -657,10 +643,10 @@ table.legend td {padding:3px 10px 3px 0px;}
 
 table.phrases-table, table.referers-table {width: 85%;}
 table.phrases-table tr.bx-th td, table.referers-table tr.bx-th td {text-align: center; font-weight: bold !important;}
-div#bx_admin_form table.phrases-table tr td, div#bx_admin_form table.referers-table tr td {height: 18px; padding: 3px 3px 0px 0px !important;}
 table.phrases-table td div, table.referers-table td div {color: black !important; white-space: nowrap;}
-table.phrases-table td div div, table.referers-table td div div {color: white !important; white-space: nowrap; overflow: hidden;}
+table.phrases-table td div div, table.referers-table td div div {color: white !important; white-space: nowrap; overflow: hidden; text-shadow: unset;}
 table.phrases-table td table, table.referers-table  td table {width: 90%;}
+.bx-seo-words-table-link-element{margin-bottom:6px;}
 
 div#bx_page_extended_data div {height: 140px; width: 99%; overflow: auto; margin-right: 5px; border: solid 1px #E0E4F1;}
 #bx_page_errors ol li {margin: 5px 0px;}
@@ -807,7 +793,7 @@ $tabControl->BeginNextTab();
 		<td>
 			<?echo
 			BeginNote(),GetMessage('SEO_PAGE_ERROR_FOLDER_ACCESS', array(
-				'#F'=>$path)
+				'#F'=> HtmlFilter::encode($path))
 			), EndNote()
 			?>
 		</td>
@@ -843,7 +829,7 @@ $tabControl->BeginNextTab();
 		);
 	}
 	?>
-			<b><?echo htmlspecialcharsEx($titleFinal)?></b>&nbsp;<?if ($titleChangerName != ''):?>(<?echo htmlspecialcharsbx($titleChangerName)?>)&nbsp;<?endif;?><?if ($titleChangerLink):?><br /><a href="<?echo htmlspecialcharsbx($titleChangerLink, ENT_QUOTES);?>"><?echo GetMessage('SEO_PAGE_CURRENT_TITLE_EDIT')?></a><?endif;?>
+			<b><?echo htmlspecialcharsEx($titleFinal)?></b>&nbsp;<?if ($titleChangerName != ''):?>(<?echo HtmlFilter::encode($titleChangerName)?>)&nbsp;<?endif;?><?if ($titleChangerLink):?><br /><a href="<?echo HtmlFilter::encode($titleChangerLink, ENT_QUOTES);?>"><?echo GetMessage('SEO_PAGE_CURRENT_TITLE_EDIT')?></a><?endif;?>
 	</tr>
 	<?
 	endif;
@@ -879,15 +865,15 @@ $tabControl->BeginNextTab();
 				);
 			}
 		?>
-			<b><?echo htmlspecialcharsEx($titleWinFinal)?></b>&nbsp;<?if ($titleWinChangerName != ''):?>(<?echo htmlspecialcharsbx($titleWinChangerName)?>)&nbsp;<?endif;?><?if ($titleWinChangerLink):?><br /><a href="<?echo htmlspecialcharsbx($titleWinChangerLink, ENT_QUOTES)?>"><?echo GetMessage('SEO_PAGE_CURRENT_TITLE_EDIT')?></a><?endif;?>
+			<b><?echo htmlspecialcharsEx($titleWinFinal)?></b>&nbsp;<?if ($titleWinChangerName != ''):?>(<?echo HtmlFilter::encode($titleWinChangerName)?>)&nbsp;<?endif;?><?if ($titleWinChangerLink):?><br /><a href="<?echo HtmlFilter::encode($titleWinChangerLink, ENT_QUOTES)?>"><?echo GetMessage('SEO_PAGE_CURRENT_TITLE_EDIT')?></a><?endif;?>
 		</tr>
 		<?
 		endif;
 	endif;
 	
 	$arEditProperties = array();
-	if ($prop_code = COption::GetOptionString('seo', 'property_keywords', 'keywords')) $arEditProperties['keywords'] = htmlspecialcharsbx($prop_code);
-	if ($prop_code = COption::GetOptionString('seo', 'property_description', 'description')) $arEditProperties['description'] = htmlspecialcharsbx($prop_code);
+	if ($prop_code = COption::GetOptionString('seo', 'property_keywords', 'keywords')) $arEditProperties['keywords'] = HtmlFilter::encode($prop_code);
+	if ($prop_code = COption::GetOptionString('seo', 'property_description', 'description')) $arEditProperties['description'] = HtmlFilter::encode($prop_code);
 	
 	foreach ($arEditProperties as $key => $prop_code):
 		$value = $arGlobalProperties[$prop_code];

@@ -3066,6 +3066,29 @@ class AjaxProcessor
 		$this->addResultData("CHECK_LIST_HTML", $htmlCheckList);
 	}
 
+	protected function sendQueryCheckStatusAction()
+	{
+		$checkId = (int)$this->request['checkId'];
+
+		$check = Cashbox\CheckManager::getObjectById($checkId);
+		$cashbox = Cashbox\Manager::getObjectById($check->getField('CASHBOX_ID'));
+		if ($cashbox && $cashbox->isCheckable())
+		{
+			$r = $cashbox->check($check);
+			if (!$r->isSuccess())
+			{
+				$err = implode("\n", $r->getErrorMessages());
+				$this->addResultError($err);
+			}
+		}
+
+		$checkData = Cashbox\CheckManager::collectInfo(array("PAYMENT_ID" => $check->getField('PAYMENT_ID')));
+		$htmlCheckList = Sale\Helpers\Admin\Blocks\OrderPayment::buildCheckHtml($checkData);
+
+		$this->addResultData("CHECK_LIST_HTML", $htmlCheckList);
+		$this->addResultData("PAYMENT_ID", $check->getField('PAYMENT_ID'));
+	}
+
 	/**
 	 * @param array $filter
 	 *

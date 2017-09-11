@@ -14,6 +14,7 @@ $MESS["SALE_ORDER_PAYMENT_PAY_VOUCHER_NUM"] = "Номер документа п�
 $MESS["SALE_ORDER_PAYMENT_CHECK_LINK_TITLE"] = "Список чеков";
 $MESS["SALE_ORDER_PAYMENT_CHECK_ADD"] = "Добавить чек";
 $MESS["SALE_ORDER_PAYMENT_CHECK_LINK"] = "Чек №#CHECK_ID#";
+$MESS["SALE_ORDER_PAYMENT_CHECK_CHECK_STATUS"] = "обновить";
 $MESS["SALE_ORDER_PAYMENT_PAY_VOUCHER_DATE"] = "Дата прихода";
 $MESS["SALE_ORDER_PAYMENT_PAY_RETURN_NUM"] = "Номер документа возврата";
 $MESS["SALE_ORDER_PAYMENT_PAY_RETURN_DATE"] = "Дата возврата";

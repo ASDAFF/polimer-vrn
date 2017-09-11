@@ -87,10 +87,10 @@ class YandexException
 	
 	private function formatMessage()
 	{
-		$trnslateString = Loc::getMessage('SEO_ERROR_'.$this->code);
-		if(strlen($trnslateString) > 0)
+		$translateString = Loc::getMessage('SEO_ERROR_'.$this->code);
+		if(strlen($translateString) > 0)
 		{
-			$this->message = $trnslateString.' ('.Loc::getMessage('SEO_ERROR_CODE').': '.$this->code.').';
+			$this->message = $translateString.' ('.Loc::getMessage('SEO_ERROR_CODE').': '.$this->code.').';
 		}
 		else
 		{

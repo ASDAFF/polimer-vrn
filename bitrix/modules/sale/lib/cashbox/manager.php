@@ -51,7 +51,7 @@ final class Manager
 
 	/**
 	 * @param $id
-	 * @return Cashbox|null
+	 * @return Cashbox|ICheckable|null
 	 */
 	public static function getObjectById($id)
 	{
