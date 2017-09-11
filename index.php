@@ -217,7 +217,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 								<img src="<?=CFile::GetPath($arFields["PREVIEW_PICTURE"]);?>" alt="" height="110" style="max-height: 110px;margin: 0 auto;" class="img">
 							</a>
 							<a href="<?=$arFields['DETAIL_PAGE_URL']?>" class="name"><?=$arFields['NAME']?></a>
-							<div class="price"><span><?=price($arFields['ID']);?></span> Руб./<?=$arProps['CML2_BASE_UNIT']['VALUE'];?></div>
+							<div class="price"><span><?=price($arFields['ID']);?></span> &#8381;/<?=$arProps['CML2_BASE_UNIT']['VALUE'];?></div>
 							<a href="javascript:void(0)" onclick="addToBasket2(<?=$arFields['ID']?>, 1,this);" class="cart">В корзину</a>
 						</div>
 					</div>
@@ -240,7 +240,7 @@ $APPLICATION->SetTitle("«Полимер» — главная страница 
 							<img src="<?=CFile::GetPath($arFields["PREVIEW_PICTURE"]);?>" alt="" height="110" style="max-height: 110px;margin: 0 auto;" class="img">
 						</a>
 						<a href="<?=$arFields['DETAIL_PAGE_URL']?>" class="name"><?=$arFields['NAME']?></a>
-						<div class="price"><span><?=price($arFields['ID']);?></span> Руб./<?=$arProps['CML2_BASE_UNIT']['VALUE'];?></div>
+						<div class="price"><span><?=price($arFields['ID']);?></span> &#8381;/<?=$arProps['CML2_BASE_UNIT']['VALUE'];?></div>
 						<a href="javascript:void(0)" onclick="addToBasket2(<?=$arFields['ID']?>, 1,this);" class="cart">В корзину</a>
 					</div>
 				</div>

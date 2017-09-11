@@ -65,8 +65,8 @@ $this->setFrameMode(true);
             <div class="bb_col">
                <div class="price">
                   <? foreach($arResult['ITEM_PRICES'] as $name => $price):?>
-                  <div class="price-old"><span><?=$price['BASE_PRICE']?></span> руб./<?=$arResult['PROPERTIES']['CML2_BASE_UNIT']['VALUE'];?></div>
-                  <div class="price-new"><span><?=$price['UNROUND_PRICE']?></span>  руб./<?=$arResult['PROPERTIES']['CML2_BASE_UNIT']['VALUE'];?></div>
+                  <div class="price-old"><span><?=$price['BASE_PRICE']?></span> &#8381;/<?=$arResult['PROPERTIES']['CML2_BASE_UNIT']['VALUE'];?></div>
+                  <div class="price-new"><span><?=$price['UNROUND_PRICE']?></span>  &#8381;/<?=$arResult['PROPERTIES']['CML2_BASE_UNIT']['VALUE'];?></div>
                   <? endforeach; ?>
                </div>
 <!--               <a href="#" class="cheaper">Нашли дешевле ?</a>-->

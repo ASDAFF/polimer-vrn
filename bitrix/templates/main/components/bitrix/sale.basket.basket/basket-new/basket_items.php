@@ -22,7 +22,7 @@ if ($normalCount > 0)
 					<div class="l-cell name">
 						<a href="<?=$arItem['DETAIL_PAGE_URL']?>" class="plink"><?=$arItem['NAME']?></a>
 					</div>
-					<div class="l-cell price"><div class="txt pr">Цена</div><span><?=$arItem['FULL_PRICE']?></span> Руб.</div>
+					<div class="l-cell price"><div class="txt pr">Цена</div><span><?=$arItem['FULL_PRICE']?></span> &#8381;</div>
 					<div class="l-cell sale"><div class="txt sl">Скидка</div><span><?=$arItem['DISCOUNT_PRICE_PERCENT']?></span>%</div>
 					<div class="l-cell quan">
 						<div class="txt qn">Кол-во</div>
@@ -32,7 +32,7 @@ if ($normalCount > 0)
 							<a class="plus" href="javascript:void(0)" onclick="basketPlus(<?=$arItem['AVAILABLE_QUANTITY']?>,$('.quantity#<?=$arItem['ID']?> input').val(),<?=$arItem['ID']?>)"></a>
 						</div>
 					</div>
-					<div class="l-cell cost"><div class="txt ct">Стоимость</div><span><?=$arItem["QUANTITY"]*$arItem["PRICE"]?></span> Руб.</div>
+					<div class="l-cell cost"><div class="txt ct">Стоимость</div><span><?=$arItem["QUANTITY"]*$arItem["PRICE"]?></span> &#8381;</div>
 					<div class="l-cell del"><div class="txt dl">Удалить</div><a href="?basketAction=delete&id=<?=$arItem["ID"]?>"></a></div>
 				</div>
 				<? endforeach; ?>
@@ -56,7 +56,7 @@ if ($normalCount > 0)
 				<div class="t-row t-sale cl">
 					<div class="line"></div>
 					<div class="name">Общая скидка:</div>
-					<div class="value"><span><?=$arResult['DISCOUNT_PRICE_ALL']?></span> р.</div>
+					<div class="value"><span><?=$arResult['DISCOUNT_PRICE_ALL']?></span> &#8381;</div>
 				</div>
 				<div class="t-row cl t-quan">
 					<div class="line"></div>
@@ -66,7 +66,7 @@ if ($normalCount > 0)
 				<div class="t-row cl t-cost">
 					<div class="line"></div>
 					<div class="name">Общая стоимость:</div>
-					<div class="value"><span><?=$arResult["allSum"]?></span> руб.</div>
+					<div class="value"><span><?=$arResult["allSum"]?></span> &#8381;</div>
 				</div>
 			</div>
 		</div>

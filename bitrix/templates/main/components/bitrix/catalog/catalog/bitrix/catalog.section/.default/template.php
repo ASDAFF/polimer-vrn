@@ -101,7 +101,7 @@ if (!empty($arResult['ITEMS']))
 								</a>
 								<a href="<?=$arItem['DETAIL_PAGE_URL']?>" class="title"><?=$arItem['NAME']?></a>
 								<div class="cost">
-									<span><?=price($arItem['ID']);?></span> Руб./<?=$arItem['PROPERTIES']['CML2_BASE_UNIT']['VALUE'];?>
+									<span><?=price($arItem['ID']);?></span> &#8381;/<?=$arItem['PROPERTIES']['CML2_BASE_UNIT']['VALUE'];?>
 								</div>
 								<?if(!price($arItem['ID'])){
 									print '<span class="noprice">Цену уточняйте у менеджера</span>';
@@ -151,7 +151,7 @@ if (!empty($arResult['ITEMS']))
 
 
 									</script>
-								<div class="cost_total"><span><?=price($arItem['ID'])?></span> Руб.</div>
+								<div class="cost_total"><span><?=price($arItem['ID'])?></span> &#8381;</div>
 								<a href="javascript:void(0)" class="add2cart">
 									<span class="txt1" onclick="if(document.body.clientWidth < 659){addToBasket2(<?=$arItem['ID']?>, $('#count_<?=$arItem['ID']?> input').val(),this)};">В корзину</span>
 									<span class="txt2" onclick="addToBasket2(<?=$arItem['ID']?>, $('#count_<?=$arItem['ID']?> input').val(),this);">Добавить в корзину</span>

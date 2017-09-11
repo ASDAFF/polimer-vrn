@@ -13,7 +13,7 @@ if ($normalCount > 0)
 						<li>
 							<div>Сумма:</div>
 							<div></div>
-							<div><span class="info-weight"><?=str_replace('руб.','',$arResult['PRICE_WITHOUT_DISCOUNT'])?></span> Руб.</div>
+							<div><span class="info-weight"><?=str_replace('руб.','',$arResult['PRICE_WITHOUT_DISCOUNT'])?></span> &#8381;</div>
 						</li>
 						<li>
 							<div>Товаров:</div>
@@ -48,7 +48,7 @@ if ($normalCount > 0)
 						<li>
 							<div><span class="info-weight">Итого:</span></div>
 							<div></div>
-							<div><span class="info-weight itog"><?=$arResult["allSum"]?></span> Руб.</div>
+							<div><span class="info-weight itog"><?=$arResult["allSum"]?></span> &#8381;</div>
 						</li>
 
 					</ol>
