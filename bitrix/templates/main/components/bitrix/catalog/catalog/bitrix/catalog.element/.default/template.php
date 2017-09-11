@@ -11,8 +11,6 @@
 /** @var string $componentPath */
 /** @var CBitrixComponent $component */
 $this->setFrameMode(true);
-
-//var_dump($arResult);
 ?>
 <script type="text/javascript">
     var viewedCounter = {
@@ -444,3 +442,5 @@ $this->setFrameMode(true);
 
 
 </div><!--end::prod_card-->
+
+

@@ -53,6 +53,12 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
      					<span class="value"><input type="text" placeholder="<?if($field['CODE'] == "PHONE"){print "+7 (473) 234-03-01";}else{print $field['NAME'];}?>" class="<?if($field['CODE'] == "PHONE"){print "phone";}elseif($field['CODE'] == "FIO"){print "name";}?>" name="<?=$field['CODE']?>" value="<?=$arResult[$field['CODE']]?>"/></span>
      				</span>
 
+				<? elseif($field['PROPERTY_TYPE'] == "E"):?>
+				<?
+				$prod = getUrlProd($APPLICATION->GetCurPage(false));
+				?>
+				<input type="hidden" name="PRODUCT" value="<?=$prod['NAME']?>">
+				<input type="hidden" name="LINK_PRODUCT" value="<?=$prod['DETAIL_PAGE_URL']?>">
 
 
 				<? elseif($field['PROPERTY_TYPE'] == "L"):?>

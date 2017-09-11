@@ -54,6 +54,12 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
      				</span>
 
 
+				<? elseif($field['PROPERTY_TYPE'] == "E"):?>
+					<?
+					$prod = getUrlProd($APPLICATION->GetCurPage(false));
+					?>
+					<input type="hidden" name="PRODUCT" value="<?=$prod['NAME']?>">
+					<input type="hidden" name="LINK_PRODUCT" value="<?=$prod['DETAIL_PAGE_URL']?>">
 
 				<? elseif($field['PROPERTY_TYPE'] == "L"):?>
 					<div class="rule">

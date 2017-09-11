@@ -175,6 +175,9 @@
 						1 => "EMAIL",
 						2 => "PHONE",
 						3 => "RULE",
+						4 => "PRODUCT",
+						5 => "LINK_PRODUCT",
+
 					),
 					"USE_CAPTCHA" => "N",
 					"COMPONENT_TEMPLATE" => "order-product"
@@ -208,8 +211,8 @@
 
 
 				<?$APPLICATION->IncludeComponent(
-	"nbrains:main.feedback", 
-	"buy-one-click", 
+	"nbrains:main.feedback",
+	"buy-one-click",
 	array(
 		"EMAIL_TO" => "sale@polimer-vrn",
 		"EVENT_MESSAGE_ID" => array(
@@ -223,6 +226,8 @@
 			1 => "PHONE",
 			2 => "EMAIL",
 			3 => "RULE",
+			4 => "PRODUCT",
+			5 => "LINK_PRODUCT",
 		),
 		"USE_CAPTCHA" => "N",
 		"COMPONENT_TEMPLATE" => "buy-one-click"
@@ -246,6 +251,8 @@
 			1 => "PHONE",
 			2 => "EMAIL",
 			3 => "RULE",
+			4 => "PRODUCT",
+			5 => "LINK_PRODUCT",
 		),
 		"USE_CAPTCHA" => "N",
 		"COMPONENT_TEMPLATE" => "free-consultant"
