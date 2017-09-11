@@ -101,7 +101,7 @@ if (!empty($arResult['ITEMS']))
 								</a>
 								<a href="<?=$arItem['DETAIL_PAGE_URL']?>" class="title"><?=$arItem['NAME']?></a>
 								<div class="cost">
-									<span><?=price($arItem['ID']);?></span> Руб.
+									<span><?=price($arItem['ID']);?></span> Руб./<?=$arItem['PROPERTIES']['CML2_BASE_UNIT']['VALUE'];?>
 								</div>
 								<?if(!price($arItem['ID'])){
 									print '<span class="noprice">Цену уточняйте у менеджера</span>';
