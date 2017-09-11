@@ -102,7 +102,12 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["submit"] <> '' && (!isset($_P
 		{
 			$arFields = Array();
 			foreach($arPropertyField as $field){
-				$arFields[$field['CODE']] = trim(strip_tags($_POST[$field['CODE']]));
+				if($field['CODE'] == "PRODUCT_CART"){
+					$arFields[$field['CODE']] = $_POST[$field['CODE']];
+					CSaleBasket::DeleteAll(CSaleBasket::GetBasketUserID(), false);
+				}else{
+					$arFields[$field['CODE']] = trim(strip_tags($_POST[$field['CODE']]));
+				}
 				$arFields["EMAIL_TO"] = $arParams["EMAIL_TO"];
 			}
 			if(!empty($arParams["EVENT_MESSAGE_ID"]))

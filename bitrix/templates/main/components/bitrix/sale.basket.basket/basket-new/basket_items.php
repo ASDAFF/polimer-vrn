@@ -51,6 +51,7 @@ if ($normalCount > 0)
 				<span>Активировать промокод:</span>
 			</div>
 <!--			<a href="/check-out/step2.php" class="checkout_wr">Оформить заказ без регистрации</a>-->
+			<a href="javascript:void(0)" class="checkout_wr show-popup" data-id="oneclickcart">Купить в один клик</a>
 			<a href="<?=$arParams['PATH_TO_ORDER']?>" class="checkout">Оформить заказ</a>
 			<div class="total">
 				<div class="t-row t-sale cl">

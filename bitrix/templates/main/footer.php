@@ -213,26 +213,50 @@
 
 
 				<?$APPLICATION->IncludeComponent(
-	"nbrains:main.feedback",
-	"buy-one-click",
+					"nbrains:main.feedback",
+					"buy-one-click",
+					array(
+						"EMAIL_TO" => "sale@polimer-vrn",
+						"EVENT_MESSAGE_ID" => array(
+							0 => "90",
+						),
+						"IBLOCK_ID" => "15",
+						"IBLOCK_TYPE" => "feedback",
+						"OK_TEXT" => "Спасибо, ваше сообщение принято.",
+						"PROPERTY_CODE" => array(
+							0 => "FIO",
+							1 => "PHONE",
+							2 => "EMAIL",
+							3 => "RULE",
+							4 => "PRODUCT",
+							5 => "LINK_PRODUCT",
+						),
+						"USE_CAPTCHA" => "N",
+						"COMPONENT_TEMPLATE" => "buy-one-click"
+					),
+					false
+				);?>
+
+				<?$APPLICATION->IncludeComponent(
+	"nbrains:main.feedback", 
+	"buy-one-click-cart", 
 	array(
 		"EMAIL_TO" => "sale@polimer-vrn",
 		"EVENT_MESSAGE_ID" => array(
-			0 => "90",
+			0 => "104",
 		),
-		"IBLOCK_ID" => "15",
+		"IBLOCK_ID" => "23",
 		"IBLOCK_TYPE" => "feedback",
 		"OK_TEXT" => "Спасибо, ваше сообщение принято.",
 		"PROPERTY_CODE" => array(
 			0 => "FIO",
-			1 => "PHONE",
-			2 => "EMAIL",
+			1 => "EMAIL",
+			2 => "PHONE",
 			3 => "RULE",
-			4 => "PRODUCT",
-			5 => "LINK_PRODUCT",
+			4 => "PRODUCT_CART",
 		),
 		"USE_CAPTCHA" => "N",
-		"COMPONENT_TEMPLATE" => "buy-one-click"
+		"COMPONENT_TEMPLATE" => "buy-one-click-cart"
 	),
 	false
 );?>
