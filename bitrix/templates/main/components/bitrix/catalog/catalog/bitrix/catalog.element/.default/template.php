@@ -114,6 +114,9 @@ $this->setFrameMode(true);
                <a href="#" class="mtb" onclick="return false">Описание</a>
                <div class="content">
                   <?=$arResult['DETAIL_TEXT']?>
+                   <? foreach($arResult['PROPERTIES']['FILES']['VALUE'] as $key => $file): ?>
+                   <p><a href="<?=CFile::GetPath($file);?>"><?=$arResult['PROPERTIES']['FILES']['DESCRIPTION'][$key];?></a></p>
+                   <? endforeach; ?>
                </div>
             </div>
             <div class="tab tab_tec">
