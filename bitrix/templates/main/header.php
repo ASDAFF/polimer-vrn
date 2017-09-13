@@ -159,7 +159,7 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 							<a href="/sale/" class="mm__action">Акции</a>
 							<a href="/calc/" class="mm__calculation">Бесплатный расчет</a>
 						</div>
-						<div class="mm__phone"><?= tplvar('phone_top', true);?></div>
+						<div class="mm__phone"><?= tplvar('phone_top_mobile', true);?></div>
 						<div class="cl">
 							<div class="mm__timework header__timework">
 								<div class="line cl">
