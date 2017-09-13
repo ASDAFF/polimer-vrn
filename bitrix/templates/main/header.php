@@ -224,7 +224,7 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 							<img src="<?=SITE_TEMPLATE_PATH?>/img/h_logo.jpg" alt="Полимер" width="206" height="44">
 						</a>
 						<div class="header__phone">
-							<table style="display: table;border-collapse: separate;border-spacing: 2px;line-height: 17px;text-align: left;">
+							<table style="display: table;border-collapse: separate;border-spacing: 5px;line-height: 17px;text-align: left;">
 								<tr>
 									<td style="padding: unset;"><?= tplvar('phone_top', true);?></td>
 									<td style="padding: unset;">
