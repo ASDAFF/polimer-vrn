@@ -618,13 +618,6 @@ if($arResult['PROPERTIES']['MORE_PHOTO']['VALUE']){
 }
 
 $arResult['NAME'] = preg_replace('#(~(.*?)~)#is', '', $arResult['NAME']);
-
-$GLOBALS['PRODUCT'] = array(
-	"NAME" => $arResult['NAME'],
-	"LINK" => $arResult['DETAIL_PAGE_URL'],
-	"IMG" => CFile::GetPath($arResult['PROPERTIES']['MORE_PHOTO']['VALUE'][0]),
-	"PRICE" => $arResult['ITEM_PRICES'][0]['UNROUND_PRICE'],
-	);
 ?>
 
 

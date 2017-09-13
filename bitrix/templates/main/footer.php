@@ -210,8 +210,15 @@
 	),
 	false
 );?>
-				
-				<?$APPLICATION->IncludeComponent(
+
+				<?
+				$arResult = getUrlProd($APPLICATION->GetCurPage(false));
+				if(CFile::GetPath($arResult['MORE_PHOTO']['VALUE'][0])){
+					$img = CFile::GetPath($arResult['MORE_PHOTO']['VALUE'][0]);
+				}else{
+					$img = CFile::GetPath($arResult['DETAIL_PICTURE']);
+				}
+				$APPLICATION->IncludeComponent(
 					"nbrains:main.feedback",
 					"buy-one-click",
 					array(
@@ -234,7 +241,12 @@
 						),
 						"USE_CAPTCHA" => "N",
 						"COMPONENT_TEMPLATE" => "buy-one-click",
-						"PRODUCT" => $GLOBALS['PRODUCT']
+						"PRODUCT" => array(
+							"NAME" => $arResult['NAME'],
+							"LINK" => $arResult['DETAIL_PAGE_URL'],
+							"IMG" => $img,
+							"PRICE" => priceDiscount($arResult['ID']),
+						)
 					),
 					false
 				);?>

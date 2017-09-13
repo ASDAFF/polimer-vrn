@@ -9,7 +9,15 @@ function price($id){
     }
 
 }
-
+function priceDiscount($id){
+    global $USER;
+    $ar_res_price = CCatalogProduct::GetOptimalPrice($id, 1, $USER->GetUserGroupArray(), 'N');
+    if($ar_res_price['DISCOUNT_PRICE']){
+        return $ar_res_price['DISCOUNT_PRICE'];
+    }else{
+        return false;
+    }
+}
 
 function getUrlProd($url){
     if($url){
@@ -21,7 +29,7 @@ function getUrlProd($url){
         }
 
         if(CModule::IncludeModule("iblock")) {
-            $arSelect = Array("ID", "IBLOCK_ID","DETAIL_PAGE_URL","PREVIEW_PICTURE", "NAME", "PROPERTY_MORE_PHOTO");//IBLOCK_ID и ID обязательно должны быть указаны, см. описание arSelectFields выше
+            $arSelect = Array("ID", "IBLOCK_ID","DETAIL_PAGE_URL","PREVIEW_PICTURE","DETAIL_PICTURE", "NAME", "PROPERTY_*");//IBLOCK_ID и ID обязательно должны быть указаны, см. описание arSelectFields выше
             $arFilter = Array("IBLOCK_ID" => 21, "CODE" => $code);
             $res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
             if($ob = $res->GetNextElement()) {
