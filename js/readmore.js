@@ -139,7 +139,7 @@
 
       el.remove();
 
-      element.data('expandedHeight', height);
+      element.data('expandedHeight', height+30);
     },
 
     resizeBoxes: function() {
