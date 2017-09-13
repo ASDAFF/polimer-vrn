@@ -630,7 +630,7 @@ $arResult['NAME'] = preg_replace('#(~(.*?)~)#is', '', $arResult['NAME']);
 		),
 		"IBLOCK_ID" => "15",
 		"IBLOCK_TYPE" => "feedback",
-		"OK_TEXT" => "Спасибо, ваше сообщение принято.",
+		"OK_TEXT" => "РЎРїР°СЃРёР±Рѕ, РІР°С€Рµ СЃРѕРѕР±С‰РµРЅРёРµ РїСЂРёРЅСЏС‚Рѕ.",
 		"PROPERTY_CODE" => array(
 			0 => "FIO",
 			1 => "PHONE",
