@@ -223,7 +223,23 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
 						<a href="/" class="header__logo">
 							<img src="<?=SITE_TEMPLATE_PATH?>/img/h_logo.jpg" alt="Полимер" width="206" height="44">
 						</a>
-						<div class="header__phone"><?= tplvar('phone_top', true);?></div>
+						<div class="header__phone">
+							<table style="line-height: 17px;text-align: left;">
+								<tr>
+									<td><?= tplvar('phone_top', true);?></td>
+									<td>
+
+										<table>
+											<tr><td><?= tplvar('phone_top_one', true);?></td></tr>
+											<tr><td style="font-size: 12px;color: #000;">Инженерная сантехника</td></tr>
+											<tr><td><?= tplvar('phone_top_two', true);?></td></tr>
+											<tr><td style="font-size: 12px;color: #000;">Строительные материалы</td></tr>
+										</table>
+
+									</td>
+								</tr>
+							</table>
+						</div>
 						<div class="header__timework">
 							<div class="line cl">
 								<div class="days">ПН-ПТ</div>
