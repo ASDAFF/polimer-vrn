@@ -22,6 +22,7 @@ $this->setFrameMode(true);
 
 
 <? foreach($arResult["STORES"] as $pid => $arProperty):?>
+	<? if($arProperty["AMOUNT"]): ?>
 	<div class="tab-row cl">
 		<div class="tab-cell">
 			 <?=$arProperty["TITLE"]?><span><?=$arProperty["PHONE"]?></span><?if($arProperty["EMAIL"]):?>email:<a href="#"><?=$arProperty["EMAIL"]?></a><? endif; ?></div>
@@ -66,8 +67,8 @@ $this->setFrameMode(true);
 		</div>
 		<div class="tab-cell"><div class="mtn">Режим работы</div><?=$arProperty["SCHEDULE"]?></div>
 	</div>
-
-	<?endforeach;?>
+	<? endif; ?>
+<?endforeach;?>
 
 
 
