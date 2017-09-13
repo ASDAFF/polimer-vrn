@@ -105,9 +105,11 @@ if (!empty($arResult['ITEMS']))
 								</div>
 								<?if(!price($arItem['ID'])){
 									print '<span class="noprice">Цену уточняйте у менеджера</span>';
-								}?>
+								}
+								?>
 
-								<? if($arItem['CATALOG_QUANTITY'] > 0): ?>
+
+								<? if($arItem['CATALOG_QUANTITY'] > 0 and (float)price($arItem['ID'])): ?>
 								<div class="quantity" id="count_<?=$arItem['ID']?>">
 									<a class="minus na" href="#"></a>
 									<input type="text" value="1"/>

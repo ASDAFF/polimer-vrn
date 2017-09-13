@@ -29,8 +29,12 @@ if($arResult["ITEMS"]):
 			<?if(!price($arItem['ID'])){
 				print '<span class="noprice" style="font-size: 11px;margin: 17px 0">Цену уточняйте у менеджера</span>';
 			}?>
-
-			<a href="javascript:void(0)" onclick="addToBasket2(<?=$arItem['ID']?>,1,this);" class="cart">В корзину</a>
+			
+			<? if((float)price($arItem['ID'])): ?>
+				<a href="javascript:void(0)" onclick="addToBasket2(<?=$arItem['ID']?>,1,this);" class="cart">В корзину</a>
+			<? else: ?>
+				<a href="javascript:void(0)" class="cart show-popup" data-id="order-product">под заказ</a>
+			<? endif; ?>
 		</div>
 	</div>
 	<? endforeach; ?>

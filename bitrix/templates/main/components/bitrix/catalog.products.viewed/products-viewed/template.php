@@ -127,7 +127,6 @@ $areaIds = array();
 
 	foreach ($arResult['ITEMS'] as $item)
 	{
-		//var_dump($item);
 		$uniqueId = $item['ID'].'_'.md5($this->randString().$component->getAction());
 		$areaIds[$item['ID']] = $this->GetEditAreaId($uniqueId);
 		$this->AddEditAction($uniqueId, $item['EDIT_LINK'], $elementEdit);
@@ -146,7 +145,11 @@ $areaIds = array();
 					<?if(!price($item['ID'])){
 						print '<span class="noprice" style="font-size: 11px;margin: 17px 0">Цену уточняйте у менеджера</span>';
 					}?>
+					<? if((float)price($item['ID'])): ?>
 					<a href="javascript:void(0)" onclick="addToBasket2(<?=$item['ID']?>,1,this);" class="cart">В корзину</a>
+					<? else: ?>
+					<a href="javascript:void(0)" class="cart show-popup" data-id="order-product">под заказ</a>
+					<? endif; ?>
 				</div>
 			</div>
 		<?

@@ -89,7 +89,7 @@ $this->setFrameMode(true);
             </div>
             <? endif; ?>
 
-            <? if($arResult['CATALOG_QUANTITY'] > 0): ?>
+            <? if($arResult['CATALOG_QUANTITY'] > 0 and $arResult['ITEM_PRICES'][0]['BASE_PRICE']): ?>
             <a href="javascript:void(0)" class="add2cart" onclick="addToBasket2(<?=$arResult['ID']?>, $('#count_product').val(),this);">Добавить в корзину</a>
             <?else:?>
             <a href="javascript:void(0)" class="add2cart show-popup" data-id="order-product">Товар под заказ</a>
