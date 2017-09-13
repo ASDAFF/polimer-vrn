@@ -40,23 +40,23 @@ class CBlogPostEdit extends CBitrixComponent
 		
 		$arParams["PATH_TO_BLOG"] = trim($arParams["PATH_TO_BLOG"]);
 		if (strlen($arParams["PATH_TO_BLOG"]) <= 0)
-			$arParams["PATH_TO_BLOG"] = htmlspecialcharsbx($APPLICATION->GetCurPage() . "?" . $arParams["PAGE_VAR"] . "=blog&" . $arParams["BLOG_VAR"] . "=#blog#");
+			$arParams["PATH_TO_BLOG"] = $APPLICATION->GetCurPage() . "?" . htmlspecialcharsbx($arParams["PAGE_VAR"]) . "=blog&" . htmlspecialcharsbx($arParams["BLOG_VAR"]) . "=#blog#";
 		
 		$arParams["PATH_TO_POST"] = trim($arParams["PATH_TO_POST"]);
 		if (strlen($arParams["PATH_TO_POST"]) <= 0)
-			$arParams["PATH_TO_POST"] = htmlspecialcharsbx($APPLICATION->GetCurPage() . "?" . $arParams["PAGE_VAR"] . "=post&" . $arParams["BLOG_VAR"] . "=#blog#&" . $arParams["POST_VAR"] . "=#post_id#");
+			$arParams["PATH_TO_POST"] = $APPLICATION->GetCurPage() . "?" . htmlspecialcharsbx($arParams["PAGE_VAR"]) . "=post&" . htmlspecialcharsbx($arParams["BLOG_VAR"]) . "=#blog#&" . htmlspecialcharsbx($arParams["POST_VAR"]) . "=#post_id#";
 		
 		$arParams["PATH_TO_POST_EDIT"] = trim($arParams["PATH_TO_POST_EDIT"]);
 		if (strlen($arParams["PATH_TO_POST_EDIT"]) <= 0)
-			$arParams["PATH_TO_POST_EDIT"] = htmlspecialcharsbx($APPLICATION->GetCurPage() . "?" . $arParams["PAGE_VAR"] . "=post_edit&" . $arParams["BLOG_VAR"] . "=#blog#&" . $arParams["POST_VAR"] . "=#post_id#");
+			$arParams["PATH_TO_POST_EDIT"] = $APPLICATION->GetCurPage() . "?" . htmlspecialcharsbx($arParams["PAGE_VAR"]) . "=post_edit&" . htmlspecialcharsbx($arParams["BLOG_VAR"]) . "=#blog#&" . htmlspecialcharsbx($arParams["POST_VAR"]) . "=#post_id#";
 		
 		$arParams["PATH_TO_USER"] = trim($arParams["PATH_TO_USER"]);
 		if (strlen($arParams["PATH_TO_USER"]) <= 0)
-			$arParams["PATH_TO_USER"] = htmlspecialcharsbx($APPLICATION->GetCurPage() . "?" . $arParams["PAGE_VAR"] . "=user&" . $arParams["USER_VAR"] . "=#user_id#");
+			$arParams["PATH_TO_USER"] = $APPLICATION->GetCurPage() . "?" . htmlspecialcharsbx($arParams["PAGE_VAR"]) . "=user&" . htmlspecialcharsbx($arParams["USER_VAR"]) . "=#user_id#";
 		
 		$arParams["PATH_TO_DRAFT"] = trim($arParams["PATH_TO_DRAFT"]);
 		if (strlen($arParams["PATH_TO_DRAFT"]) <= 0)
-			$arParams["PATH_TO_DRAFT"] = htmlspecialcharsbx($APPLICATION->GetCurPage() . "?" . $arParams["PAGE_VAR"] . "=draft&" . $arParams["BLOG_VAR"] . "=#blog#");
+			$arParams["PATH_TO_DRAFT"] = $APPLICATION->GetCurPage() . "?" . htmlspecialcharsbx($arParams["PAGE_VAR"]) . "=draft&" . htmlspecialcharsbx($arParams["BLOG_VAR"]) . "=#blog#";
 		
 		$arParams["PATH_TO_GROUP_BLOG"] = trim($arParams["PATH_TO_GROUP_BLOG"]);
 		if (strlen($arParams["PATH_TO_GROUP_BLOG"]) <= 0)
@@ -518,6 +518,7 @@ class CBlogPostEdit extends CBitrixComponent
 											else
 												$redirectUrl = CComponentEngine::MakePathFromTemplate($this->arParams["PATH_TO_POST_EDIT"], array("blog" => $arBlog["URL"], "post_id" => $newID, "user_id" => $arBlog["OWNER_ID"]));
 										}
+										LocalRedirect($redirectUrl);
 									}
 									else
 									{

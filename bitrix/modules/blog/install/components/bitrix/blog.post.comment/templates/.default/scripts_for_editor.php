@@ -301,7 +301,7 @@ window.FCForm.prototype = {
 		var node = BX('err_comment_'+this.id[1]);
 		node.insertBefore(BX.create('div', {
 				attrs : {"class": "feed-add-error"},
-				html: '<div class="blog-errors blog-note-box blog-note-error"><div class="blog-error-text" id="blg-com-err">' + text + '</div></div>'
+				html: '<div class="blog-errors blog-note-box blog-note-error"><div class="blog-error-text" id="blg-com-err">' + BX.util.htmlspecialchars(text) + '</div></div>'
 			}),
 			node.firstChild);
 	},

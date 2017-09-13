@@ -155,7 +155,10 @@ class BlogUser
 		if (!empty($ids))
 			$filter["=USER_ID"] = $ids;
 		$resBlogUsers = Internals\BlogUserTable::getList(array(
-			'select' => array('ID', 'USER_ID', 'ALIAS', 'AVATAR', 'USER.PERSONAL_PHOTO', 'USER.LOGIN', 'USER.NAME', 'USER.LAST_NAME'),
+			'select' => array(
+				'ID', 'USER_ID', 'ALIAS', 'DESCRIPTION', 'AVATAR', 'INTERESTS', 'LAST_VISIT', 'DATE_REG', 'ALLOW_POST',
+				'USER.PERSONAL_PHOTO', 'USER.LOGIN', 'USER.NAME', 'USER.LAST_NAME'
+			),
 			'filter' => $filter,
 		));
 
@@ -166,12 +169,24 @@ class BlogUser
 		while ($row = $resBlogUsers->fetch())
 		{
 			unset($notExistingUsersIds[$row["USER_ID"]]);
-			
+//			specialchars only needed fields
 			$row["BLOG_USER_ID"] = $row["ID"];    // rename for understandability
+			
+//			make correctly BlogUser structure to use in old components
 			$row["BlogUser"] = array(
 				"ALIAS" => $row["ALIAS"],
-				"~ALIAS" => htmlspecialcharsex($row["ALIAS"]),
+				"DESCRIPTION" => $row["DESCRIPTION"],
+				"INTERESTS" => $row["INTERESTS"],
 			);
+			$row["BlogUser"] = \CBlogTools::htmlspecialcharsExArray($row["BlogUser"]);
+			if($row["DATE_REG"])
+				$row["BlogUser"]["DATE_REG"] = FormatDate("FULL", $row["DATE_REG"]->getTimestamp());
+			if($row["LAST_VISIT"])
+				$row["BlogUser"]["LAST_VISIT"] = FormatDate("FULL", $row["LAST_VISIT"]->getTimestamp());
+			$row["BlogUser"]["ID"] = $row["ID"];
+			$row["BlogUser"]["USER_ID"] = $row["USER_ID"];
+			$row["BlogUser"]["AVATAR"] = $row["AVATAR"];
+			$row["BlogUser"]["ALLOW_POST"] = $row["ALLOW_POST"];
 
 //			Avatars for post and for comments
 			$row["BlogUser"]["AVATAR_file"] = intval($row["AVATAR"]) > 0 ?
@@ -286,6 +301,30 @@ class BlogUser
 		$result = array();
 		
 		$resPost = \CBlogPost::GetList(array(), array("BLOG_ID" => $blogId), false, false, array("AUTHOR_ID"));
+		while ($post = $resPost->Fetch())
+			if ($post["AUTHOR_ID"])
+				$result[$post["AUTHOR_ID"]] = $post["AUTHOR_ID"];
+		
+		return $result;
+	}
+	
+	
+	/**
+	 * Return IDs of post authors by custom selection
+	 *
+	 * @param $arFilter
+	 * @return array
+	 * @throws ArgumentNullException
+	 */
+	public static function getPostAuthorsIdsByDbFilter($arFilter)
+	{
+		if (!$arFilter)
+			throw new ArgumentNullException('blog ID');
+		if(!is_array($arFilter))
+			return array();
+		
+		$result = array();
+		$resPost = \CBlogPost::GetList(array(), $arFilter, false, false, array("AUTHOR_ID"));
 		while ($post = $resPost->Fetch())
 			if ($post["AUTHOR_ID"])
 				$result[$post["AUTHOR_ID"]] = $post["AUTHOR_ID"];

@@ -72,8 +72,8 @@ BX.CommentAux.getLiveText = function(type, params)
 			typeof params == 'object'
 			&& typeof params.isEnabledKeepVersion != 'undefined'
 			&& params.isEnabledKeepVersion
-				? 'SONET_COMMENTAUX_JS_HEAD_FILEVERSION_TEXT'
-				: 'SONET_COMMENTAUX_JS_FILEVERSION_TEXT'
+				? 'SONET_COMMENTAUX_JS_FILEVERSION_TEXT'
+				: 'SONET_COMMENTAUX_JS_HEAD_FILEVERSION_TEXT'
 		);
 		var userGender = (
 			typeof params == 'object'

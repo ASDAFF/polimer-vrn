@@ -435,7 +435,8 @@ else
 				'CONFIG' => array(
 					'AUTOFOCUS' => false,
 					'POPUP_BIND_ELEMENT_SELECTOR' => '#'.htmlspecialcharsbx($filterID).'_filter_container_max',
-					'POPUP_OFFSET_LEFT' => 13
+					'POPUP_OFFSET_LEFT' => 13,
+					'DEFAULT_PRESET' => false
 				)
 			),
 			$this->getComponent()

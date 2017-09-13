@@ -716,7 +716,7 @@ class CAllBlogComment
 			&& $userId == $authorId
 		)
 		{
-			$perms = BLOG_PERMS_FULL;
+			$perms = BLOG_PERMS_MODERATE;
 		}
 
 		if($perms <= BLOG_PERMS_DENY)

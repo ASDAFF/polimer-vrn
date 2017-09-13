@@ -47,4 +47,5 @@ $MESS["BPSFA_PD_TIME_M"] = "хвилин";
 $MESS["BPSFA_PD_TIME_S"] = "секунд";
 $MESS["BPSFA_PD_TIMEOUT_LIMIT"] = "Мінімальний період очікування";
 $MESS["BPAR_PD_COMMENT_REQUIRED"] = "Обов'язковість коментаря";
+$MESS["BPSFA_PD_DELEGATION_TYPE"] = "Тип делегування";
 ?>

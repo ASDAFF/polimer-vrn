@@ -388,3 +388,11 @@ create table b_sonet_user_content_view
 	primary key (USER_ID, RATING_TYPE_ID, RATING_ENTITY_ID),
 	index IX_SONET_USER_CONTENT_VIEW_1(CONTENT_ID)
 );
+
+create table b_sonet_log_tag (
+	LOG_ID int(11) NOT NULL,
+	NAME varchar(255) NOT NULL,
+	PRIMARY KEY (LOG_ID,NAME),
+	index IX_SONET_LOG_TAG_1(`LOG_ID`),
+	index IX_SONET_LOG_TAG_2(`NAME`)
+);

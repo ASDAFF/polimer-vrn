@@ -830,33 +830,52 @@ else
 	$tabControl->AddEditField("NAME", GetMessage("IBLOCK_FIELD_NAME").":", true, array("size" => 50, "maxlength" => 255), $str_NAME);
 }
 
+$newUploader = class_exists('\Bitrix\Main\UI\FileInput', true);
+
 $tabControl->BeginCustomField("PICTURE", GetMessage("IBSEC_E_PICTURE"), $arIBlock["FIELDS"]["SECTION_PICTURE"]["IS_REQUIRED"] === "Y");
 if($bVarsFromForm && !array_key_exists("PICTURE", $_REQUEST) && $arSection)
 	$str_PICTURE = intval($arSection["PICTURE"]);
 ?>
 	<tr class="adm-detail-file-row">
 		<td><?echo $tabControl->GetCustomLabelHTML()?></td>
-		<td>
-			<?echo CFileInput::Show("PICTURE", $str_PICTURE,
-				array(
-					"IMAGE" => "Y",
-					"PATH" => "Y",
-					"FILE_SIZE" => "Y",
-					"DIMENSIONS" => "Y",
-					"IMAGE_POPUP" => "Y",
-					"MAX_SIZE" => array(
-						"W" => COption::GetOptionString("iblock", "detail_image_size"),
-						"H" => COption::GetOptionString("iblock", "detail_image_size"),
-					),
-				), array(
-					'upload' => true,
-					'medialib' => true,
-					'file_dialog' => true,
-					'cloud' => true,
-					'del' => true,
-					'description' => false,
-				)
-			);
+		<td><?
+			if ($newUploader)
+			{
+				echo \Bitrix\Main\UI\FileInput::createInstance(array(
+					"name" => "PICTURE",
+					"description" => true,
+					"upload" => true,
+					"allowUpload" => "I",
+					"medialib" => true,
+					"fileDialog" => true,
+					"cloud" => true,
+					"delete" => true,
+					"maxCount" => 1
+				))->show(($bVarsFromForm ? $_REQUEST["PICTURE"] : $str_PICTURE), $bVarsFromForm);
+			}
+			else
+			{
+				echo CFileInput::Show("PICTURE", $str_PICTURE,
+					array(
+						"IMAGE" => "Y",
+						"PATH" => "Y",
+						"FILE_SIZE" => "Y",
+						"DIMENSIONS" => "Y",
+						"IMAGE_POPUP" => "Y",
+						"MAX_SIZE" => array(
+							"W" => COption::GetOptionString("iblock", "detail_image_size"),
+							"H" => COption::GetOptionString("iblock", "detail_image_size"),
+						),
+					), array(
+						'upload' => true,
+						'medialib' => true,
+						'file_dialog' => true,
+						'cloud' => true,
+						'del' => true,
+						'description' => false,
+					)
+				);
+			}
 			?>
 		</td>
 	</tr>
@@ -1184,27 +1203,44 @@ if($bVarsFromForm && !array_key_exists("DETAIL_PICTURE", $_REQUEST) && $arSectio
 ?>
 	<tr class="adm-detail-file-row">
 		<td><?echo $tabControl->GetCustomLabelHTML()?></td>
-		<td>
-			<?echo CFileInput::Show("DETAIL_PICTURE", $str_DETAIL_PICTURE,
-				array(
-					"IMAGE" => "Y",
-					"PATH" => "Y",
-					"FILE_SIZE" => "Y",
-					"DIMENSIONS" => "Y",
-					"IMAGE_POPUP" => "Y",
-					"MAX_SIZE" => array(
-						"W" => COption::GetOptionString("iblock", "detail_image_size"),
-						"H" => COption::GetOptionString("iblock", "detail_image_size"),
-					),
-				), array(
-					'upload' => true,
-					'medialib' => true,
-					'file_dialog' => true,
-					'cloud' => true,
-					'del' => true,
-					'description' => false,
-				)
-			);
+		<td><?
+			if ($newUploader)
+			{
+				echo \Bitrix\Main\UI\FileInput::createInstance(array(
+					"name" => "DETAIL_PICTURE",
+					"description" => true,
+					"upload" => true,
+					"allowUpload" => "I",
+					"medialib" => true,
+					"fileDialog" => true,
+					"cloud" => true,
+					"delete" => true,
+					"maxCount" => 1
+				))->show(($bVarsFromForm ? $_REQUEST["DETAIL_PICTURE"] : $str_DETAIL_PICTURE), $bVarsFromForm);
+			}
+			else
+			{
+				echo CFileInput::Show("DETAIL_PICTURE", $str_DETAIL_PICTURE,
+					array(
+						"IMAGE" => "Y",
+						"PATH" => "Y",
+						"FILE_SIZE" => "Y",
+						"DIMENSIONS" => "Y",
+						"IMAGE_POPUP" => "Y",
+						"MAX_SIZE" => array(
+							"W" => COption::GetOptionString("iblock", "detail_image_size"),
+							"H" => COption::GetOptionString("iblock", "detail_image_size"),
+						),
+					), array(
+						'upload' => true,
+						'medialib' => true,
+						'file_dialog' => true,
+						'cloud' => true,
+						'del' => true,
+						'description' => false,
+					)
+				);
+			}
 			?>
 		</td>
 	</tr>

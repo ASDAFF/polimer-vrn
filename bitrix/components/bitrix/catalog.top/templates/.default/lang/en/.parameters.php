@@ -78,7 +78,6 @@ $MESS["CP_BCT_TPL_PRODUCT_BLOCK_BUTTONS"] = "Actions";
 $MESS["CP_BCT_TPL_PRODUCT_BLOCK_PROPS"] = "Properties";
 $MESS["CP_BCT_TPL_PRODUCT_BLOCK_SKU"] = "SKU";
 $MESS["CP_BCT_TPL_PRODUCT_BLOCK_COMPARE"] = "Compare";
-$MESS["CP_BCT_TPL_CUSTOM_FILTER"] = "Product filter";
 $MESS["CP_BCT_TPL_SETTINGS_INVALID_CONDITION"] = "Condition is incorrect";
 $MESS["CP_BCT_TPL_PRODUCT_SUBSCRIPTION"] = "Enable back-in-stock notifications";
 $MESS["CP_BCT_TPL_SHOW_SLIDER"] = "Show product slider";

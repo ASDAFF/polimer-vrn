@@ -53,4 +53,5 @@ $MESS["BLOG_PHOTO"] = "Foto:";
 $MESS["MPF_IMAGE_TITLE"] = "Bild in die Nachricht einfügen";
 $MESS["BLOG_ADD_FILES"] = "Dateien hinzufügen";
 $MESS["BLOG_PC_COMMENT"] = "Abbrechen";
+$MESS["BPC_ERROR_NO_TEXT"] = "Nachrichtentext ist erforderlich";
 ?>

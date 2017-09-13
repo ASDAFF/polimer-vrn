@@ -1158,7 +1158,7 @@ class CIBlockCMLImport
 
 		if($XML_STORES_PARENT)
 		{
-			if($this->bCatalog && CBXFeatures::IsFeatureEnabled('CatMultiStore'))
+			if($this->bCatalog)
 			{
 				$result = $this->ImportStores($XML_STORES_PARENT);
 				if($result!==true)
@@ -1435,6 +1435,13 @@ class CIBlockCMLImport
 	function ImportStores($XML_STORES_PARENT)
 	{
 		$ID = 0;
+		$arDBStores = array();
+		$rsStore = CCatalogStore::GetList(array(), array(), false, false, array("ID", "XML_ID"));
+		while ($arIDStore = $rsStore->Fetch())
+		{
+			$arDBStores[$arIDStore["XML_ID"]] = $arIDStore["ID"];
+		}
+
 		$arXMLStores = $this->_xml_file->GetAllChildrenArray($XML_STORES_PARENT);
 		foreach($arXMLStores as $arXMLStore)
 		{
@@ -1471,17 +1478,18 @@ class CIBlockCMLImport
 					$arStore["PHONE"] = implode(", ", $storeContact);
 			}
 
-			$rsStore = CCatalogStore::GetList(array(), array("XML_ID" => $arXMLStore[$this->mess["IBLOCK_XML2_ID"]]));
-			$arIDStore = $rsStore->Fetch();
-			if(!$arIDStore)
+			if (!isset($arDBStores[$arStore["XML_ID"]]))
 			{
-				$ID = CCatalogStore::Add($arStore);
+				if ((count($arDBStores) < 1) || CBXFeatures::IsFeatureEnabled('CatMultiStore'))
+					$arDBStores[$arStore["XML_ID"]] = $ID = CCatalogStore::Add($arStore);
 			}
 			else
 			{
-				$ID = CCatalogStore::Update($arIDStore["ID"], $arStore);
+				if ((count($arDBStores) <= 1) || CBXFeatures::IsFeatureEnabled('CatMultiStore'))
+					$ID = CCatalogStore::Update($arDBStores[$arStore["XML_ID"]], $arStore);
 			}
 		}
+
 		if(!$ID)
 			return false;
 		return true;

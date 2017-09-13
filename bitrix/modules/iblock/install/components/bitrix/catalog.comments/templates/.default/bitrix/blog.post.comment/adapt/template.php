@@ -231,6 +231,30 @@ else
 						<?
 					}
 					?>
+					
+					<?php
+//					only for not registered users
+					if($arResult['userID'] == null && $arParams['USER_CONSENT'] == 'Y')
+					{
+						$APPLICATION->IncludeComponent(
+							"bitrix:main.userconsent.request",
+							"",
+							array(
+								"ID" => $arParams["USER_CONSENT_ID"],
+								"IS_CHECKED" => $arParams["USER_CONSENT_IS_CHECKED"],
+								"AUTO_SAVE" => "Y",
+								"IS_LOADED" => $arParams["USER_CONSENT_IS_LOADED"],
+								"ORIGIN_ID" => "sender/sub",
+								"ORIGINATOR_ID" => "",
+								"REPLACE" => array(
+									'button_caption' => GetMessage("B_B_MS_SEND"),
+									'fields' => array(GetMessage("B_B_MS_NAME"), 'E-mail')
+								),
+								"SUBMIT_EVENT_NAME" => "OnUCFormCheckConsent",
+							)
+						);
+					}
+					?>
 
 					<div class="blog-comment-buttons">
 						<input tabindex="10" value="<?=GetMessage("B_B_MS_SEND")?>" type="button" name="sub-post" id="post-button" onclick="submitCommentNew()">

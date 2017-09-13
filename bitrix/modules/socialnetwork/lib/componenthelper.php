@@ -1725,7 +1725,15 @@ class ComponentHelper
 					}
 
 					\CSocNetLogRights::deleteByLogID($logId);
-					\CSocNetLogRights::add($logId, $socnetPerms, true);
+					\CSocNetLogRights::add($logId, $socnetPerms, true, false);
+
+					foreach($newRights as $GROUP_CODE)
+					{
+						if (preg_match('/^U(\d+)$/', $GROUP_CODE, $matches))
+						{
+							\CSocNetLogFollow::set($matches[1], "L".$logId, "Y", convertTimeStamp(time() + $tzOffset, "FULL", $siteId));
+						}
+					}
 
 					if (count(array_diff($logSiteListNew, $logSiteList)) > 0)
 					{

@@ -31,4 +31,5 @@ $MESS["SONET_C30_FILTER_EVENT_ID_WIKI"] = "Вікі";
 $MESS["SONET_C30_FILTER_EVENT_ID_BP"] = "Бізнес-процеси";
 $MESS["SONET_C30_FILTER_FAVORITES"] = "Вибрані записи користувача";
 $MESS["SONET_C30_FILTER_EXTRANET"] = "Екстранет";
+$MESS["SONET_C30_FILTER_TAG"] = "Тег";
 ?>

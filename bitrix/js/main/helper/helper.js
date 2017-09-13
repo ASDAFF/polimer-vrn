@@ -105,18 +105,28 @@ BX.Helper =
 			{
 				BXIM.openMessenger(event.data.user_id);
 			}
-		}, this));
 
-		BX.addCustomEvent("onTopPanelCollapse", function(){
-			if(BX.Helper.isOpen)
+			if(event.data.action == "getMenuStructure")
 			{
-				BX.Helper.show();
+				if (typeof BX.Bitrix24.LeftMenuClass == "object")
+				{
+					if (typeof BX.Bitrix24.LeftMenuClass.getStructure == "function")
+					{
+						var structure = BX.Bitrix24.LeftMenuClass.getStructure();
+						this.frameNode.contentWindow.postMessage({action: 'throwMenu', menu: structure}, '*');
+					}
+				}
 			}
-		});
+		}, this));
 
 		if (params.needCheckNotify == "Y")
 		{
 			this.checkNotification();
+		}
+
+		if (this.notifyNum > 0)
+		{
+			BX.Helper.showNotification(this.notifyNum);
 		}
 	},
 
@@ -323,7 +333,8 @@ BX.Helper =
 		this.curtainNode.style.width = this.getCord().right + 'px';
 		this.curtainNode.style.display = 'block';
 		this.popupNode.style.display = 'block';
-		this.popupNode.style.paddingTop = top + 'px';
+		this.popupNode.style.top = top + 'px';
+		this.popupNode.style.paddingBottom = top + 'px';
 		this.topBar.style.top = top + 'px';
 		this.popupLoader.style.top = top + 'px';
 
@@ -368,6 +379,8 @@ BX.Helper =
 		this.createFrame();
 		this.closeBtnHandler();
 		this.createPopup();
+
+		BX.onCustomEvent(window, "BX.Helper:onShow");
 
 		var windowScroll = BX.GetWindowScrollPos();
 		if (windowScroll.scrollTop !== 0)
@@ -465,7 +478,7 @@ BX.Helper =
 		this.setNotification(num);
 	},
 
-	showAnimateHero : function(url)
+	showFlyingHero : function(url)
 	{
 		if (!url)
 			return;
@@ -527,7 +540,7 @@ BX.Helper =
 					}
 
 					if (res.url)
-						this.showAnimateHero(res.url);
+						this.showFlyingHero(res.url);
 				}
 				else
 				{
@@ -540,7 +553,7 @@ BX.Helper =
 		});
 	},
 
-	showAnimatedHero : function()
+	showAnimatedHero : function() //with finger
 	{
 		if (!BX.browser.IsIE8())
 		{

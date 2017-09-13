@@ -362,12 +362,13 @@ BXEditorIframeView.prototype.Clear = function()
 
 BXEditorIframeView.prototype.GetValue = function(bParse, bFormat)
 {
-	var value = this.IsEmpty() ? "" : this.editor.GetInnerHtml(this.element);
+	this.iframeValue = this.IsEmpty() ? "" : this.editor.GetInnerHtml(this.element);
+	this.editor.On('OnIframeBeforeGetValue', [this.iframeValue]);
 	if (bParse)
 	{
-		value = this.editor.Parse(value, false, bFormat);
+		this.iframeValue = this.editor.Parse(this.iframeValue, false, bFormat);
 	}
-	return value;
+	return this.iframeValue;
 };
 
 BXEditorIframeView.prototype.SetValue = function(html, bParse)

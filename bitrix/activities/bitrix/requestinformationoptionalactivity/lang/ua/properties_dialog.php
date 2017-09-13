@@ -45,4 +45,5 @@ $MESS["BPSFA_PD_TIMEOUT_LIMIT"] = "Мінімальний період очік�
 $MESS["BPRIA_PD_CANCEL_TYPE"] = "Тип відхилення";
 $MESS["BPRIA_PD_CANCEL_TYPE_ANY"] = "Будь-який співробітник";
 $MESS["BPRIA_PD_CANCEL_TYPE_ALL"] = "Всі співробітники";
+$MESS["BPRIA_PD_DELEGATION_TYPE"] = "Тип делегування";
 ?>

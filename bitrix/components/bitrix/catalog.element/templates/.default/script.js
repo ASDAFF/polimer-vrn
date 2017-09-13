@@ -1785,12 +1785,12 @@
 				if (!isNaN(curValue))
 				{
 					curValue += this.stepQuantity;
-					if (this.checkQuantity)
+
+					curValue = this.checkQuantityRange(curValue, 'up');
+
+					if (this.checkQuantity && curValue > this.maxQuantity)
 					{
-						if (curValue > this.maxQuantity)
-						{
-							boolSet = false;
-						}
+						boolSet = false;
 					}
 
 					if (boolSet)
@@ -1820,7 +1820,7 @@
 				{
 					curValue -= this.stepQuantity;
 
-					this.checkPriceRange(curValue);
+					curValue = this.checkQuantityRange(curValue, 'down');
 
 					if (curValue < this.minQuantity)
 					{
@@ -1854,6 +1854,8 @@
 					curValue = this.isDblQuantity ? parseFloat(this.obQuantity.value) : Math.round(this.obQuantity.value);
 					if (!isNaN(curValue))
 					{
+						curValue = this.checkQuantityRange(curValue);
+
 						if (this.checkQuantity)
 						{
 							if (curValue > this.maxQuantity)
@@ -2641,10 +2643,80 @@
 			BX.adjust(sticker, {text: text, attrs: {title: text}});
 		},
 
+		checkQuantityRange: function(quantity, direction)
+		{
+			if (typeof quantity === 'undefined'|| this.currentPriceMode !== 'Q')
+			{
+				return quantity;
+			}
+
+			quantity = parseFloat(quantity);
+
+			var nearestQuantity = quantity;
+			var range, diffFrom, absDiffFrom, diffTo, absDiffTo, shortestDiff;
+
+			for (var i in this.currentQuantityRanges)
+			{
+				if (this.currentQuantityRanges.hasOwnProperty(i))
+				{
+					range = this.currentQuantityRanges[i];
+
+					if (
+						parseFloat(quantity) >= parseFloat(range.SORT_FROM)
+						&& (
+							range.SORT_TO === 'INF'
+							|| parseFloat(quantity) <= parseFloat(range.SORT_TO)
+						)
+					)
+					{
+						nearestQuantity = quantity;
+						break;
+					}
+					else
+					{
+						diffFrom = parseFloat(range.SORT_FROM) - quantity;
+						absDiffFrom = Math.abs(diffFrom);
+						diffTo = parseFloat(range.SORT_TO) - quantity;
+						absDiffTo = Math.abs(diffTo);
+
+						if (shortestDiff === undefined || shortestDiff > absDiffFrom)
+						{
+							if (
+								direction === undefined
+								|| (direction === 'up' && diffFrom > 0)
+								|| (direction === 'down' && diffFrom < 0)
+							)
+							{
+								shortestDiff = absDiffFrom;
+								nearestQuantity = parseFloat(range.SORT_FROM);
+							}
+						}
+
+						if (shortestDiff === undefined || shortestDiff > absDiffTo)
+						{
+							if (
+								direction === undefined
+								|| (direction === 'up' && diffFrom > 0)
+								|| (direction === 'down' && diffFrom < 0)
+							)
+							{
+								shortestDiff = absDiffTo;
+								nearestQuantity = parseFloat(range.SORT_TO);
+							}
+						}
+					}
+				}
+			}
+
+			return nearestQuantity;
+		},
+
 		checkPriceRange: function(quantity)
 		{
-			if (typeof quantity === 'undefined'|| this.currentPriceMode != 'Q')
+			if (typeof quantity === 'undefined'|| this.currentPriceMode !== 'Q')
+			{
 				return;
+			}
 
 			var range, found = false;
 
@@ -2655,10 +2727,10 @@
 					range = this.currentQuantityRanges[i];
 
 					if (
-						parseInt(quantity) >= parseInt(range.SORT_FROM)
+						parseFloat(quantity) >= parseFloat(range.SORT_FROM)
 						&& (
-							range.SORT_TO == 'INF'
-							|| parseInt(quantity) <= parseInt(range.SORT_TO)
+							range.SORT_TO === 'INF'
+							|| parseFloat(quantity) <= parseFloat(range.SORT_TO)
 						)
 					)
 					{

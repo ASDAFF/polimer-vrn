@@ -372,7 +372,8 @@ class CBackup
 						LIMIT ".($arTable["LAST_ID"] ? $arTable["LAST_ID"].", ": "").$LIMIT;
 				}
 
-				$rsSource = self::QueryUnbuffered($strSelect);
+				if (!$rsSource = self::QueryUnbuffered($strSelect))
+					RaiseErrorAndDie('SQL Query Error');
 				while($arSource = $rsSource->Fetch())
 				{
 					if(!$strInsert)
@@ -440,7 +441,7 @@ class CBackup
 		if (defined('BX_USE_MYSQLI') && BX_USE_MYSQLI === true)
 			$DB->result = mysqli_query($DB->db_Conn, $q, MYSQLI_USE_RESULT);
 		else
-			$DB->result = mysql_unbuffered_query($q, $DB->db_Conn);
+			$DB->result = mysql_unbuffered_query($q);
 		$rsSource = new CDBResult($DB->result);
 		$rsSource->DB = $DB;
 		return $rsSource;

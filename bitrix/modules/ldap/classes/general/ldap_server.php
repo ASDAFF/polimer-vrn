@@ -564,6 +564,12 @@ class CLdapServer
 		$oLdapServer->Disconnect();
 		CLdapServer::Update($ldap_server_id, Array("~SYNC_LAST"=>$DB->CurrentTimeFunction()));
 
+		if(CModule::IncludeModule('intranet'))
+		{
+			\Bitrix\Intranet\Internals\UserSubordinationTable::performReInitialization();
+			\Bitrix\Intranet\Internals\UserToDepartmentTable::performReInitialization();
+		}
+
 		if($bUSERGen)
 			unset($USER);
 

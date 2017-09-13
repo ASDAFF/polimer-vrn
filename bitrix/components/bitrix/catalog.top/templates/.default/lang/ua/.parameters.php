@@ -78,7 +78,6 @@ $MESS["CP_BCT_TPL_PRODUCT_BLOCK_BUTTONS"] = "Дії";
 $MESS["CP_BCT_TPL_PRODUCT_BLOCK_PROPS"] = "Властивості";
 $MESS["CP_BCT_TPL_PRODUCT_BLOCK_SKU"] = "СКУ";
 $MESS["CP_BCT_TPL_PRODUCT_BLOCK_COMPARE"] = "Порівняння";
-$MESS["CP_BCT_TPL_CUSTOM_FILTER"] = "Фільтр товарів";
 $MESS["CP_BCT_TPL_SETTINGS_INVALID_CONDITION"] = "Умова задана невірно";
 $MESS["CP_BCT_TPL_PRODUCT_SUBSCRIPTION"] = "Дозволити сповіщення для відсутніх товарів";
 $MESS["CP_BCT_TPL_SHOW_SLIDER"] = "Показувати слайдер для товарів";

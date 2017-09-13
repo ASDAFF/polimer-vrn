@@ -498,7 +498,7 @@ if($_REQUEST['process'] == "Y")
 				$status_details = GetMessage("MAIN_DUMP_FILE_CNT")." <b>".intval($NS["cnt"])."</b>";
 				$last_files_count = IntOption('last_files_count');
 				if (!$last_files_count)
-					$last_files_count = 100000;
+					$last_files_count = 200000;
 				$step_done = $NS['cnt'] / $last_files_count;
 				if ($step_done > 1)
 					$step_done = 1;

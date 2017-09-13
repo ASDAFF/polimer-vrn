@@ -23,4 +23,5 @@ $MESS["BPAR_PD_COMMENT_LABEL_MESSAGE"] = "Мітка для поля комен�
 $MESS["BPAR_PD_ACCESS_CONTROL"] = "Обмежити доступ";
 $MESS["BPAR_PD_COMMENT_REQUIRED"] = "Обов'язковість коментаря";
 $MESS["BPAR_PD_TIMEOUT_LIMIT"] = "Мінімальний період ознайомлення";
+$MESS["BPAR_PD_DELEGATION_TYPE"] = "Тип делегування";
 ?>

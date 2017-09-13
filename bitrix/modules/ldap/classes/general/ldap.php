@@ -27,7 +27,7 @@ class CLDAP
 	{
 		global $APPLICATION;
 
-		if(!is_object($this))
+		if(!isset($this) || !is_object($this))
 		{
 			$ldap = new CLDAP();
 			$ldap->arFields = $arFields;
@@ -244,7 +244,7 @@ class CLDAP
 					}
 
 					if(CLdapUtil::isLdapPaginationAviable())
-						ldap_control_paged_result_response($this->conn, $sr, $cookie);
+						@ldap_control_paged_result_response($this->conn, $sr, $cookie);
 				}
 				elseif($sr === false)
 				{
@@ -596,7 +596,7 @@ class CLDAP
 		$db_events = GetModuleEvents("ldap", "OnLdapUserFields");
 		while($arEvent = $db_events->Fetch())
 		{
-			$arParams = array(array(&$arFields, $arLdapUser));
+			$arParams = array(array(&$arFields, &$arLdapUser));
 			if(ExecuteModuleEventEx($arEvent, $arParams)===false)
 			{
 				if(!($err = $APPLICATION->GetException()))
@@ -1225,10 +1225,13 @@ class CLDAP
 	{
 		$result = '';
 
-		$ldapError = ldap_error($this->conn);
+		if($this->conn)
+		{
+			$ldapError = ldap_error($this->conn);
 
-		if(strlen($ldapError) > 0)
-			$result = "\nldap_error: '".$ldapError."'\nldap_errno: '".ldap_errno($this->conn)."'";
+			if(strlen($ldapError) > 0)
+				$result = "\nldap_error: '".$ldapError."'\nldap_errno: '".ldap_errno($this->conn)."'";
+		}
 
 		return $result;
 	}

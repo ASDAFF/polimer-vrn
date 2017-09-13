@@ -973,15 +973,18 @@ class CCloudStorageService_AmazonS3 extends CCloudStorageService
 			$data
 		);
 
-		if($this->status == 200 && is_array($this->headers) && isset($this->headers["ETag"]))
+		if($this->status == 200 && is_array($this->headers))
 		{
-			$NS["Parts"][$part_no] = $this->headers["ETag"];
-			return true;
+			foreach ($this->headers as $key => $value)
+			{
+				if (strtolower($key) === "etag")
+				{
+					$NS["Parts"][$part_no] = $value;
+					return true;
+				}
+			}
 		}
-		else
-		{
-			return false;
-		}
+		return false;
 	}
 
 	function UploadPart($arBucket, &$NS, $data)

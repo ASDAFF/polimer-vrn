@@ -45,11 +45,11 @@ class BlogUserTable extends Entity\DataManager
 				'validation' => array(__CLASS__, 'validateInterests'),
 			)),
 			
-			new Entity\DateField('LAST_VISIT', array(
+			new Entity\DatetimeField('LAST_VISIT', array(
 				'required' => false,
 			)),
 			
-			new Entity\DateField('DATE_REG', array(
+			new Entity\DatetimeField('DATE_REG', array(
 				'required' => true,
 			)),
 			

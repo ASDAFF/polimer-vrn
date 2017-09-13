@@ -312,6 +312,7 @@ use \Bitrix\Main\Localization\Loc;
 												'BUTTON_ID' => $itemIds['SUBSCRIBE_LINK'],
 												'BUTTON_CLASS' => 'btn btn-default '.$buttonSizeClass,
 												'DEFAULT_DISPLAY' => true,
+												'MESS_BTN_SUBSCRIBE' => $arParams['~MESS_BTN_SUBSCRIBE'],
 											),
 											$component,
 											array('HIDE_ICONS' => 'Y')
@@ -343,6 +344,7 @@ use \Bitrix\Main\Localization\Loc;
 												'BUTTON_ID' => $itemIds['SUBSCRIBE_LINK'],
 												'BUTTON_CLASS' => 'btn btn-default '.$buttonSizeClass,
 												'DEFAULT_DISPLAY' => !$actualItem['CAN_BUY'],
+												'MESS_BTN_SUBSCRIBE' => $arParams['~MESS_BTN_SUBSCRIBE'],
 											),
 											$component,
 											array('HIDE_ICONS' => 'Y')

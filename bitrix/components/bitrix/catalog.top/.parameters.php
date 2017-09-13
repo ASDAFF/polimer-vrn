@@ -232,12 +232,6 @@ $arComponentParameters = array(
 			'',
 			'URL_TEMPLATES'
 		),
-		'SECTION_ID_VARIABLE' => array(
-			'PARENT' => 'URL_TEMPLATES',
-			'NAME'		=> GetMessage('IBLOCK_SECTION_ID_VARIABLE'),
-			'TYPE'		=> 'STRING',
-			'DEFAULT'	=> 'SECTION_ID'
-		),
 		'DISPLAY_COMPARE' => Array(
 			'PARENT' => 'COMPARE',
 			'NAME' => GetMessage('CP_BCT_DISPLAY_COMPARE'),
@@ -447,7 +441,7 @@ if ($catalogIncluded)
 	{
 		$arComponentParameters['PARAMETERS']['CUSTOM_FILTER'] = array(
 			'PARENT' => 'DATA_SOURCE',
-			'NAME' => GetMessage('CP_BCT_TPL_CUSTOM_FILTER'),
+			'NAME' => GetMessage('CP_BCT_CUSTOM_FILTER'),
 			'TYPE' => 'CUSTOM',
 			'JS_FILE' => CatalogTopComponent::getSettingsScript($componentPath, 'filter_conditions'),
 			'JS_EVENT' => 'initFilterConditionsControl',

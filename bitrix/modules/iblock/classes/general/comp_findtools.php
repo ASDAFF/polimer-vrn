@@ -67,9 +67,15 @@ class CIBlockFindTools
 
 		$component = $engine->getComponent();
 		if ($component)
+		{
 			$iblock_id = intval($component->arParams["IBLOCK_ID"]);
+			$strict_check = $component->arParams["DETAIL_STRICT_SECTION_CHECK"] === "Y";
+		}
 		else
+		{
 			$iblock_id = 0;
+			$strict_check = false;
+		}
 
 		//To fix GetPagePath security hack for SMART_FILTER_PATH
 		foreach ($pageCandidates as $pageID => $arVariablesTmp)
@@ -100,7 +106,7 @@ class CIBlockFindTools
 					&& (isset($arVariablesTmp["ELEMENT_ID"]) || isset($arVariablesTmp["ELEMENT_CODE"]))
 				)
 				{
-					if (CIBlockFindTools::checkElement($iblock_id, $arVariablesTmp))
+					if (CIBlockFindTools::checkElement($iblock_id, $arVariablesTmp, $strict_check))
 					{
 						$arVariables = $arVariablesTmp;
 						if (defined("BX_COMP_MANAGED_CACHE"))
@@ -147,7 +153,7 @@ class CIBlockFindTools
 		return $pageID;
 	}
 
-	public static function checkElement($iblock_id, &$arVariables)
+	public static function checkElement($iblock_id, &$arVariables, $strict_check = false)
 	{
 		global $DB;
 
@@ -179,6 +185,13 @@ class CIBlockFindTools
 				$joinField = "BS".$i.".IBLOCK_SECTION_ID";
 				$strWhere .= "
 					AND BS".$i.".CODE = '".$DB->ForSql($SECTION_CODE)."'
+				";
+			}
+
+			if ($strict_check)
+			{
+				$strWhere .= "
+					AND BS".$i.".IBLOCK_SECTION_ID is null
 				";
 			}
 		}

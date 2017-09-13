@@ -185,6 +185,7 @@ class CBPMailActivity
 
 			$arFields = array(
 				"SENDER" => $strMailUserFrom,
+				"REPLY_TO" => $strMailUserFrom,
 				"RECEIVER" => $strMailUserTo,
 				"TITLE" => $this->MailSubject,
 				"MESSAGE" => CBPHelper::ConvertTextForMail($this->MailText),

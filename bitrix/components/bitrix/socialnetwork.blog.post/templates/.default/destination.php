@@ -151,7 +151,9 @@
 		destSort : <?=CUtil::PhpToJSObject($arResult["DEST_SORT"])?>,
 		useClientDatabase : <?=(!isset($arResult["bPublicPage"]) || !$arResult["bPublicPage"] ? 'true' : 'false'); ?>,
 		allowAddUser: <?=($arResult["ALLOW_EMAIL_INVITATION"] ? 'true' : 'false'); ?>,
-		allowAddCrmContact: <?=($arResult["ALLOW_EMAIL_INVITATION"] && CModule::IncludeModule('crm') && CCrmContact::CheckCreatePermission() ? 'true' : 'false'); ?>
+		allowAddCrmContact: <?=($arResult["ALLOW_EMAIL_INVITATION"] && CModule::IncludeModule('crm') && CCrmContact::CheckCreatePermission() ? 'true' : 'false'); ?>,
+		showVacations: true,
+		usersVacation : <?=(empty($arResult["FEED_DESTINATION"]['USERS_VACATION'])? '{}': CUtil::PhpToJSObject($arResult["FEED_DESTINATION"]['USERS_VACATION']))?>
 	});
 	BX.bind(BX('feed-add-post-destination-input-post'), 'keyup', BX.delegate(BX.SocNetLogDestination.BXfpSearch, {
 		formName: BXSocNetLogDestinationFormNamePost,

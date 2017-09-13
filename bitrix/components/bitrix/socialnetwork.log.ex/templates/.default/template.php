@@ -653,7 +653,9 @@ if (
 					"PATH_TO_POST_IMPORTANT" => $arParams["PATH_TO_USER_BLOG_POST_IMPORTANT"],
 					"PATH_TO_BLOG_CATEGORY" => $arParams["PATH_TO_USER_BLOG_CATEGORY"],
 					"PATH_TO_POST_EDIT" => $arParams["PATH_TO_USER_BLOG_POST_EDIT"],
+					"PATH_TO_GROUP_BLOG" => $arParams["PATH_TO_GROUP_MICROBLOG"],
 					"PATH_TO_SEARCH_TAG" => $arParams["PATH_TO_SEARCH_TAG"],
+					"PATH_TO_LOG_TAG" => $arResult["PATH_TO_LOG_TAG"],
 					"PATH_TO_USER" => $arParams["PATH_TO_USER"],
 					"PATH_TO_GROUP" => $arParams["PATH_TO_GROUP"],
 					"PATH_TO_SMILE" => $arParams["PATH_TO_BLOG_SMILE"],
@@ -719,7 +721,9 @@ if (
 					"AVATAR_SIZE_COMMENT" => $arParams["AVATAR_SIZE_COMMENT"],
 					"LAZYLOAD" => "Y",
 					"CHECK_COMMENTS_PERMS" => (isset($arParams["CHECK_COMMENTS_PERMS"]) && $arParams["CHECK_COMMENTS_PERMS"] == "Y" ? "Y" : "N"),
-					"GROUP_READ_ONLY" => (isset($arResult["Group"]) && isset($arResult["Group"]["READ_ONLY"]) && $arResult["Group"]["READ_ONLY"] == "Y" ? "Y" : "N")
+					"GROUP_READ_ONLY" => (isset($arResult["Group"]) && isset($arResult["Group"]["READ_ONLY"]) && $arResult["Group"]["READ_ONLY"] == "Y" ? "Y" : "N"),
+					"BLOG_NO_URL_IN_COMMENTS" => $arParams["BLOG_NO_URL_IN_COMMENTS"],
+					"BLOG_NO_URL_IN_COMMENTS_AUTHORITY" => $arParams["BLOG_NO_URL_IN_COMMENTS_AUTHORITY"]
 				);
 
 				if ($arParams["USE_FOLLOW"] == "Y")
@@ -776,7 +780,8 @@ if (
 						"IS_UNREAD" => $is_unread
 					),
 					"LAZYLOAD" => "Y",
-					"FROM_LOG" => (isset($arParams["LOG_ID"]) && intval($arParams["LOG_ID"]) > 0 ? "N" : "Y")
+					"FROM_LOG" => (isset($arParams["LOG_ID"]) && intval($arParams["LOG_ID"]) > 0 ? "N" : "Y"),
+					"PATH_TO_LOG_TAG" => $arResult["PATH_TO_LOG_TAG"],
 				));
 
 				if ($USER->isAuthorized())

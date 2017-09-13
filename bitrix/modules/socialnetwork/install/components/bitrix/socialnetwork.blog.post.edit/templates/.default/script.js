@@ -739,7 +739,10 @@ window.SBPETabs.prototype = {
 	collapse : function()
 	{
 		window.SBPETabs.changePostFormTab("message");
-		window.SBPEFullForm.getInstance().containerMicroInner.style.display = 'block';
+		if (window.SBPEFullForm.getInstance().containerMicroInner)
+		{
+			window.SBPEFullForm.getInstance().containerMicroInner.style.display = 'block';
+		}
 		this.startAnimation();
 		BX.onCustomEvent(BX("divoPostFormLHE_blogPostForm"), "OnShowLHE", [false]);
 		this.endAnimation();

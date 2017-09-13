@@ -50,6 +50,7 @@ $APPLICATION->IncludeComponent(
 		"USER_VAR" => $arResult["ALIASES"]["user_id"],
 		"PAGE_VAR" => $arResult["ALIASES"]["blog_page"],
 		"PATH_TO_BLOG" => $arResult["PATH_TO_USER_BLOG"],
+		"PATH_TO_GROUP_BLOG" => $arParams["PATH_TO_GROUP_BLOG"],
 		"PATH_TO_POST" => $arResult["PATH_TO_USER_BLOG_POST"],
 		"PATH_TO_POST_IMPORTANT" => $arResult["PATH_TO_USER_BLOG_POST_IMPORTANT"],
 		"PATH_TO_BLOG_CATEGORY" => $arResult["PATH_TO_USER_BLOG_CATEGORY"],
@@ -87,6 +88,8 @@ $APPLICATION->IncludeComponent(
 		"ALLOW_VIDEO" => $arParams["BLOG_COMMENT_ALLOW_VIDEO"],
 		"ALLOW_IMAGE_UPLOAD" => $arParams["BLOG_COMMENT_ALLOW_IMAGE_UPLOAD"],
 		"GET_FOLLOW" => "Y",
+		"BLOG_NO_URL_IN_COMMENTS" => $arParams["BLOG_NO_URL_IN_COMMENTS"],
+		"BLOG_NO_URL_IN_COMMENTS_AUTHORITY" => $arParams["BLOG_NO_URL_IN_COMMENTS_AUTHORITY"],
 	),
 	$this->getComponent()
 );

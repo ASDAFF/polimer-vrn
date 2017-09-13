@@ -113,6 +113,14 @@ class CAllSocNetLog
 			}
 		}
 
+		if (
+			isset($arFields["TAG"])
+			&& !is_array($arFields["TAG"])
+		)
+		{
+			$arFields["TAG"] = array($arFields["TAG"]);
+		}
+
 		if ((is_set($arFields, "EVENT_ID") || $ACTION=="ADD") && StrLen($arFields["EVENT_ID"]) <= 0)
 		{
 			$APPLICATION->ThrowException(GetMessage("SONET_GL_EMPTY_EVENT_ID"), "EMPTY_EVENT_ID");

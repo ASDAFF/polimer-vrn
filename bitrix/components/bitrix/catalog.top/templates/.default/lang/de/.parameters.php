@@ -78,7 +78,6 @@ $MESS["CP_BCT_TPL_PRODUCT_BLOCK_BUTTONS"] = "Aktionen";
 $MESS["CP_BCT_TPL_PRODUCT_BLOCK_PROPS"] = "Eigenschaften";
 $MESS["CP_BCT_TPL_PRODUCT_BLOCK_SKU"] = "Produktvariante";
 $MESS["CP_BCT_TPL_PRODUCT_BLOCK_COMPARE"] = "Vergleichen";
-$MESS["CP_BCT_TPL_CUSTOM_FILTER"] = "Produktfilter";
 $MESS["CP_BCT_TPL_SETTINGS_INVALID_CONDITION"] = "Bedingung ist nicht korrekt";
 $MESS["CP_BCT_TPL_PRODUCT_SUBSCRIPTION"] = "Benachrichtigungen über wieder verfügbare Produkte aktivieren";
 $MESS["CP_BCT_TPL_SHOW_SLIDER"] = "Laufleiste der Produkte anzeigen";

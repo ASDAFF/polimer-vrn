@@ -647,11 +647,7 @@ if($lAdmin->EditAction())
 					$arCatalogProduct['QUANTITY_TRACE'] = $arFields['CATALOG_QUANTITY_TRACE'];
 				if (isset($arFields['CATALOG_MEASURE']) && is_string($arFields['CATALOG_MEASURE']) && (int)$arFields['CATALOG_MEASURE'] > 0)
 					$arCatalogProduct['MEASURE'] = $arFields['CATALOG_MEASURE'];
-				if ('Y' != $strUseStoreControl)
-				{
-					if (isset($arFields['CATALOG_QUANTITY']) && '' != $arFields['CATALOG_QUANTITY'])
-						$arCatalogProduct['QUANTITY'] = $arFields['CATALOG_QUANTITY'];
-				}
+
 				if ($catalogPurchasInfoEdit)
 				{
 					if (
@@ -664,7 +660,17 @@ if($lAdmin->EditAction())
 					}
 				}
 
-				if (!Catalog\ProductTable::isExistProduct($ID))
+				if ($strUseStoreControl != 'Y')
+				{
+					if (isset($arFields['CATALOG_QUANTITY']) && '' != $arFields['CATALOG_QUANTITY'])
+						$arCatalogProduct['QUANTITY'] = $arFields['CATALOG_QUANTITY'];
+				}
+
+				$product = Catalog\ProductTable::getList(array(
+					'select' => array('ID', 'SUBSCRIBE_ORIG'),
+					'filter' => array('=ID' => $ID)
+				))->fetch();
+				if (empty($product))
 				{
 					$arCatalogProduct['ID'] = $ID;
 					CCatalogProduct::Add($arCatalogProduct, false);
@@ -672,8 +678,14 @@ if($lAdmin->EditAction())
 				else
 				{
 					if (!empty($arCatalogProduct))
+					{
+						if ($strUseStoreControl != 'Y')
+							$arCatalogProduct['SUBSCRIBE'] = $product['SUBSCRIBE_ORIG'];
 						CCatalogProduct::Update($ID, $arCatalogProduct);
+					}
 				}
+				unset($product);
+
 				if (isset($arFields['CATALOG_MEASURE_RATIO']))
 				{
 					$newValue = trim($arFields['CATALOG_MEASURE_RATIO']);
@@ -3112,43 +3124,63 @@ foreach($arElementOps as $id => $arOps)
 		break;
 	}
 }
+$elementEdit = false;
 foreach($arElementOps as $id => $arOps)
 {
 	if(isset($arOps["element_edit"]))
 	{
-		$arGroupActions["activate"] = GetMessage("MAIN_ADMIN_LIST_ACTIVATE");
-		$arGroupActions["deactivate"] = GetMessage("MAIN_ADMIN_LIST_DEACTIVATE");
-		$arGroupActions['clear_counter'] = strtolower(GetMessage('IBEL_A_CLEAR_COUNTER'));
+		$elementEdit = true;
 		break;
 	}
 }
 
+if ($elementEdit)
+{
+	$arGroupActions["activate"] = GetMessage("MAIN_ADMIN_LIST_ACTIVATE");
+	$arGroupActions["deactivate"] = GetMessage("MAIN_ADMIN_LIST_DEACTIVATE");
+	$arGroupActions['clear_counter'] = strtolower(GetMessage('IBEL_A_CLEAR_COUNTER'));
+}
+
 $arParams = array();
 
-if($arIBTYPE["SECTIONS"] == "Y")
+if ($elementEdit)
 {
-	$sections = '<div id="section_to_move" style="display:none"><select name="section_to_move">';
-	$sections .= '<option value="-1">'.GetMessage("MAIN_NO").'</option>';
-	$sections .= '<option value="0">'.GetMessage("IBLOCK_UPPER_LEVEL").'</option>';
-	$rsSections = CIBlockSection::GetTreeList(array("IBLOCK_ID"=>$IBLOCK_ID), array("ID", "NAME", "DEPTH_LEVEL"));
-	while($ar = $rsSections->GetNext())
+	if($arIBTYPE["SECTIONS"] == "Y")
 	{
-		$sections .= '<option value="'.$ar["ID"].'">'.str_repeat(" . ", $ar["DEPTH_LEVEL"]).$ar["NAME"].'</option>';
-	}
-	$sections .= '</select></div>';
+		$sections = '<div id="section_to_move" style="display:none"><select name="section_to_move">';
+		$sections .= '<option value="-1">'.GetMessage("MAIN_NO").'</option>';
+		$sections .= '<option value="0">'.GetMessage("IBLOCK_UPPER_LEVEL").'</option>';
+		$rsSections = CIBlockSection::GetTreeList(array("IBLOCK_ID" => $IBLOCK_ID), array("ID", "NAME", "DEPTH_LEVEL"));
+		while ($ar = $rsSections->GetNext())
+		{
+			$sections .= '<option value="'.$ar["ID"].'">'.str_repeat(" . ", $ar["DEPTH_LEVEL"]).$ar["NAME"].'</option>';
+		}
+		$sections .= '</select></div>';
 
-	$arGroupActions["section"] = GetMessage("IBEL_A_MOVE_TO_SECTION");
-	$arGroupActions["add_section"] = GetMessage("IBEL_A_ADD_TO_SECTION");
-	$arGroupActions["section_chooser"] = array("type" => "html", "value" => $sections);
-	if ($bCatalog && ($USER->CanDoOperation('catalog_read') || $USER->CanDoOperation('catalog_price') || $USER->CanDoOperation('catalog_view')))
+		$arGroupActions["section"] = GetMessage("IBEL_A_MOVE_TO_SECTION");
+		$arGroupActions["add_section"] = GetMessage("IBEL_A_ADD_TO_SECTION");
+		$arGroupActions["section_chooser"] = array("type" => "html", "value" => $sections);
+		$arParams["select_onchange"] = "BX('section_to_move').style.display = (this.value == 'section' || this.value == 'add_section'? 'block':'none');";
+	}
+	if ($bCatalog && $USER->CanDoOperation('catalog_price'))
 	{
-		$arGroupActions["change_price"] = array(
-			"action" => "CreateDialogChPrice()",
-			"value" => "change_price",
-			"name" => GetMessage("IBLOCK_CHANGE_PRICE"));
+		$elementEditPrice = false;
+		foreach($arElementOps as $id => $arOps)
+		{
+			if(isset($arOps["element_edit_price"]))
+			{
+				$elementEditPrice = true;
+				break;
+			}
+		}
+		if ($elementEditPrice)
+		{
+			$arGroupActions["change_price"] = array(
+				"action" => "CreateDialogChPrice()",
+				"value" => "change_price",
+				"name" => GetMessage("IBLOCK_CHANGE_PRICE"));
+		}
 	}
-
-	$arParams["select_onchange"] = "BX('section_to_move').style.display = (this.value == 'section' || this.value == 'add_section'? 'block':'none');";
 }
 
 if($bWorkFlow)

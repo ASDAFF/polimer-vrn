@@ -18,6 +18,7 @@ Loc::loadMessages(__FILE__);
 class Workgroup
 {
 	const CHAT_ENTITY_TYPE = "SONET_GROUP";
+	private static $staticCache = array();
 
 	public static function getUseChat()
 	{
@@ -26,8 +27,6 @@ class Workgroup
 
 	public static function getChatData($params)
 	{
-		static $staticCache = array();
-
 		$result = array();
 
 		if (
@@ -46,9 +45,9 @@ class Workgroup
 		}
 
 		$cacheKey = serialize($params);
-		if (isset($staticCache[$cacheKey]))
+		if (isset(self::$staticCache[$cacheKey]))
 		{
-			return $staticCache[$cacheKey];
+			return self::$staticCache[$cacheKey];
 		}
 
 		$params['group_id'] = array_values(array_unique(array_filter(array_map(
@@ -84,7 +83,7 @@ class Workgroup
 			$result[$chat['ENTITY_ID']] = $chat['ID'];
 		}
 
-		$staticCache[$cacheKey] = $result;
+		self::$staticCache[$cacheKey] = $result;
 
 		return $result;
 	}
@@ -174,6 +173,11 @@ class Workgroup
 
 		$chat = new \CIMChat(0);
 		$result = $chat->add($chatFields);
+
+		if ($result)
+		{
+			self::$staticCache = array();
+		}
 
 		return $result;
 	}

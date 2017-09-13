@@ -743,8 +743,21 @@ class CAllIBlockElement
 				$arSqlSearch[] = $flt;
 				break;
 			case "CHECK_PERMISSIONS":
-				if($val == "Y" && (!is_object($USER) || !$USER->IsAdmin()))
-					$permSQL = CIBlockElement::_check_rights_sql($arFilter["MIN_PERMISSION"]);
+				if ($val == 'Y')
+				{
+					$permissionsBy = null;
+					if (isset($arFilter['PERMISSIONS_BY']))
+					{
+						$permissionsBy = (int)$arFilter['PERMISSIONS_BY'];
+						if ($permissionsBy < 0)
+							$permissionsBy = null;
+					}
+					if ($permissionsBy !== null)
+						$permSQL = self::_check_rights_sql($arFilter["MIN_PERMISSION"], $permissionsBy);
+					elseif (!is_object($USER) || !$USER->IsAdmin())
+						$permSQL = self::_check_rights_sql($arFilter["MIN_PERMISSION"]);
+					unset($permissionsBy);
+				}
 				break;
 			case "CHECK_BP_PERMISSIONS":
 				if(IsModuleInstalled('bizproc') && (!is_object($USER) || !$USER->IsAdmin()))
@@ -2759,15 +2772,43 @@ class CAllIBlockElement
 			//in order to avoid sql errors
 			if(is_array($arGroupBy) && count($arGroupBy)>0)
 			{
-				if($by == "STATUS") $arGroupBy[] = "WF_STATUS_ID";
-				elseif($by == "CREATED")  $arGroupBy[] = "DATE_CREATE";
-				else $arGroupBy[] = $by;
+				if ($by == "STATUS")
+				{
+					$arGroupBy[] = "WF_STATUS_ID";
+				}
+				elseif ($by == "CREATED")
+				{
+					$arGroupBy[] = "DATE_CREATE";
+				}
+				elseif ($by == "SHOWS")
+				{
+					$arGroupBy[] = "SHOW_COUNTER";
+					$arGroupBy[] = "SHOW_COUNTER_START_X";
+				}
+				else
+				{
+					$arGroupBy[] = $by;
+				}
 			}
 			else
 			{
-				if($by == "STATUS") $arSelectFields[] = "WF_STATUS_ID";
-				elseif($by == "CREATED")  $arSelectFields[] = "DATE_CREATE";
-				else $arSelectFields[] = $by;
+				if ($by == "STATUS")
+				{
+					$arSelectFields[] = "WF_STATUS_ID";
+				}
+				elseif ($by == "CREATED")
+				{
+					$arSelectFields[] = "DATE_CREATE";
+				}
+				elseif ($by == "SHOWS")
+				{
+					$arSelectFields[] = "SHOW_COUNTER";
+					$arSelectFields[] = "SHOW_COUNTER_START_X";
+				}
+				else
+				{
+					$arSelectFields[] = $by;
+				}
 			}
 		}
 
@@ -5989,6 +6030,8 @@ class CAllIBlockElement
 		if(in_array($ID, $_SESSION["IBLOCK_COUNTER"]))
 			return;
 		$_SESSION["IBLOCK_COUNTER"][] = $ID;
+
+		$DB->StartUsingMasterOnly();
 		$strSql =
 			"UPDATE b_iblock_element SET ".
 			"	TIMESTAMP_X = ".($DB->type=="ORACLE"?" NULL":"TIMESTAMP_X").", ".
@@ -5996,6 +6039,7 @@ class CAllIBlockElement
 			"	SHOW_COUNTER =  ".$DB->IsNull("SHOW_COUNTER", 0)." + 1 ".
 			"WHERE ID=".$ID;
 		$DB->Query($strSql, false, "", array("ignore_dml"=>true));
+		$DB->StopUsingMasterOnly();
 	}
 
 	public static function GetIBVersion($iblock_id)
@@ -6712,22 +6756,36 @@ class CAllIBlockElement
 			ExecuteModuleEventEx($arEvent, array($ELEMENT_ID, $IBLOCK_ID, $PROPERTY_VALUES, $FLAGS));
 	}
 
-	function _check_rights_sql($min_permission)
+	protected static function _check_rights_sql($min_permission, $permissionsBy = null)
 	{
 		global $DB, $USER;
 		$min_permission = (strlen($min_permission)==1) ? $min_permission : "R";
 
-		if(is_object($USER))
+		if ($permissionsBy !== null)
+			$permissionsBy = (int)$permissionsBy;
+		if ($permissionsBy < 0)
+			$permissionsBy = null;
+
+		if ($permissionsBy !== null)
 		{
-			$iUserID = intval($USER->GetID());
-			$strGroups = $USER->GetGroups();
-			$bAuthorized = $USER->IsAuthorized();
+			$iUserID = $permissionsBy;
+			$strGroups = implode(',', CUser::GetUserGroup($permissionsBy));
+			$bAuthorized = false;
 		}
 		else
 		{
-			$iUserID = 0;
-			$strGroups = "2";
-			$bAuthorized = false;
+			if (is_object($USER))
+			{
+				$iUserID = (int)$USER->GetID();
+				$strGroups = $USER->GetGroups();
+				$bAuthorized = $USER->IsAuthorized();
+			}
+			else
+			{
+				$iUserID = 0;
+				$strGroups = "2";
+				$bAuthorized = false;
+			}
 		}
 
 		$stdPermissions = "
@@ -6753,7 +6811,7 @@ class CAllIBlockElement
 		if($operation)
 		{
 			$acc = new CAccess;
-			$acc->UpdateCodes();
+			$acc->UpdateCodes($permissionsBy !== null ? array('USER_ID' => $permissionsBy) : false);
 		}
 
 		if($operation == "element_read")

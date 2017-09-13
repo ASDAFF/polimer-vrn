@@ -87,6 +87,7 @@ BX.SocNetLogDestination =
 	obItemsSelected: {},
 	obItemsSelectedUndeleted: {},
 	obCallback: {},
+	obShowVacations : {},
 
 	obElementSearchInput: {},
 	obElementSearchInputHidden: {},
@@ -121,6 +122,7 @@ BX.SocNetLogDestination =
 		group: false
 	}, // cursor move
 	oXHR: null,
+	usersVacation : null,
 
 	obTabSelected: {},
 
@@ -409,7 +411,7 @@ BX.SocNetLogDestination.init = function(arParams)
 	)
 	{
 		BX.Finder(false, 'destination', [], {}, BX.SocNetLogDestination);
-		BX.onCustomEvent(BX.SocNetLogDestination, 'initFinderDb', [ BX.SocNetLogDestination, arParams.name, 7, ['users'], BX.SocNetLogDestination]);
+		BX.onCustomEvent(BX.SocNetLogDestination, 'initFinderDb', [ BX.SocNetLogDestination, arParams.name, null, ['users'], BX.SocNetLogDestination]);
 		BX.SocNetLogDestination.bFinderInited = true;
 	}
 
@@ -442,6 +444,20 @@ BX.SocNetLogDestination.init = function(arParams)
 			BX.SocNetLogDestination.loadAll(params);
 		});
 		BX.SocNetLogDestination.bLoadAllInitialized = true;
+	}
+
+	BX.SocNetLogDestination.obShowVacations[arParams.name] = (
+		typeof arParams.showVacations != 'undefined'
+		&& arParams.showVacations === true
+	);
+
+	if (
+		BX.SocNetLogDestination.obShowVacations[arParams.name]
+		&& BX.SocNetLogDestination.usersVacation === null
+		&& typeof arParams.usersVacation != 'undefined'
+	)
+	{
+		BX.SocNetLogDestination.usersVacation = arParams.usersVacation;
 	}
 };
 
@@ -1211,6 +1227,10 @@ BX.SocNetLogDestination.openDialog = function(name, params)
 		}
 
 		BX.SocNetLogDestination.containerWindow.setAngle({});
+		if(BX.type.isElementNode(params.bindNode))
+		{
+			BX.SocNetLogDestination.containerWindow.setBindElement(params.bindNode);
+		}
 		BX.SocNetLogDestination.containerWindow.show();
 	}
 	else
@@ -2711,6 +2731,16 @@ BX.SocNetLogDestination.getHtmlByTemplate7 = function(name, item, params, type)
 		itemClass += ' bx-lm-element-email';
 	}
 
+	if (
+		typeof BX.SocNetLogDestination.obShowVacations[name] != 'undefined'
+		&& BX.SocNetLogDestination.obShowVacations[name] === true
+		&& typeof BX.SocNetLogDestination.usersVacation[item.entityId] != 'undefined'
+		&& BX.SocNetLogDestination.usersVacation[item.entityId]
+	)
+	{
+		itemClass += ' bx-lm-element-vacation';
+	}
+
 	var itemName = item.name + (
 		typeof item.showEmail != 'undefined'
 		&& item.showEmail == 'Y'
@@ -2723,8 +2753,8 @@ BX.SocNetLogDestination.getHtmlByTemplate7 = function(name, item, params, type)
 	return '<a id="' + name + '_' + type + '_' + item.id + '" hidefocus="true" onclick="return BX.SocNetLogDestination.selectItem(\''+name+'\', this, 7, \''+item.id+'\', \''+(params.itemType? params.itemType: 'item')+'\', '+(params.search? true: false)+')" rel="'+item.id+'" class="' + itemClass + '" href="#'+item.id+'">'+
 		(
 			item.avatar
-				? '<div class="bx-finder-box-item-t7-avatar"><img bx-lm-item-id="' + item.id + '" bx-lm-item-type="' + params.itemType + '" class="bx-finder-box-item-t7-avatar-img" src="' + item.avatar + '" onerror="BX.onCustomEvent(\'removeClientDbObject\', [BX.SocNetLogDestination, this.getAttribute(\'bx-lm-item-id\'), this.getAttribute(\'bx-lm-item-type\')]); BX.cleanNode(this, true);"></div>'
-				: '<div class="bx-finder-box-item-t7-avatar"></div>'
+				? '<div class="bx-finder-box-item-t7-avatar"><img bx-lm-item-id="' + item.id + '" bx-lm-item-type="' + params.itemType + '" class="bx-finder-box-item-t7-avatar-img" src="' + item.avatar + '" onerror="BX.onCustomEvent(\'removeClientDbObject\', [BX.SocNetLogDestination, this.getAttribute(\'bx-lm-item-id\'), this.getAttribute(\'bx-lm-item-type\')]); BX.cleanNode(this, true);"><span class="bx-finder-box-item-avatar-status"></span></div>'
+				: '<div class="bx-finder-box-item-t7-avatar"><span class="bx-finder-box-item-avatar-status"></span></div>'
 		) +
 		'<div class="bx-finder-box-item-t7-space"></div>' +
 		'<div class="bx-finder-box-item-t7-info">'+
@@ -2946,7 +2976,7 @@ BX.SocNetLogDestination.selectItem = function(name, element, template, itemId, t
 
 	BX.SocNetLogDestination.obItemsSelected[name][itemId] = type;
 
-	if (BX.SocNetLogDestination.obItemsLast[name][type] === null)
+	if (!BX.type.isArray(BX.SocNetLogDestination.obItemsLast[name][type]))
 	{
 		BX.SocNetLogDestination.obItemsLast[name][type] = {};
 	}
@@ -4104,6 +4134,7 @@ BX.SocNetLogDestination.BXfpSearch = function(event)
 	return BX.SocNetLogDestination.searchHandler(event, {
 		formName: this.formName,
 		inputId: this.inputName,
+		inputNode: (BX.type.isDomNode(this.inputNode) ? this.inputNode : null),
 		linkId: this.tagInputName,
 		sendAjax: (typeof this.sendAjax != 'undefined' ? this.sendAjax : true),
 		multiSelect: true
@@ -4114,7 +4145,8 @@ BX.SocNetLogDestination.BXfpSearchBefore = function(event)
 {
 	return BX.SocNetLogDestination.searchBeforeHandler(event, {
 		formName: this.formName,
-		inputId: this.inputName
+		inputId: this.inputName,
+		inputNode: (BX.type.isDomNode(this.inputNode) ? this.inputNode : null)
 	});
 };
 
@@ -4298,6 +4330,12 @@ BX.SocNetLogDestination.searchHandler = function(event, params)
 		}
 	}
 
+	var inputNode = (BX.type.isDomNode(params.inputNode) ? BX(params.inputNode) : BX(params.inputId));
+	if (!inputNode)
+	{
+		return false;
+	}
+
 	var searchText = '';
 	if (event.keyCode == 27)
 	{
@@ -4306,7 +4344,7 @@ BX.SocNetLogDestination.searchHandler = function(event, params)
 			|| !BX.SocNetLogDestination.inviteEmailUserWindow.isShown()
 		)
 		{
-			BX(params.inputId).value = '';
+			inputNode.value = '';
 			BX.style(BX(params.linkId), 'display', 'inline');
 
 			if (
@@ -4331,7 +4369,7 @@ BX.SocNetLogDestination.searchHandler = function(event, params)
 		}
 		else
 		{
-			searchText = BX(params.inputId).value;
+			searchText = inputNode.value;
 		}
 
 		BX.SocNetLogDestination.search(
@@ -4370,9 +4408,15 @@ BX.SocNetLogDestination.searchHandler = function(event, params)
 
 BX.SocNetLogDestination.searchBeforeHandler = function(event, params)
 {
+	var inputNode = (BX.type.isDomNode(params.inputNode) ? params.inputNode : BX(params.inputId));
+	if (!inputNode)
+	{
+		return false;
+	}
+
 	if (
 		event.keyCode == 8
-		&& BX(params.inputId).value.length <= 0
+		&& inputNode.value.length <= 0
 	)
 	{
 		BX.SocNetLogDestination.sendEvent = false;

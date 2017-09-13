@@ -230,6 +230,7 @@ $arComponentParameters = array(
 		)
 	),
 	"PARAMETERS" => array(
+		"USER_CONSENT" => array(),
 		"VARIABLE_ALIASES" => array(
 			"ELEMENT_ID" => array(
 				"NAME" => GetMessage("CP_BC_VARIABLE_ALIASES_ELEMENT_ID"),

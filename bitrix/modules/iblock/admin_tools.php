@@ -259,6 +259,48 @@ function _ShowFilePropertyField($name, $property_fields, $values, $max_file_size
 		);
 	}
 
+	if ($historyId > 0)
+	{
+		$inputParams = array(
+			'upload' => false,
+			'medialib' => false,
+			'file_dialog' => false,
+			'cloud' => false,
+			'del' => false,
+			'description' => false
+		);
+		$newUploaderParams = array(
+			'delete' => false,
+			'edit' => false
+		);
+	}
+	else
+	{
+		$inputParams = array(
+			'upload' => true,
+			'medialib' => true,
+			'file_dialog' => true,
+			'cloud' => true,
+			'del' => true,
+			'description' => $property_fields["WITH_DESCRIPTION"] == "Y",
+		);
+		$newUploaderParams = array(
+			"upload" => true,
+			"medialib" => true,
+			"fileDialog" => true,
+			"cloud" => true
+		);
+	}
+	$oldUploaderParams = array(
+		"IMAGE" => "Y",
+		"PATH" => "Y",
+		"FILE_SIZE" => "Y",
+		"DIMENSIONS" => "Y",
+		"IMAGE_POPUP" => "Y",
+		"MAX_SIZE" => $maxSize
+	);
+	$newUploaderExists = class_exists('\Bitrix\Main\UI\FileInput', true);
+
 	if($property_fields["MULTIPLE"] == "N")
 	{
 		foreach($values as $key => $val)
@@ -268,31 +310,43 @@ function _ShowFilePropertyField($name, $property_fields, $values, $max_file_size
 			else
 				$file_id = $val;
 
-			if($historyId > 0)
-				echo CFileInput::Show($name."[".$key."]", $file_id, array(
-					"IMAGE" => "Y",
-					"PATH" => "Y",
-					"FILE_SIZE" => "Y",
-					"DIMENSIONS" => "Y",
-					"IMAGE_POPUP" => "Y",
-					"MAX_SIZE" => $maxSize,
-				));
+			if ($newUploaderExists)
+			{
+				if ($bVarsFromForm)
+				{
+					$request = \Bitrix\Main\Context::getCurrent()->getRequest();
+					$number = 0;
+					if (preg_match("/PROP\\[(\d+)\\]/i", $name, $matches))
+					{
+						$number = $matches[1];
+					}
+					$prop = $request->isPost() ? $request->getPost("PROP") : $request->getQuery("PROP");
+					if ($number > 0 && is_array($prop) && array_key_exists($number, $prop))
+					{
+						$prop = $prop[$number];
+						if (!empty($prop) && is_array($prop))
+						{
+							if (!array_key_exists('tmp_name', $prop))
+								$prop = current($prop);
+							$file_id = $prop;
+						}
+					}
+				}
+				echo \Bitrix\Main\UI\FileInput::createInstance(
+					array(
+						"name" => $name."[".$key."]",
+						"id" => $name."[".$key."]_".mt_rand(1, 1000000),
+						"description" => $property_fields["WITH_DESCRIPTION"]=="Y",
+						"allowUpload" => "F",
+						"allowUploadExt" => $property_fields["FILE_TYPE"],
+						"maxCount" => 1
+					) + $newUploaderParams
+				)->show($file_id, $bVarsFromForm);
+			}
 			else
-				echo CFileInput::Show($name."[".$key."]", $file_id, array(
-					"IMAGE" => "Y",
-					"PATH" => "Y",
-					"FILE_SIZE" => "Y",
-					"DIMENSIONS" => "Y",
-					"IMAGE_POPUP" => "Y",
-					"MAX_SIZE" => $maxSize,
-				), array(
-					'upload' => true,
-					'medialib' => true,
-					'file_dialog' => true,
-					'cloud' => true,
-					'del' => true,
-					'description' => $property_fields["WITH_DESCRIPTION"]=="Y",
-				));
+			{
+				echo CFileInput::Show($name."[".$key."]", $file_id, $oldUploaderParams, $inputParams);
+			}
 			break;
 		}
 	}
@@ -304,7 +358,7 @@ function _ShowFilePropertyField($name, $property_fields, $values, $max_file_size
 			$inputName[$name."[".$key."]"] = (is_array($val) && array_key_exists("VALUE", $val) ? $val["VALUE"] : $val);
 		}
 
-		if (class_exists('\Bitrix\Main\UI\FileInput', true))
+		if ($newUploaderExists)
 		{
 			if ($bVarsFromForm)
 			{
@@ -318,10 +372,8 @@ function _ShowFilePropertyField($name, $property_fields, $values, $max_file_size
 				if ($number > 0 && is_array($prop) && array_key_exists($number, $prop))
 				{
 					$prop = $prop[$number];
-					if (is_array($prop) && !empty($prop))
-					{
+					if (!empty($prop) && is_array($prop))
 						$values = $prop;
-					}
 				}
 
 				$inputName = array();
@@ -330,49 +382,20 @@ function _ShowFilePropertyField($name, $property_fields, $values, $max_file_size
 					$inputName[$name."[".$key."]"] = $val;
 				}
 			}
-			echo \Bitrix\Main\UI\FileInput::createInstance((
+			echo \Bitrix\Main\UI\FileInput::createInstance(
 				array(
 					"name" => $name."[n#IND#]",
 					"id" => $name."[n#IND#]_".mt_rand(1, 1000000),
 					"description" => $property_fields["WITH_DESCRIPTION"]=="Y",
 					"allowUpload" => "F",
 					"allowUploadExt" => $property_fields["FILE_TYPE"]
-				) + ($historyId > 0 ? array(
-					"delete" => false,
-					"edit" => false
-				) : array(
-					"upload" => true,
-					"medialib" => true,
-					"fileDialog" => true,
-					"cloud" => true
-				))
-			))->show($inputName, $bVarsFromForm);
+				) + $newUploaderParams
+			)->show($inputName, $bVarsFromForm);
 		}
-		else if($historyId > 0)
-			echo CFileInput::ShowMultiple($inputName, $name."[n#IND#]", array(
-				"IMAGE" => "Y",
-				"PATH" => "Y",
-				"FILE_SIZE" => "Y",
-				"DIMENSIONS" => "Y",
-				"IMAGE_POPUP" => "Y",
-				"MAX_SIZE" => $maxSize,
-			), false);
 		else
-			echo CFileInput::ShowMultiple($inputName, $name."[n#IND#]", array(
-				"IMAGE" => "Y",
-				"PATH" => "Y",
-				"FILE_SIZE" => "Y",
-				"DIMENSIONS" => "Y",
-				"IMAGE_POPUP" => "Y",
-				"MAX_SIZE" => $maxSize,
-			), false, array(
-				'upload' => true,
-				'medialib' => true,
-				'file_dialog' => true,
-				'cloud' => true,
-				'del' => true,
-				'description' => $property_fields["WITH_DESCRIPTION"]=="Y",
-			));
+		{
+			echo CFileInput::ShowMultiple($inputName, $name."[n#IND#]", $oldUploaderParams, false, $inputParams);
+		}
 	}
 }
 

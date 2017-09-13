@@ -1097,10 +1097,11 @@ class CSocNetLogDestination
 				}
 			}
 
-			if ($arUser["EXTERNAL_AUTH_ID"] == "replica")
-				$arUser = self::formatNetworkUser($arUser, $params);
-			else
-				$arUser = self::formatUser($arUser, $params);
+			$arUser = (
+				$arUser["EXTERNAL_AUTH_ID"] == "replica"
+					? self::formatNetworkUser($arUser, $params)
+					: self::formatUser($arUser, $params)
+			);
 
 			$arUsers[$arUser["id"]] = $arUser;
 		}
@@ -2626,7 +2627,7 @@ class CSocNetLogDestination
 					$tmp = $arSqls;
 
 					$arSqls["WHERE"] .= (strlen($arSqls["WHERE"]) > 0 ? " AND " : "")."
-						(UM.VALUE_ID > 0)";
+						(UM.VALUE_INT > 0)";
 
 					if (!$bShowAllContactsAllowed)
 					{
@@ -2649,7 +2650,7 @@ class CSocNetLogDestination
 			elseif (!$bShowAllContactsAllowed) // limited extranet, only for intranet users, don't show extranet
 			{
 				$strJoin = "INNER JOIN b_utm_user UM ON UM.VALUE_ID = U.ID and FIELD_ID = ".intval($UFId);
-				$arSqls["WHERE"] .= (strlen($arSqls["WHERE"]) > 0 ? " AND " : "")."UM.VALUE_ID > 0";
+				$arSqls["WHERE"] .= (strlen($arSqls["WHERE"]) > 0 ? " AND " : "")."UM.VALUE_INT > 0";
 			}
 		}
 
@@ -3069,6 +3070,7 @@ class CSocNetLogDestination
 
 		return $result;
 	}
+
 
 }
 ?>

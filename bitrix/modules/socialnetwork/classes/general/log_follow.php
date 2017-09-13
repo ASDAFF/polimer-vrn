@@ -174,7 +174,7 @@ class CSocNetLogFollow
 			return false;
 	}
 
-	function Update($user_id, $code, $type, $follow_date = false, $bByWF = false)
+	public static function Update($user_id, $code, $type, $follow_date = false, $bByWF = false)
 	{
 		global $DB, $CACHE_MANAGER;
 

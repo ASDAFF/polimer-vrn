@@ -72,6 +72,7 @@ class blogTextParser extends CTextParser
 			"CUT_ANCHOR" => ($allow["CUT_ANCHOR"] == "Y" ? "Y" : "N"),
 			"SHORT_ANCHOR" => ($allow["SHORT_ANCHOR"] == "Y" ? "Y" : "N"),
 			"USER" => ($allow["USER"] == "N" ? "N" : "Y"),
+			"USER_LINK" => ($allow["USER_LINK"] == "N" ? "N" : "Y"),
 			"TAG" => ($allow["TAG"] == "N" ? "N" : "Y"),
 			"USERFIELDS" => (is_array($allow["USERFIELDS"]) ? $allow["USERFIELDS"] : array())
 		);
@@ -479,24 +480,31 @@ class blogTextParser extends CTextParser
 		}
 
 		$anchorId = RandString(8);
-
-		$res = (
-			!$this->bPublic
-				? '<a class="blog-p-user-name'.$classAdditional.'" id="bp_'.$anchorId.'" href="'.CComponentEngine::MakePathFromTemplate($pathToUser, array("user_id" => $userId)).'">'.
-				(
+		
+		if($this->allow["USER_LINK"] == "N")
+		{
+			$res = $userName;
+		}
+		else
+		{
+			$res = (
+				!$this->bPublic
+					? '<a class="blog-p-user-name' . $classAdditional . '" id="bp_' . $anchorId . '" href="' . CComponentEngine::MakePathFromTemplate($pathToUser, array("user_id" => $userId)) . '">' .
+					(
 					!$this->bMobile
 					&& $ajaxPage
 						? '<script type="text/javascript">BX.tooltip(\''.$userId.'\', "bp_'.$anchorId.'", "'.CUtil::JSEscape($ajaxPage).'");</script>'
 						: ''
-				)
-				: ''
-			).
-			$userName.
-			(
+					)
+					: ''
+				) .
+				$userName .
+				(
 				!$this->bPublic
 					? '</a>'
 					: ''
-			);
+				);
+		}
 
 		return $res;
 	}
@@ -607,7 +615,7 @@ class CBlogTools
 			);
 	}
 
-	function DeleteDoubleBR($text)
+	public static function DeleteDoubleBR($text)
 	{
 		if(strpos($text, "<br />\r<br />") !== false)
 		{

@@ -580,7 +580,6 @@ if(strlen($arParams["BLOG_URL"]) > 0)
 						
 						while($curPost = $dbPost->GetNext())
 						{
-							$curPost = CBlogTools::htmlspecialcharsExArray($curPost);
 							$curPost["DATE_PUBLISHED"] = new \DateTime($curPost["DATE_PUBLISH"]) < new \DateTime() ? "Y" : "N";
 
 							if($curPost["AUTHOR_ID"] == $arBlog["OWNER_ID"])

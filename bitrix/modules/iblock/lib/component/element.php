@@ -275,8 +275,8 @@ abstract class Element extends Base
 			$this->arParams['ELEMENT_ID'] = \CIBlockFindTools::GetElementID(
 				$this->arParams['ELEMENT_ID'],
 				$this->arParams['~ELEMENT_CODE'],
-				false,
-				false,
+				$this->arParams['STRICT_SECTION_CHECK']? $this->arParams['SECTION_ID']: 0,
+				$this->arParams['STRICT_SECTION_CHECK']? $this->arParams['~SECTION_CODE']: '',
 				$findFilter
 			);
 		}
@@ -1395,6 +1395,8 @@ abstract class Element extends Base
 			$boolSku = !empty($sku) && is_array($sku);
 			if ($boolSku && !empty($iblockParams['OFFERS_TREE_PROPS']) && $this->arParams['PRODUCT_DISPLAY_MODE'] === 'Y')
 			{
+				$this->storage['SKU_IBLOCK_INFO'] = $sku;
+
 				$skuPropList = \CIBlockPriceTools::getTreeProperties(
 					$sku,
 					$iblockParams['OFFERS_TREE_PROPS'],
@@ -1403,10 +1405,6 @@ abstract class Element extends Base
 						'NAME' => '-'
 					)
 				);
-
-				$needValues = array();
-				\CIBlockPriceTools::getTreePropertyValues($skuPropList, $needValues);
-				$this->storage['SKU_IBLOCK_INFO'] = $sku;
 
 				if (empty($skuPropList))
 				{
@@ -1465,7 +1463,9 @@ abstract class Element extends Base
 			}
 			unset($offer);
 
-			\CIBlockPriceTools::getTreePropertyValues($skuPropList, $needValues);
+			if (!empty($needValues))
+				\CIBlockPriceTools::getTreePropertyValues($skuPropList, $needValues);
+			unset($needValues);
 			$this->editTemplateOfferProps($item);
 			$offerSet = $this->editTemplateProductSets($item);
 			$this->editTemplateJsOffers($item, $offerSet);

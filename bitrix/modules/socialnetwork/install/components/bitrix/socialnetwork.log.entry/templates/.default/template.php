@@ -571,7 +571,7 @@ else
 					|| $EVENT_ID === "photo_photo"
 				)
 				{
-					?><div class="feed-post-item"><?
+					?><div class="feed-post-item feed-post-contentview" id="<?=(!empty($arResult["CONTENT_ID"]) ? "feed-post-contentview-".htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>" bx-content-view-xml-id="<?=htmlspecialcharsBx($arResult["CONTENT_ID"])?>"><?
 
 						$arPhotoItems = array();
 						$photo_section_id = false;

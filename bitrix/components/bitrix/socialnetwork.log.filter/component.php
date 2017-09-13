@@ -487,6 +487,12 @@ $arResult["Filter"][] = array(
 	'type' => 'checkbox'
 );
 
+$arResult["Filter"][] = array(
+	'id' => 'TAG',
+	'name' => Loc::getMessage('SONET_C30_FILTER_TAG'),
+	'type' => 'string'
+);
+
 if (ModuleManager::isModuleInstalled('extranet'))
 {
 	$arResult["Filter"][] = array(

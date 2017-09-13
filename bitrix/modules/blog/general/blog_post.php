@@ -164,7 +164,7 @@ class CAllBlogPost
 	}
 
 	/*************** ADD, UPDATE, DELETE *****************/
-	function CheckFields($ACTION, &$arFields, $ID = 0)
+	public static function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
 		global $DB, $APPLICATION;
 
@@ -271,7 +271,9 @@ class CAllBlogPost
 		if (is_set($arFields, "CODE") && strlen($arFields["CODE"]) > 0)
 		{
 			$arFields["CODE"] = preg_replace("/[^a-zA-Z0-9_-]/is", "", Trim($arFields["CODE"]));
-
+//			preserve collision between numeric code and post ID.
+			$arFields["CODE"] = is_numeric($arFields["CODE"]) ? "_".$arFields["CODE"] : $arFields["CODE"];
+			
 			if (in_array(strtolower($arFields["CODE"]), $GLOBALS["AR_BLOG_POST_RESERVED_CODES"]))
 			{
 				$APPLICATION->ThrowException(str_replace("#CODE#", $arFields["CODE"], GetMessage("BLG_GP_RESERVED_CODE")), "CODE_RESERVED");
@@ -765,6 +767,9 @@ class CAllBlogPost
 			{
 				$arSoFields["USER_ID"] = $arParams["user_id"];
 			}
+
+			$post = \Bitrix\Blog\Item\Post::getById($arPost);
+			$arSoFields["TAGS"] = $post->getTags();
 
 			$logID = CSocNetLog::Add($arSoFields, false);
 

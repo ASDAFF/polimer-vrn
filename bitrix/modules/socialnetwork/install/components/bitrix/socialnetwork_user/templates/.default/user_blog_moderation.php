@@ -62,6 +62,8 @@ $APPLICATION->IncludeComponent(
 		"IMAGE_MAX_HEIGHT" => $arParams["BLOG_IMAGE_MAX_HEIGHT"],
 		"ALLOW_POST_CODE" => $arParams["BLOG_ALLOW_POST_CODE"],
 		"PATH_TO_GROUP" => $arParams["PATH_TO_GROUP"],
+		"BLOG_NO_URL_IN_COMMENTS" => $arParams["BLOG_NO_URL_IN_COMMENTS"],
+		"BLOG_NO_URL_IN_COMMENTS_AUTHORITY" => $arParams["BLOG_NO_URL_IN_COMMENTS_AUTHORITY"],
 	),
 	$this->getComponent()
 );

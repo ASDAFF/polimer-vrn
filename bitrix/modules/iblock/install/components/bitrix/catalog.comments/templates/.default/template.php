@@ -72,6 +72,15 @@ if (!$templateData['BLOG']['BLOG_FROM_AJAX'])
 			'TEMPLATE_THEME' => $arParams['~TEMPLATE_THEME'],
 			'SHOW_DEACTIVATED' => $arParams['SHOW_DEACTIVATED'],
 		);
+		
+		if(isset($arParams["USER_CONSENT"]))
+			$templateData['BLOG']['AJAX_PARAMS']["USER_CONSENT"] = $arParams["USER_CONSENT"];
+		if(isset($arParams["USER_CONSENT_ID"]))
+			$templateData['BLOG']['AJAX_PARAMS']["USER_CONSENT_ID"] = $arParams["USER_CONSENT_ID"];
+		if(isset($arParams["USER_CONSENT_IS_CHECKED"]))
+			$templateData['BLOG']['AJAX_PARAMS']["USER_CONSENT_IS_CHECKED"] = $arParams["USER_CONSENT_IS_CHECKED"];
+		if(isset($arParams["USER_CONSENT_IS_LOADED"]))
+			$templateData['BLOG']['AJAX_PARAMS']["USER_CONSENT_IS_LOADED"] = $arParams["USER_CONSENT_IS_LOADED"];
 
 		$arJSParams['serviceList']['blog'] = true;
 		$arJSParams['settings']['blog'] = array(

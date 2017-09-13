@@ -1309,7 +1309,7 @@ a.feed-post-title:hover {
 }
 
 .feed-post-text-block-inner-inner img {
-	margin: 0 10px 0 0;
+	margin: 0;
 	vertical-align: middle;
 }
 
@@ -1873,8 +1873,6 @@ span.feed-add-post-destination-new:hover {
 	color: #2e2e2e;
 	display: inline-block;
 	font-size: 13px;
-	line-height: 16px;
-	margin-top: 3px;
 	vertical-align: baseline;
 }
 

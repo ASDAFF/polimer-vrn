@@ -879,7 +879,7 @@ if (
 				{
 					$DB->StartTransaction();
 
-					$CATEGORYtmp = Array();
+					$CATEGORYtmp = array();
 					if(!empty($_POST["TAGS"]))
 					{
 						$dbCategory = CBlogCategory::GetList(Array(), Array("BLOG_ID" => $arBlog["ID"]));
@@ -901,6 +901,7 @@ if (
 									? $arCatBlog[ToLower($tg)]
 									: CBlogCategory::Add(array("BLOG_ID" => $arBlog["ID"], "NAME" => $tg))
 								);
+								$tagList[] = $tg;
 							}
 						}
 					}
@@ -925,8 +926,6 @@ if (
 						$CATEGORY_ID = "";
 					}
 
-					$CATEGORY_ID = implode(",", $CATEGORYtmp);
-
 					$DATE_PUBLISH = "";
 					if (strlen($_POST["DATE_PUBLISH_DEF"]) > 0)
 					{
@@ -949,7 +948,6 @@ if (
 						"DETAIL_TEXT_TYPE" => "text",
 						"DATE_PUBLISH" => $DATE_PUBLISH,
 						"PUBLISH_STATUS" => $PUBLISH_STATUS,
-						"CATEGORY_ID" => $CATEGORY_ID,
 						"PATH" => CComponentEngine::MakePathFromTemplate(htmlspecialcharsBack($arParams["PATH_TO_POST"]), array("post_id" => "#post_id#", "user_id" => $arBlog["OWNER_ID"])),
 						"URL" => $arBlog["URL"],
 					);
@@ -996,13 +994,91 @@ if (
 					)
 					{
 						$arFields["MICRO"] = "Y";
-						$arFields["TITLE"] = trim(preg_replace(array("/\n+/is".BX_UTF_PCRE_MODIFIER, "/\s+/is".BX_UTF_PCRE_MODIFIER), " ", blogTextParser::killAllTags($arFields["DETAIL_TEXT"])));
+						$arFields["TITLE"] = preg_replace(array("/\n+/is".BX_UTF_PCRE_MODIFIER, "/\s+/is".BX_UTF_PCRE_MODIFIER), " ", blogTextParser::killAllTags($arFields["DETAIL_TEXT"]));
+						$arFields["TITLE"] = trim(str_replace("\xA0", "", $arFields["TITLE"]));
 						if(strlen($arFields["TITLE"]) <= 0)
 						{
 							$arFields["TITLE"] = GetMessage("BLOG_EMPTY_TITLE_PLACEHOLDER2");
 						}
 					}
 
+					$arTagPrev = array();
+
+					if(!empty($CATEGORYtmp))
+					{
+						$res = CBlogCategory::getList(
+							array(),
+							array(
+								'@ID' => $CATEGORYtmp
+							),
+							false,
+							false,
+							array('NAME')
+						);
+						while($arCategory = $res->fetch())
+						{
+							$arTagPrev[] = $arCategory["NAME"];
+						}
+					}
+
+					$newCategoryIdList = array();
+					$postItem = new \Bitrix\Blog\Item\Post;
+					$postItem->setFields($arFields);
+					$arTagInline = $postItem->detectTags();
+					$arTag = array_merge($arTagPrev, $arTagInline);
+					$arTag = array_intersect_key($arTag, array_unique(array_map('ToLower', $arTag)));
+
+					if (count($arTag) > count($arTagPrev))
+					{
+						$arTagPrevLower = array_unique(array_map('ToLower', $arTagPrev));
+						$newTagList = array();
+
+						foreach($arTagInline as $tagInline)
+						{
+							if (!in_array(ToLower($tagInline), $arTagPrevLower))
+							{
+								$newTagList[] = $tagInline;
+							}
+						}
+
+						if (!empty($newTagList))
+						{
+							$newTagList = array_unique($newTagList);
+
+							$existingCategoriesList = array();
+							$res = CBlogCategory::getList(
+								array(),
+								array(
+									"@NAME" => $newTagList,
+									"BLOG_ID" => $arBlog["ID"]
+								),
+								false,
+								false,
+								array('ID', 'NAME')
+							);
+							while ($arCategory = $res->fetch())
+							{
+								$existingCategoriesList[$arCategory['NAME']] = $arCategory['ID'];
+							}
+
+							foreach($newTagList as $newTag)
+							{
+								if (array_key_exists($newTag, $existingCategoriesList))
+								{
+									$newCategoryIdList[] = $existingCategoriesList[$newTag];
+								}
+								else
+								{
+									$newCategoryIdList[] = CBlogCategory::add(array("BLOG_ID" => $arBlog["ID"], "NAME" => $newTag));
+								}
+							}
+						}
+					}
+
+					$CATEGORYtmp = array_merge($CATEGORYtmp, $newCategoryIdList);
+					$CATEGORY_ID = implode(",", $CATEGORYtmp);
+
+					$arFields["CATEGORY_ID"] = $CATEGORY_ID;
 					$arFields["SOCNET_RIGHTS"] = Array();
 
 					if(
@@ -1503,7 +1579,9 @@ if (
 
 							CBlogPostCategory::DeleteByPostID($newID);
 							foreach($CATEGORYtmp as $v)
+							{
 								CBlogPostCategory::Add(Array("BLOG_ID" => $arBlog["ID"], "POST_ID" => $newID, "CATEGORY_ID"=>$v));
+							}
 
 							$DB->Query("UPDATE b_blog_image SET POST_ID=".$newID." WHERE BLOG_ID=".$arBlog["ID"]." AND POST_ID=0", true);
 
@@ -1605,7 +1683,8 @@ if (
 					}
 
 					if (
-						$newID > 0
+						isset($newID)
+						&& $newID > 0
 						&& strlen($arResult["ERROR_MESSAGE"]) <= 0
 					) // Record saved successfully
 					{
@@ -1657,11 +1736,19 @@ if (
 							}
 						}
 
-						if (intval($logId) > 0)
+						if (
+							isset($logId)
+							&& intval($logId) > 0
+						)
 						{
-							CSocNetLog::Update(intval($logId), array(
+							$logFields = array(
 								"EVENT_ID" => $eventId
-							));
+							);
+							if ($post = \Bitrix\Blog\Item\Post::getById($newID))
+							{
+								$logFields["TAG"] = $post->getTags();
+							}
+							CSocNetLog::Update(intval($logId), $logFields);
 						}
 
 						$DB->Commit();
@@ -2472,17 +2559,42 @@ if (
 
 		foreach($arDepartmentCodesSelected as $selectedDepartmentCode)
 		{
+			$departrmentIdToCheckList = array();
 			if (!array_key_exists($selectedDepartmentCode, $arResult["PostToShow"]["FEED_DESTINATION"]['DEPARTMENT']))
 			{
-				$arResult["PostToShow"]["FEED_DESTINATION"]["HIDDEN_ITEMS"][$selectedDepartmentCode] = array(
-					"ID" => substr($selectedDepartmentCode, 2),
-					"NAME" => GetMessage("B_B_HIDDEN_DEPARTMENT"),
-					"TYPE" => 'department',
-					"PREFIX" => 'DR'
+				$departrmentIdToCheckList[] = substr($selectedDepartmentCode, 2);
+			}
+
+			if (
+				!empty($departrmentIdToCheckList)
+				&& \Bitrix\Main\Loader::includeModule('iblock')
+				&& (($structureIBlockId = \Bitrix\Main\Config\Option::get('intranet', 'iblock_structure', 0)) > 0)
+			)
+			{
+				$res = CIBlockSection::getList(
+					array(),
+					array(
+						'=IBLOCK_ID' => $structureIBlockId,
+						'ID' => $departrmentIdToCheckList,
+						'=ACTIVE' => 'Y'
+					),
+					false,
+					array('ID')
 				);
+
+				while($section = $res->fetch())
+				{
+					$arResult["PostToShow"]["FEED_DESTINATION"]["HIDDEN_ITEMS"][$selectedDepartmentCode] = array(
+						"ID" => $section['ID'],
+						"NAME" => GetMessage("B_B_HIDDEN_DEPARTMENT"),
+						"TYPE" => 'department',
+						"PREFIX" => 'DR'
+					);
+				}
 			}
 		}
 
+		$arResult["PostToShow"]["FEED_DESTINATION"]["USERS_VACATION"] = Bitrix\Socialnetwork\Integration\Intranet\Absence\User::getDayVacationList();
 		$arResult["PostToShow"]["FEED_DESTINATION"]["DENY_TOALL"] = !$bAllowToAll;
 	}
 }

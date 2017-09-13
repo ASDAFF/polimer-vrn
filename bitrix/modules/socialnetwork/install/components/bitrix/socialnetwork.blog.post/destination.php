@@ -118,5 +118,7 @@ else
 	}
 }
 
+$arResult["FEED_DESTINATION"]["USERS_VACATION"] = Bitrix\Socialnetwork\Integration\Intranet\Absence\User::getDayVacationList();
+
 $arResult["FEED_DESTINATION"]["DENY_TOALL"] = !$bAllowToAll;
 ?>

@@ -49,7 +49,6 @@ $MESS["CP_BCT_TPL_PRODUCT_BLOCK_BUTTONS"] = "Действия";
 $MESS["CP_BCT_TPL_PRODUCT_BLOCK_PROPS"] = "Свойства";
 $MESS["CP_BCT_TPL_PRODUCT_BLOCK_SKU"] = "Торговое предложение";
 $MESS["CP_BCT_TPL_PRODUCT_BLOCK_COMPARE"] = "Сравнение";
-$MESS["CP_BCT_TPL_CUSTOM_FILTER"] = "Фильтр товаров";
 $MESS["CP_BCT_TPL_SETTINGS_INVALID_CONDITION"] = "Условие задано неверно";
 $MESS["CP_BCT_TPL_PRODUCT_SUBSCRIPTION"] = "Разрешить оповещения для отсутствующих товаров";
 $MESS["CP_BCT_TPL_SHOW_SLIDER"] = "Показывать слайдер для товаров";

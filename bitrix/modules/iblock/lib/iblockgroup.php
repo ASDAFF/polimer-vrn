@@ -57,7 +57,7 @@ class IblockGroupTable extends Entity\DataManager
 				'title' => Loc::getMessage('IBLOCK_GROUP_ENTITY_PERMISSION_FIELD'),
 			),
 			'GROUP' => array(
-				'data_type' => 'Bitrix\Group\Group',
+				'data_type' => 'Bitrix\Main\Group',
 				'reference' => array('=this.GROUP_ID' => 'ref.ID'),
 			),
 			'IBLOCK' => array(

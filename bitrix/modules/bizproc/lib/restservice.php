@@ -484,6 +484,11 @@ class RestService extends \IRestService
 	 */
 	public static function addProvider($params, $n, $server)
 	{
+		if (Loader::includeModule('messageservice'))
+		{
+			return \Bitrix\MessageService\RestService::addSender($params, $n, $server);
+		}
+
 		if(!$server->getClientId())
 		{
 			throw new AccessException("Application context required");
@@ -527,6 +532,11 @@ class RestService extends \IRestService
 	 */
 	public static function deleteProvider($params, $n, $server)
 	{
+		if (Loader::includeModule('messageservice'))
+		{
+			return \Bitrix\MessageService\RestService::deleteSender($params, $n, $server);
+		}
+
 		if(!$server->getClientId())
 		{
 			throw new AccessException("Application context required");
@@ -564,6 +574,11 @@ class RestService extends \IRestService
 	 */
 	public static function getProviderList($params, $n, $server)
 	{
+		if (Loader::includeModule('messageservice'))
+		{
+			return \Bitrix\MessageService\RestService::getSenderList($params, $n, $server);
+		}
+
 		if(!$server->getClientId())
 		{
 			throw new AccessException("Application context required");

@@ -49,7 +49,7 @@ BX.Kanban.Utils = {
 
 	isValidColor: function(hex)
 	{
-		return BX.type.isNotEmptyString(hex) && hex.match(/^([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+		return BX.type.isNotEmptyString(hex) && hex.match(/^([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/);
 	},
 
 	/**

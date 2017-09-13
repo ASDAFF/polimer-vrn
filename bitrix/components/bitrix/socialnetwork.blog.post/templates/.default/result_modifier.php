@@ -59,6 +59,7 @@ if (empty($arResult["urlToHide"]))
 		),
 		array(
 			"hide" => "Y",
+			"SONET_GROUP_ID" => (isset($arParams["SONET_GROUP_ID"]) && intval($arParams["SONET_GROUP_ID"]) > 0 ? intval($arParams["SONET_GROUP_ID"]) : false),
 			"sessid" => bitrix_sessid()
 		)
 	);

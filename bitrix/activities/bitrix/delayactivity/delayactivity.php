@@ -20,6 +20,12 @@ class CBPDelayActivity
 		);
 	}
 
+	protected function ReInitialize()
+	{
+		parent::ReInitialize();
+		$this->TimeoutTimeCurrent = null;
+	}
+
 	public function Cancel()
 	{
 		if (!$this->isInEventActivityMode && $this->subscriptionId > 0)

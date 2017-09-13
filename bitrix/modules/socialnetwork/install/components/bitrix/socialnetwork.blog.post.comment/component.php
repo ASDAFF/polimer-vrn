@@ -1151,7 +1151,11 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 						$arFields["PATH"] .= $arParams["COMMENT_ID_VAR"]."=".$commentID."#".$commentID;
 
 						$dbComment = CBlogComment::GetList(array(), Array("POST_ID" => $arPost["ID"], "BLOG_ID" => $arBlog["ID"], ">ID" => $commentID));
-						if($dbComment->Fetch() && $arResult["Perm"] < BLOG_PERMS_FULL && !$bIntranetInstalled)
+						if(
+							$dbComment->Fetch()
+							&& $arResult["Perm"] < BLOG_PERMS_FULL
+							&& !$bIntranetInstalled
+						)
 						{
 							$arResult["COMMENT_ERROR"] = GetMessage("B_B_PC_COM_ERROR_EDIT").": ".GetMessage("B_B_PC_EDIT_ALREADY_COMMENTED");
 						}
@@ -1715,11 +1719,24 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 							else
 							{
 								$arAllow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y", "SHORT_ANCHOR" => "Y");
-								if(COption::GetOptionString("blog","allow_video", "Y") != "Y" || $arParams["ALLOW_VIDEO"] != "Y")
+								if (
+									COption::GetOptionString("blog","allow_video", "Y") != "Y"
+									|| $arParams["ALLOW_VIDEO"] != "Y"
+								)
+								{
 									$arAllow["VIDEO"] = "N";
+								}
 
-								if($arParams["NO_URL_IN_COMMENTS"] == "L" || (IntVal($arComment["AUTHOR_ID"]) <= 0  && $arParams["NO_URL_IN_COMMENTS"] == "A"))
+								if(
+									$arParams["NO_URL_IN_COMMENTS"] == "L"
+									|| (
+										IntVal($arComment["AUTHOR_ID"]) <= 0
+										&& $arParams["NO_URL_IN_COMMENTS"] == "A"
+									)
+								)
+								{
 									$arAllow["CUT_ANCHOR"] = "Y";
+								}
 
 								if($arParams["NO_URL_IN_COMMENTS_AUTHORITY_CHECK"] == "Y" && $arAllow["CUT_ANCHOR"] != "Y" && IntVal($arComment["AUTHOR_ID"]) > 0)
 								{

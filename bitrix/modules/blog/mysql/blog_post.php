@@ -89,7 +89,9 @@ class CBlogPost extends CAllBlogPost
 			}
 
 			foreach(GetModuleEvents("blog", "OnPostAdd", true) as $arEvent)
+			{
 				ExecuteModuleEventEx($arEvent, Array($ID, &$arFields));
+			}
 
 			if (CModule::IncludeModule("search"))
 			{
@@ -313,9 +315,14 @@ class CBlogPost extends CAllBlogPost
 			}
 
 			foreach(GetModuleEvents("blog", "OnPostUpdate", true) as $arEvent)
+			{
 				ExecuteModuleEventEx($arEvent, Array($ID, &$arFields));
+			}
 
-			if ($bSearchIndex && CModule::IncludeModule("search"))
+			if (
+				$bSearchIndex
+				&& CModule::IncludeModule("search")
+			)
 			{
 				$newPostPerms = CBlogUserGroup::GetGroupPerms(1, $arNewPost["BLOG_ID"], $ID, BLOG_PERMS_POST);
 				$arBlog = CBlog::GetByID($arNewPost["BLOG_ID"]);
@@ -422,7 +429,9 @@ class CBlogPost extends CAllBlogPost
 								);
 							$authorName = CUser::FormatName(CSite::GetNameFormat(), $arTmpUser, false, false);
 							if(strlen($authorName) > 0)
+							{
 								$searchContent .= "\r\n".$authorName;
+							}
 						}
 					}
 

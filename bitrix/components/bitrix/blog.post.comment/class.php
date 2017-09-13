@@ -848,7 +848,7 @@ class CBlogPostCommentEdit extends CBitrixComponent
 								"imageWidth" => $this->arParams["IMAGE_MAX_WIDTH"],
 								"imageHeight" => $this->arParams["IMAGE_MAX_HEIGHT"],
 							);
-							$arAllow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y");
+							$arAllow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y", "USER_LINK" => "N");
 							if(COption::GetOptionString("blog","allow_video", "Y") != "Y" || $this->arParams["ALLOW_VIDEO"] != "Y")
 								$arAllow["VIDEO"] = "N";
 							
@@ -1062,7 +1062,7 @@ class CBlogPostCommentEdit extends CBitrixComponent
 											}
 										}
 										
-										$arAllow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y");
+										$arAllow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y", "USER_LINK" => "N");
 										if(COption::GetOptionString("blog","allow_video", "Y") != "Y" || $this->arParams["ALLOW_VIDEO"] != "Y")
 											$arAllow["VIDEO"] = "N";
 										

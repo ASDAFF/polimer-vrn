@@ -378,11 +378,7 @@ if (defined('B_ADMIN_SUBELEMENTS_LIST') && true === B_ADMIN_SUBELEMENTS_LIST)
 						$arCatalogProduct['QUANTITY_TRACE'] = $arFields['CATALOG_QUANTITY_TRACE'];
 					if (isset($arFields['CATALOG_MEASURE']) && is_string($arFields['CATALOG_MEASURE']) && (int)$arFields['CATALOG_MEASURE'] > 0)
 						$arCatalogProduct['MEASURE'] = $arFields['CATALOG_MEASURE'];
-					if ('Y' != $strUseStoreControl)
-					{
-						if (isset($arFields['CATALOG_QUANTITY']) && '' != $arFields['CATALOG_QUANTITY'])
-							$arCatalogProduct['QUANTITY'] = $arFields['CATALOG_QUANTITY'];
-					}
+
 					if ($catalogPurchasInfoEdit)
 					{
 						if (
@@ -394,7 +390,18 @@ if (defined('B_ADMIN_SUBELEMENTS_LIST') && true === B_ADMIN_SUBELEMENTS_LIST)
 							$arCatalogProduct['PURCHASING_CURRENCY'] = $arFields['CATALOG_PURCHASING_CURRENCY'];
 						}
 					}
-					if (!Catalog\ProductTable::isExistProduct($subID))
+
+					if ($strUseStoreControl != 'Y')
+					{
+						if (isset($arFields['CATALOG_QUANTITY']) && '' != $arFields['CATALOG_QUANTITY'])
+							$arCatalogProduct['QUANTITY'] = $arFields['CATALOG_QUANTITY'];
+					}
+
+					$product = Catalog\ProductTable::getList(array(
+						'select' => array('ID', 'SUBSCRIBE_ORIG'),
+						'filter' => array('=ID' => $subID)
+					))->fetch();
+					if (empty($product))
 					{
 						$arCatalogProduct['ID'] = $subID;
 						CCatalogProduct::Add($arCatalogProduct, false);
@@ -402,8 +409,14 @@ if (defined('B_ADMIN_SUBELEMENTS_LIST') && true === B_ADMIN_SUBELEMENTS_LIST)
 					else
 					{
 						if (!empty($arCatalogProduct))
+						{
+							if ($strUseStoreControl != 'Y')
+								$arCatalogProduct['SUBSCRIBE'] = $product['SUBSCRIBE_ORIG'];
 							CCatalogProduct::Update($subID, $arCatalogProduct);
+						}
 					}
+					unset($product);
+
 					if (isset($arFields['CATALOG_MEASURE_RATIO']))
 					{
 						$newValue = trim($arFields['CATALOG_MEASURE_RATIO']);

@@ -603,8 +603,8 @@ class CAllSocNetFeatures
 			}
 
 			if (
-				(array_key_exists($feature, $arFeatures) && ($arFeatures[$feature]["ACTIVE"] == "N"))
-				|| (!array_key_exists($feature, $arFeatures) && ($feature == 'chat'))
+				array_key_exists($feature, $arFeatures)
+				&& ($arFeatures[$feature]["ACTIVE"] == "N")
 			)
 			{
 				continue;

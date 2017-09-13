@@ -29,4 +29,5 @@ $MESS["BPAA_PD_TIMEOUT_LIMIT"] = "Мінімальний період затве
 $MESS["BPAR_PD_COMMENT_REQUIRED"] = "Обов'язковість коментаря";
 $MESS["BPAR_PD_COMMENT_REQUIRED_YA"] = "Тільки при затвердженні";
 $MESS["BPAR_PD_COMMENT_REQUIRED_YR"] = "Тільки при відхиленні";
+$MESS["BPAR_PD_DELEGATION_TYPE"] = "Тип делегування";
 ?>

@@ -187,7 +187,7 @@ $this->setFrameMode(true);
                <a href="#" class="mtb" onclick="return false">Наличие в магазинах</a>
                <div class="content">
                   <?$APPLICATION->IncludeComponent(
-	"nbrains:catalog.store.amount",
+	"nbrains:catalog.store.amount", 
 	"store", 
 	array(
 		"CACHE_TIME" => "36000",
@@ -210,7 +210,7 @@ $this->setFrameMode(true);
 		"MAIN_TITLE" => "",
 		"MIN_AMOUNT" => "0",
 		"OFFER_ID" => "",
-		"SHOW_EMPTY_STORE" => "Y",
+		"SHOW_EMPTY_STORE" => "N",
 		"SHOW_GENERAL_STORE_INFORMATION" => "N",
 		"STORES" => array(
 			0 => "3",
@@ -219,7 +219,14 @@ $this->setFrameMode(true);
 			3 => "6",
 			4 => "7",
 			5 => "8",
-			6 => "",
+			6 => "9",
+			7 => "10",
+			8 => "11",
+			9 => "12",
+			10 => "13",
+			11 => "14",
+			12 => "15",
+			13 => "",
 		),
 		"STORE_PATH" => "",
 		"USER_FIELDS" => array(
@@ -227,7 +234,9 @@ $this->setFrameMode(true);
 			1 => "",
 		),
 		"USE_MIN_AMOUNT" => "N",
-		"COMPONENT_TEMPLATE" => "store"
+		"COMPONENT_TEMPLATE" => "store",
+		"COMPOSITE_FRAME_MODE" => "A",
+		"COMPOSITE_FRAME_TYPE" => "AUTO"
 	),
 	false
 );?>

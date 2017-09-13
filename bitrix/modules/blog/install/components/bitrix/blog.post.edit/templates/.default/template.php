@@ -179,8 +179,8 @@ else
 								'delete_repeat_replace' : true,
 								'use_google' : <?echo $arParams['USE_GOOGLE_CODE'] == 'Y'? 'true': 'false'?>,
 								'callback' : function(result){
-										if(!isNaN(parseInt(result, 10))) result = '_'+result;
-										to.value = result; 
+										if(result.length > 0 && isFinite(result)) result = '_'+result;
+										to.value = result;
 										toText.innerHTML = result;
 										setTimeout('transliterate()', 250);
 										}
@@ -516,7 +516,7 @@ else
 					"ORIGIN_ID" => "sender/sub",
 					"ORIGINATOR_ID" => "",
 					"REPLACE" => array(
-						'button_caption' => GetMessage("B_B_MS_SEND"),
+						'button_caption' => GetMessage("BLOG_PUBLISH"),
 						'fields' => array('Alias', 'Personal site', 'Birthday', 'Photo')
 					),
 				)

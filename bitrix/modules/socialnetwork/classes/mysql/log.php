@@ -105,6 +105,14 @@ class CSocNetLog extends CAllSocNetLog
 				", false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
 				}
 
+				if (isset($arFields["TAG"]))
+				{
+					\Bitrix\Socialnetwork\LogTagTable::set(array(
+						'logId' => $ID,
+						'tags' => $arFields["TAG"]
+					));
+				}
+
 				$USER_FIELD_MANAGER->Update("SONET_LOG", $ID, $arFields);
 
 				$arFields["ID"] = $ID;
@@ -184,6 +192,14 @@ class CSocNetLog extends CAllSocNetLog
 					"FROM b_lang ".
 					"WHERE LID IN (".$str_SiteID.") ";
 				$DB->Query($strSql, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
+			}
+
+			if (isset($arFields["TAG"]))
+			{
+				\Bitrix\Socialnetwork\LogTagTable::set(array(
+					'logId' => $ID,
+					'tags' => $arFields["TAG"]
+				));
 			}
 
 			$USER_FIELD_MANAGER->Update("SONET_LOG", $ID, $arFields);
@@ -518,6 +534,23 @@ class CSocNetLog extends CAllSocNetLog
 		}
 
 		if (
+			array_key_exists("TAG", $arFilter)
+			|| array_key_exists("=TAG", $arFilter)
+			|| array_key_exists("@TAG", $arFilter)
+		)
+		{
+			$arFields["TAG"] = Array(
+				"FIELD" => "SLT.NAME",
+				"TYPE" => "string",
+				"FROM" => "INNER JOIN b_sonet_log_tag SLT ON L.ID = SLT.LOG_ID"
+			);
+
+			if (array_key_exists("@TAG", $arFilter))
+			{
+				$strDistinct = " DISTINCT ";
+			}
+		}
+		if (
 			array_key_exists("USER_ID|COMMENT_USER_ID", $arFilter)
 			|| array_key_exists("*CONTENT", $arFilter)
 			|| array_key_exists("*%CONTENT", $arFilter)
@@ -525,7 +558,6 @@ class CSocNetLog extends CAllSocNetLog
 		{
 			$strDistinct = " DISTINCT ";
 		}
-
 		if (
 			isset($arFilter["TMP_ID"])
 			&& !isset($arFilter["ID"])
@@ -949,8 +981,8 @@ class CSocNetLog extends CAllSocNetLog
 			}
 
 			$dbRes = new CDBResult();
-
 			//echo "!2.2!=".htmlspecialcharsbx($strSql)."<br>";
+
 			$dbRes->SetUserFields($USER_FIELD_MANAGER->GetUserFields("SONET_LOG"));
 			$dbRes->NavQuery($strSql, $cnt, $arNavStartParams);
 		}
@@ -1009,6 +1041,7 @@ class CSocNetLog extends CAllSocNetLog
 		$DB->Query("DELETE FROM b_sonet_log_right WHERE LOG_ID = ".$ID, true);
 		$DB->Query("DELETE FROM b_sonet_log_site WHERE LOG_ID = ".$ID, true);
 		$DB->Query("DELETE FROM b_sonet_log_favorites WHERE LOG_ID = ".$ID, true);
+		$DB->Query("DELETE FROM b_sonet_log_tag WHERE LOG_ID = ".$ID, true);
 
 		$bSuccess = $DB->Query("DELETE FROM b_sonet_log WHERE ID = ".$ID, true);
 

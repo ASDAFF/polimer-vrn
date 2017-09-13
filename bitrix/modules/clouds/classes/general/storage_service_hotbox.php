@@ -132,7 +132,7 @@ class CCloudStorageService_HotBox extends CCloudStorageService_AmazonS3
 			if(substr($URI, 0, strlen($arBucket["PREFIX"])+1) !== $arBucket["PREFIX"]."/")
 				$URI = $arBucket["PREFIX"]."/".$URI;
 		}
-		AddMessage2Log($URI);
+
 		if ($pref !== "")
 		{
 			$URI = $pref."/".$URI;

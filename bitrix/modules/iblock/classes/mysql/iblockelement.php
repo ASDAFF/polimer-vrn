@@ -293,6 +293,7 @@ class CIBlockElement extends CAllIBlockElement
 				"IN_SECTIONS"=>"BE.IN_SECTIONS",
 				"SHOW_COUNTER"=>"BE.SHOW_COUNTER",
 				"SHOW_COUNTER_START"=>$DB->DateToCharFunction("BE.SHOW_COUNTER_START"),
+				"SHOW_COUNTER_START_X"=>"BE.SHOW_COUNTER_START",
 				"CODE"=>"BE.CODE",
 				"TAGS"=>"BE.TAGS",
 				"XML_ID"=>"BE.XML_ID",

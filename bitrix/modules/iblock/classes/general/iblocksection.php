@@ -8,7 +8,7 @@ class CAllIBlockSection
 	protected static $arSectionPathCache = array();
 	protected static $arSectionNavChainCache = array();
 
-	function GetFilter($arFilter=Array())
+	public static function GetFilter($arFilter=Array())
 	{
 		global $DB;
 		$arIBlockFilter = Array();
@@ -2358,22 +2358,36 @@ class CAllIBlockSection
 		return $res["CNT"];
 	}
 
-	function _check_rights_sql($min_permission)
+	protected static function _check_rights_sql($min_permission, $permissionsBy = null)
 	{
 		global $DB, $USER;
 		$min_permission = (strlen($min_permission)==1) ? $min_permission : "R";
 
-		if(is_object($USER))
+		if ($permissionsBy !== null)
+			$permissionsBy = (int)$permissionsBy;
+		if ($permissionsBy < 0)
+			$permissionsBy = null;
+
+		if ($permissionsBy !== null)
 		{
-			$iUserID = intval($USER->GetID());
-			$strGroups = $USER->GetGroups();
-			$bAuthorized = $USER->IsAuthorized();
+			$iUserID = $permissionsBy;
+			$strGroups = implode(',', CUser::GetUserGroup($permissionsBy));
+			$bAuthorized = false;
 		}
 		else
 		{
-			$iUserID = 0;
-			$strGroups = "2";
-			$bAuthorized = false;
+			if (is_object($USER))
+			{
+				$iUserID = (int)$USER->GetID();
+				$strGroups = $USER->GetGroups();
+				$bAuthorized = $USER->IsAuthorized();
+			}
+			else
+			{
+				$iUserID = 0;
+				$strGroups = "2";
+				$bAuthorized = false;
+			}
 		}
 
 		$stdPermissions = "
@@ -2399,7 +2413,7 @@ class CAllIBlockSection
 		if($operation)
 		{
 			$acc = new CAccess;
-			$acc->UpdateCodes();
+			$acc->UpdateCodes($permissionsBy !== null ? array('USER_ID' => $permissionsBy) : false);
 		}
 
 		if($operation == "section_read")
@@ -2464,11 +2478,16 @@ class CAllIBlockSection
 
 		$bCheckPermissions = !array_key_exists("CHECK_PERMISSIONS", $arFilter) || $arFilter["CHECK_PERMISSIONS"]!=="N";
 		$bIsAdmin = is_object($USER) && $USER->IsAdmin();
-		if($bCheckPermissions && !$bIsAdmin)
+		$permissionsBy = null;
+		if ($bCheckPermissions && isset($arFilter['PERMISSIONS_BY']))
 		{
-			$min_permission = (strlen($arFilter["MIN_PERMISSION"])==1) ? $arFilter["MIN_PERMISSION"] : "R";
-			$arSqlSearch[] = CIBlockSection::_check_rights_sql($min_permission);
+			$permissionsBy = (int)$arFilter['PERMISSIONS_BY'];
+			if ($permissionsBy < 0)
+				$permissionsBy = null;
 		}
+		if($bCheckPermissions && ($permissionsBy !== null || !$bIsAdmin))
+			$arSqlSearch[] = self::_check_rights_sql($arFilter["MIN_PERMISSION"], $permissionsBy);
+		unset($permissionsBy);
 
 		$strSqlSearch = "";
 		foreach($arSqlSearch as $i=>$strSearch)

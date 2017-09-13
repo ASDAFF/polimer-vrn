@@ -3546,7 +3546,6 @@ BX.CViewer.prototype.initEventHandlersForElement = function(currentElement)
 		}
 		this.getCurrent().preventTimeout();
 		this.getCurrent().hide();
-		this.close();
 		this.createPopupWindowFromErrorElement(elementWithError);
 		BX.localStorage.set('iframe_options_error', true, 60);
 	}, this));
@@ -3559,7 +3558,6 @@ BX.CViewer.prototype.initEventHandlersForElement = function(currentElement)
 		}
 		this.getCurrent().preventTimeout();
 		this.getCurrent().hide();
-		this.close();
 		this.createPopupWindowFromErrorElement(elementWithError);
 
 		/*var errorElement = this.createErrorIframeElementFromAjaxElement(elementWithError);
@@ -4899,13 +4897,14 @@ BX.CViewer.prototype.createPopupWindowFromErrorElement = function(errorElement){
 				{
 					this.destroyMenu();
 					this.closeConfirm();
+                                        this.close();
 				}, this
 			)}
 		})
 	], true, null, {
 		titleBar: titleBar,
-		closeIcon: true,
-		closeByEsc: true
+		closeIcon: false,
+		closeByEsc: false
 	});
 };
 

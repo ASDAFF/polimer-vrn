@@ -128,9 +128,7 @@ class CIBlockRSS extends CAllIBlockRSS
 			$arNodes[$db_res_arr["NODE"]] = $db_res_arr["NODE_VALUE"];
 		}
 
-		$formatActiveDates = CPageOption::GetOptionString("iblock", "FORMAT_ACTIVE_DATES", "-") != "-";
-		$shortFormatActiveDates = CPageOption::GetOptionString("iblock", "FORMAT_ACTIVE_DATES", "SHORT");
-		CPageOption::SetOptionString("iblock", "FORMAT_ACTIVE_DATES", "Y");
+		$formatActiveDates = CPageOption::GetOptionString("iblock", "FORMAT_ACTIVE_DATES", "-");
 		CPageOption::SetOptionString("iblock", "FORMAT_ACTIVE_DATES", "FULL");
 
 		$nav = $LIMIT_NUM > 0? array("nTopCount" => $LIMIT_NUM): false;
@@ -152,7 +150,6 @@ class CIBlockRSS extends CAllIBlockRSS
 		CTimeZone::Enable();
 
 		CPageOption::SetOptionString("iblock", "FORMAT_ACTIVE_DATES", $formatActiveDates);
-		CPageOption::SetOptionString("iblock", "FORMAT_ACTIVE_DATES", $shortFormatActiveDates);
 
 		while ($arItem = $items->GetNext())
 		{

@@ -25,6 +25,9 @@ abstract class Provider
 	const DATA_ENTITY_TYPE_LOG_ENTRY = 'LOG_ENTRY';
 	const DATA_ENTITY_TYPE_LOG_COMMENT = 'LOG_COMMENT';
 	const DATA_ENTITY_TYPE_RATING_LIST = 'RATING_LIST';
+	const DATA_ENTITY_TYPE_PHOTOGALLERY_ALBUM = 'PHOTO_ALBUM';
+	const DATA_ENTITY_TYPE_PHOTOGALLERY_PHOTO = 'PHOTO_PHOTO';
+	const DATA_ENTITY_TYPE_LISTS_ITEM = 'LISTS_NEW_ELEMENT';
 
 	const PERMISSION_DENY = 'D';
 	const PERMISSION_READ = 'I';
@@ -113,6 +116,15 @@ abstract class Provider
 				break;
 			case self::DATA_ENTITY_TYPE_RATING_LIST:
 				$provider = new \Bitrix\Socialnetwork\Livefeed\RatingVoteList();
+				break;
+			case self::DATA_ENTITY_TYPE_PHOTOGALLERY_ALBUM:
+				$provider = new \Bitrix\Socialnetwork\Livefeed\PhotogalleryAlbum();
+				break;
+			case self::DATA_ENTITY_TYPE_PHOTOGALLERY_PHOTO:
+				$provider = new \Bitrix\Socialnetwork\Livefeed\PhotogalleryPhoto();
+				break;
+			case self::DATA_ENTITY_TYPE_LISTS_ITEM:
+				$provider = new \Bitrix\Socialnetwork\Livefeed\ListsItem();
 				break;
 			default:
 				$provider = false;
@@ -572,6 +584,22 @@ abstract class Provider
 		$contentEntityType = $contentEntityId = false;
 
 		if (
+			!empty($event["EVENT_ID"])
+			&& $event["EVENT_ID"] == 'photo'
+		)
+		{
+			$contentEntityType = self::DATA_ENTITY_TYPE_PHOTOGALLERY_ALBUM;
+			$contentEntityId = intval($event["SOURCE_ID"]);
+		}
+		elseif (
+			!empty($event["EVENT_ID"])
+			&& $event["EVENT_ID"] == 'photo_photo'
+		)
+		{
+			$contentEntityType = self::DATA_ENTITY_TYPE_PHOTOGALLERY_PHOTO;
+			$contentEntityId = intval($event["SOURCE_ID"]);
+		}
+		elseif (
 			!empty($event["RATING_TYPE_ID"])
 			&& !empty($event["RATING_ENTITY_ID"])
 			&& intval($event["RATING_ENTITY_ID"]) > 0

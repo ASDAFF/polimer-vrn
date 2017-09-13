@@ -467,12 +467,11 @@ abstract class Base extends \CBitrixComponent
 	{
 		if ($this->useCatalog && $this->useDiscountCache)
 		{
-			if (!$this->storage['USE_SALE_DISCOUNTS'])
-				\CCatalogDiscount::ClearDiscountCache(array(
-					'PRODUCT' => true,
-					'SECTIONS' => true,
-					'PROPERTIES' => true
-				));
+			\CCatalogDiscount::ClearDiscountCache(array(
+				'PRODUCT' => true,
+				'SECTIONS' => true,
+				'PROPERTIES' => true
+			));
 		}
 	}
 
@@ -586,6 +585,9 @@ abstract class Base extends \CBitrixComponent
 				$this->getUserGroups()
 			);
 		}
+
+		if ($this->useCatalog)
+			Catalog\Product\Price::loadRoundRules($this->storage['PRICES_ALLOW']);
 	}
 
 	/**
@@ -1608,15 +1610,15 @@ abstract class Base extends \CBitrixComponent
 						{
 							$fieldName = key($childResult);
 
-							if (!is_array($result[$fieldName]) || !isset($result[$fieldName]['LOGIC']))
+							if (!isset($result['LOGIC']))
 							{
-								$result[$fieldName] = array(
+								$result = array(
 									'LOGIC' => $condition['DATA']['All'],
-									$result[$fieldName]
+									array($fieldName => $result[$fieldName])
 								);
 							}
 
-							$result[$fieldName][] = $childResult[$fieldName];
+							$result[][$fieldName] = $childResult[$fieldName];
 						}
 						else
 						{
@@ -1765,28 +1767,35 @@ abstract class Base extends \CBitrixComponent
 
 			foreach ($result as $name => $value)
 			{
-				if (($ind = strpos($name, 'CondIBProp')) !== false)
+				if (!empty($result[$name]) && is_array($result[$name]))
 				{
-					list($prefix, $iblock, $propertyId) = explode(':', $name);
-					$operator = $ind > 0 ? substr($prefix, 0, $ind) : '';
-
-					$catalogInfo = \CCatalogSku::GetInfoByIBlock($iblock);
-					if (!empty($catalogInfo))
+					$this->parsePropertyCondition($result[$name], $condition, $params);
+				}
+				else
+				{
+					if (($ind = strpos($name, 'CondIBProp')) !== false)
 					{
-						if (
-							$catalogInfo['CATALOG_TYPE'] != \CCatalogSku::TYPE_CATALOG
-							&& $catalogInfo['IBLOCK_ID'] == $iblock
-						)
-						{
-							$subFilter[$operator.'PROPERTY_'.$propertyId] = $value;
-						}
-						else
-						{
-							$result[$operator.'PROPERTY_'.$propertyId] = $value;
-						}
-					}
+						list($prefix, $iblock, $propertyId) = explode(':', $name);
+						$operator = $ind > 0 ? substr($prefix, 0, $ind) : '';
 
-					unset($result[$name]);
+						$catalogInfo = \CCatalogSku::GetInfoByIBlock($iblock);
+						if (!empty($catalogInfo))
+						{
+							if (
+								$catalogInfo['CATALOG_TYPE'] != \CCatalogSku::TYPE_CATALOG
+								&& $catalogInfo['IBLOCK_ID'] == $iblock
+							)
+							{
+								$subFilter[$operator.'PROPERTY_'.$propertyId] = $value;
+							}
+							else
+							{
+								$result[$operator.'PROPERTY_'.$propertyId] = $value;
+							}
+						}
+
+						unset($result[$name]);
+					}
 				}
 			}
 

@@ -249,11 +249,38 @@ window.FCForm.prototype = {
  			}, this)
 		});
 	},
+	checkConsent: function() {
+//		consent was set previously
+		if(this.consent == true)
+		{
+			this.submit();
+		}
+		else
+		{
+//			to listen consent answer if they not set already
+			var control = BX.UserConsent.load(BX('<?=$component->createPostFormId()?>'));
+
+//			add new accept event with form submit
+			BX.addCustomEvent(
+				control,
+				BX.UserConsent.events.save,
+				BX.proxy(function () {this.consent = true; this.submit();}, this)
+			);
+			BX.addCustomEvent(
+				control,
+				BX.UserConsent.events.refused,
+				BX.proxy(function () {this.consent = false;}, this)
+			);
+
+//			to open consent form if needed
+			BX.onCustomEvent(this, 'OnUCFormCheckConsent', []);
+		}
+	},
 	showError : function(text) {
 		var node = BX('err_comment_'+this.id[1]);
 		node.insertBefore(BX.create('div', {
 				attrs : {"class": "feed-add-error"},
-				html: '<div class="blog-errors blog-note-box blog-note-error"><div class="blog-error-text" id="blg-com-err">' + text + '</div></div>'
+				html: '<div class="blog-errors blog-note-box blog-note-error"><div class="blog-error-text" id="blg-com-err">' + BX.util.htmlspecialchars(text) + '</div></div>'
 			}),
 			node.firstChild);
 	},
@@ -376,7 +403,11 @@ window.replyCommentNew = function(key, postId)
 
 window.submitCommentNew = function()
 {
-	window["UC"]["f<?=$component->createPostFormId()?>"].submit();
+	<?if ($arResult['userID'] == NULL && $arParams['USER_CONSENT'] == 'Y'):?>
+		window["UC"]["f<?=$component->createPostFormId()?>"].checkConsent();
+	<?else:?>
+		window["UC"]["f<?=$component->createPostFormId()?>"].submit();
+	<?endif;?>
 };
 
 window.cancelComment = function()

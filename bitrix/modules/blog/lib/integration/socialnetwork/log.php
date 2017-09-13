@@ -154,6 +154,7 @@ class Log
 				{
 					$category = \CBlogCategory::getByID($value);
 					$tagList[] = $category["NAME"];
+					$tagList[] = '#'.$category["NAME"];
 				}
 				if (!empty($tagList))
 				{

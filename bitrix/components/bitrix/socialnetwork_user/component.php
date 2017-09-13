@@ -421,7 +421,11 @@ if (IsModuleInstalled("blog"))
 {
 	if (!array_key_exists("PATH_TO_GROUP_POST", $arParams))
 	{
-		$arParams["PATH_TO_GROUP_POST"] = "/workgroups/group/#group_id#/blog/#post_id#/";
+		$arParams["PATH_TO_GROUP_POST"] = SITE_DIR."workgroups/group/#group_id#/blog/#post_id#/";
+	}
+	if (!array_key_exists("PATH_TO_GROUP_BLOG", $arParams))
+	{
+		$arParams["PATH_TO_GROUP_BLOG"] = SITE_DIR."workgroups/group/#group_id#/blog/";
 	}
 
 	if (!array_key_exists("BLOG_ALLOW_POST_CODE", $arParams))

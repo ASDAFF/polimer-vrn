@@ -648,11 +648,7 @@ if($lAdmin->EditAction())
 						$arCatalogProduct['QUANTITY_TRACE'] = $arFields['CATALOG_QUANTITY_TRACE'];
 					if (isset($arFields['CATALOG_MEASURE']) && is_string($arFields['CATALOG_MEASURE']) && (int)$arFields['CATALOG_MEASURE'] > 0)
 						$arCatalogProduct['MEASURE'] = $arFields['CATALOG_MEASURE'];
-					if ('Y' != $strUseStoreControl)
-					{
-						if (isset($arFields['CATALOG_QUANTITY']) && '' != $arFields['CATALOG_QUANTITY'])
-							$arCatalogProduct['QUANTITY'] = $arFields['CATALOG_QUANTITY'];
-					}
+
 					if ($catalogPurchasInfoEdit)
 					{
 						if (
@@ -665,7 +661,17 @@ if($lAdmin->EditAction())
 						}
 					}
 
-					if (!Catalog\ProductTable::isExistProduct($ID))
+					if ($strUseStoreControl != 'Y')
+					{
+						if (isset($arFields['CATALOG_QUANTITY']) && '' != $arFields['CATALOG_QUANTITY'])
+							$arCatalogProduct['QUANTITY'] = $arFields['CATALOG_QUANTITY'];
+					}
+
+					$product = Catalog\ProductTable::getList(array(
+						'select' => array('ID', 'SUBSCRIBE_ORIG'),
+						'filter' => array('=ID' => $ID)
+					))->fetch();
+					if (empty($product))
 					{
 						$arCatalogProduct['ID'] = $ID;
 						CCatalogProduct::Add($arCatalogProduct, false);
@@ -673,8 +679,13 @@ if($lAdmin->EditAction())
 					else
 					{
 						if (!empty($arCatalogProduct))
+						{
+							if ($strUseStoreControl != 'Y')
+								$arCatalogProduct['SUBSCRIBE'] = $product['SUBSCRIBE_ORIG'];
 							CCatalogProduct::Update($ID, $arCatalogProduct);
+						}
 					}
+					unset($product);
 
 					if (isset($arFields['CATALOG_MEASURE_RATIO']))
 					{
@@ -1756,7 +1767,8 @@ $arElemID = array();
 $arProductIDs = array();
 $arCatalogRights = array();
 
-
+$mainEntityEdit = false;
+$mainEntityEditPrice = false;
 
 // List build
 while($arRes = $rsData->NavNext(true, "f_"))
@@ -1820,7 +1832,11 @@ while($arRes = $rsData->NavNext(true, "f_"))
 	{
 		$bReadOnly = !CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $f_ID, "element_edit");
 		$boolEditPrice = CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $f_ID, "element_edit_price");
+		if ($boolEditPrice)
+			$mainEntityEditPrice = true;
 	}
+	if (!$bReadOnly)
+		$mainEntityEdit = true;
 
 	if ($bCatalog && 'E' == $f_TYPE)
 	{
@@ -3260,39 +3276,43 @@ $lAdmin->AddFooter(
 // Action bar
 if(true)
 {
-	$arActions = array(
-		"delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
-		"activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
-		"deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
-		'clear_counter' => strtolower(GetMessage('IBLIST_A_CLEAR_COUNTER'))
-	);
+	$arActions = array();
 	$arParams = array();
-
-	if($arIBTYPE["SECTIONS"] == "Y")
+	if ($mainEntityEdit)
 	{
-		$sections = '<div id="section_to_move" style="display:none"><select name="section_to_move">';
-		$sections .= '<option value="">'.GetMessage("MAIN_NO").'</option>';
-		$sections .= '<option value="0">'.GetMessage("IBLOCK_UPPER_LEVEL").'</option>';
-		$rsSections = CIBlockSection::GetTreeList(Array("IBLOCK_ID"=>$IBLOCK_ID), array("ID", "NAME", "DEPTH_LEVEL"));
-		while($ar = $rsSections->GetNext())
-		{
-			$sections .= '<option value="'.$ar["ID"].'">'.str_repeat(" . ", $ar["DEPTH_LEVEL"]).$ar["NAME"].'</option>';
-		}
-		$sections .= '</select></div>';
+		$arActions = array(
+			"delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+			"activate" => GetMessage("MAIN_ADMIN_LIST_ACTIVATE"),
+			"deactivate" => GetMessage("MAIN_ADMIN_LIST_DEACTIVATE"),
+			'clear_counter' => strtolower(GetMessage('IBLIST_A_CLEAR_COUNTER'))
+		);
 
-		$arActions["section"] = GetMessage("IBLIST_A_MOVE_TO_SECTION");
-		$arActions["add_section"] = GetMessage("IBLIST_A_ADD_TO_SECTION");
-		if ($bCatalog && $USER->CanDoOperation('catalog_price'))
+		if ($arIBTYPE["SECTIONS"] == "Y")
+		{
+			$sections = '<div id="section_to_move" style="display:none"><select name="section_to_move">';
+			$sections .= '<option value="">'.GetMessage("MAIN_NO").'</option>';
+			$sections .= '<option value="0">'.GetMessage("IBLOCK_UPPER_LEVEL").'</option>';
+			$rsSections = CIBlockSection::GetTreeList(Array("IBLOCK_ID" => $IBLOCK_ID), array("ID", "NAME", "DEPTH_LEVEL"));
+			while ($ar = $rsSections->GetNext())
+			{
+				$sections .= '<option value="'.$ar["ID"].'">'.str_repeat(" . ", $ar["DEPTH_LEVEL"]).$ar["NAME"].'</option>';
+			}
+			$sections .= '</select></div>';
+
+			$arActions["section"] = GetMessage("IBLIST_A_MOVE_TO_SECTION");
+			$arActions["add_section"] = GetMessage("IBLIST_A_ADD_TO_SECTION");
+			$arActions["section_chooser"] = array("type" => "html", "value" => $sections);
+			$arParams["select_onchange"] = "BX('section_to_move').style.display = (this.value == 'section' || this.value == 'add_section'? 'block':'none');";
+		}
+
+		if ($bCatalog && $USER->CanDoOperation('catalog_price') && $mainEntityEditPrice)
 		{
 			$arActions["change_price"] = array(
 				"action" => "CreateDialogChPrice()",
 				"value" => "change_price",
-				"name" => GetMessage("IBLOCK_CHANGE_PRICE"));
+				"name" => GetMessage("IBLOCK_CHANGE_PRICE")
+			);
 		}
-		$arActions["section_chooser"] = array("type" => "html", "value" => $sections);
-
-		$arParams["select_onchange"] = "BX('section_to_move').style.display = (this.value == 'section' || this.value == 'add_section'? 'block':'none');";
-
 	}
 
 	if($bWorkFlow)

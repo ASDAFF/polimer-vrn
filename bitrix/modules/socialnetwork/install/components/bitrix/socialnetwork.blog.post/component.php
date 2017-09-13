@@ -39,6 +39,13 @@ $arResult["bExtranetSite"] = ($arResult["bExtranetInstalled"] && CExtranet::IsEx
 $arResult["bExtranetUser"] = ($arResult["bExtranetInstalled"] && !CExtranet::IsIntranetUser());
 $arResult["ReadOnly"] = (isset($arParams["GROUP_READ_ONLY"]) && $arParams["GROUP_READ_ONLY"] == "Y");
 
+$folderUsers = COption::GetOptionString("socialnetwork", "user_page", false, SITE_ID);
+$arParams["PATH_TO_LOG_TAG"] = $folderUsers."log/?TAG=#tag#";
+if (SITE_TEMPLATE_ID == 'bitrix24')
+{
+	$arParams["PATH_TO_LOG_TAG"] .= "&apply_filter=Y";
+}
+
 if ($arResult["bExtranetUser"])
 {
 	$arUserIdVisible = CExtranet::GetMyGroupsUsersSimple(SITE_ID);
@@ -490,7 +497,15 @@ if(
 						BXClearCache(true, "/blog/socnet_post/".intval($arParams["ID"] / 100)."/".$arParams["ID"]."/");
 						BXClearCache(true, "/blog/socnet_post/gen/".intval($arParams["ID"] / 100)."/".$arParams["ID"]);
 						CBlogPost::DeleteLog($arParams["ID"]);
-						$url = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_BLOG"], array("user_id" => $arBlog["OWNER_ID"]));
+
+						$url = (
+							isset($_REQUEST["SONET_GROUP_ID"])
+							&& intval($_REQUEST["SONET_GROUP_ID"]) > 0
+							&& !empty($arParams["PATH_TO_GROUP_BLOG"])
+								? CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_BLOG"], array("group_id" => intval($_REQUEST["SONET_GROUP_ID"])))
+								: CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_BLOG"], array("user_id" => $arBlog["OWNER_ID"]))
+						);
+
 						if(strpos($url, "?") === false)
 							$url .= "?";
 						else
@@ -675,6 +690,7 @@ if(
 				"PATH_TO_POST",
 				"PATH_TO_GROUP",
 				"PATH_TO_SEARCH_TAG",
+				"PATH_TO_LOG_TAG",
 				"IMAGE_MAX_WIDTH",
 				"IMAGE_MAX_HEIGHT",
 				"DATE_TIME_FORMAT",
@@ -1057,7 +1073,7 @@ if(
 					{
 						$arCatTmp["~NAME"] = $arCatTmp["NAME"];
 						$arCatTmp["NAME"] = htmlspecialcharsEx($arCatTmp["NAME"]);
-						$arCatTmp["urlToCategory"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_SEARCH_TAG"], array("tag" => urlencode($arCatTmp["NAME"])));
+						$arCatTmp["urlToCategory"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_LOG_TAG"], array("tag" => urlencode($arCatTmp["NAME"])));
 						$arResult["Category"][] = $arCatTmp;
 					}
 				}

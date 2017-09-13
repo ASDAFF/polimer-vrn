@@ -53,4 +53,5 @@ $MESS["BLOG_PHOTO"] = "Фото:";
 $MESS["MPF_IMAGE_TITLE"] = "Вставити зображення в повідомлення";
 $MESS["BLOG_ADD_FILES"] = "Додати файли";
 $MESS["BLOG_PC_COMMENT"] = "Скасувати";
+$MESS["BPC_ERROR_NO_TEXT"] = "Ви повинні ввести текст повідомлення";
 ?>

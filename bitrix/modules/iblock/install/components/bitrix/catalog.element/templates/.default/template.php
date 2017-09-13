@@ -706,6 +706,7 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 															'BUTTON_ID' => $itemIds['SUBSCRIBE_LINK'],
 															'BUTTON_CLASS' => 'btn btn-default product-item-detail-buy-button',
 															'DEFAULT_DISPLAY' => !$actualItem['CAN_BUY'],
+															'MESS_BTN_SUBSCRIBE' => $arParams['~MESS_BTN_SUBSCRIBE'],
 														),
 														$component,
 														array('HIDE_ICONS' => 'Y')
@@ -930,39 +931,48 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 							?>
 							<div class="product-item-detail-tab-content" data-entity="tab-container" data-value="comments" style="display: none;">
 								<?
+								$componentCommentsParams = array(
+									'ELEMENT_ID' => $arResult['ID'],
+									'ELEMENT_CODE' => '',
+									'IBLOCK_ID' => $arParams['IBLOCK_ID'],
+									'SHOW_DEACTIVATED' => $arParams['SHOW_DEACTIVATED'],
+									'URL_TO_COMMENT' => '',
+									'WIDTH' => '',
+									'COMMENTS_COUNT' => '5',
+									'BLOG_USE' => $arParams['BLOG_USE'],
+									'FB_USE' => $arParams['FB_USE'],
+									'FB_APP_ID' => $arParams['FB_APP_ID'],
+									'VK_USE' => $arParams['VK_USE'],
+									'VK_API_ID' => $arParams['VK_API_ID'],
+									'CACHE_TYPE' => $arParams['CACHE_TYPE'],
+									'CACHE_TIME' => $arParams['CACHE_TIME'],
+									'CACHE_GROUPS' => $arParams['CACHE_GROUPS'],
+									'BLOG_TITLE' => '',
+									'BLOG_URL' => $arParams['BLOG_URL'],
+									'PATH_TO_SMILE' => '',
+									'EMAIL_NOTIFY' => $arParams['BLOG_EMAIL_NOTIFY'],
+									'AJAX_POST' => 'Y',
+									'SHOW_SPAM' => 'Y',
+									'SHOW_RATING' => 'N',
+									'FB_TITLE' => '',
+									'FB_USER_ADMIN_ID' => '',
+									'FB_COLORSCHEME' => 'light',
+									'FB_ORDER_BY' => 'reverse_time',
+									'VK_TITLE' => '',
+									'TEMPLATE_THEME' => $arParams['~TEMPLATE_THEME']
+								);
+								if(isset($arParams["USER_CONSENT"]))
+									$componentCommentsParams["USER_CONSENT"] = $arParams["USER_CONSENT"];
+								if(isset($arParams["USER_CONSENT_ID"]))
+									$componentCommentsParams["USER_CONSENT_ID"] = $arParams["USER_CONSENT_ID"];
+								if(isset($arParams["USER_CONSENT_IS_CHECKED"]))
+									$componentCommentsParams["USER_CONSENT_IS_CHECKED"] = $arParams["USER_CONSENT_IS_CHECKED"];
+								if(isset($arParams["USER_CONSENT_IS_LOADED"]))
+									$componentCommentsParams["USER_CONSENT_IS_LOADED"] = $arParams["USER_CONSENT_IS_LOADED"];
 								$APPLICATION->IncludeComponent(
 									'bitrix:catalog.comments',
 									'',
-									array(
-										'ELEMENT_ID' => $arResult['ID'],
-										'ELEMENT_CODE' => '',
-										'IBLOCK_ID' => $arParams['IBLOCK_ID'],
-										'SHOW_DEACTIVATED' => $arParams['SHOW_DEACTIVATED'],
-										'URL_TO_COMMENT' => '',
-										'WIDTH' => '',
-										'COMMENTS_COUNT' => '5',
-										'BLOG_USE' => $arParams['BLOG_USE'],
-										'FB_USE' => $arParams['FB_USE'],
-										'FB_APP_ID' => $arParams['FB_APP_ID'],
-										'VK_USE' => $arParams['VK_USE'],
-										'VK_API_ID' => $arParams['VK_API_ID'],
-										'CACHE_TYPE' => $arParams['CACHE_TYPE'],
-										'CACHE_TIME' => $arParams['CACHE_TIME'],
-										'CACHE_GROUPS' => $arParams['CACHE_GROUPS'],
-										'BLOG_TITLE' => '',
-										'BLOG_URL' => $arParams['BLOG_URL'],
-										'PATH_TO_SMILE' => '',
-										'EMAIL_NOTIFY' => $arParams['BLOG_EMAIL_NOTIFY'],
-										'AJAX_POST' => 'Y',
-										'SHOW_SPAM' => 'Y',
-										'SHOW_RATING' => 'N',
-										'FB_TITLE' => '',
-										'FB_USER_ADMIN_ID' => '',
-										'FB_COLORSCHEME' => 'light',
-										'FB_ORDER_BY' => 'reverse_time',
-										'VK_TITLE' => '',
-										'TEMPLATE_THEME' => $arParams['~TEMPLATE_THEME']
-									),
+									$componentCommentsParams,
 									$component,
 									array('HIDE_ICONS' => 'Y')
 								);

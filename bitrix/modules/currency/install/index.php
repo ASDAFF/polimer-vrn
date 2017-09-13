@@ -95,6 +95,8 @@ class currency extends CModule
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandlerCompatible('iblock', 'OnIBlockPropertyBuildList', 'currency',
 			'\Bitrix\Currency\Integration\IblockMoneyProperty', 'getUserTypeDescription');
+		$eventManager->registerEventHandlerCompatible('main', 'OnUserTypeBuildList', 'currency',
+			'\Bitrix\Currency\UserField\Money', 'getUserTypeDescription');
 
 		return true;
 	}
@@ -118,6 +120,8 @@ class currency extends CModule
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->unRegisterEventHandler('iblock', 'OnIBlockPropertyBuildList', 'currency',
 			'\Bitrix\Currency\Integration\IblockMoneyProperty', 'getUserTypeDescription');
+		$eventManager->unRegisterEventHandler('main', 'OnUserTypeBuildList', 'currency',
+			'\Bitrix\Currency\UserField\Money', 'getUserTypeDescription');
 
 		CAgent::RemoveModuleAgents('currency');
 		ModuleManager::unRegisterModule('currency');

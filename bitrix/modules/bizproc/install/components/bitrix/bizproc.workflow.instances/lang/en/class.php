@@ -27,5 +27,5 @@ $MESS["BPWI_NO_DOCUMENT"] = "The element was not found.";
 $MESS["BPWI_MODULE_CRM"] = "CRM";
 $MESS["BPWI_MODULE_IBLOCK"] = "Lists";
 $MESS["BPWI_MODULE_DISK"] = "Drive";
-$MESS["BPWI_MODULE_LISTS"] = "Workflows";
+$MESS["BPWI_MODULE_LISTS"] = "Activity Stream";
 ?>

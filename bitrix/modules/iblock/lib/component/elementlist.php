@@ -1125,9 +1125,14 @@ abstract class ElementList extends Base
 		}
 
 		$params['LINE_ELEMENT_COUNT'] = (int)$params['LINE_ELEMENT_COUNT'];
-		if ($params['LINE_ELEMENT_COUNT'] < 2 || $params['LINE_ELEMENT_COUNT'] > 5)
+		if ($params['LINE_ELEMENT_COUNT'] < 2)
 		{
-			$params['LINE_ELEMENT_COUNT'] = 3;
+			$params['LINE_ELEMENT_COUNT'] = 2;
+		}
+
+		if ($params['LINE_ELEMENT_COUNT'] > 5)
+		{
+			$params['LINE_ELEMENT_COUNT'] = 5;
 		}
 
 		if ($params['ADD_TO_BASKET_ACTION'] != 'BUY')

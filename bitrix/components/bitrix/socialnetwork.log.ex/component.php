@@ -148,6 +148,12 @@ $arParams["PATH_TO_MESSAGES_CHAT"] = (array_key_exists("PATH_TO_MESSAGES_CHAT", 
 $arParams["PATH_TO_VIDEO_CALL"] = (array_key_exists("PATH_TO_VIDEO_CALL", $arParams) && strlen(trim($arParams["PATH_TO_VIDEO_CALL"])) > 0 ? trim($arParams["PATH_TO_VIDEO_CALL"]) : $pathToVideoCall);
 $arParams["PATH_TO_SMILE"] = (array_key_exists("PATH_TO_SMILE", $arParams) && strlen(trim($arParams["PATH_TO_SMILE"])) > 0 ? trim($arParams["PATH_TO_SMILE"]) : $pathToSmile);
 
+$arResult["PATH_TO_LOG_TAG"] = $folderUsers."log/?TAG=#tag#";
+if (SITE_TEMPLATE_ID == 'bitrix24')
+{
+	$arResult["PATH_TO_LOG_TAG"] .= "&apply_filter=Y";
+}
+
 $arParams["LOG_ID"] = IntVal($arParams["LOG_ID"]);
 if ($arParams["LOG_ID"] > 0)
 {
@@ -272,6 +278,8 @@ $bUseLogin = $arParams['SHOW_LOGIN'] != "N" ? true : false;
 
 if (StrLen($arParams["ENTITY_TYPE"]) <= 0)
 	$arParams["ENTITY_TYPE"] = Trim($_REQUEST["flt_entity_type"]);
+
+$arParams["TAG"] = (isset($_REQUEST["TAG"]) ? trim($_REQUEST["TAG"]) : "");
 
 $arParams["AVATAR_SIZE_COMMON"] = (isset($arParams["AVATAR_SIZE_COMMON"]) && intval($arParams["AVATAR_SIZE_COMMON"]) > 0) ? intval($arParams["AVATAR_SIZE_COMMON"]) : 100;
 $arParams["AVATAR_SIZE"] = (isset($arParams["AVATAR_SIZE"]) && intval($arParams["AVATAR_SIZE"]) > 0) ? intval($arParams["AVATAR_SIZE"]) : 100;
@@ -893,6 +901,15 @@ if (
 		$ENTITY_TYPE = $arFilter["ENTITY_TYPE"] = $arParams["ENTITY_TYPE"];
 		$ENTITY_ID = 0;
 	}
+	elseif (strlen($arParams["TAG"]) > 0)
+	{
+		$arFilter["=TAG"] = $arParams["TAG"];
+
+		$arParams["SET_LOG_COUNTER"] = $arParams["SET_LOG_PAGE_CACHE"] = "N";
+		$arResult["SHOW_UNREAD"] = $arParams["SHOW_UNREAD"] = "N";
+		$arParams["USE_FOLLOW"] = "N";
+		$arResult["IS_FILTERED"] = true;
+	}
 	else
 	{
 		$ENTITY_TYPE = "";
@@ -1163,6 +1180,33 @@ if (
 		{
 			$filtered = true;
 			$arFilter[">FAVORITES_USER_ID"] = 0;
+		}
+
+		if (!empty($filterData["TAG"]))
+		{
+			$tagsList = explode(' ', $filterData["TAG"]);
+			$tagsList = array_map(
+				function($tag) {
+					return $tag;
+				},
+				$tagsList
+			);
+			$tagsList = array_values(array_unique(array_filter($tagsList, function($tag) {
+				return !empty($tag);
+			})));
+
+			if (!empty($tagsList))
+			{
+				$filtered = true;
+				if (count($tagsList) == 1)
+				{
+					$arFilter["=TAG"] = $tagsList[0];
+				}
+				else
+				{
+					$arFilter["@TAG"] = $tagsList;
+				}
+			}
 		}
 
 		if (
