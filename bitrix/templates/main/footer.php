@@ -210,9 +210,34 @@
 	),
 	false
 );?>
-
-
-
+				
+				<?$APPLICATION->IncludeComponent(
+					"nbrains:main.feedback",
+					"buy-one-click",
+					array(
+						"EMAIL_TO" => "sale@polimer-vrn",
+						"EVENT_MESSAGE_ID" => array(
+							0 => "90",
+						),
+						"IBLOCK_ID" => "15",
+						"IBLOCK_TYPE" => "feedback",
+						"OK_TEXT" => "Спасибо, ваше сообщение принято.",
+						"PROPERTY_CODE" => array(
+							0 => "FIO",
+							1 => "PHONE",
+							2 => "EMAIL",
+							3 => "RULE",
+							4 => "PRODUCT",
+							5 => "LINK_PRODUCT",
+							6 => "IMG_PRODUCT",
+							7 => "PRICE",
+						),
+						"USE_CAPTCHA" => "N",
+						"COMPONENT_TEMPLATE" => "buy-one-click",
+						"PRODUCT" => $GLOBALS['PRODUCT']
+					),
+					false
+				);?>
 
 				<?$APPLICATION->IncludeComponent(
 	"nbrains:main.feedback", 
