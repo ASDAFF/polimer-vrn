@@ -115,7 +115,7 @@ $this->setFrameMode(true);
                <div class="content">
                   <?=$arResult['DETAIL_TEXT']?>
                    <? foreach($arResult['PROPERTIES']['FILES']['VALUE'] as $key => $file): ?>
-                   <p><a href="<?=CFile::GetPath($file);?>"><?=$arResult['PROPERTIES']['FILES']['DESCRIPTION'][$key];?></a></p>
+                   <p><a class="download" href="<?=CFile::GetPath($file);?>"><?=$arResult['PROPERTIES']['FILES']['DESCRIPTION'][$key];?></a></p>
                    <? endforeach; ?>
                </div>
             </div>
