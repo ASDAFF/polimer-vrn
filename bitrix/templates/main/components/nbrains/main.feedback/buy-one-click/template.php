@@ -47,14 +47,17 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 			<? foreach($arResult['USER_FIELD'] as $field):?>
 
 				<? if($field['XML_ID'] == 'hidden'):?>
-					<?
-					$prod = getUrlProd($APPLICATION->GetCurPage(false));
-					?>
-					<?if($field['CODE'] == 'PRODUCT'):?>
-						<input type="hidden" name="<?=$field['CODE']?>" value="<?=$prod['NAME']?>">
-					<? else:?>
-						<input type="hidden" name="<?=$field['CODE']?>" value="<?=$prod['DETAIL_PAGE_URL']?>">
+
+					<?if($field['CODE'] == 'PRODUCT'): ?>
+						<input type="hidden" name="<?=$field['CODE']?>" value="<?=$arParams['PRODUCT']['NAME']?>">
+					<? elseif($field['CODE'] == 'LINK_PRODUCT'):?>
+						<input type="hidden" name="<?=$field['CODE']?>" value="<?=$arParams['PRODUCT']['LINK']?>">
+					<? elseif($field['CODE'] == 'IMG_PRODUCT'):?>
+						<input type="hidden" name="<?=$field['CODE']?>" value="<?=$arParams['PRODUCT']['IMG']?>">
+					<? else: ?>
+						<input type="hidden" name="<?=$field['CODE']?>" value="<?=$arParams['PRODUCT']['PRICE']?>">
 					<?endif;?>
+
 				<? else: ?>
 
 				<?if($field['PROPERTY_TYPE'] == "S"):?>

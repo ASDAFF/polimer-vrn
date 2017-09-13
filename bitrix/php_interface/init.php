@@ -21,12 +21,14 @@ function getUrlProd($url){
         }
 
         if(CModule::IncludeModule("iblock")) {
-            $arSelect = Array("ID", "IBLOCK_ID","DETAIL_PAGE_URL", "NAME", "PROPERTY_*");//IBLOCK_ID и ID обязательно должны быть указаны, см. описание arSelectFields выше
+            $arSelect = Array("ID", "IBLOCK_ID","DETAIL_PAGE_URL","PREVIEW_PICTURE", "NAME", "PROPERTY_MORE_PHOTO");//IBLOCK_ID и ID обязательно должны быть указаны, см. описание arSelectFields выше
             $arFilter = Array("IBLOCK_ID" => 21, "CODE" => $code);
             $res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
             if($ob = $res->GetNextElement()) {
                 $arFields = $ob->GetFields();
-                return $arFields;
+                $arProps = $ob->GetProperties();
+                $arResults = array_merge($arFields,$arProps);
+                return $arResults;
             }
         }
     }
