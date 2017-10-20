@@ -1,7 +1,7 @@
 <?
 $aMenuLinks = Array(
 	Array(
-		"Сервисный центр оборудования", 
+		"Сервисный центр насосного оборудования", 
 		"/service/equipment/", 
 		Array(), 
 		Array(), 

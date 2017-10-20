@@ -26,6 +26,11 @@ ErrorDocument 404 /404.php
 # от 31.08.2017
   Redirect 301 /catalog/inzhenernaya_santekhnika_otoplenie_vodoprovod_kanalizatsiya/ /catalog/inzhenernaya_santekhnika/
   Redirect 301 /catalog/stroitelnye_materialy/ /catalog/stroitelno_otdelochnye_materialy/
+  Redirect 301 /catalog/polipropilenovye_truby_i_fitingi_/ /catalog/polipropelenovye_truby_i_fitingi_fusitek/
+  Redirect 301 /catalog/peletkotly/ /catalog/tverdotoplivnye_kotly/
+  Redirect 301 /articles/tverdotoplivnyj-kotel/ /catalog/tverdotoplivnye_kotly/
+  Redirect 301 /articles/centrobezhnyj-nasos/ /articles/tsentrobezhnye-nasosy-dlya-vody/
+  Redirect 301 /catalog/vikhrevye_nasosy/ /catalog/tsentrobezhnye_nasosy/                               
 
 <IfModule mod_rewrite.c>
   Options +FollowSymLinks

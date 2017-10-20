@@ -4,7 +4,7 @@
 //**    MODIFICATION OF THIS FILE WILL ENTAIL SITE FAILURE            **/
 //**********************************************************************/
 if (!defined("UPDATE_SYSTEM_VERSION"))
-	define("UPDATE_SYSTEM_VERSION", "17.0.7");
+	define("UPDATE_SYSTEM_VERSION", "17.5.0");
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 define("HELP_FILE", "marketplace/sysupdate.php");
@@ -177,6 +177,12 @@ if (IntVal($arCurPhpVer[0]) < 5
 {
 	$errorMessage .= "<br>".GetMessage("SUP_PHP_L439", array("#VERS#" => $curPhpVer));
 }
+elseif (intval($arCurPhpVer[0]) < 5
+	|| intval($arCurPhpVer[0]) == 5 && intval($arCurPhpVer[1]) < 6
+	|| intval($arCurPhpVer[0]) == 5 && intval($arCurPhpVer[1]) == 6 && intval($arCurPhpVer[2]) < 0)
+{
+    $systemMessage .= "<br>".GetMessage("SUP_PHP_L560", array("#VERS#" => $curPhpVer));
+}
 
 if (array_key_exists("HTTP_BX_MASTER", $_SERVER) && ($_SERVER["HTTP_BX_MASTER"] != "Y"))
 {
@@ -310,7 +316,8 @@ $tabControl->BeginNextTab();
 				{
 					for ($i = 0, $cnt = count($arUpdateList["MODULES"][0]["#"]["MODULE"]); $i < $cnt; $i++)
 					{
-						$countTotalImportantUpdates += count($arUpdateList["MODULES"][0]["#"]["MODULE"][$i]["#"]["VERSION"]);
+						if (isset($arUpdateList["MODULES"][0]["#"]["MODULE"][$i]["#"]["VERSION"]))
+							$countTotalImportantUpdates += count($arUpdateList["MODULES"][0]["#"]["MODULE"][$i]["#"]["VERSION"]);
 						if (!array_key_exists($arUpdateList["MODULES"][0]["#"]["MODULE"][$i]["@"]["ID"], $arClientModules))
 							$countTotalImportantUpdates += 1;
 					}
@@ -1540,7 +1547,7 @@ $tabControl->BeginNextTab();
 							<td><B><?= GetMessage("SUP_SUB_ERROR") ?></B></td>
 						</tr>
 						<tr>
-							<td valign="top"><div id="upd_error_div_text"></td>
+							<td valign="top"><div id="upd_error_div_text"></div></td>
 						</tr>
 					</table>
 				</div>
@@ -2015,7 +2022,7 @@ $tabControl->BeginNextTab();
 							$arModuleTmp["@"]["ID"] = preg_replace("#[^A-Za-z0-9._-]#", "", $arModuleTmp["@"]["ID"]);
 
 							$strTitleTmp = $arModuleTmp["@"]["NAME"]." (".$arModuleTmp["@"]["ID"].")\n".$arModuleTmp["@"]["DESCRIPTION"]."\n";
-							if (is_array($arModuleTmp["#"]["VERSION"]))
+							if (isset($arModuleTmp["#"]["VERSION"]) && is_array($arModuleTmp["#"]["VERSION"]))
 							{
 								for ($j = 0, $cntj = count($arModuleTmp["#"]["VERSION"]); $j < $cntj; $j++)
 									$strTitleTmp .= str_replace("#VER#", $arModuleTmp["#"]["VERSION"][$j]["@"]["ID"], GetMessage("SUP_SULL_VERSION"))."\n".$arModuleTmp["#"]["VERSION"][$j]["#"]["DESCRIPTION"][0]["#"]."\n";
