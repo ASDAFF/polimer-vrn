@@ -58,6 +58,22 @@ Disallow: /*/kotel_gazovyy_nastennyy_vaillant_atmotec_pro_vuw_int_240_3_3_dvukhk
 Disallow: /*/truby_i_fitingi_iz_polietilena_pe_80/
 Disallow: /users/
 Disallow: /catalog/oborudovanie_danfoss_esbe_icma/
+Disallow: /*.pdf
+Disallow: /*.xls
+Disallow: /*.doc
+Disallow: /*.ppt
+Disallow: /*.txt
+Allow: /*/css/*.css
+Allow: /*/js/*.js
+Allow: /*.jpg
+Allow: /*.jpeg
+Allow: /*.png
+Allow: /*.gif
+Allow: /*.jpg
+Allow: /*.jpeg
+Allow: /*.png
+Allow: /*.gif
+Clean-param: utm_source&utm_medium&utm_term&utm_content&utm_campaign&yclid&gclid&_openstat&from /
+Host: http://polimer-vrn.ru/
 
-Host: polimer-vrn.ru
-Sitemap: http://polimer-vrn.ru/sitemap_000.xml
+Sitemap: http://polimer-vrn.ru/sitemap.xml

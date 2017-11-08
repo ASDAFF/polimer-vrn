@@ -9,6 +9,7 @@
 								<img src="<?=SITE_TEMPLATE_PATH?>/img/h_logo.jpg" alt="Полимер" width="206" height="44">
 							</a>
 							<p class="footer__logotext">Оптово-розничная торговля материалами и оборудованием для отопления и водоснабжения в Воронежской области.</p>
+							<a href="/upload/politics.pdf" target="_blank" style="font-size: 11px; text-decoration: none; color: #4d4d4d;">Политика конфиденциальности</a><br><a href="/upload/compliance.pdf" target="_blank" style="font-size: 11px; text-decoration: none; color: #4d4d4d;">Согласие на обработку персональных данных</a>
 						</div><!--end::col__1-->
 						<div class="footer__col col--2">
 							<div class="footer__title">Контакты</div>

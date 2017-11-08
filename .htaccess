@@ -30,11 +30,30 @@ ErrorDocument 404 /404.php
   Redirect 301 /catalog/peletkotly/ /catalog/tverdotoplivnye_kotly/
   Redirect 301 /articles/tverdotoplivnyj-kotel/ /catalog/tverdotoplivnye_kotly/
   Redirect 301 /articles/centrobezhnyj-nasos/ /articles/tsentrobezhnye-nasosy-dlya-vody/
-  Redirect 301 /catalog/vikhrevye_nasosy/ /catalog/tsentrobezhnye_nasosy/                               
+  Redirect 301 /catalog/vikhrevye_nasosy/ /catalog/tsentrobezhnye_nasosy/   
+  Redirect 301 /catalog/kotly_nastennye/ /catalog/dvukhkonturnye_nastennye_gazovye_kotly/                                 
 
 <IfModule mod_rewrite.c>
   Options +FollowSymLinks
   RewriteEngine On
+  
+RewriteCond %{HTTP_HOST} ^www.polimer-vrn\.ru$ [NC]
+RewriteRule ^(.*)$ http://polimer-vrn.ru/$1 [R=301,L]
+
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index\.php\ HTTP/
+RewriteRule ^index\.php$ http://polimer-vrn.ru [R=301,L]
+
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index\.(php|html|htm)\ HTTP/ 
+RewriteRule ^(.*)index\.(php|html|htm)$ $1 [R=301,L]
+
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.*index\.html?\ HTTP/
+RewriteRule ^(.*)index\.html?$ http://polimer-vrn.ru/$1 [R=301,L]
+
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.*index\.php?\ HTTP/
+RewriteRule ^(.*)index\.php?$ http://polimer-vrn.ru/$1 [R=301,L]
+
+RewriteCond %{QUERY_STRING} ^idc=4&marea=6$ [NC]
+RewriteRule ^index\.php$ /? [R=301,L]
 
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -l [OR]
