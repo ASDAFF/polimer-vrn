@@ -1,6 +1,7 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("Авторизация");
+LocalRedirect("/personal/order/make/",false,301);
 ?>
 
 <div class="row cl login">

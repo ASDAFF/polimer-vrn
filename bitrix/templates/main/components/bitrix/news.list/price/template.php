@@ -54,12 +54,17 @@ $this->setFrameMode(true);
 			</div>
 			<div class="inp">
 				<span>E-mail*</span>
-				<input type="text" placeholder="vash_mail@mail.ru" name="email">
+				<input type="email" placeholder="vash_mail@mail.ru" name="email" required>
 			</div>
 			<div class="inp">
 				<span>Телефон</span>
 				<input type="text" name="phone" placeholder="+7 (473) 234-03-01" class="phone">
 			</div>
+			<div class="inp">
+				<input type="checkbox" name="rule" id="rule" value="Y" checked/>
+				Нажимая на эту кнопку, я даю свое согласие на <a href="/upload/compliance.pdf" target="_blank">обработку персональных данных</a> и соглашаюсь с условиями <a href="/upload/politics.pdf" target="_blank">политики конфиденциальности</a>.*
+			</div>
+			<br><br><br>
 			<input class="btn_subscribe" type="submit" value=" Подписаться " />
 			<div class="req">* - обязательное поле</div>
 		</div>
@@ -67,4 +72,10 @@ $this->setFrameMode(true);
 	</form>
 </div>
 
-
+<script>
+	$(function(){
+		$('#rule').change(function(){
+			$('.btn_subscribe').attr('disabled',$(this).prop('checked') ? false : true );
+		});
+	});
+</script>

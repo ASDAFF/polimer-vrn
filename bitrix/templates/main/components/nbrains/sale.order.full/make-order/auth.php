@@ -146,6 +146,13 @@ if($cntBasketItems > 0):
 				</label>
 			</div>
 
+			<div class="agent">
+				<label>
+					<input type="checkbox" name="rule" id="rule" value="Y" checked/>
+					<span>Нажимая на эту кнопку, я даю свое согласие на <a href="/upload/compliance.pdf" target="_blank">обработку персональных данных</a> и соглашаюсь с условиями <a href="/upload/politics.pdf" target="_blank">политики конфиденциальности</a>.*</span>
+				</label>
+			</div>
+
 			<input type="submit" class="registrate" value="<?echo GetMessage("STOF_NEXT_STEP")?>">
 			<input type="hidden" name="do_register" value="Y">
 
@@ -160,6 +167,13 @@ if($cntBasketItems > 0):
 
 <script>
 	$(function(){
+
+		$(function(){
+			$('#rule').change(function(){
+				$('.registrate').attr('disabled',$(this).prop('checked') ? false : true );
+			});
+		});
+
 		$('.registrate').click(function(){
 			var c = $('.phone_code').val();
 			var p = $('.phone_number').val();

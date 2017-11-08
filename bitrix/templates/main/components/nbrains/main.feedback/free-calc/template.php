@@ -67,9 +67,10 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 		<div class="rule">
 			<input type="checkbox" class="fio" name="RULE" value="Y" checked>
 			<span>
-				Я прочитал правила
-				<a href="#" class="show-popup" data-id="<?=$arParams["IBLOCK_TYPE"].$arParams["IBLOCK_ID"]?>">Правила</a>
-				и даю свое согласие на обработку персональных данных
+				Нажимая на эту кнопку, я даю свое согласие на <a href="/upload/compliance.pdf" target="_blank">обработку персональных данных</a> и соглашаюсь с условиями <a href="/upload/politics.pdf" target="_blank">политики конфиденциальности</a>.
+<!--					Я прочитал правила-->
+<!--					<a href="#" class="show-popup" data-id="--><?//=$arParams["IBLOCK_TYPE"].$arParams["IBLOCK_ID"]?><!--">Правила</a>-->
+<!--					и даю свое согласие на обработку персональных данных-->
 			</span>
 		</div>
 

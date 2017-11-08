@@ -5466,7 +5466,7 @@ header {
 
 .form_registration {
 	position: relative;
-	height: 570px;
+	height: 620px;
 	.face_type {
 		height: 50px;
 		padding-top: 14px;
@@ -5607,6 +5607,7 @@ header {
 			font: 400 14px/16px @fira;
 			color: #333;
 			cursor: pointer;
+		  	display: inline-block;
 		}
 		input[type="checkbox"] + span::before {
 			position: absolute;
@@ -5614,6 +5615,7 @@ header {
 			content: '';
 			top: 50%;
 			margin-top: -10px;
+		  	margin-left: -25px;
 			height: 16px;
 			width: 16px;
 			background: url('img/ct_checkboxies.png') no-repeat;
@@ -5658,6 +5660,9 @@ header {
 			color: #fff;
 			background: #00A1F2;
 		}
+	}
+  	.registrate[disabled=disabled] {
+	  opacity: 0.5;
 	}
 }
 
@@ -10867,7 +10872,7 @@ a.pickup-stores__item{ display: block; background: url(img/place_ico.png) 20px 2
 				text-align: left;
 				color: #333;
 			}
-			input[type=text] {
+			input[type=text],input[type=email] {
 				width: 100%;
 				height: 100%;
 				-webkit-border-radius: 5px;

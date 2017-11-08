@@ -9,4 +9,5 @@ div.mf-ok-text {color:green; font-weight:bold; padding-bottom: 1em;}
 }
 .rule{
     margin: 30px 0px;
+    max-width: 550px;
 }
