@@ -19,7 +19,7 @@ $this->setFrameMode(true);
 
 	if($arItem['PROPERTIES']['PRODUCT']['VALUE'] and in_array($arParams['SECTION_NOW'], $arItem['PROPERTIES']['CATEGORY']['VALUE'])):
 	?>
-<div class="category-item-product">
+<div class="category-item-product" style="margin-bottom: 30px;">
 	<div class="slider_product_show_all slider_product" id="mp__product__action">
 		<?
 		$arSelect = Array("IBLOCK_ID", "ID", "NAME","PREVIEW_PICTURE","DETAIL_PAGE_URL", "PROPERTY_CML2_BASE_UNIT");
