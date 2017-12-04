@@ -32,26 +32,40 @@ ErrorDocument 404 /404.php
   Redirect 301 /articles/centrobezhnyj-nasos/ /articles/tsentrobezhnye-nasosy-dlya-vody/
   Redirect 301 /catalog/vikhrevye_nasosy/ /catalog/tsentrobezhnye_nasosy/   
   Redirect 301 /catalog/kotly_nastennye/ /catalog/dvukhkonturnye_nastennye_gazovye_kotly/                                 
-
+  Redirect 301 /catalog/sayding_fasadnyy_alta_profil/ /catalog/sayding_vinilovyy_fasadnyy/
+  Redirect 301 /catalog/osp/ /catalog/osb/
+  Redirect 301 /catalog/gruntovka_v_d/ /catalog/gruntovka/
+  Redirect 301 /catalog/emal_yaroslavskiy_kolorit/ /catalog/emal_pf_115/
+  Redirect 301 /catalog/nasosnoe_oborudovanie/ /catalog/nasosy/
+  Redirect 301 /catalog/nasosnye_stantsii_/ /catalog/nasosnye_stantsii/
+  Redirect 301 /catalog/protochnye/ /catalog/protochnye_vodonagrevateli/
+  Redirect 301 /catalog/teplitsy_pod_sotovyy_polikarbonat/ /catalog/teplitsy_polikarbonat/
+  Redirect 301 /catalog/dvukhkonturnye_nastennye_gazovye_kotly/ /catalog/nastennye_gazovye_kotly/
 <IfModule mod_rewrite.c>
   Options +FollowSymLinks
   RewriteEngine On
-  
+# Убрать www  
 RewriteCond %{HTTP_HOST} ^www.polimer-vrn\.ru$ [NC]
 RewriteRule ^(.*)$ http://polimer-vrn.ru/$1 [R=301,L]
-
-RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index\.php\ HTTP/
-RewriteRule ^index\.php$ http://polimer-vrn.ru [R=301,L]
-
+# Убрать index.php На главной
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index\.(php|html|htm)\ HTTP/ 
 RewriteRule ^(.*)index\.(php|html|htm)$ $1 [R=301,L]
-
+# Убрать index.html
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.*index\.html?\ HTTP/
 RewriteRule ^(.*)index\.html?$ http://polimer-vrn.ru/$1 [R=301,L]
-
+# Убрать index.php
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /.*index\.php?\ HTTP/
 RewriteRule ^(.*)index\.php?$ http://polimer-vrn.ru/$1 [R=301,L]
-
+#убрать //
+RewriteCond %{REQUEST_URI} ^(.*)/{2,}(.*)$
+RewriteRule (.*) %1/%2 [R=301,L] 
+# убрать окончание html
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+([^.]+)\.html [NC]
+RewriteRule ^ /%1/ [R=301,L]
+# убрать окончание htm
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+([^.]+)\.htm [NC]
+RewriteRule ^ /%1/ [R=301,L]
+# убрать idc=4&marea=6
 RewriteCond %{QUERY_STRING} ^idc=4&marea=6$ [NC]
 RewriteRule ^index\.php$ /? [R=301,L]
 
