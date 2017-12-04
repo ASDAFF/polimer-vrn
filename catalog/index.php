@@ -927,9 +927,9 @@ if($_REQUEST['ELEMENT_SORT_FIELD'] == "CATALOG_AVAILABLE" OR $_REQUEST['ELEMENT_
 		"COMPOSITE_FRAME_TYPE" => "AUTO",
 		"FILE_404" => "",
 		"SEF_URL_TEMPLATES" => array(
-			"sections" => "/catalog/",
-			"section" => "#SECTION_CODE#/",
-			"element" => "#SECTION_CODE#/#ELEMENT_CODE#/",
+			"sections" => "",
+			"section" => "#SECTION_CODE_PATH#/",
+			"element" => "#SECTION_CODE_PATH#/#ELEMENT_CODE#/",
 			"compare" => "compare/",
 			"smart_filter" => "#SECTION_CODE#/filter/#SMART_FILTER_PATH#/apply/",
 		)
