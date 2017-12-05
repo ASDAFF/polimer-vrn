@@ -62,9 +62,12 @@ $APPLICATION->SetTitle("Страница не найдена");?>
 
 </div>
 <style>
-	footer{
+	footer {
 		margin: 0 auto;
 		max-width: 1200px;
+	}
+	p{
+		margin:0 10px;
 	}
 </style>
 
