@@ -101,9 +101,7 @@ foreach($arResult['SECTIONS'] as $key => &$arSection){
 	$arResult['SECTIONS'][$key]['NAME'] = preg_replace('#(~(.*?)~)#is', '', $arSection['NAME']);
 }
 
-if($arResult['SECTION']['ID'] == 0){
-	define("PATH_TO_404", "/404.php");
-	@define("ERROR_404","Y");
-}
+
+
 
 ?>
