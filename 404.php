@@ -8,6 +8,8 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
 $APPLICATION->SetTitle("Страница не найдена");?>
 
+<div class="page_content">
+
 	<div class="bx-404-container">
 		<div class="bx-404-block"><img src="<?=SITE_DIR?>images/404.png" alt=""></div>
 		<div class="bx-404-text-block">Неправильно набран адрес, <br>или такой страницы на сайте больше не существует.</div>
@@ -69,4 +71,6 @@ $APPLICATION->SetTitle("Страница не найдена");?>
 			false
 		);?>
 	</div>
+
+
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
