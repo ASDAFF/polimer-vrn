@@ -102,6 +102,9 @@ foreach($arResult['SECTIONS'] as $key => &$arSection){
 }
 
 
-
+if($arResult['SECTION']['ID'] == 0 AND $APPLICATION->GetCurPage() != '/catalog/'){
+	define("PATH_TO_404", "/404.php");
+	@define("ERROR_404","Y");
+}
 
 ?>
