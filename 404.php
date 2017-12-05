@@ -10,19 +10,11 @@ $APPLICATION->SetTitle("Страница не найдена");?>
 
 <div class="page_content">
 
-	<div class="bx-404-container">
+
 		<div class="bx-404-block"><img src="<?=SITE_DIR?>images/404.png" alt=""></div>
 		<div class="bx-404-text-block">Неправильно набран адрес, <br>или такой страницы на сайте больше не существует.</div>
 		<div class="">Вернитесь на <a href="<?=SITE_DIR?>">главную</a> или воспользуйтесь картой сайта.</div>
-	</div>
-	<div class="map-columns row">
-		<div class="col-sm-10 col-sm-offset-1">
-			<div class="bx-maps-title">Карта сайта:</div>
-		</div>
-	</div>
-
-	<div class="col-sm-offset-2 col-sm-4">
-		<div class="bx-map-title"><i class="fa fa-leanpub"></i> Каталог</div>
+	
 		<?$APPLICATION->IncludeComponent(
 			"bitrix:catalog.section.list",
 			"tree",
@@ -51,10 +43,7 @@ $APPLICATION->SetTitle("Страница не найдена");?>
 			false
 		);
 		?>
-	</div>
 
-	<div class="col-sm-offset-1 col-sm-4">
-		<div class="bx-map-title"><i class="fa fa-info-circle"></i> О магазине</div>
 		<?
 		$APPLICATION->IncludeComponent(
 			"bitrix:main.map",
@@ -70,7 +59,13 @@ $APPLICATION->SetTitle("Страница не найдена");?>
 			),
 			false
 		);?>
-	</div>
 
+</div>
+<style>
+	footer{
+		margin: 0 auto;
+		max-width: 1200px;
+	}
+</style>
 
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

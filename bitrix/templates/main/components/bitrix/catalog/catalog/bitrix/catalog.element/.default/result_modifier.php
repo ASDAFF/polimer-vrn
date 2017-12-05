@@ -618,6 +618,12 @@ if($arResult['PROPERTIES']['MORE_PHOTO']['VALUE']){
 }
 
 $arResult['NAME'] = preg_replace('#(~(.*?)~)#is', '', $arResult['NAME']);
+
+
+if($arResult['DETAIL_PAGE_URL'] != $APPLICATION->GetCurPage()){
+	LocalRedirect($arResult['DETAIL_PAGE_URL'],false,301);
+}
+
 ?>
 
 
