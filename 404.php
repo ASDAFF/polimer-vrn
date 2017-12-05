@@ -67,7 +67,7 @@ $APPLICATION->SetTitle("Страница не найдена");?>
 		max-width: 1200px;
 	}
 	p{
-		margin:0 10px;
+		margin:10px 0px;
 	}
 </style>
 
