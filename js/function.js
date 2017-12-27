@@ -161,7 +161,7 @@ $(function(){
 
     $('.catalog-sections-text').readmore({
         speed: 75,
-        maxHeight: 130,
+        maxHeight: 100,
         moreLink: '<a href="#" style="border-bottom:snow">Подробнее...</a>',
         lessLink: '<a href="#" style="border-bottom:snow">Скрыть</a>'
     });
