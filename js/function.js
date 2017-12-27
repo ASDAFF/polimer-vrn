@@ -161,13 +161,13 @@ $(function(){
 
     $('.catalog-sections-text').readmore({
         speed: 75,
-        maxHeight: 160,
+        maxHeight: 130,
         moreLink: '<a href="#" style="border-bottom:snow">Подробнее...</a>',
         lessLink: '<a href="#" style="border-bottom:snow">Скрыть</a>'
     });
     $('.col-txt > .catalog-sections-text-hidden').readmore({
         speed: 75,
-        maxHeight: 160,
+        maxHeight: 130,
         moreLink: '<a href="#" style="border-bottom:snow">Подробнее...</a>',
         lessLink: '<a href="#" style="border-bottom:snow">Скрыть</a>'
     });
