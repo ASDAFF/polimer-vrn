@@ -180,7 +180,7 @@
 			4 => "LINK_PRODUCT",
 			5 => "RULE",
 		),
-		"USE_CAPTCHA" => "N",
+		"USE_CAPTCHA" => "Y",
 		"COMPONENT_TEMPLATE" => "order-product",
 		"COMPOSITE_FRAME_MODE" => "A",
 		"COMPOSITE_FRAME_TYPE" => "AUTO"
@@ -206,7 +206,7 @@
 			3 => "DESC",
 			4 => "RULE",
 		),
-		"USE_CAPTCHA" => "N",
+		"USE_CAPTCHA" => "Y",
 		"COMPONENT_TEMPLATE" => "write-mail"
 	),
 	false
@@ -240,7 +240,7 @@
 							6 => "IMG_PRODUCT",
 							7 => "PRICE",
 						),
-						"USE_CAPTCHA" => "N",
+						"USE_CAPTCHA" => "Y",
 						"COMPONENT_TEMPLATE" => "buy-one-click",
 						"PRODUCT" => array(
 							"NAME" => $arResult['NAME'],
@@ -270,7 +270,7 @@
 			3 => "RULE",
 			4 => "PRODUCT_CART",
 		),
-		"USE_CAPTCHA" => "N",
+		"USE_CAPTCHA" => "Y",
 		"COMPONENT_TEMPLATE" => "buy-one-click-cart"
 	),
 	false
@@ -295,7 +295,7 @@
 			4 => "PRODUCT",
 			5 => "LINK_PRODUCT",
 		),
-		"USE_CAPTCHA" => "N",
+		"USE_CAPTCHA" => "Y",
 		"COMPONENT_TEMPLATE" => "free-consultant"
 	),
 	false

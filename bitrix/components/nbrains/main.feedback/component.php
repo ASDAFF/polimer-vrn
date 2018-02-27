@@ -51,17 +51,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["submit"] <> '' && (!isset($_P
 
 		if($arParams["USE_CAPTCHA"] == "Y")
 		{
-			include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/captcha.php");
-			$captcha_code = $_POST["captcha_sid"];
-			$captcha_word = $_POST["captcha_word"];
-			$cpt = new CCaptcha();
-			$captchaPass = COption::GetOptionString("main", "captcha_password", "");
-			if (strlen($captcha_word) > 0 && strlen($captcha_code) > 0)
-			{
-				if (!$cpt->CheckCodeCrypt($captcha_word, $captcha_code, $captchaPass))
-					$arResult["ERROR_MESSAGE"][] = GetMessage("MF_CAPTCHA_WRONG");
-			}
-			else
+			$captcha_code = $_POST["g-recaptcha-response"];
+			if (empty($captcha_code))
 				$arResult["ERROR_MESSAGE"][] = GetMessage("MF_CAPTHCA_EMPTY");
 
 		}

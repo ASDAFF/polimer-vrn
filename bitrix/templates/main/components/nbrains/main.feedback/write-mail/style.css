@@ -7,3 +7,14 @@ div.mf-ok-text {color:green; font-weight:bold; padding-bottom: 1em;}
 input.send{
     cursor: pointer;
 }
+
+#mailus.popup{
+    top:50px;
+}
+
+#mailus .mf-captcha{
+    margin: 10px auto;
+}
+#mailus .g-recaptcha div{
+    margin: 0 auto;
+}

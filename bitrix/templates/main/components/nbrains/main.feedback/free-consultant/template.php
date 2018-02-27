@@ -81,11 +81,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 
 			<?if($arParams["USE_CAPTCHA"] == "Y"):?>
 				<div class="mf-captcha">
-					<div class="mf-text"><?=GetMessage("MFT_CAPTCHA")?></div>
-					<input type="hidden" name="captcha_sid" value="<?=$arResult["capCode"]?>">
-					<img src="/bitrix/tools/captcha.php?captcha_sid=<?=$arResult["capCode"]?>" width="180" height="40" alt="CAPTCHA">
-					<div class="mf-text"><?=GetMessage("MFT_CAPTCHA_CODE")?><span class="mf-req">*</span></div>
-					<input type="text" name="captcha_word" size="30" maxlength="50" value="">
+					<div class="g-recaptcha" data-sitekey="6LfZ8kgUAAAAAJWtIx1_4_pUvd1Xk_VfdMhpqT4P"></div>
 				</div>
 			<?endif;?>
 
