@@ -126,20 +126,28 @@ $APPLICATION->SetTitle("О компании");
 		</div>
 	</div>
 </div>
+<div align="center">
+	<p align="center">
+ <a href="/upload/sertifikat-rpo-1.jpg" target="_blank"></a>
+	</p>
+	<p style="text-align: center;">
+ <a href="/upload/sertifikat-rpo-1.jpg" target="_blank"><img width="265" src="/upload/sertifikat-rpo-1.jpg" style="margin-right: 45px;"></a> <a href="/upload/sertifikat-rpo-2.jpg" target="_blank"><img width="265" src="/upload/sertifikat-rpo-2.jpg"></a>
+	</p>
+	<p align="center">
+ <a href="/upload/sertifikat-rpo-2.jpg" target="_blank"></a>
+	</p>
+</div>
 <div>
 	<p>
  <img width="580" src="/upload/company/03.jpg" height="387" style="margin-right: 30px;"> <img width="580" src="/upload/company/04.jpg" height="387"> <img width="580" src="/upload/company/05.jpg" height="387" style="margin-right: 30px;"> <img width="580" src="/upload/company/06.jpg" height="387"> <img width="580" src="/upload/company/07.jpg" height="387" style="margin-right: 30px;"> <img width="580" src="/upload/company/08.jpg" height="387"> <img width="580" src="/upload/company/09.jpg" height="387" style="margin-right: 30px;"> <img width="580" src="/upload/company/21.jpg" height="387"> <img width="580" src="/upload/company/11.jpg" height="387" style="margin-right: 30px;"> <img width="580" src="/upload/company/12.jpg" height="387"> <img width="580" src="/upload/company/13.jpg" height="387" style="margin-right: 30px;"> <img width="580" src="/upload/company/14.jpg" height="387"> <img width="580" src="/upload/company/15.jpg" height="387" style="margin-right: 30px;"> <img width="580" src="/upload/company/16.jpg" height="387"> <img width="580" src="/upload/company/17.jpg" height="387" style="margin-right: 30px;"> <img width="580" src="/upload/company/18.jpg" height="387"> <img width="580" src="/upload/company/19.jpg" height="387" style="margin-right: 30px;"> <img width="580" src="/upload/company/20.jpg" height="387"> <img width="580" src="/upload/company/10.jpg" height="387" style="margin-right: 30px;"> <img width="580" src="/upload/company/22.jpg" height="387">
 	</p>
 </div>
-<br>
-			<h2>
-				 Партнеры
-			</h2>
+ <br>
+<h2>
+Партнеры </h2>
 <div>
 	<p>
-<a href="http://spravkavrn.ru/company/26321_polimer/" target="_blank" style="border: none;"><img style="height:100px; width:100px; margin-right: 30px;" title="Фирма максимальной открытости по версии бесплатной справочной службы ЧТО-ГДЕ-ПОЧЕМ 084" alt="Фирма максимальной открытости по версии бесплатной справочной службы ЧТО-ГДЕ-ПОЧЕМ 084" src="http://spravkavrn.ru/img/medals/info1.png" border="0"></a>
-<a href="http://spravkavrn.ru/company/26321_polimer/" target="_blank" style="border: none;"><img style="height:100px; width:100px; margin-right: 30px;" title="Участник рейтинга полезности по версии бесплатной справочной службы ЧТО-ГДЕ-ПОЧЕМ 084" alt="Участник рейтинга полезности по версии бесплатной справочной службы ЧТО-ГДЕ-ПОЧЕМ 084" src="http://www.spravkavrn.ru/img/medals/top_polez.png" border="0"></a>
-<a href="http://spravkavrn.ru/company/26321_polimer/" target="_blank" style="border: none;"><img style="height:100px; width:100px; margin-right: 30px;" title="Участник рейтинга популярности по версии бесплатной справочной службы ЧТО-ГДЕ-ПОЧЕМ 084" alt="Участник рейтинга популярности по версии бесплатной справочной службы ЧТО-ГДЕ-ПОЧЕМ 084" src="http://spravkavrn.ru/img/medals/top_popul.png" border="0"></a>
+ <a href="http://spravkavrn.ru/company/26321_polimer/" target="_blank" style="border: none;"><img alt="Фирма максимальной открытости по версии бесплатной справочной службы ЧТО-ГДЕ-ПОЧЕМ 084" src="http://spravkavrn.ru/img/medals/info1.png" style="height:100px; width:100px; margin-right: 30px;" title="Фирма максимальной открытости по версии бесплатной справочной службы ЧТО-ГДЕ-ПОЧЕМ 084" border="0"></a> <a href="http://spravkavrn.ru/company/26321_polimer/" target="_blank" style="border: none;"><img alt="Участник рейтинга полезности по версии бесплатной справочной службы ЧТО-ГДЕ-ПОЧЕМ 084" src="http://www.spravkavrn.ru/img/medals/top_polez.png" style="height:100px; width:100px; margin-right: 30px;" title="Участник рейтинга полезности по версии бесплатной справочной службы ЧТО-ГДЕ-ПОЧЕМ 084" border="0"></a> <a href="http://spravkavrn.ru/company/26321_polimer/" target="_blank" style="border: none;"><img alt="Участник рейтинга популярности по версии бесплатной справочной службы ЧТО-ГДЕ-ПОЧЕМ 084" src="http://spravkavrn.ru/img/medals/top_popul.png" style="height:100px; width:100px; margin-right: 30px;" title="Участник рейтинга популярности по версии бесплатной справочной службы ЧТО-ГДЕ-ПОЧЕМ 084" border="0"></a>
 	</p>
 </div>
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+ <br><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

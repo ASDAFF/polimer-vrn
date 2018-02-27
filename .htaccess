@@ -41,6 +41,7 @@ ErrorDocument 404 /404.php
   Redirect 301 /catalog/protochnye/ /catalog/protochnye_vodonagrevateli/
   Redirect 301 /catalog/teplitsy_pod_sotovyy_polikarbonat/ /catalog/teplitsy_polikarbonat/
   Redirect 301 /catalog/dvukhkonturnye_nastennye_gazovye_kotly/ /catalog/nastennye_gazovye_kotly/
+  Redirect 301 /catalog/svarochnye_apparaty_resanta/ /catalog/svarochnye_apparaty/
 <IfModule mod_rewrite.c>
   Options +FollowSymLinks
   RewriteEngine On
@@ -60,8 +61,8 @@ RewriteRule ^(.*)index\.php?$ http://polimer-vrn.ru/$1 [R=301,L]
 RewriteCond %{REQUEST_URI} ^(.*)/{2,}(.*)$
 RewriteRule (.*) %1/%2 [R=301,L] 
 # убрать окончание html
-RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+([^.]+)\.html [NC]
-RewriteRule ^ /%1/ [R=301,L]
+# RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+([^.]+)\.html [NC]
+# RewriteRule ^ /%1/ [R=301,L]
 # убрать окончание htm
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/+([^.]+)\.htm [NC]
 RewriteRule ^ /%1/ [R=301,L]

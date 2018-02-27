@@ -24,11 +24,14 @@ $this->setFrameMode(true);
 			<div class="col">
 				<div class="title cl">
 					<div class="name"><?=str_replace(' ','<br>',$arItem['NAME'])?></div>
+
 					<div class="download">
 						<a target="_blank" href="<?=$arItem['PROPERTIES']['TITLE_PRICE']['VALUE'];?>">Скачать</a>
 						<span><?=CFile::FormatSize(filesize($_SERVER['DOCUMENT_ROOT'].$arItem['PROPERTIES']['TITLE_PRICE']['VALUE']));?></span>
 					</div>
+
 				</div>
+<!--
 				<div class="list">
 				<?foreach($arItem['PROPERTIES']['PRICE']['VALUE'] as $key => $v):?>
 					<div class="line cl">
@@ -37,6 +40,7 @@ $this->setFrameMode(true);
 					</div>
 				<? endforeach; ?>
 				</div>
+-->
 			</div>
 			<? endforeach; ?>
 
