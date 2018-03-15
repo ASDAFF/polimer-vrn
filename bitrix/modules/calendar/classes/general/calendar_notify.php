@@ -425,7 +425,10 @@ class CCalendarNotify
 		{
 			$instanceDate = false;
 
-			if (!isset($params['LOG']))
+			if (
+				!isset($params['LOG'])
+				&& \Bitrix\Main\Loader::includeModule('socialnetwork')
+			)
 			{
 				$dbResult = CSocNetLog::GetList(
 					array(),
@@ -496,8 +499,35 @@ class CCalendarNotify
 				}
 
 				$attendees = $attendees[$aId];
+
+				$excludeUserIdList = array();
+
+				if (
+					$arLog
+					&& \Bitrix\Main\Loader::includeModule('socialnetwork')
+				)
+				{
+					$res = \Bitrix\Socialnetwork\LogFollowTable::getList(array(
+						'filter' => array(
+							"=CODE" => "L".$arLog['ID'],
+							"=TYPE" => "N"
+						),
+						'select' => array('USER_ID')
+					));
+
+					while ($unFollower = $res->fetch())
+					{
+						$excludeUserIdList[] = $unFollower["USER_ID"];
+					}
+				}
+
 				foreach($attendees as $attendee)
 				{
+					if (in_array($attendee["USER_ID"], $excludeUserIdList))
+					{
+						continue;
+					}
+
 					$url = CCalendar::GetPathForCalendarEx($attendee["USER_ID"]);
 					$url = $url.((strpos($url, "?") === false) ? '?' : '&').'EVENT_ID='.$eventId.'&EVENT_DATE='.$instanceDate;
 					if ($attendee["USER_ID"] != $userId && $attendee["STATUS"] != 'N')

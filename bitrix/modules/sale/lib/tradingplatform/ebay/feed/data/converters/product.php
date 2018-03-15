@@ -21,20 +21,24 @@ class Product extends DataConverter
 			throw new ArgumentNullException("SITE_ID");
 
 		$this->siteId = $params["SITE_ID"];
+
+		if(!\Bitrix\Main\Loader::includeModule('iblock'))
+			throw new SystemException("Can't include module \"iblock\"!");
 	}
 
 	public function convert($data)
 	{
 		$this->ebayCategories = $this->bitrixToEbayCategories($data["IBLOCK_ID"], $data["CATEGORIES"]);
+
+		if(empty($this->ebayCategories))
+			throw new SystemException('Can\'t recieve categories for ebay. Product id: '.$data["ID"].', product categories ids: '.implode(', '.$data["CATEGORIES"]));
+
 		$this->attributesList = $this->getAttributesList($data["IBLOCK_ID"], $this->ebayCategories);
 		$this->attributesItem = $this->getAttributesItem($this->attributesList, $data);
 		$this->bitrixCategories = $data["CATEGORIES"];
 
-		$myres = "myres\n";
-
 		if(isset($data["OFFERS"]) && is_array($data["OFFERS"]) && !empty($data["OFFERS"]))
 		{
-			$myres .= "OFFERS - ".$data['NAME']."\n";
 			$result = $this->getItemDataOffers($data);
 
 			foreach($data["OFFERS"] as $offer)
@@ -42,10 +46,8 @@ class Product extends DataConverter
 		}
 		else
 		{
-			$myres .= "=".$data['NAME']."\n";
 			$result = $this->getItemData($data);
 		}
-		$myres .= "---------\n";
 
 		return $result;
 	}
@@ -268,8 +270,6 @@ class Product extends DataConverter
 
 			while($arMapRes = $catMapVarRes->fetch())
 				$result[$arMapRes["VALUE_EXTERNAL"]] = $arMapRes["VALUE_INTERNAL"];
-
-
 		}
 
 		return $result;
@@ -314,7 +314,9 @@ class Product extends DataConverter
 			));
 
 			while($category = $catRes->fetch())
-				$params[$iblockId][$category["VALUE_INTERNAL"]] = $category;
+				if(intval($category["VALUE_INTERNAL"]) > 0)
+					$params[$iblockId][$category["VALUE_INTERNAL"]] = $category;
+
 		}
 
 		$result = array();
@@ -322,8 +324,23 @@ class Product extends DataConverter
 		if(!empty($bitrixCategories))
 		{
 			foreach($bitrixCategories as $catId)
+			{
 				if(isset($params[$iblockId][$catId]) && is_array($params[$iblockId][$catId]))
+				{
 					$result[] = $params[$iblockId][$catId];
+				}
+				else
+				{
+					$res = \CIBlockSection::GetNavChain($iblockId, $catId);
+
+					while($row = $res->fetch())
+					{
+
+						if(isset($params[$iblockId][$row['ID']]) && is_array($params[$iblockId][$row['ID']]))
+							$result[] = $params[$iblockId][$row['ID']];
+					}
+				}
+			}
 		}
 		else
 		{

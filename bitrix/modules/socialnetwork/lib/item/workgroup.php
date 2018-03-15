@@ -7,6 +7,7 @@
  */
 namespace Bitrix\Socialnetwork\Item;
 
+use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -93,6 +94,14 @@ class Workgroup
 	public function getFields()
 	{
 		return $this->fields;
+	}
+
+	public function isProject()
+	{
+		return (
+			isset($this->fields['PROJECT'])
+			&& $this->fields['PROJECT'] == 'Y'
+		);
 	}
 
 	private static function getSubDepartments($departmentList = array())
@@ -336,7 +345,7 @@ class Workgroup
 		);
 	}
 
-	public static function OnBeforeIBlockSectionUpdate($section)
+	public static function onBeforeIBlockSectionUpdate($section)
 	{
 		if (
 			!isset($section['ID'])
@@ -430,7 +439,7 @@ class Workgroup
 		return true;
 	}
 
-	public static function OnBeforeIBlockSectionDelete($sectionId)
+	public static function onBeforeIBlockSectionDelete($sectionId)
 	{
 		if (intval($sectionId) <= 0)
 		{
@@ -528,5 +537,382 @@ class Workgroup
 			$groupItem = \Bitrix\Socialnetwork\Item\Workgroup::getById($group['ID'], false);
 			$groupItem->syncDeptConnection();
 		}
+	}
+
+	public static function getTypes($params = array())
+	{
+		static $intranetInstalled = null;
+		static $extranetInstalled = null;
+
+		if ($intranetInstalled === null)
+		{
+			$intranetInstalled = ModuleManager::isModuleInstalled('intranet');
+		}
+
+		if ($extranetInstalled === null)
+		{
+			$extranetInstalled = (
+				ModuleManager::isModuleInstalled('extranet')
+				&& strlen(Option::get("extranet", "extranet_site")) > 0
+			);
+		}
+
+		$currentExtranetSite = (
+			!empty($params)
+			&& isset($params["currentExtranetSite"])
+			&& $params["currentExtranetSite"]
+		);
+
+		$categoryList = (
+			!empty($params)
+			&& is_array($params["category"])
+			&& !empty($params["category"])
+				? $params["category"]
+				: array()
+		);
+
+		$result = array();
+
+		if (
+			$intranetInstalled
+			&& (
+				empty($categoryList)
+				|| in_array('projects', $categoryList)
+			)
+		)
+		{
+			if (!$currentExtranetSite)
+			{
+				$result['project-open'] = array(
+					'SORT' => '10',
+					'NAME' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_PROJECT_OPEN'),
+					'DESCRIPTION' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_PROJECT_OPEN_DESC'),
+					'DESCRIPTION2' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_PROJECT_OPEN_DESC2'),
+					'VISIBLE' => 'Y',
+					'OPENED' => 'Y',
+					'PROJECT' => 'Y',
+					'EXTERNAL' => 'N',
+					'TILE_CLASS' => 'social-group-tile-item-cover-open social-group-tile-item-icon-project-open'
+				);
+				$result['project-closed'] = array(
+					'SORT' => '20',
+					'NAME' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_PROJECT_CLOSED'),
+					'DESCRIPTION' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_PROJECT_CLOSED_DESC'),
+					'DESCRIPTION2' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_PROJECT_CLOSED_DESC'),
+					'VISIBLE' => 'N',
+					'OPENED' => 'N',
+					'PROJECT' => 'Y',
+					'EXTERNAL' => 'N',
+					'TILE_CLASS' => 'social-group-tile-item-cover-close social-group-tile-item-icon-project-close'
+				);
+			}
+
+			if ($extranetInstalled)
+			{
+				$result['project-external'] = array(
+					'SORT' => '30',
+					'NAME' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_PROJECT_EXTERNAL'),
+					'DESCRIPTION' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_PROJECT_EXTERNAL_DESC'),
+					'DESCRIPTION2' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_PROJECT_EXTERNAL_DESC'),
+					'VISIBLE' => 'N',
+					'OPENED' => 'N',
+					'PROJECT' => 'Y',
+					'EXTERNAL' => 'Y',
+					'TILE_CLASS' => 'social-group-tile-item-cover-outer social-group-tile-item-icon-project-outer'
+				);
+			}
+		}
+
+		if (
+			!$currentExtranetSite
+			&& (
+				empty($categoryList)
+				|| in_array('groups', $categoryList)
+			)
+		)
+		{
+			$result['group-open'] = array(
+				'SORT' => '40',
+				'NAME' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_OPEN'),
+				'DESCRIPTION' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_OPEN_DESC'),
+				'DESCRIPTION2' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_OPEN_DESC2'),
+				'VISIBLE' => 'Y',
+				'OPENED' => 'Y',
+				'PROJECT' => 'N',
+				'EXTERNAL' => 'N',
+				'TILE_CLASS' => 'social-group-tile-item-cover-open social-group-tile-item-icon-group-open'
+			);
+			$result['group-closed'] = array(
+				'SORT' => '40',
+				'NAME' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_CLOSED'),
+				'DESCRIPTION' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_CLOSED_DESC'),
+				'DESCRIPTION2' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_CLOSED_DESC'),
+				'VISIBLE' => 'N',
+				'OPENED' => 'N',
+				'PROJECT' => 'N',
+				'EXTERNAL' => 'N',
+				'TILE_CLASS' => 'social-group-tile-item-cover-close social-group-tile-item-icon-group-close'
+			);
+		}
+
+		if (
+			$extranetInstalled
+			&& (
+				empty($categoryList)
+				|| in_array('groups', $categoryList)
+			)
+		)
+		{
+			$result['group-external'] = array(
+				'SORT' => '40',
+				'NAME' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_EXTERNAL'),
+				'DESCRIPTION' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_EXTERNAL_DESC'),
+				'DESCRIPTION2' => Loc::getMessage('SOCIALNETWORK_ITEM_WORKGROUP_TYPE_GROUP_EXTERNAL_DESC'),
+				'VISIBLE' => 'N',
+				'OPENED' => 'N',
+				'PROJECT' => 'N',
+				'EXTERNAL' => 'Y',
+				'TILE_CLASS' => 'social-group-tile-item-cover-outer social-group-tile-item-icon-group-outer'
+			);
+		}
+
+		return $result;
+	}
+
+	public static function getTypeCodeByParams($params)
+	{
+		$result = false;
+
+		$typesList = (
+			!empty($params['typesList'])
+				? $params['typesList']
+				: self::getTypes($params)
+		);
+
+		foreach($typesList as $code => $type)
+		{
+			if (
+				!empty($params['fields'])
+				&& $params['fields']['VISIBLE'] == $type['VISIBLE']
+				&& $params['fields']['PROJECT'] == $type['PROJECT']
+				&& $params['fields']['EXTERNAL'] == $type['EXTERNAL']
+			)
+			{
+				$result = $code;
+				break;
+			}
+		}
+
+		return $result;
+	}
+
+	public static function getTypeByCode($params = array())
+	{
+		$result = false;
+
+		if (
+			!is_array($params)
+			|| !in_array('code', $params)
+			|| empty($params['code'])
+		)
+		{
+			return $result;
+		}
+
+		$code = $params['code'];
+		$typesList = (
+			!empty($params['typesList'])
+				? $params['typesList']
+				: self::getTypes($params)
+		);
+
+		if (
+			!empty($typesList)
+			&& is_array($typesList)
+			&& !empty($typesList[$code])
+		)
+		{
+			$result = $typesList[$code];
+		}
+
+		return $result;
+	}
+
+	private static function getGroupContent($params = array())
+	{
+		static $fieldsList = null;;
+
+		$content = '';
+
+		$groupId = (isset($params['id']) ? intval($params['id']) : 0);
+
+		if ($groupId <= 0)
+		{
+			return $content;
+		}
+
+		if ($fieldsList === null)
+		{
+			$fieldsList = self::getContentFieldsList();
+		}
+
+		if (
+			isset($params['fields'])
+			&& is_array($params['fields'])
+			&& ($diff = array_diff($fieldsList, array_keys($params['fields'])))
+			&& empty($diff)
+		)
+		{
+			$groupFieldsList = $params['fields'];
+		}
+		else
+		{
+			$res = WorkgroupTable::getList(array(
+				'filter' => array(
+					'ID' => $groupId
+				),
+				'select' => $fieldsList
+			));
+			$groupFieldsList = $res->fetch();
+		}
+
+		if (!empty($groupFieldsList))
+		{
+			$content .= $groupFieldsList['NAME'];
+			if (!empty($groupFieldsList['DESCRIPTION']))
+			{
+				$content .= ' '.$groupFieldsList['DESCRIPTION'];
+			}
+
+			if (!empty($groupFieldsList['KEYWORDS']))
+			{
+				$keywordList = explode(",", $groupFieldsList["KEYWORDS"]);
+				$tagList = array();
+				foreach($keywordList as $keyword)
+				{
+					$tagList[] = trim($keyword);
+					$tagList[] = '#'.trim($keyword);
+				}
+				if (!empty($tagList))
+				{
+					$content .= ' '.join(' ', $tagList);
+				}
+			}
+
+			if (
+				!empty($groupFieldsList['OWNER_ID'])
+				&& intval($groupFieldsList['OWNER_ID']) > 0
+			)
+			{
+				$res = Main\UserTable::getList(array(
+					'filter' => array(
+						'ID' => intval($groupFieldsList['OWNER_ID'])
+					),
+					'select' => array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'EMAIL')
+				));
+				if ($userFields = $res->fetch())
+				{
+					$content .= ' '.\CUser::formatName(\CSite::getNameFormat(null, $groupFieldsList['SITE_ID']), $userFields, true);
+				}
+			}
+		}
+
+		return $content;
+	}
+
+	public static function setIndex($params = array())
+	{
+		global $DB;
+
+		static $connection = null;
+
+		if (!is_array($params))
+		{
+			return;
+		}
+
+		$fields = (isset($params['fields']) ? $params['fields'] : array());
+
+		if (
+			!is_array($fields)
+			|| empty($fields)
+		)
+		{
+			return;
+		}
+
+		$groupId = (isset($fields['ID']) ? intval($fields['ID']) : 0);
+
+		if ($groupId <= 0)
+		{
+			return;
+		}
+
+		$content = self::getGroupContent(array(
+			'id' => $groupId,
+			'fields' => $fields
+		));
+
+		$content = self::prepareToken($content);
+
+		$event = new Main\Event(
+			'socialnetwork',
+			'onWorkgroupIndexGetContent',
+			array(
+				'groupId' => $groupId,
+			)
+		);
+		$event->send();
+
+		foreach($event->getResults() as $eventResult)
+		{
+			if($eventResult->getType() == \Bitrix\Main\EventResult::SUCCESS)
+			{
+				$eventParams = $eventResult->getParameters();
+
+				if (
+					is_array($eventParams)
+					&& isset($eventParams['content'])
+				)
+				{
+					$eventContent = $eventParams['content'];
+					if (Main\Loader::includeModule('search'))
+					{
+						$eventContent = \CSearch::killTags($content);
+					}
+					$eventContent = trim(str_replace(
+						array("\r", "\n", "\t"),
+						" ",
+						$eventContent
+					));
+
+					$eventContent = self::prepareToken($eventContent);
+					if (!empty($eventContent))
+					{
+						$content .= ' '.$eventContent;
+					}
+				}
+			}
+		}
+
+		if (!empty($content))
+		{
+			if ($connection === null)
+			{
+				$connection = \Bitrix\Main\Application::getConnection();
+			}
+
+			$connection->query("UPDATE ".WorkgroupTable::getTableName()." SET SEARCH_INDEX = '{$DB->forSql($content)}' WHERE ID = {$groupId}");
+		}
+	}
+
+	public static function getContentFieldsList()
+	{
+		return array('NAME', 'DESCRIPTION', 'OWNER_ID', 'KEYWORDS', 'SITE_ID');
+	}
+
+	public static function prepareToken($str)
+	{
+		return str_rot13($str);
 	}
 }

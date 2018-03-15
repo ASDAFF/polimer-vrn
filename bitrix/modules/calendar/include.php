@@ -1,7 +1,37 @@
 <?
 /*patchlimitationmutatormark1*/
-global $DBType;
 IncludeModuleLangFile(__FILE__);
+
+
+if (!function_exists('array_column'))
+{
+	function array_column($input, $column_key, $index_key = null)
+	{
+		$arr = array_map(function($d) use ($column_key, $index_key)
+		{
+			if (!isset($d[$column_key]))
+			{
+				return null;
+			}
+			if ($index_key !== null)
+			{
+				return array($d[$index_key] => $d[$column_key]);
+			}
+			return $d[$column_key];
+		}, $input);
+
+		if ($index_key !== null)
+		{
+			$tmp = array();
+			foreach ($arr as $ar)
+			{
+				$tmp[key($ar)] = current($ar);
+			}
+			$arr = $tmp;
+		}
+		return $arr;
+	}
+}
 
 global $DBType;
 CModule::AddAutoloadClasses(
@@ -23,7 +53,8 @@ CModule::AddAutoloadClasses(
 		"CCalendarNotify" => "classes/general/calendar_notify.php",
 		"CCalendarUserSettings" => "classes/general/calendar_user_settings.php",
 		"CCalendarSync" => "classes/general/calendar_sync.php",
-		"CCalendarReminder" => "classes/general/calendar_reminder.php"
+		"CCalendarReminder" => "classes/general/calendar_reminder.php",
+		"CCalendarLocation" => "classes/general/calendar_location.php",
 	)
 );
 /*patchlimitationmutatormark2*/

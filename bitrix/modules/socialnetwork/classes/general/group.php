@@ -202,6 +202,10 @@ class CAllSocNetGroup
 
 		if ($bSuccess)
 		{
+			Bitrix\Socialnetwork\Integration\Im\Chat\Workgroup::unlinkChat(array(
+				'group_id' => $ID
+			));
+
 			$bSuccessTmp = true;
 			$dbResult = CSocNetFeatures::GetList(
 				array(),
@@ -441,7 +445,7 @@ class CAllSocNetGroup
 	/***************************************/
 	/**********  DATA SELECTION  ***********/
 	/***************************************/
-	public static function GetByID($ID, $bCheckPermissions = false)
+	public static function getById($ID, $bCheckPermissions = false)
 	{
 		global $USER, $CACHE_MANAGER;
 
@@ -499,14 +503,19 @@ class CAllSocNetGroup
 					$arFilter["CHECK_PERMISSIONS"] = $USER->GetID();
 				}
 
-				$dbResult = CSocNetGroup::GetList(
-					Array(), 
+				$arSelect = array("ID", "SITE_ID", "NAME", "DESCRIPTION", "DATE_CREATE", "DATE_UPDATE", "ACTIVE", "VISIBLE", "OPENED", "CLOSED", "SUBJECT_ID", "OWNER_ID", "KEYWORDS", "IMAGE_ID", "NUMBER_OF_MEMBERS", "NUMBER_OF_MODERATORS", "INITIATE_PERMS", "SPAM_PERMS", "DATE_ACTIVITY", "SUBJECT_NAME", "UF_*");
+				if (\Bitrix\Main\ModuleManager::isModuleInstalled('intranet'))
+				{
+					$arSelect = array_merge($arSelect, array("PROJECT", "PROJECT_DATE_START", "PROJECT_DATE_FINISH"));
+				}
+				$dbResult = CSocNetGroup::getList(
+					array(),
 					$arFilter, 
 					false, 
-					false, 
-					array("ID", "SITE_ID", "NAME", "DESCRIPTION", "DATE_CREATE", "DATE_UPDATE", "ACTIVE", "VISIBLE", "OPENED", "CLOSED", "SUBJECT_ID", "OWNER_ID", "KEYWORDS", "IMAGE_ID", "NUMBER_OF_MEMBERS", "NUMBER_OF_MODERATORS", "INITIATE_PERMS", "SPAM_PERMS", "DATE_ACTIVITY", "SUBJECT_NAME", "UF_*")
+					false,
+					$arSelect
 				);
-				if ($arResult = $dbResult->GetNext())
+				if ($arResult = $dbResult->getNext())
 				{
 					if (defined("BX_COMP_MANAGED_CACHE"))
 					{
@@ -694,12 +703,15 @@ class CAllSocNetGroup
 			$arFields["SPAM_PERMS"] = SONET_ROLES_OWNER;
 		}
 
-		$groupID = CSocNetGroup::Add($arFields);
+		$groupID = CSocNetGroup::add($arFields);
 
-		if (!$groupID || IntVal($groupID) <= 0)
+		if (
+			!$groupID
+			|| IntVal($groupID) <= 0
+		)
 		{
 			$errorMessage = $errorID = "";
-			if ($e = $APPLICATION->GetException())
+			if ($e = $APPLICATION->getException())
 			{
 				$errorMessage = $e->GetString();
 				$errorID = $e->GetID();
@@ -728,6 +740,7 @@ class CAllSocNetGroup
 
 			$APPLICATION->ThrowException($errorMessage, $errorID);
 			$DB->Rollback();
+
 			return false;
 		}
 

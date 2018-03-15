@@ -4,12 +4,13 @@
 /** @var array $arResult */
 /** @global CDatabase $DB */
 
-$frame = $this->createFrame()->begin();
+$this->setFrameMode(true);
 
-$injectId = 'sale_gift_product_'.rand();
 if (isset($arResult['REQUEST_ITEMS']))
 {
 	CJSCore::Init(array('ajax'));
+
+	$injectId = 'sale_gift_product_'.rand();
 
 	// component parameters
 	$signer = new \Bitrix\Main\Security\Sign\Signer;
@@ -19,6 +20,7 @@ if (isset($arResult['REQUEST_ITEMS']))
 	);
 	$signedTemplate = $signer->sign($arResult['RCM_TEMPLATE'], 'bx.sale.prediction.product.detail');
 
+	$frame = $this->createFrame()->begin("");
 	?>
 
 	<span id="<?=$injectId?>" class="sale_prediction_product_detail_container"></span>
@@ -46,7 +48,7 @@ if (isset($arResult['REQUEST_ITEMS']))
 					},
 					content:
 					'<div class="catalog-element-popup-inner">' +
-						html +
+					html +
 					'</div>',
 //					darkMode: true,
 					closeIcon: true,
@@ -71,10 +73,6 @@ else
 				BX.onCustomEvent('onHasNewPrediction', ['<?= \CUtil::JSEscape($arResult['PREDICTION_TEXT']) ?>']);
 			});
 		</script>
-	<?
+		<?
 	}
 }
-
-?>
-<?$frame->beginStub();?>
-<?$frame->end();?>

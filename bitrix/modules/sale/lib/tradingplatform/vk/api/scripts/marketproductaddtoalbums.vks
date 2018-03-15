@@ -9,8 +9,8 @@ while (i < count) {
     var res_curr = [];
     var params = {
         "owner_id": owner_id,
-        "item_id": data[i].vk_id,
-        "album_ids": data[i].album_vk_id,
+        "item_id": data[i].VK_ID,
+        "album_ids": data[i].ALBUM_VK_ID,
     };
 
     var res_add = API.market.addToAlbum(params);

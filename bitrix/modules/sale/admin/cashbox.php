@@ -64,19 +64,10 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_aft
 									<div class="cashbox-list-help-block-info">
 										<?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_5_HELP_DRIVER_1_DESC')?>
 									</div>
-									<div class="cashbox-list-help-block-link">
-										<a href="http://fs.atol.ru/_layouts/15/atol.templates/Handlers/FileHandler.ashx?guid=4104a3bf-69db-45dc-9926-f524f784c167&webUrl=" target="_blank">
-											<?=Loc::getMessage('SALE_CASHBOX_LOAD_HERE')?>
-										</a>
-									</div>
+									<br>
 									<div class="cashbox-list-help-block-title"><?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_5_HELP_DRIVER_2')?></div>
 									<div class="cashbox-list-help-block-info">
 										<?=Loc::getMessage('SALE_CASHBOX_CONNECT_INSTRUCTION_STEP_5_HELP_DRIVER_2_DESC')?>
-									</div>
-									<div class="cashbox-list-help-block-link">
-										<a href="http://fs.atol.ru/_layouts/15/atol.templates/Handlers/FileHandler.ashx?guid=d085dfef-b1f4-4ad3-9860-fcf72eb9bfda&webUrl=" target="_blank">
-											<?=Loc::getMessage('SALE_CASHBOX_LOAD_HERE')?>
-										</a>
 									</div>
 								</div>
 							</div>

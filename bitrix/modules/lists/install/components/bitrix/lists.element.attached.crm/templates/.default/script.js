@@ -67,6 +67,7 @@ BX.Lists.ListsElementAttachedCrm = (function ()
 			modalId: 'bx-lists-migrate-list',
 			title: BX.message('LEACT_DELETE_POPUP_TITLE'),
 			contentClassName: '',
+			draggable: true,
 			contentStyle: {
 				width: '400px',
 				padding: '20px 20px 20px 20px'
@@ -74,14 +75,6 @@ BX.Lists.ListsElementAttachedCrm = (function ()
 			events: {
 				onPopupClose : function() {
 					this.destroy();
-				},
-				onAfterPopupShow : function(popup) {
-					var title = BX.findChild(popup.contentContainer, {className: 'bx-lists-popup-title'}, true);
-					if (title)
-					{
-						title.style.cursor = 'move';
-						BX.bind(title, 'mousedown', BX.proxy(popup._startDrag, popup));
-					}
 				}
 			},
 			content: BX.message("LEACT_TOOLBAR_ELEMENT_DELETE_WARNING"),

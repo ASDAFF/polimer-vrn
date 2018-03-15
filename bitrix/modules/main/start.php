@@ -125,6 +125,9 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/lib/loader.php");
 		"bitrix\\main\\urlrewriterrulemaker" => "lib/urlrewriter.php",
 		"bitrix\\main\\update\\stepper" => "lib/update/stepper.php",
 		"CTimeZone" => "classes/general/time.php",
+		"bitrix\\main\\composite\\abstractresponse" => "lib/composite/responder.php",
+		"bitrix\\main\\composite\\fileresponse" => "lib/composite/responder.php",
+		"bitrix\\main\\composite\\memcachedresponse" => "lib/composite/responder.php",
 	)
 );
 
@@ -250,7 +253,6 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/cha
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/".$DBType."/main.php");	//main class
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/".$DBType."/option.php");	//options and settings class
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/general/cache.php");	//various cache classes
-require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/general/cache_html.php");	//html cache class support
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/general/module.php");
 
 error_reporting(E_COMPILE_ERROR|E_ERROR|E_CORE_ERROR|E_PARSE);

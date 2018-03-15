@@ -8,6 +8,10 @@ use Bitrix\Sale\Cashbox\Internals\CashboxTable;
 
 Localization\Loc::loadMessages(__FILE__);
 
+/**
+ * Class Cashbox1C
+ * @package Bitrix\Sale\Cashbox
+ */
 class Cashbox1C extends Cashbox
 {
 	const CACHE_ID = 'BITRIX_CASHBOX_1C_ID';

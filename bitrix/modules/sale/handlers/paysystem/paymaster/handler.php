@@ -60,10 +60,11 @@ class PayMasterHandler extends WebMoneyHandler
 			)
 			{
 				$serviceResult->addError(new Error(Loc::getMessage('SALE_HPS_PAYMASTER_ERROR_PARAMS_VALUE')));
-				return $serviceResult;
 			}
-
-			$serviceResult->setData(array('CODE' => 'YES'));
+			else
+			{
+				$serviceResult->setData(array('CODE' => 'YES'));
+			}
 		}
 		else
 		{

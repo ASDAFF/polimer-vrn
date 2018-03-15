@@ -370,6 +370,7 @@ class CSaleStatus
 				$str .= "#ORDER_DESCRIPTION# - ".Loc::getMessage("SKGS_STATUS_DESCR", null, $arSiteList["LANGUAGE_ID"])."\n";
 				$str .= "#TEXT# - ".Loc::getMessage("SKGS_STATUS_TEXT", null, $arSiteList["LANGUAGE_ID"])."\n";
 				$str .= "#SALE_EMAIL# - ".Loc::getMessage("SKGS_SALE_EMAIL", null, $arSiteList["LANGUAGE_ID"])."\n";
+				$str .= "#ORDER_PUBLIC_URL# - ".Loc::getMessage("SKGS_ORDER_PUBLIC_LINK", null, $arSiteList["LANGUAGE_ID"])."\n";
 
 				$eventTypeID = $eventType->Add(
 					array(

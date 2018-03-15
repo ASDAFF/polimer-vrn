@@ -1,6 +1,9 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use \Bitrix\Main\Loader;
+use \Bitrix\Main\ModuleManager;
+
 global $USER_FIELD_MANAGER, $CACHE_MANAGER;
 
 /** @var SocialnetworkBlogPostComment $this */
@@ -14,16 +17,18 @@ global $USER_FIELD_MANAGER, $CACHE_MANAGER;
 /** @global CUserTypeManager $USER_FIELD_MANAGER */
 /** @global CMain $APPLICATION */
 
-if (!CModule::IncludeModule("blog"))
+if (!Loader::includeModule("blog"))
 {
 	ShowError(GetMessage("BLOG_MODULE_NOT_INSTALL"));
 	return;
 }
+if (!Loader::includeModule("socialnetwork"))
+{
+	ShowError(GetMessage("SONET_MODULE_NOT_INSTALL"));
+	return;
+}
 $arParams["SOCNET_GROUP_ID"] = IntVal($arParams["SOCNET_GROUP_ID"]);
-
-$bSocialnetwork = CModule::IncludeModule("socialnetwork");
-$bIntranetInstalled = IsModuleInstalled("intranet");
-
+$arResult["bIntranetInstalled"] = ModuleManager::isModuleInstalled("intranet");
 $arResult["bTasksAvailable"] = (
 	(!isset($arParams["bPublicPage"]) || !$arParams["bPublicPage"])
 	&& IsModuleInstalled("tasks")
@@ -250,7 +255,7 @@ else
 	if($arResult["PostPerm"] > BLOG_PERMS_DENY)
 	{
 		$arResult["Perm"] = (
-			$bIntranetInstalled
+			$arResult["bIntranetInstalled"]
 			&& IsModuleInstalled("bitrix24")
 			&& $arParams["POST_DATA"]["HAVE_ALL_IN_ADR"] == "Y"
 				? ($arPost["AUTHOR_ID"] == $user_id ? BLOG_PERMS_FULL : BLOG_PERMS_WRITE)
@@ -264,7 +269,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_REQUEST['mfi_mode']) && ($_R
 	CBlogImage::AddImageResizeHandler(array("width" => 400, "height" => 400));
 }
 
-if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH && $arPost["ENABLE_COMMENTS"] == "Y")
+if(
+	!empty($arPost)
+	&& $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH
+	&& $arPost["ENABLE_COMMENTS"] == "Y"
+)
 {
 	//Comment delete
 	if(IntVal($_GET["delete_comment_id"])>0)
@@ -319,6 +328,8 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 	elseif (IntVal($_GET["show_comment_id"]) > 0)
 	{
 		$arComment = CBlogComment::GetByID(IntVal($_GET["show_comment_id"]));
+		$arTagInline = \Bitrix\Socialnetwork\Util::detectTags($arComment, array('POST_TEXT'));
+
 		if (
 			$arResult["Perm"] >= BLOG_PERMS_MODERATE
 			&& !empty($arComment)
@@ -366,7 +377,20 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 								$arImages[$arImage["ID"]] = $arImage["FILE_ID"];
 							}
 
-							$arAllow = array("HTML" => "N", "ANCHOR" => "N", "BIU" => "N", "IMG" => "N", "QUOTE" => "N", "CODE" => "N", "FONT" => "N", "TABLE" => "N", "LIST" => "N", "SMILES" => "N", "NL2BR" => "N", "VIDEO" => "N");
+							$arAllow = array(
+								"HTML" => "N",
+								"ANCHOR" => "N",
+								"BIU" => "N",
+								"IMG" => "N",
+								"QUOTE" => "N",
+								"CODE" => "N",
+								"FONT" => "N",
+								"TABLE" => "N",
+								"LIST" => "N",
+								"SMILES" => "N",
+								"NL2BR" => "N",
+								"VIDEO" => "N"
+							);
 							$text4message = $parserBlog->convert($arComment["POST_TEXT"], false, $arImages, $arAllow, array("isSonetLog"=>true));
 
 							$text4mail = $parserBlog->convert4mail($arComment["POST_TEXT"]);
@@ -394,6 +418,10 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 							if (intval($arComment["AUTHOR_ID"]) > 0)
 							{
 								$arFieldsForSocnet["USER_ID"] = $arComment["AUTHOR_ID"];
+							}
+							if (!empty($arTagInline))
+							{
+								$arFieldsForSocnet["TAG"] = $arTagInline;
 							}
 
 							$log_comment_id = CSocNetLogComments::Add($arFieldsForSocnet, false, false);
@@ -432,7 +460,10 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 	elseif(IntVal($_GET["hide_comment_id"])>0)
 	{
 		$arComment = CBlogComment::GetByID(IntVal($_GET["hide_comment_id"]));
-		if($arResult["Perm"]>=BLOG_PERMS_MODERATE && !empty($arComment))
+		if (
+			$arResult["Perm"] >= BLOG_PERMS_MODERATE
+			&& !empty($arComment)
+		)
 		{
 			if($arComment["PUBLISH_STATUS"] != BLOG_PUBLISH_STATUS_PUBLISH)
 			{
@@ -627,7 +658,12 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 						}
 					}
 
-					if(isset($_POST['webdav_history']) && $_POST['webdav_history'] == 'Y' && !empty($_POST['comment']))
+					if(
+						isset($_POST['webdav_history'])
+						&& $_POST['webdav_history'] == 'Y'
+						&& isset($_POST['comment'])
+						&& strlen($_POST['comment']) > 0
+					)
 					{
 						$_POST["comment"] = $APPLICATION->convertCharset($_POST["comment"], 'UTF-8', LANG_CHARSET);
 					}
@@ -764,6 +800,7 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 						{
 							$arFields["UF_BLOG_COMM_URL_PRV"] = $urlPreviewValue;
 						}
+						$arTagInline = \Bitrix\Socialnetwork\Util::detectTags($arFields, array('POST_TEXT'));
 
 						if($commentId = CBlogComment::Add($arFields))
 						{
@@ -874,6 +911,10 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 									if (intval($user_id) > 0)
 									{
 										$arFieldsForSocnet["USER_ID"] = $user_id;
+									}
+									if (!empty($arTagInline))
+									{
+										$arFieldsForSocnet["TAG"] = $arTagInline;
 									}
 
 									if ($log_comment_id = CSocNetLogComments::Add($arFieldsForSocnet, false, false))
@@ -1154,7 +1195,7 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 						if(
 							$dbComment->Fetch()
 							&& $arResult["Perm"] < BLOG_PERMS_FULL
-							&& !$bIntranetInstalled
+							&& !$arResult["bIntranetInstalled"]
 						)
 						{
 							$arResult["COMMENT_ERROR"] = GetMessage("B_B_PC_COM_ERROR_EDIT").": ".GetMessage("B_B_PC_EDIT_ALREADY_COMMENTED");
@@ -1752,6 +1793,7 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 								}
 
 								$arComment["TextFormated"] = $p->convert($arComment["POST_TEXT"], false, $arImages, $arAllow, $arConvertParams);
+
 								if (!empty($urlPreviewText))
 								{
 									$arComment["TextFormated"] .= $urlPreviewText;
@@ -1947,8 +1989,8 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 				);
 
 				if (
-					($bIntranetInstalled && $bAuthor)
-					|| ($arResult["Perm"] >= BLOG_PERMS_FULL && !$bIntranetInstalled)
+					($arResult["bIntranetInstalled"] && $bAuthor)
+					|| ($arResult["Perm"] >= BLOG_PERMS_FULL && !$arResult["bIntranetInstalled"])
 					|| CSocNetUser::IsCurrentUserModuleAdmin()
 					|| $APPLICATION->GetGroupRight("blog") >= "W"
 				)
@@ -1967,7 +2009,7 @@ if(!empty($arPost) && $arPost["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH &
 					$arResult["CommentsResult"][$k1]["CAN_EDIT"] = "N";
 				}
 
-				if(!$bIntranetInstalled & $arResult["Perm"] < BLOG_PERMS_FULL && !empty($arResult["CommentsResult"][$k1-1]))
+				if(!$arResult["bIntranetInstalled"] & $arResult["Perm"] < BLOG_PERMS_FULL && !empty($arResult["CommentsResult"][$k1-1]))
 				{
 					$arResult["CommentsResult"][$k1-1]["CAN_EDIT"] = "N";
 				}

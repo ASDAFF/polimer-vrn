@@ -14,4 +14,7 @@ $MESS["IM_PHONE_CALL_VIEW_RATE_QUALITY"] = "Rate connection quality";
 $MESS["IM_PHONE_CALL_VIEW_DONT_LEAVE"] = "Leaving the page will end the call";
 $MESS["IM_PHONE_CALL_VIEW_FOLD"] = "Minimize";
 $MESS["IM_PHONE_CALL_VIEW_UNFOLD"] = "Restore";
+$MESS["IM_PHONE_CALL_VIEW_INTERCEPT"] = "Intercept";
+$MESS["IM_PHONE_CALL_VIEW_SAVE"] = "Save";
+$MESS["IM_PHONE_CALL_COMMENT_PLACEHOLDER"] = "Enter comment text";
 ?>

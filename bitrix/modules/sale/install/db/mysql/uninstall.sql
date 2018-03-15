@@ -107,7 +107,9 @@ drop table if exists b_sale_entity_marker;
 drop table if exists b_sale_tp_vk_profile;
 drop table if exists b_sale_tp_vk_log;
 drop table if exists b_sale_order_archive;
+drop table if exists b_sale_order_archive_packed;
 drop table if exists b_sale_basket_archive;
+drop table if exists b_sale_basket_archive_packed;
 drop table if exists b_sale_company_group;
 drop table if exists b_sale_company_resp_grp;
 drop table if exists b_sale_kkm_model;
@@ -115,3 +117,8 @@ drop table if exists b_sale_cashbox;
 drop table if exists b_sale_cashbox_check;
 drop table if exists b_sale_cashbox_z_report;
 drop table if exists b_sale_buyer_stat;
+drop table if exists b_sale_order_product_stat;
+drop table if exists b_sale_delivery_req;
+drop table if exists b_sale_delivery_req_shp;
+drop table if exists b_sale_check_related_entities;
+drop table if exists b_sale_exchange_log

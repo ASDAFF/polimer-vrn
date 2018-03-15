@@ -77,4 +77,5 @@ $MESS["BLOG_POST_CREATE_TASK_FAILURE_TITLE"] = "Error";
 $MESS["BLOG_POST_CREATE_TASK_SUCCESS_DESCRIPTION"] = "You can now view and edit the task.";
 $MESS["BLOG_POST_CREATE_TASK_ERROR_GET_DATA"] = "Cannot obtain data to create a task.";
 $MESS["BLOG_POST_LINK_COPIED"] = "Link copied";
+$MESS["BLOG_POST_LIMITED_VIEW"] = "(users will see the post once the video has been converted)";
 ?>

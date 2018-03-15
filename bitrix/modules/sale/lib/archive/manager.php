@@ -19,15 +19,27 @@ class Manager
 {
 	const SALE_ARCHIVE_VERSION = 1;
 
-	private static $archiveFieldNamesOrder = array(
-		"ACCOUNT_NUMBER", "USER_ID", "PRICE", "CURRENCY", "STATUS_ID", "PAYED", "DEDUCTED", "CANCELED",
-		"LID", "PERSON_TYPE_ID", "XML_ID", "ID_1C", "DATE_INSERT", "RESPONSIBLE_ID", "COMPANY_ID"
-	);
+	/**
+	 * @return array
+	 */
+	public static function getOrderFieldNames()
+	{
+		return array(
+			"ACCOUNT_NUMBER", "USER_ID", "PRICE", "SUM_PAID", "CURRENCY", "STATUS_ID", "PAYED", "DEDUCTED", "CANCELED",
+			"LID", "PERSON_TYPE_ID", "XML_ID", "ID_1C", "DATE_INSERT", "RESPONSIBLE_ID", "COMPANY_ID"
+		);
+	}
 
-	private static $archiveFieldNamesBasket = array(
-		"PRODUCT_ID", "PRODUCT_PRICE_ID", "NAME", "PRICE", "MODULE", "QUANTITY", "WEIGHT", "DATE_INSERT",
-		"CURRENCY", "PRODUCT_XML_ID", "MEASURE_NAME", "TYPE", "SET_PARENT_ID", "MEASURE_CODE", "BASKET_DATA"
-	);
+	/**
+	 * @return array
+	 */
+	public static function getBasketFieldNames()
+	{
+		return array(
+			"PRODUCT_ID", "PRODUCT_PRICE_ID", "NAME", "PRICE", "MODULE", "QUANTITY", "WEIGHT", "DATE_INSERT",
+			"CURRENCY", "PRODUCT_XML_ID", "MEASURE_NAME", "TYPE", "SET_PARENT_ID", "MEASURE_CODE", "BASKET_DATA"
+		);
+	}
 
 	/**
 	 * Archive orders by filter
@@ -84,7 +96,7 @@ class Manager
 			foreach ($idOrdersList as $id)
 			{
 				$orderList = array_merge($orderListArchive[$id], $sortedOrderData[$id]);
-				$preparedOrderData = array_intersect_key($orderList['ORDER'], array_flip(static::$archiveFieldNamesOrder));
+				$preparedOrderData = array_intersect_key($orderList['ORDER'], array_flip(static::getOrderFieldNames()));
 				$preparedOrderData['ORDER_ID'] = $id;
 				$preparedOrderData['DATE_ARCHIVED'] = new Type\DateTime();
 				$preparedOrderData['VERSION'] = static::SALE_ARCHIVE_VERSION;
@@ -101,7 +113,7 @@ class Manager
 					{
 						foreach ($basketItems as $item)
 						{
-							$preparedBasketItems = array_intersect_key($item, array_flip(static::$archiveFieldNamesBasket));
+							$preparedBasketItems = array_intersect_key($item, array_flip(static::getBasketFieldNames()));
 							$preparedBasketItems['ARCHIVE_ID'] = $archivedOrderId;
 							$preparedBasketItems['BASKET_DATA'] = serialize($item);
 
@@ -231,6 +243,7 @@ class Manager
 	 */
 	public static function archiveOnAgent($limit, $maxTime = null)
 	{
+		global $USER;
 		$agentId = null;
 
 		$limit = (int)$limit ? (int)$limit : 10;
@@ -247,6 +260,11 @@ class Manager
 
 		if ($agentId)
 		{
+			if (!(isset($USER) && $USER instanceof \CUser))
+			{
+				$USER = new \CUser();
+			}
+
 			$result = static::archiveByOptions($limit, $maxTime);
 
 			$resultData = $result->getData();
@@ -309,14 +327,14 @@ class Manager
 	}
 
 	/**
-	 * @param array $filter
+	 * @param array $parameters
 	 *
 	 * @return Main\DB\Result
 	 * @throws Main\ArgumentException
 	 */
-	public static function getList(array $filter = array())
+	public static function getList(array $parameters = array())
 	{
-		return Internals\OrderArchiveTable::getList($filter);
+		return Internals\OrderArchiveTable::getList($parameters);
 	}
 
 	/**
@@ -335,14 +353,14 @@ class Manager
 	/**
 	 * Get entries of basket items from archive.
 	 * 
-	 * @param array $filter
+	 * @param array $parameters
 	 *
 	 * @return Main\DB\Result
 	 * @throws Main\ArgumentException
 	 */
-	public static function getBasketList(array $filter = array())
+	public static function getBasketList(array $parameters = array())
 	{
-		return Internals\BasketArchiveTable::getList($filter);
+		return Internals\BasketArchiveTable::getList($parameters);
 	}
 
 	/**
@@ -397,7 +415,13 @@ class Manager
 		if ($id <= 0)
 			throw new Main\ArgumentNullException("id");
 
-		$archivedOrder = Internals\OrderArchiveTable::getById($id);
+		$archivedOrder = Internals\OrderArchiveTable::getList(
+			array(
+				"select" => array("*", "ORDER_FULL" => "ORDER_PACKED.ORDER_DATA"),
+				"filter" => array("=ID" => $id),
+				"limit" => 1
+			)
+		);
 		$orderFields = $archivedOrder->fetch();
 
 		if (!$orderFields)
@@ -406,16 +430,19 @@ class Manager
 		$recoveryName = "\\Bitrix\\Sale\\Archive\\Recovery\\Version" . $orderFields['VERSION'];
 		if (class_exists($recoveryName))
 		{
-			$orderFields['ORDER_DATA'] = unserialize($orderFields['ORDER_DATA']);
+			$orderFields['ORDER_DATA'] = unserialize($orderFields['ORDER_FULL']);
+			$orderFields['ORDER_DATA']['BASKET_ITEMS'] = array();
+
 			$basketArchivedItems = Internals\BasketArchiveTable::getList(
 				array(
+					"select" => array("BASKET_FULL" => "BASKET_PACKED.BASKET_DATA"),
 					"filter" => array("ARCHIVE_ID" => $orderFields['ID'])
 				)
 			);
 
 			while ($item = $basketArchivedItems->fetch())
 			{
-				$item['BASKET_DATA'] = unserialize($item['BASKET_DATA']);
+				$item['BASKET_DATA'] = unserialize($item['BASKET_FULL']);
 				$orderFields['ORDER_DATA']['BASKET_ITEMS'][$item['BASKET_DATA']['ID']] = $item['BASKET_DATA'];
 			}
 

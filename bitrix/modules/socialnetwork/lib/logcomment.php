@@ -32,6 +32,10 @@ class LogCommentTable extends Entity\DataManager
 			'LOG_ID' => array(
 				'data_type' => 'integer',
 			),
+			'LOG' => array(
+				'data_type' => 'Bitrix\Socialnetwork\LogTable',
+				'reference' => array('=this.LOG_ID' => 'ref.ID'),
+			),
 			'EVENT_ID' => array(
 				'data_type' => 'string',
 			),
@@ -44,9 +48,8 @@ class LogCommentTable extends Entity\DataManager
 			'SOURCE_ID' => array(
 				'data_type' => 'integer',
 			),
-			'LOG' => array(
-				'data_type' => 'Bitrix\Main\LogTable',
-				'reference' => array('=this.LOG_ID' => 'ref.ID'),
+			'LOG_DATE' => array(
+				'data_type' => 'datetime',
 			),
 		);
 

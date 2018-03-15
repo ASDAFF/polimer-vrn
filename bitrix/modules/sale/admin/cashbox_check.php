@@ -55,8 +55,8 @@ if (($ids = $lAdmin->GroupAction()) && $saleModulePermissions >= "W")
 			if ($cashbox->isCheckable())
 			{
 				$r = $cashbox->check($check);
-				if ($r->isSuccess())
-					$lAdmin->AddGroupError(!Loc::getMessage('SALE_CHECK_DELETE_ERR_INCORRECT_STATUS'), $id);
+				if (!$r->isSuccess())
+					$lAdmin->AddGroupError(implode("\n", $r->getErrorMessages()), $id);
 			}
 		}
 	}
@@ -73,7 +73,7 @@ if (strlen($filter_date_create_from)>0)
 {
 	$filter[">=DATE_CREATE"] = trim($filter_date_create_from);
 }
-elseif($set_filter!="Y" && $del_filter != "Y" && !$ids)
+elseif($set_filter!="Y" && $del_filter != "Y")
 {
 	$filter_date_create_from_FILTER_PERIOD = 'day';
 	$filter_date_create_from_FILTER_DIRECTION = 'current';
@@ -203,6 +203,7 @@ else
 
 $headers = array(
 	array("id" => "ID", "content" => GetMessage("SALE_CASHBOX_ID"), "sort" => "ID", "default" => true),
+	array("id" => "CHECK_TYPE", "content" => GetMessage("SALE_CASHBOX_CHECK_TYPE"), "sort" => "TYPE", "default" => true),
 	array("id" => "ORDER_ID", "content" => GetMessage("SALE_CASHBOX_ORDER_ID"), "sort" => "ORDER_ID", "default" => true),
 	array("id" => "CASHBOX_ID", "content" => GetMessage("SALE_CASHBOX_CASHBOX_ID"), "sort" => "CASHBOX_ID", "default" => true),
 	array("id" => "DATE_CREATE", "content" => GetMessage("SALE_CASHBOX_DATE_CREATE"), "sort" => "DATE_CREATE", "default" => true),
@@ -231,10 +232,28 @@ $shipmentIdList = array();
 $shipmentStatuses = array();
 $paymentRows = array();
 $shipmentRows = array();
+$relatedEntities = array();
 while ($check = $tempResult->Fetch())
 {
 	$paymentIdList[] = $check['PAYMENT_ID'];
 	$shipmentIdList[] = $check['SHIPMENT_ID'];
+
+	$relatedDbRes = Internals\CheckRelatedEntitiesTable::getList(array(
+		'filter' => array('=CHECK_ID' => $check['ID'])
+	));
+	while ($data = $relatedDbRes->fetch())
+	{
+		if ($data['ENTITY_TYPE'] === Internals\CheckRelatedEntitiesTable::ENTITY_TYPE_SHIPMENT)
+		{
+			$shipmentIdList[] = $data['ENTITY_ID'];
+			$relatedEntities[$data['CHECK_ID']][Internals\CheckRelatedEntitiesTable::ENTITY_TYPE_SHIPMENT][] = $data['ENTITY_ID'];
+		}
+		elseif ($data['ENTITY_TYPE'] === Internals\CheckRelatedEntitiesTable::ENTITY_TYPE_PAYMENT)
+		{
+			$paymentIdList[] = $data['ENTITY_ID'];
+			$relatedEntities[$data['CHECK_ID']][Internals\CheckRelatedEntitiesTable::ENTITY_TYPE_PAYMENT][] = $data['ENTITY_ID'];
+		}
+	}
 }
 $paymentIdList = array_unique($paymentIdList);
 $shipmentIdList = array_unique($shipmentIdList);
@@ -293,17 +312,81 @@ while ($shipment = $shipmentData->fetch())
 
 	$shipmentRows[$shipment['ID']] = $fieldValue;
 }
-	
+
+$checkTypeMap = Cashbox\CheckManager::getCheckTypeMap();
+
 while ($check = $dbResultList->Fetch())
 {
 	$row =& $lAdmin->AddRow($check['ID'], $check, false, GetMessage("SALE_EDIT_DESCR"));
 
 	$row->AddField("ID", $check['ID']);
+
+	$checkClass = $checkTypeMap[$check['TYPE']];
+	$checkName = class_exists($checkClass) ? $checkClass::getName() : '';
+	$row->AddField("CHECK_TYPE", $checkName);
+
 	$row->AddField("ORDER_ID",  "<a href=\"sale_order_view.php?ID=".(int)$check['ORDER_ID']."&lang=".LANG."\">".(int)$check['ORDER_ID']."</a>");
-	$row->AddField("PAYMENT_ID",  "<a href=\"sale_order_payment_edit.php?order_id=".(int)$check['ORDER_ID']."&payment_id=".(int)$check['PAYMENT_ID']."&lang=".LANG."\">".(int)$check['PAYMENT_ID']."</a>");
-	$row->AddField("PAYMENT",  $paymentRows[(int)$check['PAYMENT_ID']]);
-	$row->AddField("SHIPMENT_ID",  "<a href=\"sale_order_shipment_edit.php?order_id=".(int)$check['ORDER_ID']."&shipment_id=".(int)$check['SHIPMENT_ID']."&lang=".LANG."\">".(int)$check['SHIPMENT_ID']."</a>");
-	$row->AddField("SHIPMENT",  $shipmentRows[(int)$check['SHIPMENT_ID']]);
+
+	$paymentIdField = '';
+	if ($check['PAYMENT_ID'] > 0)
+	{
+		$paymentIdField = "<a href=\"sale_order_payment_edit.php?order_id=".(int)$check['ORDER_ID']."&payment_id=".(int)$check['PAYMENT_ID']."&lang=".LANG."\">".(int)$check['PAYMENT_ID']."</a>";
+	}
+
+	if ($relatedEntities[$check['ID']]['P'])
+	{
+		foreach ($relatedEntities[$check['ID']]['P'] as $entityId)
+		{
+			if ($paymentIdField)
+				$paymentIdField .= "<br>";
+
+			$paymentIdField .= "<a href=\"sale_order_payment_edit.php?order_id=".(int)$check['ORDER_ID']."&payment_id=".$entityId."&lang=".LANG."\">".(int)$entityId."</a>";
+		}
+	}
+
+	$row->AddField("PAYMENT_ID",  $paymentIdField);
+
+	$paymentField = $paymentRows[(int)$check['PAYMENT_ID']];
+	if ($relatedEntities[$check['ID']]['P'])
+	{
+		foreach ($relatedEntities[$check['ID']]['P'] as $entityId)
+		{
+			if ($paymentField)
+				$paymentField .= "<br>";
+			$paymentField .= $paymentRows[(int)$entityId];
+		}
+	}
+	$row->AddField("PAYMENT",  $paymentField);
+
+	$shipmentIdField = '';
+	if ($check['SHIPMENT_ID'] > 0)
+	{
+		$shipmentIdField .= "<a href=\"sale_order_shipment_edit.php?order_id=".(int)$check['ORDER_ID']."&shipment_id=".(int)$check['SHIPMENT_ID']."&lang=".LANG."\">".(int)$check['SHIPMENT_ID']."</a>";
+	}
+	if ($relatedEntities[$check['ID']]['S'])
+	{
+		foreach ($relatedEntities[$check['ID']]['S'] as $entityId)
+		{
+			if ($shipmentIdField)
+				$shipmentIdField .= "<br>";
+
+			$shipmentIdField .= "<a href=\"sale_order_shipment_edit.php?order_id=".(int)$check['ORDER_ID']."&shipment_id=".(int)$entityId."&lang=".LANG."\">".(int)$entityId."</a>";
+		}
+	}
+	$row->AddField("SHIPMENT_ID",  $shipmentIdField);
+
+	$shipmentField = $shipmentRows[(int)$check['SHIPMENT_ID']];
+	if ($relatedEntities[$check['ID']]['S'])
+	{
+		foreach ($relatedEntities[$check['ID']]['S'] as $entityId)
+		{
+			if ($shipmentField)
+				$shipmentField .= "<br>";
+			$shipmentField .= $shipmentRows[(int)$entityId];
+		}
+	}
+	$row->AddField("SHIPMENT",  $shipmentField);
+
 	$row->AddField("DATE_CREATE", $check['DATE_CREATE']);
 	$row->AddField("SUM", SaleFormatCurrency($check['SUM'], $check['CURRENCY']));
 	$row->AddField("CASHBOX_ID", htmlspecialcharsbx($cashboxList[$check['CASHBOX_ID']]['NAME']));
@@ -484,7 +567,16 @@ $oFilter->End();
 	BX.message(
 		{
 			CASHBOX_CREATE_WINDOW_NOT_SELECT: '<?=Loc::getMessage("CASHBOX_CREATE_WINDOW_NOT_SELECT")?>',
-			CASHBOX_CREATE_WINDOW_TITLE: '<?=Loc::getMessage("CASHBOX_CREATE_WINDOW_TITLE")?>'
+			CASHBOX_CREATE_WINDOW_TITLE: '<?=Loc::getMessage("CASHBOX_CREATE_WINDOW_TITLE")?>',
+			CASHBOX_ADD_CHECK_INPUT_ORDER: '<?=Loc::getMessage("CASHBOX_ADD_CHECK_INPUT_ORDER")?>',
+			CASHBOX_ADD_CHECK_TITLE: '<?=Loc::getMessage("CASHBOX_ADD_CHECK_TITLE")?>',
+			CASHBOX_ADD_CHECK_OPTGROUP_PAYMENTS: '<?=Loc::getMessage("SALE_CASHBOX_ADD_CHECK_OPTGROUP_PAYMENTS")?>',
+			CASHBOX_ADD_CHECK_OPTGROUP_SHIPMENTS: '<?=Loc::getMessage("SALE_CASHBOX_ADD_CHECK_OPTGROUP_SHIPMENTS")?>',
+			CASHBOX_ADD_CHECK_PAYMENT: '<?=Loc::getMessage("SALE_CASHBOX_ADD_CHECK_PAYMENT")?>',
+			CASHBOX_ADD_CHECK_SHIPMENT: '<?=Loc::getMessage("SALE_CASHBOX_ADD_CHECK_SHIPMENT")?>',
+			CASHBOX_ADD_CHECK_ENTITIES: '<?=Loc::getMessage("SALE_CASHBOX_ADD_CHECK_ENTITIES")?>',
+			CASHBOX_ADD_CHECK_TYPE_CHECKS: '<?=Loc::getMessage("SALE_CASHBOX_ADD_CHECK_TYPE_CHECKS")?>',
+			CASHBOX_ADD_CHECK_ADDITIONAL_ENTITIES: '<?=Loc::getMessage("SALE_CASHBOX_ADD_CHECK_ADDITIONAL_ENTITIES")?>',
 		}
 	);
 </script>

@@ -239,7 +239,7 @@ class RestService extends \IRestService
 		$listIblock = self::getIblocksData($params);
 		if(empty($listIblock))
 			throw new RestException('Iblock not found', self::ERROR_IBLOCK_NOT_FOUND);
-		self::checkElementPermission($params);
+		self::checkBasePermission($params);
 
 		$fields = array();
 		if(!empty($params['FIELD_ID']))
@@ -394,6 +394,8 @@ class RestService extends \IRestService
 	 * @return bool
 	 * @throws AccessException
 	 * @throws RestException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \CBPArgumentOutOfRangeException
 	 */
 	public static function addElement($params, $n, $server)
 	{
@@ -481,6 +483,8 @@ class RestService extends \IRestService
 	 * @return bool
 	 * @throws AccessException
 	 * @throws RestException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \CBPArgumentOutOfRangeException
 	 */
 	public static function updateElement($params, $n, $server)
 	{
@@ -583,6 +587,7 @@ class RestService extends \IRestService
 	 * @return array
 	 * @throws RestException
 	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \CBPArgumentOutOfRangeException
 	 */
 	private static function prepareElementFields(array &$params, $object, &$errors)
 	{
@@ -599,6 +604,10 @@ class RestService extends \IRestService
 		$fields = $object->getFields();
 		foreach($fields as $fieldId => $fieldData)
 		{
+			if (empty($params['FIELDS'][$fieldId]) && $fieldData['IS_REQUIRED'] === 'Y')
+			{
+				$errors .= str_replace("#FIELD#", $fieldData["NAME"], GetMessage("LRS_FIELD_REQUIED"));
+			}
 			$fieldValue = $params['FIELDS'][$fieldId];
 			if($object->is_field($fieldId))
 			{
@@ -660,6 +669,22 @@ class RestService extends \IRestService
 						if (!is_numeric($value))
 							$errors .= 'Value of the "'.$fieldData['NAME'].'" field is not correct. ';
 						$element['PROPERTY_VALUES'][$fieldData['ID']][$key]['VALUE'] = floatval($value);
+					}
+				}
+				elseif ($fieldData['TYPE'] == "S:DiskFile")
+				{
+					foreach ($fieldValue as $key => $value)
+					{
+						if (is_array($value))
+						{
+							$element['PROPERTY_VALUES'][$fieldData['ID']][$key]['VALUE'] = $value;
+						}
+						else
+						{
+							if (!is_array($element['PROPERTY_VALUES'][$fieldData['ID']]['VALUE']))
+								$element['PROPERTY_VALUES'][$fieldData['ID']]['VALUE'] = array();
+							$element['PROPERTY_VALUES'][$fieldData['ID']]['VALUE'][] = $value;
+						}
 					}
 				}
 				else
@@ -970,6 +995,19 @@ class RestService extends \IRestService
 		{
 			throw new AccessException();
 		}
+		return true;
+	}
+
+	private static function checkBasePermission(array $params)
+	{
+		global $USER;
+		$listPerm = \CListPermissions::checkAccess(
+			$USER, $params['IBLOCK_TYPE_ID'], $params['IBLOCK_ID'], $params['SOCNET_GROUP_ID']);
+		if($listPerm < 0)
+		{
+			throw new AccessException();
+		}
+
 		return true;
 	}
 

@@ -13,7 +13,7 @@ if (strlen($arParams["MAIN_CHAIN_NAME"]) > 0)
 	$APPLICATION->AddChainItem(htmlspecialcharsbx($arParams["MAIN_CHAIN_NAME"]), $arResult['SEF_FOLDER']);
 }
 $APPLICATION->AddChainItem(Loc::getMessage("SPS_CHAIN_ORDERS"), $arResult['PATH_TO_ORDERS']);
-$APPLICATION->AddChainItem(Loc::getMessage("SPS_CHAIN_ORDER_DETAIL", array("#ID#" => $arResult["VARIABLES"]["ID"])));
+$APPLICATION->AddChainItem(Loc::getMessage("SPS_CHAIN_ORDER_DETAIL", array("#ID#" => urldecode($arResult["VARIABLES"]["ID"]))));
 $arDetParams = array(
 		"PATH_TO_LIST" => $arResult["PATH_TO_ORDERS"],
 		"PATH_TO_CANCEL" => $arResult["PATH_TO_ORDER_CANCEL"],
@@ -28,6 +28,7 @@ $arDetParams = array(
 		"CACHE_TIME" => $arParams["CACHE_TIME"],
 		"CACHE_GROUPS" => $arParams["CACHE_GROUPS"],
 		"RESTRICT_CHANGE_PAYSYSTEM" => $arParams["ORDER_RESTRICT_CHANGE_PAYSYSTEM"],
+		"REFRESH_PRICES" => $arParams["ORDER_REFRESH_PRICES"],
 		"HIDE_USER_INFO" => $arParams["ORDER_HIDE_USER_INFO"],
 
 		"CUSTOM_SELECT_PROPS" => $arParams["CUSTOM_SELECT_PROPS"]

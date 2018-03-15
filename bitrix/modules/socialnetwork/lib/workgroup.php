@@ -61,6 +61,9 @@ class WorkgroupTable extends Entity\DataManager
 			'DESCRIPTION' => array(
 				'data_type' => 'text'
 			),
+			'KEYWORDS' => array(
+				'data_type' => 'string'
+			),
 			'CLOSED' => array(
 				'data_type' => 'boolean',
 				'values' => array('N','Y')
@@ -97,6 +100,19 @@ class WorkgroupTable extends Entity\DataManager
 			),
 			'NUMBER_OF_MEMBERS' => array(
 				'data_type' => 'integer',
+			),
+			'PROJECT' => array(
+				'data_type' => 'boolean',
+				'values' => array('N','Y')
+			),
+			'PROJECT_DATE_START' => array(
+				'data_type' => 'datetime'
+			),
+			'PROJECT_DATE_FINISH' => array(
+				'data_type' => 'datetime'
+			),
+			'SEARCH_INDEX' => array(
+				'data_type' => 'text',
 			),
 		);
 

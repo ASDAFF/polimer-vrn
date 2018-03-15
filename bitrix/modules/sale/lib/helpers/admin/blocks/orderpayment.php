@@ -569,7 +569,7 @@ class OrderPayment
 										</tbody>
 									</table>
 								</div>';
-		if ($data['CAN_PRINT_CHECK'] == 'Y' || !empty($data['CHECK']))
+		if ($data['CAN_PRINT_CHECK'] == 'Y' && $data['ID'] > 0)
 		{
 			$result .= '<div class="adm-bus-table-container caption border" style="padding-top:10px;">
 						<div class="adm-bus-table-caption-title" style="background: #eef5f5;">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_LINK_TITLE').'</div>
@@ -782,19 +782,16 @@ class OrderPayment
 		if ($isAllowDelete && !$data['ORDER_LOCKED'])
 			$sectionDelete = '<div class="adm-bus-pay-section-action" id="SECTION_'.$index.'_DELETE">'.Loc::getMessage('SALE_ORDER_PAYMENT_DELETE').'</div>';
 
-		$checkLink = '';
-		if (!empty($data['CHECK']) || $form != 'archive')
+		$checkLink = '<tr><td class="tac" id="PAYMENT_CHECK_LIST_ID_'.$data['ID'].'">';
+		if (!empty($data['CHECK']))
 		{
-			if (!empty($data['CHECK']))
-			{
-				$checkLink .= '<tr><td class="tac" id="PAYMENT_CHECK_LIST_ID_'.$data['ID'].'">';
-				$checkLink .= static::buildCheckHtml($data['CHECK']);
-				$checkLink .= "</td></tr>";
-			}
-			if($form != 'archive' && $data['CAN_PRINT_CHECK'] == 'Y' && $data['HAS_ENABLED_CASHBOX'] === 'Y')
-			{
-				$checkLink .= '<tr><td class="adm-detail-content-cell-r tac"><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderPayment.prototype.showCreateCheckWindow('.$data['ID'].');">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_ADD').'</a></td></tr>';
-			}
+			$checkLink .= static::buildCheckHtml($data['CHECK']);
+		}
+		$checkLink .= "</td></tr>";
+
+		if($form != 'archive' && $data['CAN_PRINT_CHECK'] == 'Y' && $data['HAS_ENABLED_CASHBOX'] === 'Y')
+		{
+			$checkLink .= '<tr><td class="adm-detail-content-cell-r tac"><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderPayment.prototype.showCreateCheckWindow('.$data['ID'].');">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_ADD').'</a></td></tr>';
 		}
 
 		$result = '
@@ -1001,12 +998,12 @@ class OrderPayment
 		if (($data['CAN_PRINT_CHECK'] == 'Y' && $form != 'archive' && $data['HAS_ENABLED_CASHBOX'] === 'Y') || !empty($data['CHECK']))
 		{
 			$checkLink = '<td width="80px">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_LINK_TITLE').':</td><td>';
+			$checkLink .= '<div id="PAYMENT_CHECK_LIST_ID_SHORT_VIEW'.$data['ID'].'">';
 			if (!empty($data['CHECK']))
 			{
-				$checkLink .= '<div id="PAYMENT_CHECK_LIST_ID_SHORT_VIEW'.$data['ID'].'">';
 				$checkLink .= static::buildCheckHtml($data['CHECK']);
-				$checkLink .= "</div>";
 			}
+			$checkLink .= "</div>";
 			if ($form != 'archive' && $data['CAN_PRINT_CHECK'] == 'Y' && $data['HAS_ENABLED_CASHBOX'] === 'Y')
 			{
 				$checkLink .= '<div><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderPayment.prototype.showCreateCheckWindow('.$data['ID'].');">'.Loc::getMessage('SALE_ORDER_PAYMENT_CHECK_ADD').'</a></div>';

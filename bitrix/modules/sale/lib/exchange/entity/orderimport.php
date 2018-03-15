@@ -298,6 +298,7 @@ class OrderImport extends EntityImport
             foreach($item['ATTRIBUTES'] as $id => $value)
             {
                 $result[] = array(
+                    'NAME' => $id,
                     'CODE' => $id,
                     'VALUE' => $value
                 );
@@ -331,10 +332,9 @@ class OrderImport extends EntityImport
                 "MODULE" => "1c_exchange",
                 "PRODUCT_PROVIDER_CLASS" => false,
                 "CATALOG_XML_ID" => "1c_exchange",
-                "DISCOUNT_PRICE" => $item["DISCOUNT_PRICE"],
+                "DISCOUNT_PRICE" => $item['DISCOUNT']['PRICE'],
                 "MEASURE_CODE" => $item["MEASURE_CODE"],
-                "MEASURE_NAME" => $item["MEASURE_NAME"],
-                "VAT_INCLUDED" => "Y"
+                "MEASURE_NAME" => $item["MEASURE_NAME"]
             );
         }
 
@@ -348,6 +348,7 @@ class OrderImport extends EntityImport
 
         return $result;
     }
+
 
     private function prepareFieldsTax($fields)
     {
@@ -380,7 +381,7 @@ class OrderImport extends EntityImport
             false,
             array("ID", "IBLOCK_ID", "XML_ID", "NAME", "DETAIL_PAGE_URL")
         );
-        if($ar = $r->Fetch())
+        if($ar = $r->GetNext())
         {
             $result = $ar;
             $product = \CCatalogProduct::GetByID($ar["ID"]);
@@ -683,6 +684,7 @@ class OrderImport extends EntityImport
                     }
 
                     $basketItem->setField('VAT_RATE', $modifyTaxList[$code]['VAT_RATE']);
+                    $basketItem->setField('VAT_INCLUDED', $modifyTaxList[$code]['VAT_INCLUDED']);
                 }
             }
 
@@ -821,7 +823,8 @@ class OrderImport extends EntityImport
                     {
                         $needQuantity = $basketIndexQuantity-$systemBasketQuantity;
 
-                        $shipmentImport = Exchange\Manager::createImport(EntityType::SHIPMENT);
+                        /** @var ShipmentImport $shipmentImport */
+                        $shipmentImport = Exchange\ManagerImport::create(EntityType::SHIPMENT);
                         $shipmentImport->setParentEntity($order);
 
                         $r = $shipmentImport->synchronizeQuantityShipmentItems($foundedBasketItem, $needQuantity);

@@ -436,8 +436,14 @@ class CSocNetLogDestination
 		}
 
 		if (
-			IsModuleInstalled("intranet")
-			|| COption::GetOptionString("main", "new_user_registration_email_confirmation", "N") == "Y"
+			(
+				!isset($arParams['IGNORE_ACTIVITY'])
+				|| $arParams['IGNORE_ACTIVITY'] != 'Y'
+			)
+			&& (
+				IsModuleInstalled("intranet")
+				|| COption::GetOptionString("main", "new_user_registration_email_confirmation", "N") == "Y"
+			)
 		)
 		{
 			$arFilter["CONFIRM_CODE"] = false;
@@ -971,14 +977,14 @@ class CSocNetLogDestination
 		}
 
 		if (
-			$bIntranetEnabled
-			|| COption::GetOptionString("main", "new_user_registration_email_confirmation", "N") == "Y"
+			!$bNetworkSearch
+			&& (
+				$bIntranetEnabled
+				|| COption::GetOptionString("main", "new_user_registration_email_confirmation", "N") == "Y"
+			)
 		)
 		{
-			if (!$bNetworkSearch)
-			{
-				$arFilter["CONFIRM_CODE"] = false;
-			}
+			$arFilter["CONFIRM_CODE"] = false;
 		}
 
 		$bFilteredByMyUserId = false;
@@ -1575,7 +1581,7 @@ class CSocNetLogDestination
 					$filter,
 					false,
 					array("nTopCount" => $limit),
-					array("ID", "NAME", "DESCRIPTION", "IMAGE_ID")
+					array("ID", "NAME", "DESCRIPTION", "IMAGE_ID", "PROJECT")
 				);
 
 				while ($group = $res->Fetch())
@@ -1585,7 +1591,8 @@ class CSocNetLogDestination
 						"entityId" => $group["ID"],
 						"name" => htmlspecialcharsbx($group["NAME"]),
 						"desc" => htmlspecialcharsbx($group["DESCRIPTION"]),
-						"imageId" => $group["IMAGE_ID"]
+						"imageId" => $group["IMAGE_ID"],
+						"project" => ($group["PROJECT"] == 'Y' ? 'Y' : 'N')
 					);
 				}
 			}
@@ -1617,12 +1624,12 @@ class CSocNetLogDestination
 
 			if (isset($arParams['features']) && !empty($arParams['features']))
 			{
-				self::GetSocnetGroupFilteredByFeaturePerms($arSocnetGroupsTmp, $arParams['features']);
+				self::getSocnetGroupFilteredByFeaturePerms($arSocnetGroupsTmp, $arParams['features']);
 			}
 
 			if (isset($arParams['initiate']) && $arParams['initiate'] == 'Y')
 			{
-				self::GetSocnetGroupFilteredByInitiatePerms($arSocnetGroupsTmp);
+				self::getSocnetGroupFilteredByInitiatePerms($arSocnetGroupsTmp);
 			}
 
 			foreach ($arSocnetGroupsTmp as $value)
@@ -1632,6 +1639,30 @@ class CSocNetLogDestination
 			}
 
 			$staticCache[$hash] = $arSocnetGroups;
+		}
+
+		if (isset($arParams['useProjects']) && $arParams['useProjects'] == 'Y')
+		{
+			$groupsList = $projectsList = array();
+			foreach($arSocnetGroups as $key => $value)
+			{
+				if (
+					isset($value['project'])
+					&& $value['project'] == 'Y'
+				)
+				{
+					$projectsList[$key] = $value;
+				}
+				else
+				{
+					$groupsList[$key] = $value;
+				}
+			}
+
+			return array(
+				'SONETGROUPS' => $groupsList,
+				'PROJECTS' => $projectsList
+			);
 		}
 
 		return $arSocnetGroups;
@@ -2061,7 +2092,6 @@ class CSocNetLogDestination
 			$rsDest = \Bitrix\Main\FinderDestTable::getList(array(
 				'order' => $arOrder,
 				'filter' => $arFilter,
-				'group' => array("USER_ID"),
 				'select' => array(
 					'CONTEXT',
 					'CODE',
@@ -2204,6 +2234,8 @@ class CSocNetLogDestination
 	{
 		global $USER;
 
+		$result = array();
+
 		$iUCounter = $iSGCounter = $iDCounter = 0;
 		$iCRMContactCounter = $iCRMCompanyCounter = $iCRMDealCounter = $iCRMLeadCounter = 0;
 		$bCrm = (
@@ -2222,9 +2254,14 @@ class CSocNetLogDestination
 			&& $arParams["CRMEMAILS"] == "Y"
 			&& ModuleManager::isModuleInstalled('crm')
 		);
+		$bAllowProject = (
+			is_array($arParams)
+			&& isset($arParams["PROJECTS"])
+			&& $arParams["PROJECTS"] == "Y"
+		);
 		if (is_array($arDestinationSort))
 		{
-			$userIdList = array();
+			$userIdList = $sonetGroupIdList = array();
 			$userLimit = 11;
 			$sonetGroupLimit = 6;
 			$departmentLimit = 6;
@@ -2235,6 +2272,7 @@ class CSocNetLogDestination
 				if (
 					!$bAllowEmail
 					&& !$bAllowCrmEmail
+					&& !$bAllowProject
 					&& ($iUCounter >= $userLimit)
 					&& $iSGCounter >= $sonetGroupLimit
 					&& $iDCounter >= $departmentLimit
@@ -2267,7 +2305,10 @@ class CSocNetLogDestination
 				}
 				elseif (preg_match('/^SG(\d+)$/i', $code, $matches))
 				{
-					if ($iSGCounter >= $sonetGroupLimit)
+					if (
+						!$bAllowProject
+						&& $iSGCounter >= $sonetGroupLimit
+					)
 					{
 						continue;
 					}
@@ -2276,6 +2317,7 @@ class CSocNetLogDestination
 						$arLastDestination['SONETGROUPS'] = array();
 					}
 					$arLastDestination['SONETGROUPS'][$code] = $code;
+					$sonetGroupIdList[] = intval($matches[1]);
 					$iSGCounter++;
 				}
 				elseif (
@@ -2463,7 +2505,107 @@ class CSocNetLogDestination
 				CSocNetLogDestination::sortDestinations($tmp, $arDestinationSort);
 				$arLastDestination['USERS'] = $tmp['USERS'];
 			}
+
+			if (
+				$bAllowProject
+				&& !empty($sonetGroupIdList)
+			)
+			{
+				$iSGCounter = $iSGPCounter = 0;
+				$projectLimit = 10;
+				$userId = $USER->getId();
+
+				$destSGList = $destSGPList = array();
+
+				$cacheTtl = defined("BX_COMP_MANAGED_CACHE") ? 3153600 : 3600*4;
+				$cacheId = 'dest_sort_sonetgroups'.$userId.serialize($arParams);
+				$cacheDir = '/sonet/log_dest_sort/'.intval($userId / 100);
+				$obCache = new CPHPCache;
+
+				if($obCache->InitCache($cacheTtl, $cacheId, $cacheDir))
+				{
+					$cacheVars = $obCache->GetVars();
+					$destSGList = $cacheVars['SG'];
+					$destSGPList = $cacheVars['SGP'];
+				}
+				else
+				{
+					$obCache->StartDataCache();
+
+					$res = \Bitrix\Socialnetwork\WorkgroupTable::getList(array(
+						'filter' => array(
+							'@ID' => $sonetGroupIdList
+						),
+						'select' => array('ID', 'PROJECT')
+					));
+
+					while($destSonetGroup = $res->fetch())
+					{
+						if (
+							$iSGCounter >= $sonetGroupLimit
+							&& $iSGPCounter >= $projectLimit
+						)
+						{
+							break;
+						}
+
+						$code = 'SG'.$destSonetGroup['ID'];
+
+						if ($destSonetGroup['PROJECT'] == 'Y')
+						{
+							if ($iSGPCounter >= $projectLimit)
+							{
+								continue;
+							}
+							$destSGPList[$code] = $code;
+							$iSGPCounter++;
+						}
+						else
+						{
+							if ($iSGCounter >= $sonetGroupLimit)
+							{
+								continue;
+							}
+							$destSGList[$code] = $code;
+							$iSGCounter++;
+						}
+					}
+
+					$obCache->EndDataCache(array(
+						'SG' => $destSGList,
+						'SGP' => $destSGPList
+					));
+				}
+
+				$tmp = array(
+					'SONETGROUPS' => $destSGList,
+					'PROJECTS' => $destSGPList
+				);
+
+				CSocNetLogDestination::sortDestinations($tmp, $arDestinationSort);
+
+				$arLastDestination['SONETGROUPS'] = $tmp['SONETGROUPS'];
+				$arLastDestination['PROJECTS'] = $tmp['PROJECTS'];
+			}
 		}
+
+		foreach($arLastDestination as $groupKey => $entitiesList)
+		{
+			$result[$groupKey] = array();
+
+			if (is_array($entitiesList))
+			{
+				$tmp = array();
+				$sort = 0;
+				foreach($entitiesList as $key => $value)
+				{
+					$tmp[$key] = $sort++;
+				}
+				$result[$groupKey] = $tmp;
+			}
+		}
+
+		return $result;
 	}
 
 	public static function fillEmails(&$arDest)

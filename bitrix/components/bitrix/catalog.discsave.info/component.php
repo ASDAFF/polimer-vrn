@@ -93,7 +93,7 @@ if ($onlySaleDiscount && $cumulativePreset)
 			{
 				$rangeToApply = $range;
 			}
-			if ($rangeToApply && $range['sum'] > $rangeToApply['sum'])
+			if (!$nextRangeToApply && $rangeToApply && $range['sum'] > $rangeToApply['sum'])
 			{
 				$nextRangeToApply = $range;
 			}

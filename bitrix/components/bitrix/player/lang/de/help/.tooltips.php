@@ -40,4 +40,5 @@ $MESS["ALLOW_SWF_TIP"] = "Erlaubt das Abspielen von SWF-Dateien. Nicht empfohlen
 $MESS["CONTENT_TYPE_TIP"] = "Definiert den Inhaltstyp, der abgespielt wird.";
 $MESS["SIZE_TYPE_TIP"] = "<b>Absolute Größe</b>: geben Sie Höhe und Breite des Player-Fensters an, in Pixel;<br /><b>In Container einfügen</b>: Player-Fenster wird automatisch an die Größe des übergeordneten Containers angepasst;<br /><b>Videodimensionen nutzen</b>: Größe des Player-Fensters wird an den Videorahmen möglichst angepasst.";
 $MESS["PLAYBACK_RATE_TIP"] = "Geben Sie eine Zahl von 0,1 bis 3 an";
+$MESS["USE_PLAYLIST_AS_SOURCES_TIP"] = "Der Browser wird die komplette Dateiliste durchlaufen und die erste verfügbare Datei wiedergeben";
 ?>

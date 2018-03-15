@@ -37,6 +37,8 @@ class PropertyValueCollection
 	private $propertyGroupMap = array();
 	private $propertyGroups = array();
 
+	private static $eventClassName = null;
+
 	/**
 	 * @return Order
 	 */
@@ -256,14 +258,17 @@ class PropertyValueCollection
 			);
 		}
 
-		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+		if (self::$eventClassName === null)
+		{
+			$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+			$propertyClassName = $registry->get(Registry::ENTITY_PROPERTY_VALUE);
+			self::$eventClassName = $propertyClassName::getEntityEventName();
+		}
 
-		$propertyClassName = $registry->get(Registry::ENTITY_PROPERTY_VALUE);
-		$itemEventName = $propertyClassName::getEntityEventName();
 		foreach ($itemsFromDb as $k => $v)
 		{
 			/** @var Main\Event $event */
-			$event = new Main\Event('sale', "OnBefore".$itemEventName."Deleted", array(
+			$event = new Main\Event('sale', "OnBefore".self::$eventClassName."Deleted", array(
 					'VALUES' => $v,
 			));
 			$event->send();
@@ -271,7 +276,7 @@ class PropertyValueCollection
 			Internals\OrderPropsValueTable::delete($k);
 
 			/** @var Main\Event $event */
-			$event = new Main\Event('sale', "On".$itemEventName."Deleted", array(
+			$event = new Main\Event('sale', "On".self::$eventClassName."Deleted", array(
 					'VALUES' => $v,
 			));
 			$event->send();

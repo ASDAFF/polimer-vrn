@@ -150,8 +150,8 @@ class SubscribeTable extends Entity\DataManager
 	 */
 	public static function onUserDelete($userId)
 	{
-		$userId = intval($userId);
-		if(!$userId)
+		$userId = (int)$userId;
+		if ($userId <= 0)
 			return false;
 
 		$connection = Application::getConnection();
@@ -172,8 +172,8 @@ class SubscribeTable extends Entity\DataManager
 	 */
 	public static function onIblockElementDelete($productId)
 	{
-		$productId = intval($productId);
-		if($productId <= 0)
+		$productId = (int)$productId;
+		if ($productId <= 0)
 			return true;
 
 		$connection = Application::getConnection();
@@ -299,7 +299,8 @@ class SubscribeTable extends Entity\DataManager
 	}
 
 	/**
-	 * Handler onProductUpdate for send a notification to subscribers about positive change available.
+	 * @deprecated deprecated since catalog 17.5.5
+	 * Method for send a notification to subscribers about positive change available.
 	 *
 	 * @param integer $productId Id product.
 	 * @param array $fields An array of event data.
@@ -311,7 +312,7 @@ class SubscribeTable extends Entity\DataManager
 	}
 
 	/**
-	 * Handler OnProductSetAvailableUpdate for send a notification to subscribers about positive change available.
+	 * Method OnProductSetAvailableUpdate for send a notification to subscribers about positive change available.
 	 *
 	 * @param integer $productId Id product.
 	 * @param array $fields An array of event data.
@@ -330,11 +331,9 @@ class SubscribeTable extends Entity\DataManager
 	 */
 	public static function runAgentToSendNotice($productId)
 	{
-		$productId = intval($productId);
-		if(!$productId)
-		{
+		$productId = (int)$productId;
+		if ($productId <= 0)
 			return false;
-		}
 
 		$connection = Application::getConnection();
 		$helper = $connection->getSqlHelper();
@@ -344,12 +343,12 @@ class SubscribeTable extends Entity\DataManager
 			.$helper->getCurrentDateTimeFunction().')'
 		);
 
-		if(!static::$agentNoticeCreated)
+		if (!static::$agentNoticeCreated)
 		{
 			$t = DateTime::createFromTimestamp(time() + static::AGENT_TIME_OUT);
 			static::$agentNoticeCreated = true;
-			\CAgent::addAgent(
-				'Bitrix\Catalog\SubscribeTable::sendNotice();',
+			\CAgent::AddAgent(
+				'\Bitrix\Catalog\SubscribeTable::sendNotice();',
 				'catalog',
 				'N',
 				static::AGENT_INTERVAL,
@@ -373,11 +372,9 @@ class SubscribeTable extends Entity\DataManager
 	 */
 	public static function runAgentToSendRepeatedNotice($productId)
 	{
-		$productId = intval($productId);
-		if(!$productId || (string)Option::get('catalog', 'subscribe_repeated_notify') != 'Y')
-		{
+		$productId = (int)$productId;
+		if ($productId <= 0 || (string)Option::get('catalog', 'subscribe_repeated_notify') != 'Y')
 			return false;
-		}
 
 		$connection = Application::getConnection();
 		$helper = $connection->getSqlHelper();
@@ -387,11 +384,11 @@ class SubscribeTable extends Entity\DataManager
 			.$helper->getCurrentDateTimeFunction().')'
 		);
 
-		if(!static::$agentRepeatedNoticeCreated)
+		if (!static::$agentRepeatedNoticeCreated)
 		{
 			$t = DateTime::createFromTimestamp(time() + static::AGENT_TIME_OUT);
 			static::$agentRepeatedNoticeCreated = true;
-			\CAgent::addAgent(
+			\CAgent::AddAgent(
 				'Bitrix\Catalog\SubscribeTable::sendRepeatedNotice();',
 				'catalog',
 				'N',
@@ -449,7 +446,7 @@ class SubscribeTable extends Entity\DataManager
 	public static function sendNotice()
 	{
 		if(static::checkLastUpdate())
-			return 'Bitrix\Catalog\SubscribeTable::sendNotice();';
+			return '\Bitrix\Catalog\SubscribeTable::sendNotice();';
 
 		list($listSubscribe, $totalCount) = static::getSubscriptionsData();
 
@@ -459,7 +456,7 @@ class SubscribeTable extends Entity\DataManager
 			return '';
 		}
 
-		$anotherStep = intval($totalCount['CNT']) > static::LIMIT_SEND;
+		$anotherStep = (int)$totalCount['CNT'] > static::LIMIT_SEND;
 
 		list($dataSendToNotice, $listNotifiedSubscribeId) =
 			static::prepareDataForNotice($listSubscribe, 'CATALOG_PRODUCT_SUBSCRIBE_NOTIFY');
@@ -471,7 +468,7 @@ class SubscribeTable extends Entity\DataManager
 
 		if($anotherStep)
 		{
-			return 'Bitrix\Catalog\SubscribeTable::sendNotice();';
+			return '\Bitrix\Catalog\SubscribeTable::sendNotice();';
 		}
 		else
 		{
@@ -500,7 +497,7 @@ class SubscribeTable extends Entity\DataManager
 			return '';
 		}
 
-		$anotherStep = intval($totalCount['CNT']) > static::LIMIT_SEND;
+		$anotherStep = (int)$totalCount['CNT'] > static::LIMIT_SEND;
 
 		list($dataSendToNotice, $listNotifiedSubscribeId) =
 			static::prepareDataForNotice($listSubscribe, 'CATALOG_PRODUCT_SUBSCRIBE_NOTIFY_REPEATED');
@@ -530,8 +527,8 @@ class SubscribeTable extends Entity\DataManager
 	 */
 	protected static function checkOldProductAvailable($productId, $fields)
 	{
-		$productId = intval($productId);
-		if(!$productId || (empty(static::$oldProductAvailable[$productId]))
+		$productId = (int)$productId;
+		if ($productId <= 0 || (empty(static::$oldProductAvailable[$productId]))
 			|| !static::checkPermissionSubscribe($fields['SUBSCRIBE']))
 		{
 			return false;

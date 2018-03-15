@@ -73,7 +73,7 @@ class StartWritingHandler extends \Bitrix\Replica\Client\BaseHandler
 	function onExecuteStartWriting(\Bitrix\Main\Event $event)
 	{
 		$parameters = $event->getParameters();
-		$userId = $parameters[0];
+		$userId = intval($parameters[0]);
 		$dialogId = $parameters[1].$parameters[2];
 
 		if ($userId > 0)
@@ -83,19 +83,10 @@ class StartWritingHandler extends \Bitrix\Replica\Client\BaseHandler
 
 			\CPushManager::DeleteFromQueueBySubTag($userId, 'IM_MESS');
 
-			if (intval($dialogId) > 0)
-			{
-				\CPullStack::AddByUser($dialogId, Array(
-					'module_id' => 'im',
-					'command' => 'startWriting',
-					'expiry' => 60,
-					'params' => Array(
-						'senderId' => $userId,
-						'dialogId' => $dialogId
-					),
-				));
-			}
-			elseif (substr($dialogId, 0, 4) == 'chat')
+			$userName = \Bitrix\Im\User::getInstance($userId)->getFullName();
+
+
+			if (substr($dialogId, 0, 4) == 'chat')
 			{
 				$chatId = substr($dialogId, 4);
 				$arRelation = \CIMChat::GetRelationById($chatId);
@@ -109,8 +100,13 @@ class StartWritingHandler extends \Bitrix\Replica\Client\BaseHandler
 					'command' => 'startWriting',
 					'expiry' => 60,
 					'params' => Array(
-						'senderId' => $userId,
-						'dialogId' => $dialogId
+						'dialogId' => $dialogId,
+						'userId' => $userId,
+						'userName' => $userName
+					),
+					'extra' => Array(
+						'im_revision' => IM_REVISION,
+						'im_revision_mobile' => IM_REVISION_MOBILE,
 					),
 				);
 				if ($chatData['ENTITY_TYPE'] == 'LINES')
@@ -123,14 +119,31 @@ class StartWritingHandler extends \Bitrix\Replica\Client\BaseHandler
 						}
 					}
 				}
-				\CPullStack::AddByUsers(array_keys($arRelation), $pullMessage);
+				\Bitrix\Pull\Event::add(array_keys($arRelation), $pullMessage);
 
 				$orm = \Bitrix\Im\Model\ChatTable::getById($chatId);
 				$chat = $orm->fetch();
-				if ($chat['TYPE'] == IM_MESSAGE_OPEN)
+				if ($chat['TYPE'] == IM_MESSAGE_OPEN || $chat['TYPE'] == IM_MESSAGE_OPEN_LINE)
 				{
 					\CPullWatch::AddToStack('IM_PUBLIC_'.$chatId, $pullMessage);
 				}
+			}
+			else if (intval($dialogId) > 0)
+			{
+				\Bitrix\Pull\Event::add($dialogId, Array(
+					'module_id' => 'im',
+					'command' => 'startWriting',
+					'expiry' => 60,
+					'params' => Array(
+						'dialogId' => $userId,
+						'userId' => $userId,
+						'userName' => $userName
+					),
+					'extra' => Array(
+						'im_revision' => IM_REVISION,
+						'im_revision_mobile' => IM_REVISION_MOBILE,
+					),
+				));
 			}
 		}
 	}

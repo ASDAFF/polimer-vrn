@@ -25,4 +25,6 @@ $MESS["SALE_CASHBOX_ATOL_VALIDATE_E_ADDRESS"] = "Settlement address is not speci
 $MESS["SALE_CASHBOX_ATOL_REQUEST_TOKEN_ERROR"] = "Error getting token";
 $MESS["SALE_CASHBOX_ATOL_CHECK_REG_ERROR"] = "Error registering receipt";
 $MESS["SALE_CASHBOX_ATOL_ERR_EMPTY_PHONE_EMAIL"] = "ATOL.Online: incorrect data. No customer phone or email were specified.";
+$MESS["SALE_CASHBOX_ATOL_FARM_SETTINGS_SERVICE_URL_LABEL"] = "Web store URL";
+$MESS["SALE_CASHBOX_ATOL_ERR_EMPTY_TAX"] = "ATOL.Online: incorrect tax rate parameters";
 ?>

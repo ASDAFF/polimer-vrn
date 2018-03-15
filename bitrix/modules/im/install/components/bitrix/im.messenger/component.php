@@ -113,7 +113,6 @@ if ($arParams["INIT"] == 'Y')
 	$arRecent = Array();
 	$arResult['CHAT'] = Array('chat' => Array(), 'userInChat' => Array(),);
 
-	$arResult['ONLINE_COUNT'] = 0;
 	if ($arParams['RECENT'] == 'Y')
 	{
 		$arRecent = CIMContactList::GetRecentList(Array('LOAD_LAST_MESSAGE' => 'Y', 'USE_TIME_ZONE' => 'N', 'USE_SMILES' => 'N'));
@@ -122,27 +121,6 @@ if ($arParams["INIT"] == 'Y')
 		$arSmile = CIMMessenger::PrepareSmiles();
 		$arResult['SMILE'] = $arSmile['SMILE'];
 		$arResult['SMILE_SET'] = $arSmile['SMILE_SET'];
-
-		$onlineCount = 0;
-		$arOnline = CIMStatus::GetOnline();
-
-		foreach ($arRecent as $userId => $value)
-		{
-			if ($value['TYPE'] != IM_MESSAGE_PRIVATE)
-				continue;
-
-			$arOnline['users'][$userId]['status'] = $value['USER']['status'];
-		}
-
-		foreach ($arOnline['users'] as $userId => $onlineData)
-		{
-			if ($onlineData['status'] != 'offline')
-			{
-				$onlineCount++;
-			}
-		}
-
-		$arResult['ONLINE_COUNT'] = $onlineCount <= 0 ? 1 : $onlineCount;
 	}
 
 	if ($arResult["CONTEXT"] == "LINES")
@@ -187,8 +165,6 @@ if ($arParams["INIT"] == 'Y')
 			'users' => Array(),
 			'groups' => Array(),
 			'userInGroup' => Array(),
-			'woGroups' => Array(),
-			'woUserInGroup' => Array()
 		);
 		if ($arParams['RECENT'] != 'Y')
 		{
@@ -233,9 +209,6 @@ if ($arParams["INIT"] == 'Y')
 		foreach ($arChatMessage['files'] as $key => $value)
 			$arResult['MESSAGE']['files'][$key] = $value;
 
-		//foreach ($arChatMessage['woUserInGroup'] as $key => $value)
-		//	$arResult['MESSAGE']['woUserInGroup'][$key] = $value;
-
 		if ($arResult["CONTEXT"] == "DESKTOP")
 		{
 			foreach ($arChatMessage['chat'] as $key => $value)
@@ -258,9 +231,10 @@ if ($arParams["INIT"] == 'Y')
 	}
 	$arResult['MESSAGE']['flashMessage'] = CIMMessage::GetFlashMessage($arResult['MESSAGE']['unreadMessage']);
 	$arResult["MESSAGE_COUNTER"] = $arResult['MESSAGE']['countMessage']+$arChatMessage['countMessage']; // legacy
+
 	foreach ($arRecent as $userId => $value)
 	{
-		if ($value['TYPE'] == IM_MESSAGE_CHAT || $value['TYPE'] == IM_MESSAGE_OPEN)
+		if ($value['TYPE'] == IM_MESSAGE_CHAT || $value['TYPE'] == IM_MESSAGE_OPEN || $value['TYPE'] == IM_MESSAGE_OPEN_LINE)
 		{
 			if (!isset($arResult['CHAT']['chat'][$value['CHAT']['id']]))
 			{
@@ -272,17 +246,8 @@ if ($arParams["INIT"] == 'Y')
 		}
 		else
 		{
-			if ($arResult["CONTEXT"] != "DESKTOP")
-			{
-				$arResult['CONTACT_LIST']['users'][$value['USER']['id']] = $value['USER'];
-			}
-			else
-			{
-				if (!isset($arResult['CONTACT_LIST']['users'][$value['USER']['id']]))
-				{
-					$arResult['CONTACT_LIST']['users'][$value['USER']['id']] = $value['USER'];
-				}
-			}
+			$arResult['CONTACT_LIST']['users'][$value['USER']['id']] = $value['USER'];
+
 			$value['MESSAGE']['userId'] = $userId;
 			$value['MESSAGE']['recipientId'] = $userId;
 		}
@@ -313,24 +278,6 @@ if ($arParams["INIT"] == 'Y')
 				}
 			}
 		}
-		if (isset($arResult['MESSAGE']['woUserInGroup']))
-		{
-			foreach ($arResult['MESSAGE']['woUserInGroup'] as $arWoUserInGroup)
-			{
-				if (isset($arResult['CONTACT_LIST']['woUserInGroup'][$arWoUserInGroup['id']]['users']))
-					$arResult['CONTACT_LIST']['woUserInGroup'][$arWoUserInGroup['id']]['users'] = array_merge($arResult['CONTACT_LIST']['woUserInGroup'][$arWoUserInGroup['id']]['users'], $arWoUserInGroup['users']);
-				else
-				{
-					if (isset($arResult['CONTACT_LIST']['woUserInGroup']['other']['users']))
-						$arResult['CONTACT_LIST']['woUserInGroup']['other']['users'] = array_merge($arResult['CONTACT_LIST']['woUserInGroup']['other']['users'], $arWoUserInGroup['users']);
-					else
-					{
-						$arWoUserInGroup['id'] = 'other';
-						$arResult['CONTACT_LIST']['woUserInGroup']['other'] = $arWoUserInGroup;
-					}
-				}
-			}
-		}
 	}
 	if (!isset($arResult['CONTACT_LIST']['users'][$USER->GetID()]))
 	{
@@ -342,10 +289,9 @@ if ($arParams["INIT"] == 'Y')
 		));
 		$arResult['CONTACT_LIST']['users'][$USER->GetID()] = $arUsers['users'][$USER->GetID()];
 	}
-	$arResult['CURRENT_TAB'] = CIMMessenger::GetCurrentTab();
 	if (isset($arParams['CURRENT_TAB']))
 	{
-		$_GET['IM_DIALOG'] = $arParams['CURRENT_TAB'];
+		$_REQUEST['IM_DIALOG'] = $arParams['CURRENT_TAB'];
 		$arResult['CURRENT_TAB'] = $arParams['CURRENT_TAB'];
 	}
 }
@@ -370,8 +316,6 @@ $arResult['TURN_SERVER'] = COption::GetOptionString('im', 'turn_server');
 $arResult['TURN_SERVER_FIREFOX'] = COption::GetOptionString('im', 'turn_server_firefox');
 $arResult['TURN_SERVER_LOGIN'] = COption::GetOptionString('im', 'turn_server_login');
 $arResult['TURN_SERVER_PASSWORD'] = COption::GetOptionString('im', 'turn_server_password');
-
-CIMMessenger::InitCounters($USER->GetID());
 
 $initJs = 'im_web';
 if ($arResult["CONTEXT"] == 'DESKTOP')

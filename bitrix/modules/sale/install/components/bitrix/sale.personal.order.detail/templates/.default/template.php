@@ -351,7 +351,9 @@ else
 																	"payment" => $payment['ACCOUNT_NUMBER'],
 																	"order" => $arResult['ACCOUNT_NUMBER'],
 																	"allow_inner" => $arParams['ALLOW_INNER'],
-																	"only_inner_full" => $arParams['ONLY_INNER_FULL']
+																	"only_inner_full" => $arParams['ONLY_INNER_FULL'],
+																	"refresh_prices" => $arParams['REFRESH_PRICES'],
+																	"path_to_payment" => $arParams['PATH_TO_PAYMENT']
 																);
 																$paymentSubTitle = Loc::getMessage('SPOD_TPL_BILL')." ".Loc::getMessage('SPOD_NUM_SIGN').$payment['ACCOUNT_NUMBER'];
 																if(isset($payment['DATE_BILL']))
@@ -1055,9 +1057,9 @@ else
 	</div>
 	<?
 	$javascriptParams = array(
-	"url" => CUtil::JSEscape($this->__component->GetPath().'/ajax.php'),
-	"templateFolder" => CUtil::JSEscape($templateFolder),
-	"paymentList" => $paymentData
+		"url" => CUtil::JSEscape($this->__component->GetPath().'/ajax.php'),
+		"templateFolder" => CUtil::JSEscape($templateFolder),
+		"paymentList" => $paymentData
 	);
 	$javascriptParams = CUtil::PhpToJSObject($javascriptParams);
 	?>

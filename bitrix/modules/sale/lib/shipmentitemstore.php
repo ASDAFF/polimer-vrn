@@ -19,8 +19,9 @@ class ShipmentItemStore
 	/** @var null|array  */
 	protected $barcodeList = null;
 
-
 	protected static $mapFields = array();
+
+	private static $eventClassName = null;
 
 
 	/**
@@ -89,13 +90,17 @@ class ShipmentItemStore
 	public function delete()
 	{
 		$result = new Result();
-		$eventName = static::getEntityEventName();
+
+		if (self::$eventClassName === null)
+		{
+			self::$eventClassName = static::getEntityEventName();
+		}
 
 		/** @var array $oldEntityValues */
 		$oldEntityValues = $this->fields->getOriginalValues();
 
 		/** @var Main\Event $event */
-		$event = new Main\Event('sale', "OnBefore".$eventName."EntityDeleted", array(
+		$event = new Main\Event('sale', "OnBefore".self::$eventClassName."EntityDeleted", array(
 				'ENTITY' => $this,
 				'VALUES' => $oldEntityValues,
 		));
@@ -108,7 +113,7 @@ class ShipmentItemStore
 			{
 				if($eventResult->getType() == Main\EventResult::ERROR)
 				{
-					$errorMsg = new ResultError(Loc::getMessage('SALE_EVENT_ON_BEFORE_'.ToUpper($eventName).'_ENTITY_DELETED_ERROR'), 'SALE_EVENT_ON_BEFORE_'.ToUpper($eventName).'_ENTITY_DELETED_ERROR');
+					$errorMsg = new ResultError(Loc::getMessage('SALE_EVENT_ON_BEFORE_'.ToUpper(self::$eventClassName).'_ENTITY_DELETED_ERROR'), 'SALE_EVENT_ON_BEFORE_'.ToUpper(self::$eventClassName).'_ENTITY_DELETED_ERROR');
 					if ($eventResultData = $eventResult->getParameters())
 					{
 						if (isset($eventResultData) && $eventResultData instanceof ResultError)
@@ -138,7 +143,7 @@ class ShipmentItemStore
 		$oldEntityValues = $this->fields->getOriginalValues();
 
 		/** @var Main\Event $event */
-		$event = new Main\Event('sale', "On".$eventName."EntityDeleted", array(
+		$event = new Main\Event('sale', "On".self::$eventClassName."EntityDeleted", array(
 				'ENTITY' => $this,
 				'VALUES' => $oldEntityValues,
 		));
@@ -151,7 +156,7 @@ class ShipmentItemStore
 			{
 				if($eventResult->getType() == Main\EventResult::ERROR)
 				{
-					$errorMsg = new ResultError(Loc::getMessage('SALE_EVENT_ON_'.ToUpper($eventName).'_ENTITY_DELETED_ERROR'), 'SALE_EVENT_ON_'.ToUpper($eventName).'_ENTITY_DELETED_ERROR');
+					$errorMsg = new ResultError(Loc::getMessage('SALE_EVENT_ON_'.ToUpper(self::$eventClassName).'_ENTITY_DELETED_ERROR'), 'SALE_EVENT_ON_'.ToUpper(self::$eventClassName).'_ENTITY_DELETED_ERROR');
 					if ($eventResultData = $eventResult->getParameters())
 					{
 						if (isset($eventResultData) && $eventResultData instanceof ResultError)
@@ -295,7 +300,11 @@ class ShipmentItemStore
 
 		$id = $this->getId();
 		$fields = $this->fields->getValues();
-		$eventName = static::getEntityEventName();
+
+		if (self::$eventClassName === null)
+		{
+			self::$eventClassName = static::getEntityEventName();
+		}
 
 		/** @var ShipmentItemStoreCollection $shipmentItemStoreCollection */
 		if (!$shipmentItemStoreCollection = $this->getCollection())
@@ -342,10 +351,10 @@ class ShipmentItemStore
 		}
 
 
-		if ($this->isChanged() && $eventName)
+		if ($this->isChanged() && self::$eventClassName)
 		{
 			/** @var Main\Entity\Event $event */
-			$event = new Main\Event('sale', 'OnBefore'.$eventName.'EntitySaved', array(
+			$event = new Main\Event('sale', 'OnBefore'.self::$eventClassName.'EntitySaved', array(
 					'ENTITY' => $this,
 					'VALUES' => $this->fields->getOriginalValues()
 			));
@@ -449,10 +458,10 @@ class ShipmentItemStore
 			$result->setId($id);
 		}
 
-		if ($this->isChanged() && $eventName)
+		if ($this->isChanged() && self::$eventClassName)
 		{
 			/** @var Main\Event $event */
-			$event = new Main\Event('sale', 'On'.$eventName.'EntitySaved', array(
+			$event = new Main\Event('sale', 'On'.self::$eventClassName.'EntitySaved', array(
 					'ENTITY' => $this,
 					'VALUES' => $this->fields->getOriginalValues(),
 			));
@@ -623,11 +632,12 @@ class ShipmentItemStore
 	 */
 	public function getErrorEntity($value)
 	{
-		$className = null;
+		static $className = null;
 		$errorsList = static::getAutoFixErrorsList();
 		if (is_array($errorsList) && in_array($value, $errorsList))
 		{
-			$className = static::getClassName();
+			if ($className === null)
+				$className = static::getClassName();
 		}
 		return $className;
 	}

@@ -125,6 +125,8 @@ class PhotoResizer
 					'MIN_HEIGHT' => Vk::MIN_PRODUCT_PHOTO_HEIGHT,
 					'MAX_SIZES_SUM' => Vk::MAX_PRODUCT_PHOTO_SIZES_SUM,
 					'MAX_SIZE' => Vk::MAX_PRODUCT_PHOTO_SIZE,
+					'RATIO_V' => Vk::MAX_PRODUCT_RATIO_V,	// width / height
+					'RATIO_H' => Vk::MAX_PRODUCT_RATIO_H,
 				);
 				break;
 			
@@ -136,12 +138,12 @@ class PhotoResizer
 					'MIN_HEIGHT' => Vk::MIN_ALBUM_PHOTO_HEIGHT,
 					'MAX_SIZES_SUM' => Vk::MAX_ALBUM_PHOTO_SIZES_SUM,
 					'MAX_SIZE' => Vk::MAX_ALBUM_PHOTO_SIZE,
-					'RATIO_V' => 0.25,	// width / height
-					'RATIO_H' => 3,
+					'RATIO_V' => Vk::MAX_ALBUM_RATIO_V,	// width / height
+					'RATIO_H' => Vk::MAX_ALBUM_RATIO_H,
 				);
 //				CONVERT photo-id format if needed
 				if (!is_array($photos))
-					$photos = array($photos => array("PHOTOS_BX_ID" => $photos));
+					$photos = array($photos => array("PHOTO_BX_ID" => $photos));
 				break;
 			
 			default:
@@ -166,8 +168,8 @@ class PhotoResizer
 //				other PHOTOS
 				elseif ($i++ <= $count)
 				{
-					$result["PHOTOS"][$photoChecked['ID']]["PHOTOS_BX_ID"] = $photoChecked['ID'];
-					$result["PHOTOS"][$photoChecked['ID']]["PHOTOS_URL"] = $photoChecked['URL'];
+					$result["PHOTOS"][$photoChecked['ID']]["PHOTO_BX_ID"] = $photoChecked['ID'];
+					$result["PHOTOS"][$photoChecked['ID']]["PHOTO_URL"] = $photoChecked['URL'];
 				}
 				
 				else

@@ -634,12 +634,14 @@ class Field
 		$fieldId = !empty($field['FIELD_ID']) ? $field['FIELD_ID'] : '';
 		$socnetGroupId = !empty($field['SOCNET_GROUP_ID']) ? intval($field['SOCNET_GROUP_ID']) : 0;
 		$urlTemplate = !empty($field['LIST_FILE_URL']) ? $field['LIST_FILE_URL'] : '';
+		$downloadUrl = !empty($field['DOWNLOAD_FILE_URL']) ? $field['DOWNLOAD_FILE_URL'] : '';
 
 		$params = array(
 			'max_size' => 2024000,
 			'max_width' => 100,
 			'max_height' => 100,
 			'url_template' => $urlTemplate,
+			'download_url' => $downloadUrl,
 			'download_text' => Loc::getMessage('LISTS_FIELD_FILE_DOWNLOAD'),
 			'show_input' => false
 		);
@@ -1586,11 +1588,13 @@ class Field
 				$fieldId = !empty($field['FIELD_ID']) ? $field['FIELD_ID'] : '';
 				$socnetGroupId = !empty($field['SOCNET_GROUP_ID']) ? intval($field['SOCNET_GROUP_ID']) : 0;
 				$urlTemplate = !empty($field['LIST_FILE_URL']) ? $field['LIST_FILE_URL'] : '';
+				$downloadUrl = !empty($field['DOWNLOAD_FILE_URL']) ? $field['DOWNLOAD_FILE_URL'] : '';
 				$params = array(
 					'max_size' => 2024000,
 					'max_width' => 100,
 					'max_height' => 100,
 					'url_template' => $urlTemplate,
+					'download_url' => $downloadUrl,
 					'download_text' => Loc::getMessage('LISTS_FIELD_FILE_DOWNLOAD'),
 					'show_input' => $field['READ'] == 'N'
 				);

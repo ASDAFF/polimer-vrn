@@ -14,7 +14,7 @@ if (defined('PULL_USER_ID'))
 {
 	$userId = PULL_USER_ID;
 }
-else if ($GLOBALS['USER'] && intval($GLOBALS['USER']->GetID()) > 0)
+else if (is_object($GLOBALS['USER']) && intval($GLOBALS['USER']->GetID()) > 0)
 {
 	$userId = intval($GLOBALS['USER']->GetID());
 }

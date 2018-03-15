@@ -2,39 +2,27 @@
 namespace Bitrix\Sale\Exchange;
 
 
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
-use Bitrix\Main\Event;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Sale\Cashbox\Cashbox;
 use Bitrix\Sale\Cashbox\Cashbox1C;
-use Bitrix\Sale\Cashbox\CheckManager;
 use Bitrix\Sale\Cashbox\Internals\CashboxCheckTable;
 use Bitrix\Sale\EntityMarker;
-use Bitrix\Sale\Internals\Fields;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Result;
 use Bitrix\Sale\Exchange;
 use Bitrix\Sale\Exchange\OneC;
-use Bitrix\Sale\ResultError;
 use Bitrix\Sale\ResultWarning;
 
 IncludeModuleLangFile(__FILE__);
 
-class ImportOneCPackage extends ImportPattern
+class ImportOneCPackage extends ImportOneCBase
 {
-	const EVENT_ON_EXCHANGE_CONFIGURE_IMPORTER = 'OnExchangeConfigureImporter';
-
     private static $instance = null;
-    private static $settings = null;
+	private static $settings = null;
 
     protected $order = null;
-
-    /** @var  Fields */
-    protected $fields;
 
     /**
      * @return static
@@ -48,139 +36,116 @@ class ImportOneCPackage extends ImportPattern
         return self::$instance;
     }
 
-    /**
-     * @param Entity\EntityImport|ProfileImport $item
-     * @return Result
-     * @throws ArgumentException
-	 * @internal
-	 */
-    protected function modifyEntity($item)
-    {
-        $result = new Result();
-
-        if(!($item instanceof Exchange\Entity\EntityImport) && !($item instanceof Exchange\Entity\UserProfileImport))
-            throw new ArgumentException("Item must be instanceof EntityImport or UserProfileImport");
-
-        $params = $item->getFieldValues();
-
-		$fieldsCriterion = $fields = &$params['TRAITS'];
-
-        $converter = OneC\Converter::getInstance($item->getOwnerTypeId());
-        $converter->loadSettings($item->getSettings());
-
-        /** @var OneC\Converter $converter*/
-        $converter->sanitizeFields($item->getEntity(), $fields);
-        $item->refreshData($fields);
-
-        $criterion = $item->getCurrentCriterion($item->getEntity());
-        $collision = $item->getCurrentCollision($item->getOwnerTypeId());
-
-		if($item instanceof Exchange\Entity\ShipmentImport)
-			$fieldsCriterion['ITEMS'] = $params['ITEMS'];
-
-        if($criterion->equals($fieldsCriterion))
-		{
-			$collision->resolve($item);
-		}
-
-        if(!$criterion->equals($fieldsCriterion) ||
-            ($criterion->equals($fieldsCriterion) && !$item->hasCollisionErrors()))
-        {
-			$result = $item->import($params);
-        }
-
-        return $result;
-    }
-
     private function __clone() {}
     private function __construct() {}
 
-    /**
-     * @return Result|null
-     * @throws \Bitrix\Main\ArgumentNullException
-     */
-    static public function checkSettings()
-    {
-        if(self::$settings === null)
-        {
-            $result = new Result();
-            $message = self::getMessage();
+	/**
+	 * @return Result|null
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 */
+	static public function checkSettings()
+	{
+		if(self::$settings === null)
+		{
+			$result = new Result();
+			$message = self::getMessage();
 
-            if(Option::get('catalog', 'default_use_store_control', 'N')=='Y' ||
-                Option::get('catalog', 'enable_reservation', 'N')=='Y')
-            {
-                $result->addError(new Error($message["CC_BSC1_USE_STORE_SALE"]));
-            }
+			if(Option::get('catalog', 'default_use_store_control', 'N')=='Y' ||
+				Option::get('catalog', 'enable_reservation', 'N')=='Y')
+			{
+				$result->addError(new Error($message["CC_BSC1_USE_STORE_SALE"]));
+			}
 
-            if(Option::get("main", "~sale_converted_15", 'N') <> 'Y')
-            {
-                $result->addError(new Error($message["CC_BSC1_CONVERT_SALE"]));
-            }
+			if(Option::get("main", "~sale_converted_15", 'N') <> 'Y')
+			{
+				$result->addError(new Error($message["CC_BSC1_CONVERT_SALE"]));
+			}
 
-            if(Option::get("sale", "allow_deduction_on_delivery", "N") == 'Y')
-            {
-                $result->addError(new Error($message["CC_BSC1_SALE_ALLOW_DEDUCTION_ON_DELIVERY_ERROR"]));
-            }
+			if(Option::get("sale", "allow_deduction_on_delivery", "N") == 'Y')
+			{
+				$result->addError(new Error($message["CC_BSC1_SALE_ALLOW_DEDUCTION_ON_DELIVERY_ERROR"]));
+			}
 
-            self::$settings = $result;
-        }
+			self::$settings = $result;
+		}
 
-        return self::$settings;
-    }
-
-    /**
-     * @param array $rawFields
-     * @return Result
-     * @throws \Bitrix\Main\ArgumentOutOfRangeException
-     * @throws \Bitrix\Main\NotSupportedException
-     */
-    protected function parse(array $rawFields)
-    {
-        $result = new Result();
-        $list = array();
-
-        foreach($rawFields as $raw)
-        {
-            $documentTypeId = $this->resolveDocumentTypeId($raw);
-
-            $document = OneC\DocumentImportFactory::create($documentTypeId);
-
-            $fields = $document::prepareFieldsData($raw);
-
-            $document->setFields($fields);
-
-            $list[] = $document;
-        }
-
-        $result->setData($list);
-
-        return $result;
-    }
-
-    /**
-     * @param array $fields
-     * @return int
-     */
-    protected function resolveDocumentTypeId(array $fields)
-    {
-        return OneC\DocumentImport::resolveDocumentTypeId($fields);
-    }
+		return self::$settings;
+	}
 
 	/**
 	 * @param OneC\DocumentImport[] $documents
-	 * @return mixed|null
+	 * @return Result
 	 */
-	protected function getDocumentOrder(array $documents)
+	protected function checkDocuments(array $documents)
+	{
+		return new Result();
+	}
+
+	/**
+	 * @param $type_id
+	 * @param OneC\DocumentImport[] $documents
+	 * @return OneC\DocumentImport|null
+	 */
+	protected function getDocumentByTypeId($type_id, array $documents)
 	{
 		foreach($documents as $document)
 		{
-			if($document->getOwnerEntityTypeId() == EntityType::ORDER)
-				return $document;
+			if(EntityType::isDefined($type_id))
+			{
+				if($document->getOwnerEntityTypeId() == $type_id)
+				{
+					return $document;
+				}
+			}
 		}
+
 		return null;
 	}
 
-    /**
+	/**
+	 * @param $type_id
+	 * @param ImportBase[] $items
+	 * @return ImportBase|null
+	 */
+	protected function getItemByTypeId($type_id, array $items)
+	{
+		foreach($items as $item)
+		{
+			if(EntityType::isDefined($type_id))
+			{
+				if($item->getOwnerTypeId() == $type_id)
+				{
+					return $item;
+				}
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param $type_id
+	 * @param OneC\DocumentImport[] $documents
+	 * @return bool
+	 */
+	protected function hasDocumentByTypeId($type_id, array $documents)
+	{
+		$documentImport = $this->getDocumentByTypeId($type_id, $documents);
+
+		return ($documentImport !== null);
+	}
+
+	/**
+	 * @param OneC\OrderDocument $document
+	 * @return null|string
+	 */
+	protected function getDefaultTrackingNumber(OneC\OrderDocument $document)
+	{
+		$fields = $document->getFieldValues();
+		return isset($fields['REK_VALUES']['1C_TRACKING_NUMBER'])?$fields['REK_VALUES']['1C_TRACKING_NUMBER']:null;
+	}
+
+	/**
 	 * @param OneC\OrderDocument $document
 	 * @return null|int
 	 */
@@ -200,42 +165,44 @@ class ImportOneCPackage extends ImportPattern
 		return isset($fields['REK_VALUES']['DELIVERY_SYSTEM_ID'])?$fields['REK_VALUES']['DELIVERY_SYSTEM_ID']:null;
 	}
 
+	/**
+	 * @param array $list
+	 * @return bool
+	 */
+	protected function deliveryServiceExists(array $list)
+	{
+		foreach ($list as $k=>$items)
+		{
+			if(array_key_exists(self::DELIVERY_SERVICE_XMLID, $items))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param array $fields
+	 * @return array
+	 */
+	protected function getProductsItems(array $fields)
+	{
+		return (isset($fields['ITEMS']) && is_array($fields['ITEMS'])) ? $fields['ITEMS']:array();
+	}
+
     /**
      * @param OneC\DocumentImport[] $documents
      * @return Result
      * @throws \Bitrix\Main\ArgumentException
      * @throws \Bitrix\Main\NotSupportedException
      */
-    protected function convert(array $documents)
+	protected function convert(array $documents)
     {
 		$result = new Result();
         $list = array();
-		$settingsShipment = Manager::getSettingsByType(EntityType::SHIPMENT);
 
-        if($settingsShipment->canCreateOrder(EntityType::SHIPMENT)=='Y' && !static::hasDocumentOrder($documents))
-		{
-			foreach($documents as $document)
-			{
-				if($document->getOwnerEntityTypeId() == EntityType::SHIPMENT)
-				{
-					$order['ID_1C'] = $document->getField('ID_1C');
-					$order['VERSION_1C'] = $document->getField('VERSION_1C');
-					$order['AMOUNT'] = $document->getField('AMOUNT');
-					$order['ITEMS'] = $document->getField('ITEMS');
-					$order['TAXES'] = $document->getField('TAXES');
-					$order['AGENT'] = $document->getField('AGENT');
-
-					$documentOrder = new OneC\OrderDocument(EntityType::ORDER);
-					$documentOrder->setFields($order);
-					$documents[] = $documentOrder;
-
-					break;
-				}
-			}
-		}
-
-		if(!isset($documentOrder))
-			$documentOrder = $this->getDocumentOrder($documents);
+		$documentOrder = $this->getDocumentByTypeId(EntityType::ORDER, $documents);
 
 		if($documentOrder instanceof OneC\OrderDocument)
 		{
@@ -250,40 +217,7 @@ class ImportOneCPackage extends ImportPattern
 
         foreach($documents as $document)
         {
-			if($document instanceof OneC\PaymentDocument)
-			{
-				$paymentFields = $document->getFieldValues();
-				$paymentFields['REK_VALUES']['PAY_SYSTEM_ID_DEFAULT'] = $this->getDefaultPaySystem($documentOrder);
-				$document->setFields($paymentFields);
-			}
-
-			if($document instanceof OneC\ShipmentDocument)
-			{
-				$shimpentFields = $document->getFieldValues();
-				$shimpentFields['REK_VALUES']['DELIVERY_SYSTEM_ID_DEFAULT'] = $this->getDefaultDeliverySystem($documentOrder);
-				$document->setFields($shimpentFields);
-			}
-
-			$settings = Manager::getSettingsByType($document->getOwnerEntityTypeId());
-
-        	$convertor = OneC\Converter::getInstance($document->getOwnerEntityTypeId());
-			$convertor->loadSettings($settings);
-            $fields = $convertor->resolveParams($document);
-
-            $loader = Entity\EntityImportLoaderFactory::create($document->getOwnerEntityTypeId());
-            $loader->loadSettings($settings);
-
-            if(strlen($document->getId())>0)
-                $fieldsEntity = $loader->getByNumber($document->getId());
-            else
-                $fieldsEntity = $loader->getByExternalId($document->getExternalId());
-
-            if(!empty($fieldsEntity['ID']))
-                $fields['TRAITS']['ID'] = $fieldsEntity['ID'];
-
-            $entityImport = Manager::createImport($document->getOwnerEntityTypeId());
-            $entityImport->setFields($fields);
-            $list[] = $entityImport;
+            $list[] = $this->convertDocument($document);
         }
 
         if($result->isSuccess())
@@ -298,21 +232,6 @@ class ImportOneCPackage extends ImportPattern
         return $result;
     }
 
-	/**
-	 * @param array $documents
-	 * @return bool
-	 */
-	static public function hasDocumentOrder(array $documents)
-	{
-		foreach($documents as $document)
-		{
-			if($document->getOwnerEntityTypeId() == EntityType::ORDER)
-				return true;
-		}
-
-		return false;
-	}
-
     /**
      * @param array $items
      * @return Result
@@ -323,25 +242,21 @@ class ImportOneCPackage extends ImportPattern
 
         $parentEntityId = null;
 
-        /** @var Entity\EntityImport $item */
-        foreach($items as $item)
-        {
-            if($item->getOwnerTypeId() == EntityType::ORDER)
-            {
-                $params = $item->getFieldValues();
-                $fields = $params['TRAITS'];
+		$item = $this->getItemByTypeId(EntityType::ORDER, $items);
+        if($item instanceof Exchange\Entity\OrderImport)
+		{
+			$params = $item->getFieldValues();
+			$fields = $params['TRAITS'];
 
-                if($fields['ID']<>'')
-                {
-                    $parentEntityId = $fields['ID'];
-                }
-                elseif($fields[$item::getFieldExternalId()]<>'')
-                {
-                    $parentEntityId = $fields[$item::getFieldExternalId()];
-                }
-                break 1;
-            }
-        }
+			if($fields['ID']<>'')
+			{
+				$parentEntityId = $fields['ID'];
+			}
+			elseif($fields[$item::getFieldExternalId()]<>'')
+			{
+				$parentEntityId = $fields[$item::getFieldExternalId()];
+			}
+		}
 
         if(empty($parentEntityId))
             $result->addErrors(array(new Error('Order not found')));
@@ -364,34 +279,27 @@ class ImportOneCPackage extends ImportPattern
             }
         }
 
-        foreach($items as $item)
-        {
-            $params = $item->getFieldValues();
-            $fields = $params['TRAITS'];
-
-            if(strlen($fields[$item::getFieldExternalId()])<= 0)
-                $result->addErrors(array(new Error(" ".EntityType::getDescription($item->getOwnerTypeId()).": ".GetMessage("SALE_EXCHANGE_EXTERNAL_ID_NOT_FOUND"), 'SALE_EXCHANGE_EXTERNAL_ID_NOT_FOUND')));
-        }
+        if($result->isSuccess())
+			$result = parent::checkFields($items);
 
         return $result;
     }
 
     public static function configuration()
     {
-		$event = new Event('sale', static::EVENT_ON_EXCHANGE_CONFIGURE_IMPORTER);
-		$event->send();
+		parent::configuration();
 
-    	Manager::registerInstance(EntityType::ORDER, OneC\ImportSettings::getCurrent(), new OneC\CollisionOrder(), new OneC\CriterionOrder());
-        Manager::registerInstance(EntityType::SHIPMENT, OneC\ImportSettings::getCurrent(), new OneC\CollisionShipment(), new OneC\CriterionShipment());
-        Manager::registerInstance(EntityType::PAYMENT_CASH, OneC\ImportSettings::getCurrent(), new OneC\CollisionPayment(), new OneC\CriterionPayment());
-        Manager::registerInstance(EntityType::PAYMENT_CASH_LESS, OneC\ImportSettings::getCurrent(), new OneC\CollisionPayment(), new OneC\CriterionPayment());
-        Manager::registerInstance(EntityType::PAYMENT_CARD_TRANSACTION, OneC\ImportSettings::getCurrent(), new OneC\CollisionPayment(), new OneC\CriterionPayment());
-        Manager::registerInstance(EntityType::USER_PROFILE, OneC\ImportSettings::getCurrent());
+    	ManagerImport::registerInstance(EntityType::ORDER, OneC\ImportSettings::getCurrent(), new OneC\CollisionOrder(), new OneC\CriterionOrder());
+		ManagerImport::registerInstance(EntityType::SHIPMENT, OneC\ImportSettings::getCurrent(), new OneC\CollisionShipment(), new OneC\CriterionShipment());
+		ManagerImport::registerInstance(EntityType::PAYMENT_CASH, OneC\ImportSettings::getCurrent(), new OneC\CollisionPayment(), new OneC\CriterionPayment());
+		ManagerImport::registerInstance(EntityType::PAYMENT_CASH_LESS, OneC\ImportSettings::getCurrent(), new OneC\CollisionPayment(), new OneC\CriterionPayment());
+		ManagerImport::registerInstance(EntityType::PAYMENT_CARD_TRANSACTION, OneC\ImportSettings::getCurrent(), new OneC\CollisionPayment(), new OneC\CriterionPayment());
+		ManagerImport::registerInstance(EntityType::USER_PROFILE, OneC\ImportSettings::getCurrent());
     }
 
     /**
-     * @param ProfileImport[]|Exchange\Entity\EntityImport[] $items
-     * @return ProfileImport[]|Exchange\Entity\EntityImport[]
+     * @param ImportBase[] $items
+     * @return ImportBase[]
      */
     protected function sortItems(array $items)
     {
@@ -426,7 +334,7 @@ class ImportOneCPackage extends ImportPattern
     }
 
     /**
-     * @param ProfileImport[]|Exchange\Entity\EntityImport[] $items
+     * @param ImportBase[] $items
      * @return Result
      * @inernal
      */
@@ -458,6 +366,7 @@ class ImportOneCPackage extends ImportPattern
 			{
 				if($item->getOwnerTypeId() == EntityType::USER_PROFILE)
 				{
+					/** @var Exchange\Entity\UserImportBase $item */
 					$r = new Result();
 					if($itemOrder->getEntityId() == null)
 					{
@@ -482,47 +391,46 @@ class ImportOneCPackage extends ImportPattern
 
 						if($r->isSuccess())
 						{
-							$r = $this->modifyEntity($item);
-
-							if(!$this->importableItems($r, $item))
+							if(!$this->importableItems($item))
 							{
 								return new Result();
 							}
-							else
+
+							$r = $this->modifyEntity($item);
+
+							if(intval($item->getId())<=0)
+								$r->addError(new Error(GetMessage("SALE_EXCHANGE_PACKAGE_ERROR_USER_IS_EMPTY", array("#DOCUMENT_ID#"=>$fields['XML_ID'])), "PACKAGE_ERROR_USER_IS_EPMTY"));
+
+							if($r->isSuccess())
 							{
-								if(intval($item->getId())<=0)
-									$r->addError(new Error(GetMessage("SALE_EXCHANGE_PACKAGE_ERROR_USER_IS_EMPTY", array("#DOCUMENT_ID#"=>$fields['XML_ID'])), "PACKAGE_ERROR_USER_IS_EPMTY"));
+								/** prepare for import Order */
+								$paramsOrder = $itemOrder->getFieldValues();
+								$fieldsOrder = &$paramsOrder['TRAITS'];
 
-								if($r->isSuccess())
+								if(!empty($property))
 								{
-									/** prepare for import Order */
-									$paramsOrder = $itemOrder->getFieldValues();
-									$fieldsOrder = &$paramsOrder['TRAITS'];
-
-									if(!empty($property))
-									{
-										$fieldsOrder['ORDER_PROP'] = $params['ORDER_PROP'];
-									}
-
-									$fieldsOrder['USER_ID'] = $item->getId();
-									$fieldsOrder['PERSON_TYPE_ID'] = $personalTypeId;
-									$itemOrder->setFields($paramsOrder);
+									$fieldsOrder['ORDER_PROP'] = $params['ORDER_PROP'];
 								}
+
+								$fieldsOrder['USER_ID'] = $item->getId();
+								$fieldsOrder['PERSON_TYPE_ID'] = $personalTypeId;
+								$itemOrder->setFields($paramsOrder);
 							}
 						}
 					}
 				}
 				elseif($item->getOwnerTypeId() == EntityType::ORDER)
 				{
-					$r = $this->modifyEntity($itemOrder);
-
-					if(!$this->importableItems($r, $itemOrder))
+					if(!$this->importableItems($itemOrder))
 					{
 						return new Result();
 					}
+
+					$r = $this->modifyEntity($itemOrder);
 				}
 				else
 				{
+					/** @var Exchange\Entity\PaymentImport|Exchange\Entity\ShipmentImport $item */
 					/** @var Order $order */
 					$order = $itemOrder->getEntity();
 					$params = $item->getFieldValues();
@@ -587,91 +495,41 @@ class ImportOneCPackage extends ImportPattern
     }
 
 	/**
-	 * @param Result $r
-	 * @param Exchange\Entity\EntityImport|Exchange\Entity\UserProfileImport $item
+	 * @param ImportBase $item
 	 * @return bool
-	 * @throws ArgumentException
 	 */
-	private function importableItems(Result $r, $item)
+	private function importableItems($item)
 	{
-		$result = true;
-
-		$entity = $item->getEntity();
-
-		if($item->getOwnerTypeId() == EntityType::ORDER)
+		if($item->getId() == null && !$item->isImportable())
 		{
-			/** @var Order $entity */
-			if($r->isSuccess() &&
-				!$r->hasWarnings() &&
-				!($entity instanceof Order) &&
-				!$item->isImportable())
+			switch ($item->getOwnerTypeId())
 			{
-				$result = false;
-			}
-		}
-		elseif($item->getOwnerTypeId() == EntityType::USER_PROFILE)
-		{
-			/** @var Exchange\Entity\UserProfileImport $entity */
-			if($r->isSuccess() &&
-				!$r->hasWarnings() &&
-				!($entity instanceof Exchange\Entity\UserProfileImport) &&
-				!$item->isImportable())
-			{
-				$result = false;
+				case EntityType::ORDER:
+				case EntityType::USER_PROFILE:
+					return false;
+					break;
 			}
 		}
 
-		return $result;
+		return true;
 	}
 
     /**
-     * @param array $values
-     * @internal param array $fields
-     */
-    public function setFields(array $values)
-    {
-        foreach ($values as $key=>$value)
-        {
-            $this->setField($key, $value);
-        }
-    }
-
-    /**
-     * @param $name
-     * @param $value
-     */
-    public function setField($name, $value)
-    {
-        $this->fields->set($name, $value);
-    }
-
-    /**
-     * @param $name
-     * @return null|string
-     */
-    public function getField($name)
-    {
-        return $this->fields->get($name);
-    }
-
-    /**
-     * @param Entity\EntityImport[] $items
+     * @param ImportBase[] $items
      * @return Entity\OrderImport|null
      */
     protected function loadOrder(array $items)
     {
-        foreach ($items as $item)
-        {
-            if($item->getOwnerTypeId() == EntityType::ORDER)
-            {
-                $params = $item->getFieldValues();
-                $fields = $params['TRAITS'];
+		$item = $this->getItemByTypeId(EntityType::ORDER, $items);
+		if($item instanceof Exchange\Entity\OrderImport)
+		{
+			$params = $item->getFieldValues();
+			$fields = $params['TRAITS'];
 
-                static::load($item, $fields);
+			static::load($item, $fields);
 
-                return $item;
-            }
-        }
+			return $item;
+		}
 
         return null;
     }
@@ -746,7 +604,8 @@ class ImportOneCPackage extends ImportPattern
             {
                 $typeId = Entity\ShipmentImport::resolveEntityTypeId($shipment);
 
-                $item = Manager::createImport($typeId);
+                /** @var Exchange\Entity\ShipmentImport $item */
+                $item = ManagerImport::create($typeId);
                 static::load($item, array('ID'=>$id), $order);
 				$collision = $item->getLoadedCollision();
 
@@ -821,7 +680,8 @@ class ImportOneCPackage extends ImportPattern
             {
                 $typeId = Entity\PaymentImport::resolveEntityTypeId($payment);
 
-                $item = Manager::createImport($typeId);
+                /** @var Exchange\Entity\PaymentImport $item */
+                $item = ManagerImport::create($typeId);
                 static::load($item, array('ID'=>$id), $order);
 				$collision = $item->getLoadedCollision();
 
@@ -935,7 +795,6 @@ class ImportOneCPackage extends ImportPattern
         return $result;
     }
 
-
     /**
      * Modify all dependent entities after the order is changed
      * @param Entity\OrderImport $orderImport
@@ -1041,7 +900,7 @@ class ImportOneCPackage extends ImportPattern
 
     /**
      * @param Exchange\Entity\OrderImport $orderImport
-     * @param Entity\EntityImport[] $items
+     * @param ImportBase[] $items
      * @return \Bitrix\Main\Entity\AddResult|\Bitrix\Main\Entity\UpdateResult|Result|mixed
      */
     protected function save(Exchange\Entity\OrderImport $orderImport, $items)
@@ -1062,7 +921,7 @@ class ImportOneCPackage extends ImportPattern
     }
 
 	/**
-	 * @param Entity\EntityImport[] $items
+	 * @param ImportBase[] $items
 	 * @return bool
 	 */
 	protected function hasCollisionErrors($items)
@@ -1074,14 +933,6 @@ class ImportOneCPackage extends ImportPattern
 		}
 		return false;
 	}
-
-    /**
-     * @return array
-     */
-    protected static function getMessage()
-    {
-        return Loc::loadLanguageFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/components/bitrix/sale.export.1c/component.php');
-    }
 
 	/**
 	 * @param Entity\OrderImport $orderImport
@@ -1152,5 +1003,44 @@ class ImportOneCPackage extends ImportPattern
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param ImportBase[] $items
+	 * @return Result
+	 */
+	protected function logger(array $items)
+	{
+		$xmlStreem = $this->getRawData();
+		$orderItem = $this->getItemByTypeId(EntityType::ORDER, $items);
+
+		foreach ($items as $item)
+		{
+			if($item->hasLogging())
+			{
+				$logger = $item->getLogger();
+
+				if($item instanceof Exchange\Entity\OrderImport)
+				{
+					$logger->setField('MESSAGE', $xmlStreem);
+					$logger->setField('PARENT_ID', $orderItem->getId());
+					$logger->setField('MARKED', $item->isMarked()?'Y':'N');
+				}
+				else
+				{
+					if($item instanceof Exchange\Entity\EntityImport)
+					{
+						$logger->setField('PARENT_ID', $item->getParentEntity()->getId());
+						$logger->setField('OWNER_ENTITY_ID', $orderItem->getId());
+						$logger->setField('MARKED', $item->isMarked()?'Y':'N');
+					}
+					else
+					{
+						$logger->setField('PARENT_ID', $orderItem->getId());
+					}
+				}
+			}
+		}
+		return parent::logger($items);
 	}
 }

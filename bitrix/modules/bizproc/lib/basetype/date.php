@@ -115,6 +115,7 @@ class Date extends Base
 	protected static function renderControl(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
 	{
 		$name = static::generateControlName($field);
+		$className = static::generateControlClassName($fieldType, $field);
 		$renderResult = '';
 
 		if ($renderMode & FieldType::RENDER_MODE_MOBILE)
@@ -142,7 +143,8 @@ class Date extends Base
 					'FORM_NAME' => $field['Form'],
 					'INPUT_NAME' => $name,
 					'INPUT_VALUE' => $value,
-					'SHOW_TIME' => static::getType() == FieldType::DATETIME ? 'Y' : 'N'
+					'SHOW_TIME' => static::getType() == FieldType::DATETIME ? 'Y' : 'N',
+					'INPUT_ADDITIONAL_ATTR' => 'class="'.htmlspecialcharsbx($className).'"'
 				),
 				false,
 				array('HIDE_ICONS' => 'Y')

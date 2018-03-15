@@ -9,7 +9,8 @@ $MESS["MAIN_USER_CONSENT_INTL_FIELD_PURPOSES_DEFAULT"] = "- предоставл
 - направление в мой адрес информации, в том числе рекламной, о мероприятиях/товарах/услугах/работах Оператора.
 ";
 $MESS["MAIN_USER_CONSENT_INTL_FIELD_THIRD_PARTIES"] = "Информация передается третьим лицам";
-$MESS["MAIN_USER_CONSENT_INTL_FIELD_THIRD_PARTIES_HINT"] = "Перечислите данные компаний, которым вы передаете персональные данные. \nПример: ИП Иванов (ОГРНИП 123456, ИНН 7890)";
+$MESS["MAIN_USER_CONSENT_INTL_FIELD_THIRD_PARTIES_HINT"] = "Перечислите данные компаний, которым вы передаете персональные данные. 
+Пример: ИП Иванов (ОГРНИП 123456, ИНН 7890)";
 $MESS["MAIN_USER_CONSENT_INTL_FIELD_COMPANY_NAME"] = "Название компании";
 $MESS["MAIN_USER_CONSENT_INTL_FIELD_COMPANY_NAME_HINT"] = "Пример: ИП Иванов (ОГРНИП 123456, ИНН 7890)";
 $MESS["MAIN_USER_CONSENT_INTL_FIELD_COMPANY_ADDRESS"] = "Адрес регистрации компании";
@@ -23,7 +24,7 @@ $MESS["MAIN_USER_CONSENT_INTL_TYPE_S"] = "Стандартное";
 $MESS["MAIN_USER_CONSENT_INTL_NOTIFY_TEXT"] = "В июле 2017 года вступают в силу поправки к ФЗ-152 от 27.07.2006 «О персональных данных» и штрафы значительно вырастут.
 Битрикс24 поможет вам соответствовать требованиям закона и избежать штрафов.";
 $MESS["MAIN_USER_CONSENT_INTL_NOTIFY_TEXT_BTN"] = "Подробнее";
-$MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION"] = "В России при сборе личных данных требуется обязательное согласие пользователя на обработку его персональных данных. <a target=\"_blank\" href=\"https://helpdesk.bitrix24.ru/open/5791365/\">Подробнее</a>";
+$MESS["MAIN_USER_CONSENT_INTL_DESCRIPTION"] = "В России при сборе личных данных требуется обязательное согласие пользователя на обработку его персональных данных. <a target=\"_blank\" href=\"https://152fz.net/\">Подробнее</a>";
 $MESS["MAIN_USER_CONSENT_INTL_NAME"] = "Стандартное согласие на обработку персональных данных «%language_name%»";
 $MESS["MAIN_USER_CONSENT_INTL_LABEL"] = "Нажимая кнопку «%button_caption%», я даю свое согласие на обработку моих
 персональных данных, в соответствии с Федеральным законом от 27.07.2006 года №152-ФЗ «О персональных данных», на условиях и для целей,

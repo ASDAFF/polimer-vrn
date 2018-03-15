@@ -14,6 +14,7 @@ $arDetParams = array(
 		"CACHE_TIME" => $arParams["CACHE_TIME"],
 		"CACHE_GROUPS" => $arParams["CACHE_GROUPS"],
 		"RESTRICT_CHANGE_PAYSYSTEM" => $arParams["RESTRICT_CHANGE_PAYSYSTEM"],
+		"REFRESH_PRICES" => $arParams["REFRESH_PRICES"],
 		"CUSTOM_SELECT_PROPS" => $arParams["CUSTOM_SELECT_PROPS"],
 		"HIDE_USER_INFO" => $arParams["DETAIL_HIDE_USER_INFO"]
 	);

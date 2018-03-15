@@ -64,12 +64,16 @@ class CIMSettings
 		}
 		if (isset($value['openDesktopFromPanel']) && CModule::IncludeModule('pull'))
 		{
-			CPullStack::AddByUser($userId, Array(
+			\Bitrix\Pull\Event::add($userId, Array(
 				'module_id' => 'im',
 				'command' => 'updateSettings',
 				'expiry' => 5,
 				'params' => Array(
 					'openDesktopFromPanel' => $value['openDesktopFromPanel'],
+				),
+				'extra' => Array(
+					'im_revision' => IM_REVISION,
+					'im_revision_mobile' => IM_REVISION_MOBILE,
 				),
 			));
 		}
@@ -116,12 +120,16 @@ class CIMSettings
 		}
 		if (isset($value['openDesktopFromPanel']) && CModule::IncludeModule('pull'))
 		{
-			CPullStack::AddByUser($userId, Array(
+			\Bitrix\Pull\Event::add($userId, Array(
 				'module_id' => 'im',
 				'command' => 'updateSettings',
 				'expiry' => 5,
 				'params' => Array(
 					'openDesktopFromPanel' => $value['openDesktopFromPanel'],
+				),
+				'extra' => Array(
+					'im_revision' => IM_REVISION,
+					'im_revision_mobile' => IM_REVISION_MOBILE,
 				),
 			));
 		}
@@ -213,8 +221,9 @@ class CIMSettings
 				'viewLastMessage' => true,
 				'enableSound' => true,
 				'enableBigSmile' => true,
+				'enableRichLink' => true,
 				'linesTabEnable' => true,
-				'linesTabOrder' => 'group',
+				'linesNewGroupEnable' => false,
 				'sendByEnter' => COption::GetOptionString("im", "send_by_enter"),
 				'correctText' => COption::GetOptionString("im", "correct_text"),
 				'panelPositionHorizontal' => COption::GetOptionString("im", "panel_position_horizontal"),
@@ -278,10 +287,6 @@ class CIMSettings
 				{
 					$arValues[$key] = in_array($value[$key], Array('top', 'bottom'))? $value[$key]: $default;
 				}
-				else if ($key == 'linesTabOrder')
-				{
-					$arValues[$key] = in_array($value[$key], Array('group', 'support', 'classic'))? $value[$key]: $default;
-				}
 				else if ($key == 'notifyScheme')
 				{
 					$arValues[$key] = in_array($value[$key], Array('simple', 'expert'))? $value[$key]: $default;
@@ -302,7 +307,7 @@ class CIMSettings
 				{
 					$arValues[$key] = false;
 				}
-				else if ($key == 'backgroundImage') 
+				else if ($key == 'backgroundImage')
 				{
 					$arValues[$key] = $value[$key];
 				}
@@ -404,7 +409,7 @@ class CIMSettings
 					list($clientId, $moduleId, $notifyId) = explode('|', $key, 3);
 					if (in_array($clientId, Array('push', 'important', 'disabled')))
 						continue;
-					
+
 					if ($clientId == self::CLIENT_SITE)
 					{
 						if (CIMNotifySchema::CheckDisableFeature($moduleId, $notifyId, $clientId))

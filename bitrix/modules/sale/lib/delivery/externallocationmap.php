@@ -464,7 +464,7 @@ class ExternalLocationMap
 		foreach($cities as $city)
 		{
 			$xmlId = $city[self::CITY_XML_ID_IDX];
-			$locId = static::getLocationIdByNames($city[static::CITY_NAME_IDX], $city[static::REGION_NAME_IDX]);
+			$locId = static::getLocationIdByNames($city[static::CITY_NAME_IDX], '', '', $city[static::REGION_NAME_IDX]);
 
 			if(intval($locId) > 0 && !in_array($xmlId, $xmlIdExist) && !in_array($locId, $locationIdExist))
 			{

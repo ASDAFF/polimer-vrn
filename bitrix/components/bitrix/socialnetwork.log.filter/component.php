@@ -33,11 +33,8 @@ if (
 }
 
 $bizprocAvailable = (
-	ModuleManager::isModuleInstalled('lists')
+	CModule::IncludeModule("lists") && CLists::isFeatureEnabled()
 	&& ModuleManager::isModuleInstalled('intranet')
-	&& Loader::includeModule('bizproc')
-	&& CBPRuntime::isFeatureEnabled()
-	&& COption::GetOptionString("lists", "turnProcessesOn") == "Y"
 	&& (
 		!Loader::includeModule('extranet')
 		|| !CExtranet::isExtranetSite()
@@ -484,7 +481,10 @@ if (
 $arResult["Filter"][] = array(
 	'id' => 'FAVORITES_USER_ID',
 	'name' => Loc::getMessage('SONET_C30_FILTER_FAVORITES'),
-	'type' => 'checkbox'
+	'type' => 'list',
+	'items' => array(
+		'Y' => Loc::getMessage('SONET_C30_FILTER_LIST_YES')
+	)
 );
 
 $arResult["Filter"][] = array(

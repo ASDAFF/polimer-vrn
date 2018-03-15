@@ -60,6 +60,7 @@ if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bit
 
 			Restrictions\Manager::getClassesList();
 			$paramsStructure = $className::getParamsStructure($deliveryId);
+			$params = htmlspecialcharsback($params);
 			$params = $className::prepareParamsValues($params, $deliveryId);
 
 			$paramsField = "<table width='100%'>";

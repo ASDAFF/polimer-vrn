@@ -138,6 +138,13 @@ class FileInputUtility
 	{
 		return !is_null($this->getControlByCid($CID));
 	}
+
+	public function getUserFieldCid(array $userField)
+	{
+		$fieldName = $userField['MULTIPLE'] === 'Y' ? preg_replace("/\[.*\]$/", '', $userField['FIELD_NAME']) : $userField['FIELD_NAME'];
+		return $userField["ENTITY_ID"]."-".$userField["ID"]."-".$fieldName;
+	}
+
 	protected function initSession($CID, $controlId)
 	{
 		$ts = time();

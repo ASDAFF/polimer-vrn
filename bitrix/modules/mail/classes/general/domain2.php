@@ -378,7 +378,8 @@ class CMailDomain2
 			'passwd-empty'      => CMail::ERR_API_EMPTY_PASSWORD,
 			'login-toolong'     => CMail::ERR_API_LONG_NAME,
 			'badlogin'          => CMail::ERR_API_BAD_NAME,
-			'not_master_admin'  => CMail::ERR_API_DENIED
+			'not_master_admin'  => CMail::ERR_API_DENIED,
+			'get_new_token_please' => CMail::ERR_API_OLD_TOKEN,
 		);
 
 		$error = explode(',', $error);
@@ -404,7 +405,8 @@ class CMailDomain2
 			'occupied'          => CMail::ERR_API_DOMAIN_OCCUPIED,
 			'not_master_admin'  => CMail::ERR_API_DENIED,
 			'bad_country'       => CMail::ERR_API_DEFAULT,
-			'status_none'       => CMail::ERR_API_DEFAULT
+			'status_none'       => CMail::ERR_API_DEFAULT,
+			'get_new_token_please' => CMail::ERR_API_OLD_TOKEN,
 		);
 
 		$error = explode(',', $error);

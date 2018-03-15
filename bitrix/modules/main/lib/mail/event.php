@@ -199,10 +199,12 @@ class Event
 				$eventMessage['FILE'][] = $arAttachmentDb['FILE_ID'];
 			}
 
+			$context = new Context();
 			$arFields = $arEvent['FIELDS'];
+
 			foreach (GetModuleEvents("main", "OnBeforeEventSend", true) as $event)
 			{
-				if(ExecuteModuleEventEx($event, array(&$arFields, &$eventMessage)) === false)
+				if(ExecuteModuleEventEx($event, array(&$arFields, &$eventMessage, $context)) === false)
 				{
 					continue 2;
 				}
@@ -241,7 +243,8 @@ class Event
 				'TRACK_READ' => $trackRead,
 				'TRACK_CLICK' => $trackClick,
 				'LINK_PROTOCOL' => Config\Option::get("main", "mail_link_protocol", ''),
-				'LINK_DOMAIN' => $serverName
+				'LINK_DOMAIN' => $serverName,
+				'CONTEXT' => $context,
 			));
 			if($result)
 				$arResult["Success"] = true;

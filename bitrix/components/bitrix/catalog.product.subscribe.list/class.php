@@ -101,6 +101,7 @@ class CatalogProductsSubscribeListComponent extends \CCatalogViewedProductsCompo
 			}
 
 			$params['NEED_VALUES'] = array();
+			$listSubscribeItemId = array();
 			foreach($listIblockId as $itemId => $iblockId)
 			{
 				$sku = CCatalogSKU::getInfoByProductIBlock($iblockId);
@@ -108,6 +109,7 @@ class CatalogProductsSubscribeListComponent extends \CCatalogViewedProductsCompo
 				{
 					$this->prepareItemData($itemId, $sku, $params);
 					$this->listProductId[] = $itemId;
+					$listSubscribeItemId[] = $itemId;
 				}
 				else
 				{
@@ -130,14 +132,15 @@ class CatalogProductsSubscribeListComponent extends \CCatalogViewedProductsCompo
 					}
 					if(!in_array($parentItemId, $this->listProductId))
 						$this->listProductId[] = $parentItemId;
+					$listSubscribeItemId[] = $itemId;
 				}
 			}
 
-			if(!empty($this->listProductId))
+			if(!empty($listSubscribeItemId))
 			{
 				$subscribeManager = new Catalog\Product\SubscribeManager;
-				foreach($this->listProductId as $productId)
-					$subscribeManager->setSessionOfSibscribedProducts($productId);
+				foreach($listSubscribeItemId as $itemId)
+					$subscribeManager->setSessionOfSibscribedProducts($itemId);
 			}
 			if(!empty($this->codeList))
 			{

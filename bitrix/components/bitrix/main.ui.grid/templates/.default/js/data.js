@@ -105,10 +105,19 @@
 		);
 
 		url = eventArgs.url;
-		if(!BX.type.isNotEmptyString(url))
+
+		if (!BX.type.isNotEmptyString(url))
 		{
-			url = window.location.pathname + window.location.search
+			if (BX.SidePanel && BX.SidePanel.Instance && BX.SidePanel.Instance.isOpen())
+			{
+				url = BX.SidePanel.Instance.getPageUrl();
+			}
+			else
+			{
+				url = window.location.pathname + window.location.search;
+			}
 		}
+
 		url = BX.Grid.Utils.addUrlParams(url, { sessid: BX.bitrix_sessid(), internal: 'true', grid_id: this.parent.getId() });
 
 		if ('apply_filter' in data && data.apply_filter === 'Y')

@@ -1335,12 +1335,20 @@ class CAllIBlock
 		return true;
 	}
 
-	function SetPermission($IBLOCK_ID, $arGROUP_ID)
+	public static function SetPermission($IBLOCK_ID, $arGROUP_ID)
 	{
 		/** @global CDatabase $DB */
 		global $DB;
-		$IBLOCK_ID = intval($IBLOCK_ID);
-		static $letters = "RSTUWX";
+		$IBLOCK_ID = (int)$IBLOCK_ID;
+		static $letters = array(
+			'E' => true,
+			'R' => true,
+			'S' => true,
+			'T' => true,
+			'U' => true,
+			'W' => true,
+			'X' => true
+		);
 
 		$arToDelete = array();
 		$arToInsert = array();
@@ -1349,8 +1357,8 @@ class CAllIBlock
 		{
 			foreach($arGROUP_ID as $group_id => $perm)
 			{
-				$group_id = intval($group_id);
-				if($group_id > 0 && strlen($perm) == 1 && strpos($letters, $perm) !== false)
+				$group_id = (int)$group_id;
+				if ($group_id > 0 && isset($letters[$perm]))
 				{
 					$arToInsert[$group_id] = $perm;
 				}
@@ -1364,7 +1372,7 @@ class CAllIBlock
 		", false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		while($ar = $rs->Fetch())
 		{
-			$group_id = intval($ar["GROUP_ID"]);
+			$group_id = (int)$ar["GROUP_ID"];
 
 			if(isset($arToInsert[$group_id]) && $arToInsert[$group_id] === $ar["PERMISSION"])
 			{
@@ -1403,7 +1411,7 @@ class CAllIBlock
 			if(CModule::IncludeModule("search"))
 			{
 				$arGroups = CIBlock::GetGroupPermissions($IBLOCK_ID);
-				if(array_key_exists(2, $arGroups))
+				if(isset($arGroups[2]))
 					CSearch::ChangePermission("iblock", array(2), false, false, $IBLOCK_ID);
 				else
 					CSearch::ChangePermission("iblock", $arGroups, false, false, $IBLOCK_ID);
@@ -2724,8 +2732,11 @@ REQ
 			}
 		}
 
+		$id = (int)$arr["ID"];
+		$preparedId = $id > 0 ? $id : '';
+
 		if(strpos($url, "#PRODUCT_URL#") !== false)
-			$url = str_replace("#PRODUCT_URL#", CIBlock::_GetProductUrl($arr["ID"], $arr["IBLOCK_ID"], $server_name, $arrType), $url);
+			$url = str_replace("#PRODUCT_URL#", CIBlock::_GetProductUrl($id, $arr["IBLOCK_ID"], $server_name, $arrType), $url);
 
 		static $arSearch = array(
 			/*Thees come from GetNext*/
@@ -2746,19 +2757,19 @@ REQ
 		);
 		$arReplace = array(
 			$arr["LANG_DIR"],
-			intval($arr["ID"]) > 0? intval($arr["ID"]): "",
-			urlencode(isset($arr["~CODE"])? $arr["~CODE"]: $arr["CODE"]),
-			urlencode(isset($arr["~EXTERNAL_ID"])? $arr["~EXTERNAL_ID"]: $arr["EXTERNAL_ID"]),
-			urlencode(isset($arr["~IBLOCK_TYPE_ID"])? $arr["~IBLOCK_TYPE_ID"]: $arr["IBLOCK_TYPE_ID"]),
+			$preparedId,
+			rawurlencode(isset($arr["~CODE"])? $arr["~CODE"]: $arr["CODE"]),
+			rawurlencode(isset($arr["~EXTERNAL_ID"])? $arr["~EXTERNAL_ID"]: $arr["EXTERNAL_ID"]),
+			rawurlencode(isset($arr["~IBLOCK_TYPE_ID"])? $arr["~IBLOCK_TYPE_ID"]: $arr["IBLOCK_TYPE_ID"]),
 			intval($arr["IBLOCK_ID"]) > 0? intval($arr["IBLOCK_ID"]): "",
-			urlencode(isset($arr["~IBLOCK_CODE"])? $arr["~IBLOCK_CODE"]: $arr["IBLOCK_CODE"]),
-			urlencode(isset($arr["~IBLOCK_EXTERNAL_ID"])? $arr["~IBLOCK_EXTERNAL_ID"]: $arr["IBLOCK_EXTERNAL_ID"]),
+			rawurlencode(isset($arr["~IBLOCK_CODE"])? $arr["~IBLOCK_CODE"]: $arr["IBLOCK_CODE"]),
+			rawurlencode(isset($arr["~IBLOCK_EXTERNAL_ID"])? $arr["~IBLOCK_EXTERNAL_ID"]: $arr["IBLOCK_EXTERNAL_ID"]),
 		);
 
 		if($arrType === "E")
 		{
-			$arReplace[] = intval($arr["ID"]) > 0? intval($arr["ID"]): "";
-			$arReplace[] = urlencode(isset($arr["~CODE"])? $arr["~CODE"]: $arr["CODE"]);
+			$arReplace[] = $preparedId;
+			$arReplace[] = rawurlencode(isset($arr["~CODE"])? $arr["~CODE"]: $arr["CODE"]);
 			#Deal with symbol codes
 			$SECTION_ID = intval($arr["IBLOCK_SECTION_ID"]);
 
@@ -2786,7 +2797,7 @@ REQ
 		}
 		elseif($arrType === "S")
 		{
-			$SECTION_ID = intval($arr["ID"]);
+			$SECTION_ID = $id;
 			$SECTION_CODE_PATH = "";
 			if(
 				$SECTION_ID > 0
@@ -2798,15 +2809,15 @@ REQ
 			$arReplace[] = "";
 			$arReplace[] = "";
 			$arReplace[] = $SECTION_ID > 0? $SECTION_ID: "";
-			$arReplace[] = urlencode(isset($arr["~CODE"])? $arr["~CODE"]: $arr["CODE"]);
+			$arReplace[] = rawurlencode(isset($arr["~CODE"])? $arr["~CODE"]: $arr["CODE"]);
 			$arReplace[] = $SECTION_CODE_PATH;
 		}
 		else
 		{
 			$arReplace[] = intval($arr["ELEMENT_ID"]) > 0? intval($arr["ELEMENT_ID"]): "";
-			$arReplace[] = urlencode(isset($arr["~ELEMENT_CODE"])? $arr["~ELEMENT_CODE"]: $arr["ELEMENT_CODE"]);
+			$arReplace[] = rawurlencode(isset($arr["~ELEMENT_CODE"])? $arr["~ELEMENT_CODE"]: $arr["ELEMENT_CODE"]);
 			$arReplace[] = intval($arr["IBLOCK_SECTION_ID"]) > 0? intval($arr["IBLOCK_SECTION_ID"]): "";
-			$arReplace[] = urlencode(isset($arr["~SECTION_CODE"])? $arr["~SECTION_CODE"]: $arr["SECTION_CODE"]);
+			$arReplace[] = rawurlencode(isset($arr["~SECTION_CODE"])? $arr["~SECTION_CODE"]: $arr["SECTION_CODE"]);
 			$arReplace[] = "";
 		}
 

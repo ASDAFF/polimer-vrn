@@ -18,7 +18,7 @@ final class Registry
 	const ENTITY_PAYMENT_COLLECTION = 'PAYMENT_COLLECTION';
 	const ENTITY_SHIPMENT_COLLECTION = 'SHIPMENT_COLLECTION';
 	const ENTITY_PROPERTY_VALUE = 'PROPERTY_VALUE';
-	const ENTITY_BUNDLE_BASKET = 'BUNDLE_BASKET';
+	const ENTITY_BUNDLE_COLLECTION = 'BUNDLE_COLLECTION';
 	const ENTITY_BASKET = 'BASKET';
 	const ENTITY_TAX = 'TAX';
 	const ENTITY_BASKET_ITEM = 'BASKET_ITEM';
@@ -58,7 +58,7 @@ final class Registry
 				Registry::ENTITY_PROPERTY_VALUE => '\Bitrix\Sale\PropertyValue',
 				Registry::ENTITY_TAX => '\Bitrix\Sale\Tax',
 				Registry::ENTITY_BASKET_PROPERTY_ITEM => '\Bitrix\Sale\BasketPropertyItem',
-				Registry::ENTITY_BUNDLE_BASKET => '\Bitrix\Sale\BasketBundleCollection',
+				Registry::ENTITY_BUNDLE_COLLECTION => '\Bitrix\Sale\BundleCollection',
 				Registry::ENTITY_BASKET => '\Bitrix\Sale\Basket',
 				Registry::ENTITY_BASKET_ITEM => '\Bitrix\Sale\BasketItem',
 				Registry::ENTITY_BASKET_PROPERTIES_COLLECTION => '\Bitrix\Sale\BasketPropertiesCollection',
@@ -80,7 +80,7 @@ final class Registry
 				Registry::ENTITY_PROPERTY_VALUE => '\Bitrix\Sale\PropertyValue',
 				Registry::ENTITY_TAX => '\Bitrix\Sale\Tax',
 				Registry::ENTITY_BASKET_PROPERTY_ITEM => '\Bitrix\Sale\BasketPropertyItem',
-				Registry::ENTITY_BUNDLE_BASKET => '\Bitrix\Sale\BasketBundleCollection',
+				Registry::ENTITY_BUNDLE_COLLECTION => '\Bitrix\Sale\BundleCollection',
 				Registry::ENTITY_BASKET => '\Bitrix\Sale\Basket',
 				Registry::ENTITY_BASKET_ITEM => '\Bitrix\Sale\BasketItem',
 				Registry::ENTITY_BASKET_PROPERTIES_COLLECTION => '\Bitrix\Sale\BasketPropertiesCollection',
@@ -263,9 +263,9 @@ final class Registry
 	/**
 	 * @return string
 	 */
-	public function getBundleBasketClassName()
+	public function getBundleCollectionClassName()
 	{
-		return $this->get(static::ENTITY_BUNDLE_BASKET);
+		return $this->get(static::ENTITY_BUNDLE_COLLECTION);
 	}
 
 	/**

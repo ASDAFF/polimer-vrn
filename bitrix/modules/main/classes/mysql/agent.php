@@ -14,6 +14,8 @@ class CAgent extends CAllAgent
 	{
 		global $CACHE_MANAGER;
 
+		define("BX_CHECK_AGENT_START", true);
+
 		//For a while agents will execute only on primary cluster group
 		if((defined("NO_AGENT_CHECK") && NO_AGENT_CHECK===true) || (defined("BX_CLUSTER_GROUP") && BX_CLUSTER_GROUP !== 1))
 			return null;
@@ -127,6 +129,7 @@ class CAgent extends CAllAgent
 
 		$DB->Query("SELECT RELEASE_LOCK('".$uniq."_agent')");
 
+		/** @var callable|false $logFunction */
 		$logFunction = (defined("BX_AGENTS_LOG_FUNCTION") && function_exists(BX_AGENTS_LOG_FUNCTION)? BX_AGENTS_LOG_FUNCTION : false);
 
 		for($i = 0, $n = count($agents_array); $i < $n; $i++)

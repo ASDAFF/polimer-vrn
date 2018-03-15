@@ -12,11 +12,14 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type;
 use Bitrix\Sale;
-use Bitrix\Sale\Payment;
 use Bitrix\Sale\Result;
 
 Loc::loadLanguageFile(__FILE__);
 
+/**
+ * Class CheckManager
+ * @package Bitrix\Sale\Cashbox
+ */
 final class CheckManager
 {
 	const EVENT_ON_GET_CUSTOM_CHECK = 'OnGetCustomCheckList';
@@ -26,15 +29,16 @@ final class CheckManager
 	const MIN_TIME_FOR_SWITCH_CASHBOX = 240;
 
 	/** This is time re-sending a check print in minutes */
-	const CHECK_RESENDING_TIME = 1;
+	const CHECK_RESENDING_TIME = 4;
 	const CHECK_LIMIT_RECORDS = 5;
 
 	/**
 	 * @param CollectableEntity[] $entities
 	 * @param $type
+	 * @param CollectableEntity[] $relatedEntities
 	 * @return Result
 	 */
-	public static function addByType(array $entities, $type)
+	public static function addByType(array $entities, $type, array $relatedEntities = array())
 	{
 		$result = new Result();
 
@@ -52,13 +56,19 @@ final class CheckManager
 		}
 
 		$cashboxList = array();
+		$firstIteration = true;
 		foreach ($entities as $entity)
 		{
 			$items = Manager::getListWithRestrictions($entity);
-			if (!$cashboxList)
+			if ($firstIteration)
+			{
 				$cashboxList = $items;
+				$firstIteration = false;
+			}
 			else
-				$cashboxList = array_intersect($items, $cashboxList);
+			{
+				$cashboxList = array_intersect_assoc($items, $cashboxList);
+			}
 		}
 
 		$entity = reset($entities);
@@ -74,6 +84,7 @@ final class CheckManager
 		}
 
 		$check->setEntities($entities);
+		$check->setRelatedEntities($relatedEntities);
 		$check->setAvailableCashbox($cashboxList);
 
 		$validateResult = $check->validate();
@@ -89,32 +100,49 @@ final class CheckManager
 			$checkId = $saveResult->getId();
 			$order->addPrintedCheck($check);
 
+			$enabledImmediateCashboxList = array();
 			foreach ($cashboxList as $item)
 			{
-				$cashbox = Cashbox::create($item);
-				if ($cashbox instanceof IPrintImmediately)
+				if ($item['ENABLED'] === 'Y')
 				{
-					$printResult = $cashbox->printImmediately($check);
-					if ($printResult->isSuccess())
+					$cashbox = Cashbox::create($item);
+					if ($cashbox instanceof IPrintImmediately)
 					{
-						$data = $printResult->getData();
-						CashboxCheckTable::update(
-							$checkId,
-							array(
-								'STATUS' => 'P',
-								'DATE_PRINT_START' => new Type\DateTime(),
-								'CASHBOX_ID' => $item['ID'],
-								'EXTERNAL_UUID' => $data['UUID']
-							)
-						);
-
-						return $result;
-					}
-					else
-					{
-						$result->addErrors($printResult->getErrors());
+						$enabledImmediateCashboxList[$item['ID']] = $cashbox;
 					}
 				}
+			}
+
+			if ($enabledImmediateCashboxList)
+			{
+				$cashboxId = Manager::chooseCashbox(array_keys($enabledImmediateCashboxList));
+				/** @var Cashbox|IPrintImmediately $cashbox */
+				$cashbox = $enabledImmediateCashboxList[$cashboxId];
+
+				CashboxCheckTable::update(
+					$checkId,
+					array(
+						'STATUS' => 'P',
+						'DATE_PRINT_START' => new Type\DateTime(),
+						'CASHBOX_ID' => $cashbox->getField('ID')
+					)
+				);
+
+				$printResult = $cashbox->printImmediately($check);
+				if ($printResult->isSuccess())
+				{
+					$data = $printResult->getData();
+					$fields = array('EXTERNAL_UUID' => $data['UUID']);
+				}
+				else
+				{
+					$fields = array('STATUS' => 'E', 'DATE_PRINT_END' => new Type\DateTime(), 'CNT_FAIL_PRINT' => 1);
+					$result->addErrors($printResult->getErrors());
+				}
+
+				CashboxCheckTable::update($checkId, $fields);
+
+				return $result;
 			}
 
 			global $CACHE_MANAGER;
@@ -305,7 +333,7 @@ final class CheckManager
 
 			if ($isCorrect)
 			{
-				$addResult = static::addByType($check["ENTITIES"], $check["TYPE"]);
+				$addResult = static::addByType($check["ENTITIES"], $check["TYPE"], $check["RELATED_ENTITIES"]);
 				if (!$addResult->isSuccess())
 					$result->addErrors($addResult->getErrors());
 			}
@@ -348,13 +376,28 @@ final class CheckManager
 	 */
 	private static function getBuildInCheckList()
 	{
-		return array(
+		$checkList = array(
 			'\Bitrix\Sale\Cashbox\SellCheck',
 			'\Bitrix\Sale\Cashbox\SellReturnCashCheck',
-			'\Bitrix\Sale\Cashbox\SellReturnCheck',
-//			'\Bitrix\Sale\Cashbox\PrePaymentReturnCheck',
-//			'\Bitrix\Sale\Cashbox\PrePaymentCheck',
+			'\Bitrix\Sale\Cashbox\SellReturnCheck'
 		);
+
+		if (Manager::isSupportedFFD105())
+		{
+			$checkList = array_merge(
+				$checkList,
+				array(
+					'\Bitrix\Sale\Cashbox\AdvancePaymentCheck',
+					'\Bitrix\Sale\Cashbox\AdvanceReturnCheck',
+					'\Bitrix\Sale\Cashbox\AdvanceReturnCashCheck',
+					'\Bitrix\Sale\Cashbox\CreditPaymentCheck',
+					'\Bitrix\Sale\Cashbox\CreditCheck',
+					'\Bitrix\Sale\Cashbox\CreditReturnCheck',
+				)
+			);
+		}
+
+		return $checkList;
 	}
 
 	/**
@@ -487,9 +530,16 @@ final class CheckManager
 			{
 				$existingChecks = array();
 				$order = static::getOrder($entity);
+
+				$filter = array("ORDER_ID" => $order->getId());
+				if ($entity instanceof Sale\Payment)
+					$filter["PAYMENT_ID"] = $entity->getId();
+				elseif ($entity instanceof Sale\Shipment)
+					$filter["SHIPMENT_ID"] = $entity->getId();
+
 				$db = CashboxCheckTable::getList(
 					array(
-						"filter" => array("ORDER_ID" => $order->getId()),
+						"filter" => $filter,
 						"select" => array("ID", "PAYMENT_ID", "SHIPMENT_ID", "TYPE", "STATUS")
 					)
 				);
@@ -506,31 +556,217 @@ final class CheckManager
 			// we should allow users to implement their own algorithms
 			if (count($existingChecks) <= 0)
 			{
-				if ($entity instanceof Sale\Payment)
+				if (static::isAutomaticEnabled($order))
 				{
-					/** @var Sale\PaySystem\Service $ps */
-					$ps = $entity->getPaySystem();
-					if ($entity->isPaid()
-						&& ($ps->getField("CAN_PRINT_CHECK") == "Y")
-						&& ($entity->getSum() == $order->getPrice()))
+					if (Manager::isSupportedFFD105())
 					{
-						$checkEntities[] = $entity;
-
-						$shipmentCollection = $order->getShipmentCollection();
-						/** @var Sale\Shipment $shipment */
-						foreach ($shipmentCollection as $shipment)
-						{
-							if (!$shipment->isSystem())
-								$checkEntities[] = $shipment;
-						}
-
-						$map[] = array("TYPE" => "sell", "ENTITIES" => $checkEntities);
+						$result = static::collateWithFFD105($entity);
 					}
+					else
+					{
+						$result = static::collate($entity);
+					}
+
+					if ($result)
+						$map = array_merge($map, $result);
 				}
 			}
 		}
 
 		return $map;
+	}
+
+	/**
+	 * @param Sale\Order $order
+	 * @return bool
+	 */
+	private static function isAutomaticEnabled(Sale\Order $order)
+	{
+		$shipmentCollection = $order->getShipmentCollection();
+		if (!$shipmentCollection->isExistsSystemShipment() && $shipmentCollection->count() > 1)
+		{
+			return false;
+		}
+
+		$paymentCollection = $order->getPaymentCollection();
+		if (!$paymentCollection->isExistsInnerPayment() && $paymentCollection->count() > 1)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param $entity
+	 * @return array
+	 */
+	private static function collate($entity)
+	{
+		$map = array();
+
+		if ($entity instanceof Sale\Payment)
+		{
+			$order = static::getOrder($entity);
+
+			/** @var Sale\PaySystem\Service $service */
+			$service = $entity->getPaySystem();
+			if ($entity->isPaid() &&
+				($service->getField("CAN_PRINT_CHECK") == "Y") &&
+				($entity->getSum() == $order->getPrice())
+			)
+			{
+				$checkEntities[] = $entity;
+
+				$shipmentCollection = $order->getShipmentCollection();
+				/** @var Sale\Shipment $shipment */
+				foreach ($shipmentCollection as $shipment)
+				{
+					if (!$shipment->isSystem())
+						$checkEntities[] = $shipment;
+				}
+
+				$map[] = array("TYPE" => SellCheck::getType(), "ENTITIES" => $checkEntities, "RELATED_ENTITIES" => array());
+			}
+		}
+
+		return $map;
+	}
+
+	/**
+	 * @param $entity
+	 * @return array
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\NotSupportedException
+	 * @throws Main\ObjectNotFoundException
+	 */
+	private static function collateWithFFD105($entity)
+	{
+		$map = array();
+
+		$order = static::getOrder($entity);
+		if (!static::canPrintCheck($order))
+		{
+			return $map;
+		}
+
+		$entities = array();
+		$relatedEntities = array();
+		if ($entity instanceof Sale\Payment)
+		{
+			if ($entity->isInner() || !$entity->isPaid())
+				return $map;
+
+			$service = $entity->getPaySystem();
+			$type = $service->getField('IS_CASH') === 'Y' ? Check::PAYMENT_TYPE_CASHLESS : Check::PAYMENT_TYPE_CASH;
+			$entities[$type] = $entity;
+
+			$fields = $order->getFields();
+			$originalFields = $fields->getOriginalValues();
+			if (!isset($originalFields['DEDUCTED']))
+				$originalFields['DEDUCTED'] = $order->getField('DEDUCTED');
+
+			$paymentCollection = $order->getPaymentCollection();
+			if ($order->getField('DEDUCTED') === 'Y' && $originalFields['DEDUCTED'] === 'Y')
+			{
+				if ($paymentCollection->isExistsInnerPayment())
+				{
+					$relatedEntities[Check::PAYMENT_TYPE_ADVANCE][] = $paymentCollection->getInnerPayment();
+				}
+
+				$shipmentCollection = $order->getShipmentCollection();
+				/** @var Sale\Shipment $shipment */
+				foreach ($shipmentCollection as $shipment)
+				{
+					if (!$shipment->isSystem())
+					{
+						$relatedEntities[Check::SHIPMENT_TYPE_NONE][] = $shipment;
+					}
+				}
+
+				$map[] = array("TYPE" => CreditPaymentCheck::getType(), "ENTITIES" => $entities, "RELATED_ENTITIES" => $relatedEntities);
+			}
+			else
+			{
+				if (Main\Config\Option::get('sale', 'use_advance_check_by_default', 'N') === 'Y'
+					|| $paymentCollection->isExistsInnerPayment())
+				{
+					$map[] = array("TYPE" => AdvancePaymentCheck::getType(), "ENTITIES" => $entities, "RELATED_ENTITIES" => $relatedEntities);
+				}
+				else
+				{
+					$shipmentCollection = $order->getShipmentCollection();
+					/** @var Sale\Shipment $shipment */
+					foreach ($shipmentCollection as $shipment)
+					{
+						if (!$shipment->isSystem())
+						{
+							$relatedEntities[Check::SHIPMENT_TYPE_NONE][] = $shipment;
+						}
+					}
+
+					$map[] = array("TYPE" => SellCheck::getType(), "ENTITIES" => $entities, "RELATED_ENTITIES" => $relatedEntities);
+				}
+			}
+		}
+		elseif ($entity instanceof Sale\Shipment)
+		{
+			if ($entity->getField('DEDUCTED') !== 'Y')
+				return $map;
+
+			$entities[] = $entity;
+			if ($order->isPaid())
+			{
+				if (Main\Config\Option::get('sale', 'use_advance_check_by_default', 'N') === 'N')
+					return $map;
+
+				$paymentCollection = $order->getPaymentCollection();
+				foreach ($paymentCollection as $payment)
+				{
+					$relatedEntities[Check::PAYMENT_TYPE_ADVANCE][] = $payment;
+				}
+
+				$map[] = array("TYPE" => SellCheck::getType(), "ENTITIES" => $entities, "RELATED_ENTITIES" => $relatedEntities);
+			}
+			else
+			{
+				$map[] = array("TYPE" => CreditCheck::getType(), "ENTITIES" => $entities, "RELATED_ENTITIES" => $relatedEntities);
+			}
+		}
+		else
+		{
+			throw new Main\NotSupportedException();
+		}
+
+		return $map;
+	}
+
+	/**
+	 * @param Sale\Order $order
+	 * @return bool
+	 */
+	private static function canPrintCheck(Sale\Order $order)
+	{
+		$paymentCollection = $order->getPaymentCollection();
+		if ($paymentCollection)
+		{
+			/** @var Sale\Payment $payment */
+			foreach ($paymentCollection as $payment)
+			{
+				if ($payment->isInner())
+					continue;
+
+				$service = $payment->getPaySystem();
+				if ($service->getField("CAN_PRINT_CHECK") !== 'Y')
+				{
+					return false;
+				}
+			}
+		}
+
+		return true;
 	}
 
 	/**
@@ -657,21 +893,31 @@ final class CheckManager
 	}
 
 	/**
-	 * @param Sale\Internals\CollectableEntity $entity
+	 * @param CollectableEntity $entity
 	 * @return array
+	 * @throws Main\ArgumentException
 	 */
 	public static function getCheckInfo(Sale\Internals\CollectableEntity $entity)
 	{
 		$filter = array();
-		if ($entity instanceof Sale\Payment)
-			$filter['PAYMENT_ID'] = $entity->getId();
+		if ($entity->getId() > 0)
+		{
+			if ($entity instanceof Sale\Payment)
+				$filter['PAYMENT_ID'] = $entity->getId();
+			elseif ($entity instanceof Sale\Shipment)
+				$filter['SHIPMENT_ID'] = $entity->getId();
 
-		return static::collectInfo($filter);
+
+			return static::collectInfo($filter);
+		}
+
+		return array();
 	}
 
 	/**
-	 * @param Sale\Internals\CollectableEntity $entity
-	 * @return array
+	 * @param CollectableEntity $entity
+	 * @return array|false
+	 * @throws Main\ArgumentException
 	 */
 	public static function getLastPrintableCheckInfo(Sale\Internals\CollectableEntity $entity)
 	{
@@ -705,9 +951,9 @@ final class CheckManager
 
 	/**
 	 * @param array $filter
-	 *
 	 * @return array
 	 * @throws Main\ArgumentException
+	 * @throws Main\NotImplementedException
 	 */
 	public static function collectInfo(array $filter = array())
 	{
@@ -746,6 +992,7 @@ final class CheckManager
 	/**
 	 * @param $uuid
 	 * @return array|false
+	 * @throws Main\ArgumentException
 	 */
 	public static function getCheckInfoByExternalUuid($uuid)
 	{
@@ -774,5 +1021,176 @@ final class CheckManager
 		}
 
 		return null;
+	}
+
+	/**
+	 * @param array $parameters
+	 * @return Main\DB\Result
+	 * @throws Main\ArgumentException
+	 */
+	public static function getList(array $parameters = array())
+	{
+		return CashboxCheckTable::getList($parameters);
+	}
+
+	/**
+	 * @param $checkType
+	 * @param $paymentId
+	 * @return array
+	 * @throws Main\ArgumentException
+	 */
+	public static function getRelatedEntitiesForPayment($checkType, $paymentId)
+	{
+		$result = array();
+
+		$check = static::createByType($checkType);
+		if ($check === null)
+		{
+			throw new Main\ArgumentTypeException($checkType);
+		}
+
+		$dbRes = Sale\Payment::getList(array(
+			'select' => array('ORDER_ID'),
+			'filter' => array('=ID' => $paymentId)
+		));
+
+		$paymentData = $dbRes->fetch();
+		if (!$paymentData)
+		{
+			return $result;
+		}
+
+		if ($check::getSupportedRelatedEntityType() === Check::SUPPORTED_ENTITY_TYPE_PAYMENT
+			|| $check::getSupportedRelatedEntityType() === Check::SUPPORTED_ENTITY_TYPE_ALL
+		)
+		{
+			if (Manager::isSupportedFFD105())
+			{
+				$dbRes = Sale\Payment::getList(array(
+					'select' => array('ID', 'NAME' => 'PAY_SYSTEM.NAME'),
+					'filter' => array(
+						'!ID' => $paymentId,
+						'=ORDER_ID' => $paymentData['ORDER_ID']
+					)
+				));
+
+				while ($data = $dbRes->fetch())
+				{
+					$data['PAYMENT_TYPES'] = array(
+						array(
+							'CODE' => Sale\Cashbox\Check::PAYMENT_TYPE_ADVANCE,
+							'NAME' => Loc::getMessage('SALE_CASHBOX_CHECK_ADVANCE'),
+						),
+						array(
+							'CODE' => Sale\Cashbox\Check::PAYMENT_TYPE_CREDIT,
+							'NAME' => Loc::getMessage('SALE_CASHBOX_CHECK_CREDIT'),
+						)
+					);
+
+					$result['PAYMENTS'][$data['ID']] = $data;
+				}
+			}
+		}
+		if ($check::getSupportedRelatedEntityType() === Check::SUPPORTED_ENTITY_TYPE_SHIPMENT
+			|| $check::getSupportedRelatedEntityType() === Check::SUPPORTED_ENTITY_TYPE_ALL
+		)
+		{
+			$dbRes = Sale\Shipment::getList(array(
+				'select' => array('ID', 'NAME' => 'DELIVERY.NAME'),
+				'filter' => array(
+					'=ORDER_ID' => $paymentData['ORDER_ID'],
+					'SYSTEM' => 'N'
+				)
+			));
+
+			while ($data = $dbRes->fetch())
+			{
+				$result['SHIPMENTS'][$data['ID']] = $data;
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $checkType
+	 * @param $shipmentId
+	 * @return array
+	 * @throws Main\ArgumentException
+	 */
+	public static function getRelatedEntitiesForShipment($checkType, $shipmentId)
+	{
+		$result = array();
+
+		if (!Manager::isSupportedFFD105())
+		{
+			return $result;
+		}
+
+		$check = static::createByType($checkType);
+		if ($check === null)
+		{
+			throw new Main\ArgumentTypeException($checkType);
+		}
+
+		$dbRes = Sale\Shipment::getList(array(
+			'select' => array('ORDER_ID'),
+			'filter' => array('=ID' => $shipmentId)
+		));
+
+		$shipmentData = $dbRes->fetch();
+		if (!$shipmentData)
+		{
+			return $result;
+		}
+
+		if ($check::getSupportedRelatedEntityType() === Check::SUPPORTED_ENTITY_TYPE_SHIPMENT
+			|| $check::getSupportedRelatedEntityType() === Check::SUPPORTED_ENTITY_TYPE_ALL
+		)
+		{
+			$dbRes = Sale\Shipment::getList(array(
+				'select' => array('ID', 'NAME' => 'DELIVERY.NAME'),
+				'filter' => array(
+					'!ID' => $shipmentId,
+					'=ORDER_ID' => $shipmentData['ORDER_ID'],
+					'SYSTEM' => 'N'
+				)
+			));
+
+			while ($data = $dbRes->fetch())
+			{
+				$result['SHIPMENTS'][$data['ID']] = $data;
+			}
+		}
+
+		if ($check::getSupportedRelatedEntityType() === Check::SUPPORTED_ENTITY_TYPE_PAYMENT
+			|| $check::getSupportedRelatedEntityType() === Check::SUPPORTED_ENTITY_TYPE_ALL
+		)
+		{
+			$dbRes = Sale\Payment::getList(array(
+				'select' => array('ID', 'NAME' => 'PAY_SYSTEM.NAME'),
+				'filter' => array(
+					'=ORDER_ID' => $shipmentData['ORDER_ID']
+				)
+			));
+
+			while ($data = $dbRes->fetch())
+			{
+				$data['PAYMENT_TYPES'] = array(
+					array(
+						'CODE' => Sale\Cashbox\Check::PAYMENT_TYPE_ADVANCE,
+						'NAME' => Loc::getMessage('SALE_CASHBOX_CHECK_ADVANCE'),
+					),
+					array(
+						'CODE' => Sale\Cashbox\Check::PAYMENT_TYPE_CREDIT,
+						'NAME' => Loc::getMessage('SALE_CASHBOX_CHECK_CREDIT'),
+					)
+				);
+
+				$result['PAYMENTS'][$data['ID']] = $data;
+			}
+		}
+
+		return $result;
 	}
 }

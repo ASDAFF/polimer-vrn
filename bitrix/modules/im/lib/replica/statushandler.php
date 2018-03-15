@@ -42,7 +42,7 @@ class StatusHandler extends \Bitrix\Replica\Client\BaseHandler
 				'params' => array(
 					"USER_ID" => $newRecord["USER_ID"],
 					"STATUS" => $newRecord["STATUS"],
-				), //TODO \CIMStatus::PrepereToPush(
+				),
 			));
 		}
 	}
@@ -68,7 +68,7 @@ class StatusHandler extends \Bitrix\Replica\Client\BaseHandler
 					'params' => array(
 						"USER_ID" => $newRecord["USER_ID"],
 						"STATUS" => $newRecord["STATUS"],
-					), //TODO \CIMStatus::PrepereToPush(
+					),
 				));
 			}
 		}
@@ -126,6 +126,7 @@ class StatusHandler extends \Bitrix\Replica\Client\BaseHandler
 	 */
 	public function handleStatusUpdateOperation($event, $nodeFrom, $nodeTo)
 	{
+		/*
 		global $USER;
 		if (!isset($event["guid"]))
 		{
@@ -140,6 +141,7 @@ class StatusHandler extends \Bitrix\Replica\Client\BaseHandler
 		}
 
 		$USER->setLastActivityDate($userId);
+		*/
 	}
 
 	/**

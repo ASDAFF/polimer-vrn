@@ -23,4 +23,5 @@ $MESS["SPOD_ALLOW_INNER"] = "Zahlung über internes Konto aktivieren";
 $MESS["SPOD_ONLY_INNER_FULL"] = "Nur kompletter Betrag der Bestellung darf über internes Konto bezahlt werden";
 $MESS["SPOD_RESTRICT_CHANGE_PAYSYSTEM"] = "Status der Bestellungen in folgendem Status können nicht geändert werden";
 $MESS["SPOD_NOT_CHOSEN"] = "(nicht ausgewählt)";
+$MESS["SPOD_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"] = "Bestellung neu kalkulieren, wenn der Status des Zahlungssystems geändert wurde";
 ?>

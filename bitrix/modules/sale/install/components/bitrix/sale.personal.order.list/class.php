@@ -205,6 +205,11 @@ class CBitrixPersonalOrderListComponent extends CBitrixComponent
 
 		$this->tryParseBoolean($arParams['AUTH_FORM_IN_TEMPLATE']);
 
+		if (empty($arParams['REFRESH_PRICES']))
+		{
+			$arParams['REFRESH_PRICES'] = "N";
+		}
+
 		if (empty($arParams['ALLOW_INNER']))
 		{
 			$arParams['ALLOW_INNER'] = "N";
@@ -624,7 +629,7 @@ class CBitrixPersonalOrderListComponent extends CBitrixComponent
 
 				if ($item)
 				{
-					$resultItem = $item->setField('QUANTITY', $item->getQuantity() + $oldBasketItem->getQuantity());
+					$item->setField('QUANTITY', $item->getQuantity() + $oldBasketItem->getQuantity());
 				}
 				else
 				{
@@ -632,29 +637,24 @@ class CBitrixPersonalOrderListComponent extends CBitrixComponent
 					$oldBasketValues = array_intersect_key($oldBasketItem->getFieldValues(), $filterFields);
 					$item->setField('NAME', $oldBasketValues['NAME']);
 					$resultItem = $item->setFields($oldBasketValues);
+					if (!$resultItem->isSuccess())
+						continue;
 					$newPropertyCollection = $item->getPropertyCollection();
 
 					/** @var Sale\BasketPropertyItem $oldProperty*/
 					foreach ($propertyList as $oldPropertyFields)
 					{
-						$propertyItem = $newPropertyCollection->createItem();
+						$propertyItem = $newPropertyCollection->createItem($oldPropertyFields);
 						unset($oldPropertyFields['ID'], $oldPropertyFields['BASKET_ID']);
 
 						/** @var Sale\BasketPropertyItem $propertyItem*/
 						$propertyItem->setFields($oldPropertyFields);
 					}
 				}
-				if (!$resultItem->isSuccess())
-				{
-					$result->addErrors($resultItem->getErrors());
-				}
 			}
 
-			if ($result->isSuccess())
-			{
-				$basket->save();
-			}
-			else
+			$result = $basket->save();
+			if (!$result->isSuccess())
 			{
 				$errorList = $result->getErrors();
 				foreach ($errorList as $key => $error)
@@ -839,8 +839,7 @@ class CBitrixPersonalOrderListComponent extends CBitrixComponent
 
 		$getListParams = array(
 			'filter' => $this->filter,
-			'select' => $select,
-			'group' => array("STATUS_ID")
+			'select' => $select
 		);
 
 		if ($this->sortBy == 'STATUS')

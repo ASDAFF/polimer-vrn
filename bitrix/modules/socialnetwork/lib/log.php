@@ -32,6 +32,13 @@ class LogTable extends Entity\DataManager
 			'EVENT_ID' => array(
 				'data_type' => 'string',
 			),
+			'USER_ID' => array(
+				'data_type' => 'integer',
+			),
+			'USER' => array(
+				'data_type' => 'Bitrix\Main\UserTable',
+				'reference' => array('=this.USER_ID' => 'ref.ID'),
+			),
 			'TITLE' => array(
 				'data_type' => 'string',
 			),
@@ -45,6 +52,15 @@ class LogTable extends Entity\DataManager
 				'data_type' => 'text',
 			),
 			'SOURCE_ID' => array(
+				'data_type' => 'integer',
+			),
+			'LOG_DATE' => array(
+				'data_type' => 'datetime',
+			),
+			'LOG_UPDATE' => array(
+				'data_type' => 'datetime',
+			),
+			'COMMENTS_COUNT' => array(
 				'data_type' => 'integer',
 			),
 		);

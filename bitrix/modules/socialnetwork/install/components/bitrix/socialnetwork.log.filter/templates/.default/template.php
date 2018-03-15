@@ -421,6 +421,7 @@ else
 				'FILTER_FIELDS' => array(),
 				'FILTER_PRESETS' => $arResult['PresetFiltersNew'],
 				'ENABLE_LIVE_SEARCH' => true,
+				'RESET_TO_DEFAULT_MODE' => false,
 				'ENABLE_LABEL' => true,
 				'COMPACT_STATE' => (
 					empty($arResult["CREATED_BY_DEST"]['SELECTED'])
@@ -446,7 +447,8 @@ else
 			BX.ready(function(){
 				oLFFilter.initFilter({
 					version: 2,
-					filterId: '<?=htmlspecialcharsbx($filterID)?>'
+					filterId: '<?=htmlspecialcharsbx($filterID)?>',
+					minSearchStringLength: <?=intval($arResult["ftMinTokenSize"])?>
 				});
 			});
 		</script>

@@ -806,6 +806,7 @@ BX.CViewImageElement = function(params)
 	this.full_height = params.full_height;
 	this.full_size = params.full_size;
 	this.topPadding = 43;
+	this.imageElement = true;
 }
 
 BX.extend(BX.CViewImageElement, BX.CViewCoreElement);
@@ -982,6 +983,7 @@ BX.CViewEditableElement = function(params)
 	this.idToPost = params.idToPost || '';
 	this.isNowConverted = false;
 	this.version = parseInt(params.version) || 0;
+	this.hideEdit = (params.hideEdit == 1);
 	this.dateModify = params.dateModify;
 	this.currentModalWindow = params.currentModalWindow || false;
 	this.editInProcess = false;
@@ -1009,6 +1011,12 @@ BX.CViewEditableElement.prototype.runAction = function(action, params){
 			}, 100));
 			break;
 		case 'forceedit':
+			if(!!BX.message('disk_document_service') && BX.CViewer.isLocalEditService(BX.message('disk_document_service')) && BX.CViewer.isEnableLocalEditInDesktop())
+			{
+				this.localEditProcess(params.obElementViewer);
+				return;
+			}
+
 			if(!this.editUrl || !params.obElementViewer)
 			{
 				return false;
@@ -1017,7 +1025,7 @@ BX.CViewEditableElement.prototype.runAction = function(action, params){
 			//BX.is_subclass_of(currentElement, BX.CViewImageElement) doesn't work ^(
 			if(
 				BX.CViewer.enableInVersionDisk(2) &&
-				!this.hasOwnProperty('image')
+				!this.hasOwnProperty('imageElement')
 			)
 			{
 				//first run. We have to show setting window.
@@ -1287,43 +1295,46 @@ BX.CViewEditableElement.prototype.openEditConfirm = function(obElementViewer)
 					dataForCommit.success = BX.delegate(function(element, response){
 						if(this.bVisible && this.isCurrent(element))
 						{
-							var elementId = response.elementId;
-							var cid = response.cid;
-							if(element.urlToPost && response.serialize /*&& fileId*/)
+							if(element.getLastVersionUri)
 							{
 								BX.ajax({
 									'method': 'POST',
-									'dataType': 'html',
-									'url': element.urlToPost,
+									'dataType': 'json',
+									'url': element.getLastVersionUri,
 									'data':  {
-										sessid: BX.bitrix_sessid(),
-										comment_post_id: element.idToPost,
-										ENTITY_XML_ID:'BLOG_' + element.idToPost,
-										ENTITY_TYPE:'BG',
-										ENTITY_ID:element.idToPost,
-										NOREDIRECT:'Y',
-										AJAX_POST:'Y',
-										MODE:'RECORD',
-										act: 'add',
-										post: 'Y',
-										save: 'Y',
-										webdav_history: 'Y',
-										'UF_BLOG_COMMENT_FH': response.serialize,
-										blog_upload_cid: cid,
-										comment: BX.CViewer.getMsgAfterUploadNewVersionByUser()
+										sessid: BX.bitrix_sessid()
 									},
-									'onsuccess': function(data){},
-									processData: false
+									'onsuccess': BX.delegate(function(data){
+										if(data.version)
+										{
+											element.version = data.version;
+										}
+										if(data.editUrl)
+										{
+											element.editUrl = data.editUrl;
+										}
+										if(data.src)
+										{
+											element.src = data.src;
+										}
+										if(element.iframeSrc)
+										{
+											if(data.iframeSrc)
+											{
+												element.iframeSrc = data.iframeSrc;
+											}
+											var iframeElement = this.createIframeElementFromAjaxElement(element);
+											iframeElement.setCurrentModalWindow(element.getCurrentModalWindow());
+											this.getCurrent().hide();
+											this.setCurrent(iframeElement);
+											this.show();
+										}
+										else
+										{
+											this.show(element, true);
+										}
+									}, this)
 								});
-								element.isHistory = true;
-							}
-							if(element.isHistory && element.baseElementId)
-							{
-								//set version to last. Keep it simple
-								var params = {version: 0};
-								params.transformTimeout = element.transformTimeout;
-								this.setCurrent(this.createElementByType(BX(element.baseElementId), params));
-								this.show();
 							}
 							else
 							{
@@ -1993,6 +2004,7 @@ BX.CViewIframeElement = function(params)
 	this.pdfFallback = params.pdfFallback;
 	this.previewImage = params.previewImage;
 	this.transformTimeout = params.transformTimeout || 0;
+	this.getLastVersionUri = params.getLastVersionUri;
 }
 
 BX.extend(BX.CViewIframeElement, BX.CViewEditableElement);
@@ -2125,6 +2137,11 @@ BX.CViewIframeElement.prototype.load = function(successLoadCallback, errorLoadCa
 							border: 'none'
 						}
 					});
+					var transformationInProcessMessage = BX.findChildByClassName(this.contentWrap, 'bx-viewer-file-transformation-in-process-message');
+					if(transformationInProcessMessage)
+					{
+						transformationInProcessMessage.remove();
+					}
 					this.contentWrap.appendChild(this.domElement);
 
 					this.viewUrl = data.viewUrl || data.viewerUrl;
@@ -2157,7 +2174,7 @@ BX.CViewIframeElement.prototype.load = function(successLoadCallback, errorLoadCa
 		if(this.transformTimeout > 0)
 		{
 			this.contentWrap.innerHTML =
-				'<div style="text-align: center;margin-top: 50%;">' +
+				'<div class="bx-viewer-file-transformation-in-process-message" style="text-align: center;margin-top: 50%;">' +
 					BX.message('JS_CORE_VIEWER_TRANSFORMATION_IN_PROCESS') +
 				'</div>';
 			setTimeout(iframeMainAjax, (this.transformTimeout * 1000));
@@ -2257,12 +2274,12 @@ BX.CViewAjaxElement = function(params)
 	this.autoReduction = true;
 	this.autoReductionWidth = 350;
 	this.pdfFallback = params.pdfFallback;
-	this.hideEdit = (params.hideEdit == 1);
 	this.full = this.pdfFallback;
 	this.iframeSrc = params.iframeSrc;
 	this.transformTimeout = params.transformTimeout;
 	this.wrapClassName = '';
 	this.image = null;
+	this.getLastVersionUri = params.getLastVersionUri;
 }
 
 BX.extend(BX.CViewAjaxElement, BX.CViewEditableElement);
@@ -4799,6 +4816,13 @@ BX.CViewer.prototype.createPopupWindowFromErrorElement = function(errorElement){
 	{
 		return;
 	}
+
+	var errorMessage = errorElement.errorMessage;
+	if(!errorMessage)
+	{
+		errorMessage = BX.message('JS_CORE_VIEWER_IFRAME_ERROR_COULD_NOT_VIEW');
+	}
+
 	var titleBar = {content: BX.create('div', {
 		props: {
 			className: 'popup-window-titlebar'
@@ -4848,19 +4872,19 @@ BX.CViewer.prototype.createPopupWindowFromErrorElement = function(errorElement){
 						},
 						text: BX.message('JS_CORE_VIEWER_IFRAME_ERROR_TITLE')
 					}),
-					(errorElement.errorMessage? BX.create('span', {
+					(errorMessage? BX.create('span', {
 						props: {
 							className: 'bx-viewer-error-popup-text'
 						},
-						html: errorElement.errorMessage
+						html: errorMessage
 					}) : null),
-					BX.create('span', {
+					(!BX.CViewer.isDisabledLocalEdit? BX.create('span', {
 						props: {
 							className: 'bx-viewer-error-popup-text'
 						},
 						html: BX.message('JS_CORE_VIEWER_SERVICE_LOCAL_INSTALL_DESKTOP')
-					}),
-					BX.create('span', {
+					}) : null),
+					(!BX.CViewer.isDisabledLocalEdit? BX.create('span', {
 						props : {
 							className : "popup-window-button"
 						},
@@ -4870,7 +4894,7 @@ BX.CViewer.prototype.createPopupWindowFromErrorElement = function(errorElement){
 							}, this)
 						},
 						text : BX.message('JS_CORE_VIEWER_DOWNLOAD_B24_DESKTOP_FULL')
-					}),
+					}) : null),
 					(errorElement.hideEdit? null: errorElement.getComplexEditButton(this, {
 						enableEdit: !!errorElement.editUrl,
 						isLocked: !!errorElement.lockedBy && errorElement.lockedBy != BX.message('USER_ID')
@@ -4893,11 +4917,10 @@ BX.CViewer.prototype.createPopupWindowFromErrorElement = function(errorElement){
 			className: 'bx-viewer-error-popup-cancel',
 			text : BX.message('JS_CORE_VIEWER_IFRAME_CONVERT_DECLINE'),
 			events : {
-				click : BX.delegate(function()
-				{
+				click : BX.delegate(function() {
 					this.destroyMenu();
 					this.closeConfirm();
-                                        this.close();
+					this.close();
 				}, this
 			)}
 		})
@@ -5075,7 +5098,8 @@ BX.CViewer.prototype.createAjaxElementFromIframeElement = function(iframeElement
 		historyPageUrl: iframeElement.historyPageUrl,
 		askConvert: iframeElement.askConvert,
 		version: iframeElement.version,
-		iframeSrc: iframeElement.src
+		iframeSrc: iframeElement.src,
+		getLastVersionUri: iframeElement.getLastVersionUri
 	});
 
 	if(!ajaxElement.hideEdit)
@@ -5120,7 +5144,8 @@ BX.CViewer.prototype.createIframeElementFromAjaxElement = function(ajaxElement)
 		downloadUrl: ajaxElement.downloadUrl,
 		historyPageUrl: ajaxElement.historyPageUrl,
 		askConvert: ajaxElement.askConvert,
-		version: ajaxElement.version
+		version: ajaxElement.version,
+		getLastVersionUri: ajaxElement.getLastVersionUri
 	});
 
 	if(!iframeElement.hideEdit)
@@ -5207,6 +5232,7 @@ BX.CViewer.prototype.createIframeElement = function(element, params)
 
 		editUrl: element.getAttribute('data-bx-edit'),
 		lockedBy: element.getAttribute('data-bx-lockedBy'),
+		hideEdit: element.getAttribute('data-bx-hideEdit'),
 		fakeEditUrl: element.getAttribute('data-bx-fakeEdit'),
 		urlToPost: element.getAttribute('data-bx-urlToPost'),
 		idToPost: element.getAttribute('data-bx-idToPost'),
@@ -5218,6 +5244,7 @@ BX.CViewer.prototype.createIframeElement = function(element, params)
 		pdfFallback: element.getAttribute('data-bx-pdfFallback'),
 		previewImage: element.getAttribute('data-bx-previewImage'),
 		transformTimeout: params.transformTimeout,
+		getLastVersionUri: params.getLastVersionUri,
 		buttons: []
 	});
 	if(iframeElement.isConverted())
@@ -5229,10 +5256,13 @@ BX.CViewer.prototype.createIframeElement = function(element, params)
 		iframeElement.askConvert = false;
 	}
 
-	iframeElement.buttons.push(iframeElement.getComplexEditButton(this, {
-		enableEdit: !!iframeElement.editUrl,
-		isLocked: !!iframeElement.lockedBy && iframeElement.lockedBy != BX.message('USER_ID')
-	}));
+	if(!iframeElement.hideEdit)
+	{
+		iframeElement.buttons.push(iframeElement.getComplexEditButton(this, {
+			enableEdit: !!iframeElement.editUrl,
+			isLocked: !!iframeElement.lockedBy && iframeElement.lockedBy != BX.message('USER_ID')
+		}));
+	}
 	iframeElement.buttons.push(iframeElement.getComplexSaveButton(this, {
 		downloadUrl: iframeElement.downloadUrl,
 		reloadAfterDownload: true,
@@ -5270,7 +5300,8 @@ BX.CViewer.prototype.createAjaxElement = function(element, params)
 			height: element.getAttribute('data-bx-height'),
 			hideEdit: element.getAttribute('data-bx-hideEdit'),
 			iframeSrc: element.getAttribute('data-bx-iframeSrc'),
-			transformTimeout: element.getAttribute('data-bx-transformTimeout')
+			transformTimeout: element.getAttribute('data-bx-transformTimeout'),
+			getLastVersionUri: element.getAttribute('data-bx-getLastVersionUri')
 		});
 
 		if(!ajaxElement.hideEdit)

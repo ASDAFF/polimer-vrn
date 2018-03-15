@@ -20,7 +20,7 @@ class CIMMessage
 
 	public static function Add($arFields)
 	{
-		if (!isset($arFields['MESSAGE_TYPE']) || !in_array($arFields['MESSAGE_TYPE'], Array(IM_MESSAGE_CHAT, IM_MESSAGE_OPEN)))
+		if (!isset($arFields['MESSAGE_TYPE']) || !in_array($arFields['MESSAGE_TYPE'], Array(IM_MESSAGE_CHAT, IM_MESSAGE_OPEN, IM_MESSAGE_OPEN_LINE)))
 			$arFields['MESSAGE_TYPE'] = IM_MESSAGE_PRIVATE;
 
 		if (isset($arFields['MESSAGE_MODULE']))
@@ -37,7 +37,17 @@ class CIMMessage
 
 		$id = intval($id);
 
-		$query = "SELECT M.*, ".$DB->DatetimeToTimestampFunction('M.DATE_CREATE')." DATE_CREATE, R.MESSAGE_TYPE FROM b_im_relation R, b_im_message M WHERE M.ID = ".$id." AND R.USER_ID = ".$this->user_id." AND R.CHAT_ID = M.CHAT_ID";
+		$query = "SELECT 
+					M.*, ".$DB->DatetimeToTimestampFunction('M.DATE_CREATE')." DATE_CREATE, 
+					R.MESSAGE_TYPE,
+					C.TITLE CHAT_TITLE, C.COLOR CHAT_COLOR, C.AVATAR CHAT_AVATAR 
+				 FROM 
+				 	b_im_message M
+				 	INNER JOIN b_im_relation R ON R.CHAT_ID = M.CHAT_ID AND R.USER_ID = ".$this->user_id."
+				 	INNER JOIN b_im_chat C ON C.ID = M.CHAT_ID
+				 WHERE 
+				 	M.ID = ".$id."";
+
 		$result = $DB->Query($query, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		$message = $result->Fetch();
 
@@ -92,7 +102,6 @@ class CIMMessage
 			'users' => Array(),
 			'files' => Array(),
 			'userInGroup' => Array(),
-			'woUserInGroup' => Array(),
 			'countMessage' => 0,
 			'result' => false
 		);
@@ -181,7 +190,7 @@ class CIMMessage
 						'chatId' => $arRes['CHAT_ID'],
 						'senderId' => $arRes['FROM_USER_ID'],
 						'recipientId' => $arRes['TO_USER_ID'],
-						'date' => $arRes['DATE_CREATE'],
+						'date' => \Bitrix\Main\Type\DateTime::createFromTimestamp($arRes['DATE_CREATE']),
 						'system' => $arRes['NOTIFY_EVENT'] == 'private'? 'N': 'Y',
 						'text' => $arRes['MESSAGE'],
 					);
@@ -294,7 +303,6 @@ class CIMMessage
 				$arUserData = CIMContactList::GetUserData(Array('ID' => array_diff(array_unique($arUsers), $arExistUserData), 'DEPARTMENT' => ($loadDepartment? 'Y': 'N')));
 				$arResult['users'] = $arUserData['users'];
 				$arResult['userInGroup'] = $arUserData['userInGroup'];
-				$arResult['woUserInGroup'] = $arUserData['woUserInGroup'];
 			}
 			else
 			{
@@ -346,7 +354,7 @@ class CIMMessage
 			$chatId = $chat->GetPersonalChat();
 			$startId = 0;
 			$lastId = 0;
-			$lastRead = 0;
+			$lastRead = false;
 			$blockNotify = false;
 		}
 		else
@@ -369,7 +377,7 @@ class CIMMessage
 				$chatId = intval($arRes['CHAT_ID']);
 				$startId = intval($arRes['START_ID']);
 				$lastId = intval($arRes['LAST_ID']);
-				$lastRead = intval($arRes['LAST_READ']);
+				$lastRead = \Bitrix\Main\Type\DateTime::createFromTimestamp($arRes['LAST_READ']);
 				$blockNotify = $arRes['NOTIFY_BLOCK'] != 'N';
 			}
 		}
@@ -440,7 +448,7 @@ class CIMMessage
 					'senderId' => $arRes['FROM_USER_ID'],
 					'recipientId' => $arRes['TO_USER_ID'],
 					'system' => $arRes['NOTIFY_EVENT'] == 'private'? 'N': 'Y',
-					'date' => $arRes['DATE_CREATE'],
+					'date' => \Bitrix\Main\Type\DateTime::createFromTimestamp($arRes['DATE_CREATE']),
 					'text' => \Bitrix\Im\Text::parse($arRes['MESSAGE'])
 				);
 
@@ -476,12 +484,11 @@ class CIMMessage
 			'usersMessage' => $arUsersMessage,
 			'users' => Array(),
 			'userInGroup' => Array(),
-			'woUserInGroup' => Array(),
 			'files' => $arChatFiles,
 			'userChatBlockStatus' => $arUserChatBlockStatus
 		);
 
-		if ($lastRead > 0)
+		if ($lastRead)
 		{
 			$arResult['readedList'][$toUserId] = Array(
 				'messageId' => $lastId,
@@ -505,7 +512,6 @@ class CIMMessage
 			);
 			$arResult['users'] = $ar['users'];
 			$arResult['userInGroup']  = $ar['userInGroup'];
-			$arResult['woUserInGroup']  = $ar['woUserInGroup'];
 			$arResult['phones']  = $ar['phones'];
 		}
 
@@ -600,7 +606,7 @@ class CIMMessage
 					'id' => $arRes['ID'],
 					'senderId' => $arRes['FROM_USER_ID'],
 					'recipientId' => $arRes['TO_USER_ID'],
-					'date' => $arRes['DATE_CREATE'],
+					'date' => \Bitrix\Main\Type\DateTime::createFromTimestamp($arRes['DATE_CREATE']),
 					'text' => $arRes['MESSAGE']
 				);
 			}
@@ -692,38 +698,46 @@ class CIMMessage
 		$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		if ($arRes = $dbRes->Fetch())
 		{
-			$bReadMessage = self::SetLastId(intval($arRes['CHAT_ID']), $this->user_id, $arRes['END_ID']);
-			if ($bReadMessage)
+			$relation = self::SetLastId(intval($arRes['CHAT_ID']), $this->user_id, $arRes['END_ID']);
+			if ($relation)
 			{
-				//CUserCounter::Decrement($this->user_id, 'im_message_v2', '**', false, $arRes['CNT']);
 				if (CModule::IncludeModule("pull"))
 				{
 					CPushManager::DeleteFromQueueBySubTag($this->user_id, 'IM_MESS');
-					CPullStack::AddByUser($this->user_id, Array(
+					\Bitrix\Pull\Event::add($this->user_id, Array(
 						'module_id' => 'im',
 						'command' => 'readMessage',
 						'params' => Array(
+							'dialogId' => $fromUserId,
 							'chatId' => intval($arRes['CHAT_ID']),
 							'senderId' => $this->user_id,
 							'id' => $fromUserId,
 							'userId' => $fromUserId,
 							'lastId' => $arRes['END_ID'],
-							'count' => $arRes['CNT']
+							'counter' => $relation['COUNTER']
+						),
+						'extra' => Array(
+							'im_revision' => IM_REVISION,
+							'im_revision_mobile' => IM_REVISION_MOBILE,
 						),
 					));
-					CPullStack::AddByUser($fromUserId, Array(
+					\Bitrix\Pull\Event::add($fromUserId, Array(
 						'module_id' => 'im',
-						'command' => 'readMessageApponent',
+						'command' => 'readMessageOpponent',
 						'expiry' => 3600,
 						'params' => Array(
+							'dialogId' => $this->user_id,
 							'chatId' => intval($arRes['CHAT_ID']),
 							'userId' => $this->user_id,
 							'lastId' => $arRes['END_ID'],
-							'date' => time(),
-							'count' => $arRes['CNT']
+							'date' => date('c', time()),
+							'chatMessageStatus' => $relation['CHAT_MESSAGE_STATUS'],
+						),
+						'extra' => Array(
+							'im_revision' => IM_REVISION,
+							'im_revision_mobile' => IM_REVISION_MOBILE,
 						),
 					));
-					CIMMessenger::SendBadges($this->user_id);
 				}
 
 				foreach(GetModuleEvents("im", "OnAfterUserRead", true) as $arEvent)
@@ -735,7 +749,7 @@ class CIMMessage
 						'CHAT_ENTITY_ID' => '',
 						'START_ID' => $arRes['START_ID'],
 						'END_ID' => $arRes['END_ID'],
-						'COUNT' => $arRes['CNT'],
+						'COUNT' => $relation['COUNTER'],
 						'USER_ID' => $this->user_id,
 						'BY_EVENT' => $byEvent
 					)));
@@ -773,27 +787,44 @@ class CIMMessage
 		$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		if ($arRes = $dbRes->Fetch())
 		{
-			$bReadMessage = self::SetLastIdForUnread(intval($arRes['CHAT_ID']), $this->user_id, $lastId);
-			if ($bReadMessage)
+			$relation = self::SetLastIdForUnread(intval($arRes['CHAT_ID']), $this->user_id, $lastId);
+			if ($relation)
 			{
 				CIMMessenger::SpeedFileDelete($this->user_id, IM_SPEED_MESSAGE);
 
 				if (CModule::IncludeModule("pull"))
 				{
-					CPushManager::DeleteFromQueueBySubTag($this->user_id, 'IM_MESS');
-					CPullStack::AddByUser($fromUserId, Array(
+					\Bitrix\Pull\Event::add($this->user_id, Array(
 						'module_id' => 'im',
-						'command' => 'unreadMessageApponent',
+						'command' => 'unreadMessage',
 						'expiry' => 3600,
 						'params' => Array(
+							'dialogId' => $fromUserId,
 							'chatId' => intval($arRes['CHAT_ID']),
-							'userId' => $this->user_id,
-							'lastId' => $lastId,
-							'date' => time(),
-							'count' => $arRes['CNT']
+							'userId' => $fromUserId,
+							'counter' => $relation['COUNTER'],
+						),
+						'push' => Array('badge' => 'Y'),
+						'extra' => Array(
+							'im_revision' => IM_REVISION,
+							'im_revision_mobile' => IM_REVISION_MOBILE,
 						),
 					));
-					CIMMessenger::SendBadges($this->user_id);
+					\Bitrix\Pull\Event::add($fromUserId, Array(
+						'module_id' => 'im',
+						'command' => 'unreadMessageOpponent',
+						'expiry' => 3600,
+						'params' => Array(
+							'dialogId' => $this->user_id,
+							'chatId' => intval($arRes['CHAT_ID']),
+							'userId' => $this->user_id,
+							'chatMessageStatus' => $relation['CHAT_MESSAGE_STATUS'],
+						),
+						'extra' => Array(
+							'im_revision' => IM_REVISION,
+							'im_revision_mobile' => IM_REVISION_MOBILE,
+						),
+					));
 				}
 
 				return true;
@@ -821,7 +852,6 @@ class CIMMessage
 		if ($arRes = $dbRes->Fetch())
 		{
 			self::SetLastId(intval($arRes['CHAT_ID']), $arRes['USER_ID']);
-			//CUserCounter::Clear($arRes['USER_ID'], 'im_message_v2', '**', false);
 			CIMMessenger::SpeedFileDelete($arRes['USER_ID'], IM_SPEED_MESSAGE);
 		}
 
@@ -837,43 +867,99 @@ class CIMMessage
 		if ($chatId <= 0 || $userId <= 0)
 			return false;
 
-		$relationList = IM\Model\RelationTable::getList(array(
-			"select" => array("ID", "LAST_ID", "LAST_SEND_ID"),
-			"filter" => array(
-				"=CHAT_ID" => $chatId,
-				"=USER_ID" => $userId,
+		$updateCounters = false;
+		$relations = \Bitrix\Im\Chat::getRelation($chatId, Array(
+			'SELECT' => Array('ID', 'LAST_ID', 'LAST_SEND_ID', 'STATUS', 'USER_ID'),
+			'FILTER' => Array(
+				'USER_ID' => $userId
 			),
+			'REAL_COUNTERS' => Array(
+				'LAST_ID' => $lastId
+			)
 		));
-		while ($relation = $relationList->fetch())
+		if (isset($relations[$userId]))
 		{
-			$update = array(
-				"STATUS" => IM_STATUS_READ,
-			);
-			if ($lastId > 0)
-			{
-				$update = array();
-				if ($relation["LAST_ID"] < $lastId)
-					$update["LAST_ID"] = $lastId;
-				if ($relation["LAST_SEND_ID"] < $lastId)
-					$update["LAST_SEND_ID"] = $lastId;
+			$relation = $relations[$userId];
+		}
+		else
+		{
+			return false;
+		}
 
-				if (!IM\Model\MessageTable::getCount(array(
-					">ID" => $lastId,
-					"=CHAT_ID" => $chatId,
-				)))
-				{
-					$update["STATUS"] = IM_STATUS_READ;
-				}
+		$update = array();
+		if ($lastId > 0)
+		{
+			if ($relation["LAST_ID"] < $lastId)
+			{
+				$relation["LAST_ID"] = $update["LAST_ID"] = $lastId;
 			}
-
-			if ($update)
+			if ($relation["LAST_SEND_ID"] < $lastId)
 			{
-				$update["LAST_READ"] = new Bitrix\Main\Type\DateTime();
-				IM\Model\RelationTable::update($relation["ID"], $update);
+				$relation["LAST_SEND_ID"] = $update["LAST_SEND_ID"] = $lastId;
 			}
 		}
 
-		return true;
+		if ($relation['COUNTER'] > 0)
+		{
+			if ($relation['STATUS'] == IM_STATUS_READ)
+			{
+				$relation["STATUS"] = $update["STATUS"] = IM_STATUS_UNREAD;
+			}
+		}
+		else
+		{
+			if ($relation['STATUS'] != IM_STATUS_READ)
+			{
+				$relation["STATUS"] = $update["STATUS"] = IM_STATUS_READ;
+			}
+		}
+
+		if ($relation['COUNTER'] != $relation['PREVIOUS_COUNTER'])
+		{
+			$update["COUNTER"] = $relation['COUNTER'];
+			$updateCounters = true;
+		}
+
+		$relation['CHAT_MESSAGE_STATUS'] = null;
+
+		if ($update)
+		{
+			if ($relation['STATUS'] == IM_STATUS_READ)
+			{
+				$relation["LAST_READ"] = $update["LAST_READ"] = new Bitrix\Main\Type\DateTime();
+				$relation["MESSAGE_STATUS"] = $update["MESSAGE_STATUS"] = IM_MESSAGE_STATUS_DELIVERED;
+			}
+
+			IM\Model\RelationTable::update($relation["ID"], $update);
+
+			if ($relation['STATUS'] == IM_STATUS_READ && $relation['MESSAGE_TYPE'] != IM_MESSAGE_OPEN_LINE)
+			{
+				IM\Model\ChatTable::update($chatId, Array('LAST_MESSAGE_STATUS' => IM_MESSAGE_STATUS_DELIVERED));
+				$relation['CHAT_MESSAGE_STATUS'] = IM_MESSAGE_STATUS_DELIVERED;
+
+				$orm = IM\Model\RelationTable::getList(array(
+					'filter' => Array(
+						'=CHAT_ID' => $chatId
+					)
+				));
+				while ($row = $orm->fetch())
+				{
+					if ($userId == $row['USER_ID'])
+					{
+						$updateCounters = true;
+						continue;
+					}
+					\Bitrix\Im\Counter::clearCache($row['USER_ID']);
+				}
+			}
+		}
+
+		if ($updateCounters)
+		{
+			\Bitrix\Im\Counter::clearCache($userId);
+		}
+
+		return $relation;
 	}
 
 	public static function SetLastIdForUnread($chatId, $userId, $lastId)
@@ -885,41 +971,112 @@ class CIMMessage
 		if ($chatId <= 0 || $userId <= 0 || $lastId <= 0)
 			return false;
 
-		$relationList = IM\Model\RelationTable::getList(array(
-			"select" => array("ID", "LAST_ID", "LAST_SEND_ID"),
-			"filter" => array(
-				"=CHAT_ID" => $chatId,
-				"=USER_ID" => $userId,
+		$updateCounters = false;
+		$relations = \Bitrix\Im\Chat::getRelation($chatId, Array(
+			'SELECT' => Array('ID', 'LAST_ID', 'LAST_SEND_ID', 'STATUS', 'USER_ID'),
+			'FILTER' => Array(
+				'USER_ID' => $userId
 			),
+			'REAL_COUNTERS' => Array(
+				'LAST_ID' => $lastId
+			)
 		));
-		while ($relation = $relationList->fetch())
+		if (isset($relations[$userId]))
 		{
-			$update = array(
-				"STATUS" => IM_STATUS_NOTIFY,
-			);
-			if ($lastId > 0)
-			{
-				$update = array();
-				if ($relation["LAST_ID"] > $lastId)
-					$update["LAST_ID"] = $lastId;
+			$relation = $relations[$userId];
+		}
+		else
+		{
+			return false;
+		}
 
-				if (IM\Model\MessageTable::getCount(array(
-					">ID" => $lastId,
-					"=CHAT_ID" => $chatId,
-				)))
-				{
-					$update["STATUS"] = IM_STATUS_NOTIFY;
-				}
+		$update = array();
+		if ($lastId > 0)
+		{
+			if ($relation["LAST_ID"] > $lastId)
+			{
+				$relation["LAST_ID"] = $update["LAST_ID"] = $lastId;
 			}
-
-			if ($update)
+			if ($relation["LAST_SEND_ID"] > $lastId)
 			{
-				$update["LAST_READ"] = '';
-				IM\Model\RelationTable::update($relation["ID"], $update);
+				$relation["LAST_SEND_ID"] = $update["LAST_SEND_ID"] = $lastId;
 			}
 		}
 
-		return true;
+		if ($relation['COUNTER'] > 0)
+		{
+			if ($relation['STATUS'] == IM_STATUS_READ)
+			{
+				$relation["STATUS"] = $update["STATUS"] = IM_STATUS_NOTIFY;
+			}
+		}
+		else
+		{
+			if ($relation['STATUS'] != IM_STATUS_READ)
+			{
+				$relation["STATUS"] = $update["STATUS"] = IM_STATUS_READ;
+			}
+		}
+
+		if ($relation['COUNTER'] != $relation['PREVIOUS_COUNTER'])
+		{
+			$update["COUNTER"] = $relation['COUNTER'];
+			$updateCounters = true;
+		}
+
+		$relation['CHAT_MESSAGE_STATUS'] = null;
+
+		if ($update)
+		{
+			if ($update["STATUS"] == IM_STATUS_NOTIFY)
+			{
+				$relation["LAST_READ"] = $update["LAST_READ"] = '';
+				$relation["MESSAGE_STATUS"] = $update["MESSAGE_STATUS"] = IM_MESSAGE_STATUS_RECEIVED;
+			}
+
+			IM\Model\RelationTable::update($relation["ID"], $update);
+
+			if ($relation['STATUS'] == IM_STATUS_NOTIFY && $relation['MESSAGE_TYPE'] != IM_MESSAGE_OPEN_LINE)
+			{
+				$relations = Array();
+				$orm = IM\Model\RelationTable::getList(array(
+					'filter' => Array(
+						'=CHAT_ID' => $chatId
+					)
+				));
+				while ($row = $orm->fetch())
+				{
+					$relations[] = $row['USER_ID'];
+					if ($row['MESSAGE_STATUS'] == IM_MESSAGE_STATUS_DELIVERED)
+					{
+						$relation['CHAT_MESSAGE_STATUS'] = IM_MESSAGE_STATUS_DELIVERED;
+						$relations = Array();
+						break;
+					}
+				}
+				if ($relations)
+				{
+					IM\Model\ChatTable::update($chatId, Array('LAST_MESSAGE_STATUS' => IM_MESSAGE_STATUS_RECEIVED));
+					$relation['CHAT_MESSAGE_STATUS'] = IM_MESSAGE_STATUS_RECEIVED;
+					foreach ($relations as $relationUserId)
+					{
+						if ($userId == $relationUserId)
+						{
+							$updateCounters = true;
+							continue;
+						}
+						\Bitrix\Im\Counter::clearCache($relationUserId);
+					}
+				}
+			}
+		}
+
+		if ($updateCounters)
+		{
+			\Bitrix\Im\Counter::clearCache($userId);
+		}
+
+		return $relation;
 	}
 
 	public static function SetLastSendId($chatId, $userId, $lastSendId)
@@ -972,19 +1129,9 @@ class CIMMessage
 		return $arFlashMessage;
 	}
 
-	public static function Delete($ID)
+	public static function Delete($id, $userId = null, $completeDelete = false, $byEvent = false)
 	{
-		$ID = intval($ID);
-
-		CIMMessageParam::DeleteAll($ID);
-		\Bitrix\Im\Model\MessageTable::delete($ID);
-
-		foreach(GetModuleEvents("im", "OnAfterDeleteMessage", true) as $arEvent)
-		{
-			ExecuteModuleEventEx($arEvent, array($ID));
-		}
-
-		return true;
+		return CIMMessenger::Delete($id, $userId, $completeDelete, $byEvent);
 	}
 
 	public static function GetFormatMessage($arParams)
@@ -996,8 +1143,12 @@ class CIMMessage
 		$arParams['DATE_CREATE'] = intval($arParams['DATE_CREATE']);
 		$arParams['PARAMS'] = empty($arParams['PARAMS'])? Array(): $arParams['PARAMS'];
 		$arParams['EXTRA_PARAMS'] = empty($arParams['EXTRA_PARAMS'])? Array(): $arParams['EXTRA_PARAMS'];
+		$arParams['NOTIFY'] = $arParams['NOTIFY'] === true? true: $arParams['NOTIFY'];
 
-		$arUsers = CIMContactList::GetUserData(Array('ID' => isset($arParams['TO_CHAT_ID'])? $arParams['FROM_USER_ID']: Array($arParams['TO_USER_ID'], $arParams['FROM_USER_ID'])));
+		$arUsers = CIMContactList::GetUserData(Array(
+			'ID' => isset($arParams['TO_CHAT_ID'])? $arParams['FROM_USER_ID']: Array($arParams['TO_USER_ID'], $arParams['FROM_USER_ID']),
+			'PHONES' => 'Y',
+		));
 
 		$arChat = Array();
 		if (isset($arParams['TO_CHAT_ID']))
@@ -1017,46 +1168,25 @@ class CIMMessage
 		}
 
 		return Array(
-			'CHAT_ID' => $arParams['CHAT_ID'],
-			'CHAT' => isset($arChat['chat'])? $arChat['chat']: Array(),
-			'USER_IN_CHAT' => isset($arChat['userInChat'])? $arChat['userInChat']: Array(),
-			'USER_BLOCK_CHAT' => $arChat['userChatBlockStatus'],
-			'USERS' => $arUsers['users'],
-			'MESSAGE' => Array(
+			'chatId' => $arParams['CHAT_ID'],
+			'chat' => isset($arChat['chat'])? $arChat['chat']: Array(),
+			'lines' => isset($arChat['lines'])? $arChat['lines']: Array(),
+			'userInChat' => isset($arChat['userInChat'])? $arChat['userInChat']: Array(),
+			'userBlockChat' => $arChat['userChatBlockStatus'],
+			'users' => $arUsers['users'],
+			'message' => Array(
 				'id' => $arParams['ID'],
 				'chatId' => $arParams['CHAT_ID'],
 				'senderId' => $arParams['FROM_USER_ID'],
 				'recipientId' => isset($arParams['TO_CHAT_ID'])? 'chat'.$arParams['TO_USER_ID']: $arParams['TO_USER_ID'],
 				'system' => $arParams['SYSTEM'] == 'Y'? 'Y': 'N',
-				'date' => $arParams['DATE_CREATE'],
+				'date' => \Bitrix\Main\Type\DateTime::createFromTimestamp($arParams['DATE_CREATE']),
 				'text' => \Bitrix\Im\Text::parse($arParams['MESSAGE']),
 				'params' => $arParams['PARAMS']
 			),
-			'FILES' => isset($arParams['FILES'])? $arParams['FILES']: Array(),
+			'files' => isset($arParams['FILES'])? $arParams['FILES']: Array(),
+			'notify' => $arParams['NOTIFY'],
 		);
-	}
-
-	public static function SetUnreadCounter($userId)
-	{
-		return false;
-
-		global $DB;
-
-		$userId = intval($userId);
-		if ($userId <= 0)
-			return false;
-
-		$sqlCounter = "SELECT COUNT(M.ID) as CNT
-			FROM b_im_message M
-			INNER JOIN b_im_relation R1 ON M.ID > R1.LAST_ID AND M.CHAT_ID = R1.CHAT_ID AND R1.USER_ID != M.AUTHOR_ID
-			WHERE R1.USER_ID = ".$userId." AND R1.MESSAGE_TYPE = '".IM_MESSAGE_PRIVATE."' AND R1.STATUS < ".IM_STATUS_READ;
-		$dbRes = $DB->Query($sqlCounter, false, "File: ".__FILE__."<br>Line: ".__LINE__);
-		if ($row = $dbRes->Fetch())
-			CUserCounter::Set($userId, 'im_message_v2', $row['CNT'], '**', '', false);
-		else
-			CUserCounter::Set($userId, 'im_message_v2', 0, '**', '', false);
-
-		return true;
 	}
 
 	public static function GetChatId($fromUserId, $toUserId)

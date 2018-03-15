@@ -163,6 +163,25 @@ if ($this->startResultCache())
 	}
 	else
 	{
+		$userFields = array();
+		if (!empty($arParams['USER_FIELDS']))
+		{
+			$arParams['USER_FIELDS'] = array_filter($arParams['USER_FIELDS']);
+			if (!empty($arParams['USER_FIELDS']))
+			{
+				foreach ($USER_FIELD_MANAGER->GetUserFields('CAT_STORE', 0, $context->getLanguage()) as $index => $field)
+				{
+					if (!in_array($index, $arParams['USER_FIELDS']))
+						continue;
+					$field['STORE_UF_FIELD_TITLE'] = (string)$field['LIST_COLUMN_LABEL'];
+					if ($field['STORE_UF_FIELD_TITLE'] === '')
+						$field['STORE_UF_FIELD_TITLE'] = $index;
+					$userFields[$index] = $field;
+				}
+				unset($index, $field);
+			}
+		}
+
 		if (in_array('COORDINATES', $arParams['FIELDS']))
 			$arParams['FIELDS'] = array_merge($arParams['FIELDS'], array('GPS_N', 'GPS_S'));
 
@@ -250,27 +269,45 @@ if ($this->startResultCache())
 
 			$arResult["USER_FIELDS"] = $arParams["USER_FIELDS"];
 
-			$userFields = $USER_FIELD_MANAGER->GetUserFields('CAT_STORE', 0, $context->getLanguage());
-
-			foreach ($arResult["USER_FIELDS"] as $userField)
+			if (!empty($userFields))
 			{
-				if (!empty($userField) && !empty($prop[$userField]))
+				foreach (array_keys($userFields) as $index)
 				{
+					if (!isset($prop['~'.$index]))
+						continue;
+
+					$field = $userFields[$index];
+					$value = $prop['~'.$index];
+					if ($field['MULTIPLE'] == 'Y')
+					{
+						if (!is_array($value))
+							$value = unserialize($value);
+						if (empty($value))
+							continue;
+					}
+					else
+					{
+						if ($value === '')
+							continue;
+					}
+
 					ob_start();
 					$APPLICATION->IncludeComponent(
 						"bitrix:system.field.view",
-						$userFields[$userField]["USER_TYPE_ID"],
-						array("arUserField" => array_merge($userFields[$userField], array('VALUE' => $prop[$userField]))),
+						$field["USER_TYPE_ID"],
+						array("arUserField" => array_merge($field, array('VALUE' => $value))),
 						null,
-						array("HIDE_ICONS"=>"Y")
+						array("HIDE_ICONS" => "Y")
 					);
 
-					$storeInformation["USER_FIELDS"][$userField] = array(
-						'CONTENT'   => ob_get_contents(),
-						'TITLE'     => (strlen($userFields[$userField]['LIST_COLUMN_LABEL']) > 0) ? $userFields[$userField]['LIST_COLUMN_LABEL'] : $userField
+					$storeInformation["USER_FIELDS"][$index] = array(
+						'CONTENT' => ob_get_contents(),
+						'TITLE' => htmlspecialcharsbx($field['STORE_UF_FIELD_TITLE']),
+						'~TITLE' => $field['STORE_UF_FIELD_TITLE']
 					);
 					ob_end_clean();
 				}
+				unset($field, $index);
 			}
 
 			$arResult["STORES"][] = $storeInformation;

@@ -21,6 +21,7 @@ if ($arParams['PATH_TO_ELEMENT'] == '')
 $arParams['MAP_TYPE'] = (int)(isset($arParams['MAP_TYPE']) ? $arParams['MAP_TYPE'] : 0);
 
 $arParams['SET_TITLE'] = (isset($arParams['SET_TITLE']) && $arParams['SET_TITLE'] == 'Y' ? 'Y' : 'N');
+$arParams['TITLE'] = (isset($arParams['TITLE']) ? trim($arParams['TITLE']) : '');
 
 if (!isset($arParams['CACHE_TIME']))
 	$arParams['CACHE_TIME'] = 3600;
@@ -103,5 +104,5 @@ if ($this->startResultCache())
 	$arResult['VIEW_MAP'] = $viewMap;
 	$this->includeComponentTemplate();
 }
-if ($arParams["SET_TITLE"] == "Y")
-	$APPLICATION->SetTitle($arParams["TITLE"]);
+if ($arParams['SET_TITLE'] == 'Y')
+	$APPLICATION->SetTitle($arParams['TITLE']);

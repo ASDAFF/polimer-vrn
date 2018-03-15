@@ -71,25 +71,29 @@ if (check_bitrix_sessid())
 	}
 	elseif ($_POST['PULL_UPDATE_WATCH'] == 'Y')
 	{
-		$arResult = Array();
-		foreach ($_POST['WATCH'] as $tag)
-		{
-			$arResult[$tag] = CPullWatch::Extend($userId, $tag);
-		}
+		$arResult = CPullWatch::Extend($userId, $_POST['WATCH']);
 
 		echo CUtil::PhpToJsObject(Array('RESULT' => $arResult, 'ERROR' => ''));
 	}
 	elseif ($_POST['PULL_UPDATE_STATE'] == 'Y')
 	{
+		$serverTime = date('c');
+		$serverTimeUnix = microtime(true);
 		$arMessage = CPullStack::Get($_POST['CHANNEL_ID'], intval($_POST['CHANNEL_LAST_ID']));
 
-		$arResult["COUNTERS"] = CUserCounter::GetAllValues($userId);
-		if (!empty($arResult["COUNTERS"]))
+		if (!empty($counters))
 		{
 			$arMessage[] = Array(
 				'module_id' => 'main',
 				'command' => 'user_counter',
-				'params' => $arResult["COUNTERS"]
+				'params' => $counters,
+				'extra' => Array(
+					'server_time' => $serverTime,
+					'server_time_unix' => $serverTimeUnix,
+					'server_name' => COption::GetOptionString('main', 'server_name', $_SERVER['SERVER_NAME']),
+					'revision' => PULL_REVISION,
+					'revision_mobile' => PULL_REVISION_MOBILE,
+				),
 			);
 		}
 		echo CUtil::PhpToJsObject(Array('MESSAGE' => $arMessage, 'ERROR' => ''));

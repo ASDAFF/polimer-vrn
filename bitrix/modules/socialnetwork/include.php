@@ -196,6 +196,7 @@ if (
 			'LM_POPUP_TITLE' => GetMessage("LM_POPUP_TITLE"),
 			'LM_POPUP_TAB_LAST' => GetMessage("LM_POPUP_TAB_LAST"),
 			'LM_POPUP_TAB_SG' => GetMessage("LM_POPUP_TAB_SG"),
+			'LM_POPUP_TAB_SG_PROJECT' => GetMessage("LM_POPUP_TAB_SG_PROJECT"),
 			'LM_POPUP_TAB_STRUCTURE' => GetMessage("LM_POPUP_TAB_STRUCTURE"),
 			'LM_POPUP_TAB_EMAIL' => GetMessage("LM_POPUP_TAB_EMAIL"),
 			'LM_POPUP_TAB_CRMEMAIL' => GetMessage("LM_POPUP_TAB_CRMEMAIL"),
@@ -208,6 +209,7 @@ if (
 			'LM_POPUP_TAB_LAST_LEADS' => GetMessage("LM_POPUP_TAB_LAST_LEADS"),
 			'LM_POPUP_TAB_LAST_DEALS' => GetMessage("LM_POPUP_TAB_LAST_DEALS"),
 			'LM_POPUP_TAB_LAST_SG' => GetMessage("LM_POPUP_TAB_LAST_SG"),
+			'LM_POPUP_TAB_LAST_SG_PROJECT' => GetMessage("LM_POPUP_TAB_LAST_SG_PROJECT"),
 			'LM_POPUP_TAB_LAST_STRUCTURE' => GetMessage("LM_POPUP_TAB_LAST_STRUCTURE"),
 			'LM_POPUP_TAB_SEARCH' => GetMessage("LM_POPUP_TAB_SEARCH"),
 			'LM_SEARCH_PLEASE_WAIT' => GetMessage("LM_SEARCH_PLEASE_WAIT"),
@@ -227,6 +229,42 @@ if (
 		'rel' => array('core', 'popup', 'json', 'finder')
 	));
 }
+
+$transformationLimit = 0;
+if(
+	ModuleManager::isModuleInstalled('disk') &&
+	ModuleManager::isModuleInstalled('transformer') &&
+	\Bitrix\Main\Config\Option::get('disk', 'disk_allow_video_transformation', 'N') == 'Y'
+)
+{
+	$transformationLimit = \Bitrix\Main\Config\Option::get('disk', 'disk_max_size_for_video_transformation', 300) * 1024 * 1024;
+}
+IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/socialnetwork/install/js/video_recorder.php');
+CJSCore::RegisterExt('videorecorder', array(
+	'js' => '/bitrix/js/socialnetwork/video_recorder.js',
+	'css' => '/bitrix/js/socialnetwork/css/video_recorder.css',
+	'lang_additional' => array(
+		'BLOG_VIDEO_RECORD_BUTTON' => GetMessage('BLOG_VIDEO_RECORD_BUTTON'),
+		'BLOG_VIDEO_RECORD_CANCEL_BUTTON' => GetMessage('BLOG_VIDEO_RECORD_CANCEL_BUTTON'),
+		'BLOG_VIDEO_RECORD_LOGO' => GetMessage('BLOG_VIDEO_RECORD_LOGO'),
+		'BLOG_VIDEO_RECORD_STOP_BUTTON' => GetMessage('BLOG_VIDEO_RECORD_STOP_BUTTON'),
+		'BLOG_VIDEO_RECORD_USE_BUTTON' => GetMessage('BLOG_VIDEO_RECORD_USE_BUTTON'),
+		'BLOG_VIDEO_RECORD_IN_PROGRESS_LABEL' => GetMessage('BLOG_VIDEO_RECORD_IN_PROGRESS_LABEL'),
+		'BLOG_VIDEO_RECORD_AGREE' => GetMessage('BLOG_VIDEO_RECORD_AGREE'),
+		'BLOG_VIDEO_RECORD_CLOSE' => GetMessage('BLOG_VIDEO_RECORD_CLOSE'),
+		'BLOG_VIDEO_RECORD_ASK_PERMISSIONS' => GetMessage('BLOG_VIDEO_RECORD_ASK_PERMISSIONS'),
+		'BLOG_VIDEO_RECORD_REQUIREMENTS' => GetMessage('BLOG_VIDEO_RECORD_REQUIREMENTS'),
+		'BLOG_VIDEO_RECORD_REQUIREMENTS_TITLE' => GetMessage('BLOG_VIDEO_RECORD_REQUIREMENTS_TITLE'),
+		'BLOG_VIDEO_RECORD_PERMISSIONS_ERROR' => GetMessage('BLOG_VIDEO_RECORD_PERMISSIONS_ERROR'),
+		'BLOG_VIDEO_RECORD_PERMISSIONS_TITLE' => GetMessage('BLOG_VIDEO_RECORD_PERMISSIONS_TITLE'),
+		'BLOG_VIDEO_RECORD_SPOTLIGHT_MESSAGE' => GetMessage('BLOG_VIDEO_RECORD_SPOTLIGHT_MESSAGE'),
+		'DISK_VIDEO_TRANSFORMATION_LIMIT' => $transformationLimit,
+		'BLOG_VIDEO_RECORD_TRANFORM_LIMIT_TEXT' => GetMessage('BLOG_VIDEO_RECORD_TRANFORM_LIMIT_TEXT'),
+		'BLOG_VIDEO_RECORD_RESTART_BUTTON' => GetMessage('BLOG_VIDEO_RECORD_RESTART_BUTTON'),
+		'BLOG_VIDEO_RECORD_PERMISSIONS_ERROR_TITLE' => GetMessage('BLOG_VIDEO_RECORD_PERMISSIONS_ERROR_TITLE'),
+	),
+	'rel' => array('core', 'popup'),
+));
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/socialnetwork/install/js/comment_aux.php');
 CJSCore::RegisterExt('comment_aux', array(

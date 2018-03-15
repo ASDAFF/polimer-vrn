@@ -666,7 +666,7 @@
 .bx-ie8 #bx-admin-prefix .adm-designed-checkbox-label {display: none;}
 
 .adm-workarea .adm-input,
-.adm-workarea input[type="text"]:not(.main-ui-filter-search-filter),
+.adm-workarea input[type="text"],
 .adm-workarea input[type="password"],
 .adm-workarea input[type="email"] {
 	background:#fff;
@@ -683,7 +683,7 @@
 }
 
 .adm-workarea .adm-input,
-.adm-workarea input[type="text"]:not(.main-ui-filter-search-filter),
+.adm-workarea input[type="text"],
 .adm-workarea input[type="password"],
 .adm-workarea input[type="email"] {font-size:13px; height:25px; padding:0 5px; margin: 0; }
 
@@ -2121,4 +2121,27 @@
 
 .adm-toolbar-panel-button:last-child {
 	margin-right: 0 !important;
+}
+
+.main-grid-cell-content a {
+	color: #1c53a2;
+	text-decoration: none;
+}
+
+.adm-workarea input.main-ui-filter-search-filter {
+	position: relative;
+	padding: 0 50px 0 15px;
+	height: 30px;
+	width: 100%;
+	border: none;
+	border-radius: 2px;
+	margin: 4px 1px;
+	font: 15px/30px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	-webkit-transition: background .3s;
+	transition: background .3s;
+	box-shadow: none;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+	outline: none;
+	z-index: 1;
 }

@@ -12,5 +12,5 @@ if(\Bitrix\Main\Loader::includeModule('currency'))
 		$arUserField['FIELD_NAME'] = str_replace('[]', '', $arUserField['FIELD_NAME']);
 	}
 
-	echo \Bitrix\Currency\UserField\Money::getPublicEdit($arUserField);
+	echo \Bitrix\Currency\UserField\Money::getPublicEdit($arUserField, array('bVarsFromForm' => $arParams['bVarsFromForm']));
 }

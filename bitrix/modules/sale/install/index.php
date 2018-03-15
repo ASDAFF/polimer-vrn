@@ -214,6 +214,8 @@ Class sale extends CModule
 
 		RegisterModuleDependences("perfmon", "OnGetTableSchema", "sale", "sale", "OnGetTableSchema");
 
+		RegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'sale', '\Bitrix\Sale\PaySystem\RestService', 'onRestServiceBuildDescription');
+
 		COption::SetOptionString("sale", "viewed_capability", "N");
 		COption::SetOptionString("sale", "viewed_count", 10);
 		COption::SetOptionString("sale", "viewed_time", 5);
@@ -231,7 +233,11 @@ Class sale extends CModule
 		)));
 
 		if ($clearInstall)
+		{
 			Option::set('sale', 'basket_discount_converted', 'Y', '');
+			//set to use new discounts by default.
+			Option::set('sale', 'use_sale_discount_only', 'Y');
+		}
 
 		CAgent::AddAgent("CSaleRecurring::AgentCheckRecurring();", "sale", "N", 7200, "", "Y");
 		CAgent::AddAgent("CSaleOrder::RemindPayment();", "sale", "N", 86400, "", "Y");
@@ -241,6 +247,7 @@ Class sale extends CModule
 		COption::SetOptionString("sale", "product_reserve_clear_period", "3");
 
 		Option::set('sale', 'sale_locationpro_import_performed', 'Y');
+		Option::set('sale', 'product_viewed_save', 'N', '');
 
 		// install tasks + operations for statuses
 		$operations = array();
@@ -329,13 +336,7 @@ Class sale extends CModule
 			CSaleYMHandler::install();
 		}
 
-		if (Option::get('sale', 'use_sale_discount_only', false) === false)
-		{
-			//set to use new discounts by default.
-			Option::set('sale', 'use_sale_discount_only', 'Y');
-		}
-
-		if(Option::get('sale', 'use_sale_discount_only', 'Y') !== 'Y')
+		if(Option::get('sale', 'use_sale_discount_only') !== 'Y')
 		{
 			\CAdminNotify::add(
 				array(
@@ -404,7 +405,6 @@ Class sale extends CModule
 		UnRegisterModuleDependences("sale", "OnCondSaleControlBuildList", "sale", "CSaleCondCtrlBasketGroup", "GetControlDescr");
 		UnRegisterModuleDependences("sale", "OnCondSaleActionsControlBuildList", "sale", "CSaleActionGiftCtrlGroup", "GetControlDescr");
 		UnRegisterModuleDependences("sale", "OnCondSaleControlBuildList", "sale", "CSaleCondCtrlBasketFields", "GetControlDescr");
-		UnRegisterModuleDependences("sale", "OnCondSaleControlBuildList", "sale", "CSaleCondCtrlBasketProps", "GetControlDescr");
 		UnRegisterModuleDependences("sale", "OnCondSaleControlBuildList", "sale", "CSaleCondCtrlOrderFields", "GetControlDescr");
 		UnRegisterModuleDependences("sale", "onBuildDiscountConditionInterfaceControls", "sale", "CSaleCondCtrlPastOrder", "onBuildDiscountConditionInterfaceControls");
 		UnRegisterModuleDependences("sale", "onBuildDiscountConditionInterfaceControls", "sale", "CSaleCondCumulativeCtrl", "onBuildDiscountConditionInterfaceControls");
@@ -451,6 +451,8 @@ Class sale extends CModule
 		UnRegisterModuleDependences('sale'      , 'OnOrderAdd'           , 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onOrderAdd'           );
 		UnRegisterModuleDependences('sale'      , 'OnSalePayOrder'       , 'sale', '\Bitrix\Sale\Internals\ConversionHandlers', 'onSalePayOrder'       );
 		UnRegisterModuleDependences("perfmon", "OnGetTableSchema", "sale", "sale", "OnGetTableSchema");
+
+		UnRegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'sale', '\Bitrix\Sale\PaySystem\RestService', 'onRestServiceBuildDescription');
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->unRegisterEventHandler('main', 'OnUserLogout', 'sale', '\Bitrix\Sale\DiscountCouponsManager', 'logout');

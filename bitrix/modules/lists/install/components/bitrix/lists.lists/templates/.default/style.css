@@ -3,48 +3,36 @@
 	background: #f2f6f7;
 	border-radius: 1px;
 	height: 80px;
-	width: 250px;
+	width: calc(20% - 13px);
 	margin: 13px 13px 0 0;
 	float: left;
 }
-.bp-bx-application a {
-	position: absolute;
-	top: 0;
-	bottom: 0;
-	right: 0;
-	left: 0;
-	padding: 13px 16px;
+
+@media (max-width: 1600px) {
+	.bp-bx-application { width: calc(25% - 13px); }
+}
+@media (max-width: 1280px) {
+	.bp-bx-application { width: calc(33% - 13px); }
+}
+.bp-bx-application-link {
+	padding: 9px 11px;
+	display: flex;
+	align-items: center;
 	z-index: 1;
 }
-.bp-bx-application-title:hover .bx-lists-application-link {
-	text-decoration: underline;
-}
+.bp-bx-application-title:hover .bx-lists-application-link { text-decoration: underline;}
+
 .bp-bx-application-icon {
-	position: absolute;
-	width: 55px;
+	max-width: 55px;
+	min-width: 55px;
 	height: 55px;
 	border-radius: 50%;
-	margin-right: 13px;
 	background: #fff;
 	display: block;
 	overflow: hidden;
-	left: 15px;
-	top: 50%;
-	margin-top: -27.5px;
+	position: relative;
 }
-.bp-bx-application-title-wrapper {
-	display: block;
-	position: absolute;
-	left: 75px;
-	top: 50%;
-	-webkit-transform: translateY(-50%);
-	-moz-transform: translateY(-50%);
-	-ms-transform: translateY(-50%);
-	-o-transform: translateY(-50%);
-	transform: translateY(-50%);
-	right: 5px;
-	max-height: 55px;
-}
+
 .bp-bx-application-icon img {
 	position: absolute;
 	margin: auto;
@@ -53,38 +41,38 @@
 	left: 0;
 	bottom: 0;
 }
-.bp-bx-application-title {
-	font-size: 15px;
-	font-weight: bold;
-	line-height: 36px;
-	overflow: hidden;
-	height: 36px;
-	display: block;
-}
-.bp-bx-application-title .bx-lists-application-link {
-	line-height: 18px;
-	vertical-align: middle;
-	color: #000;
-	display: block;
+
+.bp-bx-application-title-wrapper {
+	flex:1;
+	padding-left: 10px;
+	box-sizing: border-box;
+	max-width: calc(100% - 55px);
 }
 
-.bp-bx-application-check {
+.bp-bx-application-title {
+	overflow: hidden;
+	display: block;
+	font: bold 14px/18px Arial, "Helvetica Neue", Helvetica, sans-serif;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 	vertical-align: middle;
+	color: #000;
 }
+
+.bp-bx-application-check { vertical-align: middle; }
 
 .bp-bx-application-check label {
 	vertical-align: middle;
-	font-size: 11px;
+	font: 11px Arial, "Helvetica Neue", Helvetica, sans-serif;
 	color: #000;
 }
 
-.bp-bx-application-check label:hover, .bp-bx-application-check input:checked + label {
-	color: #000;
-}
+.bp-bx-application-check label:hover,
+.bp-bx-application-check input:checked + label {color: #000;}
 
 .bp-bx-application-check input {
-	line-height: 16px;
 	vertical-align: middle;
+	margin: 0;
 }
 
 .bx-lists-alert {
@@ -139,4 +127,6 @@
 	overflow: hidden;
 	position: relative;
 	display: block;
+	white-space: nowrap;
+	text-overflow: ellipsis;
 }

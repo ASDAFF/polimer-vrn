@@ -253,6 +253,7 @@ if(!($dbEvent->Fetch()))
 				$str .= "#ORDER_DESCRIPTION# - ".GetMessage("SKGS_STATUS_DESCR")."\n";
 				$str .= "#TEXT# - ".GetMessage("SKGS_STATUS_TEXT")."\n";
 				$str .= "#SALE_EMAIL# - ".GetMessage("SKGS_SALE_EMAIL")."\n";
+				$str .= "#ORDER_PUBLIC_URL# - ".GetMessage("SKGS_ORDER_PUBLIC_LINK")."\n";
 
 				$eventTypeID = $eventType->Add(
 						array(

@@ -307,7 +307,7 @@
 						'h6'		=> array('style','id','class','align'),
 						'hr'		=> array('style','id','class'),
 						'i'		=> array('style','id','class'),
-						'img'		=> array('src','alt','height','width','title'),
+						'img'		=> array('style','id','class','src','alt','height','width','title'),
 						'ins'		=> array('title','style','id','class'),
 						'li'		=> array('style','id','class'),
 						'map'		=> array('shape','coords','href','alt','title','style','id','class','name'),
@@ -353,10 +353,11 @@
 			{
 				case 'src':
 				case 'href':
-					if(!preg_match("#^(http://|https://|ftp://|file://|mailto:|callto:|skype:|\\#|/)#i".BX_UTF_PCRE_MODIFIER, $attrValue))
+				case 'data-url':
+					if(!preg_match("#^(http://|https://|ftp://|file://|mailto:|callto:|skype:|tel:|\\#|/)#i".BX_UTF_PCRE_MODIFIER, $attrValue))
 						$arAttr[3] = "http://".$arAttr[3];
 
-					$valid = (!preg_match("#javascript:|data:|[^\\w".$this->localAlph."a-zA-Z:/\\.=@;,!~\\*\\&\\#\\)(%\\s\\+\$\\?\\-]#i".BX_UTF_PCRE_MODIFIER, $attrValue)) ? true : false;
+					$valid = (!preg_match("#javascript:|data:|[^\\w".$this->localAlph."a-zA-Z:/\\.=@;,!~\\*\\&\\#\\)(%\\s\\+\$\\?\\-\\[\\]]#i".BX_UTF_PCRE_MODIFIER, $attrValue)) ? true : false;
 					break;
 
 				case 'height':
@@ -372,7 +373,7 @@
 					break;
 
 				case 'style':
-					$valid = !preg_match("#(behavior|expression|position|javascript)#i".BX_UTF_PCRE_MODIFIER, $attrValue) && !preg_match("#[^\\w\\s)(!%,:\\.;\\-\\#]#i".BX_UTF_PCRE_MODIFIER, $attrValue) ? true : false;
+					$valid = !preg_match("#(behavior|expression|position|javascript)#i".BX_UTF_PCRE_MODIFIER, $attrValue) && !preg_match("#[^\\/\\w\\s)(!%,:\\.;\\-\\#\\']#i".BX_UTF_PCRE_MODIFIER, $attrValue) ? true : false;
 					break;
 
 				case 'coords':
@@ -380,7 +381,7 @@
 					break;
 
 				default:
-					$valid = !preg_match("#[^\\s\\w".$this->localAlph."\\-\\#\\.]#i".BX_UTF_PCRE_MODIFIER, $attrValue) ? true : false;
+					$valid = !preg_match("#[^\\s\\w".$this->localAlph."\\-\\#\\.;]#i".BX_UTF_PCRE_MODIFIER, $attrValue) ? true : false;
 					break;
 			}
 
@@ -602,12 +603,14 @@
 							}
 
 							//find attributies an erase unallowed
-							preg_match_all('#([a-z_-]+)\s*=\s*([\'\"])\s*(.*?)\s*\2#i'.BX_UTF_PCRE_MODIFIER, $matches[3], $arTagAttrs, PREG_SET_ORDER);
+							preg_match_all('#([a-z_-]+)\s*=\s*([\'\"])\s*(.*?)\s*\2#is'.BX_UTF_PCRE_MODIFIER, $matches[3], $arTagAttrs, PREG_SET_ORDER);
 							$attr = array();
 							foreach($arTagAttrs as $arTagAttr)
 							{
 								if(in_array(strtolower($arTagAttr[1]), $this->arHtmlTags[$seg[$i]['tagName']]))
 								{
+									$arTagAttr[3] = str_replace('"', "'", $arTagAttr[3]); //We will wrap attribute by "
+
 									if($this->IsValidAttr($arTagAttr))
 									{
 										if($this->bHtmlSpecChars)
@@ -698,7 +701,7 @@
 							$filteredHTML .= '<'.$segt['tagName'];
 
 							if(is_array($segt['attr']))
-								foreach($segt['attr'] as $attr_key=>$attr_val)
+								foreach($segt['attr'] as $attr_key => $attr_val)
 									$filteredHTML .= ' '.$attr_key.'="'.$attr_val.'"';
 
 							if (count($this->arHtmlTags[$segt['tagName']]) && ($this->arHtmlTags[$segt['tagName']][count($this->arHtmlTags[$segt['tagName']])-1] == false))

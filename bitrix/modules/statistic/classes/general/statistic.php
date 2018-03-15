@@ -245,7 +245,7 @@ class CAllStatistics extends CKeepStatistics
 					</style>
 					<div class="stat_pages">
 					<h2><?=GetMessage("STAT_LINK_STAT")?></h2>
-					<p><?=$CURRENT_PAGE?></p>
+					<p><?=htmlspecialcharsEx($CURRENT_PAGE)?></p>
 					<table border="0" cellspacing="0" cellpadding="0" width="100%">
 						<tr>
 							<td class="head" align="center">#</td>

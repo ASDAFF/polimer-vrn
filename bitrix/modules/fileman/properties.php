@@ -654,7 +654,7 @@ var jsGoogleCESearch_<?echo $MAP_ID;?> = {
 			$value = parent::ConvertFromDB($arProperty, $value);
 			if ($arParams['MODE'] == 'CSV_EXPORT')
 			{
-				$s = $value;
+				$s = $value["VALUE"];
 			}
 			else
 			{
@@ -1871,7 +1871,9 @@ function saveYandexKey(domain, input)
 		{
 			if (strlen($value["VALUE"])>0)
 			{
-				$s = parent::ConvertFromDB($arProperty, $value);
+				$coordValue = parent::ConvertFromDB($arProperty, $value);
+				$s = $coordValue["VALUE"];
+
 			}
 		}
 		else

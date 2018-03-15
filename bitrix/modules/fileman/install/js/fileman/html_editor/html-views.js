@@ -422,9 +422,29 @@ BXEditorIframeView.prototype.Focus = function(setToEnd)
 		this.Clear();
 	}
 
-	if (!document.querySelector || this.element.ownerDocument.querySelector(":focus") !== this.element || !this.IsFocused())
+	if (!document.querySelector
+		|| this.element.ownerDocument.querySelector(":focus") !== this.element
+		|| !this.IsFocused())
 	{
-		BX.focus(this.element);
+		if (BX.browser.IsIOS())
+		{
+			var _this = this;
+			if (this.focusTimeout)
+				clearTimeout(this.focusTimeout);
+
+			this.focusTimeout = setTimeout(function()
+			{
+				var
+					orScrollTop = document.documentElement.scrollTop || document.body.scrollTop,
+					orScrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+					BX.focus(_this.element);
+					window.scrollTo(orScrollLeft, orScrollTop);
+			}, 200);
+		}
+		else
+		{
+			BX.focus(this.element);
+		}
 	}
 
 	if (setToEnd && this.element.lastChild)
@@ -677,34 +697,35 @@ var focusWithoutScrolling = function(element)
 			editor.On("OnIframeMouseUp", [e, target]);
 		});
 
-		// resizestart
-		// resizeend
-		if (BX.browser.IsIOS())
-		{
-			// When on iPad/iPhone/IPod after clicking outside of editor, the editor loses focus
-			// but the UI still acts as if the editor has focus (blinking caret and onscreen keyboard visible)
-			// We prevent _this by focusing a temporary input element which immediately loses focus
-			BX.bind(iframeWindow, "blur", function()
-			{
-				var
-					input = BX.create('INPUT', {props: {type: 'text', value: ''}}, element.ownerDocument),
-					orScrollTop = document.documentElement.scrollTop || document.body.scrollTop,
-					orScrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
-
-				try
-				{
-					editor.selection.InsertNode(input);
-				}
-				catch(e)
-				{
-					element.appendChild(input);
-				}
-
-				BX.focus(input);
-				BX.remove(input);
-				window.scrollTo(orScrollLeft, orScrollTop);
-			});
-		}
+		// Mantis: 90137
+		//if (BX.browser.IsIOS())
+		//{
+		//	// When on iPad/iPhone/IPod after clicking outside of editor, the editor loses focus
+		//	// but the UI still acts as if the editor has focus (blinking caret and onscreen keyboard visible)
+		//	// We prevent _this by focusing a temporary input element which immediately loses focus
+		//	BX.bind(iframeWindow, "blur", function()
+		//	{
+		//		var
+		//			orScrollTop = document.documentElement.scrollTop || document.body.scrollTop,
+		//			orScrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft,
+		//			input = BX.create('INPUT', {
+		//				props:{type: 'text', value: ''}
+		//			}, iframeWindow.ownerDocument);
+		//
+		//		try
+		//		{
+		//			editor.selection.InsertNode(input);
+		//		}
+		//		catch(e)
+		//		{
+		//			iframeWindow.appendChild(input);
+		//		}
+		//
+		//		BX.focus(input);
+		//		BX.remove(input);
+		//		window.scrollTo(orScrollLeft, orScrollTop);
+		//	});
+		//}
 
 		// --------- Drag & Drop events  ---------
 		BX.bind(element, "dragover", function(){editor.On("OnIframeDragOver", arguments);});
@@ -769,6 +790,14 @@ var focusWithoutScrolling = function(element)
 			{
 				_this.editor.parser.FirstLetterCheckNodes('', '', true);
 			}
+
+			//mantis:91555, mantis:93629
+			if (BX.browser.IsChrome())
+			{
+				if (_this.stopBugusScrollTimeout)
+					clearTimeout(_this.stopBugusScrollTimeout);
+				_this.stopBugusScrollTimeout = setTimeout(function(){_this.stopBugusScroll = false;}, 200);
+			}
 		});
 
 		BX.bind(element, "mousedown", function(e)
@@ -791,6 +820,24 @@ var focusWithoutScrolling = function(element)
 		});
 
 		BX.bind(element, "keydown", BX.proxy(this.KeyDown, this));
+
+		// Workaround for chrome bug with bugus scrollint to the top of the page (mantis:91555, mantis:93629)
+		if (BX.browser.IsChrome())
+		{
+			BX.bind(window, "scroll", BX.proxy(function(e)
+			{
+				if (_this.stopBugusScroll)
+				{
+					if ((!_this.savedScroll || !_this.savedScroll.scrollTop) && _this.lastSavedScroll)
+						_this.savedScroll = _this.lastSavedScroll;
+
+					if (_this.savedScroll && !_this.lastSavedScroll)
+						_this.lastSavedScroll = _this.savedScroll;
+					_this._RestoreScrollTop();
+				}
+			}, this));
+		}
+
 		// Show urls and srcs in tooltip when hovering links or images
 		var nodeTitles = {
 			IMG: BX.message.SrcTitle + ": ",
@@ -822,6 +869,13 @@ var focusWithoutScrolling = function(element)
 	{
 		this.SetFocusedFlag(true);
 		this.editor.iframeKeyDownPreventDefault = false;
+
+		// Workaround for chrome bug with bugus scrollint to the top of the page (mantis:91555, mantis:93629)
+		if (BX.browser.IsChrome())
+		{
+			this.stopBugusScroll = true;
+			this.savedScroll = BX.GetWindowScrollPos(document);
+		}
 
 		var
 			_this = this,

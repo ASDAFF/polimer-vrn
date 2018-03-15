@@ -82,7 +82,7 @@ class CMainUiFilter extends CBitrixComponent
 
 	protected function prepareResetToDefaultMode()
 	{
-		$result = false;
+		$result = true;
 
 		if (isset($this->arParams["RESET_TO_DEFAULT_MODE"]) && is_bool($this->arParams["RESET_TO_DEFAULT_MODE"]))
 		{
@@ -436,6 +436,34 @@ class CMainUiFilter extends CBitrixComponent
 					"FIELDS" => $this->preparePresetFields($rows, $fields),
 					"IS_PINNED" => false
 				);
+
+				if (is_array($presetFields["additional"]))
+				{
+					if (isset($presetFields["additional_rows"]))
+					{
+						$additionalRows = explode(",", $presetFields["additional_rows"]);
+					}
+					else
+					{
+						$additionalRows = array();
+
+						foreach ($presetFields["additional"] as $fieldKey => $fieldValue)
+						{
+							$fieldKey = str_replace(
+								array("_numsel", "_datesel", "_from", "_to", "_days", "_year", "_month", "_quarter"),
+								"",
+								$fieldKey
+							);
+
+							if (!in_array($fieldKey, $additionalRows))
+							{
+								$additionalRows[] = $fieldKey;
+							}
+						}
+					}
+
+					$preset["ADDITIONAL"] = $this->preparePresetFields($additionalRows, $presetFields["additional"]);
+				}
 
 				if ($arOptions["default"] === $presetId)
 				{

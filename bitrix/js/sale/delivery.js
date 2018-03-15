@@ -378,6 +378,9 @@
 
 		addRestrictionProductSection: function(id, name)
 		{
+			name = BX.util.htmlspecialcharsback(name);
+			name = name.replace(/&#039;/g, "'").replace(/&nbsp;/g, ' ');
+
 			var alreadyExist = BX('sale-admin-delivery-restriction-cat-'+id);
 
 			if(alreadyExist)
@@ -392,7 +395,7 @@
 					BX.create('td',{
 						children:[
 							BX.create('span',{
-								html: " - "+name
+								html: " - "+ BX.util.htmlspecialchars(name)
 							}),
 							BX.create('input',{
 								props:{

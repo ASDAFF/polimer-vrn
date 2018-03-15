@@ -2,32 +2,38 @@
 
 namespace Sale\Handlers\Delivery;
 
-use Bitrix\Main\Error;
-use Bitrix\Main\Loader;
-use Bitrix\Main\IO\File;
-use Bitrix\Sale\Shipment;
-use Bitrix\Main\Page\Asset;
-use Bitrix\Main\Config\Option;
-use Bitrix\Main\SystemException;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ArgumentNullException;
-use Bitrix\Sale\Delivery\Services\Base;
-use Bitrix\Sale\Delivery\Services\Manager;
-use Bitrix\Sale\Delivery\ExtraServices\Table;
-use Sale\Handlers\Delivery\Additional\Location;
-use Sale\Handlers\Delivery\Additional\RestClient;
-use Bitrix\Sale\Internals\ServiceRestrictionTable;
+use Bitrix\Main\Error,
+	Bitrix\Main\Loader,
+	Bitrix\Main\IO\File,
+	Bitrix\Sale\Shipment,
+	Bitrix\Main\Page\Asset,
+	Bitrix\Main\Config\Option,
+	Bitrix\Main\SystemException,
+	Bitrix\Main\Localization\Loc,
+	Bitrix\Main\ArgumentNullException,
+	Bitrix\Sale\Delivery\Services\Base,
+	Bitrix\Sale\Delivery\ExtraServices,
+	Bitrix\Sale\Location\ExternalTable,
+	Bitrix\Sale\Location\LocationTable,
+	Bitrix\Sale\Delivery\Services\Manager,
+	Bitrix\Sale\Delivery\ExtraServices\Table,
+	Bitrix\Sale\Location\Admin\LocationHelper,
+	Sale\Handlers\Delivery\Additional\Location,
+	Sale\Handlers\Delivery\Additional\RestClient,
+	Bitrix\Sale\Internals\ServiceRestrictionTable,
+	Sale\Handlers\Delivery\Additional\DeliveryRequests\RusPost;
 
 Loc::loadMessages(__FILE__);
 
 Loader::registerAutoLoadClasses(
 	'sale',
 	array(
-		'Sale\Handlers\Delivery\Additional\Action' => 'handlers/delivery/additional/action.php',
-		'Sale\Handlers\Delivery\AdditionalProfile' => 'handlers/delivery/additional/profile.php',
-		'Sale\Handlers\Delivery\Additional\Location' => 'handlers/delivery/additional/location.php',
-		'Sale\Handlers\Delivery\Additional\CacheManager' => 'handlers/delivery/additional/cache.php',
-		'Sale\Handlers\Delivery\Additional\RestClient' => 'handlers/delivery/additional/restclient.php'
+		__NAMESPACE__.'\Additional\Action' => 'handlers/delivery/additional/action.php',
+		__NAMESPACE__.'\AdditionalProfile' => 'handlers/delivery/additional/profile.php',
+		__NAMESPACE__.'\Additional\Location' => 'handlers/delivery/additional/location.php',
+		__NAMESPACE__.'\Additional\CacheManager' => 'handlers/delivery/additional/cache.php',
+		__NAMESPACE__.'\Additional\RestClient' => 'handlers/delivery/additional/restclient.php',
+		__NAMESPACE__.'\Additional\DeliveryRequests\RusPost\Handler' => 'handlers/delivery/additional/deliveryrequests/ruspost/handler.php',
 	)
 );
 
@@ -47,7 +53,6 @@ class AdditionalHandler extends Base
 	protected $trackingDescription = '';
 	protected $profilesListFull = null;
 	protected $extraServicesList = null;
-
 
 	const LOGO_FILE_ID_OPTION = 'handlers_dlv_add_lgotip';
 
@@ -87,6 +92,19 @@ class AdditionalHandler extends Base
 			if(!empty($srvParams['LOGOTIP']))
 				$this->logotip = $srvParams['LOGOTIP'];
 		}
+
+		$this->deliveryRequestHandler = $this->getDeliveryRequestHandler();
+	}
+
+	public function getDeliveryRequestHandler()
+	{
+		$result = null;
+
+		if($this->serviceType == "RUSPOST")
+			if(!empty($this->config["MAIN"]["OTPRAVKA_AUTH_TOKEN"]) && !empty($this->config["MAIN"]["OTPRAVKA_AUTH_KEY"]))
+				$result = new RusPost\Handler($this);
+
+		return $result;
 	}
 
 	/**
@@ -726,5 +744,224 @@ class AdditionalHandler extends Base
 	{
 		$config = \Sale\Handlers\Delivery\AdditionalProfile::extractConfigValues($this->getConfig());
 		return !empty($config["MAIN"]["TRACKING_URL_TEMPL"]) ? $config["MAIN"]["TRACKING_URL_TEMPL"] : '';
+	}
+
+	/**
+	 * @param Shipment $shipment
+	 * @param string $serviceType
+	 * @return array
+	 */
+	public static function getShipmentParams(Shipment $shipment, $serviceType)
+	{
+		/** @var \Bitrix\Sale\ShipmentCollection $shipmentCollection */
+		$shipmentCollection = $shipment->getCollection();
+		/** @var \Bitrix\Sale\Order $order */
+		$order = $shipmentCollection->getOrder();
+		$props = $order->getPropertyCollection();
+		$loc = $props->getDeliveryLocation();
+		$locToInternalCode = !!$loc ? $loc->getValue() : "";
+		$locFromRequest = array();
+		$locToRequest = array();
+
+		if(!empty($locToInternalCode))
+			$locToRequest = self::getLocationForRequest($locToInternalCode);
+
+		$shopLocation = \CSaleHelper::getShopLocation();
+
+		if(!empty($shopLocation['CODE']))
+			$locFromRequest = self::getLocationForRequest($shopLocation['CODE']);
+
+		$result = array(
+			"ITEMS" => array(),
+			"LOCATION_FROM" => $locFromRequest['EXTERNAL_ID'],
+			"LOCATION_FROM_NAME" => $locFromRequest['NAME'],
+			"LOCATION_TO" => $locToRequest['EXTERNAL_ID'],
+			"LOCATION_TO_NAME" => $locToRequest['NAME'],
+			"LOCATION_TO_TYPES" => self::getLocationChainByTypes($locToInternalCode, LANGUAGE_ID)
+		);
+
+		if($address = $props->getAddress())
+			$result["ADDRESS"] = $address->getValue();
+
+		if($phone = $props->getPhone())
+			$result["PHONE"] = $phone->getValue();
+
+		if($payerName = $props->getPayerName())
+			$result["PAYER_NAME"] = $payerName->getValue();
+
+		if($serviceType == "RUSPOST" )
+		{
+			$zipFrom = \CSaleHelper::getShopLocationZIP();
+
+			if(strlen($zipFrom) > 0)
+			{
+				$result["ZIP_FROM"] = $zipFrom;
+			}
+			elseif(!empty($shopLocation['CODE']))
+			{
+				$extLoc = LocationHelper::getZipByLocation($shopLocation['CODE'], array('limit' => 1))->fetch();
+
+				if(!empty($extLoc['XML_ID']))
+					$result["ZIP_FROM"] = $extLoc['XML_ID'];
+			}
+
+			$zipTo = $props->getDeliveryLocationZip();
+			$zipTo = !!$zipTo ? $zipTo->getValue() : "";
+
+			if(strlen($zipTo) > 0)
+			{
+				$result["ZIP_TO"] = $zipTo;
+			}
+			elseif(!empty($locToInternalCode))
+			{
+				$extLoc = LocationHelper::getZipByLocation($locToInternalCode, array('limit' => 1))->fetch();
+
+				if(!empty($extLoc['XML_ID']))
+					$result["ZIP_TO"] = $extLoc['XML_ID'];
+			}
+		}
+
+		$price = 0;
+		$weight = 0;
+
+		/** @var \Bitrix\Sale\ShipmentItem $shipmentItem */
+		foreach($shipment->getShipmentItemCollection() as $shipmentItem)
+		{
+			$basketItem = $shipmentItem->getBasketItem();
+
+			if(!$basketItem)
+				continue;
+
+			//$itemFieldValues = $basketItem->getFieldValues();
+			$itemFieldValues = array(
+				"PRICE" => $basketItem->getPrice(),
+				"WEIGHT" => $basketItem->getWeight(),
+				"CURRENCY" => $basketItem->getCurrency(),
+				"QUANTITY" => $shipmentItem->getQuantity(),
+				"DIMENSIONS" => $basketItem->getField("DIMENSIONS")
+			);
+
+			$price += $itemFieldValues["PRICE"] * $itemFieldValues["QUANTITY"];
+			$weight += $itemFieldValues["WEIGHT"] * $itemFieldValues["QUANTITY"];
+
+			if(!empty($itemFieldValues["DIMENSIONS"]) && is_string($itemFieldValues["DIMENSIONS"]))
+				$itemFieldValues["DIMENSIONS"] = unserialize($itemFieldValues["DIMENSIONS"]);
+
+			$result["ITEMS"][] = $itemFieldValues;
+		}
+
+		//Extra services
+		$esList = \Bitrix\Sale\Delivery\ExtraServices\Manager::getExtraServicesList($shipment->getDeliveryId(), false);
+
+		if(!empty($esList))
+		{
+			$result['EXTRA_SERVICES'] = array();
+
+			foreach($shipment->getExtraServices() as $esId => $esVal)
+			{
+				if(empty($esList[$esId]['CODE']))
+					continue;
+
+				$result['EXTRA_SERVICES'][$esList[$esId]['CODE']] = $esVal;
+			}
+		}
+
+		$delivery= Manager::getObjectById($shipment->getDeliveryId());
+		$result['DELIVERY_SERVICE_CONFIG'] = $delivery->getConfigValues();
+		$result['WEIGHT'] = $weight;
+		$result['PRICE'] = $price;
+		$result['SHIPMENT_ID'] = $shipment->getId();
+
+		return $result;
+	}
+
+	/**
+	 * @param $locationCode
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	protected static function getLocationForRequest($locationCode)
+	{
+		if(strlen($locationCode) <= 0)
+			return array();
+
+		static $result = array();
+
+		if(!isset($result[$locationCode]))
+		{
+			$externalId = Location::getExternalId($locationCode);
+			$name = '';
+
+			if(strlen($externalId) > 0)
+			{
+				$dbRes = ExternalTable::getList(array(
+					'filter' => array(
+						'XML_ID' => $externalId,
+						'SERVICE_ID' => Location::getExternalServiceId(),
+						'LOCATION.NAME.LANGUAGE_ID' => 'ru'
+					),
+					'select' => array('NAME' => 'LOCATION.NAME.NAME')
+				));
+
+				if($rec = $dbRes->fetch())
+					$name = $rec['NAME'];
+			}
+
+			$result[$locationCode] = array(
+				'EXTERNAL_ID' => $externalId,
+				'NAME' => $name
+			);
+		}
+
+		return $result[$locationCode];
+	}
+
+	/**
+	 * @param int $locationCode Location code.
+	 * @param string $lang Language identifier.
+	 * @return array Location components by type.
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	protected static function getLocationChainByTypes($locationCode, $lang = LANGUAGE_ID)
+	{
+		if(strlen($locationCode) <= 0)
+			return array();
+
+		$res = LocationTable::getList(array(
+			'filter' => array(
+				array(
+					'LOGIC' => 'OR',
+					'=CODE' => $locationCode
+				),
+			),
+			'select' => array(
+				'ID', 'CODE', 'LEFT_MARGIN', 'RIGHT_MARGIN'
+			)
+		));
+
+		if(!$loc = $res->fetch())
+			return array();
+
+		$result = array();
+
+		$res = LocationTable::getList(array(
+			'filter' => array(
+				'<=LEFT_MARGIN' => $loc['LEFT_MARGIN'],
+				'>=RIGHT_MARGIN' => $loc['RIGHT_MARGIN'],
+				'NAME.LANGUAGE_ID' => $lang,
+				'TYPE.NAME.LANGUAGE_ID' => $lang
+			),
+			'select' => array(
+				'ID', 'CODE',
+				'LOCATION_NAME' => 'NAME.NAME',
+				'TYPE_NAME' => 'TYPE.NAME.NAME',
+				'TYPE_CODE' => 'TYPE.CODE'
+			)
+		));
+
+		while($locParent = $res->fetch())
+			$result[$locParent['TYPE_CODE']] = $locParent['LOCATION_NAME'];
+
+		return $result;
 	}
 }

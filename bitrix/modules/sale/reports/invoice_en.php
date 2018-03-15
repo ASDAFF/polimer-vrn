@@ -279,13 +279,7 @@ array(
 											?>:
 
 											<?
-											$basket_tax = CSaleOrderTax::CountTaxes(DoubleVal($arOrder["PRICE_DELIVERY"]), $arTaxList, $arOrder["CURRENCY"]);
-											$nds_val = 0;
-											for ($i = 0; $i < count($arTaxList); $i++)
-											{
-												$nds_val += ($arTaxList[$i]["TAX_VAL"]);
-												$total_nds += $nds_val;
-											}
+											$total_nds += $arOrder['DELIVERY_VAT_SUM'];
 											?>
 										</td>
 										<td align="right" class="smallText">
@@ -307,7 +301,7 @@ array(
 									</tr>
 								<?endif?>
 
-								<?if (DoubleVal($arOrder["PRICE_DELIVERY"])>0):?>
+								<?if ($arOrder["DELIVERY_ID"]):?>
 									<tr>
 										<td align="right" class="smallText">
 											Delivery 

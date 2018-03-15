@@ -24,6 +24,7 @@ abstract class Ofd
 			'\Bitrix\Sale\Cashbox\TaxcomOfd' => TaxcomOfd::getName(),
 			'\Bitrix\Sale\Cashbox\OfdruOfd' => OfdruOfd::getName(),
 			'\Bitrix\Sale\Cashbox\TenzorOfd' => TenzorOfd::getName(),
+			'\Bitrix\Sale\Cashbox\ConturOfd' => ConturOfd::getName(),
 		);
 	}
 
@@ -105,7 +106,7 @@ abstract class Ofd
 			'OFD_MODE' => array(
 				'LABEL' => Loc::getMessage('SALE_CASHBOX_OFD_SETTINGS'),
 				'ITEMS' => array(
-					array(
+					'IS_TEST' => array(
 						'TYPE' => 'Y/N',
 						'LABEL' => Loc::getMessage('SALE_CASHBOX_OFD_TEST_MODE'),
 						'VALUE' => 'N'
@@ -153,6 +154,6 @@ abstract class Ofd
 	 */
 	protected function isTestMode()
 	{
-		return $this->getValueFromSettings('OFD_MODE') === 'Y';
+		return $this->getValueFromSettings('OFD_MODE', 'IS_TEST') === 'Y';
 	}
 }

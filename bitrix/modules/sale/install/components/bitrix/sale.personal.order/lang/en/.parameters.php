@@ -26,4 +26,9 @@ $MESS["SPO_ORDER_LIST_SORT_PRICE"] = "Order total";
 $MESS["SPO_ORDER_LIST_DEFAULT_SORT"] = "Order sorting";
 $MESS["SPO_RESTRICT_CHANGE_PAYSYSTEM"] = "Orders in these statuses cannot change status";
 $MESS["SPO_NOT_CHOSEN"] = "(not selected)";
+$MESS["SPO_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"] = "Recalculate order when payment system status changes";
+$MESS["SPO_USER_INFO_LOGIN"] = "Login";
+$MESS["SPO_USER_INFO_EMAIL"] = "E-mail address";
+$MESS["SPO_USER_INFO_PERSON_TYPE_NAME"] = "Payer type";
+$MESS["SPO_ORDER_HIDE_USER_INFO"] = "Don't show in user information area";
 ?>

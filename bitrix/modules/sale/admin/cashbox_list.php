@@ -323,6 +323,45 @@ $oFilter->End();
 	);
 </script>
 <?
+
+if (!Cashbox\Manager::isSupportedFFD105())
+{
+	Cashbox\Cashbox::init();
+
+	$cashboxList = Cashbox\Manager::getListFromCache();
+	$cashboxFfd105 = array();
+	$cashboxNoFfd105 = array();
+	foreach ($cashboxList as $cashbox)
+	{
+		if ($cashbox['ACTIVE'] === 'N')
+			continue;
+
+		/** @var Cashbox\Cashbox $handler */
+		$handler = $cashbox['HANDLER'];
+		if ($handler::isSupportedFFD105())
+		{
+			$cashboxFfd105[] = $cashbox['NAME'];
+		}
+		else
+		{
+			$cashboxNoFfd105[] = $cashbox['NAME'];
+		}
+	}
+
+	if ($cashboxFfd105)
+	{
+		$note = BeginNote();
+		$note .= Loc::getMessage(
+			'SALE_CASHBOX_VERSION_CONFLICT',
+			array(
+				'#CASHBOX_FFD105#' => implode(', ', $cashboxFfd105),
+				'#CASHBOX_NO_FFD105#' => implode(', ', $cashboxNoFfd105)
+			)
+		);
+		$note .= EndNote();
+		echo $note;
+	}
+}
 $lAdmin->DisplayList();
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

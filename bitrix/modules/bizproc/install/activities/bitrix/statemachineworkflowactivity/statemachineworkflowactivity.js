@@ -62,6 +62,7 @@ StateMachineWorkflowActivity = function()
 			}
 		}
 
+		var linesLeft = 0, linesCenter = 0, linesRight = 0;
 		for(i=0; i<ar.length; i++)
 		{
 			var from = ActGetRealPos(document.getElementById(ar[i][0]));
@@ -119,37 +120,67 @@ StateMachineWorkflowActivity = function()
 			from['right'] = from['right'] + 10;
 			from['left'] = from['left'] - 10;
 
-			var W, C = i*6 - 50, D = 12;
+			var W, C = -50, D = 12, direction = -1;
 			if(from['right']<to['left'])
 			{
+				++linesCenter;
+				C += (linesCenter % 6)*6;
+
 				W = to['left'] - from['right'];
 				d1.style.left = from['right'] + 'px';
 				d1.style.width = W/2 + C + 'px';
 				d2.style.left = from['right'] + W/2 + C + 'px';
 				d3.style.left = from['right'] + W/2 + C + 'px';
 				d0.src = '/bitrix/images/bizproc/arr_l1.gif';
-				d0.style.left = from['right'] - 2+ 'px';
+				d0.style.left = from['right'] - 2 + 'px';
 				d0.style.top = from['top'] + D - 3 + 'px';
 				d4.src = '/bitrix/images/bizproc/arr_r1.gif';
 				d4.style.left = to['left']+ 'px';
-				d4.style.top = to['top'] + D - 3+ 'px';
+				d4.style.top = to['top'] + D - 3 + 'px';
 			}
-			else if(from['left']==to['left'])
+			else if(from['left'] === to['left'])
 			{
 				W = 150;
-				d1.style.left = from['left'] - W/2 + C + 'px';
-				d1.style.width = W/2 - C+ 'px';
-				d2.style.left = from['left'] - W/2 + C + 'px';
-				d3.style.left = from['left'] - W/2 + C + 'px';
-				d0.src = '/bitrix/images/bizproc/arr_l2.gif';
-				d0.style.left = from['left'] - 6+ 'px';
-				d0.style.top = from['top'] + D - 3+ 'px';
-				d4.src = '/bitrix/images/bizproc/arr_r1.gif';
-				d4.style.left = to['left']+ 'px';
-				d4.style.top = to['top'] + D - 3+ 'px';
+				var columnNode = BX.findParent(document.getElementById(ar[i][0]), {attr: 'data-column'});
+				if (columnNode && columnNode.getAttribute('data-column') === '2')
+				{
+					++linesRight;
+					C += (linesRight % 10)*10;
+
+					d0.src = '/bitrix/images/bizproc/arr_l1.gif';
+					d0.style.left = from['right'] - 2 + 'px';
+					d0.style.top = from['top'] + D - 3 + 'px';
+					d1.style.left = from['right'] + 'px';
+					d1.style.width = W/2 + C + 'px';
+					d2.style.left = from['right'] + W/2 + C + 'px';
+					d3.style.left = to['right']+ 'px';
+					d4.src = '/bitrix/images/bizproc/arr_l2.gif';
+					d4.style.left = to['right'] - 8 + 'px';
+					d4.style.top = to['top'] + D - 3 + 'px';
+					direction = 1;
+				}
+				else
+				{
+					++linesLeft;
+					C += (linesLeft % 10)*10;
+
+					d1.style.left = from['left'] - W / 2 + C + 'px';
+					d1.style.width = W / 2 - C + 'px';
+					d2.style.left = from['left'] - W / 2 + C + 'px';
+					d3.style.left = from['left'] - W / 2 + C + 'px';
+					d0.src = '/bitrix/images/bizproc/arr_l2.gif';
+					d0.style.left = from['left'] - 6 + 'px';
+					d0.style.top = from['top'] + D - 3 + 'px';
+					d4.src = '/bitrix/images/bizproc/arr_r1.gif';
+					d4.style.left = to['left'] + 'px';
+					d4.style.top = to['top'] + D - 3 + 'px';
+				}
 			}
 			else
 			{
+				++linesCenter;
+				C = (linesCenter % 6)*6 - 50;
+
 				W = from['left'] - to['right'];
 				d1.style.left = to['right'] + W/2 - C+ 'px';
 				d1.style.width = W/2 + C+ 'px';
@@ -179,7 +210,7 @@ StateMachineWorkflowActivity = function()
 
 			d3.style.top = to['top'] + Math.floor((to['bottom'] - to['top'])/2)+ 'px';
 
-			d3.style.width = W/2 - C + 2 + 'px';
+			d3.style.width = (W/2 + direction * C + 2) + 'px';
 
 			ob.__l.push([d0, d1, d2, d3, d4]);
 		}
@@ -213,7 +244,11 @@ StateMachineWorkflowActivity = function()
 		for(i=0; i<ob.childActivities.length; i++)
 		{
 			ob.Table.rows[i].cells[0].align = 'right';
+			ob.Table.rows[i].cells[0].setAttribute('data-column', 1);
+
 			ob.Table.rows[i].cells[2].align = 'left';
+			ob.Table.rows[i].cells[2].setAttribute('data-column', 2);
+
 			ob.childActivities[i].Draw(ob.Table.rows[i].cells[i%2*2]);
 		}
 

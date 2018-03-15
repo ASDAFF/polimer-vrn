@@ -105,4 +105,7 @@ $MESS["PC_PAR_SIZES_AUTO"] = "Videodimensionen nutzen";
 $MESS["PC_PAR_PLAYLIST_HIDE"] = "Playlist ausblenden";
 $MESS["PC_PAR_START_TIME"] = "Wiedergabezeit (Sek.)";
 $MESS["PC_PAR_PLAYBACK_RATE"] = "Wiedergabegeschwindigkeit";
+$MESS["PC_PAR_AUTOSTART_ON_SCROLL"] = "Automatische Wiedergabe aktivieren, wenn der Player sichtbar wird";
+$MESS["PC_PAR_FILE_TYPE"] = "MIME-Type der Datei";
+$MESS["PC_PAR_USE_PLAYLIST_AS_SOURCES"] = "Wiedergabeliste als eine alternative Dateiquelle nutzen";
 ?>

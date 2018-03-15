@@ -45,9 +45,10 @@ class RusPost extends Base
 	 */
 	public function getStatus($trackingNumber)
 	{
+		$trackingNumber = trim($trackingNumber);
 		$result = new StatusResult();
 
-		if(!$this->checkTracknumberFormat($trackingNumber))
+		if(!$this->checkTrackNumberFormat($trackingNumber))
 			$result->addError(new Error(Loc::getMessage('SALE_DELIVERY_TRACKING_RUS_POST_ERROR_TRNUM_FORMAT')));
 
 		if(empty($this->params['LOGIN']))
@@ -447,7 +448,18 @@ class RusPostSingle
 			19 => Statuses::ON_THE_WAY,
 			20 => Statuses::ON_THE_WAY,
 			21 => Statuses::ON_THE_WAY,
-			22 => Statuses::PROBLEM
+			22 => Statuses::PROBLEM,
+			23 => Statuses::ON_THE_WAY,
+			24 => Statuses::PROBLEM,
+			25 => Statuses::ON_THE_WAY,
+			26 => Statuses::PROBLEM,
+			27 => Statuses::ON_THE_WAY,
+			28 => Statuses::NO_INFORMATION,
+			29 => Statuses::ON_THE_WAY,
+			30 => Statuses::ON_THE_WAY,
+			31 => Statuses::ON_THE_WAY,
+			32 => Statuses::ON_THE_WAY,
+			33 => Statuses::ON_THE_WAY,
 		);
 
 		if(!isset($rusPostStatuses[$oper]))

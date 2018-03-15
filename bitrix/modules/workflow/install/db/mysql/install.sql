@@ -45,7 +45,7 @@ create table if not exists b_workflow_log (
 
 create table if not exists b_workflow_move (
    ID int(18) not null auto_increment,
-   TIMESTAMP_X datetime not null default '0000-00-00 00:00:00',
+   TIMESTAMP_X datetime not null,
    DOCUMENT_ID int(18),
    IBLOCK_ELEMENT_ID int(18),
    OLD_STATUS_ID int(18) not null default '0',

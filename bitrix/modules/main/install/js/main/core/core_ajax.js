@@ -1276,7 +1276,17 @@ BX.userOptions.__get = function()
 				prevParam = aOpt[0]+'.'+aOpt[1];
 			}
 
-			sParam += '&p['+n+'][v]['+BX.util.urlencode(aOpt[2])+']='+BX.util.urlencode(aOpt[3]);
+			var valueName = aOpt[2];
+			var value = aOpt[3];
+
+			if (valueName === null)
+			{
+				sParam += '&p['+n+'][v]='+BX.util.urlencode(value);
+			}
+			else
+			{
+				sParam += '&p['+n+'][v]['+BX.util.urlencode(valueName)+']='+BX.util.urlencode(value);
+			}
 		}
 	}
 

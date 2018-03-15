@@ -15,15 +15,8 @@ class CBPDelayActivity
 			"Title" => "",
 			"TimeoutDuration" => null,
 			"TimeoutDurationType" => "s",
-			"TimeoutTime" => null,
-			"TimeoutTimeCurrent" => null,
+			"TimeoutTime" => null
 		);
-	}
-
-	protected function ReInitialize()
-	{
-		parent::ReInitialize();
-		$this->TimeoutTimeCurrent = null;
 	}
 
 	public function Cancel()
@@ -39,29 +32,7 @@ class CBPDelayActivity
 		if ($this->isInEventActivityMode)
 			return CBPActivityExecutionStatus::Closed;
 
-		if ($this->TimeoutTime != null)
-		{
-			$this->TimeoutTimeCurrent = $this->TimeoutTime;
-			if (intval($this->TimeoutTime)."|" != $this->TimeoutTime."|")
-				$this->TimeoutTimeCurrent = MakeTimeStamp($this->TimeoutTime);
-		}
-
 		$this->Subscribe($this);
-
-		if ($this->TimeoutDuration != null)
-		{
-			$timeoutDuration = max($this->CalculateTimeoutDuration(), CBPSchedulerService::getDelayMinLimit());
-			$this->WriteToTrackingService(str_replace("#PERIOD#", CBPHelper::FormatTimePeriod($timeoutDuration), GetMessage("BPDA_TRACK")));
-		}
-		elseif ($this->TimeoutTime != null)
-		{
-			$timestamp = max($this->TimeoutTimeCurrent, time() + CBPSchedulerService::getDelayMinLimit());
-			$this->WriteToTrackingService(str_replace("#PERIOD#", ConvertTimeStamp($timestamp, "FULL"), GetMessage("BPDA_TRACK1")));
-		}
-		else
-		{
-			$this->WriteToTrackingService(GetMessage("BPDA_TRACK2"));
-		}
 
 		$this->isInEventActivityMode = false;
 		return CBPActivityExecutionStatus::Executing;
@@ -73,26 +44,47 @@ class CBPDelayActivity
 			throw new Exception("eventHandler");
 
 		$this->isInEventActivityMode = true;
-		if ($this->TimeoutDuration != null)
-			$expiresAt = time() + $this->CalculateTimeoutDuration();
-		elseif ($this->TimeoutTime != null)
-		{
-			if ($this->TimeoutTimeCurrent === null)
-			{
-				$this->TimeoutTimeCurrent = $this->TimeoutTime;
-				if (intval($this->TimeoutTime)."|" != $this->TimeoutTime."|")
-					$this->TimeoutTimeCurrent = MakeTimeStamp($this->TimeoutTime);
-			}
 
-			$expiresAt = $this->TimeoutTimeCurrent;
+		$timeoutDuration = $this->TimeoutDuration;
+		$timeoutDurationValue = 0;
+		$timeoutTime = $this->TimeoutTime;
+
+		if ($timeoutDuration != null)
+		{
+			$timeoutDurationValue = $this->CalculateTimeoutDuration();
+			$expiresAt = time() + $timeoutDurationValue;
+		}
+		elseif ($timeoutTime != null)
+		{
+			if (intval($timeoutTime)."|" != $timeoutTime."|")
+				$timeoutTime = MakeTimeStamp($timeoutTime);
+
+			$expiresAt = $timeoutTime;
 		}
 		else
+		{
 			$expiresAt = time();
+		}
 
 		$schedulerService = $this->workflow->GetService("SchedulerService");
 		$this->subscriptionId = $schedulerService->SubscribeOnTime($this->workflow->GetInstanceId(), $this->name, $expiresAt);
 
 		$this->workflow->AddEventHandler($this->name, $eventHandler);
+
+		if ($timeoutDuration != null)
+		{
+			$timeoutDurationValue = max($timeoutDurationValue, CBPSchedulerService::getDelayMinLimit());
+			$this->WriteToTrackingService(str_replace("#PERIOD#", CBPHelper::FormatTimePeriod($timeoutDurationValue), GetMessage("BPDA_TRACK")));
+		}
+		elseif ($timeoutTime != null)
+		{
+			$timestamp = max($timeoutTime, time() + CBPSchedulerService::getDelayMinLimit());
+			$this->WriteToTrackingService(str_replace("#PERIOD#", ConvertTimeStamp($timestamp, "FULL"), GetMessage("BPDA_TRACK1")));
+		}
+		else
+		{
+			$this->WriteToTrackingService(GetMessage("BPDA_TRACK2"));
+		}
 	}
 
 	public function Unsubscribe(IBPActivityExternalEventListener $eventHandler)

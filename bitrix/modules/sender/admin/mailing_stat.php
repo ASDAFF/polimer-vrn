@@ -80,6 +80,7 @@ if($action == 'get_template' && $chainId)
 {
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_js.php");
 	$message = MailingChainTable::getMessageById($chainId);
+	Loader::includeModule('fileman');
 	$message = BlockEditor::getHtmlForEditor($message, Context::getCurrent()->getCulture()->getCharset());
 	echo $message;
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");

@@ -2122,3 +2122,8 @@
 .adm-toolbar-panel-button:last-child {
 	margin-right: 0 !important;
 }
+
+.main-grid-cell-content a {
+	color: #1c53a2;
+	text-decoration: none;
+}

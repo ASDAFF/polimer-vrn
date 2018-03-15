@@ -143,7 +143,7 @@ if(count($arErrors)>0)
 {
 	echo '<tr><td colspan="2">';
 	foreach($arErrors as $e)
-		echo '<font color="red">'.$e["message"].'</font><br>';
+		echo '<font color="red">'.htmlspecialcharsbx($e["message"]).'</font><br>';
 	echo '</td></tr>';
 }
 

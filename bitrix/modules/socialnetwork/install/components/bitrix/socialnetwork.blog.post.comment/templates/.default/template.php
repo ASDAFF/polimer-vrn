@@ -8,7 +8,7 @@ use Bitrix\Blog\Item;
  * @var CMain $APPLICATION
  * @var CUser $USER
  */
-CJSCore::Init(array("tooltip", "popup", "fx", "viewer", "content_view"));
+CJSCore::Init(array("tooltip", "popup", "fx", "viewer", "content_view", "videorecorder"));
 
 if(!empty($arResult["FATAL_MESSAGE"]))
 {
@@ -40,25 +40,14 @@ $rights = "N";
 if (
 	$arResult["Perm"] >= Item\Permissions::FULL
 	|| CSocNetUser::IsCurrentUserModuleAdmin()
-	||$APPLICATION->GetGroupRight("blog") >= "W"
+	|| $APPLICATION->GetGroupRight("blog") >= "W"
 )
 {
 	$rights = "ALL";
 }
-else if (
-	IsModuleInstalled("intranet") 
-	&& $USER->IsAuthorized()
-)
+elseif ($USER->IsAuthorized())
 {
 	$rights = "OWN";
-}
-else if (!IsModuleInstalled("intranet"))
-{
-	$rights = (
-		$arResult["Perm"] < Item\Permissions::FULL
-			? "OWNLAST"
-			: "ALL"
-	);
 }
 
 $eventHandlerID = AddEventHandler('main', 'system.field.view.file', Array('CBlogTools', 'blogUFfileShow'));

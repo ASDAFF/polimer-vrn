@@ -33,6 +33,18 @@
 	position: relative;
 }
 
+.bp-livefeed-wrapper
+{
+	max-height: 1500px;
+	transition: max-height 300ms ease-in-out;
+	overflow: hidden;
+}
+
+.bp-livefeed-wrapper-loading
+{
+	max-height: 105px;
+}
+
 .bp-title-desc-icon.bp-title-desc-icon-vacation {
 	background-position: 0 -224px;
 }

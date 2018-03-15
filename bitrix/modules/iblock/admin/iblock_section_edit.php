@@ -138,19 +138,24 @@ if(
 	$DB->StartTransaction();
 	$bs = new CIBlockSection;
 
+	$useFileUpload = array_key_exists("PICTURE", $_FILES);
 	$arPICTURE = CIBlock::makeFileArray(
-		array_key_exists("PICTURE", $_FILES)? $_FILES["PICTURE"]: $_REQUEST["PICTURE"],
-		${"PICTURE_del"} === "Y"
+		$useFileUpload? $_FILES["PICTURE"]: $_REQUEST["PICTURE"],
+		${"PICTURE_del"} === "Y",
+		$useFileUpload ? null : $_REQUEST['PICTURE_descr']
 	);
 	if ($arPICTURE["error"] == 0)
 		$arPICTURE["COPY_FILE"] = "Y";
 
+	$useFileUpload = array_key_exists('DETAIL_PICTURE', $_FILES);
 	$arDETAIL_PICTURE = CIBlock::makeFileArray(
-		array_key_exists("DETAIL_PICTURE", $_FILES)? $_FILES["DETAIL_PICTURE"]: $_REQUEST["DETAIL_PICTURE"],
-		${"DETAIL_PICTURE_del"} === "Y"
+		$useFileUpload? $_FILES["DETAIL_PICTURE"]: $_REQUEST["DETAIL_PICTURE"],
+		${"DETAIL_PICTURE_del"} === "Y",
+		$useFileUpload ? null : $_REQUEST['DETAIL_PICTURE_descr']
 	);
 	if ($arDETAIL_PICTURE["error"] == 0)
 		$arDETAIL_PICTURE["COPY_FILE"] = "Y";
+	unset($useFileUpload);
 
 	$arFields = array(
 		"ACTIVE" => $_POST["ACTIVE"],
@@ -1813,7 +1818,7 @@ if($arIBlock["SECTION_PROPERTY"] === "Y")
 		<?
 		$arCatalog = false;
 		if (CModule::IncludeModule("catalog"))
-			$arCatalog = CCatalog::GetSkuInfoByProductID($IBLOCK_ID);
+			$arCatalog = CCatalogSku::GetInfoByProductIBlock($IBLOCK_ID);
 
 		if (is_array($arCatalog))
 		{
@@ -1977,9 +1982,10 @@ else
 if (!defined('BX_PUBLIC_MODE') || BX_PUBLIC_MODE != 1):
 	$tabControl->Buttons(array(
 		"disabled" => false,
-		"btnSaveAndAdd" => (!$bAutocomplete),
-		"btnApply" => (!$bAutocomplete),
-		"return_url" => $bu,
+		"btnSaveAndAdd" => !$bAutocomplete,
+		"btnApply" => !$bAutocomplete,
+		"btnCancel" => !$bAutocomplete,
+		"back_url" => $bu,
 	));
 elseif($nobuttons !== "Y"):
 	$save_and_add = "{

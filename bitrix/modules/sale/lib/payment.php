@@ -33,6 +33,8 @@ class Payment
 
 	protected static $mapFields = array();
 
+	private static $eventClassName = null;
+
 	/**
 	 * @return array
 	 */
@@ -192,13 +194,16 @@ class Payment
 			return $result;
 		}
 
-		$eventName = static::getEntityEventName();
+		if (self::$eventClassName === null)
+		{
+			self::$eventClassName = static::getEntityEventName();
+		}
 
 		/** @var array $oldEntityValues */
 		$oldEntityValues = $this->fields->getOriginalValues();
 
 		/** @var Main\Event $event */
-		$event = new Main\Event('sale', "OnBefore".$eventName."EntityDeleted", array(
+		$event = new Main\Event('sale', "OnBefore".self::$eventClassName."EntityDeleted", array(
 				'ENTITY' => $this,
 				'VALUES' => $oldEntityValues,
 		));
@@ -211,7 +216,7 @@ class Payment
 			{
 				if($eventResult->getType() == Main\EventResult::ERROR)
 				{
-					$errorMsg = new ResultError(Loc::getMessage('SALE_EVENT_ON_BEFORE_'.ToUpper($eventName).'_ENTITY_DELETED_ERROR'), 'SALE_EVENT_ON_BEFORE_'.ToUpper($eventName).'_ENTITY_DELETED_ERROR');
+					$errorMsg = new ResultError(Loc::getMessage('SALE_EVENT_ON_BEFORE_'.ToUpper(self::$eventClassName).'_ENTITY_DELETED_ERROR'), 'SALE_EVENT_ON_BEFORE_'.ToUpper(self::$eventClassName).'_ENTITY_DELETED_ERROR');
 					if ($eventResultData = $eventResult->getParameters())
 					{
 						if (isset($eventResultData) && $eventResultData instanceof ResultError)
@@ -244,7 +249,7 @@ class Payment
 		$oldEntityValues = $this->fields->getOriginalValues();
 
 		/** @var Main\Event $event */
-		$event = new Main\Event('sale', "On".$eventName."EntityDeleted", array(
+		$event = new Main\Event('sale', "On".self::$eventClassName."EntityDeleted", array(
 				'ENTITY' => $this,
 				'VALUES' => $oldEntityValues,
 		));
@@ -257,7 +262,7 @@ class Payment
 			{
 				if($eventResult->getType() == Main\EventResult::ERROR)
 				{
-					$errorMsg = new ResultError(Loc::getMessage('SALE_EVENT_ON_'.ToUpper($eventName).'_ENTITY_DELETED_ERROR'), 'SALE_EVENT_ON_'.ToUpper($eventName).'_ENTITY_DELETED_ERROR');
+					$errorMsg = new ResultError(Loc::getMessage('SALE_EVENT_ON_'.ToUpper(self::$eventClassName).'_ENTITY_DELETED_ERROR'), 'SALE_EVENT_ON_'.ToUpper(self::$eventClassName).'_ENTITY_DELETED_ERROR');
 					if ($eventResultData = $eventResult->getParameters())
 					{
 						if (isset($eventResultData) && $eventResultData instanceof ResultError)
@@ -365,12 +370,15 @@ class Payment
 			throw new Main\ObjectNotFoundException('Entity "Order" not found');
 		}
 
-		$eventName = static::getEntityEventName();
+		if (self::$eventClassName === null)
+		{
+			self::$eventClassName = static::getEntityEventName();
+		}
 
-		if ($this->isChanged() && $eventName)
+		if ($this->isChanged() && self::$eventClassName)
 		{
 			/** @var Main\Entity\Event $event */
-			$event = new Main\Event('sale', 'OnBefore'.$eventName.'EntitySaved', array(
+			$event = new Main\Event('sale', 'OnBefore'.self::$eventClassName.'EntitySaved', array(
 					'ENTITY' => $this,
 					'VALUES' => $this->fields->getOriginalValues()
 			));
@@ -523,10 +531,10 @@ class Payment
 				}
 			}
 
-			if ($this->isChanged() && $eventName)
+			if ($this->isChanged() && self::$eventClassName)
 			{
 				/** @var Main\Event $event */
-				$event = new Main\Event('sale', 'On'.$eventName.'EntitySaved', array(
+				$event = new Main\Event('sale', 'On'.self::$eventClassName.'EntitySaved', array(
 					'ENTITY' => $this,
 					'VALUES' => $this->fields->getOriginalValues(),
 				));
@@ -805,6 +813,15 @@ class Payment
 	 */
 	public function setField($name, $value)
 	{
+		$priceRoundedFields = array(
+			'SUM' => 'SUM',
+			'PRICE_COD' => 'PRICE_COD',
+		);
+		if (isset($priceRoundedFields[$name]))
+		{
+			$value = PriceMaths::roundPrecision($value);
+		}
+
 		if ($name == "PAY_SYSTEM_ID")
 		{
 			if (intval($value) > 0 && !Sale\PaySystem\Manager::isExist($value))
@@ -835,6 +852,27 @@ class Payment
 
 
 		return parent::setField($name, $value);
+	}
+
+	/**
+	 * @internal
+	 *
+	 * @param $name
+	 * @param $value
+	 * @throws Main\ArgumentOutOfRangeException
+	 */
+	public function setFieldNoDemand($name, $value)
+	{
+		$priceRoundedFields = array(
+			'SUM' => 'SUM',
+			'PRICE_COD' => 'PRICE_COD',
+		);
+		if (isset($priceRoundedFields[$name]))
+		{
+			$value = PriceMaths::roundPrecision($value);
+		}
+
+		parent::setFieldNoDemand($name, $value);
 	}
 
 	/**
@@ -1049,7 +1087,7 @@ class Payment
 
 		return md5(
 			$this->getId().
-			PriceMaths::roundByFormatCurrency($this->getSum(), $this->getField('CURRENCY')).
+			PriceMaths::roundPrecision($this->getSum()).
 			$order->getId()
 		);
 	}
@@ -1083,11 +1121,12 @@ class Payment
 	 */
 	public function getErrorEntity($value)
 	{
-		$className = null;
+		static $className = null;
 		$errorsList = static::getAutoFixErrorsList();
 		if (is_array($errorsList) && in_array($value, $errorsList))
 		{
-			$className = static::getClassName();
+			if ($className === null)
+				$className = static::getClassName();
 		}
 
 		return $className;

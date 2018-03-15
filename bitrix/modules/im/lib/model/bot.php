@@ -46,7 +46,8 @@ class BotTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('BOT_ENTITY_BOT_ID_FIELD'),
 			),
 			'MODULE_ID' => array(
-				'data_type' => 'integer',
+				'data_type' => 'string',
+				'validation' => array(__CLASS__, 'validateModuleId'),
 				'required' => true,
 				'title' => Loc::getMessage('BOT_ENTITY_MODULE_ID_FIELD'),
 			),
@@ -159,6 +160,17 @@ class BotTable extends Main\Entity\DataManager
 	 * @return array
 	 */
 	public static function validateToClass()
+	{
+		return array(
+			new Main\Entity\Validator\Length(null, 255),
+		);
+	}
+	/**
+	 * Returns validators for MODULE_ID field.
+	 *
+	 * @return array
+	 */
+	public static function validateModuleId()
 	{
 		return array(
 			new Main\Entity\Validator\Length(null, 255),

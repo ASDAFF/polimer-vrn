@@ -100,7 +100,7 @@ class OrderBasketShipment extends OrderBasket
 				</table>
 			</div>';
 
-		$result .= '<div class="adm-list-table-footer" id="b_sale_order_shipment_footer" style="margin-top: -20px; padding-top: 10px;">
+		$result .= '<div class="adm-list-table-footer" id="b_sale_order_shipment_footer" style="margin-top: -5px; padding-top: 10px;">
 			<span class="adm-selectall-wrap" style="margin-top: 5px; font-weight: bold;">'.Loc::getMessage('SALE_ORDER_SHIPMENT_BASKET_GOODS_ALL').': </span><span class="adm-selectall-wrap" style="margin-top: 5px; font-weight: bold;" id="'.$this->idPrefix.'_count">0</span>
 			<span class="adm-selectall-wrap" style="margin-top: 5px; font-weight: bold;">'.Loc::getMessage('SALE_ORDER_SHIPMENT_BASKET_GOODS_SELECTED').': </span><span class="adm-selectall-wrap" style="margin-top: 5px; font-weight: bold;" id="'.$this->idPrefix.'_selected_count">0</span>
 			<span class="adm-selectall-wrap" style="margin-top: 5px; font-weight: bold;">'.str_replace(array('#CURRENT_PAGE#', '#COUNT_PAGE#'), array('1', '1'),Loc::getMessage('SALE_ORDER_SHIPMENT_BASKET_PAGE')).'</span>

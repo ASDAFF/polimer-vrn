@@ -245,7 +245,6 @@
 				}
 				catch (e)
 				{
-					
 				}
 			}
 			return false;
@@ -376,7 +375,7 @@
 						if (!!callback)
 						{
 							try {
-								callback(BX.proxy_context, this.getCanvas(), this.getContext(), getOrientation((BX.proxy_context || null)));
+								callback(BX.proxy_context, this.getCanvas(), this.getContext(), getOrientation((((e && e.target && e.target.src) ? e.target.src : (BX.proxy_context || null)))));
 							}
 							catch (e)
 							{

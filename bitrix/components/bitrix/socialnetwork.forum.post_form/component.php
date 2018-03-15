@@ -288,7 +288,7 @@ if ($arParams["MESSAGE_TYPE"] == "EDIT")
 	}
 	if ($arParams["SHOW_VOTE"] == "Y" && $arResult["MESSAGE"]["PARAM1"] == "VT" && intVal($arResult["MESSAGE"]["PARAM2"]) > 0)
 	{
-		$db_vote = CVote::GetByID(intVal($arMessage["PARAM2"]));
+		$db_vote = CVote::GetByID(intVal($unreadedMessages["PARAM2"]));
 		if ($db_vote && $arVote = $db_vote->GetNext())
 			$arResult['DATE_END'] = $arVote['DATE_END'];
 

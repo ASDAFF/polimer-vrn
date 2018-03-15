@@ -130,7 +130,9 @@ class PersonalProfileDetail extends CBitrixComponent
 			)
 		);
 
-		if ($userOrderProperties = $userProperties->fetch())
+		$htmlConvector = \Bitrix\Main\Text\Converter::getHtmlConverter();
+
+		if ($userOrderProperties = $userProperties->fetch($htmlConvector))
 		{
 			if ($request->isPost() && ($request->get("save") || $request->get("apply"))	&& check_bitrix_sessid())
 			{
@@ -328,6 +330,9 @@ class PersonalProfileDetail extends CBitrixComponent
 		}
 		// get prop values
 		$propertiesValueList = Array();
+
+		$htmlConvector = \Bitrix\Main\Text\Converter::getHtmlConverter();
+
 		$profileData = Sale\OrderUserProperties::getProfileValues((int)($this->idProfile));
 		if (!empty($profileData))
 		{
@@ -347,6 +352,21 @@ class PersonalProfileDetail extends CBitrixComponent
 						$locationMap[] = $location['ID'];
 					}
 					$value = ($orderPropertyList[$propertyId]['MULTIPLE'] === 'Y') ? $locationMap : $locationMap[0];
+				}
+
+				if (is_array($value))
+				{
+					foreach ($value as &$elementValue)
+					{
+						if (!is_array($elementValue))
+							$elementValue = $htmlConvector->encode($elementValue);
+						else
+							$elementValue = htmlspecialcharsEx($elementValue);
+					}
+				}
+				else
+				{
+					$value = $htmlConvector->encode($value);
 				}
 				$propertiesValueList["ORDER_PROP_" . $propertyId] = $value;
 			}
@@ -644,7 +664,6 @@ class PersonalProfileDetail extends CBitrixComponent
 			$key = array_search($idDelete, $baseArray);
 			if ($key !== false)
 			{
-				CFile::Delete($baseArray[$key]);
 				unset($baseArray[$key]);
 			}
 		}

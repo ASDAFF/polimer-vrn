@@ -109,11 +109,6 @@ class OrderCompatibility
 			$order->setPersonTypeId($fields['PERSON_TYPE_ID']);
 		}
 
-		if (!isset($fields['DATE_STATUS']))
-		{
-			$fields['DATE_STATUS'] = new Main\Type\DateTime();
-		}
-
 		$orderFields = static::replaceFields($fields, static::getOrderReplaceFields());
 
 		$orderFields = $orderCompatibility->parseRawFields(static::ENTITY_ORDER, $orderFields);
@@ -162,6 +157,11 @@ class OrderCompatibility
 		{
 			$order->setField('STATUS_ID', $orderFields['STATUS_ID']);
 			unset($orderFields['STATUS_ID']);
+		}
+
+		if (isset($orderFields['USE_VAT']) && $orderFields['USE_VAT'] === true)
+		{
+			$orderFields['USE_VAT'] = 'Y';
 		}
 
 		$order->setFieldsNoDemand($orderFields);
@@ -353,6 +353,11 @@ class OrderCompatibility
 
 					unset($shipmentFields['ALLOW_DELIVERY']);
 					unset($shipmentFields['DEDUCTED']);
+
+					if ($fields['CURRENCY'] != $shipmentFields['CURRENCY'])
+					{
+						$shipmentFields['CURRENCY'] = $fields['CURRENCY'];
+					}
 
 					/** @var Sale\Result $r */
 					$r = $shipment->setFields(static::clearFields($shipmentFields, static::getShipmentAvailableFields()));
@@ -1020,7 +1025,7 @@ class OrderCompatibility
 				'PS_STATUS_MESSAGE', 'PS_SUM', 'PS_CURRENCY', 'PS_RESPONSE_DATE',
 				'PAY_VOUCHER_NUM', 'PAY_VOUCHER_DATE', 'DATE_PAY_BEFORE',
 				'DATE_BILL', 'PAY_SYSTEM_NAME', 'PAY_SYSTEM_ID',
-				'DATE_PAYED', 'EMP_PAYED_ID'
+				'DATE_PAYED', 'EMP_PAYED_ID', 'CURRENCY'
 			);
 
 			foreach ($fieldsFromOrder as $fieldName)
@@ -1117,7 +1122,7 @@ class OrderCompatibility
 						if ($payment->isPaid() || $payment->isInner())
 							continue;
 
-						if (Sale\PriceMaths::roundByFormatCurrency($payment->getSum(), $order->getCurrency()) == Sale\PriceMaths::roundByFormatCurrency($deltaSumPaid, $fields['SUM_PAID']))
+						if (Sale\PriceMaths::roundPrecision($payment->getSum()) === Sale\PriceMaths::roundPrecision($deltaSumPaid))
 						{
 							$paidPayment = true;
 							/** @var Sale\Result $r */
@@ -1574,7 +1579,36 @@ class OrderCompatibility
 	 */
 	public static function add(array $fields)
 	{
-		/** @var Sale\Result $r */
+		if (!empty($fields['ORDER_PROP']) && is_array($fields['ORDER_PROP']))
+		{
+			$fields['PROPERTIES'] = $fields['ORDER_PROP'];
+			unset($fields['ORDER_PROP']);
+		}
+
+		if (!isset($fields['PROPERTIES']) || !is_array($fields['PROPERTIES']))
+		{
+			$fields['PROPERTIES'] = array();
+		}
+
+		/** @var Sale\Compatible\OrderCompatibility $orderCompatibility */
+		$orderCompatibility = Sale\Compatible\OrderCompatibility::create($fields);
+
+		/** @var Sale\PropertyValueCollection $propCollection */
+		$propCollection = $orderCompatibility->getOrder()->getPropertyCollection();
+
+		// compatibility to prevent setting default values for empty properties
+		/** @var Sale\PropertyValue $property */
+		foreach ($propCollection as $property)
+		{
+			$propertyFields = $property->getProperty();
+			$key = isset($propertyFields['ID']) ? $propertyFields['ID'] : 'n'.$property->getId();
+
+			if (!array_key_exists($key, $fields['PROPERTIES']))
+			{
+				$fields['PROPERTIES'][$key] = null;
+			}
+		}
+
 		return static::modifyOrder(static::ORDER_COMPAT_ACTION_ADD, $fields);
 	}
 
@@ -1623,7 +1657,6 @@ class OrderCompatibility
 
 		try
 		{
-
 			$adminSection = (defined('ADMIN_SECTION') && ADMIN_SECTION === true);
 
 			/** @var Sale\Compatible\OrderCompatibility $orderCompatibility */
@@ -1638,6 +1671,11 @@ class OrderCompatibility
 			if (!empty($fields['ORDER_PROP']) && is_array($fields['ORDER_PROP']))
 			{
 				$fields['PROPERTIES'] = $fields['ORDER_PROP'];
+			}
+
+			if (!isset($fields['PROPERTIES']) || !is_array($fields['PROPERTIES']))
+			{
+				$fields['PROPERTIES'] = array();
 			}
 
 			/** @var Sale\Result $r */
@@ -1757,6 +1795,13 @@ class OrderCompatibility
 				return $result;
 			}
 
+			/** @var Sale\Result $r */
+			$r = $orderCompatibility->fillShipmentCollectionFromRequest( $order->getShipmentCollection(), $fields);
+			if (!$r->isSuccess())
+			{
+				$result->addErrors($r->getErrors());
+				return $result;
+			}
 
 			if ($isStartField)
 			{
@@ -1771,16 +1816,6 @@ class OrderCompatibility
 				}
 			}
 
-
-
-			/** @var Sale\Result $r */
-			$r = $orderCompatibility->fillShipmentCollectionFromRequest( $order->getShipmentCollection(), $fields);
-			if (!$r->isSuccess())
-			{
-				$result->addErrors($r->getErrors());
-				return $result;
-			}
-
 			$order->setMathActionOnly(false);
 
 			/** @var Sale\Result $r */
@@ -1790,8 +1825,6 @@ class OrderCompatibility
 				$result->addErrors($r->getErrors());
 				return $result;
 			}
-
-
 
 			/** @var Sale\Result $r */
 			$r = Sale\Compatible\OrderCompatibility::fillOrderFromRequest($order, $fields);
@@ -2313,6 +2346,28 @@ class OrderCompatibility
 		{
 			$result->addError( new Sale\ResultError(Main\Localization\Loc::getMessage('SALE_COMPATIBLE_ORDER_NOT_FOUND'), 'SALE_COMPATIBLE_ORDER_NOT_FOUND') );
 			return $result;
+		}
+
+		$paymentCollection = $order->getPaymentCollection();
+		/** @var Sale\Payment $payment */
+		foreach ($paymentCollection as $payment)
+		{
+			if ($payment->isPaid())
+				$payment->setReturn('Y');
+		}
+
+		$shipmentCollection = $order->getShipmentCollection();
+		/** @var Sale\Shipment $shipment */
+		foreach ($shipmentCollection as $shipment)
+		{
+			if ($shipment->isSystem())
+				continue;
+
+			if ($shipment->isShipped())
+				$shipment->setField('DEDUCTED', 'N');
+
+			if ($shipment->isAllowDelivery())
+				$shipment->disallowDelivery();
 		}
 
 		/** @var Sale\Result $r */
@@ -3429,9 +3484,7 @@ class OrderFetchAdapter implements FetchAdapter
 	 */
 	public function adapt(array $row)
 	{
-		\CTimeZone::Disable();
 		$data = OrderCompatibility::convertDateFieldsToOldFormat($row);
-		\CTimeZone::Enable();
 		return static::convertRowData($data);
 	}
 

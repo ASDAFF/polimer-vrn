@@ -37,11 +37,25 @@ class ByProductCategory extends Base
 			return true;
 		}
 
-		foreach($categoriesList as $category)
+		foreach($categoriesList as $productId => $productCategories)
 		{
-			$categoryPath = self::getCategoriesPath($category);
+			if(!is_array($productCategories) || empty($productCategories))
+				continue;
 
-			if(!array_intersect($categoryPath, $restrictionParams["CATEGORIES"]))
+			$isProductFromCategory = false;
+
+			foreach($productCategories as $categoryId)
+			{
+				$categoryPath = self::getCategoriesPath($categoryId);
+
+				if(array_intersect($categoryPath, $restrictionParams["CATEGORIES"]))
+				{
+					$isProductFromCategory =  true;
+					break;
+				}
+			}
+
+			if(!$isProductFromCategory)
 				return false;
 		}
 
@@ -108,11 +122,16 @@ class ByProductCategory extends Base
 	{
 		$groupsIds = array();
 
-		$res = \CIBlockElement::GetElementGroups($productIds, true, array('ID'));
+		$res = \CIBlockElement::GetElementGroups($productIds, true, array('ID', 'IBLOCK_ELEMENT_ID'));
 
 		while($group = $res->Fetch())
-			if(!in_array($group['ID'], $groupsIds))
-				$groupsIds[] = $group['ID'];
+		{
+			if(!is_array($groupsIds[$group['IBLOCK_ELEMENT_ID']]))
+				$groupsIds[$group['IBLOCK_ELEMENT_ID']] = array();
+
+			if(!in_array($group['ID'], $groupsIds[$group['IBLOCK_ELEMENT_ID']]))
+				$groupsIds[$group['IBLOCK_ELEMENT_ID']][] = $group['ID'];
+		}
 
 		return $groupsIds;
 	}

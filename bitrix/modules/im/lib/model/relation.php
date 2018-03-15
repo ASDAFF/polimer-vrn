@@ -12,7 +12,7 @@ Loc::loadMessages(__FILE__);
  * <ul>
  * <li> ID int mandatory
  * <li> CHAT_ID int mandatory
- * <li> MESSAGE_TYPE string(2) optional default 'P'
+ * <li> MESSAGE_TYPE string(1) optional default 'P'
  * <li> USER_ID int mandatory
  * <li> START_ID int optional
  * <li> LAST_ID int optional
@@ -101,6 +101,11 @@ class RelationTable extends Entity\DataManager
 				'data_type' => 'integer',
 				'title' => Loc::getMessage('RELATION_ENTITY_CALL_STATUS_FIELD'),
 			),
+			'MESSAGE_STATUS' => array(
+				'data_type' => 'string',
+				'default_value' => IM_MESSAGE_STATUS_RECEIVED,
+				'validation' => array(__CLASS__, 'validateMessageStatus'),
+			),
 			'NOTIFY_BLOCK' => array(
 				'data_type' => 'boolean',
 				'values' => array('N', 'Y'),
@@ -110,6 +115,10 @@ class RelationTable extends Entity\DataManager
 				'data_type' => 'boolean',
 				'values' => array('N', 'Y'),
 				'default_value' => 'N',
+			),
+			'COUNTER' => array(
+				'data_type' => 'integer',
+				'default_value' => 0,
 			),
 			'CHAT' => array(
 				'data_type' => 'Bitrix\Im\Model\ChatTable',
@@ -133,6 +142,7 @@ class RelationTable extends Entity\DataManager
 			),
 		);
 	}
+
 	/**
 	 * Returns validators for MESSAGE_TYPE field.
 	 *
@@ -142,6 +152,18 @@ class RelationTable extends Entity\DataManager
 	{
 		return array(
 			new Entity\Validator\Length(null, 1),
+		);
+	}
+
+	/**
+	 * Returns validators for MESSAGE_STATUS field.
+	 *
+	 * @return array
+	 */
+	public static function validateMessageStatus()
+	{
+		return array(
+			new Entity\Validator\Length(null, 50),
 		);
 	}
 }

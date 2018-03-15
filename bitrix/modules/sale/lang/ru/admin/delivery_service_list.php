@@ -44,4 +44,6 @@ $MESS ['SALE_SDL_FILTER_SITE'] = "Сайт";
 $MESS ['SALE_SDL_ALL'] = "Все";
 $MESS ['SALE_SDL_MARKETPLACE_ADD_NEW'] = "Установить из Маркетплейс";
 $MESS ['SALE_SDL_MARKETPLACE_ADD_NEW_ALT'] = "Нажмите для установки из Маркетплейс";
+$MESS ['SALE_SDL_VAT_ID'] = "Ставка НДС";
+$MESS ['SALE_SDL_NO_VAT'] = "Без НДС";
 ?>

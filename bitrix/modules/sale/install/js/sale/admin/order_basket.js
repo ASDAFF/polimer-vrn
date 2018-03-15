@@ -32,6 +32,7 @@ BX.Sale.Admin.OrderBasket = function (params)
 	this.qantityUpdaterTimeout = 0;
 	this.qantityUpdaterDelay = 750;
 	this.canSendUpdateQuantityRequest = true;
+	this.lastChangedQuantity = false;
 
 	if(params.iblocksSkuParams)
 	{
@@ -1322,7 +1323,32 @@ BX.Sale.Admin.OrderBasketEdit.prototype.updateProductPriceCell = function(produc
 	priceParent.removeChild(oldPriceCell);
 	priceParent.appendChild(newPriceCell);
 	newPriceCell.id = id;
+	this.updateBasePrice(basketCode, product);
+	this.updateProviderData(basketCode, product);
 	this.updateProductSumm(basketCode);
+};
+
+BX.Sale.Admin.OrderBasketEdit.prototype.updateBasePrice = function(basketCode, product)
+{
+	var form = BX.Sale.Admin.OrderEditPage.getForm();
+	var basePrice = form.elements[this.getFieldName(basketCode, "BASE_PRICE")];
+
+	if(basePrice)
+		basePrice.value = product.BASE_PRICE;
+
+	var priceBase = form.elements[this.getFieldName(basketCode, "PRICE_BASE")];
+
+	if(priceBase)
+		priceBase.value = product.PRICE_BASE;
+};
+
+BX.Sale.Admin.OrderBasketEdit.prototype.updateProviderData = function(basketCode, product)
+{
+	var form = BX.Sale.Admin.OrderEditPage.getForm(),
+		providerData = form.elements[this.getFieldName(basketCode, "PROVIDER_DATA")];
+
+	if(providerData)
+		providerData.value = product.PROVIDER_DATA;
 };
 
 BX.Sale.Admin.OrderBasketEdit.prototype.updateProductDiscountsCell = function(product)
@@ -2188,6 +2214,24 @@ BX.Sale.Admin.OrderBasketEdit.prototype.createFieldQuantity = function(basketCod
 			style: { width: '60px' }
 		}),
 		ratioNode = this.createMeasureRatioNode(basketCode, input, ratio);
+
+	/*
+	 * If we will receive the error during the refreshOrderData error we must restore this value
+	 */
+	BX.bind(
+		input,
+		"focus",
+		function(e){
+			var oldValue = input.value;
+			BX.Sale.Admin.OrderEditPage.addRollbackMethod(
+				function(){
+					var tmp = _this.canSendUpdateQuantityRequest;
+					_this.canSendUpdateQuantityRequest = false;
+					_this.setProductQuantity(basketCode, oldValue);
+					setTimeout(function(){_this.canSendUpdateQuantityRequest = tmp;}, 1);
+			});
+		}
+	);
 
 	BX.bind(
 		input,

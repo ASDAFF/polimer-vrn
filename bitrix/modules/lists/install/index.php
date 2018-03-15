@@ -65,9 +65,10 @@ Class lists extends CModule
 			RegisterModuleDependences('socialnetwork', 'BeforeIndexSocNet', 'lists', 'CListsLiveFeed', 'BeforeIndexSocNet');
 			RegisterModuleDependences('socialnetwork', 'OnAfterSonetLogEntryAddComment', 'lists', 'CListsLiveFeed', 'OnAfterSonetLogEntryAddComment');
 			RegisterModuleDependences('socialnetwork', 'OnForumCommentIMNotify', 'lists', 'CListsLiveFeed', 'OnForumCommentIMNotify');
-			RegisterModuleDependences("iblock", "OnAfterIBlockElementDelete", "lists", "CLists", "OnAfterIBlockElementDelete");
 			RegisterModuleDependences("socialnetwork", "OnSendMentionGetEntityFields", "lists", "CListsLiveFeed", "OnSendMentionGetEntityFields");
+			RegisterModuleDependences("socialnetwork", "OnSocNetGroupDelete", "lists", "CListsLiveFeed", "OnSocNetGroupDelete");
 			RegisterModuleDependences('rest', 'onRestServiceBuildDescription', 'lists', '\Bitrix\Lists\Rest\RestService', 'onRestServiceBuildDescription');
+			RegisterModuleDependences("iblock", "OnAfterIBlockElementDelete", "lists", "CLists", "OnAfterIBlockElementDelete");
 			RegisterModuleDependences("iblock", "OnAfterIBlockPropertyAdd", "lists", "CLists", "OnAfterIBlockPropertyAdd");
 			RegisterModuleDependences("iblock", "OnAfterIBlockPropertyUpdate", "lists", "CLists", "OnAfterIBlockPropertyUpdate");
 			RegisterModuleDependences("iblock", "OnAfterIBlockPropertyDelete", "lists", "CLists", "OnAfterIBlockPropertyDelete");
@@ -213,6 +214,8 @@ Class lists extends CModule
 		UnRegisterModuleDependences('socialnetwork', 'BeforeIndexSocNet', 'lists', 'CListsLiveFeed', 'BeforeIndexSocNet');
 		UnRegisterModuleDependences('socialnetwork', 'OnAfterSonetLogEntryAddComment', 'lists', 'CListsLiveFeed', 'OnAfterSonetLogEntryAddComment');
 		UnRegisterModuleDependences('socialnetwork', 'OnForumCommentIMNotify', 'lists', 'CListsLiveFeed', 'OnForumCommentIMNotify');
+		UnRegisterModuleDependences("socialnetwork", "OnSendMentionGetEntityFields", "lists", "CListsLiveFeed", "OnSendMentionGetEntityFields");
+		UnRegisterModuleDependences("socialnetwork", "OnSocNetGroupDelete", "lists", "CListsLiveFeed", "OnSocNetGroupDelete");
 		UnRegisterModuleDependences("iblock", "OnAfterIBlockElementDelete", "lists", "CLists", "OnAfterIBlockElementDelete");
 		UnRegisterModuleDependences('rest', 'onRestServiceBuildDescription', 'lists', '\Bitrix\Lists\Rest\RestService', 'onRestServiceBuildDescription');
 		UnRegisterModuleDependences("iblock", "OnAfterIBlockPropertyAdd", "lists", "CLists", "OnAfterIBlockPropertyAdd");

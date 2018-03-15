@@ -10,11 +10,13 @@ class Fuser extends BaseContext
 
 	/**
 	 * FUser constructor.
+	 *
+	 * @param int $fuserId
 	 */
 	public function __construct($fuserId)
 	{
 		$this->fuserId = $fuserId;
 		$this->userId = RuntimeCache\FuserCache::getInstance()->getUserIdById($this->fuserId);
-		$this->userGroups = \CUser::getUserGroup($this->userId);
+		$this->setUserGroups(\CUser::getUserGroup($this->userId));
 	}
 }

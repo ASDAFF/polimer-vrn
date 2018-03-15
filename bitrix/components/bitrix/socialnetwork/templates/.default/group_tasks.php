@@ -19,7 +19,8 @@ if (
 			case 'VIEW_MODE_GANTT':
 				$componentName = 'bitrix:tasks.task.gantt';
 				break;
-			case 'VIEW_MODE_KANBAN':
+			case 'VIEW_MODE_PLAN':
+//			case 'VIEW_MODE_KANBAN':
 				$componentName = 'bitrix:tasks.kanban';
 				break;
 			case 'VIEW_MODE_TIMELINE':

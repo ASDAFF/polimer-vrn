@@ -11,6 +11,7 @@ use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\UserContentViewTable;
+use Bitrix\Main\DB\SqlQueryException;
 
 class UserContentView
 {
@@ -252,6 +253,28 @@ class UserContentView
 		}
 
 		$result['items'] = array_values($userList);
+
+		return $result;
+	}
+
+	public static function deleteNoDemand($userId = 0)
+	{
+		$userId = intval($userId);
+		if ($userId <= 0)
+		{
+			return false;
+		}
+
+		$result = true;
+
+		try
+		{
+			\Bitrix\Main\Application::getConnection()->queryExecute("DELETE FROM ".UserContentViewTable::getTableName()." WHERE USER_ID = ".$userId);
+		}
+		catch (SqlQueryException $exception)
+		{
+			$result = false;
+		}
 
 		return $result;
 	}

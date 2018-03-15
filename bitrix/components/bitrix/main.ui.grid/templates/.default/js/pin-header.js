@@ -15,6 +15,7 @@
 		this.table = null;
 		this.header = null;
 		this.container = null;
+		this.parentNodeResizeObserver = null;
 		this.init(parent);
 	};
 
@@ -23,6 +24,22 @@
 		{
 			this.parent = parent;
 			this.rect = BX.pos(this.parent.getHead());
+			this.gridRect = BX.pos(this.parent.getTable());
+
+			var workArea = BX.Grid.Utils.getBySelector(document, '#workarea-content', true);
+
+			if (!workArea)
+			{
+				workArea = this.parent.getContainer().parentNode;
+				workArea = !!workArea ? workArea.parentNode : workArea;
+			}
+
+			if (!!workArea)
+			{
+				this.parentNodeResizeObserver = new BX.ResizeObserver(BX.proxy(this.refreshRect, this));
+				this.parentNodeResizeObserver.observe(workArea);
+			}
+
 			this.create();
 
 			document.addEventListener('scroll', BX.proxy(this._onScroll, this), BX.Grid.Utils.listenerParams({passive: true}));
@@ -30,6 +47,12 @@
 			BX.addCustomEvent('Grid::updated', BX.proxy(this._onGridUpdate, this));
 			BX.addCustomEvent('Grid::resize', BX.proxy(this._onGridUpdate, this));
 			BX.bind(window, 'resize', BX.proxy(this._onGridUpdate, this));
+		},
+
+		refreshRect: function()
+		{
+			this.gridRect = BX.pos(this.parent.getTable());
+			this.rect = BX.pos(this.parent.getHead());
 		},
 
 		_onGridUpdate: function()
@@ -42,6 +65,7 @@
 			isPinned && this.pin();
 
 			this.table = null;
+			this.refreshRect();
 
 			BX.onCustomEvent(window, 'Grid::headerUpdated', []);
 		},
@@ -110,6 +134,24 @@
 			BX.onCustomEvent(window, 'Grid::headerUnpinned', []);
 		},
 
+		stopPin: function()
+		{
+			BX.Grid.Utils.styleForEach([this.getContainer()], {
+				'position': 'absolute',
+				'top': ((this.gridRect.bottom - this.rect.height - this.gridRect.top) + 'px'),
+				'box-shadow': 'none'
+			});
+		},
+
+		startPin: function()
+		{
+			BX.Grid.Utils.styleForEach([this.getContainer()], {
+				'position': 'fixed',
+				'top': 0,
+				'box-shadow': ''
+			});
+		},
+
 		isPinned: function()
 		{
 			return !this.getContainer().hidden;
@@ -117,13 +159,22 @@
 
 		_onScroll: function()
 		{
-			if (this.rect.top <= window.scrollY)
+			if (this.gridRect.bottom > (window.scrollY + this.rect.height))
 			{
-				!this.isPinned() && this.pin();
+				this.startPin();
+
+				if (this.rect.top <= window.scrollY)
+				{
+					!this.isPinned() && this.pin();
+				}
+				else
+				{
+					this.isPinned() && this.unpin();
+				}
 			}
 			else
 			{
-				this.isPinned() && this.unpin();
+				this.stopPin();
 			}
 		},
 

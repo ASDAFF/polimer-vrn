@@ -43,7 +43,7 @@ window.JCCatalogCompareList.prototype.reload = function()
 	BX.showWait(this.obCompare);
 	BX.ajax.post(
 		this.ajax.url,
-		this.ajax.params,
+		this.ajax.reload,
 		BX.proxy(this.reloadResult, this)
 	);
 };

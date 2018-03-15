@@ -16,10 +16,20 @@
 .feed-wrap-empty {
 	padding-top: 250px;
 	padding-bottom: 60px;
-	background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNzMiIGhlaWdodD0iMTYyIiB2aWV3Qm94PSIwIDAgMTczIDE2MiI+ICA8ZGVmcz4gICAgPHN0eWxlPiAgICAgIC5jbHMtMSB7ICAgICAgICBmaWxsOiAjOTc5ZGE0OyAgICAgICAgZmlsbC1ydWxlOiBldmVub2RkOyAgICAgICAgb3BhY2l0eTogMC4xMzsgICAgICB9ICAgIDwvc3R5bGU+ICA8L2RlZnM+ICA8cGF0aCBpZD0iUm91bmRlZF9SZWN0YW5nbGVfOSIgZGF0YS1uYW1lPSJSb3VuZGVkIFJlY3RhbmdsZSA5IiBjbGFzcz0iY2xzLTEiIGQ9Ik02NjYsNjU5SDgzNWEyLDIsMCwwLDEsMiwyVjgxOWEyLDIsMCwwLDEtMiwySDY2NmEyLDIsMCwwLDEtMi0yVjY2MUEyLDIsMCwwLDEsNjY2LDY1OVptMTEuMjc2LDMwLjIwOEg4MjMuNzI0VjgwNy43SDY3Ny4yNzZWNjg5LjIwOFptMTQuMTUsMjAuNTg0aDExOGExLDEsMCwwLDEsMSwxdjExLjQ1MmExLDEsMCwwLDEtMSwxaC0xMThhMSwxLDAsMCwxLTEtMVY3MTAuNzkyQTEsMSwwLDAsMSw2OTEuNDI2LDcwOS43OTJabTAsMjYuOTI0SDc4Mi43MWExLDEsMCwwLDEsMSwxdjExLjNhMSwxLDAsMCwxLTEsMUg2OTEuNDI2YTEsMSwwLDAsMS0xLTF2LTExLjNBMSwxLDAsMCwxLDY5MS40MjYsNzM2LjcxNlptMCwyNi42MDlINzgyLjcxYTEsMSwwLDAsMSwxLDF2MTEuNmExLDEsMCwwLDEtMSwxSDY5MS40MjZhMSwxLDAsMCwxLTEtMXYtMTEuNkExLDEsMCwwLDEsNjkxLjQyNiw3NjMuMzI1WiIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoLTY2NCAtNjU5KSIvPjwvc3ZnPg==) no-repeat scroll center 89px;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22173%22%20height%3D%22162%22%20viewBox%3D%220%200%20173%20162%22%3E%3Cpath%20fill%3D%22%23979da4%22%20opacity%3D%22.13%22%20fill-rule%3D%22evenodd%22%20d%3D%22M666%2C659H835a2%2C2%2C0%2C0%2C1%2C2%2C2V819a2%2C2%2C0%2C0%2C1-2%2C2H666a2%2C2%2C0%2C0%2C1-2-2V661A2%2C2%2C0%2C0%2C1%2C666%2C659Zm11.276%2C30.208H823.724V807.7H677.276V689.208Zm14.15%2C20.584h118a1%2C1%2C0%2C0%2C1%2C1%2C1v11.452a1%2C1%2C0%2C0%2C1-1%2C1h-118a1%2C1%2C0%2C0%2C1-1-1V710.792A1%2C1%2C0%2C0%2C1%2C691.426%2C709.792Zm0%2C26.924H782.71a1%2C1%2C0%2C0%2C1%2C1%2C1v11.3a1%2C1%2C0%2C0%2C1-1%2C1H691.426a1%2C1%2C0%2C0%2C1-1-1v-11.3A1%2C1%2C0%2C0%2C1%2C691.426%2C736.716Zm0%2C26.609H782.71a1%2C1%2C0%2C0%2C1%2C1%2C1v11.6a1%2C1%2C0%2C0%2C1-1%2C1H691.426a1%2C1%2C0%2C0%2C1-1-1v-11.6A1%2C1%2C0%2C0%2C1%2C691.426%2C763.325Z%22%20transform%3D%22translate%28-664%20-659%29%22/%3E%3C/svg%3E') no-repeat scroll center 89px;
 	background-size: 120px 120px;
 	margin: 15px;
 }
+
+.bitrix24-light-theme .feed-wrap-empty {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22173%22%20height%3D%22162%22%20viewBox%3D%220%200%20173%20162%22%3E%3Cpath%20fill%3D%22%23fff%22%20opacity%3D%22.5%22%20fill-rule%3D%22evenodd%22%20d%3D%22M666%2C659H835a2%2C2%2C0%2C0%2C1%2C2%2C2V819a2%2C2%2C0%2C0%2C1-2%2C2H666a2%2C2%2C0%2C0%2C1-2-2V661A2%2C2%2C0%2C0%2C1%2C666%2C659Zm11.276%2C30.208H823.724V807.7H677.276V689.208Zm14.15%2C20.584h118a1%2C1%2C0%2C0%2C1%2C1%2C1v11.452a1%2C1%2C0%2C0%2C1-1%2C1h-118a1%2C1%2C0%2C0%2C1-1-1V710.792A1%2C1%2C0%2C0%2C1%2C691.426%2C709.792Zm0%2C26.924H782.71a1%2C1%2C0%2C0%2C1%2C1%2C1v11.3a1%2C1%2C0%2C0%2C1-1%2C1H691.426a1%2C1%2C0%2C0%2C1-1-1v-11.3A1%2C1%2C0%2C0%2C1%2C691.426%2C736.716Zm0%2C26.609H782.71a1%2C1%2C0%2C0%2C1%2C1%2C1v11.6a1%2C1%2C0%2C0%2C1-1%2C1H691.426a1%2C1%2C0%2C0%2C1-1-1v-11.6A1%2C1%2C0%2C0%2C1%2C691.426%2C763.325Z%22%20transform%3D%22translate%28-664%20-659%29%22/%3E%3C/svg%3E');
+}
+
+.bitrix24-dark-theme .feed-wrap-empty {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22173%22%20height%3D%22162%22%20viewBox%3D%220%200%20173%20162%22%3E%3Cpath%20fill%3D%22%23000%22%20opacity%3D%22.2%22%20fill-rule%3D%22evenodd%22%20d%3D%22M666%2C659H835a2%2C2%2C0%2C0%2C1%2C2%2C2V819a2%2C2%2C0%2C0%2C1-2%2C2H666a2%2C2%2C0%2C0%2C1-2-2V661A2%2C2%2C0%2C0%2C1%2C666%2C659Zm11.276%2C30.208H823.724V807.7H677.276V689.208Zm14.15%2C20.584h118a1%2C1%2C0%2C0%2C1%2C1%2C1v11.452a1%2C1%2C0%2C0%2C1-1%2C1h-118a1%2C1%2C0%2C0%2C1-1-1V710.792A1%2C1%2C0%2C0%2C1%2C691.426%2C709.792Zm0%2C26.924H782.71a1%2C1%2C0%2C0%2C1%2C1%2C1v11.3a1%2C1%2C0%2C0%2C1-1%2C1H691.426a1%2C1%2C0%2C0%2C1-1-1v-11.3A1%2C1%2C0%2C0%2C1%2C691.426%2C736.716Zm0%2C26.609H782.71a1%2C1%2C0%2C0%2C1%2C1%2C1v11.6a1%2C1%2C0%2C0%2C1-1%2C1H691.426a1%2C1%2C0%2C0%2C1-1-1v-11.6A1%2C1%2C0%2C0%2C1%2C691.426%2C763.325Z%22%20transform%3D%22translate%28-664%20-659%29%22/%3E%3C/svg%3E');
+	color: rgba(51, 51, 51, .3);
+}
+
 
 .feed-wrap a, .feed-item-wrap a {
 	text-decoration: none;
@@ -873,7 +883,6 @@
 }
 
 .feed-new-message-informer-place {
-	background-color: #eef2f4;
 	height: 33px;
 	position: relative;
 	z-index: 140;
@@ -921,7 +930,7 @@
 	display: inline-block;
 	bottom: 0;
 	position: absolute;
-	left: 50%;
+/*	left: 50%;*/
 	height: 36px;
 	-webkit-transform: translate(-50%, 0);
 	transform: translate(-50%, 0);
@@ -1099,7 +1108,6 @@
 }
 
 .feed-post-block {
-	border-bottom: 15px solid #eef2f4;
 	padding-bottom: 20px;
 	min-height: 87px;
 	position: relative;
@@ -1531,6 +1539,11 @@ span.feed-add-post-destination-new:hover {
 	text-decoration: none;
 }
 
+.feed-add-post-destination-cont .feed-add-post-destination-limited-view {
+/*	opacity: 0.3;*/
+	margin-left: 6px;
+}
+
 .feed-post-text-more {
 	background-image: -webkit-linear-gradient(top, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5) 10px, rgba(255, 255, 255, 1) 20px);
 	background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.5) 10px, rgba(255, 255, 255, 1) 20px);
@@ -1615,13 +1628,12 @@ span.feed-add-post-destination-new:hover {
 	background-color: #ffffff;
 	line-height: 12px;
 	overflow: hidden;
-	padding: 23px 18px 1px 70px;
-	margin: 0 -18px 0 -70px;
+	padding: 23px 18px 1px 85px;
+	margin: 0 -18px 0 -85px;
 	min-height: 14px;
 }
 
-.start-page .feed-post-informers,
-.crm-feed-wrap .feed-post-informers {
+.start-page .feed-post-informers, .crm-feed-wrap .feed-post-informers  {
 	margin-left: -85px;
 	padding-left: 85px;
 }
@@ -2523,12 +2535,14 @@ span.feed-add-post-destination-new:hover {
 }
 
 .feed-event-view-timezon-icon {
-	background: url(/bitrix/images/calendar/calendar-sprite.png) no-repeat -10px -482px;
-	cursor: pointer;
 	display: inline-block;
-	height: 15px;
-	vertical-align: middle;
-	width: 17px;
+	margin: 3px 0 0 0;
+	height: 13px;
+	width: 14px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2014%2013%22%3E%3Cpath%20fill%3D%22%238E959D%22%20fill-rule%3D%22evenodd%22%20d%3D%22M12.636%209.942h-2.71v-.03H9.92v-2.31h.977V8.96h1.74v.982zm-2.243-3.96c-1.918%200-3.473%201.556-3.473%203.473%200%201.918%201.555%203.472%203.473%203.472%201.917%200%203.472-1.554%203.472-3.472%200-1.917-1.555-3.472-3.472-3.472zm-6.056%204.57c-1.328-.46-2.405-1.453-2.94-2.743h2.12c.156%201.088.444%202.036.82%202.74zM1.02%205.927c0-.368.048-.725.125-1.07h2.283c-.027.347-.044.704-.044%201.07%200%20.376.017.743.046%201.1H1.154c-.08-.355-.134-.72-.134-1.1zm3.317-4.622c-.38.71-.67%201.67-.824%202.77H1.388c.532-1.303%201.61-2.308%202.95-2.77zm1.592.035c.73%200%201.357%201.127%201.636%202.736H4.292c.28-1.61.906-2.735%201.637-2.735zm4.54%202.736H8.345c-.155-1.1-.445-2.06-.825-2.77%201.338.462%202.418%201.467%202.95%202.77zm-4.607%202.95H4.195c-.035-.353-.058-.717-.058-1.098%200-.37.02-.725.055-1.07h3.474c.007.068.006.143.01.212.8-.5%201.736-.802%202.748-.802.428%200%20.838.067%201.235.164C10.994%201.884%208.685%200%205.93%200%202.654%200%200%202.654%200%205.928c0%203.244%202.606%205.875%205.837%205.925-.263-.505-.446-1.052-.532-1.637-.447-.43-.812-1.297-1.007-2.407h1.226c.09-.274.205-.533.34-.783z%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	vertical-align: top;
+	cursor: pointer;
 }
 
 .feed-info .feed-user-avatar,
@@ -2810,7 +2824,7 @@ span.feed-add-post-destination-new:hover {
 }
 
 * html .feed-add-post-destination-sonetgroups {
-	background-color: #f6ebe2;
+	background-color: #ADE7E4;
 }
 
 * html .feed-add-post-files-block .feed-add-post-files-title {
@@ -4033,13 +4047,6 @@ a.crm-feed-client-company:hover {
 
 /*=========================== feed animation ======================*/
 
-
-
-.bx-placeholder-wrap {
-	border-bottom: 15px solid #eef2f4;
-	padding-bottom: 80px;
-}
-
 .bx-placeholder {
 
 	-webkit-animation: 0.8s placeHolderShimmer linear infinite;
@@ -4113,7 +4120,7 @@ a.crm-feed-client-company:hover {
 .bx-curtain-row-0 td {height: 5px;}
 .bx-curtain-row-1 td {height: 12px;}
 .bx-curtain-row-2 td {height: 29px;}
-.bx-curtain-row-last td {height: 33px;}
+.bx-curtain-row-last td {height: 110px;}
 
 td.transparent {background: none;}
 
@@ -4341,3 +4348,21 @@ td.transparent {background: none;}
 	background-color: rgba(255, 0, 0, 0.1)
 }
 */
+
+.feed-post-text-block .bx-inline-tag {
+	color: #0b66c3;
+}
+
+.feed-post-text-block .bx-inline-tag:hover {
+	border-bottom: 1px solid;
+	cursor: pointer;
+}
+
+.feed-com-text .bx-inline-tag {
+	color: #0b66c3;
+}
+
+.feed-com-text .bx-inline-tag:hover {
+	border-bottom: 1px solid;
+	cursor: pointer;
+}

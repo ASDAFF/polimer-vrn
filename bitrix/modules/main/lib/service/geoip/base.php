@@ -86,14 +86,6 @@ abstract class Base
 	}
 
 	/**
-	 * @return string Html to show inside admin edit form.
-	 */
-	public function getAdminConfigHtml()
-	{
-		return '';
-	}
-
-	/**
 	 * @return array Set of fields description for administration purposes.
 	 */
 	public function getConfigForAdmin()

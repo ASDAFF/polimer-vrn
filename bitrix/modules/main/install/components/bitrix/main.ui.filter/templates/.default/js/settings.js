@@ -85,6 +85,7 @@
 		this.classForAllCheckbox = 'main-ui-filter-save-for-all';
 		this.classShow = 'main-ui-show';
 		this.classFocus = 'main-ui-focus';
+		this.classPresetField = 'main-ui-filter-preset-field';
 		this.numberPostfix = '_numsel';
 		this.datePostfix = '_datesel';
 		this.toPostfix = '_to';

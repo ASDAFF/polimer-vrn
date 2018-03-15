@@ -5,9 +5,8 @@ namespace Bitrix\Sale\Cashbox;
 use Bitrix\Main;
 use Bitrix\Catalog;
 use Bitrix\Main\Localization;
-use Bitrix\Sale\Cashbox\Internals\CashboxCheckTable;
-use Bitrix\Sale\Cashbox\Internals\KkmModelTable;
-use Bitrix\Sale\Result;
+use Bitrix\Sale\Cashbox\Internals\CashboxTable;
+use Bitrix\Sale\PriceMaths;
 
 Localization\Loc::loadMessages(__FILE__);
 
@@ -28,10 +27,11 @@ class CashboxBitrix extends Cashbox
 		$result = array();
 
 		$data = $check->getDataForCheck();
+
 		foreach ($data['payments'] as $payment)
 		{
 			$result['payments'][] = array(
-				'type' => $this->getValueFromSettings('PAYMENT_TYPE', $payment['is_cash']),
+				'type' => $this->getValueFromSettings('PAYMENT_TYPE', $payment['type']),
 				'value' => $payment['sum']
 			);
 		}
@@ -60,7 +60,8 @@ class CashboxBitrix extends Cashbox
 
 			if (isset($item['discount']) && is_array($item['discount']))
 			{
-				$value['discount'] = $item['discount']['discount']*$item['quantity'];
+				$discountValue = PriceMaths::roundPrecision($item['base_price']*$item['quantity']) - $item['sum'];
+				$value['discount'] = $discountValue;
 
 				$discountType = $item['discount']['discount_type'] === 'P' ? 1 : 0;
 				$value['discount_type'] = $discountType;
@@ -349,7 +350,7 @@ class CashboxBitrix extends Cashbox
 	 */
 	protected static function getErrorType($errorCode)
 	{
-		$errors = array(-3800, -3803, -3804, -3805, -3816, -3807, -3896, -3897);
+		$errors = array(-3800, -3803, -3804, -3805, -3816, -3807, -3896, -3897, -4026);
 		if (in_array($errorCode, $errors))
 			return Errors\Error::TYPE;
 
@@ -368,29 +369,37 @@ class CashboxBitrix extends Cashbox
 	{
 		$settings = array();
 
-		if ($modelId > 0)
+		$kkmList = static::getSupportedKkmModels();
+		if (isset($kkmList[$modelId]))
 		{
-			$data = KkmModelTable::getRowById($modelId);
-			if (isset($data['SETTINGS']['PAYMENT_TYPE']))
+			$defaultSettings = $kkmList[$modelId]['SETTINGS'];
+
+			if (isset($defaultSettings['PAYMENT_TYPE']))
 			{
 				$settings['PAYMENT_TYPE'] = array(
 					'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_P_TYPE'),
+					'REQUIRED' => 'Y',
 					'ITEMS' => array()
 				);
 
-				$systemPaymentType = array('Y', 'N', 'A');
+				$systemPaymentType = array(
+					Check::PAYMENT_TYPE_CASH,
+					Check::PAYMENT_TYPE_CASHLESS,
+				);
 				foreach ($systemPaymentType as $type)
 				{
 					$settings['PAYMENT_TYPE']['ITEMS'][$type] = array(
 						'TYPE' => 'STRING',
-						'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_P_TYPE_LABEL_'.$type),
-						'VALUE' => $data['SETTINGS']['PAYMENT_TYPE'][$type]
+						'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_P_TYPE_LABEL_'.ToUpper($type)),
+						'VALUE' => $defaultSettings['PAYMENT_TYPE'][$type]
 					);
 				}
 			}
 
+
 			$settings['VAT'] = array(
 				'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_VAT'),
+				'REQUIRED' => 'Y',
 				'ITEMS' => array(
 					'NOT_VAT' => array(
 						'TYPE' => 'STRING',
@@ -409,8 +418,8 @@ class CashboxBitrix extends Cashbox
 					foreach ($vatList as $vat)
 					{
 						$value = '';
-						if (isset($data['SETTINGS']['VAT'][(int)$vat['RATE']]))
-							$value = $data['SETTINGS']['VAT'][(int)$vat['RATE']];
+						if (isset($defaultSettings['VAT'][(int)$vat['RATE']]))
+							$value = $defaultSettings['VAT'][(int)$vat['RATE']];
 
 						$settings['VAT']['ITEMS'][(int)$vat['ID']] = array(
 							'TYPE' => 'STRING',
@@ -464,24 +473,63 @@ class CashboxBitrix extends Cashbox
 	}
 
 	/**
-	 * @param $data
-	 * @return Result
+	 * @param Main\HttpRequest $request
+	 * @return array
 	 */
-	public static function validateSettings($data)
+	public static function extractSettingsFromRequest(Main\HttpRequest $request)
 	{
-		$result = new Result();
+		$settings = parent::extractSettingsFromRequest($request);
 
-		if (empty($data['KKM_ID']))
+		if ($settings['PAYMENT_TYPE'])
 		{
-			$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_VALIDATE_E_KKM_ID')));
+			/* hack is for difference between real values of payment cashbox's settings and user view (diff is '-1') */
+			foreach ($settings['PAYMENT_TYPE'] as $i => $payment)
+			{
+				if ((int)$payment)
+					$settings['PAYMENT_TYPE'][$i] = (int)$payment - 1;
+				else
+					$settings['PAYMENT_TYPE'][$i] = 0;
+			}
 		}
 
-		if (empty($data['NUMBER_KKM']))
-		{
-			$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_VALIDATE_E_NUMBER_KKM')));
-		}
-
-		return $result;
+		return $settings;
 	}
 
+	/**
+	 * @return array
+	 */
+	public static function getGeneralRequiredFields()
+	{
+		$generalRequiredFields = parent::getGeneralRequiredFields();
+
+		$map = CashboxTable::getMap();
+		$generalRequiredFields['KKM_ID'] = $map['KKM_ID']['title'];
+		$generalRequiredFields['NUMBER_KKM'] = $map['NUMBER_KKM']['title'];
+
+		return $generalRequiredFields;
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function getSupportedKkmModels()
+	{
+		return array(
+			'atol' => array(
+				'NAME' => 'ATOL',
+				'SETTINGS' => array(
+					'VAT' => array(
+						'NOT_VAT' => 4,
+						0 => 1,
+						10 => 2,
+						18 => 3
+					),
+					'PAYMENT_TYPE' => array(
+						Check::PAYMENT_TYPE_CASH => 0,
+						Check::PAYMENT_TYPE_CASHLESS => 3,
+					)
+				)
+			),
+		);
+	}
 }

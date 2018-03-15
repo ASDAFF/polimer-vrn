@@ -8,59 +8,84 @@ class CIMRestService extends IRestService
 	{
 		return array(
 			'im' => array(
-				'im.chat.add' => array('CIMRestService', 'chatCreate'),
-				'im.chat.setOwner' => array('CIMRestService', 'chatSetOwner'),
-				'im.chat.setManager' => array('CIMRestService', 'chatSetManager'),
-				'im.chat.updateColor' => array('CIMRestService', 'chatUpdateColor'),
-				'im.chat.updateTitle' => array('CIMRestService', 'chatUpdateTitle'),
-				'im.chat.updateAvatar' => array('CIMRestService', 'chatUpdateAvatar'),
-				'im.chat.leave' => array('CIMRestService', 'chatUserDelete'),
-				'im.chat.user.add' => array('CIMRestService', 'chatUserAdd'),
-				'im.chat.user.delete' => array('CIMRestService', 'chatUserDelete'),
-				'im.chat.user.list' => array('CIMRestService', 'chatUserList'),
-				'im.chat.sendTyping' => array('CIMRestService', 'chatSendTyping'),
+				'im.revision.get' => array(__CLASS__, 'revisionGet'),
 
-				'im.message.add' => array('CIMRestService', 'messageAdd'),
-				'im.message.delete' => array('CIMRestService', 'messageDelete'),
-				'im.message.update' => array('CIMRestService', 'messageUpdate'),
-				'im.message.like' => array('CIMRestService', 'messageLike'),
+				'im.user.get' => array(__CLASS__, 'userGet'),
+				'im.user.list' => array(__CLASS__, 'userList'),
 
-				'im.notify' => array('CIMRestService', 'notifyAdd'),
-				'im.notify.personal.add' => array('CIMRestService', 'notifyAdd'),
-				'im.notify.system.add' => array('CIMRestService', 'notifyAdd'),
-				'im.notify.delete' => array('CIMRestService', 'notifyDelete'),
+				'im.search.user' => array(__CLASS__, 'searchUser'),
+				'im.search.last.get' => array(__CLASS__, 'searchLastGet'),
+				'im.search.last.add' => array(__CLASS__, 'searchLastAdd'),
+				'im.search.last.delete' => array(__CLASS__, 'searchLastDelete'),
+
+				'im.recent.get' => array(__CLASS__, 'recentGet'),
+				'im.recent.pin' => array(__CLASS__, 'recentPin'),
+				'im.recent.hide' => array(__CLASS__, 'recentHide'),
+
+				'im.department.list' => array(__CLASS__, 'departmentList'),
+				'im.department.get' => array(__CLASS__, 'departmentGet'),
+				'im.department.colleagues.get' => array(__CLASS__, 'departmentColleaguesGet'),
+				'im.department.managers.get' => array(__CLASS__, 'departmentManagersGet'),
+				'im.department.employees.get' => array(__CLASS__, 'departmentEmployeesGet'),
+
+				'im.chat.add' => array(__CLASS__, 'chatCreate'),
+				'im.chat.setOwner' => array(__CLASS__, 'chatSetOwner'),
+				'im.chat.setManager' => array(__CLASS__, 'chatSetManager'),
+				'im.chat.updateColor' => array(__CLASS__, 'chatUpdateColor'),
+				'im.chat.updateTitle' => array(__CLASS__, 'chatUpdateTitle'),
+				'im.chat.updateAvatar' => array(__CLASS__, 'chatUpdateAvatar'),
+				'im.chat.leave' => array(__CLASS__, 'chatUserDelete'),
+				'im.chat.user.add' => array(__CLASS__, 'chatUserAdd'),
+				'im.chat.user.delete' => array(__CLASS__, 'chatUserDelete'),
+				'im.chat.user.list' => array(__CLASS__, 'chatUserList'),
+				'im.chat.sendTyping' => array(__CLASS__, 'chatSendTyping'),
+				'im.chat.mute' => array(__CLASS__, 'chatMute'),
+
+				'im.message.add' => array(__CLASS__, 'messageAdd'),
+				'im.message.delete' => array(__CLASS__, 'messageDelete'),
+				'im.message.update' => array(__CLASS__, 'messageUpdate'),
+				'im.message.like' => array(__CLASS__, 'messageLike'),
+
+				'im.notify' => array(__CLASS__, 'notifyAdd'),
+				'im.notify.personal.add' => array(__CLASS__, 'notifyAdd'),
+				'im.notify.system.add' => array(__CLASS__, 'notifyAdd'),
+				'im.notify.delete' => array(__CLASS__, 'notifyDelete'),
+
+				'im.notify.read' => array(__CLASS__, 'notifyRead'),
+
+				'im.counters.get' =>  array(__CLASS__, 'counterGet'),
 			),
 			'imbot' => Array(
-				'imbot.register' => array('CIMRestService', 'botRegister'),
-				'imbot.unregister' => array('CIMRestService', 'botUnRegister'),
-				'imbot.update' => array('CIMRestService', 'botUpdate'),
+				'imbot.register' => array(__CLASS__, 'botRegister'),
+				'imbot.unregister' => array(__CLASS__, 'botUnRegister'),
+				'imbot.update' => array(__CLASS__, 'botUpdate'),
 
-				'imbot.chat.updateColor' => array('CIMRestService', 'chatUpdateColor'),
-				'imbot.chat.updateTitle' => array('CIMRestService', 'chatUpdateTitle'),
-				'imbot.chat.updateAvatar' => array('CIMRestService', 'chatUpdateAvatar'),
-				'imbot.chat.leave' => array('CIMRestService', 'botLeave'),
-				'imbot.chat.user.add' => array('CIMRestService', 'chatUserAdd'),
-				'imbot.chat.user.delete' => array('CIMRestService', 'chatUserDelete'),
-				'imbot.chat.user.list' => array('CIMRestService', 'chatUserList'),
-				'imbot.chat.sendTyping' => array('CIMRestService', 'botSendTyping'),
+				'imbot.chat.updateColor' => array(__CLASS__, 'chatUpdateColor'),
+				'imbot.chat.updateTitle' => array(__CLASS__, 'chatUpdateTitle'),
+				'imbot.chat.updateAvatar' => array(__CLASS__, 'chatUpdateAvatar'),
+				'imbot.chat.leave' => array(__CLASS__, 'botLeave'),
+				'imbot.chat.user.add' => array(__CLASS__, 'chatUserAdd'),
+				'imbot.chat.user.delete' => array(__CLASS__, 'chatUserDelete'),
+				'imbot.chat.user.list' => array(__CLASS__, 'chatUserList'),
+				'imbot.chat.sendTyping' => array(__CLASS__, 'botSendTyping'),
 
-				'imbot.bot.list' => array('CIMRestService', 'botList'),
+				'imbot.bot.list' => array(__CLASS__, 'botList'),
 
-				'imbot.message.add' => array('CIMRestService', 'botMessageAdd'),
-				'imbot.message.delete' => array('CIMRestService', 'botMessageDelete'),
-				'imbot.message.update' => array('CIMRestService', 'botMessageUpdate'),
-				'imbot.message.like' => array('CIMRestService', 'botMessageLike'),
+				'imbot.message.add' => array(__CLASS__, 'botMessageAdd'),
+				'imbot.message.delete' => array(__CLASS__, 'botMessageDelete'),
+				'imbot.message.update' => array(__CLASS__, 'botMessageUpdate'),
+				'imbot.message.like' => array(__CLASS__, 'botMessageLike'),
 
-				'imbot.sendTyping' => array('CIMRestService', 'botSendTyping'),
+				'imbot.sendTyping' => array(__CLASS__, 'botSendTyping'),
 
-				'imbot.command.register' => array('CIMRestService', 'commandRegister'),
-				'imbot.command.unregister' => array('CIMRestService', 'commandUnRegister'),
-				'imbot.command.update' => array('CIMRestService', 'commandUpdate'),
-				'imbot.command.answer' => array('CIMRestService', 'commandAnswer'),
+				'imbot.command.register' => array(__CLASS__, 'commandRegister'),
+				'imbot.command.unregister' => array(__CLASS__, 'commandUnRegister'),
+				'imbot.command.update' => array(__CLASS__, 'commandUpdate'),
+				'imbot.command.answer' => array(__CLASS__, 'commandAnswer'),
 
-				'imbot.app.register' =>  array('callback' => array('CIMRestService', 'appRegister'), 'options' => array('private' => false)),
-				'imbot.app.unregister' =>  array('callback' => array('CIMRestService', 'appUnRegister'), 'options' => array('private' => false)),
-				'imbot.app.update' =>  array('callback' => array('CIMRestService', 'appUpdate'), 'options' => array('private' => false)),
+				'imbot.app.register' =>  array('callback' => array(__CLASS__, 'appRegister'), 'options' => array('private' => false)),
+				'imbot.app.unregister' =>  array('callback' => array(__CLASS__, 'appUnRegister'), 'options' => array('private' => false)),
+				'imbot.app.update' =>  array('callback' => array(__CLASS__, 'appUpdate'), 'options' => array('private' => false)),
 
 				CRestUtil::EVENTS => array(
 					'OnImBotMessageAdd' => array('im', 'onImBotMessageAdd', array(__CLASS__, 'onBotMessageAdd'), array("category" => \Bitrix\Rest\Sqs::CATEGORY_BOT, "sendRefreshToken" => true)),
@@ -91,6 +116,437 @@ class CIMRestService extends IRestService
 			}
 		}
 	}
+
+	public static function revisionGet($arParams, $n, CRestServer $server)
+	{
+		return Array(
+			'im_revision' => IM_REVISION,
+			'im_revision_mobile' => IM_REVISION_MOBILE,
+			'im_call_revision' => IM_CALL_REVISION,
+			'im_call_revision_mobile' => IM_CALL_REVISION_MOBILE,
+		);
+	}
+
+	/* User api */
+	public static function userGet($arParams, $n, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		$userId = null;
+		if (isset($arParams['ID']))
+		{
+			$userId = intval($arParams['ID']);
+			if ($userId <= 0)
+			{
+				throw new Bitrix\Rest\RestException("User ID can't be empty", "ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
+
+		$user = \Bitrix\Im\User::getInstance($userId);
+		if (!$user->isExists())
+		{
+			throw new Bitrix\Rest\RestException("User is not exists", "USER_NOT_EXISTS", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$currentUserId = \Bitrix\Im\User::getInstance()->getId();
+		$isExtranet = \Bitrix\Im\User::getInstance()->isExtranet();
+
+		$extranetUsers = Array($currentUserId => $currentUserId);
+		if ($isExtranet)
+		{
+			$groups = \Bitrix\Im\Integration\Socialnetwork\Extranet::getGroup(Array('CURRENT_USER' => $currentUserId));
+			if (is_array($groups))
+			{
+				foreach ($groups as $group)
+				{
+					foreach ($group['USERS'] as $userId)
+					{
+						$extranetUsers[$userId] = $userId;
+					}
+				}
+			}
+			if (!isset($extranetUsers[$userId]))
+			{
+				throw new Bitrix\Rest\RestException("You can request only users who consist of your extranet group", "ACCESS_DENIED", CRestServer::STATUS_WRONG_REQUEST);
+			}
+		}
+
+		$result = $user->getArray(Array('JSON' => 'Y'));
+
+		$result['desktop_last_date'] = \CIMMessenger::GetDesktopStatusOnline($userId);
+		$result['desktop_last_date'] = $result['desktop_last_date']? date('c', $result['desktop_last_date']): false;
+
+		return $result;
+	}
+
+	public static function userList($arParams, $offset, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		$users = Array();
+		if (is_string($arParams['USERS']))
+		{
+			$arParams['USERS'] = \CUtil::JsObjectToPhp($arParams['USERS']);
+		}
+		if (is_array($arParams['USERS']))
+		{
+			foreach ($arParams['USERS'] as $userId)
+			{
+				$userId = intval($userId);
+				if ($userId > 0)
+				{
+					$users[$userId] = $userId;
+				}
+			}
+		}
+
+		if (empty($users))
+		{
+			throw new Bitrix\Rest\RestException("A wrong format for the USERS field is passed", "INVALID_FORMAT", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$currentUserId = \Bitrix\Im\User::getInstance()->getId();
+		$isExtranet = \Bitrix\Im\User::getInstance()->isExtranet();
+
+		$extranetUsers = Array($currentUserId);
+		if ($isExtranet)
+		{
+			$groups = \Bitrix\Im\Integration\Socialnetwork\Extranet::getGroup(Array('CURRENT_USER' => $currentUserId));
+			if (is_array($groups))
+			{
+				foreach ($groups as $group)
+				{
+					foreach ($group['USERS'] as $userId)
+					{
+						$extranetUsers[$userId] = $userId;
+					}
+				}
+			}
+		}
+
+		$result = Array();
+		foreach ($users as $userId)
+		{
+			if ($isExtranet && !isset($extranetUsers[$userId]))
+			{
+				$result[$userId] = null;
+			}
+			else
+			{
+				$result[$userId] = \Bitrix\Im\User::getInstance($userId)->getArray(Array('JSON' => 'Y'));
+			}
+		}
+
+		return $result;
+	}
+
+	/* Search api */
+	public static function searchUser($arParams, $offset, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		if (!isset($arParams['FIND']))
+		{
+			throw new Bitrix\Rest\RestException("Too short a search phrase.", "FIND_SHORT", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$params = Array(
+			'FILTER' => Array('SEARCH' => $arParams['FIND']),
+			'JSON' => 'Y'
+		);
+
+		$filter = \Bitrix\Im\User::getListFilter($params);
+		if (is_null($filter))
+		{
+			throw new Bitrix\Rest\RestException("Too short a search phrase.", "FIND_SHORT", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$counter = \Bitrix\Main\UserTable::getList(array(
+			'filter' => $filter,
+			'select' => array("CNT" => new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)')),
+		))->fetch();
+
+		$result = Array();
+		if ($counter && $counter["CNT"] > 0)
+		{
+			$params['OFFSET'] = isset($arParams['OFFSET']) && intval($arParams['OFFSET']) > 0? intval($arParams['OFFSET']): intval($offset);
+			$params['LIMIT'] = intval($arParams['LIMIT']) <= 50? $arParams['LIMIT']: 10;
+
+			$result = \Bitrix\Im\User::getList($params);
+
+			return self::setNavData(
+				$result,
+				array(
+					"count" => $counter['CNT'],
+					"offset" => $params['OFFSET']
+				)
+			);
+		}
+
+		return $result;
+	}
+
+	public static function searchLastGet($arParams, $n, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		$config = Array('JSON' => 'Y');
+		if ($arParams['SKIP_OPENLINES'] == 'Y')
+		{
+			$config['SKIP_OPENLINES'] = 'Y';
+		}
+		if ($arParams['SKIP_CHAT'] == 'Y')
+		{
+			$config['SKIP_CHAT'] = 'Y';
+		}
+		if ($arParams['SKIP_DIALOG'] == 'Y')
+		{
+			$config['SKIP_DIALOG'] = 'Y';
+		}
+
+		return \Bitrix\Im\LastSearch::get(null, $config);
+	}
+
+	public static function searchLastAdd($arParams, $n, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		if (empty($arParams['DIALOG_ID']))
+		{
+			throw new Bitrix\Rest\RestException("Dialog ID can't be empty", "DIALOG_ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return \Bitrix\Im\LastSearch::add($arParams['DIALOG_ID'])? true: false;
+	}
+
+	public static function searchLastDelete($arParams, $n, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		if (empty($arParams['DIALOG_ID']))
+		{
+			throw new Bitrix\Rest\RestException("Dialog ID can't be empty", "DIALOG_ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return \Bitrix\Im\LastSearch::delete($arParams['DIALOG_ID']);
+	}
+
+	/* Recent api */
+	public static function recentGet($arParams, $n, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		$config = Array('JSON' => 'Y');
+		if ($arParams['SKIP_OPENLINES'] == 'Y')
+		{
+			$config['SKIP_OPENLINES'] = 'Y';
+		}
+		if ($arParams['SKIP_CHAT'] == 'Y')
+		{
+			$config['SKIP_CHAT'] = 'Y';
+		}
+		if ($arParams['SKIP_DIALOG'] == 'Y')
+		{
+			$config['SKIP_DIALOG'] = 'Y';
+		}
+
+		return \Bitrix\Im\Recent::get(null, $config);
+	}
+
+	public static function recentPin($arParams, $n, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		if (empty($arParams['DIALOG_ID']))
+		{
+			throw new Bitrix\Rest\RestException("Dialog ID can't be empty", "DIALOG_ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return \Bitrix\Im\Recent::pin($arParams['DIALOG_ID'], $arParams['ACTION'] != 'N');
+	}
+
+	public static function recentHide($arParams, $n, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		if (empty($arParams['DIALOG_ID']))
+		{
+			throw new Bitrix\Rest\RestException("Dialog ID can't be empty", "DIALOG_ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return \Bitrix\Im\Recent::hide($arParams['DIALOG_ID']);
+	}
+
+	/* Department api */
+
+	public static function departmentList($arParams, $n, CRestServer $server)
+	{
+		$ids = Array();
+		if (is_string($arParams['ID']))
+		{
+			$arParams['ID'] = \CUtil::JsObjectToPhp($arParams['ID']);
+		}
+		if (is_array($arParams['ID']))
+		{
+			foreach ($arParams['ID'] as $id)
+			{
+				$id = intval($id);
+				if ($id > 0)
+				{
+					$ids[$id] = $id;
+				}
+			}
+		}
+
+		if (isset($arParams['ID']) && empty($ids))
+		{
+			throw new Bitrix\Rest\RestException("A wrong format for the ID field is passed", "INVALID_FORMAT", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$options = Array();
+		if ($arParams['USER_DATA'] == 'Y')
+		{
+			$options['USER_DATA'] = 'Y';
+		}
+
+		if (isset($arParams['ID']))
+		{
+			$list = \Bitrix\Im\Department::getStructure($options);
+
+			$result = Array();
+			foreach ($ids as $id)
+			{
+				if (!isset($list[$id]))
+				{
+					$result[$id] = null;
+					continue;
+				}
+
+				if ($list[$id]['MANAGER_USER_DATA'] instanceof \Bitrix\Im\User)
+				{
+					$list[$id]['MANAGER_USER_DATA'] = $list[$id]['MANAGER_USER_DATA']->getArray(Array('JSON' => 'Y'));
+				}
+
+				$result[$id] = array_change_key_case($list[$id], CASE_LOWER);
+			}
+
+			$result = array_values($result);
+		}
+		else
+		{
+			$result = \Bitrix\Im\Department::getStructure($options);
+
+			foreach ($result as $id => $department)
+			{
+				if ($department['MANAGER_USER_DATA'] instanceof \Bitrix\Im\User)
+				{
+					$department['MANAGER_USER_DATA'] = $department['MANAGER_USER_DATA']->getArray(Array('JSON' => 'Y'));
+				}
+
+				$result[$id] = array_change_key_case($department, CASE_LOWER);
+			}
+
+			$result = array_values($result);
+		}
+
+		return $result;
+	}
+
+	public static function departmentGet($arParams, $n, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		$id = intval($arParams['ID']);
+		if ($id <= 0)
+		{
+			throw new Bitrix\Rest\RestException("Department ID can't be empty", "ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$list = \Bitrix\Im\Department::getStructure();
+		if (!isset($list[$id]))
+		{
+			throw new Bitrix\Rest\RestException("Department is not exists", "DEPARTMENT_NOT_EXISTS", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return array_change_key_case($list[$id], CASE_LOWER);
+	}
+
+	public static function departmentManagersGet($arParams, $n, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		$withUserData = $arParams['USER_DATA'] == 'Y';
+
+		$ids = Array();
+		if (is_string($arParams['ID']))
+		{
+			$arParams['ID'] = \CUtil::JsObjectToPhp($arParams['ID']);
+		}
+		if (is_array($arParams['ID']))
+		{
+			foreach ($arParams['ID'] as $id)
+			{
+				$id = intval($id);
+				if ($id > 0)
+				{
+					$ids[$id] = $id;
+				}
+			}
+		}
+
+		return \Bitrix\Im\Department::getManagers(empty($ids)? null: $ids, array('JSON' => 'Y', 'USER_DATA' => $withUserData? 'Y': 'N'));
+	}
+
+	public static function departmentEmployeesGet($arParams, $n, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		$withUserData = $arParams['USER_DATA'] == 'Y';
+
+		$ids = Array();
+		if (is_string($arParams['ID']))
+		{
+			$arParams['ID'] = \CUtil::JsObjectToPhp($arParams['ID']);
+		}
+		if (is_array($arParams['ID']))
+		{
+			foreach ($arParams['ID'] as $id)
+			{
+				$id = intval($id);
+				if ($id > 0)
+				{
+					$ids[$id] = $id;
+				}
+			}
+		}
+		if (empty($ids))
+		{
+			throw new Bitrix\Rest\RestException("Department ID can't be empty", "ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return \Bitrix\Im\Department::getEmployees($ids, array('JSON' => 'Y', 'USER_DATA' => $withUserData? 'Y': 'N'));
+	}
+
+	public static function departmentColleaguesGet($arParams, $offset, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		$withUserData = $arParams['USER_DATA'] == 'Y';
+
+		$params['OFFSET'] = isset($arParams['OFFSET']) && intval($arParams['OFFSET']) > 0? intval($arParams['OFFSET']): intval($offset);
+		$params['LIMIT'] = intval($arParams['LIMIT']) <= 50? $arParams['LIMIT']: 10;
+
+		$result = \Bitrix\Im\Department::getColleagues(null, array('JSON' => 'Y', 'USER_DATA' => $withUserData? 'Y': 'N', 'LIST' => $params));
+
+		return self::setNavData(
+			$result['result'],
+			array(
+				"count" => $result['total'],
+				"offset" => $params['OFFSET']
+			)
+		);
+	}
+
 
 	/* ChatAPI */
 
@@ -445,6 +901,19 @@ class CIMRestService extends IRestService
 		return true;
 	}
 
+	public static function chatMute($arParams, $n, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		$arParams['CHAT_ID'] = intval($arParams['CHAT_ID']);
+		if ($arParams['CHAT_ID'] <= 0)
+		{
+			throw new Bitrix\Rest\RestException("Chat ID can't be empty", "CHAT_ID_EMPTY", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		return \Bitrix\Im\Chat::mute($arParams['CHAT_ID'], $arParams['ACTION'] != 'N');
+	}
+
 	public static function botLeave($arParams, $n, CRestServer $server)
 	{
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
@@ -503,6 +972,10 @@ class CIMRestService extends IRestService
 
 	public static function botList($arParams, $n, CRestServer $server)
 	{
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 		$result = Array();
 		$list = \Bitrix\Im\Bot::getListCache();
 		foreach ($list as $botId => $botData)
@@ -631,7 +1104,7 @@ class CIMRestService extends IRestService
 		{
 			throw new Bitrix\Rest\RestException("Incorrect attach params", "ATTACH_ERROR", CRestServer::STATUS_WRONG_REQUEST);
 		}
-		
+
 		if (isset($arParams['KEYBOARD']) && !empty($arParams['KEYBOARD']))
 		{
 			$keyboard = Array();
@@ -648,7 +1121,7 @@ class CIMRestService extends IRestService
 				$keyboard = $arParams['KEYBOARD'];
 			}
 			$keyboard['BOT_ID'] = $arParams['BOT_ID'];
-			
+
 			$keyboard = \Bitrix\Im\Bot\Keyboard::getKeyboardByJson($keyboard);
 			if ($keyboard)
 			{
@@ -659,7 +1132,7 @@ class CIMRestService extends IRestService
 				throw new Bitrix\Rest\RestException("Incorrect keyboard params", "KEYBOARD_ERROR", CRestServer::STATUS_WRONG_REQUEST);
 			}
 		}
-		
+
 		if (isset($arParams['MENU']) && !empty($arParams['MENU']))
 		{
 			$menu = Array();
@@ -676,7 +1149,7 @@ class CIMRestService extends IRestService
 				$menu = $arParams['MENU'];
 			}
 			$menu['BOT_ID'] = $arParams['BOT_ID'];
-			
+
 			$menu = \Bitrix\Im\Bot\ContextMenu::getByJson($menu);
 			if ($menu)
 			{
@@ -831,7 +1304,7 @@ class CIMRestService extends IRestService
 				}
 			}
 		}
-		
+
 		if (isset($arParams['MENU']))
 		{
 			if (is_null($message))
@@ -931,6 +1404,11 @@ class CIMRestService extends IRestService
 	public static function notifyAdd($arParams, $n, CRestServer $server)
 	{
 		global $USER;
+
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
@@ -1046,6 +1524,11 @@ class CIMRestService extends IRestService
 
 	public static function notifyDelete($arParams, $n, CRestServer $server)
 	{
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
+
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		if (isset($arParams['ID']) && intval($arParams['ID']) > 0)
@@ -1087,6 +1570,26 @@ class CIMRestService extends IRestService
 		return $result;
 	}
 
+	public static function notifyRead($arParams, $n, CRestServer $server)
+	{
+		$arParams = array_change_key_case($arParams, CASE_UPPER);
+
+		if (isset($arParams['ID']) && intval($arParams['ID']) > 0)
+		{
+			$CIMNotify = new CIMNotify();
+			$CIMNotify->MarkNotifyRead($arParams['ID'], $arParams['ONLY_CURRENT'] != 'Y');
+		}
+
+		return true;
+	}
+
+	public static function counterGet($arParams, $n, CRestServer $server)
+	{
+		global $USER;
+
+		return \Bitrix\Im\Counter::get($USER->GetID());
+	}
+
 	public static function notImplemented($arParams, $n, CRestServer $server)
 	{
 		throw new Bitrix\Rest\RestException("Method isn't implemented yet", "NOT_IMPLEMENTED", CRestServer::STATUS_NOT_FOUND);
@@ -1096,6 +1599,11 @@ class CIMRestService extends IRestService
 
 	public static function botRegister($arParams, $n, CRestServer $server)
 	{
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
+
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		$customClientId = false;
@@ -1181,6 +1689,12 @@ class CIMRestService extends IRestService
 			throw new Bitrix\Rest\RestException("Bot code isn't specified", "CODE_ERROR", CRestServer::STATUS_WRONG_REQUEST);
 		}
 
+		$counter = \Bitrix\Im\Model\BotTable::getCount(array('=APP_ID' => $clientId));
+		if ($counter >= 5)
+		{
+			throw new Bitrix\Rest\RestException("Has reached the maximum number of bots for application (max: 5)", "MAX_COUNT_ERROR", CRestServer::STATUS_WRONG_REQUEST);
+		}
+
 		$arParams['TYPE'] = in_array($arParams['TYPE'], Array('O', 'B', 'H'))? $arParams['TYPE']: '';
 		$arParams['OPENLINE'] = $arParams['OPENLINE'] == 'Y'? 'Y': 'N';
 
@@ -1263,6 +1777,11 @@ class CIMRestService extends IRestService
 
 	public static function botUnRegister($arParams, $n, CRestServer $server)
 	{
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
+
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		$clientId = $server->getClientId();
@@ -1299,6 +1818,10 @@ class CIMRestService extends IRestService
 
 	public static function botUpdate($arParams, $n, CRestServer $server)
 	{
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		$clientId = $server->getClientId();
@@ -1606,7 +2129,7 @@ class CIMRestService extends IRestService
 				throw new Bitrix\Rest\RestException("Incorrect keyboard params", "KEYBOARD_ERROR", CRestServer::STATUS_WRONG_REQUEST);
 			}
 		}
-		
+
 		if (isset($arParams['MENU']) && !empty($arParams['MENU']))
 		{
 			$menu = Array();
@@ -1623,7 +2146,7 @@ class CIMRestService extends IRestService
 				$menu = $arParams['MENU'];
 			}
 			$menu['BOT_ID'] = $arParams['BOT_ID'];
-			
+
 			$menu = \Bitrix\Im\Bot\ContextMenu::getByJson($menu);
 			if ($menu)
 			{
@@ -1793,7 +2316,7 @@ class CIMRestService extends IRestService
 				}
 			}
 		}
-		
+
 		if (isset($arParams['MENU']))
 		{
 			if (is_null($message))
@@ -2058,13 +2581,13 @@ class CIMRestService extends IRestService
 			$parts = parse_url($arHandler['EVENT_HANDLER']);
 			parse_str($parts['query'], $query);
 			$query = array_change_key_case($query, CASE_UPPER);
-			
+
 			if ($query['CLIENT_ID'])
 			{
 				$arHandler['APP_CODE'] = 'custom'.$query['CLIENT_ID'];
 			}
 		}
-		
+
 		if (!$arHandler['APP_CODE'])
 		{
 			throw new Exception('Event is intended for another application');
@@ -2115,9 +2638,9 @@ class CIMRestService extends IRestService
 			$user = Array(
 				'ID' => $fromUser['id'],
 				'NAME' => $fromUser['name'],
-				'FIRST_NAME' => $fromUser['firstName'],
-				'LAST_NAME' => $fromUser['lastName'],
-				'WORK_POSITION' => $fromUser['workPosition'],
+				'FIRST_NAME' => $fromUser['first_name'],
+				'LAST_NAME' => $fromUser['last_name'],
+				'WORK_POSITION' => $fromUser['work_position'],
 				'GENDER' => $fromUser['gender'],
 			);
 		}
@@ -2136,19 +2659,19 @@ class CIMRestService extends IRestService
 	public static function onBotMessageAdd($arParams, $arHandler)
 	{
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
-		
+
 		if (!$arHandler['APP_CODE'])
 		{
 			$parts = parse_url($arHandler['EVENT_HANDLER']);
 			parse_str($parts['query'], $query);
 			$query = array_change_key_case($query, CASE_UPPER);
-			
+
 			if ($query['CLIENT_ID'])
 			{
 				$arHandler['APP_CODE'] = 'custom'.$query['CLIENT_ID'];
 			}
 		}
-		
+
 		if (!$arHandler['APP_CODE'])
 		{
 			throw new Exception('Event is intended for another application');
@@ -2188,9 +2711,9 @@ class CIMRestService extends IRestService
 			$user = Array(
 				'ID' => $fromUser['id'],
 				'NAME' => $fromUser['name'],
-				'FIRST_NAME' => $fromUser['firstName'],
-				'LAST_NAME' => $fromUser['lastName'],
-				'WORK_POSITION' => $fromUser['workPosition'],
+				'FIRST_NAME' => $fromUser['first_name'],
+				'LAST_NAME' => $fromUser['last_name'],
+				'WORK_POSITION' => $fromUser['work_position'],
 				'GENDER' => $fromUser['gender'],
 				'IS_BOT' => $fromUser['bot']? 'Y':'N',
 				'IS_CONNECTOR' => $fromUser['connector']? 'Y':'N',
@@ -2224,7 +2747,7 @@ class CIMRestService extends IRestService
 				$arHandler['APP_CODE'] = 'custom'.$query['CLIENT_ID'];
 			}
 		}
-		
+
 		if (!$arHandler['APP_CODE'])
 		{
 			throw new Exception('Event is intended for another application');
@@ -2256,9 +2779,9 @@ class CIMRestService extends IRestService
 			$user = Array(
 				'ID' => $fromUser['id'],
 				'NAME' => $fromUser['name'],
-				'FIRST_NAME' => $fromUser['firstName'],
-				'LAST_NAME' => $fromUser['lastName'],
-				'WORK_POSITION' => $fromUser['workPosition'],
+				'FIRST_NAME' => $fromUser['first_name'],
+				'LAST_NAME' => $fromUser['last_name'],
+				'WORK_POSITION' => $fromUser['work_position'],
 				'GENDER' => $fromUser['gender'],
 			);
 		}
@@ -2290,7 +2813,7 @@ class CIMRestService extends IRestService
 				$arHandler['APP_CODE'] = 'custom'.$query['CLIENT_ID'];
 			}
 		}
-		
+
 		if (!$arHandler['APP_CODE'])
 		{
 			throw new Exception('Event is intended for another application');
@@ -2326,6 +2849,10 @@ class CIMRestService extends IRestService
 
 	public static function commandRegister($arParams, $n, CRestServer $server)
 	{
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		$customClientId = false;
@@ -2423,6 +2950,10 @@ class CIMRestService extends IRestService
 
 	public static function commandUnRegister($arParams, $n, CRestServer $server)
 	{
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		$clientId = $server->getClientId();
@@ -2459,6 +2990,10 @@ class CIMRestService extends IRestService
 
 	public static function commandUpdate($arParams, $n, CRestServer $server)
 	{
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		$clientId = $server->getClientId();
@@ -2556,6 +3091,10 @@ class CIMRestService extends IRestService
 
 	public static function commandAnswer($arParams, $n, CRestServer $server)
 	{
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		$clientId = $server->getClientId();
@@ -2667,7 +3206,7 @@ class CIMRestService extends IRestService
 				throw new Bitrix\Rest\RestException("Incorrect keyboard params", "KEYBOARD_ERROR", CRestServer::STATUS_WRONG_REQUEST);
 			}
 		}
-		
+
 		if (isset($arParams['MENU']) && !empty($arParams['MENU']))
 		{
 			$menu = Array();
@@ -2684,7 +3223,7 @@ class CIMRestService extends IRestService
 				$menu = $arParams['MENU'];
 			}
 			$menu['BOT_ID'] = $arParams['BOT_ID'];
-			
+
 			$menu = \Bitrix\Im\Bot\ContextMenu::getByJson($menu);
 			if ($menu)
 			{
@@ -2722,6 +3261,10 @@ class CIMRestService extends IRestService
 
 	public static function appRegister($arParams, $n, CRestServer $server)
 	{
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		$clientId = $server->getClientId();
@@ -2747,7 +3290,7 @@ class CIMRestService extends IRestService
 		$iframeHeight = 0;
 		$iframePopup = 'N';
 		$hash = '';
-		
+
 		$js = '';
 		if (
 			isset($arParams['JS_METHOD']) && in_array($arParams['JS_METHOD'], Array('PUT', 'SEND', 'CALL', 'SUPPORT')) &&
@@ -2896,6 +3439,10 @@ class CIMRestService extends IRestService
 
 	public static function appUnRegister($arParams, $n, CRestServer $server)
 	{
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		$clientId = $server->getClientId();
@@ -2932,6 +3479,10 @@ class CIMRestService extends IRestService
 
 	public static function appUpdate($arParams, $n, CRestServer $server)
 	{
+		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
 		$clientId = $server->getClientId();
@@ -3043,7 +3594,7 @@ class CIMRestService extends IRestService
 		{
 			$updateFields['EXTRANET_SUPPORT'] = $arParams['FIELDS']['EXTRANET_SUPPORT'] == 'Y'? 'Y': 'N';
 		}
-		
+
 		if (isset($arParams['FIELDS']['LIVECHAT_SUPPORT']) && !empty($arParams['FIELDS']['LIVECHAT_SUPPORT']))
 		{
 			$updateFields['LIVECHAT_SUPPORT'] = $arParams['FIELDS']['LIVECHAT_SUPPORT'] == 'Y'? 'Y': 'N';

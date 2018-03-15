@@ -14,3 +14,5 @@ DROP TABLE if exists b_im_external_avatar;
 DROP TABLE if exists b_im_message_favorite;
 DROP TABLE if exists b_im_app;
 DROP TABLE if exists b_im_app_lang;
+DROP TABLE if exists b_im_no_relation_permission_disk;
+DROP TABLE if exists b_im_last_search;

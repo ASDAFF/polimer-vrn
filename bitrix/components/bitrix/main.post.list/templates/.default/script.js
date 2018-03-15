@@ -783,6 +783,7 @@
 					BX.addClass(BX('record-' + id[0] + '-corner'), (params["NEW"] == "Y" ? "feed-post-block-yellow-corner" :""));
 					BX('record-' + id[0] + '-corner').removeAttribute("id");
 				}
+
 				BX.addClass(node, 'comment-new-answer');
 				if (params["NEW"] == "Y")
 				{
@@ -1547,7 +1548,8 @@
 			var commentsReadToCounter = 0,
 				size = BX.GetWindowInnerSize(),
 				res = [],
-				node, pos, node1, i;
+				node, pos, node1, i,
+				commentsBlockNode, cornerNode;
 			for (i = 0; i < newCommentsToCheckForReading.data.length; i++)
 			{
 				node = BX('record-' + newCommentsToCheckForReading.data[i].join('-') + '-cover');
@@ -1558,6 +1560,17 @@
 					{
 						BX.onCustomEvent(window, 'OnUCCommentWasRead', [newCommentsToCheckForReading.data[i], node]);
 						BX.removeClass(node, 'comment-new-answer');
+
+						commentsBlockNode = BX.findParent(node, { className: 'feed-comments-block'});
+						if (commentsBlockNode)
+						{
+							cornerNode = BX.findChild(commentsBlockNode, {className: 'feed-com-corner'});
+							if (cornerNode)
+							{
+								BX.addClass(cornerNode, "feed-post-block-corner-fade");
+							}
+						}
+
 						node1 = BX.findChild(node, {className: 'feed-com-block'}, true, false);
 						BX.removeClass(node1, 'feed-com-block-pointer-to-new feed-com-block-new');
 						BX.addClass(node1, 'feed-com-block-read');

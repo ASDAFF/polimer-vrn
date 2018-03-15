@@ -35,8 +35,33 @@ create table b_sonet_group
   DATE_ACTIVITY datetime not null,
   CLOSED char(1) not null default 'N',
   SPAM_PERMS char(1) not null default 'K',
+	PROJECT char(1) not null default 'N',
+	PROJECT_DATE_START datetime null,
+	PROJECT_DATE_FINISH datetime null,
+	SEARCH_INDEX mediumtext null,
   primary key (ID),
   index IX_SONET_GROUP_1(OWNER_ID)
+);
+
+create table b_sonet_group_template
+(
+	ID int not null auto_increment,
+	USER_ID int not null,
+	NAME varchar(255) not null,
+	OWNER_ID int not null,
+	TYPE varchar(255) null,
+	DATE_CREATE datetime null,
+	TIMESTAMP_X datetime null,
+	PARAMS text null,
+	primary key (ID),
+	index IX_SONET_GROUP_TEMPLATE_1(`USER_ID`)
+);
+
+create table b_sonet_group_template_right
+(
+	TEMPLATE_ID int not null,
+	GROUP_CODE varchar(255) not null,
+	unique ix_b_sonet_group_template_right_1(TEMPLATE_ID, GROUP_CODE)
 );
 
 create table b_sonet_group_site
@@ -374,8 +399,12 @@ create table b_sonet_log_index
 	ITEM_TYPE varchar(10) not null default 'L',
 	ITEM_ID int(11) not null,
 	CONTENT text null,
+	LOG_UPDATE datetime null,
+	DATE_CREATE datetime null,
 	primary key (ITEM_TYPE, ITEM_ID),
-	index IX_SONET_LOG_INDEX_1(LOG_ID)
+	index IX_SONET_LOG_INDEX_1(LOG_ID),
+	index IX_SONET_LOG_INDEX_2(LOG_UPDATE),
+	index IX_SONET_LOG_INDEX_3(DATE_CREATE)
 );
 
 create table b_sonet_user_content_view
@@ -391,8 +420,10 @@ create table b_sonet_user_content_view
 
 create table b_sonet_log_tag (
 	LOG_ID int(11) NOT NULL,
+	ITEM_TYPE varchar(10) not null default 'L',
+	ITEM_ID int(11) not null,
 	NAME varchar(255) NOT NULL,
-	PRIMARY KEY (LOG_ID,NAME),
+	PRIMARY KEY (ITEM_TYPE,ITEM_ID,NAME),
 	index IX_SONET_LOG_TAG_1(`LOG_ID`),
 	index IX_SONET_LOG_TAG_2(`NAME`)
 );

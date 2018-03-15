@@ -2,6 +2,8 @@
 use Bitrix\Main\Loader;
 use Bitrix\Iblock;
 use Bitrix\Catalog;
+use Bitrix\Sale;
+use Bitrix\Main;
 // some of this functions should probably migrate to CSaleHelper
 
 /*
@@ -2472,16 +2474,15 @@ function getProductDataToFillBasket($productId, $quantity, $userId, $LID, $userC
 		$arBuyerGroups = CUser::GetUserGroup($userId);
 
 		// price
-		$currentVatMode = CCatalogProduct::getPriceVatIncludeMode();
-		$currentUseDiscount = CCatalogProduct::getUseDiscount();
-		CCatalogProduct::setUseDiscount(true);
-		CCatalogProduct::setPriceVatIncludeMode(true);
-		CCatalogProduct::setUsedCurrency(CSaleLang::GetLangCurrency($LID));
+		Catalog\Product\Price\Calculation::pushConfig();
+		Catalog\Product\Price\Calculation::setConfig(array(
+			'CURRENCY' => Sale\Internals\SiteCurrencyTable::getSiteCurrency($LID),
+			'PRECISION' => (int)Main\Config\Option::get('sale', 'value_precision'),
+			'USE_DISCOUNTS' => true,
+			'RESULT_WITH_VAT' => true
+		));
 		$arPrice = CCatalogProduct::GetOptimalPrice($arElementInfo["ID"], 1, $arBuyerGroups, "N", array(), $LID);
-		CCatalogProduct::clearUsedCurrency();
-		CCatalogProduct::setPriceVatIncludeMode($currentVatMode);
-		CCatalogProduct::setUseDiscount($currentUseDiscount);
-		unset($currentUseDiscount, $currentVatMode);
+		Catalog\Product\Price\Calculation::popConfig();
 
 		$currentPrice = $arPrice['RESULT_PRICE']['DISCOUNT_PRICE'];
 		$arElementInfo['PRICE'] = $currentPrice;
@@ -2489,10 +2490,6 @@ function getProductDataToFillBasket($productId, $quantity, $userId, $LID, $userC
 		$arElementInfo['DISCOUNT_PRICE'] = $arPrice['RESULT_PRICE']['DISCOUNT'];
 		$currentTotalPrice = $arPrice['RESULT_PRICE']['BASE_PRICE'];
 		$discountPercent = (int)$arPrice['RESULT_PRICE']['PERCENT'];
-
-
-
-
 
 		$arProduct = array();
 

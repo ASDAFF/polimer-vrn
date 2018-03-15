@@ -25,6 +25,18 @@
 			}
 		},
 
+		setFilter: function(filter)
+		{
+			if (typeof filter === "object")
+			{
+				this.parent.updateParams(filter);
+				this.parent.getPreset().deactivateAllPresets();
+				this.parent.getPreset().activatePreset(filter.preset_id);
+				this.parent.getPreset().applyPreset(filter.preset_id);
+				this.parent.applyFilter(false, filter.preset_id);
+			}
+		},
+
 		apply: function()
 		{
 			if (!this.parent.isEditEnabled())

@@ -15,7 +15,6 @@ $MESS["SBBL_LIST"] = "Список товаров";
 $MESS["SBBL_SHOW_PRODUCTS"] = "Показывать список товаров";
 $MESS["SBBL_SHOW_DELAY"] = "Показывать отложенные товары";
 $MESS["SBBL_SHOW_NOTAVAIL"] = "Показывать товары, недоступные для покупки";
-$MESS["SBBL_SHOW_SUBSCRIBE"] = "Показывать товары, на которые подписан покупатель";
 $MESS["SBBL_SHOW_IMAGE"] = "Выводить картинку товара";
 $MESS["SBBL_SHOW_PRICE"] = "Выводить цену товара";
 $MESS["SBBL_SHOW_SUMMARY"] = "Выводить подытог по строке";

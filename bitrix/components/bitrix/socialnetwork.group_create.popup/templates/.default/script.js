@@ -130,6 +130,12 @@ BX.SGCP.ShowForm = function(action, popupName, event)
 						BX.delegate(function(result)
 							{
 								this.setContent(result);
+								if (BX.SGCP.popup)
+								{
+									setTimeout(function() {
+										BX.SGCP.popup.adjustPosition();
+									}, 100);
+								}
 							},
 							this)
 					);
@@ -150,14 +156,17 @@ BX.SGCP.ShowForm = function(action, popupName, event)
 
 BX.SGCP.onPopupClose = function()
 {
-	if (BX.SocNetLogDestination.popupWindow != null)
+	if (typeof BX.SocNetLogDestination != 'undefined')
 	{
-		BX.SocNetLogDestination.popupWindow.close();
-	}
+		if (BX.SocNetLogDestination.popupWindow != null)
+		{
+			BX.SocNetLogDestination.popupWindow.close();
+		}
 
-	if (BX.SocNetLogDestination.popupSearchWindow != null)
-	{
-		BX.SocNetLogDestination.popupSearchWindow.close();
+		if (BX.SocNetLogDestination.popupSearchWindow != null)
+		{
+			BX.SocNetLogDestination.popupSearchWindow.close();
+		}
 	}
 };
 

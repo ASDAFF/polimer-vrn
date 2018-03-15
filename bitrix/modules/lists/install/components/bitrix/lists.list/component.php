@@ -409,7 +409,7 @@ $arResult["ELEMENTS_HEADERS"] = array(
 		"sort" => "ID"
 	)
 );
-$ignoreSortFields = array("S:Money", "PREVIEW_TEXT", "DETAIL_TEXT");
+$ignoreSortFields = array("S:Money", "PREVIEW_TEXT", "DETAIL_TEXT", "S:ECrm", "S:map_yandex");
 $arSelect = array("ID", "IBLOCK_ID");
 $arProperties = array();
 $arResult["FIELDS"] = $listFields = $obList->GetFields();
@@ -859,7 +859,7 @@ while($obElement = $rsElements->GetNextElement())
 			if($proccesses && !empty($data["WORKFLOW_ID"]))
 				$workflows[] = 'WF_'.$vv["ID"];
 
-			$canViewWorkflow = CIBlockDocument::canUserOperateDocument(
+			$canViewWorkflow = BizprocDocument::canUserOperateDocument(
 				CBPCanUserOperateOperation::ViewWorkflow,
 				$USER->GetID(),
 				$data["ID"],
@@ -1075,10 +1075,12 @@ while($obElement = $rsElements->GetNextElement())
 			|| CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $data["~ID"], "element_delete")))
 	{
 		$aActions[] = array(
+			"ID" => "delete",
 			"TEXT" => GetMessage("CC_BLL_ELEMENT_ACTION_MENU_DELETE"),
-			"ONCLICK" => "javascript:BX.Lists['".$arResult['JS_OBJECT']."'].deleteElement('".
-				$arResult["GRID_ID"]."', '".$data["ID"]."')",
+			"ONCLICK" => "bxGrid_".$arResult["GRID_ID"].".DeleteItem('".$data["ID"]."', '".
+				GetMessage("CC_BLL_ELEMENT_ACTION_MENU_DELETE_CONF")."')",
 		);
+		$arResult["ELEMENTS_CAN_DELETE"][] = $data["ID"];
 	}
 
 	$arResult["ELEMENTS_ROWS"][] = array(

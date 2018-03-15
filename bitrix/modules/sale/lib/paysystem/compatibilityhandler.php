@@ -315,6 +315,85 @@ class CompatibilityHandler extends ServiceHandler implements ICheckable
 	/**
 	 * @return array
 	 */
+	public function getDescription()
+	{
+		$data = array();
+
+		$documentRoot = Application::getDocumentRoot();
+		$handler = $this->service->getField('ACTION_FILE');
+
+		$psTitle = '';
+		$arPSCorrespondence = array();
+
+		$actionFile = $documentRoot.$handler.'/.description.php';
+		if (IO\File::isFileExists($actionFile))
+		{
+			require $actionFile;
+
+			if ($arPSCorrespondence)
+			{
+				$codes = $this->convertCodesToNewFormat($arPSCorrespondence);
+
+				if ($codes)
+					$data = array('NAME' => $psTitle, 'SORT' => 100, 'CODES' => $codes);
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * @param array $arPSCorrespondence
+	 * @return array
+	 */
+	private function convertCodesToNewFormat(array $arPSCorrespondence)
+	{
+		if ($arPSCorrespondence)
+		{
+			foreach ($arPSCorrespondence as $i => $property)
+			{
+				if ($property['TYPE'] == 'SELECT')
+				{
+					$options = array();
+					foreach ($property['VALUE'] as $code => $value)
+						$options[$code] = $value['NAME'];
+
+					$arPSCorrespondence[$i] = array(
+						'NAME' => $property['NAME'],
+						'INPUT' => array(
+							'TYPE' => 'ENUM',
+							'OPTIONS' => $options
+						),
+						'SORT' => $property['SORT'],
+					);
+				}
+				else if ($property['TYPE'] == 'FILE')
+				{
+					$arPSCorrespondence[$i] = array(
+						'NAME' => $property['NAME'],
+						'INPUT' => array(
+							'TYPE' => 'FILE'
+						),
+						'SORT' => $property['SORT'],
+					);
+				}
+
+				if (array_key_exists('DESCR', $property))
+					$arPSCorrespondence[$i]['DESCRIPTION'] = $property['DESCR'];
+
+				if (!isset($arPSCorrespondence[$i]['GROUP']))
+					$arPSCorrespondence[$i]['GROUP'] = (isset($property['GROUP'])) ? $property['GROUP'] : 'PS_OTHER';
+			}
+
+			return $arPSCorrespondence;
+		}
+
+		return array();
+	}
+
+	/**
+	 * @return array
+	 */
 	public function getDemoParams()
 	{
 		$data = array(

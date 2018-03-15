@@ -4,6 +4,7 @@ namespace Bitrix\Sale\Helpers\Admin\Blocks;
 
 use Bitrix\Main;
 use Bitrix\Sale\Company;
+use Bitrix\Sale\Delivery\Requests\ShipmentTable;
 use Bitrix\Sale\Internals;
 use	Bitrix\Sale\Order,
 	Bitrix\Sale\Payment,
@@ -144,7 +145,7 @@ class OrderAnalysis
 							foreach ($item['SKU_PROPS'] as $skuProp)
 							{
 								$properties .= '<tr>';
-								$properties .= '<td style="text-align: left;">'. htmlspecialcharsbx($skuProp['NAME']).' : '.'</td>';
+								$properties .= '<td style="text-align: left; padding-left: 0;">'. htmlspecialcharsbx($skuProp['NAME']).' : '.'</td>';
 
 								if (isset($skuProp['VALUE']['PICT']) && $skuProp['VALUE']['PICT'])
 									$properties .= '<td><span class="color"><img src="'.$skuProp['VALUE']['PICT'].'" alt=""></span></td>';
@@ -165,14 +166,14 @@ class OrderAnalysis
 						?>
 						<tr class="bdb-line">
 							<td class="tac"><?=++$itemNo?></td>
-							<td style="text-align: left;"><a class="fwb" href="<?=$item['EDIT_PAGE_URL']?>"><?=htmlspecialcharsEx($item['NAME']);?></a></td>
+							<td style="text-align: left;"><a class="fwb" href="<?=htmlspecialcharsbx($item['EDIT_PAGE_URL']);?>"><?=htmlspecialcharsEx($item['NAME']);?></a></td>
 							<td class="tac"><?=$properties;?></td>
-							<td class="tac"><?=$quantity.' '.htmlspecialcharsEx($item['MEASURE_TEXT'])?></td>
-							<td class="tac"><?=$shippedQuantity.' '.htmlspecialcharsEx($item['MEASURE_TEXT'])?></td>
-							<td class="tac"><?=($quantity - $shippedQuantity).' '.htmlspecialcharsEx($item['MEASURE_TEXT'])?></td>
+							<td class="tac" style="text-align: right !important;"><?=$quantity.' '.htmlspecialcharsEx($item['MEASURE_TEXT'])?></td>
+							<td class="tac" style="text-align: right !important;;"><?=$shippedQuantity.' '.htmlspecialcharsEx($item['MEASURE_TEXT'])?></td>
+							<td class="tac" style="text-align: right !important;;"><?=($quantity - $shippedQuantity).' '.htmlspecialcharsEx($item['MEASURE_TEXT'])?></td>
 						</tr>
 					<?endforeach?>
-					<tr><td colspan="8" style="padding: 16px; background: #f7fafa; text-align: left;" class="fwb"><?=Loc::getMessage('SALE_OANALYSIS_ITEMS_QUANTITY').': '.count($items)?></td></tr>
+					<tr><td colspan="8" style="padding: 16px; background: #f7fafa; text-align: right;" class="fwb"><?=Loc::getMessage('SALE_OANALYSIS_ITEMS_QUANTITY').': '.count($items)?></td></tr>
 				</tbody>
 			</table>
 			<div class="adm-bus-table-contaier-white caption border" style="margin-top: 25px;">
@@ -244,6 +245,9 @@ class OrderAnalysis
 							</div>
 							<div class="clb"></div>
 						</div>
+						<?if(!$isPayment):?>
+							<?self::printDeliveryRequestBlock($document->getId());?>
+						<?endif;?>
 					<?endforeach?>
 				</div>
 			</div>
@@ -253,6 +257,41 @@ class OrderAnalysis
 		$result = ob_get_contents();
 		ob_end_clean();
 		return $result;
+	}
+
+	private static function printDeliveryRequestBlock($shipmentId)
+	{
+		$res = ShipmentTable::getList(
+			array(
+				'filter' => array('=SHIPMENT_ID' => $shipmentId),
+				'select' => array(
+					'*',
+					'REQUEST_DATE' => 'REQUEST.DATE'
+				)
+			)
+		);
+
+		$request = $res->fetch();
+
+		if(intval($request['REQUEST_ID']) > 0)
+		{
+			?>
+				<div class="adm-bus-orderdocs-threelist-block-children" style="padding-left: 60px;">
+					<div class="adm-bus-orderdocs-threelist-block-img adm-bus-orderdocs-threelist-block-img-doc_shipping"></div>
+						<div class="adm-bus-orderdocs-threelist-block-content">
+							<div class="adm-bus-orderdocs-threelist-block-title">
+								<a href="/bitrix/admin/sale_delivery_request_view.php?lang=<?=LANGUAGE_ID?>&ID=<?=$request['REQUEST_ID']?>" class="adm-bus-orderdocs-threelist-block-title-link">
+									<?=Loc::getMessage('SALE_OANALYSIS_DELIVERY_REQUEST', array('#REQUEST_ID#' => $request['REQUEST_ID']))?>
+								</a>
+							</div>
+						<div class="adm-bus-orderdocs-threelist-block-date-block">
+							<?=Loc::getMessage('SALE_OANALYSIS_CREATED_AT')?>: <span class="adm-bus-orderdocs-threelist-block-date"><?=$request['REQUEST_DATE']?></span>
+						</div>
+					</div>
+					<div class="clb"></div>
+				</div>
+			<?
+		}
 	}
 
 	private static function renderBottomBlocks($creationDate, $userId)

@@ -88,7 +88,12 @@ class CBPSequentialWorkflowActivity
 			 */
 
 			$documentService = $this->workflow->GetService("DocumentService");
-			$documentService->onWorkflowStatusChange($this->GetDocumentId(), $this->workflow->GetInstanceId(), $status);
+			$documentService->onWorkflowStatusChange(
+				$this->GetDocumentId(),
+				$this->workflow->GetInstanceId(),
+				$status,
+				$this
+			);
 
 			/**
 			 * @var CBPAllStateService $stateService

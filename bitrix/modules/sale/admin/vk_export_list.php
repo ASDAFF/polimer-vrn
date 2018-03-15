@@ -4,6 +4,7 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/include/prolog_ad
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\TradingPlatform\Vk;
+use Bitrix\Main\Text\HtmlFilter;
 
 Loc::loadMessages(__FILE__);
 Loader::includeModule('sale');
@@ -78,7 +79,7 @@ while ($profile = $resProfiles->NavNext(true))
 	$row =& $lAdmin->AddRow($exportId, $profile);
 
 	$row->AddField("ID", "<a href=\"/bitrix/admin/sale_vk_export_edit.php?ID=" . $exportId . "&lang=" . LANG . "\">" . $exportId . "</a>");
-	$row->AddField("NAME", $profile['DESCRIPTION'] ? $profile['DESCRIPTION'] : '');
+	$row->AddField("NAME", $profile['DESCRIPTION'] ? HtmlFilter::encode($profile['DESCRIPTION']) : '');
 	if ($profile["EXPORT_SETTINGS"]['ACTIVE'] == 'N')
 	{
 		$row->AddField("ACTIVE", Loc::getMessage("SALE_VK_TABLE__ACTIVE_NO"));

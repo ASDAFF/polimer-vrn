@@ -31,7 +31,8 @@ if (CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $arResult["VARIABLES"][
 				"SHOW_RATING" => $arParams["SHOW_RATING"],
 				"RATING_TYPE" => $arParams["RATING_TYPE"],
 				"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
-			)
+			),
+			'HIDE_MENU_PANEL'=>'Y'
 		),
 		$component,
 		array("HIDE_ICONS" => "Y")

@@ -416,8 +416,6 @@ class CIBlockRights
 
 	function SetRights($arRights)
 	{
-		global $DB;
-
 		if(!$this->_self_check())
 			return false;
 
@@ -509,7 +507,6 @@ class CIBlockRights
 
 		foreach($arDBRights as $RIGHT_ID => $arRightSet)
 		{
-
 			if($arRightSet["IS_INHERITED"] == "Y")
 				continue;
 

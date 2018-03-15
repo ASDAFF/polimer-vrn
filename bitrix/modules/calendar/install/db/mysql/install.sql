@@ -14,6 +14,7 @@ create table b_calendar_section
 	NAME varchar(255) null,
 	XML_ID varchar(100) null,
 	EXTERNAL_ID varchar(100) null,
+	GAPI_CALENDAR_ID varchar(255) null,
 	ACTIVE char(1) not null default 'Y',
 	DESCRIPTION text null,
 	COLOR varchar(10) null,
@@ -32,6 +33,7 @@ create table b_calendar_section
 	CAL_DAV_CAL varchar(255) null,
 	CAL_DAV_MOD varchar(255) null,
 	IS_EXCHANGE char(1) null,
+	SYNC_TOKEN varchar(100) null,
 	primary key (ID),
 	INDEX ix_cal_sect_owner (CAL_TYPE, OWNER_ID)
 );
@@ -82,6 +84,8 @@ create table b_calendar_event
   ATTENDEES_CODES varchar(255) null,
   RECURRENCE_ID int null,
   RELATIONS varchar(255) null,
+  SEARCHABLE_CONTENT text null,
+  SECTION_ID int null,
   primary key (ID),
   INDEX ix_cal_event_date_utc (DATE_FROM_TS_UTC, DATE_TO_TS_UTC),
   INDEX ix_cal_event_owner_id_date (OWNER_ID, DATE_FROM_TS_UTC, DATE_TO_TS_UTC),
@@ -115,6 +119,20 @@ create table b_calendar_attendees
 	TEXT_COLOR varchar(10) null,
 	primary key (EVENT_ID, USER_KEY),
 	INDEX ix_cal_attendees_0 (USER_KEY)
+);
+
+CREATE TABLE b_calendar_push (
+  ENTITY_TYPE varchar(24) NOT NULL,
+  ENTITY_ID int(11) NOT NULL,
+  CHANNEL_ID varchar(128) NOT NULL,
+  RESOURCE_ID varchar(128) NOT NULL,
+  EXPIRES datetime NOT NULL,
+  NOT_PROCESSED varchar(1) NOT NULL DEFAULT 'N',
+  FIRST_PUSH_DATE datetime DEFAULT NULL,
+  PRIMARY KEY (ENTITY_TYPE,ENTITY_ID),
+  KEY CHANNEL_ID (CHANNEL_ID),
+  KEY NOT_PROCESSED (NOT_PROCESSED),
+  KEY FIRST_PUSH_DATE (FIRST_PUSH_DATE)
 );
 
 create table b_calendar_access

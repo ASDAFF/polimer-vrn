@@ -5,17 +5,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	<td align="right" width="40%"><span class="adm-required-field"><?= GetMessage("SNBPA_PD_OWNER_ID") ?>:</span></td>
 	<td width="60%">
 		<?
-		global $USER;
-		if ($USER->IsAdmin() || (CModule::IncludeModule("bitrix24") && CBitrix24::IsPortalAdmin($USER->GetID())))
+		if ($user->isAdmin())
 		{
-			?>
-			<input type="text" name="owner_id" id="id_owner_id" value="<?= htmlspecialcharsbx($arCurrentValues["owner_id"]) ?>" size="40">
-			<input type="button" value="..." onclick="BPAShowSelector('id_owner_id', 'user');">
-			<?
+			echo CBPDocument::ShowParameterField("user", 'owner_id', $arCurrentValues['owner_id'], Array('rows'=> 1));
 		}
 		else
 		{
-			echo $USER->GetFullName();
+			echo $user->getFullName();
 		}
 		?>
 	</td>

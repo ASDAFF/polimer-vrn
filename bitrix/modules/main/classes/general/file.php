@@ -396,7 +396,8 @@ class CAllFile
 				ORIGINAL_NAME,
 				DESCRIPTION,
 				HANDLER_ID,
-				EXTERNAL_ID
+				EXTERNAL_ID,
+				TIMESTAMP_X
 			) VALUES (
 				".intval($arFields["HEIGHT"]).",
 				".intval($arFields["WIDTH"]).",
@@ -408,40 +409,41 @@ class CAllFile
 				'".$DB->ForSql($arFields["ORIGINAL_NAME"], 255)."',
 				'".$DB->ForSQL($arFields["DESCRIPTION"], 255)."',
 				".($arFields["HANDLER_ID"]? "'".$DB->ForSql($arFields["HANDLER_ID"], 50)."'": "null").",
-				".($arFields["EXTERNAL_ID"] != ""? "'".$DB->ForSql($arFields["EXTERNAL_ID"], 50)."'": "null").
-			")";
+				".($arFields["EXTERNAL_ID"] != ""? "'".$DB->ForSql($arFields["EXTERNAL_ID"], 50)."'": "null").",
+				".$DB->GetNowFunction()."
+			)";
 		$DB->Query($strSql);
 		return $DB->LastID();
 	}
 
 	public static function CleanCache($ID)
 	{
-		global $CACHE_MANAGER;
-
-		$ID = intval($ID);
 		if (CACHED_b_file!==false)
 		{
 			$bucket_size = intval(CACHED_b_file_bucket_size);
 			if ($bucket_size <= 0)
 				$bucket_size = 10;
 			$bucket = intval($ID/$bucket_size);
-			$CACHE_MANAGER->Clean("b_file0".$bucket, "b_file");
-			$CACHE_MANAGER->Clean("b_file1".$bucket, "b_file");
+			$cache = Bitrix\Main\Application::getInstance()->getManagedCache();
+			$cache->clean("b_file0".$bucket, "b_file");
+			$cache->clean("b_file1".$bucket, "b_file");
 		}
 	}
 
 	public static function GetFromCache($FILE_ID)
 	{
-		global $CACHE_MANAGER, $DB;
+		global $DB;
+		$cache = Bitrix\Main\Application::getInstance()->getManagedCache();
 
 		$bucket_size = intval(CACHED_b_file_bucket_size);
 		if($bucket_size <= 0)
 			$bucket_size = 10;
 
 		$bucket = intval($FILE_ID/$bucket_size);
-		if($CACHE_MANAGER->Read(CACHED_b_file, $cache_id="b_file".intval(CMain::IsHTTPS()).$bucket, "b_file"))
+		$cache_id = "b_file".intval(CMain::IsHTTPS()).$bucket;
+		if($cache->read(CACHED_b_file, $cache_id, "b_file"))
 		{
-			$arFiles = $CACHE_MANAGER->Get($cache_id);
+			$arFiles = $cache->get($cache_id);
 		}
 		else
 		{
@@ -461,7 +463,7 @@ class CAllFile
 				}
 				$arFiles[$ar["ID"]] = $ar;
 			}
-			$CACHE_MANAGER->Set($cache_id, $arFiles);
+			$cache->setImmediate($cache_id, $arFiles);
 		}
 		return $arFiles;
 	}
@@ -761,7 +763,12 @@ class CAllFile
 	public static function UpdateDesc($ID, $desc)
 	{
 		global $DB;
-		$DB->Query("UPDATE b_file SET DESCRIPTION='".$DB->ForSql($desc, 255)."' WHERE ID=".intval($ID));
+		$DB->Query(
+			"UPDATE b_file SET 
+				DESCRIPTION = '".$DB->ForSql($desc, 255)."', 
+				TIMESTAMP_X = ".$DB->GetNowFunction()." 
+			WHERE ID=".intval($ID)
+		);
 		CFile::CleanCache($ID);
 	}
 
@@ -769,7 +776,12 @@ class CAllFile
 	{
 		global $DB;
 		$external_id = trim($external_id);
-		$DB->Query("UPDATE b_file SET EXTERNAL_ID=".($external_id != ""? "'".$DB->ForSql($external_id, 50)."'": "null")." WHERE ID=".intval($ID));
+		$DB->Query(
+			"UPDATE b_file SET 
+				EXTERNAL_ID = ".($external_id != ""? "'".$DB->ForSql($external_id, 50)."'": "null").", 
+				TIMESTAMP_X = ".$DB->GetNowFunction()." 
+			WHERE ID=".intval($ID)
+		);
 		CFile::CleanCache($ID);
 	}
 
@@ -1170,10 +1182,21 @@ function ImgShw(ID, width, height, alt)
 		);
 	}
 
+	/**
+	 * Retuns the path from the root by a file ID.
+	 *
+	 * @param int $img_id File ID
+	 * @return string|null
+	 */
 	public static function GetPath($img_id)
 	{
-		$res = CFile::_GetImgParams($img_id);
-		return $res["SRC"];
+		$img_id = intval($img_id);
+		if($img_id > 0)
+		{
+			$res = CFile::_GetImgParams($img_id);
+			return $res["SRC"];
+		}
+		return null;
 	}
 
 	public static function ShowImage($strImage, $iMaxW=0, $iMaxH=0, $sParams=null, $strImageUrl="", $bPopup=false, $sPopupTitle=false, $iSizeWHTTP=0, $iSizeHHTTP=0, $strImageUrlTemplate="")
@@ -1502,13 +1525,14 @@ function ImgShw(ID, width, height, alt)
 
 	public static function ChangeSubDir($module_id, $old_subdir, $new_subdir)
 	{
-		global $DB, $CACHE_MANAGER;
+		global $DB;
 
 		if ($old_subdir!=$new_subdir)
 		{
 			$strSql = "
-				UPDATE b_file
-				SET SUBDIR = REPLACE(SUBDIR,'".$DB->ForSQL($old_subdir)."','".$DB->ForSQL($new_subdir)."')
+				UPDATE b_file SET 
+					SUBDIR = REPLACE(SUBDIR,'".$DB->ForSQL($old_subdir)."','".$DB->ForSQL($new_subdir)."'),
+					TIMESTAMP_X = ".$DB->GetNowFunction()." 
 				WHERE MODULE_ID='".$DB->ForSQL($module_id)."'
 			";
 
@@ -1518,7 +1542,8 @@ function ImgShw(ID, width, height, alt)
 				$to = "/".COption::GetOptionString("main", "upload_dir", "upload")."/".$new_subdir;
 				CopyDirFiles($_SERVER["DOCUMENT_ROOT"].$from, $_SERVER["DOCUMENT_ROOT"].$to, true, true, true);
 				//Reset All b_file cache
-				$CACHE_MANAGER->CleanDir("b_file");
+				$cache = Bitrix\Main\Application::getInstance()->getManagedCache();
+				$cache->cleanDir("b_file");
 			}
 		}
 	}
@@ -2171,6 +2196,7 @@ function ImgShw(ID, width, height, alt)
 					$im = new Imagick();
 					try
 					{
+						$im->setOption('jpeg:size', $arDestinationSize["width"].'x'.$arDestinationSize["height"]);
 						$im->setSize($arDestinationSize["width"], $arDestinationSize["height"]);
 						$im->readImage($io->GetPhysicalName($sourceFile));
 						$im->setImageFileName($new_image);

@@ -12,6 +12,7 @@ use Bitrix\Sale\Internals;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Config\Option;
 
 Loc::loadMessages(__FILE__);
 
@@ -83,8 +84,11 @@ class BuyerStatistic
 			return $result;
 		}
 
+		$lastOrderDate = null;
+		$lastArchiveDate = null;
+
 		$orderData = Order::getList(array(
-			'select' => array('USER_ID', 'DATE_INSERT'),
+			'select' => array('DATE_INSERT'),
 			'filter' => array('=USER_ID' => $userId, '=CURRENCY' => $currency, '=LID' => $lid),
 			'order' => array('DATE_INSERT' => 'DESC'),
 			'limit' => 1
@@ -92,46 +96,82 @@ class BuyerStatistic
 
 		if ($resultOrder = $orderData->fetch())
 		{
+			$lastOrderDate = $resultOrder['DATE_INSERT'];
+		}
+
+		$archiveData = Archive\Manager::getList(array(
+			'select' => array('DATE_INSERT'),
+			'filter' => array('=USER_ID' => $userId, '=CURRENCY' => $currency, '=LID' => $lid),
+			'order' => array('DATE_INSERT' => 'DESC'),
+			'limit' => 1
+		));
+
+		if ($resultOrder = $archiveData->fetch())
+		{
+			$lastArchiveDate = $resultOrder['DATE_INSERT'];
+		}
+
+		if ($lastOrderDate || $lastArchiveDate)
+		{
 			$statistic = array(
 				'USER_ID' => $userId,
 				'CURRENCY' => $currency,
 				'LID' => $lid,
-				'LAST_ORDER_DATE' => $resultOrder['DATE_INSERT']
+				'LAST_ORDER_DATE' => ($lastOrderDate) ? $lastOrderDate : $lastArchiveDate
 			);
 
-			$orderDataCount = Order::getList(array(
-				'select' => array('COUNT_ORDER'),
-				'filter' => array(
-					'=USER_ID' => $userId,
-					'=CURRENCY' => $currency,
-					'=LID' => $lid,
-					'PAYED' => 'Y'
-				),
-				'runtime' => array(
-					new ExpressionField('COUNT_ORDER', 'COUNT(1)')
-				),
-			));
-			$countData = $orderDataCount->fetch();
-			$statistic['COUNT_FULL_PAID_ORDER'] = ($countData['COUNT_ORDER'] === "0") ? NULL : $countData['COUNT_ORDER'];
+			if ($lastOrderDate)
+			{
+				$orderDataCount = Order::getList(array(
+					'select' => array('FULL_SUM_PAID', 'COUNT_FULL_PAID_ORDER', 'COUNT_PART_PAID_ORDER'),
+					'filter' => array(
+						'=USER_ID' => $userId,
+						'=CURRENCY' => $currency,
+						'=LID' => $lid,
+						'>SUM_PAID' => 0
+					),
+					'group' => array('USER_ID'),
+					'runtime' => array(
+						new ExpressionField('COUNT_PART_PAID_ORDER', 'COUNT(1)'),
+						new ExpressionField('COUNT_FULL_PAID_ORDER', 'SUM(CASE WHEN PAYED = "Y" THEN 1 ELSE 0 END)'),
+						new ExpressionField('FULL_SUM_PAID', 'SUM(SUM_PAID)')
+					),
+				));
 
-			$paymentDataCount = Payment::getList(array(
-				'select' => array('SUM_PAID', 'ORDER.USER_ID', 'COUNT_ORDER'),
-				'filter' => array(
-					'=ORDER.USER_ID' => $userId,
-					'=ORDER.LID' => $lid,
-					'=ORDER.CURRENCY' => $currency,
-					'PAID' => 'Y'
-				),
-				'group' => array('ORDER.USER_ID'),
-				'runtime' => array(
-					new ExpressionField('SUM_PAID', 'SUM(SUM)'),
-					new ExpressionField('COUNT_ORDER', 'COUNT(DISTINCT ORDER_ID)'),
-				),
-			));
+				$countData = $orderDataCount->fetch();
 
-			$countData = $paymentDataCount->fetch();
-			$statistic['SUM_PAID'] = !empty($countData['SUM_PAID']) ? $countData['SUM_PAID'] : "0.0000";
-			$statistic['COUNT_PART_PAID_ORDER'] = $countData['COUNT_ORDER'];
+				$statistic['SUM_PAID'] = !empty($countData['FULL_SUM_PAID']) ? $countData['FULL_SUM_PAID'] : "0.0000";
+				$statistic['COUNT_PART_PAID_ORDER'] = !empty($countData['COUNT_PART_PAID_ORDER']) ? $countData['COUNT_PART_PAID_ORDER'] : 0;
+				$statistic['COUNT_FULL_PAID_ORDER'] = !empty($countData['COUNT_FULL_PAID_ORDER']) ? $countData['COUNT_FULL_PAID_ORDER'] : 0;
+			}
+
+			if ($lastArchiveDate)
+			{
+				$archiveDataCount = Archive\Manager::getList(array(
+					'select' => array('FULL_SUM_PAID', 'COUNT_FULL_PAID_ORDER', 'COUNT_PART_PAID_ORDER'),
+					'filter' => array(
+						'=USER_ID' => $userId,
+						'=CURRENCY' => $currency,
+						'=LID' => $lid,
+						'>SUM_PAID' => 0
+					),
+					'group' => array('USER_ID'),
+					'runtime' => array(
+						new ExpressionField('COUNT_PART_PAID_ORDER', 'COUNT(1)'),
+						new ExpressionField('COUNT_FULL_PAID_ORDER', 'SUM(CASE WHEN PAYED = "Y" THEN 1 ELSE 0 END)'),
+						new ExpressionField('FULL_SUM_PAID', 'SUM(SUM_PAID)')
+					),
+				));
+
+				$countArchiveData = $archiveDataCount->fetch();
+
+				if ($countArchiveData['FULL_SUM_PAID'] > 0)
+					$statistic['SUM_PAID'] += $countArchiveData['FULL_SUM_PAID'];
+				if ($countArchiveData['COUNT_PART_PAID_ORDER'] > 0)
+					$statistic['COUNT_PART_PAID_ORDER'] += $countArchiveData['COUNT_PART_PAID_ORDER'];
+				if ($countArchiveData['COUNT_FULL_PAID_ORDER'] > 0)
+					$statistic['COUNT_FULL_PAID_ORDER'] += $countArchiveData['COUNT_FULL_PAID_ORDER'];
+			}
 
 			$result->setData($statistic);
 		}
@@ -142,4 +182,6 @@ class BuyerStatistic
 
 		return $result;
 	}
+
+
 }

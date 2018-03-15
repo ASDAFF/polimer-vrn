@@ -14,3 +14,6 @@ $MESS["IM_PHONE_CALL_VIEW_RATE_QUALITY"] = "Оцените качество св
 $MESS["IM_PHONE_CALL_VIEW_DONT_LEAVE"] = "Если вы уйдете с этой страницы, звонок прервется";
 $MESS["IM_PHONE_CALL_VIEW_FOLD"] = "Свернуть";
 $MESS["IM_PHONE_CALL_VIEW_UNFOLD"] = "Развернуть";
+$MESS["IM_PHONE_CALL_VIEW_INTERCEPT"] = "Перехватить";
+$MESS["IM_PHONE_CALL_VIEW_SAVE"] = "Сохранить";
+$MESS["IM_PHONE_CALL_COMMENT_PLACEHOLDER"] = "Введите текст комментария";

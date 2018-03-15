@@ -340,7 +340,7 @@ CAdminMessage::ShowMessage($errorMessage);?>
 
 	</tr>
 	<tr>
-		<td>XML_ID:</td>
+		<td><?= GetMessage("STORE_XML_ID") ?>:</td>
 		<td><input type="text" name="XML_ID" value="<?=$str_XML_ID?>" size="45" />
 		</td>
 	</tr>

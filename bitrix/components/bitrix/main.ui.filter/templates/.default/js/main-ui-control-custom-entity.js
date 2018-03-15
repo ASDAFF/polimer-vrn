@@ -137,20 +137,43 @@
 
 		getCurrentValues: function()
 		{
-			var square = this.getSquares();
-			var data;
-
-			try {
-				data = JSON.parse(BX.data(square, 'item'));
-				data = {
-					label: data._label,
-					value: data._value
-				};
-			} catch (err) {
-				data = {label: '', value: ''};
+			var squares = this.getSquares();
+			var data, result;
+			if(this.isMultiple())
+			{
+				result = [];
+				for(var i = 0, length = squares.length; i < length; i++)
+				{
+					try
+					{
+						data = JSON.parse(BX.data(squares[i], 'item'));
+						result.push({ label: data._label, value: data._value });
+					}
+					catch (ex)
+					{
+					}
+				}
 			}
-
-			return data;
+			else
+			{
+				if(squares.length === 0)
+				{
+					result = { label: '', value: '' };
+				}
+				else
+				{
+					try
+					{
+						data = JSON.parse(BX.data(squares[0], 'item'));
+						result =  { label: data._label, value: data._value };
+					}
+					catch (ex)
+					{
+						result = { label: '', value: '' };
+					}
+				}
+			}
+			return result;
 		},
 
 		setData: function(label, value)

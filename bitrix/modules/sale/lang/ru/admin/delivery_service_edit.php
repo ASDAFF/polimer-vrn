@@ -71,4 +71,7 @@ $MESS ['SALE_DSE_FORM_ALLOW_EDIT_SHIPMENT'] = "Автоматическое из
 $MESS ['SALE_DSE_REQUIRED_FIELD'] = "Необходимо заполнить поле:";
 $MESS ['SALE_DSE_2DS_EDIT'] = "Вернуться в службу доставки";
 $MESS ['SALE_DSE_BUSINESS_VALUES'] = "Бизнес смыслы";
+$MESS ['SALE_DSE_FORM_VAT_ID'] = "Ставка НДС";
+$MESS ['SALE_DSE_FORM_NO_VAT'] = "Без НДС";
+$MESS ['SALE_DSE_DELIVERY_SERVICE_CREATE_ERROR'] = "Не удалось создать объект службы доставки!";
 ?>

@@ -35,7 +35,7 @@ class RestClient
 	protected $accessSettings = null;
 	protected $serviceHost = 'https://saleservices.bitrix.info';
 
-	protected $version = 2;
+	protected $version = 3;
 
 	/**
 	 * Performs call to the REST method and returns decoded results of the call.
@@ -69,7 +69,7 @@ class RestClient
 
 		if (!$this->accessSettings)
 		{
-			$result->addError(new Error('Error access settings'));
+			$result->addError(new Error(Loc::getMessage('SALE_SRV_BASE_REST_ACCESS_SETTINGS_ERROR')));
 			return $result;
 		}
 

@@ -565,16 +565,12 @@ $control->BeginNextFormTab();
 	$control->BeginCustomField("ACTIONS", GetMessage('BT_SALE_DISCOUNT_EDIT_FIELDS_APP').":",false);
 	?><tr id="ACTIONS">
 		<td valign="top" colspan="2"><div id="tree_actions" style="position: relative; z-index: 1;"></div><?
-			if (!is_array($arDiscount['APPICATIONS']))
+			if (!is_array($arDiscount['ACTIONS']))
 			{
-				if (CheckSerializedData($arDiscount['APPICATIONS']))
-				{
-					$arDiscount['APPICATIONS'] = unserialize($arDiscount['APPICATIONS']);
-				}
+				if (CheckSerializedData($arDiscount['ACTIONS']))
+					$arDiscount['ACTIONS'] = unserialize($arDiscount['ACTIONS']);
 				else
-				{
-					$arDiscount['APPICATIONS'] = '';
-				}
+					$arDiscount['ACTIONS'] = '';
 			}
 			$arCondParams = array(
 				'FORM_NAME' => 'sale_discount_form',
@@ -617,13 +613,9 @@ $control->BeginNextFormTab();
 			if (!is_array($arDiscount['CONDITIONS']))
 			{
 				if (CheckSerializedData($arDiscount['CONDITIONS']))
-				{
 					$arDiscount['CONDITIONS'] = unserialize($arDiscount['CONDITIONS']);
-				}
 				else
-				{
 					$arDiscount['CONDITIONS'] = '';
-				}
 			}
 			$arCondParams = array(
 				'FORM_NAME' => 'sale_discount_form',

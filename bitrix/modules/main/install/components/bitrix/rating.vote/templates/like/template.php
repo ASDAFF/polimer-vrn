@@ -39,7 +39,7 @@ BX.ready(function() {
 			'<?=CUtil::JSEscape($arResult['VOTE_AVAILABLE'])?>',
 			'<?=$USER->GetId()?>',
 			{'LIKE_Y' : '<?=htmlspecialcharsBx(CUtil::JSEscape($arResult['RATING_TEXT_LIKE_Y']))?>', 'LIKE_N' : '<?=htmlspecialcharsBx(CUtil::JSEscape($arResult['RATING_TEXT_LIKE_Y']))?>', 'LIKE_D' : '<?=htmlspecialcharsBx(CUtil::JSEscape($arResult['RATING_TEXT_LIKE_D']))?>'},
-			'light',
+			'<?=CUtil::JSEscape($arResult['LIKE_TEMPLATE'])?>',
 			'<?=CUtil::JSEscape($arResult['PATH_TO_USER_PROFILE'])?>'
 		);
 

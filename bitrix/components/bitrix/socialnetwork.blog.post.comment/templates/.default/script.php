@@ -3,8 +3,9 @@ if(!$arResult["CanUserComment"])
 	return;
 
 $rand = randString(4);
+$formID = "blogCommentForm".$rand;
 $formParams = Array(
-	"FORM_ID" => "blogCommentForm".$rand,
+	"FORM_ID" => $formID,
 	"SHOW_MORE" => "Y",
 	"PARSER" => Array(
 		"Bold", "Italic", "Underline", "Strike", "ForeColor",
@@ -26,9 +27,16 @@ $formParams = Array(
 		($arResult["allowVideo"] == "Y" ? "InputVideo" : ""),
 		//(($arResult["allowImageUpload"] == "Y") ? 'UploadImage' : ''),
 		"Quote",
-		(!$arParams["bPublicPage"] ? "MentionUser" : "")
 		/*, "BlogTag"*/
+		(!$arParams["bPublicPage"] ? "MentionUser" : ""),
+		(
+		in_array("UF_BLOG_COMMENT_FILE", $arParams["COMMENT_PROPERTY"])
+		|| in_array("UF_BLOG_COMMENT_DOC", $arParams["COMMENT_PROPERTY"])
+			? "VideoMessage"
+			: ""
+		),
 	),
+	"BUTTONS_HTML" => Array("VideoMessage" => '<span class="feed-add-post-form-but-cnt feed-add-videomessage" onclick="BX.VideoRecorder.start(\''.$formID.'\');">'.GetMessage('BLOG_VIDEO_RECORD_BUTTON').'</span>'),
 	"TEXT" => Array(
 		"NAME" => "comment",
 		"VALUE" => "",
@@ -81,7 +89,7 @@ if(!array_key_exists("USER", $GLOBALS) || !$GLOBALS["USER"]->IsAuthorized())
 	unset($formParams["UPLOAD_WEBDAV_ELEMENT"]);
 	foreach($formParams["BUTTONS"] as $keyT => $valT)
 	{
-		if($valT == "UploadFile")
+		if($valT == "UploadFile" || $valT == "VideoMessage")
 		{
 			unset($formParams["BUTTONS"][$keyT]);
 		}

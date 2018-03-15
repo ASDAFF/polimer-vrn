@@ -8,6 +8,7 @@ use Bitrix\Sale\TradingPlatform\Vk;
 use Bitrix\Main\Application;
 use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\Text\HtmlFilter;
 
 Loc::loadMessages(__FILE__);
 global $APPLICATION;
@@ -95,7 +96,7 @@ if ($exportId)
 }
 
 if ($exportId)
-	$APPLICATION->SetTitle(Loc::getMessage('SALE_VK_TITLE', array('#E1#' => htmlspecialchars_decode($vkSettings["DESCRIPTION"]))));
+	$APPLICATION->SetTitle(Loc::getMessage('SALE_VK_TITLE', array('#E1#' => $vkSettings["DESCRIPTION"])));
 else
 	$APPLICATION->SetTitle(Loc::getMessage('SALE_VK_TITLE_NEW'));
 
@@ -183,7 +184,7 @@ if (isset($request["VK"]) && is_array($request["VK"]) && ($_POST['save'] || $_PO
 
 //		VALIDATE settings
 		if (isset($request["VK"]["DESCRIPTION"]))
-			$vkSettings["DESCRIPTION"] = htmlspecialcharsbx($request["VK"]["DESCRIPTION"]);
+			$vkSettings["DESCRIPTION"] = $request["VK"]["DESCRIPTION"];
 
 //		adding "-"
 		if (strlen($request["VK"]["VK_SETTINGS"]["GROUP_ID"]) > 1)
@@ -233,6 +234,10 @@ if (isset($request["VK"]) && is_array($request["VK"]) && ($_POST['save'] || $_PO
 			$bSaved = $vk->saveSettings(array('SETTINGS' => $vkSettings, 'EXPORT_ID' => $exportId));
 		else
 			$exportId = $vk->saveSettings(array('SETTINGS' => $vkSettings));
+		
+//		change of settings may change sections lists. Drop cache to have true data
+		$sectionsList = new Vk\SectionsList($exportId);
+		$sectionsList->clearCaches();
 
 // 		create Agent for update vk categories to cache
 		$vkCategories = new Vk\VkCategories($exportId);
@@ -341,13 +346,21 @@ $arrTabs = array(
 		"TITLE" => Loc::getMessage("SALE_VK_TAB_SETTINGS_DESC"),
 	),
 );
-//	exchange tab only if active
+//	exchange and map active tab only if active
 if ($vk->isActive() && $vk->isActiveById($exportId))
+	{
 	array_unshift($arrTabs, array(
 		"DIV" => "vk_export",
 		"TAB" => Loc::getMessage("SALE_VK_TAB_EXPORT"),
 		"TITLE" => Loc::getMessage("SALE_VK_TAB_EXPORT_DESC"),
 	));
+		$arrTabs[] = array(
+			"DIV" => "vk_export_map",
+			"TAB" => Loc::getMessage("SALE_VK_TAB_MAP"),
+			"TITLE" => Loc::getMessage("SALE_VK_TAB_MAP_DESC"),
+			"ONSELECT" => "BX.Sale.VkAdmin.loadExportMap(".$exportId.")",
+		);
+	}
 
 $tabControl = new CAdminTabControl("tabControl", $arrTabs);
 
@@ -400,7 +413,7 @@ $additionalMenuDel = array();
 $onclickDel = 'return false;';
 foreach (array('ALBUMS', 'PRODUCTS') as $type1)
 {
-//			ADD
+//	ADD
 	$additionalMenuAdd[] = array(
 		"TEXT" => Loc::getMessage("SALE_VK_EXPORT_BUTTON_" . $type1),
 		"TITLE" => Loc::getMessage("SALE_VK_EXPORT_BUTTON_" . $type1),
@@ -408,7 +421,7 @@ foreach (array('ALBUMS', 'PRODUCTS') as $type1)
 		"ONCLICK" => "BX.Sale.VkAdmin.startFeed('" . $type1 . "', '" . $exportId . "', true);",
 	);
 
-//			DEL
+//	DEL
 	foreach (array('_DELETE', '_DELETE_ALL') as $type2)
 	{
 		$msg = Loc::getMessage("SALE_VK_EXPORT_BUTTON_" . $type1 . $type2 . "_ALERT") . '\n' . Loc::getMessage("SALE_VK_SETTINGS_BUTTON_CONFIRM");
@@ -422,11 +435,16 @@ foreach (array('ALBUMS', 'PRODUCTS') as $type1)
 		);
 	}
 }
-
-if (!empty($additionalMenuAdd))
-	$onclickAdd = "this.blur();BX.adminShowMenu(this," . htmlspecialcharsbx(CAdminPopup::PhpToJavaScript($additionalMenuAdd)) . ", {active_class: 'adm-btn-active'});return false;";
-if (!empty($additionalMenuDel))
-	$onclickDel = "this.blur();BX.adminShowMenu(this," . htmlspecialcharsbx(CAdminPopup::PhpToJavaScript($additionalMenuDel)) . ", {active_class: 'adm-btn-active'});return false;";
+	
+	$contextButtonAdd = array(
+		"TEXT" => Loc::getMessage("SALE_VK_EXPORT_BUTTON_ADDITIONAL_ADD"),
+		"MENU" => $additionalMenuAdd
+	);
+	$contextButtonDel = array(
+		"TEXT" => Loc::getMessage("SALE_VK_EXPORT_BUTTON_ADDITIONAL_DEL"),
+		"MENU" => $additionalMenuDel
+	);
+	$contextButtons = new CAdminContextMenu(array($contextButtonAdd, $contextButtonDel));
 
 ?>
 <tr>
@@ -435,20 +453,9 @@ if (!empty($additionalMenuDel))
 			   style="margin-right:10px"
 			   value="<?= Loc::getMessage("SALE_VK_EXPORT_BUTTON_ALL") ?>"
 			   onclick="BX.Sale.VkAdmin.startFeed('ALL','<?= $exportId ?>', true);">
-		
-		<a id="vk_export_button__startFeed_add" class="adm-btn adm-btn-menu <?= $processDisabledClassFlag ?>"
-		   style="margin-right:10px"
-		   onclick="<?= $onclickAdd ?>"
-		>
-			<?= Loc::getMessage("SALE_VK_EXPORT_BUTTON_ADDITIONAL_ADD") ?>
-		</a>
-		
-		<a id="vk_export_button__startFeed_delete" class="adm-btn adm-btn-menu <?= $processDisabledClassFlag ?>"
-		   style="margin-right:10px"
-		   onclick="<?= $onclickDel ?>"
-		>
-			<?= Loc::getMessage("SALE_VK_EXPORT_BUTTON_ADDITIONAL_DEL") ?>
-		</a>
+
+		<?=$contextButtons->Button($contextButtonAdd, CHotKeys::getInstance());?>
+		<?=$contextButtons->Button($contextButtonDel, CHotKeys::getInstance());?>
 	</td>
 </tr>
 
@@ -508,7 +515,7 @@ $tabControl->BeginNextTab();
 		<td width="40%"><span><?= Loc::getMessage("SALE_VK_SETTINGS_NAME") ?>:</span></td>
 		<td width="60%">
 			<input type="text" name="VK[DESCRIPTION]" size="50" maxlength="255"
-				   value="<?= isset($vkSettings["DESCRIPTION"]) ? $vkSettings["DESCRIPTION"] : "" ?>">
+				   value="<?= isset($vkSettings["DESCRIPTION"]) ? HtmlFilter::encode($vkSettings["DESCRIPTION"]) : "" ?>">
 		</td>
 	</tr>
 	
@@ -695,8 +702,20 @@ $tabControl->BeginNextTab();
 	</tr>
 </form>
 
+	
+	<?php
+//	export MAP
+	$tabControl->BeginNextTab();
+	?>
+	<tr>
+		<td id="vk_export_map_edit_table__content">
+			<?=BeginNote()?>
+			<?=Loc::getMessage("SALE_VK_TAB_MAP_LOAD")?>
+			<?=EndNote()?>
+		</td>
+	</tr>
+	
 <?php
-//		$tabControl->Buttons(array("btnSave" => true, "btnApply" => true));
 $tabControl->End();
 ?>
 <!--		</table>-->

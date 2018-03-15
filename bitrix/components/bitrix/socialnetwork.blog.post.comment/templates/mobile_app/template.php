@@ -6,18 +6,18 @@
  * @var CUser $USER
  */
 $rights = "N";
-if (\CSocNetUser::IsCurrentUserModuleAdmin() ||$APPLICATION->GetGroupRight("blog") >= "W")
+if (
+	\CSocNetUser::IsCurrentUserModuleAdmin()
+	|| $APPLICATION->GetGroupRight("blog") >= "W"
+)
 {
 	$rights = "ALL";
 }
-else if ( IsModuleInstalled("intranet") && $USER->IsAuthorized() )
+else if ($USER->IsAuthorized())
 {
 	$rights = "OWN";
 }
-else if (!IsModuleInstalled("intranet"))
-{
-	$rights = ($arResult["Perm"] < BLOG_PERMS_FULL ? "OWNLAST" : "ALL");
-}
+
 $eventHandlerID = AddEventHandler('main', 'system.field.view.file', Array('CBlogTools', 'blogUFfileShow'));
 $arResult["OUTPUT_LIST"] = $APPLICATION->IncludeComponent(
 	"bitrix:main.post.list",

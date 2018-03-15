@@ -254,7 +254,6 @@ RatingLike.Init = function(likeId)
 			BXRL[likeId].buttonText.innerHTML	=	BXRL[likeId].localize['LIKE_D'];
 	}
 	// get like-user-list
-	RatingLike.PopupScroll(likeId);
 
 	BX.bind(BXRL[likeId].count, 'mouseover' , function() {
 		clearTimeout(BXRL[likeId].popupTimeoutId);

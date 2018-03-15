@@ -10,7 +10,7 @@ abstract class ImportPattern
      * @param array $rawData
      * @return mixed
      */
-    abstract protected function parse(array $rawData);
+    abstract public function parse(array $rawData);
 
     /**
      * @param array $items
@@ -23,6 +23,12 @@ abstract class ImportPattern
      * @return mixed
      */
     abstract protected function import(array $items);
+
+	/**
+	 * @param ImportBase[] $items
+	 * @return Result
+	 */
+    abstract protected function logger(array $items);
 
     /**
      * @param array $rawData
@@ -42,6 +48,9 @@ abstract class ImportPattern
 
         $entityItems = $r->getData();
         $r = $this->import($entityItems);
+
+        $this->logger($entityItems);
+
         return $r;
     }
 }

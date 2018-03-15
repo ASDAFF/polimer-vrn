@@ -231,8 +231,12 @@ class CUserOptions
 		}
 		else
 		{
+			$arUpdateFields = array(
+				"VALUE" => $arFields["VALUE"],
+				"COMMON" => $arFields["COMMON"],
+			);
 			$helper = \Bitrix\Main\Application::getConnection()->getSqlHelper();
-			$sql = $helper->prepareMerge("b_user_option", array("USER_ID", "CATEGORY", "NAME"), $arFields, $arFields);
+			$sql = $helper->prepareMerge("b_user_option", array("USER_ID", "CATEGORY", "NAME"), $arFields, $arUpdateFields);
 
 			if(!$DB->Query(current($sql)))
 			{

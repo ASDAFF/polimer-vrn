@@ -73,11 +73,14 @@ if (!empty($arResult['ITEMS']))
 			}
 			if(!empty($sku) && is_array($sku))
 			{
-				$skuPropList[$itemId] = CIBlockPriceTools::getTreeProperties(
-					$sku,
-					$arParams['OFFER_TREE_PROPS'][$itemId],
-					array('PICT' => $arEmptyPreview, 'NAME' => '-')
-				);
+				if (empty($skuPropList[$itemId]))
+				{
+					$skuPropList[$itemId] = CIBlockPriceTools::getTreeProperties(
+						$sku,
+						$arParams['OFFER_TREE_PROPS'][$itemId],
+						array('PICT' => $arEmptyPreview, 'NAME' => '-')
+					);
+				}
 				CIBlockPriceTools::getTreePropertyValues($skuPropList[$itemId], $arParams['NEED_VALUES'][$itemId]);
 
 				$skuPropIds[$itemId] = array_keys($skuPropList[$itemId]);

@@ -32,4 +32,7 @@ $MESS["SONET_C30_FILTER_EVENT_ID_BP"] = "Бізнес-процеси";
 $MESS["SONET_C30_FILTER_FAVORITES"] = "Вибрані записи користувача";
 $MESS["SONET_C30_FILTER_EXTRANET"] = "Екстранет";
 $MESS["SONET_C30_FILTER_TAG"] = "Тег";
+$MESS["SONET_C30_FILTER_LIST_YES"] = "Так";
+$MESS["SONET_C30_FILTER_EVENT_ID_BLOG_POST_GRAT"] = "Подяки";
+$MESS["SONET_C30_FILTER_EVENT_ID_BLOG_POST_VOTE"] = "Опитування";
 ?>

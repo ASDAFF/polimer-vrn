@@ -105,8 +105,10 @@ class BoolType extends Base
 	 */
 	protected static function renderControl(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
 	{
+		$className = static::generateControlClassName($fieldType, $field);
 		$renderResult = '<select id="'.htmlspecialcharsbx(static::generateControlId($field))
-				.'" name="'.htmlspecialcharsbx(static::generateControlName($field)).'">';
+				.'" name="'.htmlspecialcharsbx(static::generateControlName($field))
+				.'" class="'.htmlspecialcharsbx($className).'">';
 
 		if (!$fieldType->isRequired())
 			$renderResult .= '<option value="">['.Loc::getMessage("BPDT_BOOL_NOT_SET").']</option>';

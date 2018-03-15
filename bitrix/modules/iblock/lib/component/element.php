@@ -980,8 +980,8 @@ abstract class Element extends Base
 
 		$params['USE_COMMENTS'] = $params['USE_COMMENTS'] === 'Y' ? 'Y' : 'N';
 		$params['BLOG_USE'] = $params['BLOG_USE'] === 'Y' ? 'Y' : 'N';
-		$params['VK_USE'] = $params['VK_USE'] === 'Y' ? 'Y' : 'N';
-		$params['FB_USE'] = $params['FB_USE'] === 'Y' ? 'Y' : 'N';
+		$params['VK_USE'] = $params['VK_USE'] === 'Y' && !empty($params['VK_API_ID']) ? 'Y' : 'N';
+		$params['FB_USE'] = $params['FB_USE'] === 'Y' && !empty($params['FB_APP_ID']) ? 'Y' : 'N';
 
 		if ($params['USE_COMMENTS'] === 'Y')
 		{
@@ -1015,7 +1015,7 @@ abstract class Element extends Base
 
 		if (empty($params['PRODUCT_PAY_BLOCK_ORDER']))
 		{
-			$params['PRODUCT_PAY_BLOCK_ORDER'] = 'rating,price,quantityLimit,quantity,buttons,compare';
+			$params['PRODUCT_PAY_BLOCK_ORDER'] = 'rating,price,quantityLimit,quantity,buttons';
 		}
 
 		if (is_string($params['PRODUCT_PAY_BLOCK_ORDER']))
@@ -1306,7 +1306,7 @@ abstract class Element extends Base
 				$foundOffer = $offer['CAN_BUY'];
 			}
 
-			if ($foundOffer)
+			if ($foundOffer && $intSelected == -1)
 			{
 				$intSelected = $keyOffer;
 			}
@@ -1336,6 +1336,7 @@ abstract class Element extends Base
 				$item['OFFERS'][$keyOffer]['OFFER_GROUP'] = true;
 			}
 
+			$ratioSelectedIndex = $offer['ITEM_MEASURE_RATIO_SELECTED'];
 			$firstPhoto = reset($offer['MORE_PHOTO']);
 			$arOneRow = array(
 				'ID' => $offer['ID'],
@@ -1349,13 +1350,13 @@ abstract class Element extends Base
 				'ITEM_QUANTITY_RANGES' => $offer['ITEM_QUANTITY_RANGES'],
 				'ITEM_QUANTITY_RANGE_SELECTED' => $offer['ITEM_QUANTITY_RANGE_SELECTED'],
 				'ITEM_MEASURE_RATIOS' => $offer['ITEM_MEASURE_RATIOS'],
-				'ITEM_MEASURE_RATIO_SELECTED' => $offer['ITEM_MEASURE_RATIO_SELECTED'],
+				'ITEM_MEASURE_RATIO_SELECTED' => $ratioSelectedIndex,
 				'PREVIEW_PICTURE' => $firstPhoto,
 				'DETAIL_PICTURE' => $firstPhoto,
 				'CHECK_QUANTITY' => $offer['CHECK_QUANTITY'],
-				'MAX_QUANTITY' => $offer['CATALOG_QUANTITY'],
-				'STEP_QUANTITY' => $offer['ITEM_MEASURE_RATIOS'][$offer['ITEM_MEASURE_RATIO_SELECTED']]['RATIO'],
-				'QUANTITY_FLOAT' => is_float($offer['ITEM_MEASURE_RATIOS'][$offer['ITEM_MEASURE_RATIO_SELECTED']]['RATIO']),
+				'MAX_QUANTITY' => $offer['PRODUCT']['QUANTITY'],
+				'STEP_QUANTITY' => $offer['ITEM_MEASURE_RATIOS'][$ratioSelectedIndex]['RATIO'], // deprecated
+				'QUANTITY_FLOAT' => is_float($offer['ITEM_MEASURE_RATIOS'][$ratioSelectedIndex]['RATIO']), // deprecated
 				'MEASURE' => $offer['ITEM_MEASURE']['TITLE'],
 				'OFFER_GROUP' => (isset($offerSet[$offer['ID']]) && $offerSet[$offer['ID']]),
 				'CAN_BUY' => $offer['CAN_BUY'],
@@ -1363,6 +1364,7 @@ abstract class Element extends Base
 				'SLIDER' => $offer['MORE_PHOTO'],
 				'SLIDER_COUNT' => $offer['MORE_PHOTO_COUNT'],
 			);
+			unset($ratioSelectedIndex);
 
 			$matrix[$keyOffer] = $arOneRow;
 		}

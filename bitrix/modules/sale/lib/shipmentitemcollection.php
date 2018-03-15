@@ -19,6 +19,10 @@ class ShipmentItemCollection
 	/** @var Shipment */
 	protected $shipment;
 
+	protected $shipmentItemIndexMap = array();
+
+	private static $eventClassName = null;
+
 	/**
 	 * @return Shipment
 	 */
@@ -106,7 +110,7 @@ class ShipmentItemCollection
 			return null;
 
 		$shipmentItem = $this->getItemByBasketCode($basketItem->getBasketCode());
-		if ($shipmentItem !== null )
+		if ($shipmentItem !== null)
 			return $shipmentItem;
 
 		$shipmentItem = ShipmentItem::create($this, $basketItem);
@@ -235,11 +239,18 @@ class ShipmentItemCollection
 	{
 		parent::addItem($shipmentItem);
 
+		$this->shipmentItemIndexMap[$shipmentItem->getBasketCode()] = $shipmentItem->getInternalIndex();
+
 		/** @var Shipment $shipment */
 		$shipment = $this->getShipment();
 		$shipment->onShipmentItemCollectionModify(EventActions::ADD, $shipmentItem);
+	}
 
-//		$shipment->setFieldNoDemand('PRICE_DELIVERY', $this->getPrice());
+	protected function createIndex()
+	{
+		$index = parent::createIndex();
+		$shipment = $this->getShipment();
+		return $shipment->getInternalIndex()."_".$index;
 	}
 
 	/**
@@ -253,6 +264,8 @@ class ShipmentItemCollection
 	public function deleteItem($index)
 	{
 		$oldShipmentItem = parent::deleteItem($index);
+
+		unset($this->shipmentItemIndexMap[$oldShipmentItem->getBasketCode()]);
 
 		$shipment = $this->getShipment();
 		$shipment->onShipmentItemCollectionModify(EventActions::DELETE, $oldShipmentItem);
@@ -277,12 +290,12 @@ class ShipmentItemCollection
 	 */
 	public function getItemByBasketCode($itemCode)
 	{
-		foreach ($this->collection as $shippedItem)
+		if (
+			isset($this->shipmentItemIndexMap[$itemCode])
+			&& isset($this->collection[$this->shipmentItemIndexMap[$itemCode]])
+		)
 		{
-			/** @var ShipmentItem $shippedItem */
-			$shippedItemCode = $shippedItem->getBasketCode();
-			if ($itemCode === $shippedItemCode)
-				return $shippedItem;
+			return $this->collection[$this->shipmentItemIndexMap[$itemCode]];
 		}
 
 		return null;
@@ -307,21 +320,52 @@ class ShipmentItemCollection
 	}
 
 	/**
+	 * @return Internals\CollectionFilterIterator
+	 */
+	public function getShippableItems()
+	{
+		$callback = function (ShipmentItem $shipmentItem)
+		{
+			$basketItem = $shipmentItem->getBasketItem();
+			if ($basketItem)
+				return !$basketItem->isBundleParent();
+
+			return true;
+		};
+
+		return new Internals\CollectionFilterIterator($this->getIterator(), $callback);
+	}
+
+	/**
+	 * @return Internals\CollectionFilterIterator
+	 */
+	public function getSellableItems()
+	{
+		$callback = function (ShipmentItem $shipmentItem)
+		{
+			$basketItem = $shipmentItem->getBasketItem();
+			if ($basketItem)
+				return !$basketItem->isBundleChild();
+
+			return true;
+		};
+
+		return new Internals\CollectionFilterIterator($this->getIterator(), $callback);
+	}
+
+	/**
 	 * @return float|int
 	 */
 	public function getPrice()
 	{
 		$price = 0;
+		$sellableItems = $this->getSellableItems();
 		/** @var ShipmentItem $shipmentItem */
-		foreach ($this->collection as $shipmentItem)
+		foreach ($sellableItems as $shipmentItem)
 		{
 			/** @var BasketItem $basketItem */
 			if ($basketItem = $shipmentItem->getBasketItem())
-			{
-				if ($basketItem->isBundleChild())
-					continue;
 				$price += $basketItem->getPrice() * $shipmentItem->getQuantity();
-			}
 		}
 
 		return $price;
@@ -480,14 +524,17 @@ class ShipmentItemCollection
 			throw new Main\ObjectNotFoundException('Entity "Basket" not found');
 		}
 
-		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
-		$shipmentItemClassName = $registry->getShipmentItemClassName();
-		$itemEventName = $shipmentItemClassName::getEntityEventName();
+		if (self::$eventClassName === null)
+		{
+			$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+			$shipmentItemClassName = $registry->getShipmentItemClassName();
+			self::$eventClassName = $shipmentItemClassName::getEntityEventName();
+		}
 
 		foreach ($itemsFromDb as $k => $v)
 		{
 			/** @var Main\Event $event */
-			$event = new Main\Event('sale', "OnBefore".$itemEventName."Deleted", array(
+			$event = new Main\Event('sale', "OnBefore".self::$eventClassName."Deleted", array(
 					'VALUES' => $v,
 			));
 			$event->send();
@@ -495,7 +542,7 @@ class ShipmentItemCollection
 			Internals\ShipmentItemTable::deleteWithItems($k);
 
 			/** @var Main\Event $event */
-			$event = new Main\Event('sale', "On".$itemEventName."Deleted", array(
+			$event = new Main\Event('sale', "On".self::$eventClassName."Deleted", array(
 					'VALUES' => $v,
 			));
 			$event->send();
@@ -599,7 +646,8 @@ class ShipmentItemCollection
 
 	/**
 	 * @param array $filter
-	 * @return \Bitrix\Main\DB\Result
+	 * @return Main\DB\Result
+	 * @throws Main\ArgumentException
 	 */
 	public static function getList(array $filter = array())
 	{
@@ -781,17 +829,15 @@ class ShipmentItemCollection
 	 */
 	public function getBasketItemQuantity(BasketItem $basketItem)
 	{
-		$allQuantity = 0;
-		/** @var ShipmentItem $shipmentItem */
-		foreach ($this->collection as $shipmentItem)
+		$quantity = 0;
+
+		$shipmentItem = $this->getItemByBasketCode($basketItem->getBasketCode());
+		if ($shipmentItem)
 		{
-			if ($shipmentItem->getBasketCode() == $basketItem->getBasketCode())
-			{
-				$allQuantity += $shipmentItem->getQuantity();
-			}
+			$quantity = $shipmentItem->getQuantity();
 		}
 
-		return $allQuantity;
+		return $quantity;
 	}
 
 	/**

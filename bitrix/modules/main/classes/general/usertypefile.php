@@ -2,6 +2,7 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Main;
+use Bitrix\Main\UI\FileInputUtility;
 
 class CUserTypeFile extends Main\UserField\TypeBase
 {
@@ -315,12 +316,13 @@ class CUserTypeFile extends Main\UserField\TypeBase
 	function CheckFields($arUserField, $value)
 	{
 		$aMsg = array();
-
 		if(!is_array($value))
 		{
 			if($value > 0)
 			{
-				$checkResult = \Bitrix\Main\UI\FileInputUtility::instance()->checkFiles($arUserField['FIELD_NAME'], array($value));
+				$fileInputUtility = FileInputUtility::instance();
+
+				$checkResult = $fileInputUtility->checkFiles($fileInputUtility->getUserFieldCid($arUserField), array($value));
 
 				if(!in_array($value, $checkResult))
 				{
@@ -445,9 +447,12 @@ class CUserTypeFile extends Main\UserField\TypeBase
 		// new mechanism - mail.file.input
 		else
 		{
+			$fileInputUtility = FileInputUtility::instance();
+			$controlId = $fileInputUtility->getUserFieldCid($arUserField);
+
 			if($value > 0)
 			{
-				$checkResult = \Bitrix\Main\UI\FileInputUtility::instance()->checkFiles($arUserField['FIELD_NAME'], array($value));
+				$checkResult = $fileInputUtility->checkFiles($controlId, array($value));
 
 				if(!in_array($value, $checkResult))
 				{
@@ -455,7 +460,14 @@ class CUserTypeFile extends Main\UserField\TypeBase
 				}
 			}
 
-			\Bitrix\Main\UI\FileInputUtility::instance()->checkDeletedFiles($arUserField['FIELD_NAME']);
+			if($value > 0)
+			{
+				$delResult = $fileInputUtility->checkDeletedFiles($controlId);
+				if(in_array($value, $delResult))
+				{
+					$value = false;
+				}
+			}
 
 			return $value;
 		}
@@ -565,7 +577,7 @@ class CUserTypeFile extends Main\UserField\TypeBase
 					{
 						$src = $fileInfo["SRC"];
 					}
-					$tag .= '<a href="'.htmlspecialcharsbx($src).'">'.htmlspecialcharsbx($fileInfo["FILE_NAME"]).'</a> ('.\CFile::formatSize($fileInfo["FILE_SIZE"]).')';
+					$tag .= '<a href="'.htmlspecialcharsbx($src).'">'.htmlspecialcharsbx($fileInfo["ORIGINAL_NAME"]).'</a> ('.\CFile::formatSize($fileInfo["FILE_SIZE"]).')';
 				}
 
 				$html .= static::getHelper()->wrapSingleField($tag);
@@ -584,14 +596,16 @@ class CUserTypeFile extends Main\UserField\TypeBase
 		ob_start();
 
 		global $APPLICATION;
+
+		$fileInputUtility = FileInputUtility::instance();
 		$APPLICATION->IncludeComponent(
 			'bitrix:main.file.input',
 			'.default',
 			array(
+				'CONTROL_ID' => $fileInputUtility->getUserFieldCid($arUserField),
 				'INPUT_NAME' => $fieldName,
 				'INPUT_NAME_UNSAVED' => $fieldName.'_tmp',
 				'INPUT_VALUE' => $value,
-				'CONTROL_ID' => $arUserField['FIELD_NAME'],
 				'MULTIPLE' => $arUserField['MULTIPLE'] === 'Y' ? 'Y' : 'N',
 				'MODULE_ID' => 'uf',
 				'ALLOW_UPLOAD' => 'A',

@@ -172,6 +172,21 @@
 	font-weight: normal;
 }
 
+.popup-window-button-blue {
+	background-color: #3bc8f5;
+	box-shadow: none;
+	color: #ffffff;
+}
+
+.popup-window-button-blue:hover {
+	background-color: #3fddff;
+	color: #ffffff;
+}
+.popup-window-button-blue:active {
+	background-color: #13b1e3;
+	color: #ffffff;
+}
+
 .popup-window-button-link,
 .popup-window-button-link-cancel,
 .popup-window-button-link:hover,

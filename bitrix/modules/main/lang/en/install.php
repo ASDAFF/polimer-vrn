@@ -280,8 +280,8 @@ $MESS["INST_ALLOW_CALL_REFERENCE"] = "The allow_call_time_pass_reference paramet
 $MESS["INST_UTF8_NOT_SUPPORT"] = "UTF-8 is not supported by PHP (mbstring library is not configured)";
 $MESS["INST_JAVASCRIPT_DISABLED"] = "JavaScript support is required to install Bitrix Site Manager. Apparently, JavaScript is not supported by browser or disabled. Change your browser settings and <a href=\"\">try again</a>.";
 $MESS["INS_UTF_PARAMS"] = "UTF-8 Installation of Bitrix Site Manager";
-$MESS["INST_UTF8_RECOMENDATION"] = "UTF-8 installation of Bitrix Site Manager requires <b>mbstring</b> library with parameters <b>mbstring.func_overload=2</b> and <b>mbstring.internal_encoding=UTF-8</b>.";
-$MESS["ERR_MBSTRING_EXISTS"] = "Non UTF-8 installation of Bitrix Site Manager requires that you set <b>mbstring.func_overload</b> parameter to 0 (zero). Otherwise, install Bitrix Site Manager in UTF-8.";
+$MESS["INST_UTF8_RECOMENDATION1"] = "UTF-8 installation of Bitrix Site Manager requires <b>mbstring</b> library with parameters <b>mbstring.func_overload=2</b> and <b>default_charset=UTF-8</b>.";
+$MESS["ERR_MBSTRING_EXISTS1"] = "Non UTF-8 installation of Bitrix Site Manager requires that you set <b>mbstring.func_overload</b> parameter to 0 (zero). Otherwise, install Bitrix Site Manager in UTF-8.";
 $MESS["BAD_LICENSE_KEY"] = "Incorrect license number.";
 $MESS["NLS_LANGUAGE_TERRITORY"] = "language_territory";
 $MESS["INST_YES"] = "Yes";

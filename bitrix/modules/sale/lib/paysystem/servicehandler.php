@@ -54,7 +54,7 @@ abstract class ServiceHandler extends BaseServiceHandler
 	/**
 	 * @param Payment $payment
 	 * @param Request $request
-	 * @return mixed
+	 * @return ServiceResult
 	 */
 	public abstract function processRequest(Payment $payment, Request $request);
 

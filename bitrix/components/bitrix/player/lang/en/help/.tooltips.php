@@ -40,4 +40,5 @@ $MESS["ALLOW_SWF_TIP"] = "Allows to play SWF files. Not recommended due to high 
 $MESS["CONTENT_TYPE_TIP"] = "Specifies to play the selected content type only.";
 $MESS["SIZE_TYPE_TIP"] = "<b>Absolute size</b>: specify player window height and width, in pixels;<br /><b>Fit in container</b>: player window will be auto resized to match the parent container's size;<br /><b>Use video dimensions</b>: player window size will be set to the video frame size as closely as possible.";
 $MESS["PLAYBACK_RATE_TIP"] = "Specify number from 0.1 to 3";
+$MESS["USE_PLAYLIST_AS_SOURCES_TIP"] = "The browser will walk the file list and start playing the first available file";
 ?>

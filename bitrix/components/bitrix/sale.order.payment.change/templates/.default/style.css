@@ -259,6 +259,17 @@
 
 .sale-paysystem-yandex-button-item:hover {
 	background: #ff911a;
+	color: #fff;
+	text-decoration: none;
+}
+
+.sale-paysystem-yandex-checkout-button-item {
+	padding: 10px 22px;
+}
+
+.sale-paysystem-yandex-button-item:focus {
+	color: #fff;
+	text-decoration: none;
 }
 
 .sale-paysystem-yandex-button-descrition {

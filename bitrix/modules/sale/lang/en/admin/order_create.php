@@ -20,4 +20,5 @@ $MESS["SALE_OK_ORDER_CREATE_ERROR_NO_PRODUCT"] = "The product \"##NAME##\" is un
 $MESS["SALE_OK_ARCHIVE_LIST"] = "Order archive";
 $MESS["SALE_OK_ARCHIVE_LIST_TITLE"] = "View order archive";
 $MESS["ARCHIVE_ERROR_PRODUCT_NOT_FOUND"] = "Product ##ID# - #NAME# was not found in the catalog.";
+$MESS["SALE_OK_ORDER_CREATE_ERROR_BASKET_ITEM_NOT_CREATED"] = "Order item \"##NAME##\" was not created";
 ?>

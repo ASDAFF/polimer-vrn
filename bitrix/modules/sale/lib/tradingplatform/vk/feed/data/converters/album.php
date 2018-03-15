@@ -57,8 +57,8 @@ class Album extends DataConverter
 		if ($checkedPhotos)
 			foreach ($checkedPhotos["PHOTOS"] as $photo)
 			{
-				$this->result["PHOTO_BX_ID"] = $photo["PHOTOS_BX_ID"];
-				$this->result["PHOTO_URL"] = $photo["PHOTOS_URL"];
+				$this->result["PHOTO_BX_ID"] = $photo["PHOTO_BX_ID"];
+				$this->result["PHOTO_URL"] = $photo["PHOTO_URL"];
 			}
 		else
 			$logger->addError("ALBUM_EMPTY_PHOTOS", $data["ID"]);

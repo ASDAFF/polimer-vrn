@@ -68,8 +68,18 @@ class Service
 
 		if ($className === '')
 		{
-			$className = '\Bitrix\Sale\PaySystem\CompatibilityHandler';
-			$handlerType = $fields['ACTION_FILE'];
+			if (Manager::isRestHandler($fields['ACTION_FILE']))
+			{
+				$className = '\Bitrix\Sale\PaySystem\RestHandler';
+				if (!class_exists($fields['ACTION_FILE']))
+				{
+					class_alias($className, $fields['ACTION_FILE']);
+				}
+			}
+			else
+			{
+				$className = '\Bitrix\Sale\PaySystem\CompatibilityHandler';
+			}
 		}
 
 		$this->fields = $fields;

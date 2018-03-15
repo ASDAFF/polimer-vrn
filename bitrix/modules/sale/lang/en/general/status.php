@@ -53,4 +53,5 @@ $MESS["SKGS_ORDER_ALLOW_PAY_STATUS_MAIL_BODY4"] = "To view order details, please
 
 Thank you!
 ";
+$MESS["SKGS_ORDER_PUBLIC_LINK"] = "order view link for unauthorized users (requires configuration in the e-Store module settings)";
 ?>

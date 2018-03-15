@@ -6,11 +6,13 @@ class User extends BaseContext
 {
 	/**
 	 * User constructor.
+	 *
+	 * @param \CUser|int $user
 	 */
 	public function __construct($user)
 	{
 		$this->userId = static::resolveUserId($user);
-		$this->userGroups = \CUser::getUserGroup($this->userId);
+		$this->setUserGroups(\CUser::getUserGroup($this->userId));
 	}
 
 	/**

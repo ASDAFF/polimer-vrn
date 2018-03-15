@@ -546,7 +546,7 @@
 		})();
 	BX.AvatarEditor = (function(){
 		var video;
-		var d = function(){
+		var d = function(params){
 			this.id = 'avatarEditor' + (new Date()).valueOf();
 			this.popup = null;
 			this.handlers = {
@@ -558,6 +558,8 @@
 			};
 			if (webRTC === null && BX["webrtc"])
 				webRTC = new BX.webrtc();
+			params = (BX.type.isPlainObject(params) ? params : {});
+			this.params = { enableCamera : params["enableCamera"] !== false };
 			this.limitations = []; // TODO make control to work with file limits
 		};
 		d.prototype = {
@@ -631,7 +633,7 @@
 					'</div>',
 				'</div>'
 				].join(''));
-				if ((window.location.protocol.indexOf("https") === 0) && webRTC && webRTC.enabled)
+				if (this.params.enableCamera && (window.location.protocol.indexOf("https") === 0) && webRTC && webRTC.enabled)
 				{
 					headers.push(
 						'<span class="main-file-input-tab-button-item main-file-input-tab-button-active" data-bx-role="tab-camera">' + BX.message("JS_AVATAR_EDITOR_CAMERA") + '</span>'

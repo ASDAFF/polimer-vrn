@@ -24,4 +24,5 @@ $MESS["SPOL_ORDER_LIST_SORT_PRICE"] = "Betrag der Bestellung";
 $MESS["SPOL_ORDER_LIST_DEFAULT_SORT"] = "Sortierung der Bestellungen";
 $MESS["SPOL_RESTRICT_CHANGE_PAYSYSTEM"] = "Status der Bestellungen in folgendem Status können nicht geändert werden";
 $MESS["SPOL_NOT_CHOSEN"] = "(nicht ausgewählt)";
+$MESS["SPOL_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"] = "Bestellung neu kalkulieren, wenn der Status des Zahlungssystems geändert wurde";
 ?>

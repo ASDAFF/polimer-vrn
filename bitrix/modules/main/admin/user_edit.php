@@ -461,7 +461,7 @@ if($canViewUserList)
 {
 	$aMenu[] = array(
 		"TEXT"	=> GetMessage("RECORD_LIST"),
-		"LINK"	=> "/bitrix/admin/user_admin.php?lang=".LANGUAGE_ID."&set_default=Y",
+		"LINK"	=> "/bitrix/admin/user_admin.php?lang=".LANGUAGE_ID."&apply_filter=Y",
 		"ICON"	=> "btn_list",
 		"TITLE"	=> GetMessage("RECORD_LIST_TITLE"),
 	);

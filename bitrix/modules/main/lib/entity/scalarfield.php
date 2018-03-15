@@ -8,13 +8,14 @@
 
 namespace Bitrix\Main\Entity;
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Entity\Field\IStorable;
 
 /**
  * Scalar entity field class for non-array and non-object data types
  * @package bitrix
  * @subpackage main
  */
-abstract class ScalarField extends Field
+abstract class ScalarField extends Field implements IStorable
 {
 	protected $is_primary;
 

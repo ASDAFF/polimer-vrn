@@ -134,18 +134,18 @@ if (strlen($arResult["FatalErrorMessage"]) <= 0 && !$arParams['COUNTERS_ONLY'])
 	if (empty($arParams["WORKFLOW_ID"]))
 	{
 		$ar = array("" => GetMessage("BPATL_WORKFLOW_ID_ANY"));
-		$tmpFilter = $arFilter;
-		unset($tmpFilter['USER_STATUS']);
-
-		$dbResTmp = CBPTaskService::GetList(
-			array("WORKFLOW_TEMPLATE_NAME" => "ASC"),
-			$tmpFilter,
-			array("WORKFLOW_TEMPLATE_TEMPLATE_ID", "WORKFLOW_TEMPLATE_NAME"),
-			false,
-			array("WORKFLOW_TEMPLATE_TEMPLATE_ID", "WORKFLOW_TEMPLATE_NAME")
+		$dbResTmp = CBPWorkflowTemplateLoader::GetList(
+			array('NAME' => 'ASC'),
+			array(
+				"ACTIVE" => "Y",
+				'!AUTO_EXECUTE' => CBPDocumentEventType::Automation
+			),
+			false, false,
+			array('ID', 'NAME')
 		);
+
 		while ($arResTmp = $dbResTmp->GetNext())
-			$ar[$arResTmp["WORKFLOW_TEMPLATE_TEMPLATE_ID"]] = $arResTmp["WORKFLOW_TEMPLATE_NAME"];
+			$ar[$arResTmp['ID']] = $arResTmp["NAME"];
 
 		$arResult["FILTER"][] = array("id" => "WORKFLOW_TEMPLATE_ID", "name" => GetMessage("BPATL_WORKFLOW_ID"), "type" => "list", "items" => $ar);
 	}

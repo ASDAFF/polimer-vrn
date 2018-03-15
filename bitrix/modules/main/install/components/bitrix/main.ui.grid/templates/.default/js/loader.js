@@ -100,6 +100,7 @@
 		hide: function()
 		{
 			var loader = this.getContainer();
+			this.adjustLoaderOffset();
 			BX.removeClass(loader, this.parent.settings.get('classLoaderShow'));
 			BX.addClass(loader, this.parent.settings.get('classLoaderHide'));
 		},

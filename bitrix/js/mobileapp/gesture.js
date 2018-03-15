@@ -8,7 +8,7 @@
 			var touchDuration = 100;
 			var timerInterval;
 
-			function timer(interval)
+			function timer(interval, targetNode)
 			{
 				interval--;
 
@@ -16,12 +16,12 @@
 				{
 					timerInterval = setTimeout(function ()
 					{
-						timer(interval);
+						timer(interval, targetNode);
 					});
 				}
 				else
 				{
-					tapHold();
+					tapHold(targetNode);
 				}
 			}
 
@@ -35,7 +35,7 @@
 				}
 
 				startPostition = {x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY};
-				timer(touchDuration);
+				timer(touchDuration, e.target);
 			}
 
 			function touchEnd()
@@ -55,14 +55,13 @@
 				}
 			}
 
-			function tapHold()
+			function tapHold(targetNode)
 			{
 				clearTimeout(timerInterval);
 				if (callback)
 				{
-					callback(node);
+					callback(targetNode);
 				}
-
 			}
 
 			BX.addClass(node, "long-tap-block");

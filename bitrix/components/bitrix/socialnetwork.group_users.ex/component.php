@@ -118,7 +118,7 @@ else
 
 		if (!$arResult["CurrentUserPerms"] || !$arResult["CurrentUserPerms"]["UserCanViewGroup"])
 		{
-			$arResult["FatalError"] = GetMessage("SONET_GUE_NO_PERMS").". ";
+			$arResult["FatalError"] = GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_NO_PERMS_PROJECT" : "SONET_GUE_NO_PERMS").". ";
 		}
 		else
 		{
@@ -129,7 +129,7 @@ else
 
 			if ($arParams["SET_TITLE"] == "Y")
 			{
-				$APPLICATION->SetTitle($arResult["Group"]["NAME"].": ".GetMessage("SONET_GUE_PAGE_TITLE"));
+				$APPLICATION->SetTitle($arResult["Group"]["NAME"].": ".GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_PAGE_TITLE_PROJECT" : "SONET_GUE_PAGE_TITLE"));
 			}
 
 			if ($arParams["SET_NAV_CHAIN"] != "N")

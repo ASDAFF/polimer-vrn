@@ -632,7 +632,7 @@ BX.TreeCondCtrlSelect.prototype.Init = function()
 						'option',
 						{
 							props: { value: this.values[i] },
-							html: this.ViewFormat(this.values[i] ,this.labels[i])
+							html: BX.util.htmlspecialchars(this.ViewFormat(this.values[i] ,this.labels[i]))
 						}
 					));
 				}
@@ -772,7 +772,7 @@ BX.TreeCondCtrlLazySelect.prototype.ajaxLoadResult = function(result)
 				'option',
 				{
 					props: { value: result[i].value },
-					html: this.ViewFormat(result[i].value, result[i].label)
+					html: BX.util.htmlspecialchars(this.ViewFormat(result[i].value, result[i].label))
 				}
 			));
 		}
@@ -1086,7 +1086,7 @@ BX.TreeUserCondCtrlPopup.prototype.AppendItemNode = function(value, label)
 						props: {
 							className: 'condition-item-text'
 						},
-						html: this.ViewFormat(value, label)
+						html: BX.util.htmlspecialchars(this.ViewFormat(value, label))
 					}),
 					BX.create('SPAN', {
 						props: {
@@ -1293,7 +1293,7 @@ BX.TreeCondCtrlDialog.prototype.onSave = function(params)
 	if (BX.type.isPlainObject(params))
 	{
 		this.input.value = params.id;
-		this.link.innerHTML = this.ViewFormat(params.id, params.name);
+		this.link.innerHTML = BX.util.htmlspecialchars(this.ViewFormat(params.id, params.name));
 		this.onChange();
 	}
 	this.dialog.Close();
@@ -1349,7 +1349,7 @@ BX.TreeMultiCondCtrlDialog.prototype.AppendItemNode = function(value, label)
 						props: {
 							className: 'condition-item-text'
 						},
-						html: this.ViewFormat(value, label)
+						html: BX.util.htmlspecialchars(this.ViewFormat(value, label))
 					}),
 					BX.create('SPAN', {
 						props: {

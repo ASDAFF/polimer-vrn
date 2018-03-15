@@ -22,4 +22,6 @@ $MESS["SPOL_ORDER_LIST_SORT_ID"] = "ID замовлення";
 $MESS["SPOL_ORDER_LIST_SORT_DATE_CREATE"] = "Дата створення";
 $MESS["SPOL_ORDER_LIST_SORT_PRICE"] = "Сума замовлення";
 $MESS["SPOL_ORDER_LIST_DEFAULT_SORT"] = "Сортування замовлень";
+$MESS["SPOL_RESTRICT_CHANGE_PAYSYSTEM"] = "Заборонити зміну платіжної системи у замовлень в статусах";
+$MESS["SPOL_NOT_CHOSEN"] = "(не обрано)";
 ?>

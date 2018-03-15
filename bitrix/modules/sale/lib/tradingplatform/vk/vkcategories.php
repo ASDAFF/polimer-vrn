@@ -19,7 +19,7 @@ class VkCategories
 	const CACHE_TTL = 86400;
 	const CACHE_ID_PREFIX = "vkcategory_cache";
 	private $exportId;
-
+	
 	/**
 	 * VkCategories constructor.
 	 * @param $exportId - int, ID of export profile
@@ -146,7 +146,7 @@ class VkCategories
 	 * @param bool $isTree
 	 * @return array|bool
 	 */
-	private function getData($isTree = true)
+	public function getList($isTree = true)
 	{
 		$cacheManager = Application::getInstance()->getManagedCache();
 		$result = NULL;
@@ -162,6 +162,8 @@ class VkCategories
 		
 		if ($isTree)
 			$result = self::convertVkCategoriesToTree($result);
+		else
+			$result = self::convertVkCategoriesToList($result);
 		
 		return $result;
 	}
@@ -206,11 +208,11 @@ class VkCategories
 	
 	
 	/**
-	 * Convert category list to tree
-	 *
-	 * @param $categoriesList
-	 * @return array
-	 */
+ * Convert category list to tree
+ *
+ * @param $categoriesList
+ * @return array
+ */
 	private static function convertVkCategoriesToTree($categoriesList)
 	{
 		$categoriesTree = array();
@@ -220,22 +222,43 @@ class VkCategories
 			{
 //				create NEW tree-item
 				$categoriesTree[$category["section"]["id"]] = array(
-					"id" => $category["section"]["id"],
-					"name" => $category["section"]["name"],
-					"items" => array(),
+					"ID" => $category["section"]["id"],
+					"NAME" => $category["section"]["name"],
+					"ITEMS" => array(),
 				);
 			}
 
 //			put data in exist tree item
-			$categoriesTree[$category["section"]["id"]]["items"][$category["id"]] = array(
-				"id" => $category["id"],
-				"name" => $category["name"],
+			$categoriesTree[$category["section"]["id"]]["ITEMS"][$category["id"]] = array(
+				"ID" => $category["id"],
+				"NAME" => $category["name"],
 			);
 		}
 		
 		return $categoriesTree;
 	}
 	
+	
+	/**
+	 * Convert category list from VK to correct list
+	 *
+	 * @param $categoriesList
+	 * @return array
+	 */
+	private static function convertVkCategoriesToList($categoriesList)
+	{
+		$categoriesListFormatted = array();
+		foreach ($categoriesList as $category)
+		{
+			$categoriesListFormatted[$category["id"]]= array(
+				"ID" => $category["id"],
+				"NAME" => $category["name"],
+			);
+		}
+		
+		return $categoriesListFormatted;
+	}
+
 	
 	/**
 	 * Formmatted selector to HTML. Not create <select> tag. only inner options.
@@ -246,7 +269,7 @@ class VkCategories
 	 */
 	public function getVkCategorySelector($catVkSelected = NULL, $defaultItemText = '')
 	{
-		$vkCategory = $this->getData();
+		$vkCategory = $this->getList();
 
 //		todo: why upper case dont work?
 		$defaultItemText = strlen($defaultItemText) > 0 ? $defaultItemText : Loc::getMessage("SALE_CATALOG_CHANGE_VK_CATEGORY");
@@ -254,15 +277,15 @@ class VkCategories
 		
 		foreach ($vkCategory as $vkTreeItem)
 		{
-			$strSelect .= '<option disabled value="0">' . strtoupper($vkTreeItem["name"]) . '</option>';
+			$strSelect .= '<option disabled value="0">' . strtoupper($vkTreeItem["NAME"]) . '</option>';
 			
-			foreach ($vkTreeItem["items"] as $sectionItem)
+			foreach ($vkTreeItem["ITEMS"] as $sectionItem)
 			{
 				$selected = '';
-				if ($catVkSelected && ($sectionItem["id"] == $catVkSelected))
+				if ($catVkSelected && ($sectionItem["ID"] == $catVkSelected))
 					$selected = " selected";
 				
-				$strSelect .= '<option' . $selected . ' value="' . $sectionItem["id"] . '">- ' . $sectionItem["name"] . '</option>';
+				$strSelect .= '<option' . $selected . ' value="' . $sectionItem["ID"] . '">- ' . $sectionItem["NAME"] . '</option>';
 			}
 		}
 		

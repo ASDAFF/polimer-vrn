@@ -8,11 +8,12 @@ use Bitrix\Main\Localization\Loc;
 /** @var array $arResult */
 
 CUtil::InitJSCore(array("popup"));
+?><div class="main-user-consent-errors"><?
 foreach ($arResult['ERRORS'] as $error)
 {
 	ShowError($error);
 }
-
+?></div><?
 if ($arResult['IS_SAVED'])
 {
 	?>
@@ -217,7 +218,7 @@ if ($arResult['IS_SAVED'])
 					<input name="save" value="<?=Loc::getMessage('MAIN_USER_CONSENT_EDIT_TMPL_BTN_SAVE')?>" type="submit" class="webform-small-button webform-small-button-accept">
 					<input name="apply" value="<?=Loc::getMessage('MAIN_USER_CONSENT_EDIT_TMPL_BTN_APPLY')?>" type="submit" class="webform-small-button webform-small-button-transparent">
 				<?else:?>
-					<input name="apply" value="<?=Loc::getMessage('MAIN_USER_CONSENT_EDIT_TMPL_BTN_APPLY')?>" type="submit" class="webform-small-button webform-small-button-accept">
+					<input name="save" value="<?=Loc::getMessage('MAIN_USER_CONSENT_EDIT_TMPL_BTN_SAVE')?>" type="submit" class="webform-small-button webform-small-button-accept">
 				<?endif;?>
 			<?endif;?>
 			<a id="MAIN_USER_CONSENT_EDIT_BACK_TO_LIST" href="<?=htmlspecialcharsbx($arParams['PATH_TO_LIST'])?>" class="webform-small-button webform-small-button-transparent">

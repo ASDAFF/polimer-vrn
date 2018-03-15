@@ -185,6 +185,7 @@ $arDefaultUrlTemplates404 = array(
 	"user_microblog_post" => "user/#user_id#/microblog/#post_id#/",
 
 	"user_tasks" => "user/#user_id#/tasks/",
+	"user_tasks_board" => "user/#user_id#/tasks/board/",
 	"user_tasks_task" => "user/#user_id#/tasks/task/#action#/#task_id#/",
 	"user_tasks_view" => "user/#user_id#/tasks/view/#action#/#view_id#/",
 	"user_tasks_departments_overview" => "user/#user_id#/tasks/departments/",
@@ -194,6 +195,8 @@ $arDefaultUrlTemplates404 = array(
 	"user_tasks_report_view" => "user/#user_id#/tasks/report/view/#report_id#/",
 	"user_tasks_templates" => "user/#user_id#/tasks/templates/",
 	"user_templates_template" => "user/#user_id#/tasks/templates/template/#action#/#template_id#/",
+
+	//"user_tasks_import" => "user/#user_id#/tasks/import/",
 
 	"user_forum" => "user/#user_id#/forum/",
 	"user_forum_topic" => "user/#user_id#/forum/#topic_id#/",
@@ -377,6 +380,7 @@ $arDefaultUrlTemplatesN404 = array(
 	"user_microblog_post" => "page=user_microblog_post&user_id=#user_id#&post_id=#post_id#",
 
 	"user_tasks" => "page=user_tasks&user_id=#user_id#",
+	"user_tasks_board" => "page=user_tasks_board&user_id=#user_id#",
 	"user_tasks_task" => "page=user_tasks_task&user_id=#user_id#&action=#action#&task_id=#task_id#",
 	"user_tasks_view" => "page=user_tasks_view&user_id=#user_id#&action=#action#&view_id=#view_id#",
 	"user_tasks_report" => "page=user_tasks_report&user_id=#user_id#",

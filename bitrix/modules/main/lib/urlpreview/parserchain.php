@@ -19,7 +19,9 @@ class ParserChain
 	 * @var array Key is host, value - parser class name
 	 */
 	protected  static $metadataParsersByHost = array(
-
+		'vk.com' => 'Bitrix\Main\UrlPreview\Parser\Vk',
+		'www.facebook.com' => 'Bitrix\Main\UrlPreview\Parser\Facebook',
+		'www.instagram.com' => 'Bitrix\Main\UrlPreview\Parser\Instagram',
 	);
 
 	/**

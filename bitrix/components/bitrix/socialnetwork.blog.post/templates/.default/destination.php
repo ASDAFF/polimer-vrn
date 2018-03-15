@@ -164,6 +164,10 @@
 		formName: BXSocNetLogDestinationFormNamePost,
 		inputName: 'feed-add-post-destination-input-post'
 	}));
+	BX.bind(BX('feed-add-post-destination-input-post'), 'blur', BX.delegate(BX.SocNetLogDestination.BXfpBlurInput, {
+		inputBoxName: 'feed-add-post-destination-input-box-post',
+		tagInputName: 'bx-destination-tag-post'
+	}));
 	BX.bind(BX('bx-destination-tag-post'), 'click', function(e){BX.SocNetLogDestination.openDialog(BXSocNetLogDestinationFormNamePost); BX.PreventDefault(e); });
 	BX.bind(BX('feed-add-post-destination-container-post'), 'click', function(e){BX.SocNetLogDestination.openDialog(BXSocNetLogDestinationFormNamePost); BX.PreventDefault(e); });
 </script>

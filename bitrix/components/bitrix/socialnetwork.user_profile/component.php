@@ -316,6 +316,7 @@ else
 		}
 	}
 
+				
 	if (!is_array($arResult["User"]))
 	{
 		$arResult["FatalError"] = GetMessage("SONET_P_USER_NO_USER").". ";
@@ -753,7 +754,13 @@ else
 							case 'LAST_LOGIN':
 								if (StrLen($val) > 0)
 								{
-									$val = FormatDateFromDB($val, $arParams["DATE_TIME_FORMAT"], true);
+									$val = \CUser::FormatLastActivityDate(MakeTimeStamp($val));
+								}
+								break;
+							case 'LAST_ACTIVITY_DATE':
+								if (StrLen($val) > 0)
+								{
+									$val = \CUser::FormatLastActivityDate(MakeTimeStamp($val, 'YYYY-MM-DD HH:MI:SS'));
 								}
 								break;
 

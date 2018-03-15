@@ -168,6 +168,12 @@ if(CModule::IncludeModule("sale"))
 		"SIZE" => 5,
 	);
 
+	$arComponentParameters['PARAMETERS']['REFRESH_PRICES'] = array(
+		"NAME" => GetMessage("SPO_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"),
+		"TYPE" => "CHECKBOX",
+		"DEFAULT" => "N",
+		"PARENT" => "ORDER",
+	);
 
 	$orderSortList = array(
 		'STATUS' => GetMessage("SPO_ORDER_LIST_SORT_STATUS"),

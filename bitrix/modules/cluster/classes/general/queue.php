@@ -12,7 +12,7 @@ class CClusterQueue
 		$sql_param1 = CClusterQueue::QuoteParam($param1);
 		$sql_param2 = CClusterQueue::QuoteParam($param2);
 		$sql_param3 = CClusterQueue::QuoteParam($param3);
-
+		$DB->StartUsingMasterOnly();
 		$DB->Query("
 			INSERT INTO b_cluster_queue (
 			TIMESTAMP_X, GROUP_ID, COMMAND, PARAM1, PARAM2, PARAM3
@@ -20,6 +20,7 @@ class CClusterQueue
 			".$DB->CurrentTimeFunction().", ".$sql_group_id.", ".$sql_command.", ".$sql_param1.", ".$sql_param2.", ".$sql_param3."
 			)
 		");
+		$DB->StopUsingMasterOnly();
 	}
 
 	public static function QuoteParam($str)
@@ -50,7 +51,7 @@ class CClusterQueue
 	public static function Run()
 	{
 		global $DB;
-
+		$DB->StartUsingMasterOnly();
 		do
 		{
 			//read data
@@ -91,5 +92,6 @@ class CClusterQueue
 			}
 		}
 		while ($queue);
+		$DB->StopUsingMasterOnly();
 	}
 }

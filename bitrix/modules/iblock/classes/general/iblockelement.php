@@ -4073,6 +4073,47 @@ class CAllIBlockElement
 		}
 		return self::$elementIblock[$ID];
 	}
+
+	/**
+	 * Return IBLOCK_ID for element.
+	 *
+	 * @param array $list
+	 * @return array
+	 */
+	public static function GetIBlockByIDList(array $list)
+	{
+		global $DB;
+		$output = array();
+		Main\Type\Collection::normalizeArrayValuesByInt($list);
+		if (empty($list))
+			return;
+		foreach ($list as $index => $id)
+		{
+			if (!empty(self::$elementIblock[$id]))
+			{
+				$output[$id] = self::$elementIblock[$id];
+				unset($list[$index]);
+			}
+		}
+
+		if (!empty($list))
+		{
+			foreach (array_chunk($list, 500) as $pageIds)
+			{
+				$strSql = "select IBLOCK_ID,ID from b_iblock_element where ID in (".join(', ', $pageIds).")";
+				$rsItems = $DB->Query($strSql, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
+				while ($itemData = $rsItems->Fetch())
+				{
+					$output[$itemData['ID']] = self::$elementIblock[$itemData['ID']] = (int)$itemData['IBLOCK_ID'];
+				}
+				unset($itemData, $rsItems);
+			}
+			unset($pageIds);
+		}
+
+		return $output;
+	}
+
 	///////////////////////////////////////////////////////////////////
 	// Checks fields before update or insert
 	///////////////////////////////////////////////////////////////////

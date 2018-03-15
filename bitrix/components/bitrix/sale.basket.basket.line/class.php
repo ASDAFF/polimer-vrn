@@ -73,9 +73,6 @@ class SaleBasketLineComponent extends CBitrixComponent
 		if ($arParams['SHOW_NOTAVAIL'] != 'N')
 			$arParams['SHOW_NOTAVAIL'] = 'Y';
 
-		if ($arParams['SHOW_SUBSCRIBE'] != 'N')
-			$arParams['SHOW_SUBSCRIBE'] = 'Y';
-
 		if ($arParams['SHOW_IMAGE'] != 'N')
 			$arParams['SHOW_IMAGE'] = 'Y';
 
@@ -117,7 +114,7 @@ class SaleBasketLineComponent extends CBitrixComponent
 		if (preg_match('/^[0-9]+$/', $_POST["sbblRemoveItemFromCart"]) !== 1)
 			return;
 
-		if (! ($userFilter = $this->getUserFilter()))
+		if (!($userFilter = $this->getUserFilter()))
 			return;
 
 		$numProducts = CSaleBasket::GetList(
@@ -150,7 +147,7 @@ class SaleBasketLineComponent extends CBitrixComponent
 		)
 			return;
 
-		if(! \Bitrix\Main\Loader::includeModule ('sale'))
+		if(!\Bitrix\Main\Loader::includeModule('sale'))
 		{
 			ShowError(GetMessage('SALE_MODULE_NOT_INSTALL'));
 			return;
@@ -163,7 +160,7 @@ class SaleBasketLineComponent extends CBitrixComponent
 
 		// prepare result
 
-		if(! \Bitrix\Main\Loader::includeModule("currency"))
+		if(!\Bitrix\Main\Loader::includeModule("currency"))
 		{
 			ShowError(GetMessage("CURRENCY_MODULE_NOT_INSTALLED"));
 			return;
@@ -192,7 +189,9 @@ class SaleBasketLineComponent extends CBitrixComponent
 		}
 
 		if($this->arParams["SHOW_PRODUCTS"] == "Y")
+		{
 			$this->arResult = $this->getProducts() + $this->arResult;
+		}
 		else
 		{
 			if($this->arParams["SHOW_TOTAL_PRICE"] == "Y")
@@ -258,15 +257,13 @@ class SaleBasketLineComponent extends CBitrixComponent
 
 	private function getProducts()
 	{
-		if (! ($arFilter = $this->getUserFilter()))
+		if (!($arFilter = $this->getUserFilter()))
 			return array();
 
 		if ($this->arParams['SHOW_NOTAVAIL'] == 'N')
 			$arFilter['CAN_BUY'] = 'Y';
 		if ($this->arParams['SHOW_DELAY'] == 'N')
 			$arFilter['DELAY'] = 'N';
-		if ($this->arParams['SHOW_SUBSCRIBE'] == 'N')
-			$arFilter["SUBSCRIBE"] = 'N';
 
 		$dbItems = CSaleBasket::GetList(
 			array("NAME" => "ASC", "ID" => "ASC"),
@@ -290,13 +287,13 @@ class SaleBasketLineComponent extends CBitrixComponent
 			if (CSaleBasketHelper::isSetItem($arItem))
 				continue;
 
-			$arItem["PRICE_FMT"] = CCurrencyLang::CurrencyFormat($arItem["PRICE"], $arItem["CURRENCY"], true);
-			$arItem["FULL_PRICE"] = CCurrencyLang::CurrencyFormat($arItem["PRICE"] + $arItem["DISCOUNT_PRICE"], $arItem["CURRENCY"], true);
-			$arItem['QUANTITY'] += 0; // remove excessive zeros after period
-			if (! $arItem['MEASURE_NAME'])
-				$arItem['MEASURE_NAME'] = GetMessage('TSB1_MEASURE_NAME');
 			if (!isset($arItem['BASE_PRICE']) || (float)$arItem['BASE_PRICE'] <= 0)
 				$arItem['BASE_PRICE'] = $arItem['PRICE'] + $arItem['DISCOUNT_PRICE'];
+			$arItem["PRICE_FMT"] = CCurrencyLang::CurrencyFormat($arItem["PRICE"], $arItem["CURRENCY"], true);
+			$arItem["FULL_PRICE"] = CCurrencyLang::CurrencyFormat($arItem["BASE_PRICE"], $arItem["CURRENCY"], true);
+			$arItem['QUANTITY'] += 0; // remove excessive zeros after period
+			if (!$arItem['MEASURE_NAME'])
+				$arItem['MEASURE_NAME'] = GetMessage('TSB1_MEASURE_NAME');
 
 			if ($this->arParams['SHOW_IMAGE'] == 'Y' && $this->bUseCatalog && $arItem["MODULE"] == 'catalog')
 			{
@@ -363,11 +360,11 @@ class SaleBasketLineComponent extends CBitrixComponent
 					$arResult["CATEGORIES"]["DELAY"] = $orderDelay['BASKET_ITEMS'];
 				}
 
-
 				foreach ($arResult["CATEGORIES"]["READY"] as &$arItem)
 				{
 					$arItem["SUM"] = CCurrencyLang::CurrencyFormat($arItem["PRICE"] * $arItem["QUANTITY"], $arItem["CURRENCY"], true);
 					$arItem["PRICE_FMT"] = CCurrencyLang::CurrencyFormat($arItem["PRICE"], $arItem["CURRENCY"], true);
+					$arItem["FULL_PRICE"] = CCurrencyLang::CurrencyFormat($arItem["BASE_PRICE"], $arItem["CURRENCY"], true);
 				}
 				unset($arItem);
 
@@ -377,6 +374,7 @@ class SaleBasketLineComponent extends CBitrixComponent
 					{
 						$arItem["SUM"] = CCurrencyLang::CurrencyFormat($arItem["PRICE"] * $arItem["QUANTITY"], $arItem["CURRENCY"], true);
 						$arItem["PRICE_FMT"] = CCurrencyLang::CurrencyFormat($arItem["PRICE"], $arItem["CURRENCY"], true);
+						$arItem["FULL_PRICE"] = CCurrencyLang::CurrencyFormat($arItem["BASE_PRICE"], $arItem["CURRENCY"], true);
 					}
 					unset($arItem);
 				}
@@ -520,7 +518,7 @@ class SaleBasketLineComponent extends CBitrixComponent
 
 	protected function loadCurrentFuser()
 	{
-		$this->currentFuser = \Bitrix\Sale\Fuser::getId(true);
+		$this->currentFuser = Sale\Fuser::getId(true);
 	}
 }
 

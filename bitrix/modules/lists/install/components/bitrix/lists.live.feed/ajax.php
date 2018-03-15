@@ -74,7 +74,14 @@ class LiveFeedAjaxController extends Controller
 
 	protected function processActionGetList()
 	{
+		if(!CLists::isFeatureEnabled())
+		{
+			ShowError(Loc::getMessage('LISTS_SEAC_ACCESS_DENIED'));
+			return;
+		}
+
 		$this->checkRequiredPostParams(array('iblockId', 'randomString'));
+
 		if($this->errorCollection->hasErrors())
 		{
 			$errorObject = array_shift($this->errorCollection->toArray());
@@ -1856,6 +1863,7 @@ class LiveFeedAjaxController extends Controller
 							"name" => $arParameter["Name"],
 							"title" => $arParameter["Description"],
 							"type" => "custom",
+							"realType" => $arParameter["Type"],
 							"value" => $html,
 							'show' => 'Y',
 							'templateName' => $templateName,
@@ -2082,7 +2090,22 @@ class LiveFeedAjaxController extends Controller
 						case 'label':
 						case 'custom':
 							?><td><?
-							echo $customHtml;
+							$spanOne = '';
+							$spanTwo = '';
+							if (!empty($field["realType"]))
+							{
+								switch ($field["realType"])
+								{
+									case "select":
+									case "internalselect":
+									case "E:EList":
+									case "bool":
+										$spanOne = '<span class="bx-bp-select">';
+										$spanTwo = '</span>';
+										break;
+								}
+							}
+							echo $spanOne.$customHtml.$spanTwo;
 							?></td><?
 							break;
 						case 'checkbox':

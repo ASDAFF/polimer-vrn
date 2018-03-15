@@ -151,15 +151,7 @@ BX.Lists.ListsElementEditClass = (function ()
 			return;
 		}
 
-		var button = window.event.currentTarget;
-		if(button.hasOwnProperty('setAttribute'))
-		{
-			button.setAttribute('onclick', '');
-		}
-
-		var objectForPut = JSON.stringify(listTemplateId);
 		var content = '';
-
 		BX.Lists.ajax({
 			method: 'POST',
 			dataType: 'html',
@@ -177,17 +169,13 @@ BX.Lists.ListsElementEditClass = (function ()
 					html: result
 				});
 
-				if(button.hasOwnProperty('setAttribute'))
-				{
-					button.setAttribute('onclick', 'BX.Lists["'+this.jsClass+'"].fillConstants('+objectForPut+');');
-				}
-
 				var modalWindow = BX.Lists.modalWindow({
 					modalId: 'bx-lists-popup',
 					withoutWindowManager: true,
 					title: BX.message("CT_BLEE_BIZPROC_CONSTANTS_FILL_TITLE"),
 					autoHide: false,
 					overlay: false,
+					draggable: true,
 					contentStyle: {
 						width: '600px',
 						paddingTop: '10px',
@@ -197,14 +185,6 @@ BX.Lists.ListsElementEditClass = (function ()
 					events : {
 						onPopupClose : function() {
 							this.destroy();
-						},
-						onAfterPopupShow : function(popup) {
-							var title = BX.findChild(popup.contentContainer, {className: 'bx-lists-popup-title'}, true);
-							if (title)
-							{
-								title.style.cursor = "move";
-								BX.bind(title, "mousedown", BX.proxy(popup._startDrag, popup));
-							}
 						}
 					},
 					buttons: [
@@ -265,6 +245,7 @@ BX.Lists.ListsElementEditClass = (function ()
 						modalId: 'bx-lists-popup',
 						title: BX.message('CT_BLEE_BIZPROC_NOTIFY_TITLE'),
 						overlay: false,
+						draggable: true,
 						contentStyle: {
 							width: '600px',
 							paddingTop: '10px',
@@ -275,14 +256,6 @@ BX.Lists.ListsElementEditClass = (function ()
 							onPopupClose : function() {
 								BX('lists-notify-admin-popup').appendChild(BX('lists-notify-admin-popup-content'));
 								this.destroy();
-							},
-							onAfterPopupShow : function(popup) {
-								var title = BX.findChild(popup.contentContainer, {className: 'bx-lists-popup-title'}, true);
-								if (title)
-								{
-									title.style.cursor = "move";
-									BX.bind(title, "mousedown", BX.proxy(popup._startDrag, popup));
-								}
 							}
 						},
 						buttons: [
@@ -472,6 +445,7 @@ BX.Lists.ListsElementEditClass = (function ()
 				modalId: 'bx-lists-migrate-list',
 				title: BX.message('CT_BLEE_DELETE_POPUP_TITLE'),
 				contentClassName: '',
+				draggable: true,
 				contentStyle: {
 					width: '400px',
 					padding: '20px 20px 20px 20px'
@@ -479,14 +453,6 @@ BX.Lists.ListsElementEditClass = (function ()
 				events: {
 					onPopupClose : function() {
 						this.destroy();
-					},
-					onAfterPopupShow : function(popup) {
-						var title = BX.findChild(popup.contentContainer, {className: 'bx-lists-popup-title'}, true);
-						if (title)
-						{
-							title.style.cursor = 'move';
-							BX.bind(title, 'mousedown', BX.proxy(popup._startDrag, popup));
-						}
 					}
 				},
 				content: message,

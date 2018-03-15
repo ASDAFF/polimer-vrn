@@ -2,6 +2,7 @@
 
 namespace Bitrix\Socialnetwork;
 
+use Bitrix\Blog\Item\Post;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main;
@@ -10,6 +11,9 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\EventManager;
 use Bitrix\Socialnetwork\CommentAux\CreateTask;
 use Bitrix\Main\Update\Stepper;
+use Bitrix\Socialnetwork\Item\Log;
+use Bitrix\Socialnetwork\Livefeed\BlogPost;
+use Bitrix\Socialnetwork\Livefeed\Provider;
 
 Loc::loadMessages(__FILE__);
 
@@ -1265,6 +1269,7 @@ class ComponentHelper
 				if (defined("BX_COMP_MANAGED_CACHE"))
 				{
 					$CACHE_MANAGER->registerTag('sonet_user2group');
+					$CACHE_MANAGER->registerTag('sonet_extranet_user_list');
 					$CACHE_MANAGER->endTagCache();
 				}
 
@@ -1690,39 +1695,10 @@ class ComponentHelper
 					}
 					$logSiteListNew = array_merge($logSiteListNew, $logSiteList);
 
-					$socnetPerms = \CBlogPost::getSocNetPermsCode($postId);
-					if(!in_array("U".$post["AUTHOR_ID"], $socnetPerms))
-					{
-						$socnetPerms[] = "U".$post["AUTHOR_ID"];
-					}
-					$socnetPerms[] = "SA"; // socnet admin
-
-					if (
-						in_array("AU", $socnetPerms)
-						|| in_array("G2", $socnetPerms)
-					)
-					{
-						$socnetPermsAdd = array();
-
-						foreach($socnetPerms as $perm)
-						{
-							if (preg_match('/^SG(\d+)$/', $perm, $matches))
-							{
-								if (
-									!in_array("SG".$matches[1]."_".SONET_ROLES_USER, $socnetPerms)
-									&& !in_array("SG".$matches[1]."_".SONET_ROLES_MODERATOR, $socnetPerms)
-									&& !in_array("SG".$matches[1]."_".SONET_ROLES_OWNER, $socnetPerms)
-								)
-								{
-									$socnetPermsAdd[] = "SG".$matches[1]."_".SONET_ROLES_USER;
-								}
-							}
-						}
-						if (count($socnetPermsAdd) > 0)
-						{
-							$socnetPerms = array_merge($socnetPerms, $socnetPermsAdd);
-						}
-					}
+					$socnetPerms = self::getBlogPostSocNetPerms(array(
+						'postId' => $postId,
+						'authorId' => $post["AUTHOR_ID"]
+					));
 
 					\CSocNetLogRights::deleteByLogID($logId);
 					\CSocNetLogRights::add($logId, $socnetPerms, true, false);
@@ -3084,4 +3060,465 @@ class ComponentHelper
 			}
 		}
 	}
+
+	// used when video transform
+	public static function getBlogPostLimitedViewStatus($params = array())
+	{
+		global $USER;
+
+		$result = false;
+
+		$logId = (
+			is_array($params)
+			&& !empty($params['logId'])
+			&& intval($params['logId']) > 0
+				? intval($params['logId'])
+				: 0
+		);
+
+		$postId = (
+			is_array($params)
+			&& !empty($params['postId'])
+			&& intval($params['postId']) > 0
+				? intval($params['postId'])
+				: 0
+		);
+
+		$authorId = (
+			is_array($params)
+			&& !empty($params['authorId'])
+			&& intval($params['authorId']) > 0
+				? intval($params['authorId'])
+				: 0
+		);
+
+		$blogPostPerms = (
+			is_array($params)
+			&& !empty($params['blogPostPerms'])
+			&& is_array($params['blogPostPerms'])
+				? $params['blogPostPerms']
+				: array()
+		);
+
+		if (
+			$logId <= 0
+			|| $postId <= 0
+			|| $authorId <= 0
+			|| !Loader::includeModule('blog')
+		)
+		{
+			return $result;
+		}
+
+		$logRightsAuthorOnly = true;
+
+		$res = LogRightTable::getList(array(
+			'filter' => array(
+				'LOG_ID' => $logId
+			),
+			'select' => array('GROUP_CODE')
+		));
+		foreach($res as $right)
+		{
+			if (!in_array($right['GROUP_CODE'], array('SA', 'U'.$authorId)))
+			{
+				$logRightsAuthorOnly = false;
+				break;
+			}
+		}
+
+		if ($logRightsAuthorOnly)
+		{
+			if (empty($blogPostPerms))
+			{
+				$blogPostPerms = \CBlogPost::getSocnetPermsName($postId);
+			}
+
+			foreach($blogPostPerms as $groupKey => $group)
+			{
+				if ($groupKey != 'U')
+				{
+					$result = true;
+				}
+				else
+				{
+					foreach($group as $codeUserId => $codeUser)
+					{
+						if (
+							$codeUserId != $USER->getId()
+							|| (
+								isset($codeUser['NAME'])
+								&& $codeUser['NAME'] == 'All'
+							) // SPERM
+							|| (
+								isset($codeUser['ENTITY'])
+								&& is_array($codeUser['ENTITY'])
+								&& in_array('G2', $codeUser['ENTITY'])
+							) // getSocnetPermsName
+						)
+						{
+							$result = true;
+							break;
+						}
+					}
+				}
+
+				if ($result)
+				{
+					break;
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	public static function setBlogPostLimitedViewStatus($params = array())
+	{
+		static $extranetSiteId = null;
+
+		$result = false;
+
+		$show = (
+			is_array($params)
+			&& isset($params['show'])
+			&& $params['show'] === true
+		);
+
+		$postId = (
+			is_array($params)
+			&& !empty($params['postId'])
+			&& intval($params['postId']) > 0
+				? intval($params['postId'])
+				: 0
+		);
+
+		if (
+			$postId <= 0
+			|| !Loader::includeModule('blog')
+		)
+		{
+			return $result;
+		}
+
+		if ($show)
+		{
+			$post = Post::getById($postId);
+			$postFields = $post->getFields();
+
+			$socnetPerms = self::getBlogPostSocNetPerms(array(
+				'postId' => $postId,
+				'authorId' => $postFields["AUTHOR_ID"]
+			));
+
+			$liveFeedEntity = Livefeed\Provider::init(array(
+				'ENTITY_TYPE' => 'BLOG_POST',
+				'ENTITY_ID' => $postId,
+			));
+
+			$logId = $liveFeedEntity->getLogId();
+
+			\CSocNetLogRights::deleteByLogID($logId);
+			\CSocNetLogRights::add($logId, $socnetPerms, true, false);
+
+			if (\Bitrix\Main\Loader::includeModule('crm'))
+			{
+				$logItem = Log::getById($logId);
+				\CCrmLiveFeedComponent::processCrmBlogPostRights($logId, $logItem->getFields(), $postFields, 'new');
+			}
+
+			\Bitrix\Blog\Integration\Socialnetwork\CounterPost::increment(array(
+				'socnetPerms' => $socnetPerms,
+				'logId' => $logId,
+				'logEventId' => $liveFeedEntity->getEventId()
+			));
+
+			$logSiteIdList = array();
+			$resSite = \CSocNetLog::getSite($logId);
+			while($logSite = $resSite->fetch())
+			{
+				$logSiteIdList[] = $logSite["LID"];
+			}
+
+			if (
+				$extranetSiteId === null
+				&& Loader::includeModule('extranet')
+			)
+			{
+				$extranetSiteId = \CExtranet::getExtranetSiteID();
+			}
+
+			$siteId = false;
+			foreach($logSiteIdList as $logSiteId)
+			{
+				if ($logSiteId != $extranetSiteId)
+				{
+					$siteId = $logSiteId;
+					break;
+				}
+			}
+
+			if (!$siteId)
+			{
+				$siteId = \CSite::getDefSite();
+			}
+
+			$postUrl = \CComponentEngine::makePathFromTemplate(
+				Option::get('socialnetwork', 'userblogpost_page', '/company/personal/user/#user_id#/blog/#post_id#/', $siteId),
+				array(
+					"post_id" => $postId,
+					"user_id" => $postFields["AUTHOR_ID"]
+				)
+			);
+
+			$notificationParamsList = array(
+				'post' => array(
+					'ID' => $postFields["ID"],
+					'TITLE' => $postFields["TITLE"],
+					'AUTHOR_ID' => $postFields["AUTHOR_ID"]
+				),
+				'siteId' => $siteId,
+				'postUrl' => $postUrl,
+				'socnetRights' => $socnetPerms,
+			);
+
+			preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/ies".BX_UTF_PCRE_MODIFIER, $postFields["DETAIL_TEXT"], $matches);
+			if (!empty($matches))
+			{
+				$notificationParamsList["mentionList"] = $matches[1];
+			}
+
+			\Bitrix\Socialnetwork\ComponentHelper::notifyBlogPostCreated($notificationParamsList);
+
+			BXClearCache(true, "/blog/socnet_post/".intval($postId / 100)."/".$postId."/");
+		}
+
+		$result = true;
+
+		return $result;
+	}
+
+	public static function getBlogPostSocNetPerms($params = array())
+	{
+		$result = array();
+
+		$postId = (
+			is_array($params)
+			&& !empty($params['postId'])
+			&& intval($params['postId']) > 0
+				? intval($params['postId'])
+				: 0
+		);
+
+		$authorId = (
+			is_array($params)
+			&& !empty($params['authorId'])
+			&& intval($params['authorId']) > 0
+				? intval($params['authorId'])
+				: 0
+		);
+
+		if ($postId <= 0)
+		{
+			return $result;
+		}
+
+		if ($authorId <= 0)
+		{
+			$blogPostFields = \CBlogPost::getByID($postId);
+			$authorId = intval($blogPostFields["AUTHOR_ID"]);
+		}
+
+		if ($authorId <= 0)
+		{
+			return $result;
+		}
+
+		$result = \CBlogPost::getSocNetPermsCode($postId);
+		if(!in_array("U".$authorId, $result))
+		{
+			$result[] = "U".$authorId;
+		}
+		$result[] = "SA"; // socnet admin
+
+		if (
+			in_array("AU", $result)
+			|| in_array("G2", $result)
+		)
+		{
+			$socnetPermsAdd = array();
+
+			foreach($result as $perm)
+			{
+				if (preg_match('/^SG(\d+)$/', $perm, $matches))
+				{
+					if (
+						!in_array("SG".$matches[1]."_".UserToGroupTable::ROLE_USER, $result)
+						&& !in_array("SG".$matches[1]."_".UserToGroupTable::ROLE_MODERATOR, $result)
+						&& !in_array("SG".$matches[1]."_".UserToGroupTable::ROLE_OWNER, $result)
+					)
+					{
+						$socnetPermsAdd[] = "SG".$matches[1]."_".$result;
+					}
+				}
+			}
+			if (count($socnetPermsAdd) > 0)
+			{
+				$result = array_merge($result, $socnetPermsAdd);
+			}
+		}
+
+		return $result;
+	}
+
+
+	public static function notifyBlogPostCreated($params = array())
+	{
+		if (!Loader::includeModule('blog'))
+		{
+			return false;
+		}
+
+		$post = (
+			!empty($params)
+			&& is_array($params)
+			&& !empty($params['post'])
+			&& is_array($params['post'])
+				? $params['post']
+				: array()
+		);
+
+		$siteId = (
+			!empty($params)
+			&& is_array($params)
+			&& !empty($params['siteId'])
+				? $params['siteId']
+				: \CSite::getDefSite()
+		);
+
+		$postUrl = (
+			!empty($params)
+			&& is_array($params)
+			&& !empty($params['postUrl'])
+				? $params['postUrl']
+				: ''
+		);
+
+		$socnetRights = (
+			!empty($params)
+			&& is_array($params)
+			&& !empty($params['socnetRights'])
+			&& is_array($params['socnetRights'])
+				? $params['socnetRights']
+				: array()
+		);
+
+		$socnetRightsOld = (
+			!empty($params)
+			&& is_array($params)
+			&& !empty($params['socnetRightsOld'])
+			&& is_array($params['socnetRightsOld'])
+				? $params['socnetRightsOld']
+				: array(
+					'U' => array(),
+					'SG' => array()
+				)
+		);
+
+		$mentionListOld = (
+			!empty($params)
+			&& is_array($params)
+			&& !empty($params['mentionListOld'])
+			&& is_array($params['mentionListOld'])
+				? $params['mentionListOld']
+				: array()
+		);
+
+		$mentionList = (
+			!empty($params)
+			&& is_array($params)
+			&& !empty($params['mentionList'])
+			&& is_array($params['mentionList'])
+				? $params['mentionList']
+				: array()
+		);
+
+		$IMNotificationFields = array(
+			"TYPE" => "POST",
+			"TITLE" => $post["TITLE"],
+			"URL" => $postUrl,
+			"ID" => $post["ID"],
+			"FROM_USER_ID" => $post["AUTHOR_ID"],
+			"TO_USER_ID" => array(),
+			"TO_SOCNET_RIGHTS" => $socnetRights,
+			"TO_SOCNET_RIGHTS_OLD" => $socnetRightsOld
+		);
+		if (!empty($mentionListOld))
+		{
+			$IMNotificationFields["MENTION_ID_OLD"] = $mentionListOld;
+		}
+		if (!empty($mentionList))
+		{
+			$IMNotificationFields["MENTION_ID"] = $mentionList[1];
+		}
+
+		$userIdSentList = \CBlogPost::notifyIm($IMNotificationFields);
+		if (!$userIdSentList)
+		{
+			$userIdSentList = array();
+		}
+
+		$userIdToMailList = array();
+
+		if (!empty($socnetRights))
+		{
+			\Bitrix\Blog\Broadcast::send(array(
+				"EMAIL_FROM" => Option::get('main', 'email_from', 'nobody@nobody.com'),
+				"SOCNET_RIGHTS" => $socnetRights,
+				"SOCNET_RIGHTS_OLD" => $socnetRightsOld,
+				"ENTITY_TYPE" => "POST",
+				"ENTITY_ID" => $post["ID"],
+				"AUTHOR_ID" => $post["AUTHOR_ID"],
+				"URL" => $postUrl,
+				"EXCLUDE_USERS" => array_merge(array($post["AUTHOR_ID"]), array($userIdSentList))
+			));
+
+			foreach ($socnetRights as $right)
+			{
+				if(substr($right, 0, 1) == "U")
+				{
+					$rightUserId = intVal(substr($right, 1));
+					if (
+						$rightUserId > 0
+						&& !in_array($rightUserId, $userIdToMailList)
+						&& empty($socnetRightsOld["U"][$rightUserId])
+						&& $rightUserId != $post["AUTHOR_ID"]
+					)
+					{
+						$userIdToMailList[] = $rightUserId;
+					}
+				}
+			}
+		}
+
+		if (!empty($userIdToMailList))
+		{
+			\CBlogPost::notifyMail(array(
+				"type" => "POST",
+				"siteId" => $siteId,
+				"userId" => $userIdToMailList,
+				"authorId" => $post["AUTHOR_ID"],
+				"postId" => $post["ID"],
+				"postUrl" => \CComponentEngine::makePathFromTemplate(
+					'/pub/post.php?post_id=#post_id#',
+					array(
+						"post_id"=> $post["ID"]
+					)
+				)
+			));
+		}
+
+		return true;
+	}
+
 }

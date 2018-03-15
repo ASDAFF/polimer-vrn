@@ -12,7 +12,7 @@ CModule::IncludeModule("sale");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/sale/delivery/delivery_ems.php');
 
 define('DELIVERY_EMS_CACHE_LIFETIME', 2592000); // cache lifetime - 30 days (60*60*24*30)
-define('DELIVERY_EMS_PRICE_TARIFF', 0.01); // price koefficient - 1%
+define('DELIVERY_EMS_PRICE_TARIFF', 0.004956); // declared value koeff - 0,42% + VAT. https://www.pochta.ru/support/post-rules/valuable-departure
 define('DELIVERY_EMS_WRITE_LOG', 0); // flag 'write to log'. use CDeliveryEMS::__WriteToLog() for logging.
 
 class CDeliveryEMS
@@ -45,6 +45,8 @@ class CDeliveryEMS
 
 			"COMPABILITY" => array("CDeliveryEMS", "Compability"),
 			"CALCULATOR" => array("CDeliveryEMS", "Calculate"),
+
+			"DEPRECATED" => "Y",
 
 			/* List of delivery profiles */
 			"PROFILES" => array(
@@ -615,22 +617,14 @@ class CDeliveryEMS
 		$arParams = array();
 
 		if ($arLocationTo['IS_RUSSIAN'] != 'Y')
-		{
 			$arParams['type'] = $arConfig["category"]["VALUE"];
-		}
 		else
-		{
 			$arParams['from'] = $arLocationFrom['EMS_ID'];
-		}
 
 		$arParams['to'] = $arLocationTo['EMS_ID'];
 		$arParams['weight'] = $arOrder['WEIGHT'] / 1000;
-
 		$arParams['plain'] = 'true';
-
 		$data = CDeliveryEMS::__EMSQuery('ems.calculate', $arParams);
-
-		//echo '<pre style="text-align: left;">answer: '; print_r($data); echo '</pre>';
 
 		if (is_array($data) && $data['rsp']['stat'] == 'ok')
 		{
@@ -666,6 +660,9 @@ class CDeliveryEMS
 
 	function Compability($arOrder, $arConfig)
 	{
+		//It will work never.
+		return array();
+
 		$arLocationFrom = CSaleHelper::getLocationByIdHitCached($arOrder["LOCATION_FROM"]);
 		$arLocationTo = CDeliveryEMS::__GetLocation($arOrder["LOCATION_TO"]);
 

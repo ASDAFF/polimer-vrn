@@ -389,6 +389,7 @@ class CUserTypeBoolean extends \Bitrix\Main\UserField\TypeBase
 			$attrList['class'] = static::getHelper()->getCssClassName().(isset($attrList['class']) ? ' '.$attrList['class'] : '');
 
 			$attrList['name'] = $fieldName;
+			$attrList['tabindex'] = '0';
 
 			$tag = '';
 			$valueList = static::getLabels($arUserField);

@@ -11,7 +11,6 @@ function JCEC(params) // Javascript Class Event Calendar
 	this.arEvents = [];
 	this.arAttendees = {};
 	this.arSections = params.sections;
-	this.sectionsIds = params.sectionsIds;
 	this.type = params.type;
 	this.bSuperpose = params.bSuperpose || false;
 	this.bTasks = params.bTasks || false;
@@ -30,7 +29,6 @@ function JCEC(params) // Javascript Class Event Calendar
 	this.days = params.days;
 	this.bReadOnly = !!params.readOnly;
 	this.bAnonym = !!params.bAnonym;
-	this.canAddToSuperpose = params.canAddToSuperpose && !this.bAnonym;
 	this.startupEvent = params.startupEvent;
 	this.accessColors = params.accessColors;
 	this.initMonth = params.init_month;
@@ -118,8 +116,7 @@ function JCEC(params) // Javascript Class Event Calendar
 	this.bUser = this.type == 'user';
 	this.meetingRooms = params.meetingRooms || [];
 	this.allowResMeeting = !!params.allowResMeeting;
-	this.allowVideoMeeting = !!params.allowVideoMeeting;
-	this.bUseMR = this.bIntranet && (this.allowResMeeting || this.allowVideoMeeting) && this.meetingRooms.length > 0;
+	this.bUseMR = this.bIntranet && this.allowResMeeting && this.meetingRooms.length > 0;
 
 	if (this.bTasks)
 	{
@@ -219,6 +216,7 @@ JCEC.prototype = {
 
 		this.BuildButtonsCont();
 		this.pCalCnt.className = "bxcal";
+
 		this.InitTabControl();
 
 		setTimeout(function(){BX.bind(window, "resize", BX.proxy(_this.OnResize, _this))},200);
@@ -1234,7 +1232,7 @@ JCEC.prototype = {
 			});
 		}
 
-		if (!el.SUPERPOSED && this.canAddToSuperpose)
+		if (!el.SUPERPOSED)
 		{
 			menu.push({
 				text : EC_MESS.CalAdd2SP,
@@ -1750,26 +1748,13 @@ JCEC.prototype = {
 			{
 				if (res.result)
 				{
-					if (!_this.bSuperpose && _this.canAddToSuperpose)
+					if (!_this.bSuperpose)
 						return BX.reload();
 					return _this.BuildSectionElements();
 				}
 				return  false;
 			}
 		});
-	},
-
-	GetReqData : function(action, O)
-	{
-		if (!O)
-			O = {};
-		if (action)
-			O.action = action;
-		O.sessid = BX.bitrix_sessid();
-		O.bx_event_calendar_request = 'Y';
-		O.reqId = Math.round(Math.random() * 1000000);
-
-		return O;
 	},
 
 	GetCenterWindowPos : function(w, h)
@@ -2006,6 +1991,19 @@ JCEC.prototype = {
 		};
 
 		return P;
+	},
+
+	GetReqData : function(action, O)
+	{
+		if (!O)
+			O = {};
+		if (action)
+			O.action = action;
+		O.sessid = BX.bitrix_sessid();
+		O.bx_event_calendar_request = 'Y';
+		O.reqId = Math.round(Math.random() * 1000000);
+
+		return O;
 	},
 
 	CancelRequest: function(reqId)
@@ -3345,7 +3343,7 @@ JCEC.prototype.BuildWeekEventHolder = function()
 			var Tab = _this.Tabs[_this.activeTabId || _this.userSettings.tabId];
 			// Days title event holder;
 			if (!Tab.pEventHolder)
-				Tab.pEventHolder = Tab.pBodyCont.rows[0].cells[0].firstChild;
+				Tab.pEventHolder = Tab.pBodyCont.querySelector(".bxec-day-t-event-holder");
 
 			if (_this.bJustRedraw)
 				_this.ReBuildEvents(Tab.id);
@@ -3550,7 +3548,8 @@ JCEC.prototype.DisplayEvent_DT = function(arInit, oEvent, Tab)
 		// Drag & Drop
 		this.dragDrop.RegisterEvent(oDiv, oEvent, 'week_title');
 
-		Tab.pEventHolder.appendChild(oDiv);
+		if(Tab.pEventHolder)
+			Tab.pEventHolder.appendChild(oDiv);
 	}
 };
 JCEC.prototype.DisplayEventOnTimeline = function(arInit, oEvent, Tab)
@@ -3773,7 +3772,7 @@ JCEC.prototype.ShowMoreEventsSelectWeek = function(oDay, tabId)
 
 JCEC.prototype.ArrangeEventsInTL = function(Tab)
 {
-	try{ //
+	try{
 	var
 		bStarted = false,
 		h, m, e, pDiv, _e, leftDrift = 0,

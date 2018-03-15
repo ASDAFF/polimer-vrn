@@ -95,6 +95,8 @@ $arFilterFields = array(
 	"filter_delivery_service",
 	"filter_xml_id",
 	"filter_tracking_number",
+	"filter_delivery_doc_date_from",
+	"filter_delivery_doc_date_to",
 	"filter_source",
 	"filter_company_id",
 	"filter_responsible_id",
@@ -325,6 +327,31 @@ if(floatval($filter_price_from)>0) $arFilter[">=PRICE"] = floatval($filter_price
 if(floatval($filter_price_to)>0) $arFilter["<=PRICE"] = floatval($filter_price_to);
 if(strlen($filter_xml_id)>0) $arFilter["%XML_ID"] = trim($filter_xml_id);
 if(strlen($filter_tracking_number)>0) $arFilter["%SHIPMENT.TRACKING_NUMBER"] = trim($filter_tracking_number);
+
+if(strval(trim($filter_delivery_doc_date_from)) != '')
+{
+	$arFilter[">=SHIPMENT.DELIVERY_DOC_DATE"] = trim($filter_delivery_doc_date_from);
+}
+if(strval(trim($filter_delivery_doc_date_to)) != '')
+{
+	if($arDate = ParseDateTime($filter_delivery_doc_date_to, CSite::GetDateFormat("FULL", SITE_ID)))
+	{
+		if(StrLen($filter_delivery_doc_date_to) < 11)
+		{
+			$arDate["HH"] = 23;
+			$arDate["MI"] = 59;
+			$arDate["SS"] = 59;
+		}
+
+		$filter_delivery_doc_date_to = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL", SITE_ID)), mktime($arDate["HH"], $arDate["MI"], $arDate["SS"], $arDate["MM"], $arDate["DD"], $arDate["YYYY"]));
+		$arFilter["<=SHIPMENT.DELIVERY_DOC_DATE"] = $filter_delivery_doc_date_to;
+	}
+	else
+	{
+		$filter_delivery_doc_date_to = "";
+	}
+}
+
 
 if(isset($filter_universal) && strlen($filter_universal) > 0)
 	$arFilter["NAME_SEARCH"] = trim($filter_universal);
@@ -1018,9 +1045,27 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 
 							if ($setResult->isSuccess())
 							{
-								$warnings = $setResult->getWarningMessages();
+								$warningsList = array();
 
-								if (empty($warnings))
+								$warnings = $setResult->getWarningMessages();
+								$hasWarnings = false;
+								if (!empty($warnings))
+								{
+									foreach ($warnings as $message)
+									{
+										$warningsList[] = $message.' '.$shpMsg;
+									}
+
+									$shipment->setField('DEDUCTED', ($_REQUEST['action'] == 'deducted' ? 'N' : 'Y'));
+								}
+
+								$saveResult = $saleOrder->save();
+								if (!$saveResult->isSuccess())
+								{
+									$lAdmin->AddGroupError(join("\n", $saveResult->getErrorMessages()).' '.$shpMsg);
+								}
+
+								if(empty($warnings))
 								{
 									if($_REQUEST['action'] == 'deducted')
 										$mess = Loc::getMessage('SALE_SHIPMENT_DEDUCTED');
@@ -1031,14 +1076,19 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 								}
 								else
 								{
+
 									foreach ($warnings as $message)
-										$lAdmin->AddGroupError($message.' '.$shpMsg);
+									{
+										$warningsList[] = $message.' '.$shpMsg;
+									}
+
+									$warningsList = array_unique($warningsList);
+
+									foreach ($warningsList as $warning)
+									{
+										$lAdmin->AddGroupError($warning);
+									}
 								}
-
-								$saveResult = $saleOrder->save();
-
-								if (!$saveResult->isSuccess())
-									$lAdmin->AddGroupError(join("\n", $saveResult->getErrorMessages()).' '.$shpMsg);
 							}
 							else
 							{
@@ -1159,6 +1209,22 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 						}
 					}
 
+					break;
+
+				case "delivery_requests":
+
+					$shipmentIds = array();
+					$dbRes = Sale\Internals\ShipmentTable::getList(array(
+						'filter' => array('=ORDER_ID' => $arID, '!=SYSTEM' => 'Y'),
+						'select' => array('ID')
+					));
+
+					while($row = $dbRes->fetch())
+						$shipmentIds[] = $row['ID'];
+
+					$_SESSION["SALE_DELIVERY_REQUEST_SHIPMENT_IDS"] = $shipmentIds;
+					echo '<script>window.parent.location = "sale_delivery_request.php?lang='.LANGUAGE_ID.'";</script>';
+					die();
 					break;
 
 				default:
@@ -1298,6 +1364,7 @@ $arHeaders = array(
 	array("id"=>"DATE_ALLOW_DELIVERY", "content"=>Loc::getMessage("SALE_F_DATE_ALLOW_DELIVERY"), "sort"=>"", "default"=>false),
 	array("id"=>"ACCOUNT_NUMBER","content"=>Loc::getMessage("SOA_ACCOUNT_NUMBER"), "sort"=>""),
 	array("id"=>"TRACKING_NUMBER","content"=>Loc::getMessage("SOA_TRACKING_NUMBER"), "sort"=>"", "default"=>false),
+	array("id"=>"DELIVERY_DOC_DATE","content"=>Loc::getMessage("SOA_DELIVERY_DOC_DATE"), "sort"=>"", "default"=>false),
 	array("id"=>"EXTERNAL_ORDER","content"=>Loc::getMessage("SOA_EXTERNAL_ORDER"), "sort"=>"", "default"=> false),
 	array("id"=>"SHIPMENTS","content"=>Loc::getMessage("SOA_SHIPMENTS"), "sort"=>"", "default"=> true),
 	array("id"=>"PAYMENTS","content"=>Loc::getMessage("SOA_PAYMENTS"), "sort"=>"", "default"=> true),
@@ -1603,20 +1670,14 @@ if (!empty($orderList) && is_array($orderList))
 		{
 			$basketList[$item['ORDER_ID']][$item['ID']] = $item;
 
-			if (array_key_exists($item['ORDER_ID'], $recommendedList))
+			if (isset($recommendedList[$item['ORDER_ID']]) && $item['RECOMMENDATION'])
 			{
-				if($item['RECOMMENDATION'])
-				{
-					$recommendedList[$item['ORDER_ID']] = true;
-				}
+				$recommendedList[$item['ORDER_ID']] = true;
 			}
 
 			if ($bShowBasketProps)
 			{
-				if (!empty($basketList[$item['ORDER_ID']]) && is_array($basketList[$item['ORDER_ID']]))
-				{
-					$basketItemIds = array_merge($basketItemIds, array_keys($basketList[$item['ORDER_ID']]));
-				}
+				$basketItemIds[] = $item['ID'];
 			}
 		}
 	}
@@ -1669,12 +1730,12 @@ if (!empty($orderList) && is_array($orderList))
 		{
 			$arBasketItems = array();
 
-			if (array_key_exists($orderId, $basketList))
+			if (isset($basketList[$orderId]))
 			{
 				$arBasketItems = $basketList[$orderId];
 			}
 
-			if (array_key_exists($orderId, $recommendedList))
+			if (isset($recommendedList[$orderId]))
 			{
 				$isRecommended = $recommendedList[$orderId];
 			}
@@ -2497,7 +2558,7 @@ if (!empty($orderList) && is_array($orderList))
 
 			while($shipment = $res->fetch())
 			{
-				$shipment["ID_LINKED"] = '[<a href="/bitrix/admin/sale_order_shipment_edit.php?order_id='.$arOrder['ID'].'&shipment_id='.$shipment["ID"].'&lang='.LANGUAGE_ID.'">'.$shipment["ID"].'</a>]';
+				$shipment["ID_LINKED"] = '[<a href="/bitrix/admin/sale_order_shipment_edit.php?order_id='.$arOrder['ID'].'&shipment_id='.$shipment["ID"].'&lang='.LANGUAGE_ID.'"  title="'.Loc::getMessage('SALE_O_SHIPMENT_ID_TITLE', array('#SHIPMENT_ID#' => $shipment["ID"])).'">'.$shipment["ID"].'</a>]';
 				$shipments[] = $shipment;
 			}
 
@@ -2654,11 +2715,10 @@ if (!empty($orderList) && is_array($orderList))
 				foreach($shipments as $shipment)
 				{
 					$tmp = '<span id="DEDUCTED_'.$shipment["ID"].'">'.(($shipment["DEDUCTED"] == "Y") ? Loc::getMessage("SO_YES") : Loc::getMessage("SO_NO"))."</span>";
+					$fieldValue .= $shipment["ID_LINKED"]." ".$tmp;
 
 					if(count($shipments) > 1)
-						$fieldValue .= $shipment["ID_LINKED"]." ".$tmp."<hr>";
-					else
-						$fieldValue .= $tmp;
+						$fieldValue .= "<hr>";
 
 					$fieldValueTmp = $shipment["DATE_DEDUCTED"];
 					if(strlen($shipment["DATE_DEDUCTED"]) > 0)
@@ -2995,7 +3055,7 @@ foreach($arFooterArray as $val)
 
 $arResult = array(
 	'RECOMMENDATION_ORDERS_COUNT' => $rcmCount,
-	'RECOMMENDATION_ORDERS_VALUE' => htmlspecialcharsbx(join(' / ', $rcmValue))
+	'RECOMMENDATION_ORDERS_VALUE' => htmlspecialcharsEx(join(' / ', $rcmValue))
 );
 
 // prepare recommendation widget
@@ -3094,7 +3154,8 @@ $arGroupActionsTmp = array(
 	"deducted_n" => Loc::getMessage("SALE_SHIPMENT_DEDUCTED_N"),
 	"update_payment_status" => Loc::getMessage("SALE_UPDATE_PAYMENT_STATUS"),
 	"paid" => Loc::getMessage("SALE_ORDER_PAID"),
-	"paid_n" => Loc::getMessage("SALE_ORDER_PAID_N")
+	"paid_n" => Loc::getMessage("SALE_ORDER_PAID_N"),
+	"delivery_requests" => Loc::getMessage("SALE_SEND_DELIVERY_REQUEST"),
 );
 	
 if($saleModulePermissions >= "W" || !empty($permDeleteOrderList))
@@ -3236,6 +3297,20 @@ if($saleModulePermissions == "W" || ($saleModulePermissions >= 'P' && !empty($al
 			"LINK" => "sale_order_create.php?lang=".LANGUAGE_ID.$siteLID,
 			"TITLE" => Loc::getMessage("SALE_A_NEWORDER_TITLE"),
 			"MENU" => $arSiteMenu
+		),
+		array(
+			"TEXT" => Loc::getMessage("SALE_O_CONTEXT_B_DELIVERY_REQUESTS"),
+			"TITLE" => Loc::getMessage("SALE_O_CONTEXT_B_DELIVERY_REQUESTS_TITLE"),
+			"MENU" => array(
+				array(
+					"TEXT" => Loc::getMessage('SALE_O_CONTEXT_B_DELIVERY_REQUESTS_SELECTED'),
+					"ONCLICK" =>"sendDeliveryRequestsForCurrentOrders(true)",
+				),
+				array(
+					"TEXT" => Loc::getMessage('SALE_O_CONTEXT_B_DELIVERY_REQUESTS_ALL'),
+					"ONCLICK" =>"sendDeliveryRequestsForCurrentOrders(false)",
+				)
+			)
 		)
 	);
 }
@@ -3332,6 +3407,7 @@ $arFilterFieldsTmp = array(
 	"filter_sum_paid" => Loc::getMessage("SO_SUM_PAID"),
 	"filter_xml_id" => Loc::getMessage("SO_XML_ID"),
 	"filter_tracking_number" => Loc::getMessage("SOA_TRACKING_NUMBER"),
+	"filter_delivery_doc_date" => Loc::getMessage("SOA_DELIVERY_DOC_DATE"),
 	"filter_source" => Loc::getMessage("SALE_F_SOURCE"),
 	"filter_company_id" => Loc::getMessage("SALE_F_COMPANY_ID"),
 	"filter_responsible_id" => Loc::getMessage("SALE_F_RESPONSIBLE_ID")
@@ -3501,7 +3577,7 @@ $oFilter->Begin();
 		</td>
 	</tr>
 	<tr>
-		<td valign="top"><?echo Loc::getMessage("SALE_F_STATUS")?>:<br /><img src="/bitrix/images/sale/mouse.gif" width="44" height="21" border="0" alt=""></td>
+		<td valign="top"><?echo Loc::getMessage("SALE_F_STATUS")?>:</td>
 		<td valign="top">
 			<select name="filter_status[]" multiple size="3">
 				<?
@@ -3878,6 +3954,12 @@ $oFilter->Begin();
 			<input type="text" name="filter_tracking_number" value="<?echo htmlspecialcharsbx($filter_tracking_number)?>" size="40">
 		</td>
 	</tr>
+	<tr>
+		<td><?echo Loc::getMessage("SALE_F_DELIVERY_DOC_DATE");?>:</td>
+		<td>
+			<?echo CalendarPeriod("filter_delivery_doc_date_from", $filter_delivery_doc_date_from, "filter_delivery_doc_date_to", $filter_delivery_doc_date_to, "find_form", "Y")?>
+		</td>
+	</tr>
 	<?
 		$tPlatformList = array(
 			0 => Loc::getMessage("SALE_F_ALL"),
@@ -3979,7 +4061,78 @@ $lAdmin->DisplayList();
 echo BeginNote();
 ?>
 <span id="order_sum"><? echo $order_sum;?></span>
-<?
-echo EndNote();
 
+<script type="text/javascript">
+	function sendDeliveryRequestsForCurrentOrders(selectedOnly)
+	{
+		var ordersListForm = BX('form_tbl_sale_order');
+
+		if(BX('tbl_sale_order_check_all') && ordersListForm)
+		{
+			if(!selectedOnly)
+			{
+				BX.fireEvent(BX('tbl_sale_order_check_all'), 'click');
+			}
+			else
+			{
+				var selected = BX('tbl_sale_order_selected_count');
+
+				if(selected && !BX.hasClass(selected, 'adm-table-counter-visible'))
+				{
+					alert("<?=Loc::getMessage('SALE_O_CONTEXT_B_DELIVERY_REQUESTS_SELECTION_NEEDED')?>");
+					return;
+				}
+			}
+
+			if(ordersListForm.action)
+			{
+				ordersListForm.action.value='delivery_requests';
+				BX.fireEvent(ordersListForm.action, 'change');
+
+				if(ordersListForm.apply)
+					BX.fireEvent(ordersListForm.apply, 'click');
+			}
+		}
+	}
+</script>
+
+<?$spotlight = new \Bitrix\Main\UI\Spotlight("DELIVERY_REQUESTS_ADDED");?>
+<?if(!$spotlight->isViewed($USER->GetID())):?>
+	<?\CJSCore::init("spotlight");?>
+	<script type="text/javascript">
+		BX.ready(
+			function() {
+				var elem = document.getElementsByClassName('adm-list-table-top');
+
+				if(!elem[0] || !elem[0].nodeName || elem[0].nodeName !== 'DIV')
+					return;
+
+				var target = null;
+
+				for (var i = 0; i < elem[0].childNodes.length; i++)
+				{
+					if(elem[0].childNodes[i].innerHTML === "<?=Loc::getMessage("SALE_O_CONTEXT_B_DELIVERY_REQUESTS")?>")
+					{
+						target = elem[0].childNodes[i];
+						break;
+					}
+				}
+
+				if(target)
+				{
+					var deliveryRequestSpotlight = new BX.SpotLight({
+						targetElement: target,
+						targetVertex: "middle-center",
+						content: "<?=Loc::getMessage('SALE_O_CONTEXT_B_DELIVERY_REQUESTS_SL')?>",
+						id: "DELIVERY_REQUESTS_ADDED",
+						autoSave: true
+					});
+
+					deliveryRequestSpotlight.show();
+				}
+		});
+	</script>
+<?endif;?>
+
+<?echo EndNote();
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

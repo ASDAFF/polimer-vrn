@@ -165,7 +165,7 @@ class UserToGroup
 				"NOTIFY_MODULE" => "socialnetwork",
 				"NOTIFY_EVENT" => "invite_group",
 				"NOTIFY_TAG" => "SOCNET|INVITE_GROUP|".$userId."|".$relationId,
-				"NOTIFY_MESSAGE" => Loc::getMessage("SOCIALNETWORK_ITEM_USERTOGROUP_AUTO_MEMBER_ADD_IM", array(
+				"NOTIFY_MESSAGE" => Loc::getMessage(($groupItem->isProject() ? "SOCIALNETWORK_ITEM_USERTOGROUP_AUTO_MEMBER_ADD_IM_PROJECT" : "SOCIALNETWORK_ITEM_USERTOGROUP_AUTO_MEMBER_ADD_IM"), array(
 						"#GROUP_NAME#" => "<a href=\"".$groupUrlData['DOMAIN'].$groupUrlData['URL']."\" class=\"bx-notifier-item-action\">".htmlspecialcharsEx($groupFields["NAME"])."</a>"
 					)
 				),
@@ -444,14 +444,14 @@ class UserToGroup
 
 		$groupId = intval($params['group_id']);
 		$userId = intval($params['user_id']);
+		$sendMessage = (
+			!isset($params['sendMessage'])
+			|| $params['sendMessage']
+		);
 
 		$chatData = Integration\Im\Chat\Workgroup::getChatData(array(
 			'group_id' => $groupId,
 			'skipAvailabilityCheck' => true
-		));
-
-		$availableChatData = Integration\Im\Chat\Workgroup::getChatData(array(
-			'group_id' => $groupId
 		));
 
 		if (
@@ -476,6 +476,9 @@ class UserToGroup
 			return $result;
 		}
 
+		$groupItem = \Bitrix\Socialnetwork\Item\Workgroup::getById($groupId);
+		$projectSuffix = ($groupItem->isProject() ? '_PROJECT' : '');
+
 		$userName = \CUser::formatName(\CSite::getNameFormat(), $user, true);
 		switch($user['PERSONAL_GENDER'])
 		{
@@ -496,32 +499,45 @@ class UserToGroup
 		{
 			case self::CHAT_ACTION_IN:
 				$chat->addUser($chatId, $userId, false, true, true);
-				$chatMessage = str_replace('#USER_NAME#', $userName, Loc::getMessage("SOCIALNETWORK_ITEM_USERTOGROUP_CHAT_USER_ADD".$genderSuffix));
+				$chatMessage = str_replace('#USER_NAME#', $userName, Loc::getMessage("SOCIALNETWORK_ITEM_USERTOGROUP_CHAT_USER_ADD".$projectSuffix.$genderSuffix));
 				break;
 			case self::CHAT_ACTION_OUT:
 				$chat->deleteUser($chatId, $userId, false, true);
-				$chatMessage = str_replace('#USER_NAME#', $userName, Loc::getMessage("SOCIALNETWORK_ITEM_USERTOGROUP_CHAT_USER_DELETE".$genderSuffix));
+				$chatMessage = str_replace('#USER_NAME#', $userName, Loc::getMessage("SOCIALNETWORK_ITEM_USERTOGROUP_CHAT_USER_DELETE".$projectSuffix.$genderSuffix));
 				break;
 			default:
 				$chatMessage = '';
 		}
 
-		$chatMessageFields = array(
-			"MESSAGE" => $chatMessage,
-			"SYSTEM" => "Y"
-		);
-
-		if (
-			!empty($availableChatData)
-			&& !empty($availableChatData[$groupId])
-			&& intval($availableChatData[$groupId]) > 0
-		)
+		if ($sendMessage)
 		{
-			return \CIMChat::addMessage(array_merge(
-				$chatMessageFields, array(
-					"TO_CHAT_ID" => $chatId
-				)
+			$chatMessageFields = array(
+				"MESSAGE" => $chatMessage,
+				"SYSTEM" => "Y",
+				"INCREMENT_COUNTER" => "N",
+				"PUSH" => "N"
+			);
+
+			$availableChatData = Integration\Im\Chat\Workgroup::getChatData(array(
+				'group_id' => $groupId
 			));
+
+			if (
+				!empty($availableChatData)
+				&& !empty($availableChatData[$groupId])
+				&& intval($availableChatData[$groupId]) > 0
+			)
+			{
+				return \CIMChat::addMessage(array_merge(
+					$chatMessageFields, array(
+						"TO_CHAT_ID" => $chatId
+					)
+				));
+			}
+		}
+		else
+		{
+			return true;
 		}
 
 		return false;

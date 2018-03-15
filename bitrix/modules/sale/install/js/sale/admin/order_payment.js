@@ -940,7 +940,7 @@ BX.Sale.Admin.OrderPayment.prototype.showCreateCheckWindow = function(paymentId)
 					'title': BX.message('PAYMENT_CASHBOX_CHECK_ADD_WINDOW_TITLE'),
 					'resizable': false,
 					'draggable': false,
-					'height': '200',
+					'height': '100',
 					'width': '516',
 					'buttons': [
 						{
@@ -958,6 +958,35 @@ BX.Sale.Admin.OrderPayment.prototype.showCreateCheckWindow = function(paymentId)
 				});
 				dlg.Show();
 
+				BX.bind(BX('checkTypeSelect'), 'change', function ()
+				{
+					var option = this.value;
+					var disabled = option.indexOf('advance') !== -1;
+
+					var parent = BX.findParent(this, {tag : 'tr'});
+					var tr = parent.nextElementSibling;
+					var checkboxList = BX.findChildren(tr, {tag : 'input'}, true);
+					for (var i in checkboxList)
+					{
+						if (checkboxList.hasOwnProperty(i))
+						{
+							var sibling = checkboxList[i].nextElementSibling;
+							if (disabled)
+							{
+								BX.addClass(sibling, "bx-admin-service-restricted");
+							}
+							else
+							{
+								BX.removeClass(sibling, "bx-admin-service-restricted");
+							}
+
+							if (checkboxList[i].checked)
+								checkboxList[i].click();
+							checkboxList[i].disabled = disabled;
+						}
+					}
+				});
+
 				BX.bind(BX("cancelCheckBtn"), 'click', BX.delegate(
 					function()
 					{
@@ -970,12 +999,10 @@ BX.Sale.Admin.OrderPayment.prototype.showCreateCheckWindow = function(paymentId)
 					function()
 					{
 						ShowWaitWindow();
-						var paymentId = BX('checkPaymentId').value;
+						var form = BX('check_payment');
+
 						var subRequest = {
-							typeId : BX('checkTypeSelect').value,
-							shipmentId : BX('checkShipmentSelect').value,
-							orderId : BX('checkOrderId').value,
-							paymentId : paymentId,
+							formData : BX.ajax.prepareForm(form),
 							action: 'saveCheck',
 							sessid: BX.bitrix_sessid()
 						};
@@ -1017,6 +1044,31 @@ BX.Sale.Admin.OrderPayment.prototype.showCreateCheckWindow = function(paymentId)
 	};
 
 	BX.Sale.Admin.OrderAjaxer.sendRequest(request, true);
+};
+
+BX.Sale.Admin.OrderPayment.prototype.onCheckEntityChoose = function (currentElement, multiSelect)
+{
+	var checked = currentElement.checked;
+
+	var paymentType = BX(currentElement.id+"_type");
+	if (paymentType)
+		paymentType.disabled = !checked;
+	
+	if (!multiSelect)
+	{
+		var parent = BX.findParent(currentElement, {tag : 'table'});
+		var inputs = BX.findChildren(parent, {tag : 'input'}, true);
+		for (var i in inputs)
+		{
+			if (inputs.hasOwnProperty(i))
+			{
+				if (inputs[i].id === currentElement.id)
+					continue;
+				
+				inputs[i].disabled = checked;
+			}
+		}
+	}
 };
 
 BX.Sale.Admin.OrderPayment.prototype.sendQueryCheckStatus = function(checkId)

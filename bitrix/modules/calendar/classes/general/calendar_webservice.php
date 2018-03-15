@@ -141,8 +141,14 @@ class CCalendarWebService extends IWebService
 		$data->addChild($obNode = new CXMLCreator('RegionalSettings'));
 
 		$obNode->addChild(CXMLCreator::createTagAttributed('Language', '1049'));
+		$obNode->addChild(CXMLCreator::createTagAttributed('Locale', '1049'));
+		$obNode->addChild(CXMLCreator::createTagAttributed('SortOrder', '1026'));
+		// TODO: replace following code with commented line below
+		$obNode->addChild(CXMLCreator::createTagAttributed('TimeZone', -(intval(date('Z')) + \CTimeZone::GetOffset(null, true))/60));
+		//$obNode->addChild(CXMLCreator::createTagAttributed('TimeZone', \CIntranetUtils::getOutlookTimeZone()));
+
 		$obNode->addChild(CXMLCreator::createTagAttributed('AdvanceHijri', '0'));
-		$obNode->addChild(CXMLCreator::createTagAttributed('CalendarType', '0'));
+		$obNode->addChild(CXMLCreator::createTagAttributed('CalendarType', '1'));
 		$obNode->addChild(CXMLCreator::createTagAttributed('Time24', 'True'));
 		$obNode->addChild(CXMLCreator::createTagAttributed('Presence', 'True'));
 

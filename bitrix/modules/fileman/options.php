@@ -603,6 +603,7 @@ if($USER->isAdmin())
 	<tr>
 		<td valign="top"><label for="google_map_api_key"><?= GetMessage('FILEMAN_OPTION_GOOGLE_MAP_API_KEY')?>:</label></td>
 		<td valign="top">
+			<a name="google_api_key"></a>
 			<input type="text" size="40" name="google_map_api_key" id="google_map_api_key" value="<?=htmlspecialcharsbx(COption::GetOptionString($module_id, "google_map_api_key", ""));?>">
 			<?=BeginNote();?>
 				<?=GetMessage(
@@ -611,7 +612,7 @@ if($USER->isAdmin())
 						"#A#" => '<a href="https://developers.google.com/maps/documentation/javascript/get-api-key">https://developers.google.com/maps/documentation/javascript/get-api-key</a>'
 					)
 				)?>
-			<?=EndNote();?>			
+			<?=EndNote();?>
 		</td>
 	</tr>
 

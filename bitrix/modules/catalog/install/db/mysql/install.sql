@@ -134,7 +134,7 @@ create table if not exists b_catalog_export
 	IN_MENU char(1) not null default 'N',
 	IN_AGENT char(1) not null default 'N',
 	IN_CRON char(1) not null default 'N',
-	SETUP_VARS text null,
+	SETUP_VARS mediumtext null,
 	LAST_USE datetime null,
 	IS_EXPORT char(1) not null default 'Y',
 	NEED_EDIT char(1) not null default 'N',
@@ -501,7 +501,10 @@ create table if not exists b_catalog_viewed_product
 	VIEW_COUNT INT NOT NULL DEFAULT 1,
 	RECOMMENDATION VARCHAR(40) NULL,
 	PRIMARY KEY (ID),
-	INDEX IX_CAT_V_PR_FUSER_ID (FUSER_ID)
+	INDEX IX_CAT_V_PR_FUSER_ID (FUSER_ID),
+	INDEX IX_CAT_V_PR_VISIT(FUSER_ID, SITE_ID, DATE_VISIT DESC),
+	INDEX IX_CAT_V_PR_PRODUCT(FUSER_ID, SITE_ID, ELEMENT_ID),
+	INDEX IX_CAT_V_PR_PRODUCT_VISIT(ELEMENT_ID, DATE_VISIT)
 );
 
 create table if not exists b_catalog_subscribe (

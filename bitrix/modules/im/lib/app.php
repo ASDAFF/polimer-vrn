@@ -25,13 +25,13 @@ class App
 		{
 			return false;
 		}
-		
+
 		$iframe = '';
 		$iframeWidth = 350;
 		$iframeHeight = 250;
 		$iframePopup = 'N';
 		$jscommand = isset($fields['JS'])? $fields['JS']: '';
-		
+
 		if (isset($fields['IFRAME']) && $fields['IFRAME'])
 		{
 			$check = parse_url($fields['IFRAME']);
@@ -55,15 +55,15 @@ class App
 		{
 			return false;
 		}
-		
+
 		$code = $fields['CODE'];
 		if (!$code)
 		{
 			return false;
 		}
-		
+
 		$iconFileId = intval($fields['ICON_ID']);
-		
+
 		$botId = isset($fields['BOT_ID'])? intval($fields['BOT_ID']): 0;
 		$hash = isset($fields['HASH']) && !empty($fields['HASH'])? substr($fields['HASH'], 0, 32): md5($botId.$fields['CODE'].\CMain::GetServerUniqID());
 		$context = isset($fields['CONTEXT'])? $fields['CONTEXT']: 'ALL';
@@ -73,10 +73,10 @@ class App
 		{
 			$botId = 0;
 		}
-		
+
 		$extranetSupport = isset($fields['EXTRANET_SUPPORT']) && $fields['EXTRANET_SUPPORT'] == 'Y'? 'Y': 'N';
 		$livechatSupport = isset($fields['LIVECHAT_SUPPORT']) && $fields['LIVECHAT_SUPPORT'] == 'Y'? 'Y': 'N';
-		
+
 		/* vars for module install */
 		$class = isset($fields['CLASS'])? $fields['CLASS']: '';
 		$methodLangGet = isset($fields['METHOD_LANG_GET'])? $fields['METHOD_LANG_GET']: '';
@@ -84,7 +84,7 @@ class App
 		/* vars for rest install */
 		$restAppId = isset($fields['APP_ID'])? $fields['APP_ID']: '';
 		$langSet = isset($fields['LANG'])? $fields['LANG']: Array();
-		
+
 		if ($moduleId == 'rest')
 		{
 			if (empty($langSet))
@@ -220,9 +220,13 @@ class App
 		{
 			\CPullStack::AddShared(Array(
 				'module_id' => 'im',
-				'command' => 'deleteTextareaIcon',
+				'command' => 'deleteAppIcon',
 				'params' => Array(
 					'iconId' => $appId
+				),
+				'extra' => Array(
+					'im_revision' => IM_REVISION,
+					'im_revision_mobile' => IM_REVISION_MOBILE,
 				)
 			));
 		}
@@ -352,7 +356,7 @@ class App
 		{
 			$update['LIVECHAT_SUPPORT'] = $updateFields['LIVECHAT_SUPPORT'] == 'Y'? 'Y': 'N';
 		}
-		
+
 		if (!empty($update))
 		{
 			\Bitrix\Im\Model\AppTable::update($appId, $update);
@@ -360,23 +364,23 @@ class App
 			$cache = \Bitrix\Main\Data\Cache::createInstance();
 			$cache->cleanDir(self::CACHE_PATH);
 		}
-		
+
 		if (\Bitrix\Main\Loader::includeModule('pull'))
 		{
 			if (
-				$update['REGISTERED'] 
-				|| $update['DOMAIN_HASH'] 
-				|| $update['CONTEXT'] 
-				|| $update['IFRAME'] 
-				|| $update['JS']  
-				|| $update['IFRAME_WIDTH'] 
+				$update['REGISTERED']
+				|| $update['DOMAIN_HASH']
+				|| $update['CONTEXT']
+				|| $update['IFRAME']
+				|| $update['JS']
+				|| $update['IFRAME_WIDTH']
 				|| $update['IFRAME_HEIGHT']
 				|| $update['IFRAME_POPUP']
 			)
 			{
 				\CPullStack::AddShared(Array(
 					'module_id' => 'im',
-					'command' => 'updateTextareaIcon',
+					'command' => 'updateAppIcon',
 					'params' => Array(
 						'iconId' => $appId,
 						'userId' => $userId,
@@ -387,6 +391,10 @@ class App
 						'iframeWidth' => $update['IFRAME_WIDTH'],
 						'iframeHeight' => $update['IFRAME_HEIGHT'],
 						'iframePopup' => $update['IFRAME_POPUP'],
+					),
+					'extra' => Array(
+						'im_revision' => IM_REVISION,
+						'im_revision_mobile' => IM_REVISION_MOBILE,
 					)
 				));
 			}
@@ -394,9 +402,13 @@ class App
 			{
 				\CPullStack::AddShared(Array(
 					'module_id' => 'im',
-					'command' => 'deleteTextareaIcon',
+					'command' => 'deleteAppIcon',
 					'params' => Array(
 						'iconId' => $appId
+					),
+					'extra' => Array(
+						'im_revision' => IM_REVISION,
+						'im_revision_mobile' => IM_REVISION_MOBILE,
 					)
 				));
 			}
@@ -409,16 +421,16 @@ class App
 	{
 		$botId = intval($params['BOT_ID']);
 		$userId = intval($params['USER_ID']);
-		
+
 		if (!$botId && !$userId || empty($params['DIALOG_ID']))
 		{
 			return false;
 		}
-		
+
 		Bot\Token::add($botId, $params['DIALOG_ID']);
 		Bot\Token::add($userId, $params['DIALOG_ID']);
-		
-		if (!self::isChat($params['DIALOG_ID']))
+
+		if (!Common::isChatId($params['DIALOG_ID']))
 		{
 			Bot\Token::add($botId, $params['USER_ID']);
 		}
@@ -446,8 +458,8 @@ class App
 			return false;
 
 		$botId = intval($apps[$appId]['BOT_ID']);
-		
-		if (self::isChat($messageFields['DIALOG_ID']))
+
+		if (Common::isChatId($messageFields['DIALOG_ID']))
 		{
 			$relations = \CIMChat::GetRelationById(substr($messageFields['DIALOG_ID'], 4));
 		}
@@ -460,18 +472,18 @@ class App
 			}
 			$relations = \CIMChat::GetPrivateRelation($botId, $userId);
 		}
-		
+
 		if ($botId && !Bot\Token::isActive($botId, $messageFields['DIALOG_ID']))
 		{
 			return false;
 		}
-		
+
 		$messageFields['ATTACH'] = $messageFields['ATTACH']? $messageFields['ATTACH']: null;
 		$messageFields['KEYBOARD'] = $messageFields['KEYBOARD']? $messageFields['KEYBOARD']: null;
 
 		$fromUserId = isset($messageFields['FROM_USER_ID'])? $messageFields['FROM_USER_ID']: $botId;
-		
-		if (self::isChat($messageFields['DIALOG_ID']))
+
+		if (Common::isChatId($messageFields['DIALOG_ID']))
 		{
 			$chatId = intval(substr($messageFields['DIALOG_ID'], 4));
 			if ($chatId <= 0)
@@ -503,7 +515,7 @@ class App
 				{
 					$ar['MESSAGE'] = $messageFields['MESSAGE'];
 				}
-				
+
 				$ar['MESSAGE'] = "[B]".$apps[$appId]['TITLE']."[/B]\n".$ar['MESSAGE'];
 			}
 
@@ -521,7 +533,7 @@ class App
 		{
 			$userId = intval($messageFields['DIALOG_ID']);
 			\CModule::IncludeModule('imbot');
-			
+
 			if (isset($relations[$fromUserId]) && $messageFields['SYSTEM'] != 'Y')
 			{
 				$ar = Array(
@@ -548,7 +560,7 @@ class App
 				{
 					$ar['MESSAGE'] = $messageFields['MESSAGE'];
 				}
-				
+
 				$ar['MESSAGE'] = "[B]".$apps[$appId]['TITLE']."[/B]\n".$ar['MESSAGE'];
 			}
 
@@ -563,18 +575,7 @@ class App
 
 		return $id;
 	}
-	
-	public static function isChat($dialogId)
-	{
-		$isChat = false;
-		if (is_string($dialogId) && substr($dialogId, 0, 4) == 'chat')
-		{
-			$isChat = true;
-		}
 
-		return $isChat;
-	}
-	
 	public static function getListCache($lang = LANGUAGE_ID)
 	{
 		$cache = \Bitrix\Main\Data\Cache::createInstance();
@@ -605,7 +606,7 @@ class App
 				{
 					$row['ICON_URL'] = '';
 				}
-				
+
 				if (!empty($row['CLASS']) && !empty($row['METHOD_LANG_GET']))
 				{
 					if (\Bitrix\Main\Loader::includeModule($row['MODULE_ID']) && class_exists($row["CLASS"]) && method_exists($row["CLASS"], $row["METHOD_LANG_GET"]))
@@ -632,7 +633,7 @@ class App
 					$row['TITLE'] = '';
 					$row['DESCRIPTION'] = '';
 					$row['COPYRIGHT'] = '';
-					
+
 					if ($row['MODULE_ID'] == 'rest')
 					{
 						$loadRestLang = true;
@@ -687,7 +688,7 @@ class App
 					}
 				}
 			}
-			
+
 			$cache->startDataCache();
 			$cache->endDataCache($result);
 		}
@@ -702,7 +703,7 @@ class App
 		$userId = $GLOBALS['USER']? $GLOBALS['USER']->GetId(): 0;
 		$isExtranet = $userId && \Bitrix\Im\User::getInstance($userId)->isExtranet();
 		$isConnector = $userId && \Bitrix\Im\User::getInstance($userId)->isConnector();
-		
+
 		$result = Array();
 		foreach ($apps as $app)
 		{
@@ -710,7 +711,7 @@ class App
 				continue;
 			else if ($isExtranet && $app['EXTRANET_SUPPORT'] != 'Y')
 				continue;
-			
+
 			$botData = \Bitrix\Im\Bot::getCache($app['BOT_ID']);
 			$result[] = Array(
 				'id' => $app['ID'],
@@ -735,24 +736,24 @@ class App
 
 		return $result;
 	}
-	
+
 	public static function getUserHash($userId, $hash = 'register')
 	{
 		if ($hash == 'register')
 			$result = md5($userId.\CMain::GetServerUniqID());
 		else
 			$result = md5($userId.$hash);
-		
+
 		return $result;
 	}
-	
+
 	public static function getDomainHash($hash)
 	{
 		$result = md5($_SERVER['SERVER_NAME'].$hash);
-		
+
 		return $result;
 	}
-	
+
 	public static function clearCache()
 	{
 		$cache = \Bitrix\Main\Data\Cache::createInstance();

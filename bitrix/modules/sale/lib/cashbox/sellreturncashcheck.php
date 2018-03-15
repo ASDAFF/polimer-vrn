@@ -40,12 +40,11 @@ class SellReturnCashCheck extends SellCheck
 
 
 	/**
-	 * @param array $entities
 	 * @return array
 	 */
-	public function extractDataFromEntities(array $entities)
+	protected function extractDataInternal()
 	{
-		$result = parent::extractDataFromEntities($entities);
+		$result = parent::extractDataInternal();
 
 		if (isset($result['PAYMENTS']))
 		{
@@ -55,5 +54,13 @@ class SellReturnCashCheck extends SellCheck
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getSupportedEntityType()
+	{
+		return static::SUPPORTED_ENTITY_TYPE_PAYMENT;
 	}
 }

@@ -11,7 +11,14 @@
 /** @var string $componentPath */
 /** @var CBitrixComponent $component */
 
-$isAjax = ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST["ajax_action"]) && $_POST["ajax_action"] == "Y");
+$isAjax = false;
+if ($_SERVER['REQUEST_METHOD'] == 'POST')
+{
+	$isAjax = (
+		(isset($_POST['ajax_action']) && $_POST['ajax_action'] == 'Y')
+		|| (isset($_POST['compare_result_reload']) && $_POST['compare_result_reload'] == 'Y')
+	);
+}
 
 $templateData = array(
 	'TEMPLATE_THEME' => $this->GetFolder().'/themes/'.$arParams['TEMPLATE_THEME'].'/style.css',
@@ -366,7 +373,7 @@ if (!empty($arResult["SHOW_OFFER_PROPERTIES"]))
 		{
 		?>
 		<td>
-			<a onclick="CatalogCompareObj.MakeAjaxAction('<?=CUtil::JSEscape($arElement['~DELETE_URL'])?>');" href="javascript:void(0)"><?=GetMessage("CATALOG_REMOVE_PRODUCT")?></a>
+			<a onclick="CatalogCompareObj.delete('<?=CUtil::JSEscape($arElement['~DELETE_URL'])?>');" href="javascript:void(0)"><?=GetMessage("CATALOG_REMOVE_PRODUCT")?></a>
 		</td>
 		<?
 		}
@@ -383,5 +390,5 @@ if ($isAjax)
 ?>
 </div>
 <script type="text/javascript">
-	var CatalogCompareObj = new BX.Iblock.Catalog.CompareClass("bx_catalog_compare_block");
+	var CatalogCompareObj = new BX.Iblock.Catalog.CompareClass("bx_catalog_compare_block", '<?=CUtil::JSEscape($arResult['~COMPARE_URL_TEMPLATE']); ?>');
 </script>

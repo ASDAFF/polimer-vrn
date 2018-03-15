@@ -122,7 +122,7 @@ if (!empty($cashboxList))
 	$todayCash = array();
 	while($data = $checkData->fetch())
 	{
-		if ($data['TYPE'] == 'sellreturn' || $data['TYPE'] == 'prepaymentreturn')
+		if ($data['TYPE'] == 'sellreturncash' || $data['TYPE'] == 'prepaymentreturn')
 		{
 			$blockData['CASH']['RETURN_SUM'] += $data['CHECK_SUM'];
 		}

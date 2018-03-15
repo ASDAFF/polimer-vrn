@@ -306,9 +306,12 @@ class CBPAllStateService
 			throw new Exception("workflowId");
 
 		$dbResult = $DB->Query(
-			"SELECT WS.ID, WS.STATE_TITLE, WS.MODULE_ID, WS.ENTITY, WS.DOCUMENT_ID, WI.STATUS, WS.STARTED_BY ".
+			"SELECT 
+				WS.ID, WS.STATE_TITLE, WS.MODULE_ID, WS.ENTITY, WS.DOCUMENT_ID, WI.STATUS, WS.STARTED_BY,
+				WS.WORKFLOW_TEMPLATE_ID, WT.NAME WORKFLOW_TEMPLATE_NAME ".
 			"FROM b_bp_workflow_state WS ".
 			"LEFT JOIN b_bp_workflow_instance WI ON (WS.ID = WI.ID) ".
+			"LEFT JOIN b_bp_workflow_template WT ON (WS.WORKFLOW_TEMPLATE_ID = WT.ID) ".
 			"WHERE WS.ID = '".$DB->ForSql($workflowId)."' "
 		);
 
@@ -318,6 +321,8 @@ class CBPAllStateService
 		{
 			$state = array(
 				'ID' => $result["ID"],
+				'WORKFLOW_TEMPLATE_ID' => $result['WORKFLOW_TEMPLATE_ID'],
+				'WORKFLOW_TEMPLATE_NAME' => $result['WORKFLOW_TEMPLATE_NAME'],
 				"STATE_TITLE" => $result["STATE_TITLE"],
 				"WORKFLOW_STATUS" => $result["STATUS"],
 				"DOCUMENT_ID" => array($result["MODULE_ID"], $result["ENTITY"], $result["DOCUMENT_ID"]),

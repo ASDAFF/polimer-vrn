@@ -68,6 +68,9 @@ class OrderDocument extends DocumentImport
 						'DELIVERY_SYSTEM_ID' => array(
 							'TYPE' => 'string'
 						),
+						'1C_TRACKING_NUMBER' => array(
+							'TYPE' => 'string'
+						),
                     ),
                 ),
                 'ITEMS' => array(
@@ -121,9 +124,20 @@ class OrderDocument extends DocumentImport
                                 ),
                                 'TAX_VALUE' => array(
                                     'TYPE' => 'string'
-                                )
+                                ),
+								'IN_PRICE' => array(
+									'TYPE' => 'bool'
+								)
                             )
-                        )
+                        ),
+						'DISCOUNTS' => array(
+							'TYPE' => 'array',
+							'FIELDS' => array(
+								'SUMM' => array(
+									'TYPE' => 'string'
+								)
+							)
+						)
                     )
                 ),
                 'TAXES' => array(

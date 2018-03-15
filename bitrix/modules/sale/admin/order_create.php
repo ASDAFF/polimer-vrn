@@ -143,6 +143,7 @@ if($isSavingOperation || $needFieldsRestore)
 				\CSaleMobileOrderPush::send("ORDER_CREATED", array("ORDER_ID" => $order->getId()));
 
 				$customTabber->SetArgs(array("ID" => $order->getId()));
+
 				if (!$customTabber->Action())
 				{
 					if ($ex = $APPLICATION->GetException())
@@ -150,6 +151,8 @@ if($isSavingOperation || $needFieldsRestore)
 					else
 						$errorMessage .= "Custom tabber action unknown error!";
 				}
+
+				$customDraggableBlocks->setArgs(array('ORDER' => $order));
 
 				if (!$customDraggableBlocks->action())
 				{
@@ -248,45 +251,99 @@ elseif($createWithProducts)
 
 			$fakeBasket = Sale\Basket::create($_GET['SITE_ID']);
 
+			$context = array(
+				"SITE_ID" => $_GET['SITE_ID'],
+			);
+
+			if (!empty($_GET["USER_ID"]))
+			{
+				$context['USER_ID'] = $_GET["USER_ID"];
+			}
+
+			Bitrix\Main\Loader::includeModule('catalog');
 			$basketFilter = array(
 				'filter' => array(
 					'LID' => $_GET['SITE_ID'],
 					'FUSER_ID' => intval($fuserId),
 					'DELAY' => "N",
 					'ORDER_ID' => null,
-					'!MODULE' => false,
 					'SET_PARENT_ID' => false,
 				),
-				'select' => array('PRODUCT_ID', 'QUANTITY', 'CAN_BUY', 'NAME', 'MODULE', 'PRODUCT_PROVIDER_CLASS'),
+				'select' => array('PRODUCT_ID', 'QUANTITY', 'CAN_BUY', 'NAME', 'MODULE', 'PRODUCT_PROVIDER_CLASS', 'CALLBACK_FUNC', 'PAY_CALLBACK_FUNC'),
 				'order' => array('ID' => 'ASC'),
 			);
 
-			$res = \Bitrix\Sale\Basket::getList($basketFilter);
-
-			while($basketItem = $res->fetch())
+			$resBasketDataList = \Bitrix\Sale\Basket::getList($basketFilter);
+			while($basketData = $resBasketDataList->fetch())
 			{
-				if ($basketItem['CAN_BUY'] != 'Y')
+				if ($basketData['CAN_BUY'] != 'Y')
 				{
 					$result->addError(
 						new \Bitrix\Main\Error(
 							Loc::getMessage(
 								'SALE_OK_ORDER_CREATE_ERROR_NO_PRODUCT',
-								array('##NAME##' => $basketItem['NAME'])
+								array('##NAME##' => $basketData['NAME'])
 							)
 						)
 					);
 					continue;
 				}
 
-				$basketList[$basketCode] = $basketItem;
+				$basketFields = array(
+					'PRODUCT_ID' => $basketData['PRODUCT_ID'],
+					'QUANTITY' => $basketData['QUANTITY'],
+				);
 
-				$fakeBasketItem = $fakeBasket->createItem($basketItem['MODULE'], $basketItem['PRODUCT_ID'], $basketCode);
-				$fakeBasketItem->initFields(array(
-						'PRODUCT_PROVIDER_CLASS' => $basketItem['PRODUCT_PROVIDER_CLASS'],
-						'QUANTITY' => $basketItem['QUANTITY']
-				));
+				if (!empty($basketData['MODULE']))
+				{
+					$basketFields['MODULE'] = $basketData['MODULE'];
+				}
 
-				$basketCode++;
+				if (!empty($basketData['PRODUCT_PROVIDER_CLASS']))
+				{
+					$basketFields['PRODUCT_PROVIDER_CLASS'] = $basketData['PRODUCT_PROVIDER_CLASS'];
+				}
+
+				if (!empty($basketData['CALLBACK_FUNC']))
+				{
+					$basketFields['CALLBACK_FUNC'] = $basketData['CALLBACK_FUNC'];
+				}
+
+				if (!empty($basketData['PAY_CALLBACK_FUNC']))
+				{
+					$basketFields['PAY_CALLBACK_FUNC'] = $basketData['PAY_CALLBACK_FUNC'];
+				}
+
+				$r = Catalog\Product\Basket::addProductToBasket($fakeBasket, $basketFields, $context);
+				if ($r->isSuccess())
+				{
+					$resultData = $r->getData();
+					if (isset($resultData['BASKET_ITEM']))
+					{
+						/** @var \Bitrix\Sale\BasketItem $basketItem */
+						$basketItem = $resultData['BASKET_ITEM'];
+						$basketCode = $basketItem->getBasketCode();
+					}
+					else
+					{
+						$result->addError(
+							new \Bitrix\Main\Error(
+								Loc::getMessage(
+									'SALE_OK_ORDER_CREATE_ERROR_BASKET_ITEM_NOT_CREATED',
+									array('##NAME##' => $basketData['NAME'])
+								)
+							)
+						);
+						continue;
+					}
+				}
+				else
+				{
+					$result->addErrors($r->getErrors());
+					continue;
+				}
+
+				$basketList[$basketCode] = $basketData;
 			}
 
 			$providerItemDataList = Sale\Provider::getProductData($fakeBasket, array('QUANTITY'));

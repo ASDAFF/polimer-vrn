@@ -6,7 +6,6 @@ IncludeModuleLangFile(__FILE__);
 class CSocServGoogleOAuth extends CSocServAuth
 {
 	const ID = "GoogleOAuth";
-	const CONTROLLER_URL = "https://www.bitrix24.ru/controller";
 	const LOGIN_PREFIX = "G_";
 
 	/** @var CGoogleOAuthInterface null  */
@@ -78,7 +77,7 @@ class CSocServGoogleOAuth extends CSocServAuth
 		CSocServAuthManager::SetUniqueKey();
 		if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
 		{
-			$redirect_uri = static::CONTROLLER_URL."/redirect.php";
+			$redirect_uri = static::getControllerUrl()."/redirect.php";
 			$state = $this->getEntityOAuth()->getRedirectUri()."?check_key=".$_SESSION["UNIQUE_KEY"]."&state=";
 			$backurl = $GLOBALS["APPLICATION"]->GetCurPageParam('', array("logout", "auth_service_error", "auth_service_id", "backurl"));
 			$state .= urlencode('provider='.static::ID. "&state=".urlencode("backurl=".urlencode($backurl).'&mode='.$location.(isset($arParams['BACKURL']) ? '&redirect_url='.urlencode($arParams['BACKURL']) : '')));
@@ -505,7 +504,7 @@ class CGoogleOAuthInterface extends CSocServOAuthTransport
 		{
 			if(IsModuleInstalled('bitrix24') && defined('BX24_HOST_NAME'))
 			{
-				$redirect_uri = \CSocServGoogleOAuth::CONTROLLER_URL."/redirect.php";
+				$redirect_uri = \CSocServGoogleOAuth::getControllerUrl()."/redirect.php";
 			}
 			else
 			{

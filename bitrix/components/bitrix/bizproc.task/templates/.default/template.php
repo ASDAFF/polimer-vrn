@@ -1,5 +1,9 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/bizproc/tools.js');
+
+\Bitrix\Main\Loader::includeModule('socialnetwork');
+CJSCore::Init(array('socnetlogdest', 'bp_user_selector'));
+
 $cmpId = RandString();
 
 $showDelegationButton = (

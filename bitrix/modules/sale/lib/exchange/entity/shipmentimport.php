@@ -243,7 +243,7 @@ class ShipmentImport extends EntityImport
             if($shipment->isShipped())
             	continue;
 
-            $allQuantity += (int)$shipment->getBasketItemQuantity($basketItem);
+            $allQuantity += $shipment->getBasketItemQuantity($basketItem);
         }
 
         return $allQuantity;
@@ -262,7 +262,6 @@ class ShipmentImport extends EntityImport
 
         $order = $basket->getOrder();
 
-        $fields = $params['TRAITS'];
         $fieldsBasketItems = $params['ITEMS'];
 
         if(is_array($fieldsBasketItems))
@@ -271,7 +270,7 @@ class ShipmentImport extends EntityImport
             {
                 foreach($items as $productXML_ID => $item)
                 {
-                    if($productXML_ID == 'ORDER_DELIVERY')
+                    if($productXML_ID == Exchange\ImportOneCBase::DELIVERY_SERVICE_XMLID)
                     	continue;
 
                 	if($item['TYPE'] == Exchange\ImportBase::ITEM_ITEM)

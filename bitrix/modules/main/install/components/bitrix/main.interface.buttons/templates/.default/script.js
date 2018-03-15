@@ -238,22 +238,12 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 
 			if (BX.type.isDomNode(item))
 			{
-				if (!this.isSublink(event.target))
-				{
-					dataOnClick = this.dataValue(item, 'onclick');
-
-					if (BX.type.isNotEmptyString(dataOnClick))
-					{
-						event.preventDefault();
-						this.execScript(dataOnClick);
-					}
-				}
-
 				if (this.isSettings(item))
 				{
 					this.enableEdit();
 					BX.hide(this.getSettingsButton());
 					BX.show(this.getSettingsApplyButton());
+					return false;
 				}
 
 				if (this.isApplySettingsButton(item))
@@ -264,17 +254,20 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 
 					BX.show(this.getSettingsButton());
 					BX.hide(this.getSettingsApplyButton());
+					return false;
 				}
 
 				if (this.isResetSettingsButton(item))
 				{
 					this.resetSettings();
+					return false;
 				}
 
 				if (this.isLocked(item))
 				{
 					event.preventDefault();
 					this.showLicenseWindow();
+					return false;
 				}
 
 				if (this.isEditButton(event.target))
@@ -304,6 +297,7 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 					}
 
 					this.lastEditNode = item;
+					return false;
 				}
 
 				if (this.isSetHide(item))
@@ -344,6 +338,7 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 					}
 
 					this.editMenu.popupWindow.close();
+					return false;
 				}
 
 				if (this.isSetHome(item))
@@ -371,6 +366,18 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 					}
 
 					this.editMenu.popupWindow.close();
+					return false;
+				}
+
+				if (!this.isSublink(event.target))
+				{
+					dataOnClick = this.dataValue(item, 'onclick');
+
+					if (BX.type.isNotEmptyString(dataOnClick))
+					{
+						event.preventDefault();
+						this.execScript(dataOnClick);
+					}
 				}
 			}
 
@@ -943,6 +950,12 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 		 */
 		updateCounter: function(id, value)
 		{
+			if(id.indexOf("crm") === 0 && value < 0)
+			{
+				//HACK: Skip of CRM counter reset
+				return;
+			}
+
 			var counter, data, alias;
 			var item = null;
 			var items = this.getAllItems();
@@ -1346,6 +1359,7 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 						result.push({
 							text: this.getSubmenuItemText(current),
 							href: this.dataValue(current, 'url'),
+							onclick: this.dataValue(current, 'onclick'),
 							title: current.getAttribute('title'),
 							className: [
 								this.classSubmenuItem,
@@ -1384,6 +1398,7 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 					result.push({
 						text: this.getSubmenuItemText(current),
 						href: this.dataValue(current, 'url'),
+						onclick: this.dataValue(current, 'onclick'),
 						title: current.getAttribute('title'),
 						className: className.join(' ')
 					});
@@ -1438,6 +1453,7 @@ if (typeof(BX.Main.interfaceButtons) === 'undefined')
 						result.push({
 							text: this.getSubmenuItemText(current),
 							href: this.dataValue(current, 'url'),
+							onclick: this.dataValue(current, 'onclick'),
 							title: current.getAttribute('title'),
 							className: className.join(' ')
 						});

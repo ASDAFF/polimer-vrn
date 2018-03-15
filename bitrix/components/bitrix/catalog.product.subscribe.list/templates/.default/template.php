@@ -7,6 +7,8 @@
 
 use Bitrix\Main\Localization\Loc;
 
+CJSCore::init(array('popup'));
+
 $randomString = $this->randString();
 
 $APPLICATION->setTitle(Loc::getMessage('CPSL_SUBSCRIBE_TITLE_NEW'));
@@ -60,8 +62,8 @@ if(!$arResult['USER_ID'] && !isset($arParams['GUEST_ACCESS'])):?>
 							$contactTypeId = $contactType['ID'];
 						}
 					?>
-					<label for="contactInput"><?=htmlspecialcharsbx($contactLable)?></label>
-					<input type="text" class="form-control" name="userContact" id="contactInput">
+					<label for="contactInputOut"><?=htmlspecialcharsbx($contactLable)?></label>
+					<input type="text" class="form-control" name="userContact" id="contactInputOut">
 					<input type="hidden" name="subscriberIdentification" value="Y">
 					<?if($contactTypeId):?>
 						<input type="hidden" name="contactType" value="<?=$contactTypeId?>">
@@ -76,8 +78,8 @@ if(!$arResult['USER_ID'] && !isset($arParams['GUEST_ACCESS'])):?>
 			<form method="post">
 				<?=bitrix_sessid_post()?>
 				<div class="form-group">
-					<label for="contactInput"><?=htmlspecialcharsbx($contactLable)?></label>
-					<input type="text" class="form-control" name="userContact" id="contactInput" value=
+					<label for="contactInputCheck"><?=htmlspecialcharsbx($contactLable)?></label>
+					<input type="text" class="form-control" name="userContact" id="contactInputCheck" value=
 						"<?=!empty($_GET['contact']) ? htmlspecialcharsbx(urldecode($_GET['contact'])): ''?>">
 				</div>
 				<div class="form-group">

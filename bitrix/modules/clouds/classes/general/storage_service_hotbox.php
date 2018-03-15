@@ -49,7 +49,7 @@ class CCloudStorageService_HotBox extends CCloudStorageService_AmazonS3
 	function GetLocationList()
 	{
 		return array(
-			"" => "hb.cldmail.ru",
+			"" => "hb.bizmrg.com",
 		);
 	}
 	/**
@@ -94,7 +94,7 @@ class CCloudStorageService_HotBox extends CCloudStorageService_AmazonS3
 		}
 		else
 		{
-			return $bucket.".hb.cldmail.ru";
+			return $bucket.".hb.bizmrg.com";
 		}
 	}
 	/**
@@ -113,12 +113,12 @@ class CCloudStorageService_HotBox extends CCloudStorageService_AmazonS3
 		}
 		elseif ($proto === "https" && strpos($arBucket["BUCKET"], ".") !== false)
 		{
-			$host = "hb.cldmail.ru";
+			$host = "hb.bizmrg.com";
 			$pref = $arBucket["BUCKET"];
 		}
 		else
 		{
-			$host = $arBucket["BUCKET"].".hb.cldmail.ru";
+			$host = $arBucket["BUCKET"].".hb.bizmrg.com";
 			$pref = "";
 		}
 

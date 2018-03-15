@@ -27,4 +27,5 @@ $MESS["STORE_CODE"] = "Symbolic code";
 $MESS["STORE_SELECT_SITE_ID"] = "Select website";
 $MESS["CAT_FEATURE_NOT_ALLOW"] = "Your edition cannot use this feature.";
 $MESS["STORE_SAVE_ERROR"] = "Error saving warehouse";
+$MESS["STORE_XML_ID"] = "External ID";
 ?>

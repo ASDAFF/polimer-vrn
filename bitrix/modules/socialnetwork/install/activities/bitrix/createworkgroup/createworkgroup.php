@@ -11,6 +11,7 @@ class CBPCreateWorkGroup
 			"GroupName" => "",
 			"OwnerId" => "",
 			'Users' => "",
+			"GroupSite" => "",
 			"GroupId" => null,
 			"Fields" => null
 		);
@@ -47,7 +48,7 @@ class CBPCreateWorkGroup
 		unset($dbSubjects, $row);
 
 		$options = array(
-			"SITE_ID" => SITE_ID,
+			"SITE_ID" => $this->GroupSite ? $this->GroupSite : SITE_ID,
 			"NAME" => $this->GroupName,
 			"VISIBLE" => "Y",
 			"OPENED" => "N",
@@ -135,7 +136,8 @@ class CBPCreateWorkGroup
 			"GroupName" => "group_name",
 			"OwnerId" => "owner_id",
 			"Users" => 'users',
-			"Fields" => ''
+			"GroupSite" => "group_site",
+			"Fields" => '',
 		);
 
 		if (!is_array($arCurrentValues))
@@ -211,6 +213,9 @@ class CBPCreateWorkGroup
 				continue;
 			$arProperties[$value] = $arCurrentValues[$key];
 		}
+
+		if (strlen($arProperties["GroupSite"]) <= 0)
+			$arProperties["GroupSite"] = $arCurrentValues["group_site_x"];
 
 		$userFieldsList = $USER_FIELD_MANAGER->getUserFields("SONET_GROUP", 0, LANGUAGE_ID);
 		foreach ($userFieldsList as $field)

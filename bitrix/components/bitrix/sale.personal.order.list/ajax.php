@@ -27,6 +27,8 @@ $orderData = $request->get("orderData");
 
 $params['ACCOUNT_NUMBER'] = $orderData['order'];
 $params['PAYMENT_NUMBER'] = $orderData['payment'];
+$params['PATH_TO_PAYMENT'] = strlen($orderData['path_to_payment']) > 0 ? htmlspecialcharsbx($orderData['path_to_payment']) : "";
+$params['REFRESH_PRICES'] = ($orderData['refresh_prices'] === 'Y') ? 'Y' : 'N';
 if (CBXFeatures::IsFeatureEnabled('SaleAccounts'))
 {
 	$params['ALLOW_INNER'] = $orderData['allow_inner'];

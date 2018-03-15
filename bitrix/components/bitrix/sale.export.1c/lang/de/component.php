@@ -145,4 +145,12 @@ $MESS["CC_BSC1_CASHBOX_URL"] = "URL";
 $MESS["CC_BSC1_CASHBOX_FISCAL_SIGN"] = "FISCAL_SIGN";
 $MESS["CC_BSC1_CASHBOX_REG_NUMBER_KKT"] = "REG_NUMBER_KKT";
 $MESS["CC_BSC1_ORDER_ERROR_5"] = "Dokument-ID #XML_1C_DOCUMENT_ID#. Bestellwährung #CURRENCY_FROM# stimmt nicht mit der Website-Währung #CURRENCY_TO# überein";
+$MESS["CRM_PACKAGE_NOT_FOUND_ORDER"] = "Rechnung und Dokumentation können nicht importiert werden, weil die Rechnung nicht im Paket ist";
+$MESS["CRM_PACKAGE_NOT_FOUND_PAYMENT"] = "Rechnung ID #XML_1C_DOCUMENT_ID#. Rechnung und Dokumentation können nicht importiert werden, weil die Zahlungsinformationen fehlen. Überprüfen Sie bitte Ihre  1C-Einstellungen.";
+$MESS["CRM_PACKAGE_PARTIAL_SHIPMENT_NOT_SUPPORTED"] = "Rechnung ID #XML_1C_DOCUMENT_ID#. Rechnung und Dokumentation können nicht importiert werden, weil eine Rechnung nur eine Lieferung enthalten kann. Cannot import invoice and documentation because an invoice can have only one shipment. Teillieferungen werden nicht unterstützt.";
+$MESS["CRM_PACKAGE_DELIVERY_SERVICE_ITEM"] = "Lieferung";
+$MESS["CRM_PACKAGE_DELIVERY_SERVICE_ITEM_MEASURE_796"] = "Stück";
+$MESS["CC_BSC1_PAY_SYSTEM_ID"] = "ID des Zahlungssystems";
+$MESS["CC_BSC1_DELIVERY_SYSTEM_ID"] = "ID der Lieferung";
+$MESS["CC_BSC1_DI_DS"] = "LieferServices";
 ?>

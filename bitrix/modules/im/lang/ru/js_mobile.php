@@ -34,6 +34,8 @@ $MESS["IM_MENU_MESS_DISLIKE"] = "Не нравится";
 $MESS["IM_MENU_MESS_REPLY"] = "Ответить";
 $MESS["IM_MENU_MESS_QUOTE"] = "Цитировать";
 $MESS["IM_MENU_MESS_LIKE_LIST"] = "Кому понравилось";
+$MESS["IM_MENU_MESS_VIEW_LIST"] = "Кто просмотрел";
+$MESS["IM_MENU_LIST"] = "Пользователи";
 $MESS["IM_MENU_MESS_EDIT"] = "Редактировать";
 $MESS["IM_MENU_MESS_DEL"] = "Удалить";
 $MESS["IM_MENU_WARN"] = "Внимание";
@@ -54,4 +56,6 @@ $MESS['IM_CHOOSE_PHOTO'] = "Выбрать из галереи";
 $MESS['IM_CAMERA_ROLL'] = "Снять фото";
 $MESS['IM_CHOOSE_FILE_TITLE'] = "Файлы";
 $MESS['IM_FUNCTION_FOR_BROWSER'] = "К сожалению, функция доступна только в версии для браузера.";
+$MESS["IM_LS_M_M"] = "Заходил #LAST_SEEN#";
+$MESS["IM_LS_M_F"] = "Заходила #LAST_SEEN#";
 ?>

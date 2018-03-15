@@ -129,6 +129,7 @@ BX.Lists.ListClass = (function ()
 		BX.Lists.modalWindow({
 			modalId: 'bx-lists-add-section',
 			title: BX.message('CT_BLL_ADD_SECTION_POPUP_TITLE'),
+			draggable: true,
 			contentClassName: '',
 			contentStyle: {
 				width: '400px',
@@ -137,14 +138,6 @@ BX.Lists.ListClass = (function ()
 			events: {
 				onPopupClose : function() {
 					this.destroy();
-				},
-				onAfterPopupShow : function(popup) {
-					var title = BX.findChild(popup.contentContainer, {className: 'bx-lists-popup-title'}, true);
-					if (title)
-					{
-						title.style.cursor = 'move';
-						BX.bind(title, 'mousedown', BX.proxy(popup._startDrag, popup));
-					}
 				}
 			},
 			content: [
@@ -305,6 +298,7 @@ BX.Lists.ListClass = (function ()
 					BX.Lists.modalWindow({
 						modalId: 'bx-lists-add-section',
 						title: BX.message('CT_BLL_EDIT_SECTION_POPUP_TITLE'),
+						draggable: true,
 						contentClassName: '',
 						contentStyle: {
 							width: '400px',
@@ -313,15 +307,6 @@ BX.Lists.ListClass = (function ()
 						events: {
 							onPopupClose : function() {
 								this.destroy();
-							},
-							onAfterPopupShow : function(popup) {
-								var title = BX.findChild(popup.contentContainer,
-									{className: 'bx-lists-popup-title'}, true);
-								if (title)
-								{
-									title.style.cursor = 'move';
-									BX.bind(title, 'mousedown', BX.proxy(popup._startDrag, popup));
-								}
 							}
 						},
 						content: [
@@ -440,6 +425,7 @@ BX.Lists.ListClass = (function ()
 		BX.Lists.modalWindow({
 			modalId: 'bx-lists-migrate-list',
 			title: BX.message('CT_BLL_DELETE_POPUP_TITLE'),
+			draggable: true,
 			contentClassName: '',
 			contentStyle: {
 				width: '400px',
@@ -448,14 +434,6 @@ BX.Lists.ListClass = (function ()
 			events: {
 				onPopupClose : function() {
 					this.destroy();
-				},
-				onAfterPopupShow : function(popup) {
-					var title = BX.findChild(popup.contentContainer, {className: 'bx-lists-popup-title'}, true);
-					if (title)
-					{
-						title.style.cursor = 'move';
-						BX.bind(title, 'mousedown', BX.proxy(popup._startDrag, popup));
-					}
 				}
 			},
 			content: BX.message('CT_BLL_TOOLBAR_SECTION_DELETE_WARNING'),
@@ -528,6 +506,7 @@ BX.Lists.ListClass = (function ()
 		BX.Lists.modalWindow({
 			modalId: 'bx-lists-migrate-list',
 			title: BX.message('CT_BLL_DELETE_POPUP_TITLE'),
+			draggable: true,
 			contentClassName: '',
 			contentStyle: {
 				width: '400px',
@@ -536,14 +515,6 @@ BX.Lists.ListClass = (function ()
 			events: {
 				onPopupClose : function() {
 					this.destroy();
-				},
-				onAfterPopupShow : function(popup) {
-					var title = BX.findChild(popup.contentContainer, {className: 'bx-lists-popup-title'}, true);
-					if (title)
-					{
-						title.style.cursor = 'move';
-						BX.bind(title, 'mousedown', BX.proxy(popup._startDrag, popup));
-					}
 				}
 			},
 			content: BX.message('CT_BLL_TOOLBAR_ELEMENT_DELETE_WARNING'),

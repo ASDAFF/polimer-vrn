@@ -24,4 +24,10 @@ $MESS["SPO_ORDER_LIST_SORT_ID"] = "ID замовлення";
 $MESS["SPO_ORDER_LIST_SORT_DATE_CREATE"] = "Дата створення";
 $MESS["SPO_ORDER_LIST_SORT_PRICE"] = "Сума замовлення";
 $MESS["SPO_ORDER_LIST_DEFAULT_SORT"] = "Сортування замовлень";
+$MESS["SPO_RESTRICT_CHANGE_PAYSYSTEM"] = "Заборонити зміну платіжної системи у замовлень в статусах";
+$MESS["SPO_NOT_CHOSEN"] = "(не обрано)";
+$MESS["SPO_USER_INFO_LOGIN"] = "Логін";
+$MESS["SPO_USER_INFO_EMAIL"] = "E-mail адреса";
+$MESS["SPO_USER_INFO_PERSON_TYPE_NAME"] = "Тип платника";
+$MESS["SPO_ORDER_HIDE_USER_INFO"] = "Не показувати в інформації про користувача";
 ?>

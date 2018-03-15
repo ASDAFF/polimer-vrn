@@ -51,9 +51,24 @@ class UrlPreviewComponent extends \CBitrixComponent
 		$this->arResult['ELEMENT_ID'] = $this->arParams['PARAMS']['urlPreviewId'];
 
 		if(isset($this->arParams['~METADATA']['EMBED']) && $this->arParams['~METADATA']['EMBED'] != '' && $this->showEmbed)
+		{
 			$this->arResult['METADATA']['EMBED'] = $this->arParams['~METADATA']['EMBED'];
+			if(strpos($this->arResult['METADATA']['EMBED'], '<iframe') !== 0)
+			{
+				$this->arResult['METADATA']['EMBED'] = '<iframe class="urlpreview-iframe-html-embed" src="'.Main\UrlPreview\UrlPreview::getInnerFrameUrl($this->arResult['METADATA']['ID']).'" allowfullscreen="" width="'.Main\UrlPreview\UrlPreview::IFRAME_MAX_WIDTH.'" height="'.Main\UrlPreview\UrlPreview::IFRAME_MAX_HEIGHT.'" frameborder="0" onload="BXUrlPreview.adjustFrameHeight(this);"></iframe>';
+			}
+		}
 		else
-			$this->arResult['METADATA']['EMBED'] = null;
+		{
+			if($this->arParams['METADATA']['EXTRA']['VIDEO'])
+			{
+				$this->arResult['METADATA']['EMBED'] = $this->invokePlayer();
+			}
+			else
+			{
+				$this->arResult['METADATA']['EMBED'] = null;
+			}
+		}
 
 		$this->arResult['SELECT_IMAGE'] = (
 				$this->editMode
@@ -129,6 +144,33 @@ class UrlPreviewComponent extends \CBitrixComponent
 				$this->arResult['METADATA']['ID'] = null;
 			}
 		}
+	}
+
+	/**
+	 * Include component bitrix:player to view html5 player. Returns html.
+	 *
+	 * @return string
+	 */
+	protected function invokePlayer()
+	{
+		global $APPLICATION;
+		$params = array(
+			'PATH' => $this->arParams['METADATA']['EXTRA']['VIDEO'],
+			'PLAYER_TYPE' => 'videojs',
+			'WIDTH' => '600',
+			'HEIGHT' => '340',
+		);
+		if(isset($this->arParams['METADATA']['EXTRA']['VIDEO_TYPE']))
+		{
+			$params['TYPE'] = $this->arParams['METADATA']['EXTRA']['VIDEO_TYPE'];
+		}
+		if(isset($this->arParams['METADATA']['IMAGE']))
+		{
+			$params['PREVIEW'] = $this->arParams['METADATA']['IMAGE'];
+		}
+		ob_start();
+		$APPLICATION->IncludeComponent('bitrix:player', '', $params);
+		return ob_get_clean();
 	}
 
 	/**

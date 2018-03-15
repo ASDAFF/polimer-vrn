@@ -1486,11 +1486,31 @@ class AjaxProcessor
 		$profiles = array();
 		$index = $this->request['index'];
 		$formData = isset($this->request["formData"]) ? $this->request["formData"] : array();
+		$confirmed = isset($this->request["confirmed"]) ? $this->request["confirmed"] : 'N';
 		$formData['ID'] = $formData['order_id'];
 		$deliveryId = intval($formData['SHIPMENT'][$index]['DELIVERY_ID']);
 
 		if ($deliveryId <= 0)
 			return;
+
+		$shipmentId = intval($formData['SHIPMENT'][$index]['SHIPMENT_ID']);
+
+		if($shipmentId > 0 && Sale\Delivery\Requests\Manager::isShipmentSent($shipmentId) && $confirmed != 'Y')
+		{
+			$requestId = Sale\Delivery\Requests\Manager::getRequestIdByShipmentId($shipmentId);
+			$this->addResultData("NEED_CONFIRM", "Y");
+			$this->addResultData(
+				"CONFIRM",
+				array(
+					"TEXT" =>
+						Loc::getMessage(
+							'SALE_OA_SHIPMENT_DELIVERY_REQ_SENT',
+							array(
+								'#REQUEST_ID#' => Sale\Delivery\Requests\Helper::getRequestViewLink($requestId)
+
+			))));
+			return;
+		}
 
 		Admin\OrderEdit::$isTrustProductFormData = true;
 		$order = $this->getOrder($formData);
@@ -1518,7 +1538,7 @@ class AjaxProcessor
 			$resShipment = Sale\Internals\ShipmentTable::getList(array(
 																	 'filter' => array(
 																		 '=ORDER_ID' => intval($this->request["orderId"]),
-																		 '=ID' => intval($formData['SHIPMENT'][$index]['SHIPMENT_ID']),
+																		 '=ID' => $shipmentId,
 																	 ),
 																	 'select' => array(
 																		 'RESPONSIBLE_ID', 'COMPANY_ID', 'STATUS_ID'
@@ -1544,6 +1564,7 @@ class AjaxProcessor
 				throw new UserMessageException(Loc::getMessage('SALE_OA_PERMISSION'));
 			}
 		}
+
 
 		/** @var  \Bitrix\Sale\Delivery\Services\Base $service */
 		$service = Sale\Delivery\Services\Manager::getObjectById($deliveryId);
@@ -1872,6 +1893,7 @@ class AjaxProcessor
 		{
 			Admin\OrderEdit::$needUpdateNewProductPrice = true;
 			Admin\OrderEdit::$isBuyerIdChanged = true;
+			Admin\OrderEdit::$isTrustProductFormData = false;
 		}
 
 		if($order === null && intval($orderId) > 0)
@@ -1953,7 +1975,20 @@ class AjaxProcessor
 
 					$order->setPersonTypeId($personTypeId);
 
-					$result["PROPERTIES_ARRAY"] = $order->loadPropertyCollection()->getArray();
+					$properties = $order->loadPropertyCollection()->getArray();
+
+					if (is_array($properties['properties']))
+					{
+						foreach ($properties['properties'] as &$property)
+						{
+							if ($property['TYPE'] === 'ENUM')
+							{
+								$property['OPTIONS_SORT'] = array_keys($property['OPTIONS']);
+							}
+						}
+					}
+
+					$result["PROPERTIES_ARRAY"] = $properties;
 					break;
 
 				case "PRODUCT":
@@ -2315,7 +2350,7 @@ class AjaxProcessor
 		}
 		else
 		{
-			$this->addResultError(implode("\n", $result->getErrorMessages()));
+			$this->addResultError(implode("<br>\n", $result->getErrorMessages()));
 		}
 	}
 
@@ -2774,6 +2809,8 @@ class AjaxProcessor
 	 * Create HTML for create check window
 	 *
 	 * @throws ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\NotImplementedException
 	 */
 	protected function addCheckPaymentAction()
 	{
@@ -2784,210 +2821,277 @@ class AjaxProcessor
 			return ;
 		}
 
-		$paymentData = Sale\Payment::getList(
-			array(
-				"filter" => array("ID" => (int)$paymentId)
-			)
-		);
 		$typeList = Cashbox\CheckManager::getCheckTypeMap();
-
-		$payment = $paymentData->fetch();
-		$order = Sale\Order::load($payment['ORDER_ID']);
-		$shipmentCollection = $order->getShipmentCollection();
-
-		$resultHtml = "<form>
-							<div class=\"adm-info-message\">
-									".Loc::getMessage("SALE_CASHBOX_SELECT_MESSAGE")."
-							</div>
-							<table>
-								<tr>
-									<input type='hidden' name='action' value='saveCheck'>
-									<td>
-										<label for='checkTypeSelect'>".Loc::getMessage("SALE_CASHBOX_SELECT_TYPE")."</label>
-									</td>
-									<td>
-									
-									
-									<select class=\"sale-discount-bus-select\" name='CHECK[TYPE]' id='checkTypeSelect'>";
+		$checkType = null;
+		$typeListHtml = '';
+		/** @var Cashbox\Check $typeClass */
 		foreach ($typeList as $id => $typeClass)
 		{
 			if (class_exists($typeClass))
 			{
+				if ($typeClass::getSupportedEntityType() === Cashbox\Check::SUPPORTED_ENTITY_TYPE_SHIPMENT)
+					continue;
+
+				if ($checkType === null)
+				{
+					$checkType = $id;
+				}
+
 				$type = $typeClass::getName();
-				$resultHtml .= "<option value='".$id."'>".$type."</option>";
+				$typeListHtml .= "<option value='".$id."'>".$type."</option>";
 			}
 		}
-		$resultHtml .= "		</select>
-								</td>
-							</tr>
-							<tr>";
-		$resultHtml .= "		<td><label for='checkShipmentSelect'>".Loc::getMessage("SALE_CASHBOX_SELECT_SHIPMENT")."</label></td>
-								<td><select class=\"sale-discount-bus-select\" name='CHECK[SHIPMENT]' id='checkShipmentSelect'>";
 
-		/** @var \Bitrix\Sale\Shipment $shipment */
-		foreach($shipmentCollection as $shipment)
+		$relatedEntities = Cashbox\CheckManager::getRelatedEntitiesForPayment($checkType, $paymentId);
+
+		$entityHtml = '';
+
+		if ($relatedEntities['SHIPMENTS'])
 		{
-			if ($shipment->isSystem())
+			$useMulti = Cashbox\Manager::isSupportedFFD105() ? 'true' : 'false';
+			foreach($relatedEntities['SHIPMENTS'] as $shipment)
 			{
-				continue;
+				$uuid = uniqid('check_'.$shipment['ID']);
+				$entityHtml .= "
+					<tr>
+						<td colspan='2'>
+							<input type='checkbox' id='".$uuid."' onclick='BX.Sale.Admin.OrderPayment.prototype.onCheckEntityChoose(this, $useMulti);' name='SHIPMENTS[".$shipment['ID']."][ID]' value='".$shipment['ID']."'>
+							<label for='".$uuid."'>
+								".Loc::getMessage('CASHBOX_OA_SHIPMENT')." ".$shipment['ID'].": ".$shipment['NAME']."
+							</label>
+						</td>
+					</tr>";
 			}
-
-			$shipmentData = $shipment->getFieldValues();
-			$resultHtml .= "<option value='".$shipmentData['ID']."'>"."[".$shipmentData['ID']."] ".$shipmentData['DELIVERY_NAME']."</option>";
 		}
-		$resultHtml .= "</select></td></tr></table>
-				<input type='hidden' id='checkOrderId' value='".$payment['ORDER_ID']."'>
-				<input type='hidden' id='checkPaymentId' value='".$payment['ID']."'>
-			</form>";
+
+		if ($relatedEntities['PAYMENTS'])
+		{
+			foreach($relatedEntities['PAYMENTS'] as $payment)
+			{
+				$uuid = uniqid('check_'.$payment['ID']);
+
+				$entityHtml .= "
+					<tr>
+						<td>
+							<input type='checkbox' id='".$uuid."' onclick='BX.Sale.Admin.OrderPayment.prototype.onCheckEntityChoose(this, true)' name='PAYMENTS[".$payment['ID']."][ID]' value='".$payment['ID']."'>
+							<label for='".$uuid."'>
+								".Loc::getMessage('CASHBOX_OA_PAYMENT')." ".$payment['ID'].": ".$payment['NAME']."
+							</label>
+						</td>
+						<td>
+							<select name='PAYMENTS[".$payment['ID']."][TYPE]' disabled='true' id='".$uuid."_type'>
+								<option value='".Cashbox\Check::PAYMENT_TYPE_ADVANCE."'>".Loc::getMessage('CASHBOX_OA_PAYMENT_TYPE_ADVANCE')."</option>
+								<option value='".Cashbox\Check::PAYMENT_TYPE_CREDIT."'>".Loc::getMessage('CASHBOX_OA_PAYMENT_TYPE_CREDIT')."</option>
+							</select>
+						</td>
+					</tr>";
+			}
+		}
+
+		$resultHtml = "
+			<form name='check_payment' id='check_payment'>
+				<table>
+					<tr>
+						<input type='hidden' name='action' value='saveCheck'>
+						<td>
+							<label for='checkTypeSelect'>".Loc::getMessage("SALE_CASHBOX_SELECT_TYPE").": </label>
+						</td>
+						<td>
+							<select name='CHECK_TYPE' id='checkTypeSelect'>
+							".$typeListHtml."
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label for='checkShipmentSelect'>".Loc::getMessage("SALE_CASHBOX_SELECT_ENTITIES").": </label>
+						</td>
+						<td>
+							<table>
+								".$entityHtml."
+							</table>
+						</td>
+					</tr>
+				</table>
+				<input type='hidden' name='PAYMENT_ID' value='".$paymentId."'>
+			</form>
+		";
 
 		$this->addResultData("HTML", $resultHtml);
 	}
 
 	/**
-	 * @throws ArgumentNullException
+	 * Create HTML for create check window
+	 *
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\NotImplementedException
 	 */
-	protected function addCheckOrderAction()
+	protected function addCheckShipmentAction()
 	{
-		global $APPLICATION, $USER;
-
-		$orderId = (int)$this->request['orderId'];
-		if (!$orderId && $this->request['returnHtml'])
+		$shipmentId = $this->request['shipmentId'];
+		if ((int)$shipmentId <= 0)
 		{
-			$typeOptions = '';
-			$typeList = Cashbox\CheckManager::getCheckTypeMap();
-			foreach ($typeList as $id => $typeClass)
-			{
-				if (class_exists($typeClass))
-				{
-					$type = $typeClass::getName();
-					$typeOptions .= "<option value='$id'>$type</option>";
-				}
-			}
-			$windowHTML = "<form>
-								<div class=\"adm-info-message\">".Loc::getMessage('CASHBOX_ADD_CHECK_TITLE')."</div>
-								<table>
-									<tr>
-										<td><label for='checkInputOrder'>".Loc::getMessage('CASHBOX_ADD_CHECK_INPUT_ORDER').":</label></td>
-										<td><input type='text' class=\"sale-discount-bus-select\" name='CHECK[ORDER]' id='checkInputOrder'></td>
-									</tr>
-									<tr>
-										<td><label for='checkSelectPayment'>".Loc::getMessage('CASHBOX_ADD_CHECK_SELECT_PAYMENT').":</label></td>
-										<td>
-											<select class=\"sale-discount-bus-select\" name='CHECK[PAYMENT]' id='checkSelectPayment' disabled>
-												<option value=''>".Loc::getMessage('CASHBOX_ADD_CHECK_NOT_SELECTED')."</option>
-											</select>
-										</td>
-									</tr>
-									<tr>
-										<td><label for='checkSelectShipment'>".Loc::getMessage('CASHBOX_ADD_CHECK_SELECT_SHIPMENT').":</label></td>
-										<td>
-											<select class=\"sale-discount-bus-select\" name='CHECK[SHIPMENT]' id='checkSelectShipment' disabled>
-												<option value=''>".Loc::getMessage('CASHBOX_ADD_CHECK_NOT_SELECTED')."</option>
-											</select>
-										</td>
-									</tr>
-									<tr>
-										<td><label for='checkSelectType'>".Loc::getMessage('CASHBOX_ADD_CHECK_SELECT_TYPE').":</label></td>
-										<td>
-											<select class=\"sale-discount-bus-select\" name='CHECK[TYPE]' id='checkSelectType'>"
-												.$typeOptions.
-											"</select>
-										</td>
-									</tr>
-								</table>
-							</form>";
-							
-			$this->addResultData("HTML", $windowHTML);
+			$this->addResultError("Wrong payment id");
+			return ;
 		}
-		else
+
+		$checkType = null;
+		$typeList = Cashbox\CheckManager::getCheckTypeMap();
+		$typeListHtml = '';
+		/** @var Cashbox\Check $typeClass */
+		foreach ($typeList as $id => $typeClass)
 		{
-			$resultData = array(
-				'PAYMENT' => array(),
-				'SHIPMENT' => array()
-			);
-
-			if ($orderId <= 0)
+			if (class_exists($typeClass))
 			{
-				$this->addResultData("ORDER_DATA", $resultData);
-				return;
-			}
+				if ($typeClass::getSupportedEntityType() === Cashbox\Check::SUPPORTED_ENTITY_TYPE_PAYMENT)
+					continue;
 
-			$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
-
-			$orderData = Sale\Internals\OrderTable::getList(
-				array(
-					"filter" => array("=ID" => $orderId),
-					"select" => array(
-						"USER_ID", "COMPANY_ID",
-						"PAYMENT_PAY_SYSTEM_NAME" => "PAYMENT.PAY_SYSTEM_NAME",
-						"PAYMENT_ID" => "PAYMENT.ID",
-						"PAYMENT_CURRENCY" => "PAYMENT.CURRENCY",
-						"PAYMENT_SUM" => "PAYMENT.SUM"
-					)
-				)
-			);
-
-			$userId = $USER->GetID();
-			$userCompanyList = Sale\Services\Company\Manager::getUserCompanyList($userId);
-
-			while ($order = $orderData->fetch())
-			{
-				if ($saleModulePermissions == 'P')
+				if ($checkType === null)
 				{
-					if ($order["USER_ID"] !== $userId && !in_array($order["COMPANY_ID"], $userCompanyList))
-					{
-						$this->addResultData("ORDER_DATA", $resultData);
-						return;
-					}
+					$checkType = $id;
 				}
 
-				$paymentId = $order['PAYMENT_ID'];
-				$paySystemName = $order['PAYMENT_PAY_SYSTEM_NAME'];
-				$sum = SaleFormatCurrency($order['PAYMENT_SUM'], $order['PAYMENT_CURRENCY']);
-				$resultData['PAYMENT'][] = array(
-					'ID' => $paymentId,
-					'NAME' => "[$paymentId] $paySystemName - $sum"
-				);
+				$type = $typeClass::getName();
+				$typeListHtml .= "<option value='".$id."'>".$type."</option>";
 			}
-
-			$shipmentData = Sale\Shipment::getList(
-				array(
-					"filter" => array("=ORDER_ID" => $orderId, "!SYSTEM" => "Y"),
-					"select" => array("DELIVERY_NAME", "ID")
-				)
-			);
-			while ($shipment = $shipmentData->fetch())
-			{
-				$id = (int)$shipment['ID'];
-				$name = htmlspecialcharsbx($shipment['DELIVERY_NAME']);
-				$resultData['SHIPMENT'][] = array(
-					'ID' => $id,
-					'NAME' => "[$id] $name"
-				);
-			}
-
-			$this->addResultData("ORDER_DATA", $resultData);
 		}
+
+		$relatedEntities = Cashbox\CheckManager::getRelatedEntitiesForShipment($checkType, $shipmentId);
+
+		$entityHtml = '';
+		if ($relatedEntities['PAYMENTS'])
+		{
+			foreach($relatedEntities['PAYMENTS'] as $payment)
+			{
+				$uuid = uniqid('check_'.$payment['ID'].'_');
+
+				$entityHtml .= "
+					<tr>
+						<td>
+							<input type='checkbox' id='".$uuid."' onclick='BX.Sale.Admin.OrderShipment.prototype.onCheckEntityChoose(this, true);' name='PAYMENTS[".$payment['ID']."][ID]' value='".$payment['ID']."'>
+							<label for='".$uuid."' id=\"".$uuid."_title\">
+								".Loc::getMessage('CASHBOX_OA_PAYMENT')." ".$payment['ID'].": ".$payment['NAME']."
+							</label>
+						</td>
+						<td>
+							<select name='PAYMENTS[".$payment['ID']."][TYPE]' disabled='true' id='".$uuid."_type'>
+								<option value='".Cashbox\Check::PAYMENT_TYPE_ADVANCE."'>".Loc::getMessage('CASHBOX_OA_PAYMENT_TYPE_ADVANCE')."</option>
+								<option value='".Cashbox\Check::PAYMENT_TYPE_CREDIT."'>".Loc::getMessage('CASHBOX_OA_PAYMENT_TYPE_CREDIT')."</option>
+							</select>
+						</td>
+					</tr>";
+			}
+		}
+
+		$dbRes = Sale\Shipment::getList(array(
+			'select' => array('PRICE_DELIVERY'),
+			'filter' => array('=ID' => $shipmentId)
+		));
+		$shipmentInfo = $dbRes->fetch();
+
+		$totalSum = $shipmentInfo['PRICE_DELIVERY'];
+
+		$dbRes = Sale\ShipmentItemCollection::getList(array(
+			'select' => array(
+				'PRICE' => 'BASKET.PRICE',
+				'QUANTITY',
+				'CURRENCY' => 'BASKET.CURRENCY'
+			),
+			'filter' => array('=ORDER_DELIVERY_ID' => $shipmentId)
+		));
+
+		$currency = '';
+		while ($item = $dbRes->fetch())
+		{
+			if ($currency === '')
+			{
+				$currency = $item['CURRENCY'];
+			}
+
+			$totalSum += $item['PRICE'] * $item['QUANTITY'];
+		}
+
+
+		$resultHtml = "
+			<form name='check_shipment' id='check_shipment'>
+				<table>
+					<tr>
+						<td colspan='2' style='padding-bottom: 7px'>".Loc::getMessage('SALE_CASHBOX_SHIPMENT_PRICE').": ".SaleFormatCurrency($totalSum, $currency)."</td>
+					</tr>
+					<tr>
+						<td>
+							<input type='hidden' name='action' value='saveCheck'>
+							<label for='checkTypeSelect'>".Loc::getMessage("SALE_CASHBOX_SELECT_TYPE").": </label>
+						</td>
+						<td>
+							<select name='CHECK_TYPE' id='checkTypeSelect'>
+							".$typeListHtml."
+							</select>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<label for='checkShipmentSelect'>".Loc::getMessage("SALE_CASHBOX_SELECT_ENTITIES").": </label>
+						</td>
+						<td>
+							<table>
+								".$entityHtml."
+							</table>
+						</td>
+					</tr>
+				</table>
+				<input type='hidden' name='SHIPMENT_ID' value='".$shipmentId."'>
+			</form>
+		";
+
+		$this->addResultData("HTML", $resultHtml);
 	}
 
 	/**
 	 * Add new check
 	 *
 	 * @throws ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\NotImplementedException
 	 */
 	protected function saveCheckAction()
 	{
 		global $APPLICATION, $USER;
-		
-		$typeId = $this->request['typeId'];
-		$shipmentId = (int)$this->request['shipmentId'];
-		$orderId = (int)$this->request['orderId'];
-		$paymentId = (int)$this->request['paymentId'];
-		$entityList = array();
+
+		$orderId = 0;
+		$typeId = $this->request['formData']['data']['CHECK_TYPE'];
+		$paymentId = (int)$this->request['formData']['data']['PAYMENT_ID'];
+		$shipmentId = (int)$this->request['formData']['data']['SHIPMENT_ID'];
+		$paymentData = $this->request['formData']['data']['PAYMENTS'];
+		$shipmentData = $this->request['formData']['data']['SHIPMENTS'];
+
+		if ($paymentId > 0)
+		{
+			$dbRes = Sale\Payment::getList(
+				array(
+					"filter" => array("ID" => (int)$paymentId)
+				)
+			);
+
+			$data = $dbRes->fetch();
+			$orderId = $data['ORDER_ID'];
+
+		}
+		elseif ($shipmentId > 0)
+		{
+
+			$dbRes = Sale\Shipment::getList(
+				array(
+					"filter" => array("ID" => (int)$shipmentId)
+				)
+			);
+
+			$data = $dbRes->fetch();
+			$orderId = $data['ORDER_ID'];
+		}
 
 		if ($orderId <= 0)
 		{
-			$this->addResultError(Loc::getMessage('CASHBOX_CREATE_CHECK_ERROR_ORDER_ID'));
 			return;
 		}
 
@@ -3005,63 +3109,70 @@ class AjaxProcessor
 				return;
 			}
 		}
-		
-		if (!$paymentId)
-		{
-			$this->addResultError(Loc::getMessage('CASHBOX_CREATE_CHECK_ERROR_EMPTY_PAYMENT'));
-			return;
-		}
 
 		$paymentCollection = $order->getPaymentCollection();
-		$payment = $paymentCollection->getItemById($paymentId);
-
-		if ($payment)
+		$entities = array();
+		if ($paymentId > 0)
 		{
-			$entityList[] = $payment;
-		}
-		else
-		{
-			$this->addResultError(Loc::getMessage('CASHBOX_CREATE_CHECK_ERROR_PAYMENT_ID'));
-			return;
-		}
-
-		if (!$shipmentId)
-		{
-			$this->addResultError(Loc::getMessage('CASHBOX_CREATE_CHECK_ERROR_EMPTY_SHIPMENT'));
-			return;
+			$entities[] = $paymentCollection->getItemById($paymentId);
 		}
 
 		$shipmentCollection = $order->getShipmentCollection();
-		$shipment = $shipmentCollection->getItemById($shipmentId);
-		if ($shipment)
+		if ($shipmentId > 0)
 		{
-			$entityList[] = $shipment;
-		}
-		else
-		{
-			$this->addResultError(Loc::getMessage('CASHBOX_CREATE_CHECK_ERROR_SHIPMENT_ID'));
-			return;
+			$entities[] = $shipmentCollection->getItemById($shipmentId);
 		}
 
-		$typeList = Cashbox\CheckManager::getCheckTypeMap();
-
-		if (strlen($typeId) <= 0 || !(in_array($typeId, array_keys($typeList))))
+		$relatedEntities = array();
+		if ($paymentData)
 		{
-			$this->addResultError(Loc::getMessage('CASHBOX_CREATE_CHECK_ERROR_ORDER_ID'));
-			return;
+			foreach ($paymentData as $id => $data)
+			{
+				$relatedEntities[$data['TYPE']][] = $paymentCollection->getItemById($id);
+			}
 		}
-			
-		$addResult = Cashbox\CheckManager::addByType($entityList, $typeId);
+
+		if ($shipmentData)
+		{
+			foreach ($shipmentData as $id => $data)
+			{
+				$relatedEntities[Cashbox\Check::SHIPMENT_TYPE_NONE][] = $shipmentCollection->getItemById($id);
+			}
+		}
+
+		if (!Cashbox\Manager::isSupportedFFD105())
+		{
+			foreach ($relatedEntities as $type => $entityList)
+			{
+				foreach ($entityList as $item)
+				{
+					$entities[] = $item;
+				}
+			}
+
+			$relatedEntities = array();
+		}
+
+		$addResult = Cashbox\CheckManager::addByType($entities, $typeId, $relatedEntities);
 		if (!$addResult->isSuccess())
 			$this->addResultError(implode("\n", $addResult->getErrorMessages()));
 
-		$checkData = Cashbox\CheckManager::collectInfo(
-			array(
-				"PAYMENT_ID" => $paymentId
-			)
-		);
-
-		$htmlCheckList = Sale\Helpers\Admin\Blocks\OrderPayment::buildCheckHtml($checkData);
+		if ($paymentId > 0)
+		{
+			$filter = array("PAYMENT_ID" => $paymentId);
+			$checkData = Cashbox\CheckManager::collectInfo($filter);
+			$htmlCheckList = Sale\Helpers\Admin\Blocks\OrderPayment::buildCheckHtml($checkData);
+		}
+		else if ($shipmentId > 0)
+		{
+			$filter = array("SHIPMENT_ID" => $shipmentId);
+			$checkData = Cashbox\CheckManager::collectInfo($filter);
+			$htmlCheckList = Sale\Helpers\Admin\Blocks\OrderShipment::buildCheckHtml($checkData);
+		}
+		else
+		{
+			$htmlCheckList = '';
+		}
 
 		$this->addResultData("CHECK_LIST_HTML", $htmlCheckList);
 	}
@@ -3082,11 +3193,27 @@ class AjaxProcessor
 			}
 		}
 
-		$checkData = Cashbox\CheckManager::collectInfo(array("PAYMENT_ID" => $check->getField('PAYMENT_ID')));
-		$htmlCheckList = Sale\Helpers\Admin\Blocks\OrderPayment::buildCheckHtml($checkData);
-
-		$this->addResultData("CHECK_LIST_HTML", $htmlCheckList);
-		$this->addResultData("PAYMENT_ID", $check->getField('PAYMENT_ID'));
+		$filter = array();
+		if ($check->getField('PAYMENT_ID') > 0)
+		{
+			$filter = array("PAYMENT_ID" => $check->getField('PAYMENT_ID'));
+			$checkData = Cashbox\CheckManager::collectInfo($filter);
+			$htmlCheckList = Sale\Helpers\Admin\Blocks\OrderPayment::buildCheckHtml($checkData);
+			$this->addResultData("PAYMENT_ID", $check->getField('PAYMENT_ID'));
+			$this->addResultData("CHECK_LIST_HTML", $htmlCheckList);
+		}
+		elseif ($check->getField('SHIPMENT_ID') > 0)
+		{
+			$filter = array("SHIPMENT_ID" => $check->getField('SHIPMENT_ID'));
+			$checkData = Cashbox\CheckManager::collectInfo($filter);
+			$htmlCheckList = Sale\Helpers\Admin\Blocks\OrderShipment::buildCheckHtml($checkData);
+			$this->addResultData("SHIPMENT_ID", $check->getField('SHIPMENT_ID'));
+			$this->addResultData("CHECK_LIST_HTML", $htmlCheckList);
+		}
+		else
+		{
+			throw new SystemException();
+		}
 	}
 
 	/**

@@ -7,6 +7,7 @@
  */
 namespace Bitrix\Main\UserConsent\Internals;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
@@ -85,5 +86,22 @@ class AgreementTable extends Entity\DataManager
 				}
 			)
 		);
+	}
+
+	/**
+	 * After delete event handler.
+	 *
+	 * @param Entity\Event $event Event object.
+	 * @return Entity\EventResult
+	 */
+	public static function onAfterDelete(Entity\Event $event)
+	{
+		$result = new Entity\EventResult;
+		$data = $event->getParameters();
+
+		$sql = /** @lang MySQL */ "DELETE FROM " . ConsentTable::getTableName() . " WHERE AGREEMENT_ID = " . intval($data['primary']['ID']);
+		Application::getConnection()->query($sql);
+
+		return $result;
 	}
 }

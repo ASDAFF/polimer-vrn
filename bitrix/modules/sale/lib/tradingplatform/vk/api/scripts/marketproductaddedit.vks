@@ -23,12 +23,12 @@ while (i < count) {
 
     if(FLAG_EDIT == true)
     {
-        params.item_id = data[i].vk_id;
+        params.item_id = data[i].VK_ID;
         var res_edit = API.market.edit(params);
         if(res_edit){
-            res_curr.flag_product_edit_result = true;
+            res_curr.FLAG_PRODUCT_EDIT_RESULT = true;
         } else {
-            res_curr.flag_product_edit_result = false;
+            res_curr.FLAG_PRODUCT_EDIT_RESULT = false;
         }
     }
 
@@ -36,10 +36,10 @@ while (i < count) {
     {
         var res_add = API.market.add(params);
         if(res_add) {
-            res_curr.vk_id = res_add.market_item_id;
-            res_curr.flag_product_add_result = true;
+            res_curr.VK_ID = res_add.market_item_id;
+            res_curr.FLAG_PRODUCT_ADD_RESULT = true;
         } else {
-            res_curr.flag_product_add_result = false;
+            res_curr.FLAG_PRODUCT_ADD_RESULT = false;
         }
 
     }

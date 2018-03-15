@@ -215,6 +215,26 @@ class CBPDocumentService
 		return null;
 	}
 
+	public function normalizeDocumentId($parameterDocumentId)
+	{
+		$normalized = $parameterDocumentId;
+		list($moduleId, $entity, $documentId) = CBPHelper::ParseDocumentId($parameterDocumentId);
+
+		if (strlen($moduleId) > 0)
+			CModule::IncludeModule($moduleId);
+
+		if (class_exists($entity) && method_exists($entity, "normalizeDocumentId"))
+		{
+			$normalized = array(
+				$moduleId,
+				$entity,
+				call_user_func_array(array($entity, "normalizeDocumentId"), array($documentId))
+			);
+		}
+
+		return $normalized;
+	}
+
 	public function GetDocumentFields($parameterDocumentType, $importExportMode = false)
 	{
 		list($moduleId, $entity, $documentType) = CBPHelper::ParseDocumentId($parameterDocumentType);
@@ -717,7 +737,11 @@ EOS;
 
 		if (is_array($fieldName))
 		{
-			$arFieldName = array("Form" => null, "Field" => null);
+			$arFieldName = array(
+				'Form' => null,
+				'Field' => null,
+				'ClassNamePrefix' => null,
+			);
 			foreach ($fieldName as $key => $val)
 			{
 				switch (strtoupper($key))
@@ -729,6 +753,9 @@ EOS;
 					case "FIELD":
 					case "1":
 						$arFieldName["Field"] = $val;
+						break;
+					case 'CLASSNAMEPREFIX':
+						$arFieldName["ClassNamePrefix"] = $val;
 						break;
 				}
 			}
@@ -1230,7 +1257,7 @@ EOS;
 		return false;
 	}
 
-	public function onWorkflowStatusChange($parameterDocumentId, $workflowId, $status)
+	public function onWorkflowStatusChange($parameterDocumentId, $workflowId, $status, $rootActivity = null)
 	{
 		list($moduleId, $entity, $documentId) = CBPHelper::ParseDocumentId($parameterDocumentId);
 
@@ -1238,7 +1265,7 @@ EOS;
 			CModule::IncludeModule($moduleId);
 
 		if (class_exists($entity) && method_exists($entity, "onWorkflowStatusChange"))
-			return call_user_func_array(array($entity, "onWorkflowStatusChange"), array($documentId, $workflowId, $status));
+			return call_user_func_array(array($entity, "onWorkflowStatusChange"), array($documentId, $workflowId, $status, $rootActivity));
 
 		return false;
 	}

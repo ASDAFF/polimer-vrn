@@ -12,6 +12,6 @@ class UserGroup extends BaseContext
 	public function __construct(array $userGroups)
 	{
 		$this->userId = static::GUEST_USER_ID;
-		$this->userGroups = $userGroups;
+		$this->setUserGroups($userGroups);
 	}
 }

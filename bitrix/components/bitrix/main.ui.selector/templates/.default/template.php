@@ -22,11 +22,11 @@ $frame = $this->createFrame()->begin(false);
 	BX.ready(function() {
 
 		var f = function(params) {
-
 			var selectorId = '<?=CUtil::JSEscape($arParams['ID'])?>';
 			var inputId = (typeof params != 'undefined' && params.inputId != 'undefined' ? params.inputId : <?=($arParams['BIND_ID'] ? "'".$arParams['BIND_ID']."'" : 'false')?>);
 			var containerId = (typeof params != 'undefined' && params.containerId != 'undefined' ? params.containerId : <?=($arParams['CONTAINER_ID'] ? "'".$arParams['CONTAINER_ID']."'" : 'false')?>);
 			var bindId = inputId;
+			var openDialogWhenInit = (typeof params == 'undefined' || typeof params.openDialogWhenInit == 'undefined' || !!params.openDialogWhenInit);
 
 			if (
 				typeof params != 'undefined'
@@ -44,6 +44,7 @@ $frame = $this->createFrame()->begin(false);
 				bindId: bindId,
 				containerId: containerId,
 				tagId: BX('<?=$arParams['TAG_ID']?>'),
+				openDialogWhenInit: openDialogWhenInit,
 				bindNode: BX('<?=$arParams['BIND_ID']?>'),
 				options: <?=\CUtil::phpToJSObject($arParams["OPTIONS"])?>,
 				callback : {

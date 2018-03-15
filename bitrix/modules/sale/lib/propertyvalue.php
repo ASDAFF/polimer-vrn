@@ -68,6 +68,11 @@ class PropertyValue
 			);
 		}
 
+		if (!isset($value['VALUE']) && !empty($property['DEFAULT_VALUE']))
+		{
+			$value['VALUE'] = $property['DEFAULT_VALUE'];
+		}
+
 		if (!empty($relation))
 			$property['RELATION'] = $relation;
 
@@ -105,6 +110,11 @@ class PropertyValue
 
 		if ($this->property['TYPE'] == "STRING")
 		{
+			if ($this->property['IS_EMAIL'] === "Y" && !empty($value))
+			{
+				$value = trim((string)$value);
+			}
+
 			if (Input\StringInput::isMultiple($value))
 			{
 				$fields = $this->getFields();
@@ -261,10 +271,11 @@ class PropertyValue
 		$property = $this->property;
 
 		$key = isset($property["ID"]) ? $property["ID"] : "n".$this->getId();
-		$value = isset($post['PROPERTIES'][$key]) ? $post['PROPERTIES'][$key] : null;
 
-		if (isset($post['PROPERTIES'][$key]))
-			$this->setValue($value);
+		if (is_array($post['PROPERTIES']) && array_key_exists($key, $post['PROPERTIES']))
+		{
+			$this->setValue($post['PROPERTIES'][$key]);
+		}
 
 		return $result;
 	}
@@ -292,7 +303,7 @@ class PropertyValue
 			);
 		}
 
-		if (!is_array($value) && strval(trim($value)) != "" && $property['IS_EMAIL'] == 'Y' && !check_email($value, true)) // TODO EMAIL TYPE
+		if (!is_array($value) && $property['IS_EMAIL'] == 'Y' && trim($value) !== '' && !check_email(trim($value), true))
 		{
 			$error['EMAIL'] = str_replace(
 				array("#EMAIL#", "#NAME#"),

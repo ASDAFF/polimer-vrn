@@ -342,11 +342,9 @@ if ($errors)
 }
 
 ?>
-<form method="POST" action="<?echo $APPLICATION->GetCurPage()?>?" name="fform">
+<form method="POST" action="<?echo $APPLICATION->GetCurPage()?>?ID=<?=htmlspecialcharsbx($statusId)?>&lang=<?=LANGUAGE_ID?>" name="fform">
 	<?=GetFilterHiddens('filter_')?>
 	<input type="hidden" name="Update" value="Y">
-	<input type="hidden" name="lang" value="<?=LANGUAGE_ID?>">
-	<input type="hidden" name="ID" value="<?=$statusId?>">
 	<?=bitrix_sessid_post()?>
 
 	<?
@@ -455,7 +453,7 @@ if ($errors)
 				false
 			);
 			?>
-			<div id="new_color_label" style="background: <?=$status['COLOR']?>"></div>
+			<div id="new_color_label" style="background: <?=htmlspecialcharsbx($status['COLOR'])?>"></div>
 		</td>
 	</tr>
 	<?foreach ($languages as $languageId => $languageName):?>

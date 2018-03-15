@@ -172,6 +172,26 @@ BXUrlPreview.showEmbed = function()
 	{
 		BX.addClass(this, 'urlpreview__container-hide-image');
 		BX.removeClass(this, 'urlpreview__container-hide-embed');
+		var playerNode = BX.findChildByClassName(this, 'video-js');
+		if(playerNode)
+		{
+			if(BX.getClass('BX.Fileman.PlayerManager'))
+			{
+				var player = BX.Fileman.PlayerManager.getPlayerById(playerNode.getAttribute('id'));
+				if(player)
+				{
+					player.play();
+				}
+			}
+		}
+		else
+		{
+			var iframe = BX.findChildByClassName(this, 'urlpreview-iframe-html-embed');
+			if(iframe)
+			{
+				BXUrlPreview.adjustFrameHeight(iframe, 5);
+			}
+		}
 	}
 };
 
@@ -182,5 +202,54 @@ BXUrlPreview.bindEmbedHandler = function()
 	for(i = 0; i < switchableElements.length; i++)
 	{
 		switchableElements.item(i).addEventListener('click', BXUrlPreview.showEmbed);
+	}
+};
+
+BXUrlPreview.adjustFrameHeight = function(iframe, counter)
+{
+	if(BX.hasClass(iframe, 'urlpreview-iframe-html-embed-adjusted'))
+	{
+		return;
+	}
+	counter = counter || 0;
+	if(counter > 10)
+	{
+		return;
+	}
+	var addToHeight = 50;
+	if(iframe.contentWindow.document.body.scrollHeight > iframe.height)
+	{
+		iframe.height = iframe.contentWindow.document.body.scrollHeight + addToHeight + "px";
+		BX.addClass(iframe, 'urlpreview-iframe-html-embed-adjusted');
+		return;
+	}
+	var videos = iframe.contentWindow.document.getElementsByTagName('video');
+	if(videos[0])
+	{
+		iframe.height = iframe.contentWindow.document.body.scrollHeight + addToHeight + "px";
+		BX.addClass(iframe, 'urlpreview-iframe-html-embed-adjusted');
+		return;
+	}
+	else
+	{
+		var iframes = iframe.contentWindow.document.getElementsByTagName('iframe');
+		if(iframes[0] && iframes[0].height > 0)
+		{
+			iframe.height = iframes[0].height + addToHeight;
+			BX.addClass(iframe, 'urlpreview-iframe-html-embed-adjusted');
+		}
+		else if (iframes[0] && iframes[0].style.height)
+		{
+			iframe.height = iframes[0].style.height + addToHeight;
+			BX.addClass(iframe, 'urlpreview-iframe-html-embed-adjusted');
+		}
+		else
+		{
+			setTimeout(function()
+			{
+				counter++;
+				BXUrlPreview.adjustFrameHeight(iframe, counter);
+			}, 500);
+		}
 	}
 };

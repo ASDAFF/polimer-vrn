@@ -1,7 +1,5 @@
 <?
 $MESS["SONET_GCE_T_SUBTITLE"] = "Параметри групи";
-$MESS["SONET_GCE_T_NAME"] = "Назва групи";
-$MESS["SONET_GCE_T_DESCR"] = "Опис групи";
 $MESS["SONET_GCE_T_IMAGE"] = "Зображення групи";
 $MESS["SONET_GCE_T_IMAGE_DEL"] = "Видалити зображення";
 $MESS["SONET_GCE_T_SUBJECT"] = "Тематика групи";
@@ -9,7 +7,6 @@ $MESS["SONET_GCE_T_TO_SELECT"] = "-Не обрано-";
 $MESS["SONET_GCE_T_PARAMS"] = "Параметри групи";
 $MESS["SONET_GCE_T_PARAMS_VIS"] = "Група видима всім";
 $MESS["SONET_GCE_T_PARAMS_OPEN"] = "Відкрита для вільного вступу";
-$MESS["SONET_GCE_T_KEYWORDS"] = "Ключові слова";
 $MESS["SONET_GCE_T_INVITE"] = "Запрошувати користувачів до групи можуть";
 $MESS["SONET_GCE_T_DO_EDIT"] = "Змінити параметри";
 $MESS["SONET_GCE_T_DO_CREATE"] = "Створити групу";

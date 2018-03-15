@@ -145,4 +145,12 @@ $MESS["CC_BSC1_CASHBOX_URL"] = "URL";
 $MESS["CC_BSC1_CASHBOX_FISCAL_SIGN"] = "FISCAL_SIGN";
 $MESS["CC_BSC1_CASHBOX_REG_NUMBER_KKT"] = "REG_NUMBER_KKT";
 $MESS["CC_BSC1_ORDER_ERROR_5"] = "Document ID #XML_1C_DOCUMENT_ID#. Order currency #CURRENCY_FROM# does not match the site currency #CURRENCY_TO#";
+$MESS["CRM_PACKAGE_NOT_FOUND_ORDER"] = "Cannot import invoice and documentation because invoice is missing from package";
+$MESS["CRM_PACKAGE_NOT_FOUND_PAYMENT"] = "Invoice ID #XML_1C_DOCUMENT_ID#. Cannot import invoice and documentation because payment information is missing. Please check your 1C settings.";
+$MESS["CRM_PACKAGE_PARTIAL_SHIPMENT_NOT_SUPPORTED"] = "Invoice ID #XML_1C_DOCUMENT_ID#. Cannot import invoice and documentation because an invoice can have only one shipment. Partial shipments are not supported.";
+$MESS["CRM_PACKAGE_DELIVERY_SERVICE_ITEM"] = "Delivery";
+$MESS["CRM_PACKAGE_DELIVERY_SERVICE_ITEM_MEASURE_796"] = "Piece";
+$MESS["CC_BSC1_PAY_SYSTEM_ID"] = "Payment system ID";
+$MESS["CC_BSC1_DELIVERY_SYSTEM_ID"] = "Delivery ID";
+$MESS["CC_BSC1_DI_DS"] = "DeliveryServices";
 ?>

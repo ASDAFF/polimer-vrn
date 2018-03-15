@@ -130,6 +130,9 @@ class Helper
 		if (empty($imapOptions['income']) || !is_array($imapOptions['income']))
 			return false;
 
+		$imapOptions['outcome'] = !empty($imapOptions['outcome']) && is_array($imapOptions['income'])
+			? array_diff($imapOptions['outcome'], $imapOptions['income']) : array();
+
 		$client = new Imap(
 			$mailbox['SERVER'], $mailbox['PORT'],
 			$mailbox['USE_TLS'] == 'Y' || $mailbox['USE_TLS'] == 'S',

@@ -508,7 +508,7 @@ BX.Kanban.DraftItem = function(options)
  */
 BX.Kanban.DraftItem.addToColumn = function(column, targetItem)
 {
-	if (!column instanceof BX.Kanban.Column)
+	if (!(column instanceof BX.Kanban.Column))
 	{
 		return null;
 	}

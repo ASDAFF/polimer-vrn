@@ -25,6 +25,7 @@ $MESS["SPO_ORDER_LIST_SORT_DATE_CREATE"] = "Дата создания";
 $MESS["SPO_ORDER_LIST_SORT_PRICE"] = "Сумма заказа";
 $MESS["SPO_ORDER_LIST_DEFAULT_SORT"] = "Сортировка заказов";
 $MESS["SPO_RESTRICT_CHANGE_PAYSYSTEM"] = "Запретить смену платежной системы у заказов в статусах";
+$MESS["SPO_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"] = "Пересчитывать заказ после смены платежной системы";
 $MESS["SPO_NOT_CHOSEN"] = "(не выбрано)";
 $MESS["SPO_USER_INFO_LOGIN"] = "Логин";
 $MESS["SPO_USER_INFO_EMAIL"] = "E-mail адрес";

@@ -157,3 +157,7 @@ if ($arOrder)
 		}
 	}
 }
+else
+{
+	ShowError(GetMessage('SOP_ORDER_NOT_FOUND'));
+}

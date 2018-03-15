@@ -9,8 +9,7 @@ use \Bitrix\Main\Localization\Loc;
  * Class Stepper
  * @package Bitrix\Main\Update
  * This class can be used if only:
- * 1. you do not alter tables in DB. Agent will not be executed if module is not installed;
- * 2. you do not use Stepper for main module because of agent would not bind in updater.php on bitrix24.
+ * 1. you do not alter tables in DB. Agent will not be executed if module is not installed.
  * Code to bind agent in updater:
  * \Bitrix\Main\Update\Stepper::bindClass('Bitrix\Tasks\Update1701', 'tasks');
  * or
@@ -238,28 +237,41 @@ HTML;
 	 */
 	public static function bindClass($className, $moduleId, $delay = 60)
 	{
-		$addAgent = true;
-
-		if ($delay <= 0)
+		if (class_exists("\CAgent"))
 		{
-			/** @var Stepper $className */
-			$addAgent = $className::execAgent() !== '';
+			$addAgent = true;
+
+			if ($delay <= 0)
+			{
+				/** @var Stepper $className */
+				$addAgent = $className::execAgent() !== '';
+			}
+
+			if ($addAgent)
+			{
+				\CAgent::AddAgent(
+					$className.'::execAgent();',
+					$moduleId,
+					"Y",
+					1,
+					"",
+					"Y",
+					\ConvertTimeStamp(time()+\CTimeZone::GetOffset() + (int) $delay, "FULL"),
+					100,
+					false,
+					false
+				);
+			}
 		}
-
-		if ($addAgent)
+		else
 		{
-			\CAgent::AddAgent(
-				$className.'::execAgent();',
-				$moduleId,
-				"Y",
-				1,
-				"",
-				"Y",
-				\ConvertTimeStamp(time()+\CTimeZone::GetOffset() + (int) $delay, "FULL"),
-				100,
-				false,
-				false
-			);
+			global $DB;
+			$name = $DB->ForSql($className.'::execAgent();', 2000);
+			$moduleId = $DB->ForSql($moduleId);
+			if (!(($agent = $DB->Query("SELECT ID FROM b_agent WHERE MODULE_ID='".$moduleId."' AND NAME = '".$name."' AND USER_ID IS NULL")->Fetch()) && $agent))
+			{
+				$DB->Query("INSERT INTO b_agent (MODULE_ID, SORT, NAME, ACTIVE, AGENT_INTERVAL, IS_PERIOD, NEXT_EXEC) VALUES ('".$moduleId."', 100, '".$name."', 'Y', 1, 'Y', ".($delay > 0 ? "DATE_ADD(now(), INTERVAL ". ((int) $delay)." SECOND)" : $DB->GetNowFunction()).")");
+			}
 		}
 	}
 	/**

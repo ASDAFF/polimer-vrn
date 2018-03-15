@@ -127,8 +127,6 @@ class CIBlockPropertyHTML
 		if (!is_array($value["VALUE"]))
 			$value = static::ConvertFromDB($arProperty, $value);
 		$ar = $value["VALUE"];
-		if (!$ar && isset($arProperty['DEFAULT_VALUE']) && is_array($arProperty['DEFAULT_VALUE']))
-			$ar = $arProperty['DEFAULT_VALUE'];
 		if (strtolower($ar["TYPE"]) != "text")
 			$ar["TYPE"] = "html";
 		else

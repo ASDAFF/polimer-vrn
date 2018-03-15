@@ -418,21 +418,35 @@
 }
 
 .main-grid-fade::before {
-	background-image: -webkit-linear-gradient(transparent, rgba(0,0,0,.2) 25%, rgba(0,0,0,.3) 75%, transparent),radial-gradient(farthest-side at 0 50%,rgba(0,0,0,.4),transparent);
-	background-image: -o-linear-gradient(transparent, rgba(0,0,0,.2) 25%, rgba(0,0,0,.3) 75%, transparent),radial-gradient(farthest-side at 0 50%,rgba(0,0,0,.4),transparent);
-	background-image: linear-gradient(transparent, rgba(0,0,0,.2) 25%, rgba(0,0,0,.3) 75%, transparent),radial-gradient(farthest-side at 0 50%,rgba(0,0,0,.4),transparent);
-    background-position: 0 0,0 0;
-	left: 0;
-	transition: linear opacity 100ms;
+	content: '';
+	position: absolute;
+	width: 10px;
+	-webkit-border-radius: 80%;
+	border-radius: 80%;
+	top: 0;
+	bottom: 0;
+	z-index: 9;
+	opacity: 0;
+	box-shadow: 0 0 10px rgba(0,0,0,.2);
+	left: -10px;
+	right: auto;
+	transition: .2s;
 }
 
 .main-grid-fade::after {
-	background-image: -webkit-linear-gradient(transparent, rgba(0,0,0,.2) 25%, rgba(0,0,0,.3) 75%, transparent),radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.4),transparent);
-	background-image: -o-linear-gradient(transparent, rgba(0,0,0,.2) 25%, rgba(0,0,0,.3) 75%, transparent),radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.4),transparent);
-	background-image: linear-gradient(transparent, rgba(0,0,0,.2) 25%, rgba(0,0,0,.3) 75%, transparent),radial-gradient(farthest-side at 100% 50%,rgba(0,0,0,.4),transparent);
-    background-position: 100% 0,100% 0;
-	right: 0;
-	transition: linear opacity 100ms;
+	content: '';
+	position: absolute;
+	width: 10px;
+	-webkit-border-radius: 80%;
+	border-radius: 80%;
+	top: 0;
+	bottom: 0;
+	z-index: 9;
+	opacity: 0;
+	box-shadow: 0 0 10px rgba(0,0,0,.2);
+	left: auto;
+	right: -10px;
+	transition: .2s;
 }
 
 .main-grid-fade-right::after {
@@ -677,9 +691,7 @@
 .main-grid-editor-container {
 	margin-top: 11px;
 	margin-bottom: 11px;
-}
-
-.main-grid-editor-container {
+	text-align: left;
 	padding: 0;
 }
 
@@ -738,7 +750,8 @@
 .main-grid-editor-checkbox {
 	width: auto;
 	height: auto;
-	margin: auto;
+	margin-top: 7px;
+	margin-left: 0;
 }
 
 /* Tbody Content*/
@@ -1701,6 +1714,15 @@ html:not(.bx-firefox) .main-grid-resize-button:active::after {
 	transform: rotate(180deg);
 }
 
+.main-grid-col-no-sortable .main-grid-control-sort-asc,
+.main-grid-col-no-sortable.main-grid-cell-head:hover .main-grid-control-sort-hover-asc,
+.main-grid-col-no-sortable.main-grid-cell-head:active .main-grid-control-sort-hover-asc,
+.main-grid-col-no-sortable .main-grid-control-sort-desc,
+.main-grid-col-no-sortable.main-grid-cell-head:hover .main-grid-control-sort-hover-desc,
+.main-grid-col-no-sortable.main-grid-cell-head:active .main-grid-control-sort-hover-desc{
+	visibility: hidden;
+}
+
 .main-grid-cell-head.load .main-grid-control-sort {
 	visibility: visible;
 	background: url(images/loader.png) no-repeat 0 0;
@@ -1824,6 +1846,10 @@ label.main-grid-checkbox {
 	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
 	line-height: 35px;
 	padding-left: 10px;
+	margin-left: -11px;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 .main-grid-editor.main-dropdown {
@@ -2019,6 +2045,14 @@ label.main-grid-checkbox {
 	color: #535c69;
 }
 
+.main-grid-disable.main-grid-settings-window-actions-item-button {
+	pointer-events: none;
+	opacity: .6;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
 
 .main-grid-buttons.icon {
 	background: none;
@@ -2177,20 +2211,15 @@ label.main-grid-checkbox {
 	line-height: 19px;
 	width: auto;
 	height: auto;
-	padding-left: 28px;
-	padding-top: 6px;
-	padding-bottom: 6px;
-	padding-right: 20px;
+	padding:6px 20px 6px 28px;
 	margin-right: 1px;
 	vertical-align: middle;
 	cursor: pointer;
-	-webkit-transition: border 200ms;
-	-moz-transition: border 200ms;
-	-ms-transition: border 200ms;
-	-o-transition: border 200ms;
 	transition: border 200ms;
 	border: 1px transparent solid;
 	outline: none;
+	min-height:33px;
+	box-sizing: border-box;
 }
 
 .main-grid-settings-window-list-item-label[contenteditable="true"] {

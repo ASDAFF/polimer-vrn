@@ -400,7 +400,7 @@ $tabControl->BeginNextTab();
 			?>
 			<tr>
 				<td><?echo GetMessage('MAIN_TOTAL_USERS')?></td>
-				<td><a href="user_admin.php?lang=<?=LANG?>&find_group_id[]=<?=$ID?>&set_filter=Y" title="<?=GetMessage("MAIN_VIEW_USER_GROUPS")?>"><?= intval($arGroupTmp["USERS"]) ?></a></td>
+				<td><a href="user_admin.php?lang=<?=LANG?>&GROUPS_ID[]=<?=$ID?>&apply_filter=Y" title="<?=GetMessage("MAIN_VIEW_USER_GROUPS")?>"><?= intval($arGroupTmp["USERS"]) ?></a></td>
 			</tr>
 			<?
 		}

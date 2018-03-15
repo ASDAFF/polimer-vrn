@@ -257,6 +257,7 @@ class MFIController
 		{
 			if ($this->getUploader() === null)
 				throw new \Bitrix\Main\AccessDeniedException("Uploading is forbidden.");
+			$this->getUploader()->setControlId($registeredControlId);
 			$this->executeActionUpload();
 		}
 		else if ($action == "delete")

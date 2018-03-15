@@ -246,50 +246,16 @@ if(CModule::IncludeModule('iblock'))
 
 final class export
 {
-	const UNDEFINED = 0;
-	const PACKAGE = 1;
-
-	const ONEC_MODULE_VERSION_DEFAULT = 1;
-	const ONEC_MODULE_VERSION_2 = 2;
-
-	protected $moduleVersion = '';
 	protected $packageMode = false;
 	protected $package = null;
 	protected $nextStep = array();
 	protected $step = array();
 	protected $currentsList = array();
 
-	public function __construct($moduleVersion, $nextStep, $step)
+	public function __construct($nextStep, $step)
 	{
-		$this->moduleVersion = $moduleVersion;
 		$this->nextStep = $nextStep;
 		$this->step = $step;
-	}
-
-	/**
-	 * @param string $minVerion
-	 * @param null|string $maxVersion
-	 * @return bool
-	 */
-	public function versionCompare($minVerion, $maxVersion = null)
-	{
-
-		if(version_compare($this->getModuleVersion(), $minVerion)>=0)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getModuleVersion()
-	{
-		return $this->moduleVersion;
 	}
 
 	/**
@@ -305,18 +271,6 @@ final class export
 	public function isPackageMode()
 	{
 		return $this->packageMode;
-	}
-
-	/**
-	 * @param int $tipeId
-	 * @return CIBlockCMLExport|CIBlockCMLExportPackage
-	 */
-	public static function create($tipeId)
-	{
-		if(export::PACKAGE == $tipeId)
-			return new CIBlockCMLExportPackage();
-		else
-			return new CIBlockCMLExport();
 	}
 
 	/**
@@ -445,6 +399,549 @@ final class export
 			return $content;
 	}
 }
+
+abstract class ExportSchema
+{
+	protected $export = null;
+	protected $params = array();
+	protected $fp = null;
+	protected $start_time = '';
+
+	public function initExport(CIBlockCMLExport $export, $fp, $start_time, $params, $filter = array())
+	{
+		$this->export = $export;
+		$this->fp = $fp;
+		$this->start_time = $start_time;
+		$this->params = $params;
+	}
+
+	/**
+	 * @return CIBlockCMLExport|null
+	 */
+	public function getExport()
+	{
+		return $this->export;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getParams()
+	{
+		return $this->params;
+	}
+
+	abstract public function exportMeta();
+
+	abstract public function exportCatalog();
+
+	abstract public function exportOffers();
+
+	public function exportFinished()
+	{
+		echo "finished=yes\n";
+	}
+}
+
+class ExportSchemaDefault extends ExportSchema
+{
+	public function exportMeta()
+	{
+		$obExport = $this->getExport();
+		$arParams = $this->getParams();
+		$fp = $this->fp;
+
+		if($obExport->Init(
+			$fp,
+			$arParams["IBLOCK_ID"],
+			$_SESSION["BX_CML2_EXPORT"]["next_step"],
+			false,
+			false,
+			false,
+			false
+		))
+		{
+			$_SESSION["BX_CML2_EXPORT"]["total"] = CIBlockElement::GetList(array(), array("IBLOCK_ID"=> $arParams["IBLOCK_ID"], "ACTIVE" => "Y"), array());
+			$_SESSION["BX_CML2_EXPORT"]["current"] = 0;
+			echo GetMessage("CC_BCE1_PROGRESS_PRODUCT", array("#TOTAL#" => $_SESSION["BX_CML2_EXPORT"]["total"], "#COUNT#" => 0));
+
+			$obExport->NotCatalog();
+			$obExport->ExportFileAsURL();
+
+			$obExport->StartExport();
+			$obExport->StartExportMetadata();
+			$obExport->ExportProperties($_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"]);
+			$obExport->ExportSections(
+				$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
+				0,
+				0
+			);
+			$obExport->EndExportMetadata();
+			$obExport->EndExport();
+
+			$_SESSION["BX_CML2_EXPORT"]["next_step"] = $obExport->next_step;
+			$_SESSION["BX_CML2_EXPORT"]["step"] = ManagerExport::STEP_CATALOG;
+		}
+		else
+		{
+			echo "failure\n",GetMessage("CC_BCE1_ERROR_INIT");
+		}
+	}
+
+	public function exportCatalog()
+	{
+		$obExport = $this->getExport();
+		$arParams = $this->getParams();
+		$fp = $this->fp;
+		$start_time = $this->start_time;
+
+		if($obExport->Init(
+			$fp,
+			$arParams["IBLOCK_ID"],
+			$_SESSION["BX_CML2_EXPORT"]["next_step"],
+			false,
+			false,
+			false,
+			false
+		))
+		{
+			$obExport->NotCatalog();
+			$obExport->ExportFileAsURL();
+			ob_start();
+			$obExport->StartExport();
+			$obExport->StartExportCatalog();
+			$result = $obExport->ExportElements(
+				$_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"],
+				$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
+				$start_time,
+				$arParams["INTERVAL"],
+				$arParams["ELEMENTS_PER_STEP"]
+			);
+
+			if($result)
+			{
+				$_SESSION["BX_CML2_EXPORT"]["current"] += $result;
+				$obExport->EndExportCatalog();
+				$obExport->EndExport();
+				$c = ob_get_contents();
+				ob_end_clean();
+				echo GetMessage("CC_BCE1_PROGRESS_PRODUCT", array(
+					"#TOTAL#" => $_SESSION["BX_CML2_EXPORT"]["total"],
+					"#COUNT#" => $_SESSION["BX_CML2_EXPORT"]["current"],
+				));
+				echo $c;
+				$_SESSION["BX_CML2_EXPORT"]["next_step"] = $obExport->next_step;
+			}
+			else
+			{
+				ob_end_clean();
+				$_SESSION["BX_CML2_EXPORT"] = array(
+					"zip" => $arParams["USE_ZIP"] && function_exists("zip_open"),
+					"step" => ManagerExport::STEP_OFFERS,
+					"next_step" => array(),
+					"SECTION_MAP" => array(),
+					"PROPERTY_MAP" => false,
+					"PRICES_MAP" => false,
+				);
+			}
+		}
+	}
+
+	public function exportOffers()
+	{
+		$obExport = $this->getExport();
+		$arParams = $this->getParams();
+		$fp = $this->fp;
+		$start_time = $this->start_time;
+
+		if(
+			$obExport->Init(
+				$fp,
+				$arParams["IBLOCK_ID"],
+				$_SESSION["BX_CML2_EXPORT"]["next_step"],
+				false,
+				false,
+				false,
+				false,
+				$arParams["PRODUCT_IBLOCK_ID"]
+			)
+		)
+		{
+			if(!array_key_exists("total", $_SESSION["BX_CML2_EXPORT"]))
+			{
+				if(isset($arParams['CATALOG_TYPE']))
+					$filter = array("IBLOCK_ID"=> $arParams["IBLOCK_ID"], "ACTIVE" => "Y", 'CATALOG_TYPE' => $arParams['CATALOG_TYPE']);
+				else
+					$filter = array("IBLOCK_ID"=> $arParams["IBLOCK_ID"], "ACTIVE" => "Y");
+
+				$_SESSION["BX_CML2_EXPORT"]["total"] = CIBlockElement::GetList(array(), $filter, array());
+				$_SESSION["BX_CML2_EXPORT"]["current"] = 0;
+			}
+			ob_start();
+			$obExport->StartExport();
+
+			ob_start();
+			$obExport->StartExportMetadata();
+			$obExport->ExportProperties($_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"]);
+			$obExport->ExportSections(
+				$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
+				0,
+				0
+			);
+			$obExport->EndExportMetadata();
+			ob_end_clean();
+
+			$obExport->StartExportCatalog();
+			$result = $obExport->ExportElements(
+				$_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"],
+				$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
+				$start_time,
+				$arParams["INTERVAL"],
+				$arParams["ELEMENTS_PER_STEP"],
+				(isset($arParams['CATALOG_TYPE']) ? array_merge(array('CATALOG_TYPE'=>$arParams['CATALOG_TYPE']), array(
+						"IBLOCK_ID"=> $obExport->arIBlock["ID"],
+						"ACTIVE" => "Y",
+						">ID" => $obExport->next_step["LAST_ID"])
+				):false)
+			);
+
+			if($result)
+			{
+				$_SESSION["BX_CML2_EXPORT"]["current"] += $result;
+				$obExport->EndExportCatalog();
+				$obExport->EndExport();
+				$c = ob_get_contents();
+				ob_end_clean();
+				echo GetMessage("CC_BCE1_PROGRESS_OFFERS", array(
+					"#TOTAL#" => $_SESSION["BX_CML2_EXPORT"]["total"],
+					"#COUNT#" => $_SESSION["BX_CML2_EXPORT"]["current"],
+				));
+				echo $c;
+				$_SESSION["BX_CML2_EXPORT"]["next_step"] = $obExport->next_step;
+			}
+			else
+			{
+				ob_end_clean();
+				$_SESSION["BX_CML2_EXPORT"] = array(
+					"zip" => $arParams["USE_ZIP"] && function_exists("zip_open"),
+					"step" => ManagerExport::STEP_FINISHED,
+					"next_step" => array(),
+					"SECTION_MAP" => array(),
+					"PROPERTY_MAP" => false,
+					"PRICES_MAP" => false,
+				);
+			}
+		}
+	}
+}
+
+class ExportSchemaPackage extends ExportSchema
+{
+	protected function init($package)
+	{
+		$export = new export(
+			$_SESSION["BX_CML2_EXPORT"]["next_step"],
+			$_SESSION["BX_CML2_EXPORT"]["step"]
+		);
+
+		$export->setPackageMode(true);
+		$export->setPackage($package);
+
+		return $export;
+	}
+
+	public function exportMeta()
+	{
+		$export = $this->init(isset($_GET["package"]) ? $_GET["package"]:0);
+		$obExport = $this->getExport();
+		$arParams = $this->getParams();
+		$fp = $this->fp;
+
+		if($obExport->Init(
+			$fp,
+			$arParams["IBLOCK_ID"],
+			$export->getNextStep(),
+			false,
+			false,
+			false,
+			false
+		))
+		{
+			$_SESSION["BX_CML2_EXPORT"]["total"] = CIBlockElement::GetList(array(), array("IBLOCK_ID"=> $arParams["IBLOCK_ID"], "ACTIVE" => "Y"), array());
+			$_SESSION["BX_CML2_EXPORT"]["current"] = 0;
+			$_SESSION["BX_CML2_EXPORT"]["package"][$export->getStep()]["current"] = array();
+			echo GetMessage("CC_BCE1_PROGRESS_PRODUCT", array("#TOTAL#" => $_SESSION["BX_CML2_EXPORT"]["total"], "#COUNT#" => 0));
+
+			$obExport->NotCatalog();
+			$obExport->ExportFileAsURL();
+
+			ob_start();
+			$obExport->StartExport();
+			$obExport->StartExportMetadata();
+			$obExport->ExportProperties($_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"]);
+			$obExport->ExportSections(
+				$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
+				0,
+				0
+			);
+			$obExport->EndExportMetadata();
+			$obExport->EndExport();
+			$c = ob_get_contents();
+			ob_end_clean();
+
+			echo $export->prepareContents($c, $obExport->next_step["LAST_ID"]);
+
+			$_SESSION["BX_CML2_EXPORT"]["next_step"] = $obExport->next_step;
+			$_SESSION["BX_CML2_EXPORT"]["step"] = ManagerExport::STEP_CATALOG;
+		}
+		else
+		{
+			echo "failure\n",GetMessage("CC_BCE1_ERROR_INIT");
+		}
+	}
+
+	public function exportCatalog()
+	{
+		$export = $this->init(isset($_GET["package"]) ? $_GET["package"]:0);
+		$obExport = $this->getExport();
+		$arParams = $this->getParams();
+		$fp = $this->fp;
+		$start_time = $this->start_time;
+
+		if($obExport->Init(
+			$fp,
+			$arParams["IBLOCK_ID"],
+			$export->getNextStep(),
+			false,
+			false,
+			false,
+			false
+		))
+		{
+			$obExport->NotCatalog();
+			$obExport->ExportFileAsURL();
+			ob_start();
+			$obExport->StartExport();
+			$obExport->StartExportCatalog();
+			$result = $obExport->ExportElements(
+				$_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"],
+				$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
+				$start_time,
+				$arParams["INTERVAL"],
+				$arParams["ELEMENTS_PER_STEP"]
+			);
+
+			if($result)
+			{
+				$currentList = $_SESSION["BX_CML2_EXPORT"]["package"][$export->getStep()]["current"];
+
+				$export->loadCurrents($currentList);
+
+				$export->saveCurrent($result);
+
+				$current = $export->getSummCurrent();
+				$obExport->EndExportCatalog();
+				$obExport->EndExport();
+				$c = ob_get_contents();
+				ob_end_clean();
+				echo GetMessage("CC_BCE1_PROGRESS_PRODUCT", array(
+					"#TOTAL#" => $_SESSION["BX_CML2_EXPORT"]["total"],
+					"#COUNT#" => $current,
+				));
+
+				echo $export->prepareContents($c, $obExport->next_step["LAST_ID"]);
+
+				$_SESSION["BX_CML2_EXPORT"]["next_step"] = $obExport->next_step;
+
+				$_SESSION["BX_CML2_EXPORT"]["package"][$export->getStep()]["current"] = $export->getCurrentsList();
+			}
+			else
+			{
+				ob_end_clean();
+
+				$packageList = $_SESSION["BX_CML2_EXPORT"]["package"];
+				$exportType = $_SESSION["BX_CML2_EXPORT"]["exportType"];
+
+				$_SESSION["BX_CML2_EXPORT"] = array(
+					"zip" => $arParams["USE_ZIP"] && function_exists("zip_open"),
+					"step" => ManagerExport::STEP_OFFERS,
+					"package" => $packageList,
+					"exportType" => $exportType,
+					"next_step" => array(),
+					"SECTION_MAP" => array(),
+					"PROPERTY_MAP" => false,
+					"PRICES_MAP" => false,
+				);
+
+				unset($_GET["package"]);
+			}
+		}
+	}
+
+	public function exportOffers()
+	{
+		$export = $this->init(isset($_GET["package"]) ? $_GET["package"]:0);
+		$obExport = $this->getExport();
+		$arParams = $this->getParams();
+		$fp = $this->fp;
+		$start_time = $this->start_time;
+
+		if(
+		$obExport->Init(
+			$fp,
+			$arParams["IBLOCK_ID"],
+			$export->getNextStep(),
+			false,
+			false,
+			false,
+			false,
+			$arParams["PRODUCT_IBLOCK_ID"]
+		)
+		)
+		{
+			if(!array_key_exists("total", $_SESSION["BX_CML2_EXPORT"]))
+			{
+				$_SESSION["BX_CML2_EXPORT"]["total"] = CIBlockElement::GetList(array(), array("IBLOCK_ID"=> $arParams["IBLOCK_ID"], "ACTIVE" => "Y"), array());
+				$_SESSION["BX_CML2_EXPORT"]["current"] = 0;
+				$_SESSION["BX_CML2_EXPORT"]["package"][$export->getStep()]["current"] = array();
+			}
+			if($export->isPackageMode())
+				$obExport->ExportFileAsURL();
+
+			ob_start();
+			$obExport->StartExport();
+
+			$obExport->StartExportMetadata();
+			ob_start();
+			$obExport->ExportSections(
+				$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
+				0,
+				0
+			);
+			ob_end_clean();
+			$obExport->ExportProperties($_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"]);
+			$obExport->EndExportMetadata();
+
+			$obExport->StartExportCatalog();
+			$result = $obExport->ExportElements(
+				$_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"],
+				$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
+				$start_time,
+				$arParams["INTERVAL"],
+				$arParams["ELEMENTS_PER_STEP"],
+				(isset($arParams['CATALOG_TYPE']) ? array_merge(array('CATALOG_TYPE'=>$arParams['CATALOG_TYPE']), array(
+						"IBLOCK_ID"=> $obExport->arIBlock["ID"],
+						"ACTIVE" => "Y",
+						">ID" => $obExport->next_step["LAST_ID"])
+				):false)
+			);
+
+			if($result)
+			{
+				$currentList = $_SESSION["BX_CML2_EXPORT"]["package"][$export->getStep()]["current"];
+
+				$export->loadCurrents($currentList);
+				$export->saveCurrent($result);
+
+				$obExport->EndExportCatalog();
+				$obExport->EndExport();
+				$c = ob_get_contents();
+				ob_end_clean();
+
+				echo $export->prepareContents($c, $obExport->next_step["LAST_ID"]);
+
+				$_SESSION["BX_CML2_EXPORT"]["next_step"] = $obExport->next_step;
+			}
+			else
+			{
+				ob_end_clean();
+
+				$packageList = $_SESSION["BX_CML2_EXPORT"]["package"];
+				$exportType = $_SESSION["BX_CML2_EXPORT"]["exportType"];
+
+				$_SESSION["BX_CML2_EXPORT"] = array(
+					"zip" => $arParams["USE_ZIP"] && function_exists("zip_open"),
+					"step" => ManagerExport::STEP_FINISHED,
+					"package" => $packageList,
+					"exportType" => $exportType,
+					"next_step" => array(),
+					"SECTION_MAP" => array(),
+					"PROPERTY_MAP" => false,
+					"PRICES_MAP" => false,
+				);
+
+				unset($_GET["package"]);
+			}
+		}
+	}
+}
+
+class ManagerExport
+{
+	const STEP_META = 1;
+	const STEP_CATALOG = 2;
+	const STEP_OFFERS = 3;
+	const STEP_FINISHED = 4;
+	const STEP_OFFERS_MIXED = 5;
+
+	const SCHAME_DEFAULT = 0;
+	const SCHAME_PACKAGE = 1;
+
+	/**
+	 * @param $typeId
+	 * @return ExportSchemaDefault|ExportSchemaPackage
+	 * @throws \Bitrix\Main\NotSupportedException
+	 */
+	static public function createSchema($typeId)
+	{
+		if(!is_int($typeId))
+		{
+			$typeId = (int)$typeId;
+		}
+
+		if($typeId == self::SCHAME_DEFAULT)
+		{
+			return new ExportSchemaDefault();
+
+		}
+		elseif($typeId == self::SCHAME_PACKAGE)
+		{
+			return new ExportSchemaPackage();
+		}
+		else
+		{
+			throw new \Bitrix\Main\NotSupportedException("Schame type: '$typeId' is not supported in current context");
+		}
+	}
+
+	/**
+	 * @param $typeId
+	 * @return CIBlockCMLExport|CIBlockCMLExportPackage
+	 * @throws \Bitrix\Main\NotSupportedException
+	 */
+	static public function createExport($typeId)
+	{
+		if(!is_int($typeId))
+		{
+			$typeId = (int)$typeId;
+		}
+
+		if($typeId == self::SCHAME_DEFAULT)
+		{
+			return new CIBlockCMLExport();
+
+		}
+		elseif($typeId == self::SCHAME_PACKAGE)
+		{
+			return new CIBlockCMLExportPackage();
+		}
+		else
+		{
+			throw new \Bitrix\Main\NotSupportedException("Export type: '$typeId' is not supported in current context");
+		}
+	}
+}
+
 $arParams["IBLOCK_ID"] = intval($arParams["IBLOCK_ID"]);
 
 $arParams["INTERVAL"] = intval($arParams["INTERVAL"]);
@@ -540,14 +1037,14 @@ else
 	{
 		$_SESSION["BX_CML2_EXPORT"] = array(
 			"zip" => $arParams["USE_ZIP"] && function_exists("zip_open"),
-			"step" => 1,
-			"package" => array(),
-			"exportType" => (isset($_GET["outputType"]) && $_GET["outputType"] == "package" ? export::PACKAGE : export::UNDEFINED),
-			"moduleVersion" => (isset($_GET["moduleVersion"]) && $_GET["moduleVersion"]<>''? $_GET["moduleVersion"] : export::ONEC_MODULE_VERSION_DEFAULT),
+			"step" => ManagerExport::STEP_META,
 			"next_step" => array(),
 			"SECTION_MAP" => array(),
 			"PROPERTY_MAP" => false,
 			"PRICES_MAP" => false,
+
+			"package" => array(),
+			"exportType" => (isset($_GET["outputType"]) && $_GET["outputType"] == "package" ? ManagerExport::SCHAME_PACKAGE : ManagerExport::SCHAME_DEFAULT),
 		);
 		echo "zip=".($_SESSION["BX_CML2_EXPORT"]["zip"]? "yes": "no")."\n";
 	}
@@ -556,278 +1053,84 @@ else
 		$start_time = time();
 		if($fp = fopen("php://output", "ab"))
 		{
-			$export = new export(
-				$_SESSION["BX_CML2_EXPORT"]["moduleVersion"],
-				$_SESSION["BX_CML2_EXPORT"]["next_step"],
-				$_SESSION["BX_CML2_EXPORT"]["step"]
+			$manager = new ManagerExport();
+
+			$export = $manager::createExport($_SESSION["BX_CML2_EXPORT"]["exportType"]);
+			$schema = $manager::createSchema($_SESSION["BX_CML2_EXPORT"]["exportType"]);
+
+			$schema->initExport(
+				$export,
+				$fp,
+				$start_time,
+				$arParams
 			);
 
-			if($export->versionCompare(export::ONEC_MODULE_VERSION_2))
+			if($_SESSION["BX_CML2_EXPORT"]["step"] === $manager::STEP_META)
 			{
-				$export->setPackageMode($_SESSION["BX_CML2_EXPORT"]["exportType"] == export::PACKAGE);
+				$schema->exportMeta();
 			}
-
-			if($export->isPackageMode())
-				$obExport = export::create(export::PACKAGE);
-			else
-				$obExport = export::create(export::UNDEFINED);
-
-			if($export->isPackageMode())
-				$export->setPackage($_GET["package"]);
-
-			if($_SESSION["BX_CML2_EXPORT"]["step"] === 1)
+			elseif($_SESSION["BX_CML2_EXPORT"]["step"] === $manager::STEP_CATALOG)
 			{
-				if($obExport->Init(
-					$fp,
-					$arParams["IBLOCK_ID"],
-					$export->getNextStep(),
-					false,
-					$work_dir = false,
-					$file_dir = false,
-					$bCheckPermissions = false
-				))
-				{
-					$_SESSION["BX_CML2_EXPORT"]["total"] = CIBlockElement::GetList(array(), array("IBLOCK_ID"=> $arParams["IBLOCK_ID"], "ACTIVE" => "Y"), array());
-					$_SESSION["BX_CML2_EXPORT"]["current"] = 0;
-					$_SESSION["BX_CML2_EXPORT"]["package"][$export->getStep()]["current"] = array();
-					echo GetMessage("CC_BCE1_PROGRESS_PRODUCT", array("#TOTAL#" => $_SESSION["BX_CML2_EXPORT"]["total"], "#COUNT#" => 0));
-
-					$obExport->NotCatalog();
-					$obExport->ExportFileAsURL();
-
-					ob_start();
-					$obExport->StartExport();
-					$obExport->StartExportMetadata();
-					$obExport->ExportProperties($_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"]);
-					$obExport->ExportSections(
-						$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
-						0,
-						0
-					);
-					$obExport->EndExportMetadata();
-					$obExport->EndExport();
-					$c = ob_get_contents();
-					ob_end_clean();
-
-					echo $export->prepareContents($c, $obExport->next_step["LAST_ID"]);
-
-					$_SESSION["BX_CML2_EXPORT"]["next_step"] = $obExport->next_step;
-					$_SESSION["BX_CML2_EXPORT"]["step"] = 2;
-				}
-				else
-				{
-					echo "failure\n",GetMessage("CC_BCE1_ERROR_INIT");
-				}
-			}
-			elseif($_SESSION["BX_CML2_EXPORT"]["step"] === 2)
-			{
-				if($obExport->Init(
-					$fp,
-					$arParams["IBLOCK_ID"],
-					$export->getNextStep(),
-					false,
-					$work_dir = false,
-					$file_dir = false,
-					$bCheckPermissions = false
-				))
-				{
-					$obExport->NotCatalog();
-					$obExport->ExportFileAsURL();
-					ob_start();
-					$obExport->StartExport();
-					$obExport->StartExportCatalog();
-					$result = $obExport->ExportElements(
-						$_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"],
-						$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
-						$start_time,
-						$arParams["INTERVAL"],
-						$arParams["ELEMENTS_PER_STEP"]
-					);
-
-					if($result)
-					{
-						if($export->isPackageMode())
-							$currentList = $_SESSION["BX_CML2_EXPORT"]["package"][$export->getStep()]["current"];
-						else
-							$currentList = $_SESSION["BX_CML2_EXPORT"]["current"];
-
-						$export->loadCurrents($currentList);
-
-						$export->saveCurrent($result);
-
-						$current = $export->getSummCurrent();
-						$obExport->EndExportCatalog();
-						$obExport->EndExport();
-						$c = ob_get_contents();
-						ob_end_clean();
-						echo GetMessage("CC_BCE1_PROGRESS_PRODUCT", array(
-							"#TOTAL#" => $_SESSION["BX_CML2_EXPORT"]["total"],
-							"#COUNT#" => $current,
-						));
-
-						echo $export->prepareContents($c, $obExport->next_step["LAST_ID"]);
-
-						$_SESSION["BX_CML2_EXPORT"]["next_step"] = $obExport->next_step;
-
-						if($export->isPackageMode())
-							$_SESSION["BX_CML2_EXPORT"]["package"][$export->getStep()]["current"] = $export->getCurrentsList();
-						else
-							$_SESSION["BX_CML2_EXPORT"]["current"] = $export->getCurrent();
-					}
-					else
-					{
-						ob_end_clean();
-
-						$packageList = $_SESSION["BX_CML2_EXPORT"]["package"];
-						$exportType = $_SESSION["BX_CML2_EXPORT"]["exportType"];
-						$moduleVersion = $_SESSION["BX_CML2_EXPORT"]["moduleVersion"];
-
-						$_SESSION["BX_CML2_EXPORT"] = array(
-							"zip" => $arParams["USE_ZIP"] && function_exists("zip_open"),
-							"step" => 3,
-							"package" => $packageList,
-							"exportType" => $exportType,
-							"moduleVersion" => $moduleVersion,
-							"next_step" => array(),
-							"SECTION_MAP" => array(),
-							"PROPERTY_MAP" => false,
-							"PRICES_MAP" => false,
-						);
-
-						$export = new export(
-							$_SESSION["BX_CML2_EXPORT"]["moduleVersion"],
-							$_SESSION["BX_CML2_EXPORT"]["next_step"],
-							$_SESSION["BX_CML2_EXPORT"]["step"]
-						);
-
-						if($export->versionCompare(export::ONEC_MODULE_VERSION_2))
-						{
-							$export->setPackageMode($_SESSION["BX_CML2_EXPORT"]["exportType"] == export::PACKAGE);
-						}
-
-						if($export->isPackageMode())
-							$export->setPackage(0);
-					}
-				}
+				$schema->exportCatalog();
 			}
 
 			$arCatalog = false;
-			if($_SESSION["BX_CML2_EXPORT"]["step"] === 3)
-				$arCatalog = CCatalog::GetSkuInfoByProductID($arParams["IBLOCK_ID"]);
+			if($_SESSION["BX_CML2_EXPORT"]["step"] === $manager::STEP_OFFERS)
+				$arCatalog = CCatalogSku::GetInfoByIBlock($arParams["IBLOCK_ID"]);
 
-			if($export->isPackageMode())
-				$obExport = export::create(export::PACKAGE);
-			else
-				$obExport = export::create(export::UNDEFINED);
+			$export = $manager::createExport($_SESSION["BX_CML2_EXPORT"]["exportType"]);
+			$schema = $manager::createSchema($_SESSION["BX_CML2_EXPORT"]["exportType"]);
 
-			if(
-				$_SESSION["BX_CML2_EXPORT"]["step"] === 3
-				&& $obExport->Init(
-					$fp,
-					is_array($arCatalog)? $arCatalog["IBLOCK_ID"]: $arParams["IBLOCK_ID"],
-					$export->getNextStep(),
-					false,
-					$work_dir = false,
-					$file_dir = false,
-					$bCheckPermissions = false,
-					is_array($arCatalog)? $arCatalog["PRODUCT_IBLOCK_ID"]: false
-				)
-			)
+			if($_SESSION["BX_CML2_EXPORT"]["step"] === $manager::STEP_OFFERS)
 			{
-				if(!array_key_exists("total", $_SESSION["BX_CML2_EXPORT"]))
-				{
-					$_SESSION["BX_CML2_EXPORT"]["total"] = CIBlockElement::GetList(array(), array("IBLOCK_ID"=> is_array($arCatalog)? $arCatalog["IBLOCK_ID"]: $arParams["IBLOCK_ID"], "ACTIVE" => "Y"), array());
-					$_SESSION["BX_CML2_EXPORT"]["current"] = 0;
-					$_SESSION["BX_CML2_EXPORT"]["package"][$export->getStep()]["current"] = array();
-				}
-				if($export->isPackageMode())
-					$obExport->ExportFileAsURL();
-
-				ob_start();
-				$obExport->StartExport();
-
-				if($export->versionCompare(export::ONEC_MODULE_VERSION_2))
-				{
-					$obExport->StartExportMetadata();
-					ob_start();
-					$obExport->ExportSections(
-						$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
-						0,
-						0
-					);
-					ob_end_clean();
-					$obExport->ExportProperties($_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"]);
-					$obExport->EndExportMetadata();
-				}
-				else
-				{
-					ob_start();
-					$obExport->StartExportMetadata();
-					$obExport->ExportProperties($_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"]);
-					$obExport->ExportSections(
-						$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
-						0,
-						0
-					);
-					$obExport->EndExportMetadata();
-					ob_end_clean();
-				}
-
-
-				$obExport->StartExportCatalog();
-				$result = $obExport->ExportElements(
-					$_SESSION["BX_CML2_EXPORT"]["PROPERTY_MAP"],
-					$_SESSION["BX_CML2_EXPORT"]["SECTION_MAP"],
+				$schema->initExport(
+					$export,
+					$fp,
 					$start_time,
-					$arParams["INTERVAL"],
-					$arParams["ELEMENTS_PER_STEP"]
+					array(
+						'INTERVAL'=>$arParams["INTERVAL"],
+						'ELEMENTS_PER_STEP'=>$arParams["ELEMENTS_PER_STEP"],
+						'IBLOCK_ID'=>is_array($arCatalog)? $arCatalog["IBLOCK_ID"]: $arParams["IBLOCK_ID"],
+						'PRODUCT_IBLOCK_ID'=>is_array($arCatalog)? $arCatalog["PRODUCT_IBLOCK_ID"]: false
+					)
 				);
 
-				if($result)
+				$schema->exportOffers();
+
+				if($_SESSION["BX_CML2_EXPORT"]["step"] === $manager::STEP_FINISHED)
 				{
-					if($export->isPackageMode())
-						$currentList = $_SESSION["BX_CML2_EXPORT"]["package"][$export->getStep()]["current"];
-					else
-						$currentList = $_SESSION["BX_CML2_EXPORT"]["current"];
-
-					$export->loadCurrents($currentList);
-					$export->saveCurrent($result);
-
-					$obExport->EndExportCatalog();
-					$obExport->EndExport();
-					$c = ob_get_contents();
-					ob_end_clean();
-
-					echo $export->prepareContents($c, $obExport->next_step["LAST_ID"]);
-
-					$_SESSION["BX_CML2_EXPORT"]["next_step"] = $obExport->next_step;
-/*
-					if($export->isPackageMode())
-						$_SESSION["BX_CML2_EXPORT"]["package"][$export->getStep()]["current"] = $export->getCurrentsList();
-					else
-						$_SESSION["BX_CML2_EXPORT"]["current"] = $export->getCurrent();*/
-				}
-				else
-				{
-					ob_end_clean();
-					$_SESSION["BX_CML2_EXPORT"] = array(
-						"zip" => $arParams["USE_ZIP"] && function_exists("zip_open"),
-						"step" => 4,
-						"package" => array(),
-						"exportType" => export::UNDEFINED,
-						"next_step" => array(),
-						"SECTION_MAP" => array(),
-						"PROPERTY_MAP" => false,
-						"PRICES_MAP" => false,
-					);
+					if ($arCatalog && $arCatalog['CATALOG_TYPE'] == CCatalogSku::TYPE_FULL)
+					{
+						$_SESSION["BX_CML2_EXPORT"]["step"] = $manager::STEP_OFFERS_MIXED;
+					}
 				}
 			}
 
-			if(
-				$_SESSION["BX_CML2_EXPORT"]["step"] === 4
-			)
+			if($_SESSION["BX_CML2_EXPORT"]["step"] === $manager::STEP_OFFERS_MIXED)
 			{
-				echo "finished=yes\n";
+				$export = $manager::createExport($_SESSION["BX_CML2_EXPORT"]["exportType"]);
+				$schema = $manager::createSchema($_SESSION["BX_CML2_EXPORT"]["exportType"]);
+
+				$schema->initExport(
+					$export,
+					$fp,
+					$start_time,
+					array(
+						'INTERVAL'=>$arParams["INTERVAL"],
+						'ELEMENTS_PER_STEP'=>$arParams["ELEMENTS_PER_STEP"],
+						'IBLOCK_ID'=>$arParams['IBLOCK_ID'],
+						'PRODUCT_IBLOCK_ID'=>false,
+						'CATALOG_TYPE' => array(\Bitrix\Catalog\ProductTable::TYPE_PRODUCT,
+							\Bitrix\Catalog\ProductTable::TYPE_SET
+						)
+					)
+				);
+				$schema->exportOffers();
+			}
+
+			if($_SESSION["BX_CML2_EXPORT"]["step"] === $manager::STEP_FINISHED)
+			{
+				$schema->exportFinished();
 			}
 		}
 	}

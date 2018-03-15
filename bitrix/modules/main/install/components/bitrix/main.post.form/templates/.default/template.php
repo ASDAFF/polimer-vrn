@@ -296,7 +296,8 @@ foreach($arParams["BUTTONS"] as $val)
 				allowSearchCrmEmailUsers: <?=($arResult["ALLOW_CRM_EMAILS"] ? 'true' : 'false')?>,
 				userNameTemplate: '<?=CUtil::JSEscape($arParams['NAME_TEMPLATE'])?>',
 				allowSonetGroupsAjaxSearch: <?=(isset($arParams["DESTINATION"]['SONETGROUPS_LIMITED']) && $arParams["DESTINATION"]['SONETGROUPS_LIMITED'] == 'Y' ? 'true' : 'false')?>,
-				allowSonetGroupsAjaxSearchFeatures: <?=(!empty($arParams["DESTINATION"]['SONETGROUPS_FEATURES']) ? CUtil::PhpToJSObject($arParams["DESTINATION"]['SONETGROUPS_FEATURES']) : '{}')?>
+				allowSonetGroupsAjaxSearchFeatures: <?=(!empty($arParams["DESTINATION"]['SONETGROUPS_FEATURES']) ? CUtil::PhpToJSObject($arParams["DESTINATION"]['SONETGROUPS_FEATURES']) : '{}')?>,
+				usersVacation : <?=(empty($arParams["DESTINATION"]['USERS_VACATION'])? '{}': CUtil::PhpToJSObject($arParams["DESTINATION"]['USERS_VACATION']))?>
 			});
 		});
 		</script>

@@ -216,7 +216,7 @@ if($this->StartResultCache(false, array($USER->GetGroups(), $arNavigation, $arCa
 						'IS_RED' => 'Y',
 						'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATEGORY'],
 							array(
-								'wiki_name' => 'category:'.urlencode($arCat['NAME']),
+								'wiki_name' => 'category:'.rawurlencode($arCat['NAME']),
 								'group_id' => CWikiSocnet::$iSocNetId
 							)
 						)
@@ -285,7 +285,7 @@ if($this->StartResultCache(false, array($USER->GetGroups(), $arNavigation, $arCa
 					'IS_RED' => $arPage['ACTIVE'] == 'Y' ? 'N' : 'Y',
 					'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_POST'],
 						array(
-							'wiki_name' => urlencode($arPage['NAME']),
+							'wiki_name' => rawurlencode($arPage['NAME']),
 							'group_id' => CWikiSocnet::$iSocNetId
 						)
 					)

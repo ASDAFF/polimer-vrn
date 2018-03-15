@@ -483,6 +483,65 @@ class OrderDiscountManager
 	}
 
 	/**
+	 * Round basket prices.
+	 *
+	 * @param array $basket			Basket.
+	 * @param array $roundData		Round data.
+	 * @param array $orderData      Order (without basket).
+	 * @return array
+	 */
+	public static function roundBasket(array $basket, array $roundData = array(), array $orderData = array())
+	{
+		if (empty($basket))
+			return array();
+
+		$result = array();
+		$basketByModules = array();
+		$roundByModules = array();
+		foreach ($basket as $basketCode => $basketItem)
+		{
+			if (!isset($basketItem['MODULE']))
+				continue;
+			$module = $basketItem['MODULE'];
+			if (!isset($basketByModules[$module]))
+			{
+				$basketByModules[$module] = array();
+				$roundByModules[$module] = array();
+			}
+			$basketByModules[$module][$basketCode] = $basketItem;
+			$roundByModules[$module][$basketCode] = (isset($roundData[$basketCode]) ? $roundData[$basketCode] : array());
+		}
+		unset($basketCode, $basketItem);
+
+		foreach ($basketByModules as $module => $moduleItems)
+		{
+			$moduleResult = self::executeDiscountProvider(
+				array('MODULE_ID' => $module, 'METHOD' => 'roundBasket'),
+				array($moduleItems, $roundByModules[$module], $orderData)
+			);
+			if ($moduleResult === false)
+			{
+				$moduleResult = array();
+				foreach ($moduleItems as $basketCode => $basketItem)
+				{
+					$itemResult = self::roundPrice($basketItem, $roundByModules[$module][$basketCode]);
+					if (!empty($itemResult))
+						$moduleResult[$basketCode] = $itemResult;
+				}
+			}
+			if (empty($moduleResult))
+				continue;
+
+			foreach (array_keys($moduleResult) as $basketCode)
+				$result[$basketCode] = $moduleResult[$basketCode];
+			unset($moduleResult);
+		}
+		unset($moduleResult, $module, $moduleItems);
+
+		return $result;
+	}
+
+	/**
 	 * Load applied discount list
 	 *
 	 * @param int $order				Order id.
@@ -1438,6 +1497,8 @@ class OrderDiscountManager
 				self::$discountProviders[$module]['calculateApplyCoupons'] = $provider['calculateApplyCoupons'];
 			if (isset($provider['roundPrice']))
 				self::$discountProviders[$module]['roundPrice'] = $provider['roundPrice'];
+			if (isset($provider['roundBasket']))
+				self::$discountProviders[$module]['roundBasket'] = $provider['roundBasket'];
 		}
 		unset($provider, $module, $eventResult, $resultList, $event);
 	}

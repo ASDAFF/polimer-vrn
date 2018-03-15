@@ -434,8 +434,10 @@ $tabControl->BeginNextTab();
 					$innerId = PaySystem\Manager::getInnerPaySystemId();
 					foreach($handlerList['SYSTEM'] as $handler => $title):?>
 						<?
-							if ($innerId > 0 && $handler == 'inner' && $handlerName != 'inner')
+							if (($innerId > 0 && $handler == 'inner' && $handlerName != 'inner'))
+							{
 								continue;
+							}
 						?>
 						<option value="<?=htmlspecialcharsbx($handler) ?>"<?=((!$selected && ToLower($handlerName) == ToLower($handler)) ? " selected" : '');?>>
 							<?=htmlspecialcharsEx($title) ?>

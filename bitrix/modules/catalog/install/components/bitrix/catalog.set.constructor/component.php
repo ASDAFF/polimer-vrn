@@ -13,7 +13,6 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Main,
 	Bitrix\Main\Loader,
 	Bitrix\Main\Application,
-	Bitrix\Iblock,
 	Bitrix\Catalog;
 
 if (!CBXFeatures::IsFeatureEnabled('CatCompleteSet'))
@@ -47,6 +46,10 @@ if (!is_array($arParams["OFFERS_CART_PROPERTIES"]))
 foreach($arParams["OFFERS_CART_PROPERTIES"] as $i => $pid)
 	if ($pid === "")
 		unset($arParams["OFFERS_CART_PROPERTIES"][$i]);
+
+$arParams['BUNDLE_ITEMS_COUNT'] = (isset($arParams['BUNDLE_ITEMS_COUNT']) ? (int)$arParams['BUNDLE_ITEMS_COUNT'] : 3);
+if ($arParams['BUNDLE_ITEMS_COUNT'] < 1)
+	$arParams['BUNDLE_ITEMS_COUNT'] = 3;
 
 if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==="N"? false: $USER->GetGroups()))))
 {
@@ -121,7 +124,6 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 			}
 		}
 	}
-	$arResult['CONVERT_CURRENCY'] = $arConvertParams;
 
 	$currentSet = false;
 	$productLink = array();
@@ -144,7 +146,9 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 	Main\Type\Collection::sortByColumn($currentSet['ITEMS'], array('SORT' => SORT_ASC), '', null, true);
 
 	$arSetItemsID = array($arResult['ELEMENT_ID']);
-	$productQuantity = array();
+	$productQuantity = array(
+		$arResult['ELEMENT_ID'] => 1
+	);
 	foreach ($currentSet['ITEMS'] as $index => $item)
 	{
 		$id = $item['ITEM_ID'];
@@ -340,46 +344,85 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 				$itemsList[$id]['~CATALOG_QUANTITY_TO_'.$priceType] = $rawPrice['QUANTITY_TO'];
 				$itemsList[$id]['CATALOG_EXTRA_ID_'.$priceType] = $rawPrice['EXTRA_ID'];
 				$itemsList[$id]['~CATALOG_EXTRA_ID_'.$priceType] = $rawPrice['EXTRA_ID'];
+
+				$tagCurrencyList[$rawPrice['CURRENCY']] = $rawPrice['CURRENCY'];
 				unset($priceType);
 			}
 			unset($rawPrice, $id);
 		}
 		unset($row, $iterator);
-
 	}
+
+	$item = $itemsList[$arResult['ELEMENT_ID']];
+	$priceList = \CIBlockPriceTools::GetItemPrices(
+		$item['IBLOCK_ID'],
+		$arResult['PRICES'],
+		$item,
+		$arParams['PRICE_VAT_INCLUDE'],
+		$arConvertParams
+	);
+	if (empty($priceList))
+	{
+		$this->abortResultCache();
+		return;
+	}
+	$minimalPrice = \CIBlockPriceTools::getMinPriceFromList($priceList);
+	if (empty($minimalPrice))
+	{
+		$this->abortResultCache();
+		return;
+	}
+	else
+	{
+		$itemsList[$arResult['ELEMENT_ID']]['PRICE_CURRENCY'] = $minimalPrice['CURRENCY'];
+		$itemsList[$arResult['ELEMENT_ID']]['PRICE_DISCOUNT_VALUE'] = $minimalPrice['DISCOUNT_VALUE'];
+		$itemsList[$arResult['ELEMENT_ID']]['PRICE_PRINT_DISCOUNT_VALUE'] = $minimalPrice['PRINT_DISCOUNT_VALUE'];
+		$itemsList[$arResult['ELEMENT_ID']]['PRICE_VALUE'] = $minimalPrice['VALUE'];
+		$itemsList[$arResult['ELEMENT_ID']]['PRICE_PRINT_VALUE'] = $minimalPrice['PRINT_VALUE'];
+		$itemsList[$arResult['ELEMENT_ID']]['PRICE_DISCOUNT_DIFFERENCE_VALUE'] = $minimalPrice['DISCOUNT_DIFF'];
+		$itemsList[$arResult['ELEMENT_ID']]['PRICE_DISCOUNT_DIFFERENCE'] = $minimalPrice['PRINT_DISCOUNT_DIFF'];
+		$itemsList[$arResult['ELEMENT_ID']]['PRICE_DISCOUNT_PERCENT'] = $minimalPrice['DISCOUNT_DIFF_PERCENT'];
+
+		if ($arParams['CONVERT_CURRENCY'] == 'N')
+		{
+			$arConvertParams['CONVERT_CURRENCY'] = 'Y';
+			$arConvertParams['CURRENCY_ID'] = $minimalPrice['CURRENCY'];
+		}
+	}
+	unset($minimalPrice, $priceList, $item);
+
+	if ($arConvertParams['CURRENCY_ID'] !== '')
+		$tagCurrencyList[$arConvertParams['CURRENCY_ID']] = $arConvertParams['CURRENCY_ID'];
 
 	foreach ($itemsList as $item)
 	{
-		$priceList = CIBlockPriceTools::GetItemPrices(
-			$item['IBLOCK_ID'],
-			$arResult['PRICES'],
-			$item,
-			$arParams['PRICE_VAT_INCLUDE'],
-			$arConvertParams
-		);
-		if (empty($priceList))
-			continue;
-		//TODO: after iblock 15.5.9 change this code to CIBlockPriceTools::getMinPriceFromList
-		foreach($priceList as &$price)
+		if ($item['ID'] != $arResult['ELEMENT_ID'])
 		{
-			$tagCurrencyList[$price['CURRENCY']] = $price['CURRENCY'];
-			if (isset($price['ORIG_CURRENCY']))
-				$tagCurrencyList[$price['ORIG_CURRENCY']] = $price['ORIG_CURRENCY'];
-			if ($price['MIN_PRICE'] == "Y")
+			$priceList = \CIBlockPriceTools::GetItemPrices(
+				$item['IBLOCK_ID'],
+				$arResult['PRICES'],
+				$item,
+				$arParams['PRICE_VAT_INCLUDE'],
+				$arConvertParams
+			);
+			if (empty($priceList))
+				continue;
+
+			$minimalPrice = \CIBlockPriceTools::getMinPriceFromList($priceList);
+			if (!empty($minimalPrice))
 			{
-				$item['PRICE_CURRENCY'] = $price['CURRENCY'];
-				$item['PRICE_DISCOUNT_VALUE'] = $price['DISCOUNT_VALUE'];
-				$item['PRICE_PRINT_DISCOUNT_VALUE'] = $price['PRINT_DISCOUNT_VALUE'];
-				$item['PRICE_VALUE'] = $price['VALUE'];
-				$item['PRICE_PRINT_VALUE'] = $price['PRINT_VALUE'];
-				$item['PRICE_DISCOUNT_DIFFERENCE_VALUE'] = $price['DISCOUNT_DIFF'];
-				$item['PRICE_DISCOUNT_DIFFERENCE'] = $price['PRINT_DISCOUNT_DIFF'];
-				$item['PRICE_DISCOUNT_PERCENT'] = $price['DISCOUNT_DIFF_PERCENT'];
-				break;
+				$item['PRICE_CURRENCY'] = $minimalPrice['CURRENCY'];
+				$item['PRICE_DISCOUNT_VALUE'] = $minimalPrice['DISCOUNT_VALUE'];
+				$item['PRICE_PRINT_DISCOUNT_VALUE'] = $minimalPrice['PRINT_DISCOUNT_VALUE'];
+				$item['PRICE_VALUE'] = $minimalPrice['VALUE'];
+				$item['PRICE_PRINT_VALUE'] = $minimalPrice['PRINT_VALUE'];
+				$item['PRICE_DISCOUNT_DIFFERENCE_VALUE'] = $minimalPrice['DISCOUNT_DIFF'];
+				$item['PRICE_DISCOUNT_DIFFERENCE'] = $minimalPrice['PRINT_DISCOUNT_DIFF'];
+				$item['PRICE_DISCOUNT_PERCENT'] = $minimalPrice['DISCOUNT_DIFF_PERCENT'];
 			}
+			unset($minimalPrice);
 		}
-		unset($price, $priceList);
-		//TODO: end
+
 		$item['CAN_BUY'] = CIBlockPriceTools::CanBuy(
 			$item['IBLOCK_ID'],
 			$arResult['PRICES'],
@@ -421,6 +464,7 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 	);
 
 	$defaultCurrency = $arResult['ELEMENT']['PRICE_CURRENCY'];
+	$compareCurrency = empty($arConvertParams) || $arConvertParams['CONVERT_CURRENCY'] == 'N';
 	$found = false;
 	$resort = false;
 	foreach ($currentSet['ITEMS'] as &$setItem)
@@ -438,14 +482,14 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 		$setItem['ITEM_DATA']['BASKET_QUANTITY'] = $setItem['ITEM_DATA']['SET_QUANTITY']*$setItem['ITEM_DATA']['MEASURE_RATIO'];
 		$arResult['BASKET_QUANTITY'][$setItem['ITEM_DATA']['ID']] = $setItem['ITEM_DATA']['BASKET_QUANTITY'];
 		$setItem['ITEM_DATA']['SET_SORT'] = $setItem['SORT'];
-		if ($arParams['CONVERT_CURRENCY'] == 'N' && $setItem['ITEM_DATA']['PRICE_CURRENCY'] != $defaultCurrency)
+		if ($compareCurrency && $setItem['ITEM_DATA']['PRICE_CURRENCY'] != $defaultCurrency)
 		{
 			$setItem['ITEM_DATA']['PRICE_CONVERT_DISCOUNT_VALUE'] = CCurrencyRates::ConvertCurrency($setItem['ITEM_DATA']['PRICE_DISCOUNT_VALUE'], $setItem['ITEM_DATA']['PRICE_CURRENCY'], $defaultCurrency);
 			$setItem['ITEM_DATA']['PRICE_CONVERT_VALUE'] = CCurrencyRates::ConvertCurrency($setItem['ITEM_DATA']["PRICE_VALUE"], $setItem['ITEM_DATA']['PRICE_CURRENCY'], $defaultCurrency);
 			$setItem['ITEM_DATA']['PRICE_CONVERT_DISCOUNT_DIFFERENCE_VALUE'] = CCurrencyRates::ConvertCurrency($setItem['ITEM_DATA']['PRICE_DISCOUNT_DIFFERENCE_VALUE'], $setItem['ITEM_DATA']['PRICE_CURRENCY'], $defaultCurrency);
 			$setItem['ITEM_DATA']['PRICE_CURRENCY'] = $defaultCurrency;
 		}
-		if ($setItem['ITEM_DATA']['CAN_BUY'] && $countSetDefaultItems < 3)
+		if ($setItem['ITEM_DATA']['CAN_BUY'] && $countSetDefaultItems < $arParams['BUNDLE_ITEMS_COUNT'])
 		{
 			$arResult['SET_ITEMS']['DEFAULT'][] = $setItem['ITEM_DATA'];
 			$arResult['SET_ITEMS']['PRICE'] += $setItem['ITEM_DATA']['PRICE_DISCOUNT_VALUE']*$setItem['ITEM_DATA']['BASKET_QUANTITY'];
@@ -477,13 +521,13 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 		$taggedCache = Application::getInstance()->getTaggedCache();
 		if (!empty($tagIblockList))
 		{
-			foreach ($tagIblockList as &$iblock)
+			foreach ($tagIblockList as $iblock)
 				$taggedCache->registerTag('iblock_id_'.$iblock);
 			unset($iblock);
 		}
 		if (!empty($tagCurrencyList))
 		{
-			foreach ($tagCurrencyList as &$currency)
+			foreach ($tagCurrencyList as $currency)
 				$taggedCache->registerTag('currency_id_'.$currency);
 			unset($currency);
 		}
@@ -519,6 +563,7 @@ if($this->startResultCache(false, array($elementID, ($arParams["CACHE_GROUPS"]==
 		)
 	);
 	unset($currencyFormat);
+	$arResult['CONVERT_CURRENCY'] = $arConvertParams;
 
 	$this->setResultCacheKeys(array());
 	$this->includeComponentTemplate();

@@ -19,13 +19,15 @@ $bTasks = $arResult["BLOG_POST_TASKS"];
 if ($bTasks)
 {
 	CModule::IncludeModule('tasks');
-	CJSCore::Init(array('tasks_util_query'));
+	CJSCore::Init(array('tasks_integration_socialnetwork'));
 }
 
 if ($bLists)
 {
 	CJSCore::Init(array('lists'));
 }
+
+CJSCore::Init(array('videorecorder'));
 
 if (
 	!empty($arResult["Post"])
@@ -484,7 +486,8 @@ HTML;
 		{
 			$APPLICATION->ShowAjaxHead();
 		}
-		?><div id="microblog-form">
+		?>
+		<div id="microblog-form">
 		<form action="<?=(isset($arParams["POST_FORM_ACTION_URI"]) ? htmlspecialcharsbx($arParams["POST_FORM_ACTION_URI"]) : POST_FORM_ACTION_URI)?>" id="blogPostForm" name="blogPostForm" method="POST" enctype="multipart/form-data" target="_self">
 			<input type="hidden" name="show_title" id="show_title" value="<?=($bShowTitle ? "Y" : "N")?>">
 			<?=bitrix_sessid_post();?>
@@ -536,9 +539,11 @@ HTML;
 								(($arResult["allowVideo"] == "Y") ? "InputVideo" : ""),
 								"Quote",
 								"MentionUser",
-								"InputTag"
+								"InputTag",
+								"VideoMessage",
 	//						,"Important"
 							),
+							"BUTTONS_HTML" => Array("VideoMessage" => '<span class="feed-add-post-form-but-cnt feed-add-videomessage" onclick="BX.VideoRecorder.start(\''.$arParams["FORM_ID"].'\');">'.GetMessage('BLOG_VIDEO_RECORD_BUTTON').'</span>'),
 							"ADDITIONAL" => array(
 								"<span title=\"".GetMessage("BLOG_TITLE")."\" ".
 								"onclick=\"showPanelTitle_".$arParams["FORM_ID"]."(this);\" ".

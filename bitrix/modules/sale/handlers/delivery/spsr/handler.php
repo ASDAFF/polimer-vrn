@@ -28,9 +28,9 @@ Loader::registerAutoLoadClasses(
 		'Sale\Handlers\Delivery\Spsr\Cache' => 'handlers/delivery/spsr/cache.php',
 		'Sale\Handlers\Delivery\SpsrProfile' => 'handlers/delivery/spsr/profile.php',
 		'Sale\Handlers\Delivery\Spsr\Request' => 'handlers/delivery/spsr/request.php',
-		'Sale\Handlers\Delivery\Spsr\Location' => 'handlers/delivery/spsr/location.php',
 		'Sale\Handlers\Delivery\SpsrTracking' => 'handlers/delivery/spsr/tracking.php',
-		'Sale\Handlers\Delivery\Spsr\Calculator' => 'handlers/delivery/spsr/calculator.php',
+		'Sale\Handlers\Delivery\Spsr\Location' => 'handlers/delivery/spsr/location.php',
+		'Sale\Handlers\Delivery\Spsr\Calculator' => 'handlers/delivery/spsr/calculator.php'
 	)
 );
 
@@ -44,6 +44,7 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
 	protected static $whetherAdminExtraServicesShow = true;
 	/** @var string Tracking class */
 	protected $trackingClass = '\Sale\Handlers\Delivery\SpsrTracking';
+
 	/**
 	 * @return string
 	 */
@@ -342,7 +343,7 @@ class SpsrHandler extends \Bitrix\Sale\Delivery\Services\Base
 			return $result;
 
 		$dbRes = CompanyTable::getList(array(
-			'filter' => array('ACTIVE' => 'Y'),
+			'filter' => array('=ACTIVE' => 'Y'),
 			'select' => array('CNT'),
     		'runtime' => array(
 				new ExpressionField('CNT', 'COUNT(*)'

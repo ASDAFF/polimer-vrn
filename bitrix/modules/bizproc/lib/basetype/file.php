@@ -149,7 +149,10 @@ class File extends Base
 	{
 		if ($renderMode & FieldType::RENDER_MODE_DESIGNER)
 			return '';
-		return '<input type="file" id="'
+
+		$className = static::generateControlClassName($fieldType, $field);
+
+		return '<input type="file" class="'.htmlspecialcharsbx($className).'" id="'
 			.htmlspecialcharsbx(static::generateControlId($field))
 			.'" name="'.htmlspecialcharsbx(static::generateControlName($field)).'">';
 	}

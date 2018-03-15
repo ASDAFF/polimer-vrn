@@ -59,4 +59,12 @@ $MESS["SPS_ORDER_LIST_SORT_ID"] = "ID замовлення";
 $MESS["SPS_ORDER_LIST_SORT_DATE_CREATE"] = "Дата створення";
 $MESS["SPS_ORDER_LIST_SORT_PRICE"] = "Сума замовлення";
 $MESS["SPS_ORDER_LIST_DEFAULT_SORT"] = "Сортування замовлень";
+$MESS["SPS_RESTRICT_CHANGE_PAYSYSTEM"] = "Заборонити зміну платіжної системи у замовлень в статусах";
+$MESS["SPS_CHAIN_MAIN"] = "Мій кабінет";
+$MESS["SPS_PROFILES_PER_PAGE"] = "Кількість профілів на одній сторінці";
+$MESS["SPS_USER_INFO_LOGIN"] = "Логін";
+$MESS["SPS_USER_INFO_EMAIL"] = "E-mail адреса";
+$MESS["SPS_USER_INFO_PERSON_TYPE_NAME"] = "Тип платника";
+$MESS["SPS_ORDER_HIDE_USER_INFO"] = "Не показувати в інформації про користувача";
+$MESS["SPS_CHAIN_MAIN_FIELD"] = "Назва розділу в ланцюжку навігації";
 ?>

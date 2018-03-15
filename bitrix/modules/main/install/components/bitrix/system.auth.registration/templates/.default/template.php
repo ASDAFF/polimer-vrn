@@ -121,6 +121,32 @@ document.getElementById('bx_auth_secure').style.display = 'inline-block';
 	}
 	/* CAPTCHA */
 	?>
+		<tr>
+			<td></td>
+			<td>
+				<?$APPLICATION->IncludeComponent("bitrix:main.userconsent.request", "",
+					array(
+						"ID" => COption::getOptionString("main", "new_user_agreement", ""),
+						"IS_CHECKED" => "Y",
+						"AUTO_SAVE" => "N",
+						"IS_LOADED" => "Y",
+						"ORIGINATOR_ID" => $arResult["AGREEMENT_ORIGINATOR_ID"],
+						"ORIGIN_ID" => $arResult["AGREEMENT_ORIGIN_ID"],
+						"INPUT_NAME" => $arResult["AGREEMENT_INPUT_NAME"],
+						"REPLACE" => array(
+							"button_caption" => GetMessage("AUTH_REGISTER"),
+							"fields" => array(
+								rtrim(GetMessage("AUTH_NAME"), ":"),
+								rtrim(GetMessage("AUTH_LAST_NAME"), ":"),
+								rtrim(GetMessage("AUTH_LOGIN_MIN"), ":"),
+								rtrim(GetMessage("AUTH_PASSWORD_REQ"), ":"),
+								rtrim(GetMessage("AUTH_EMAIL"), ":"),
+							)
+						),
+					)
+				);?>
+			</td>
+		</tr>
 	</tbody>
 	<tfoot>
 		<tr>

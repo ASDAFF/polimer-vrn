@@ -13,6 +13,8 @@ class CSaleOrderLoader
 
 	/** @var Sale\Exchange\ImportOneCPackage  */
 	public $importer;
+	/** @var Sale\Exchange\ImportOneCContragent */
+	public $importerContragent;
 
 	var $strError = "";
 	var $SumFormat = ".";
@@ -1994,7 +1996,7 @@ class CSaleOrderLoader
 					if (strlen($arUser["EMAIL"]) <= 0)
 						$arUser["EMAIL"] = "buyer" . time() . GetRandomCode(2) . "@" . $emServer;
 
-					$arOrder["USER_ID"] = CSaleUser::DoAutoRegisterUser($arUser["EMAIL"], $arUser["NAME"], $this->getSiteId(), $arErrors, array("XML_ID"=>$arOrder["AGENT"]["ID"]));
+					$arOrder["USER_ID"] = CSaleUser::DoAutoRegisterUser($arUser["EMAIL"], $arUser["NAME"], $this->getSiteId(), $arErrors, array("XML_ID"=>$arOrder["AGENT"]["ID"], "EXTERNAL_AUTH_ID"=>Sale\Exchange\Entity\UserImportBase::EXTERNAL_AUTH_ID));
 
 					$obUser = new CUser;
 					$userFields[] = array();
@@ -2049,21 +2051,68 @@ class CSaleOrderLoader
 		return false;
 	}
 
-	function nodeHandler(CDataXML $dataXml)
+	protected function getXMLStream(CXMLFileStream $fileStream)
+	{
+		$startPosition = 0;
+		$endPosition = 0;
+
+		$positionLast = $fileStream->getPosition();
+
+		if(isset($positionLast[1]))
+			$endPosition = $positionLast[1];
+
+		if(is_array($_SESSION["BX_CML2_EXPORT"]["proccess_xml_entry"]))
+		{
+			$position = $_SESSION["BX_CML2_EXPORT"]["proccess_xml_entry"];
+
+			if(isset($position[1]))
+				$startPosition = $position[1];
+		}
+		else
+		{
+			foreach(explode("/", $positionLast[2]) as $pathPart)
+			{
+				@list($elementPosition, $elementName) = explode("@", $pathPart, 2);
+				$positionStack[] = $elementPosition;
+			}
+			$startPosition = array_pop($positionStack);
+		}
+
+		$_SESSION["BX_CML2_EXPORT"]["proccess_xml_entry"] = $fileStream->getPosition();
+
+		$xmlChunk = $fileStream->readFilePart($startPosition, $endPosition);
+
+		return \Bitrix\Main\Text\Encoding::convertEncoding($xmlChunk, $positionLast[0], LANG_CHARSET, $error);
+	}
+
+	function nodeHandler(CDataXML $dataXml, CXMLFileStream $fileStream)
 	{
 		$value = $dataXml->GetArray();
+		$xmlStream = $this->getXMLStream($fileStream);
 
-		if(!empty($value[GetMessage("CC_BSC1_CONTAINER")]))
+		if(!empty($value[GetMessage("CC_BSC1_CONTAINER")]) ||
+			empty($value[GetMessage("CC_BSC1_DOCUMENT")])
+ 		)
 		{
-			$containerData = $value[GetMessage("CC_BSC1_CONTAINER")]['#'];
-
-			$importer = $this->importer;
+			if(!empty($value[GetMessage("CC_BSC1_CONTAINER")]))
+			{
+				$documentData = $value[GetMessage("CC_BSC1_CONTAINER")]['#'][GetMessage("CC_BSC1_DOCUMENT")];
+				$importer = $this->importer;
+			}
+			else
+			{
+				$documentData = array($value[GetMessage("CC_BSC1_AGENT")]["#"]);
+				$importer = $this->importerContragent;
+			}
 
 			/** @var Sale\Result $r */
 			$r = $importer::checkSettings();
 			if($r->isSuccess())
 			{
-				$r = $importer->process($containerData[GetMessage("CC_BSC1_DOCUMENT")]);
+				if(strlen($xmlStream)>0)
+					$importer->setRawData($xmlStream);
+
+				$r = $importer->process($documentData);
 			}
 
 			if(!$r->isSuccess())
@@ -2092,6 +2141,9 @@ class CSaleOrderLoader
 		}
 		elseif(!empty($value[GetMessage("CC_BSC1_DOCUMENT")]))
 		{
+			/**
+			 * @deprecated
+			 */
 			$value = $value[GetMessage("CC_BSC1_DOCUMENT")];
 
 			$arDocument = $this->collectDocumentInfo($value);
@@ -2485,7 +2537,9 @@ class CSaleOrderLoader
 		}
 		elseif(\Bitrix\Main\Config\Option::get("sale", "1C_IMPORT_NEW_ORDERS", "Y") == "Y")
 		{
-
+			/**
+			 * @deprecated
+			 */
 			$value = $value[GetMessage("CC_BSC1_AGENT")]["#"];
 			$arAgentInfo = $this->collectAgentInfo($value);
 
@@ -2527,7 +2581,7 @@ class CSaleOrderLoader
 						if(strlen($arUser["EMAIL"]) <= 0)
 							$arUser["EMAIL"] = "buyer".time().GetRandomCode(2)."@".$emServer;
 
-						$arAgentInfo["USER_ID"] = CSaleUser::DoAutoRegisterUser($arUser["EMAIL"], $arUser["NAME"], $this->arParams["SITE_NEW_ORDERS"], $arErrors, array("XML_ID"=>$arAgentInfo["AGENT"]["ID"]));
+						$arAgentInfo["USER_ID"] = CSaleUser::DoAutoRegisterUser($arUser["EMAIL"], $arUser["NAME"], $this->arParams["SITE_NEW_ORDERS"], $arErrors, array("XML_ID"=>$arAgentInfo["AGENT"]["ID"], "EXTERNAL_AUTH_ID"=>Sale\Exchange\Entity\UserImportBase::EXTERNAL_AUTH_ID));
 					}
 
 					if(IntVal($arAgentInfo["USER_ID"]) > 0)
@@ -2857,12 +2911,16 @@ class CSaleOrderLoader
 
 						$quantity = $this->ToFloat($val[GetMessage("CC_BSC1_QUANTITY")][0]["#"]);
 						if (doubleval($quantity) > 0) {
-							$price = roundEx($priceAll / $quantity, 4);
-							$priceone = roundEx($priceone, 4);
+							$price = Sale\PriceMaths::roundPrecision($priceAll / $quantity);
+							$priceone = Sale\PriceMaths::roundPrecision($priceone);
 
-							if ($priceone != $price)
-								$discountPrice = DoubleVal($priceone - $price);
-
+							if(isset($val[GetMessage("CC_BSC1_DISCOUNTS")]) && $val[GetMessage("CC_BSC1_DISCOUNTS")][0]["#"][GetMessage("CC_BSC1_DISCOUNT")][0]["#"][GetMessage("CC_BSC1_SUMM")][0]['#']<>'')
+							{
+								if ($priceone != $price)
+									$discountPrice = DoubleVal($priceone - $price);
+							}
+							else
+								$price = $priceone;
 
 							//DISCOUNTS!
 							$basketItems = Array(
@@ -3549,7 +3607,7 @@ class CSaleOrderLoader
 						if (strlen($arUser["EMAIL"]) <= 0)
 							$arUser["EMAIL"] = "buyer".time().GetRandomCode(2)."@".$emServer;
 
-						$arOrder["USER_ID"] = CSaleUser::DoAutoRegisterUser($arUser["EMAIL"], $arUser["NAME"], $this->arParams["SITE_NEW_ORDERS"], $arErrors, array("XML_ID"=>$arOrder["AGENT"]["ID"]));
+						$arOrder["USER_ID"] = CSaleUser::DoAutoRegisterUser($arUser["EMAIL"], $arUser["NAME"], $this->arParams["SITE_NEW_ORDERS"], $arErrors, array("XML_ID"=>$arOrder["AGENT"]["ID"], "EXTERNAL_AUTH_ID"=>Sale\Exchange\Entity\UserImportBase::EXTERNAL_AUTH_ID));
 
 						$obUser = new CUser;
 						$userFields[] = array();

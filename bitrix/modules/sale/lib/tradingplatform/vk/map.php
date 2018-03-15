@@ -378,7 +378,7 @@ class Map
 		while ($album = $catRes->fetch())
 			$result[$album["VALUE_INTERNAL"]] = array(
 				"SECTION_ID" => $album["VALUE_INTERNAL"],
-				"album_vk_id" => $album["VALUE_EXTERNAL"],
+				"ALBUM_VK_ID" => $album["VALUE_EXTERNAL"],
 			);
 		
 		return $result;
@@ -404,7 +404,7 @@ class Map
 		while ($product = $catRes->fetch())
 			$result[$product["VALUE_INTERNAL"]] = array(
 				"BX_ID" => $product["VALUE_INTERNAL"],
-				"vk_id" => $product["VALUE_EXTERNAL"],
+				"VK_ID" => $product["VALUE_EXTERNAL"],
 			);
 		
 		return $result;
@@ -427,6 +427,7 @@ class Map
 		if ($sectionId)
 			$filter['=VALUE_INTERNAL'] = $sectionId;
 		
+//		todo: we can cached map. Clear cache if set setting in section
 		$catRes = MapTable::getList(array(
 			'filter' => $filter,
 		));
@@ -462,14 +463,14 @@ class Map
 		{
 			case 'ALBUMS':
 				$bxKey = "SECTION_ID";
-				$vkKey = "album_vk_id";
+				$vkKey = "ALBUM_VK_ID";
 				$deleteMapMethod = "removeAlbumMapping";
 				$dataFromMapping = self::getMappedAlbums($exportId);
 				break;
 			
 			case 'PRODUCTS':
 				$bxKey = "BX_ID";
-				$vkKey = "vk_id";
+				$vkKey = "VK_ID";
 				$deleteMapMethod = "removeProductMapping";
 				$dataFromMapping = self::getMappedProducts($exportId);
 				break;

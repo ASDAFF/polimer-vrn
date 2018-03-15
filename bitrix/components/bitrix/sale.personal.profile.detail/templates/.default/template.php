@@ -1,7 +1,6 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
-
 ?>
 <div class="sale-profile-detail-link-list">
 	<a href="<?=$arParams["PATH_TO_LIST"]?>"><?=GetMessage("SPPD_RECORDS_LIST")?></a>
@@ -31,7 +30,7 @@ if(strlen($arResult["ID"])>0)
 				<?=Loc::getMessage('SALE_PNAME')?>:<span class="req">*</span>
 			</label>
 			<div class="col-md-12">
-				<input class="form-control" type="text" name="NAME" maxlength="50" id="sale-personal-profile-detail-name" value="<?=htmlspecialcharsbx($arResult["NAME"])?>" />
+				<input class="form-control" type="text" name="NAME" maxlength="50" id="sale-personal-profile-detail-name" value="<?=$arResult["NAME"]?>" />
 			</div>
 		</div>
 		<?
@@ -48,7 +47,7 @@ if(strlen($arResult["ID"])>0)
 				<?
 				foreach($block["PROPS"] as $key => $property)
 				{
-					$name = "ORDER_PROP_".$property["ID"];
+					$name = "ORDER_PROP_".(int)$property["ID"];
 					$currentValue = $arResult["ORDER_PROPS_VALUES"][$name];
 					$alignTop = ($property["TYPE"] === "LOCATION" && $arParams['USE_AJAX_LOCATIONS'] === 'Y') ? "vertical-align-top" : "";
 					?>
@@ -82,7 +81,7 @@ if(strlen($arResult["ID"])>0)
 							{
 								if ($property["MULTIPLE"] === 'Y')
 								{
-									if (empty($currentValue))
+									if (empty($currentValue) || !is_array($currentValue))
 										$currentValue = array('');
 									foreach ($currentValue as $elementValue)
 									{
@@ -153,7 +152,9 @@ if(strlen($arResult["ID"])>0)
 										foreach($property["VALUES"] as $value)
 										{
 											?>
-											<option value="<?= $value["VALUE"]?>"<?if (in_array($value["VALUE"], $arCurVal) || !isset($currentValue) && in_array($value["VALUE"], $arDefVal)) echo" selected"?>><?echo $value["NAME"]?></option>
+											<option value="<?= $value["VALUE"]?>"<?if (in_array($value["VALUE"], $arCurVal) || !isset($currentValue) && in_array($value["VALUE"], $arDefVal)) echo" selected"?>>
+												<?= $value["NAME"]?>
+											</option>
 											<?
 										}
 										?>
@@ -182,7 +183,7 @@ if(strlen($arResult["ID"])>0)
 								}
 								if ($property["MULTIPLE"] === 'Y')
 								{
-									if (empty($currentValue))
+									if (empty($currentValue) || !is_array($currentValue))
 										$currentValue = array($property["DEFAULT_VALUE"]);
 
 									foreach ($currentValue as $key => $elementValue)
@@ -237,14 +238,15 @@ if(strlen($arResult["ID"])>0)
 								foreach($property["VALUES"] as $value)
 								{
 									?>
-									<input
-										class="form-control"
-										type="radio"
-										id="sppd-property-<?=$key?>"
-										name="<?=$name?>"
-										value="<?echo $value["VALUE"]?>"
-										<?if ($value["VALUE"] == $currentValue || !isset($currentValue) && $value["VALUE"] == $property["DEFAULT_VALUE"]) echo " checked"?>>
-									<?= $value["NAME"]?><br />
+									<div class="radio">
+										<input
+											type="radio"
+											id="sppd-property-<?=$key?>"
+											name="<?=$name?>"
+											value="<?= $value["VALUE"]?>"
+											<?if ($value["VALUE"] == $currentValue || !isset($currentValue) && $value["VALUE"] == $property["DEFAULT_VALUE"]) echo " checked"?>>
+										<?= $value["NAME"]?>
+									</div>
 									<?
 								}
 							}

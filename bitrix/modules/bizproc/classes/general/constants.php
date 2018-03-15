@@ -149,6 +149,7 @@ class CBPDocumentEventType
 	const Edit = 2;		//   10
 	const Delete = 4;	//  100
 	const Automation = 8;	// 1000
+	const Manual = 16;	// 10000
 
 	public static function Out($v)
 	{
@@ -183,6 +184,13 @@ class CBPDocumentEventType
 			if (strlen($result) > 0)
 				$result .= ", ";
 			$result .= "Automation";
+		}
+
+		if (($v & self::Manual) != 0)
+		{
+			if (strlen($result) > 0)
+				$result .= ", ";
+			$result .= "Manual";
 		}
 
 		return $result;
@@ -248,6 +256,29 @@ class CBPTaskUserStatus
 	const No = 2;
 	const Ok = 3;
 	const Cancel = 4;
+
+	public static function resolveStatus($name)
+	{
+		switch (strtolower((string)$name))
+		{
+			case '0':
+			case 'waiting':
+				return self::Waiting;
+			case '1':
+			case 'yes':
+				return self::Yes;
+			case '2':
+			case 'no':
+				return self::No;
+			case '3':
+			case 'ok':
+				return self::Ok;
+			case '4':
+			case 'cancel':
+				return self::Cancel;
+		}
+		return null;
+	}
 }
 
 class CBPTaskChangedStatus

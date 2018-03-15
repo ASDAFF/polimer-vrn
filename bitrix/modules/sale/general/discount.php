@@ -31,14 +31,13 @@ class CAllSaleDiscount
 		if (empty($arOrder['BASKET_ITEMS']) || !is_array($arOrder['BASKET_ITEMS']))
 			return;
 
-		$isOrderConverted = \Bitrix\Main\Config\Option::get("main", "~sale_converted_15", 'N');
+		$isOrderConverted = \Bitrix\Main\Config\Option::get("main", "~sale_converted_15", 'Y');
 		$onlySaleDiscounts = (string)Main\Config\Option::get('sale', 'use_sale_discount_only') == 'Y';
-		$executeRound = true;
 		$oldDelivery = '';
 
 		$checkIds = true;
 		$arIDS = array();
-		if ($isOrderConverted == 'Y')
+		if ($isOrderConverted != 'N')
 		{
 			if (isset($arOrder['DELIVERY_ID']) && $arOrder['DELIVERY_ID'] != '')
 			{
@@ -70,16 +69,19 @@ class CAllSaleDiscount
 				$basketIdList = array();
 				foreach ($arOrder['BASKET_ITEMS'] as $basketId => $basketItem)
 				{
-					if (!isset($basketItem['PRODUCT_PRICE_ID']) && isset($basketItem['ID']))
+					if (isset($basketItem['ID']))
 					{
-						$basketIdList[$basketItem['ID']] = $basketId;
+						if (!isset($basketItem['PRODUCT_PRICE_ID']) || !isset($basketItem['PRICE_TYPE_ID']))
+						{
+							$basketIdList[$basketItem['ID']] = $basketId;
+						}
 					}
 				}
 				unset($basketId, $basketItem);
 				if (!empty($basketIdList))
 				{
 					$iterator = Sale\Internals\BasketTable::getList(array(
-						'select' => array('ID', 'PRODUCT_PRICE_ID'),
+						'select' => array('ID', 'PRODUCT_PRICE_ID', 'PRICE_TYPE_ID'),
 						'filter' => array('@ID' => array_keys($basketIdList))
 					));
 					while ($row = $iterator->fetch())
@@ -88,6 +90,7 @@ class CAllSaleDiscount
 							continue;
 						$index = $basketIdList[$row['ID']];
 						$arOrder['BASKET_ITEMS'][$index]['PRODUCT_PRICE_ID'] = $row['PRODUCT_PRICE_ID'];
+						$arOrder['BASKET_ITEMS'][$index]['PRICE_TYPE_ID'] = $row['PRICE_TYPE_ID'];
 						unset($index);
 					}
 					unset($row, $iterator);
@@ -114,11 +117,7 @@ class CAllSaleDiscount
 			Sale\Compatible\DiscountCompatibility::clearDiscountResult();
 			Sale\Compatible\DiscountCompatibility::fillBasketData($arOrder['BASKET_ITEMS']);
 			if (!$onlySaleDiscounts)
-			{
 				Sale\Compatible\DiscountCompatibility::calculateBasketDiscounts($arOrder['BASKET_ITEMS']);
-				Sale\Compatible\DiscountCompatibility::roundPrices($arOrder['BASKET_ITEMS']);
-				$executeRound = false;
-			}
 			Sale\Compatible\DiscountCompatibility::setApplyMode($arOrder['BASKET_ITEMS']);
 
 			$applyMode = Sale\Discount::getApplyMode();
@@ -136,6 +135,8 @@ class CAllSaleDiscount
 			}
 		}
 
+		$arOrder['DISCOUNT_LIST'] = array();
+		$arOrder['FULL_DISCOUNT_LIST'] = array();
 		if ($checkIds)
 		{
 			$groupDiscountIterator = Sale\Internals\DiscountGroupTable::getList(array(
@@ -323,22 +324,17 @@ class CAllSaleDiscount
 				static::prefillDiscountFields($discount, $couponList);
 				$applyFlag = static::workWithDiscountHandlers($discount);
 
-				if ($isOrderConverted == 'Y')
+				if ($isOrderConverted != 'N')
 					Sale\Compatible\DiscountCompatibility::setOrderData($arOrder);
 				if ($applyFlag && self::__Unpack($arOrder, $discount['UNPACK']))
 				{
-					if ($executeRound && $discount['EXECUTE_MODULE'] == 'sale')
-					{
-						Sale\Compatible\DiscountCompatibility::roundPrices($arOrder['BASKET_ITEMS']);
-						$executeRound = false;
-					}
 					$oldOrder = $arOrder;
-					if ($isOrderConverted == 'Y')
+					if ($isOrderConverted != 'N')
 						Sale\Discount\Actions::clearAction();
 
 					self::__ApplyActions($arOrder, $discount['APPLICATION']);
 
-					if ($isOrderConverted == 'Y')
+					if ($isOrderConverted != 'N')
 					{
 						$resultDiscountFullList[] = $discount;
 						if (Sale\Compatible\DiscountCompatibility::calculateSaleDiscount($arOrder, $discount))
@@ -412,12 +408,13 @@ class CAllSaleDiscount
 
 			$arOrder['DISCOUNT_LIST'] = $resultDiscountList;
 			$arOrder['FULL_DISCOUNT_LIST'] = $resultDiscountFullList;
-			if ($isOrderConverted == 'Y')
+			if ($isOrderConverted != 'N')
 				Sale\Compatible\DiscountCompatibility::setOldDiscountResult($resultDiscountList);
 		}
-		if ($executeRound)
-			Sale\Compatible\DiscountCompatibility::roundPrices($arOrder['BASKET_ITEMS']);
-		unset($executeRound);
+		$orderData = $arOrder;
+		unset($orderData['BASKET_ITEMS'], $orderData['DISCOUNT_LIST'], $orderData['FULL_DISCOUNT_LIST']);
+		Sale\Compatible\DiscountCompatibility::roundPrices($arOrder['BASKET_ITEMS'], $orderData);
+		unset($orderData);
 
 		$arOrder["ORDER_PRICE"] = 0;
 		$arOrder["ORDER_WEIGHT"] = 0;
@@ -444,11 +441,11 @@ class CAllSaleDiscount
 				$customPrice = isset($arShoppingCartItem['CUSTOM_PRICE']) && $arShoppingCartItem['CUSTOM_PRICE'] == 'Y';
 				if (!$customPrice)
 				{
-					$arShoppingCartItem['DISCOUNT_PRICE'] = roundEx($arShoppingCartItem['DISCOUNT_PRICE'], SALE_VALUE_PRECISION);
+					$arShoppingCartItem['DISCOUNT_PRICE'] = Sale\PriceMaths::roundPrecision($arShoppingCartItem['DISCOUNT_PRICE']);
 					if ($arShoppingCartItem['DISCOUNT_PRICE'] > 0)
 						$arShoppingCartItem['PRICE'] = $arShoppingCartItem['BASE_PRICE'] - $arShoppingCartItem['DISCOUNT_PRICE'];
 					else
-						$arShoppingCartItem['PRICE'] = roundEx($arShoppingCartItem['PRICE'], SALE_VALUE_PRECISION);
+						$arShoppingCartItem['PRICE'] = Sale\PriceMaths::roundPrecision($arShoppingCartItem['PRICE']);
 				}
 
 				if (isset($arShoppingCartItem['VAT_RATE']))
@@ -467,7 +464,7 @@ class CAllSaleDiscount
 
 				if ($arShoppingCartItem["BASE_PRICE"] > 0)
 					$arShoppingCartItem["DISCOUNT_PRICE_PERCENT"] = ($arShoppingCartItem["DISCOUNT_PRICE"] * 100) / $arShoppingCartItem["BASE_PRICE"];
-				$arShoppingCartItem["DISCOUNT_PRICE_PERCENT_FORMATED"] = roundEx($arShoppingCartItem["DISCOUNT_PRICE_PERCENT"], SALE_VALUE_PRECISION)."%";
+				$arShoppingCartItem["DISCOUNT_PRICE_PERCENT_FORMATED"] = roundEx($arShoppingCartItem["DISCOUNT_PRICE_PERCENT"], 0)."%";
 
 				if ($arShoppingCartItem["VAT_RATE"] > 0)
 				{
@@ -549,6 +546,7 @@ class CAllSaleDiscount
 					}
 					unset($discount);
 				}
+				$simplePercent = false;
 				if ($simplePercent && $simplePercentValue !== null)
 					$arShoppingCartItem['SIMPLE_DISCOUNT_PRICE_PERCENT'] = $simplePercentValue;
 				$arShoppingCartItem['DISCOUNTS_APPLY'] = $itemDiscountsApply;
@@ -568,7 +566,7 @@ class CAllSaleDiscount
 		unset($discountResult, $publicMode);
 		unset($clearFields);
 
-		if ($isOrderConverted == 'Y' && $oldDelivery != '')
+		if ($isOrderConverted != 'N' && $oldDelivery != '')
 			$arOrder['DELIVERY_ID'] = $oldDelivery;
 
 		$arOrder["ORDER_PRICE"] = roundEx($arOrder["ORDER_PRICE"], SALE_VALUE_PRECISION);

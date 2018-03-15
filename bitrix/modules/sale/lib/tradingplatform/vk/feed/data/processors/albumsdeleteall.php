@@ -28,7 +28,7 @@ class AlbumsDeleteAll extends DataProcessor
 //		delete ALL from mapping
 		$albumsMappedToRemove = array();
 		foreach ($albumsMapped as $albumMapped)
-			$albumsMappedToRemove[] = array("VALUE_EXTERNAL" => $albumMapped["album_vk_id"]);
+			$albumsMappedToRemove[] = array("VALUE_EXTERNAL" => $albumMapped["ALBUM_VK_ID"]);
 
 		if (!empty($albumsMappedToRemove))
 			Vk\Map::removeAlbumMapping($albumsMappedToRemove, $this->exportId);
@@ -37,7 +37,7 @@ class AlbumsDeleteAll extends DataProcessor
 //		formatted data
 		foreach ($albumsFromVk as &$album)
 		{
-			$album = array('album_vk_id' => $album);
+			$album = array('ALBUM_VK_ID' => $album);
 		}
 		$albumsFromVk = array_chunk($albumsFromVk, Vk\Vk::MAX_EXECUTION_ITEMS);    // max 25 items in execute()
 		foreach ($albumsFromVk as $chunk)

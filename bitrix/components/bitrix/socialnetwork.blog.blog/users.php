@@ -75,6 +75,8 @@ if ($_REQUEST["post_id"] > 0 && !empty($_REQUEST["name"]) && !empty($_REQUEST["v
 				"SELECT" => array("USER_ID", "USER_NAME", "USER_LAST_NAME", "USER_SECOND_NAME", "USER_LOGIN", "USER_PERSONAL_PHOTO")
 			)
 		);
+		$arList = is_array($arList) ? $arList : array();
+		$arList["items"] = array();
 		if ($db_res && ($res = $db_res->Fetch()))
 		{
 			$arList["StatusPage"] = (($db_res->NavPageNomer >= $db_res->NavPageCount ||

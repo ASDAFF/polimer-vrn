@@ -1,16 +1,21 @@
 <?
+use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\Web\Json;
+
+
 class CCalendarSceleton
 {
 	// Show html
 	public static function Build($params)
 	{
+		return;
 		global $APPLICATION;
 		$id = $params['id'];
 
 		$Tabs = array(
-			array('name' => GetMessage('EC_TAB_MONTH'), 'title' => GetMessage('EC_TAB_MONTH_TITLE'), 'id' => $id."_tab_month"),
-			array('name' => GetMessage('EC_TAB_WEEK'), 'title' => GetMessage('EC_TAB_WEEK_TITLE'), 'id' => $id."_tab_week"),
-			array('name' => GetMessage('EC_TAB_DAY'), 'title' => GetMessage('EC_TAB_DAY_TITLE'), 'id' => $id."_tab_day")
+			array('name' => Loc::getMessage('EC_TAB_MONTH'), 'title' => Loc::getMessage('EC_TAB_MONTH_TITLE'), 'id' => $id."_tab_month"),
+			array('name' => Loc::getMessage('EC_TAB_WEEK'), 'title' => Loc::getMessage('EC_TAB_WEEK_TITLE'), 'id' => $id."_tab_week"),
+			array('name' => Loc::getMessage('EC_TAB_DAY'), 'title' => Loc::getMessage('EC_TAB_DAY_TITLE'), 'id' => $id."_tab_day")
 		);
 
 		$bCalDAV = CCalendar::IsCalDAVEnabled() && $params['type'] == 'user';
@@ -32,8 +37,8 @@ function bxcUserSelectorOnchange(arUsers){BX.onCustomEvent(window, 'onUserSelect
 		<span class="bxec-sect-cont-wrap" id="<?=$id?>sections">
 			<b class="r-2"></b><b class="r-1"></b><b class="r-0"></b>
 			<div class="bxec-sect-cont-inner">
-				<div class="bxec-sect-title"><span class="bxec-spr bxec-flip"></span><span class="bxec-sect-title-text"><?=GetMessage('EC_T_CALENDARS')?></span>
-				<a id="<?=$id?>-add-section" class="bxec-sect-top-action" href="javascript:void(0);" title="<?=GetMessage('EC_ADD_CAL_TITLE')?>"  hidefocus="true" style="visibility:hidden;"><?= strtolower(GetMessage('EC_T_ADD'))?></a>
+				<div class="bxec-sect-title"><span class="bxec-spr bxec-flip"></span><span class="bxec-sect-title-text"><?=Loc::getMessage('EC_T_CALENDARS')?></span>
+				<a id="<?=$id?>-add-section" class="bxec-sect-top-action" href="javascript:void(0);" title="<?=Loc::getMessage('EC_ADD_CAL_TITLE')?>"  hidefocus="true" style="visibility:hidden;"><?= strtolower(Loc::getMessage('EC_T_ADD'))?></a>
 				</div>
 				<div class="bxec-sect-cont-white">
 					<div id="<?=$id?>sections-cont"></div>
@@ -51,8 +56,8 @@ function bxcUserSelectorOnchange(arUsers){BX.onCustomEvent(window, 'onUserSelect
 		<span class="bxec-sect-cont-wrap" id="<?=$id?>sp-sections">
 			<b class="r-2"></b><b class="r-1"></b><b class="r-0"></b>
 			<div class="bxec-sect-cont-inner bxec-sect-superpose">
-				<div class="bxec-sect-title"><span class="bxec-spr bxec-flip"></span><span class="bxec-sect-title-text"><?=GetMessage('EC_T_SP_CALENDARS')?></span>
-				<a id="<?=$id?>-manage-superpose" class="bxec-sect-top-action" href="javascript:void(0);" title="<?=GetMessage('EC_ADD_EX_CAL_TITLE')?>"  hidefocus="true" style="visibility:hidden;"><?= strtolower(GetMessage('EC_ADD_EX_CAL'))?></a>
+				<div class="bxec-sect-title"><span class="bxec-spr bxec-flip"></span><span class="bxec-sect-title-text"><?=Loc::getMessage('EC_T_SP_CALENDARS')?></span>
+				<a id="<?=$id?>-manage-superpose" class="bxec-sect-top-action" href="javascript:void(0);" title="<?=Loc::getMessage('EC_ADD_EX_CAL_TITLE')?>"  hidefocus="true" style="visibility:hidden;"><?= strtolower(Loc::getMessage('EC_ADD_EX_CAL'))?></a>
 				</div>
 				<div class="bxec-sect-cont-white"  id="<?=$id?>sp-sections-cont"></div>
 			</div>
@@ -62,13 +67,13 @@ function bxcUserSelectorOnchange(arUsers){BX.onCustomEvent(window, 'onUserSelect
 		<?if ($params['syncPannel']):?>
 		<div class="bxec-sect-cont-inner">
 			<div class="bxec-sect-title">
-				<span class="bxec-sect-title-text"><?= GetMessage('EC_CAL_SYNC_TITLE')?></span>
+				<span class="bxec-sect-title-text"><?= Loc::getMessage('EC_CAL_SYNC_TITLE')?></span>
 			</div>
 			<div class="bxec-sect-cont-white" id="<?=$id?>-sync-inner-wrap"></div>
 		</div>
 		<?endif; /*syncPannel*/ ?>
 		<span class="bxec-access-settings-wrap" id="<?=$id?>-access-settings-wrap">
-			<a hidefocus="true" href="javascript:void(0);" class="bxec-access-settings" id="<?=$id?>-access-settings"><?=GetMessage('EC_CAL_ACCESS_SETTINGS')?></a>
+			<a hidefocus="true" href="javascript:void(0);" class="bxec-access-settings" id="<?=$id?>-access-settings"><?=Loc::getMessage('EC_CAL_ACCESS_SETTINGS')?></a>
 		</span>
 	<i class="r0"></i><i class="r1"></i><i class="r2"></i>
 </div>
@@ -76,17 +81,14 @@ function bxcUserSelectorOnchange(arUsers){BX.onCustomEvent(window, 'onUserSelect
 
 
 <div class="bxcal-loading" id="<?=$id?>_bxcal" style="">
-<div class="bxcal-wait"></div>
 <div class="bxec-tabs-cnt">
 	<div class="bxec-tabs-div">
 		<?foreach($Tabs as $tab):?>
 		<div class="bxec-tab-div" title="<?=$tab['title']?>" id="<?=$tab['id']?>">
-			<b></b><div class="bxec-tab-c"><span><?=$tab['name']?></span></div><i></i>
+			<div class="bxec-tab-c"><span><?=$tab['name']?></span></div>
 		</div>
 		<?endforeach;?>
 	</div>
-	<div class="bxec-bot-bg"></div>
-
 	<div class="bxec-view-selector-cont">
 		<div id="<?=$id?>_selector" class="bxec-selector-cont">
 		<a class="bxec-sel-left"  id="<?=$id?>selector-prev"></a>
@@ -109,17 +111,31 @@ function bxcUserSelectorOnchange(arUsers){BX.onCustomEvent(window, 'onUserSelect
 <div>
 	<table class="BXEC-Calendar" cellPadding="0" cellSpacing="0" id="<?=$id?>_scel_table_month" style="display:none;">
 	<tr class="bxec-days-title"><td>
-		<!--Don't insert spases inside DOM layout!-->
 		<div id="<?=$id?>_days_title" class="bxc-month-title"><?foreach($days as $day):?><b id="<?=$id.'_'.$day['2']?>" title="<?= $day['0']?>"><i><?= $day['1']?></i></b><?endforeach;?></div>
 	</td></tr>
 	<tr><td class="bxec-days-grid-td"><div id="<?=$id?>_days_grid" class="bxec-days-grid-cont"></div>
 	</td></tr>
 	</table>
+
 	<table class="BXEC-Calendar-week" id="<?=$id?>_scel_table_week" cellPadding="0" cellSpacing="0" style="display:none;">
-		<tr class="bxec-days-tbl-title"><td class="bxec-pad"><div class="bxec-day-t-event-holder"></div><img src="/bitrix/images/1.gif" width="40" height="1"/></td><td class="bxec-pad2"><img src="/bitrix/images/1.gif" width="16" height="1"/></td></tr>
-		<tr class="bxec-days-tbl-more-ev"><td class="bxec-pad"></td><td class="bxec-pad2"></td></tr>
-		<tr class="bxec-days-tbl-grid"><td class="bxec-cont"><div class="bxec-timeline-div"></div></td></tr>
+		<tr class="bxec-days-tbl-title">
+			<td class="bxec-pad">
+				<div class="bxec-day-t-event-holder"></div><img src="/bitrix/images/1.gif" width="40" height="1"/></td>
+			<td class="bxec-pad2">
+				<img src="/bitrix/images/1.gif" width="16" height="1"/>
+			</td>
+		</tr>
+		<tr class="bxec-days-tbl-more-ev">
+			<td class="bxec-pad"></td>
+			<td class="bxec-pad2"></td>
+		</tr>
+		<tr class="bxec-days-tbl-grid">
+			<td class="bxec-cont">
+				<div id="<?=$id?>-week-timeline-wrap" class="bxec-timeline-div"></div>
+			</td>
+		</tr>
 	</table>
+
 	<table class="BXEC-Calendar-week" id="<?=$id?>_scel_table_day" cellPadding="0" cellSpacing="0" style="display:none;">
 		<tr class="bxec-days-tbl-title"><td class="bxec-pad"><div class="bxec-day-t-event-holder"></div><img src="/bitrix/images/1.gif" width="40" height="1" /></td></tr>
 		<tr class="bxec-days-tbl-more-ev"><td class="bxec-pad"></td></tr>
@@ -128,8 +144,6 @@ function bxcUserSelectorOnchange(arUsers){BX.onCustomEvent(window, 'onUserSelect
 </div>
 </div>
 <?
-		self::BuildDialogs($params);
-
 		if($params['bShowTasks'])
 		{
 		?>
@@ -159,21 +173,83 @@ function onPopupTaskDeleted(taskId){BX.onCustomEvent(window, 'onCalendarPopupTas
 			ExecuteModuleEventEx($arEvent);
 	}
 
-	public static function InitJS($JSConfig)
+	public static function InitJS($config = array(), $data = array(), $additionalParams = array())
 	{
 		global $APPLICATION;
-		CJSCore::Init(array('ajax', 'window', 'popup', 'access', 'date', 'viewer', 'socnetlogdest'));
+		CJSCore::Init(array('ajax', 'window', 'popup', 'access', 'date', 'viewer', 'socnetlogdest','color_picker', 'sidepanel', 'clipboard'));
 
 		if(\Bitrix\Main\Loader::includeModule('webservice'))
 		{
 			CJSCore::Init(array('stssync'));
 		}
 
-		$JSConfig['days'] = self::GetWeekDays();
-		$JSConfig['month'] = array(GetMessage('EC_JAN'), GetMessage('EC_FEB'), GetMessage('EC_MAR'), GetMessage('EC_APR'), GetMessage('EC_MAY'), GetMessage('EC_JUN'), GetMessage('EC_JUL'), GetMessage('EC_AUG'), GetMessage('EC_SEP'), GetMessage('EC_OCT'), GetMessage('EC_NOV'), GetMessage('EC_DEC'));
-		$JSConfig['month_r'] = array(GetMessage('EC_JAN_R'), GetMessage('EC_FEB_R'), GetMessage('EC_MAR_R'), GetMessage('EC_APR_R'), GetMessage('EC_MAY_R'), GetMessage('EC_JUN_R'), GetMessage('EC_JUL_R'), GetMessage('EC_AUG_R'), GetMessage('EC_SEP_R'), GetMessage('EC_OCT_R'), GetMessage('EC_NOV_R'), GetMessage('EC_DEC_R'));
+		if (\Bitrix\Main\Loader::includeModule('bitrix24') && !in_array(\CBitrix24::getLicenseType(), array('company', 'demo', 'edu', 'bis_inc', 'nfr')))
+		{
+			\CBitrix24::initLicenseInfoPopupJS();
+		}
+
+		?>
+		<script>
+			top.BXCRES = {};
+			(function(window) {
+				if (!window.BXEventCalendar)
+				{
+					var BXEventCalendar = {
+						instances: {},
+
+						Show: function(config, data, additionalParams)
+						{
+							BX.ready(function()
+							{
+								BXEventCalendar.instances[config.id] = new window.BXEventCalendar.Core(config, data, additionalParams);
+							});
+						},
+						Get: function(id)
+						{
+							return BXEventCalendar.instances[id] || false;
+						}
+					};
+
+					window.BXEventCalendar = BXEventCalendar;
+				}
+				BX.onCustomEvent(window, "onBXEventCalendarInit");
+			})(window);
+		</script><?
+
+		$basePath = '/bitrix/js/calendar/new/';
+
+		CJSCore::RegisterExt('event_calendar', array(
+			'js' => array(
+				$basePath.'calendar-core.js',
+				$basePath.'calendar-view.js',
+				$basePath.'calendar-view-transition.js',
+				$basePath.'calendar-entry.js',
+				$basePath.'calendar-section.js',
+				$basePath.'calendar-controls.js',
+				$basePath.'calendar-dialogs.js',
+				$basePath.'calendar-simple-popup.js',
+				$basePath.'calendar-simple-view-popup.js',
+				$basePath.'calendar-section-slider.js',
+				$basePath.'calendar-settings-slider.js',
+				$basePath.'calendar-edit-entry-slider.js',
+				$basePath.'calendar-view-entry-slider.js',
+				$basePath.'calendar-sync-slider.js',
+				$basePath.'calendar-util.js',
+				$basePath.'calendar-search.js'
+			),
+			'lang' => '/bitrix/modules/calendar/classes/general/calendar_js.php',
+			'css' => $basePath.'calendar.css',
+			'rel' => array('ajax', 'window', 'popup', 'access', 'date', 'viewer', 'socnetlogdest', 'dnd')
+		));
+		CUtil::InitJSCore(array('event_calendar'));
+
+		$config['days'] = self::GetWeekDays();
+		$config['month'] = array(Loc::getMessage('EC_JAN'), Loc::getMessage('EC_FEB'), Loc::getMessage('EC_MAR'), Loc::getMessage('EC_APR'), Loc::getMessage('EC_MAY'), Loc::getMessage('EC_JUN'), Loc::getMessage('EC_JUL'), Loc::getMessage('EC_AUG'), Loc::getMessage('EC_SEP'), Loc::getMessage('EC_OCT'), Loc::getMessage('EC_NOV'), Loc::getMessage('EC_DEC'));
+		$config['month_r'] = array(Loc::getMessage('EC_JAN_R'), Loc::getMessage('EC_FEB_R'), Loc::getMessage('EC_MAR_R'), Loc::getMessage('EC_APR_R'), Loc::getMessage('EC_MAY_R'), Loc::getMessage('EC_JUN_R'), Loc::getMessage('EC_JUL_R'), Loc::getMessage('EC_AUG_R'), Loc::getMessage('EC_SEP_R'), Loc::getMessage('EC_OCT_R'), Loc::getMessage('EC_NOV_R'), Loc::getMessage('EC_DEC_R'));
 
 		$APPLICATION->SetAdditionalCSS("/bitrix/js/calendar/cal-style.css");
+
+		/*
 		// Add scripts
 		$arJS = array(
 			'/bitrix/js/calendar/cal-core.js',
@@ -183,21 +259,32 @@ function onPopupTaskDeleted(taskId){BX.onCustomEvent(window, 'onCalendarPopupTas
 			'/bitrix/js/calendar/cal-controlls.js'
 		);
 
-		// Drag & drop
+		 //Drag & drop
 		$arJS[] = '/bitrix/js/main/dd.js';
 
 		for($i = 0, $l = count($arJS); $i < $l; $i++)
 		{
 			$APPLICATION->AddHeadScript($arJS[$i]);
 		}
+		*/
 
 		?>
+		<div class="calendar-main-container" id="<?=$config['id']?>-main-container"></div>
 		<script type="text/javascript">
-		<?self::Localization();?>
-
+		<?
+		/*
+		self::Localization();?>
+		// Old one
 		BX.ready(function(){
-			new JCEC(<?= CUtil::PhpToJSObject($JSConfig)?>);
+			new JCEC(<?= CUtil::PhpToJSObject($config)?>);
 		});
+		<? */?>
+
+		window.BXEventCalendar.Show(
+			<?= Json::encode($config)?>,
+			<?= Json::encode($data)?>,
+			<?= Json::encode($additionalParams)?>
+		);
 		</script>
 		<?
 	}
@@ -472,434 +559,17 @@ var EC_MESS = {
 	?>};<?
 	}
 
-	private static function DialogAddEventSimple($params)
-	{
-		if (CCalendarSceleton::CheckBitrix24Limits($params))
-		{
-			global $APPLICATION;
-			$APPLICATION->IncludeComponent("bitrix:calendar.event.simple.add", "", $params);
-		}
-	}
-
-	public static function DialogEditEvent($params)
-	{
-		if (CCalendarSceleton::CheckBitrix24Limits($params))
-		{
-			global $APPLICATION;
-			$APPLICATION->IncludeComponent("bitrix:calendar.event.edit", "", $params);
-		}
-	}
-
-	public static function DialogViewEvent($params)
-	{
-		if (CCalendarSceleton::CheckBitrix24Limits($params))
-		{
-			global $APPLICATION;
-			$APPLICATION->IncludeComponent("bitrix:calendar.event.view", "", $params);
-		}
-	}
-
-	public static function DialogEditSection($params)
-	{
-		$id = $params['id'];
-		$arTabs = array(
-			array('name' => GetMessage('EC_SECT_BASE_TAB'), 'id' => $id."sect-tab-0", 'active' => true),
-			array('name' => GetMessage('EC_SECT_ACCESS_TAB'), 'id' => $id."sect-tab-1")
-		);
-		?>
-
-<div id="bxec_sect_d_<?=$id?>" class="bxec-popup">
-	<div style="width: 560px; height: 1px;"></div>
-	<div class="popup-window-tabs" id="<?=$id?>_editsect_tabs">
-		<?foreach($arTabs as $tab):?>
-			<span class="popup-window-tab<? if($tab['active']) echo ' popup-window-tab-selected';?>" title="<?= (isset($tab['title']) ? $tab['title'] : $tab['name'])?>" id="<?=$tab['id']?>" <?if($tab['show'] === false)echo'style="display:none;"';?>>
-				<?=$tab['name']?>
-			</span>
-		<?endforeach;?>
-	</div>
-	<div class="popup-window-tabs-content">
-<?/* ####### TAB 0 : MAIN ####### */?>
-<div id="<?=$id?>sect-tab-0-cont" class="popup-window-tab-content popup-window-tab-content-selected">
-	<!-- Title -->
-	<div class="bxec-popup-row">
-		<span class="bxec-field-label-2"><label for="<?=$id?>_edcal_name"><?=GetMessage('EC_T_NAME')?>:</label></span>
-		<span  class="bxec-field-val-2"><input type="text" id="<?=$id?>_edcal_name" style="width: 350px;"/></span>
-	</div>
-	<!-- Description -->
-	<div class="bxec-popup-row">
-		<span class="bxec-field-label-2"><label for="<?=$id?>_edcal_desc"><?=GetMessage('EC_T_DESC')?>:</label></span>
-		<span  class="bxec-field-val-2"><textarea cols="32" id="<?=$id?>_edcal_desc" rows="2" style="width: 350px; resize: none;"></textarea></span>
-	</div>
-	<!-- Color -->
-	<div class="bxec-popup-row">
-		<span class="bxec-field-label-2"><label for="<?=$id?>-sect-color-inp"><?=GetMessage('EC_T_COLOR')?>:</label></span>
-		<span  class="bxec-field-val-2" style="width: 360px;">
-		<?CCalendarSceleton::DisplayColorSelector($id, 'sect', $params['colors']);?>
-		</span>
-	</div>
-
-	<div class="bxec-popup-row">
-		<input id="<?=$id?>_bxec_cal_exp_allow" type="checkbox" value="Y"><label for="<?=$id?>_bxec_cal_exp_allow"><?=GetMessage('EC_T_ALLOW_CALEN_EXP')?></label>
-		<div id="<?=$id?>_bxec_calen_exp_div" style="margin-top: 4px;">
-		<?=GetMessage('EC_T_CALEN_EXP_SET')?>:
-		<select id="<?=$id?>_bxec_calen_exp_set">
-			<option value="all"><?=GetMessage('EC_T_CALEN_EXP_SET_ALL')?></option>
-			<option value="3_9"><?=GetMessage('EC_T_CALEN_EXP_SET_3_9')?></option>
-			<option value="6_12"><?=GetMessage('EC_T_CALEN_EXP_SET_6_12')?></option>
-		</select>
-		</div>
-	</div>
-
-	<?if ($params['bExchangeConnected'] && CCalendar::IsExchangeEnabled() && $params['type'] == 'user' && $params['inPersonalCalendar']):?>
-	<div class="bxec-popup-row">
-		<input id="<?=$id?>_bxec_cal_exch" type="checkbox" value="Y" checked="checked"><label for="<?=$id?>_bxec_cal_exch"><?=GetMessage('EC_CALENDAR_TO_EXCH')?></label>
-	</div>
-	<?endif;?>
-
-	<?if($params['bShowSuperpose'] && $params['inPersonalCalendar']):?>
-	<div class="bxec-popup-row" id="<?=$id?>_bxec_cal_add2sp_cont">
-		<input id="<?=$id?>_bxec_cal_add2sp" type="checkbox" value="Y"><label for="<?=$id?>_bxec_cal_add2sp"><?=GetMessage('EC_T_ADD_TO_SP')?></label>
-	</div>
-	<?endif;?>
-</div>
-<?/* ####### END TAB 0 ####### */?>
-
-<?/* ####### TAB 1 : ACCESS ####### */?>
-<div id="<?=$id?>sect-tab-1-cont" class="popup-window-tab-content">
-	<div class="bxec-popup-row">
-		<div class="bxec-access-cont-row">
-			<div id="<?= $id?>access-values-cont" class="bxec-access-cont"></div>
-			<?self::GetAccessHTML('calendar_section');?>
-			<div class="bxec-access-link-cont"><a href="javascript:void(0);" id="<?= $id?>access-link" class="bxec-access-link"><?= GetMessage('EC_T_ADD')?></a></div>
-		</div>
-	</div>
-</div>
-<?/* ####### END TAB 1 ####### */?>
-	</div>
-</div>
-<?
-	}
-
-	public static function DialogExportCalendar($params)
-	{
-		$id = $params['id'];
-?>
-<div id="bxec_excal_<?=$id?>" class="bxec-popup">
-	<span id="<?=$id?>_excal_text"></span><br />
-	<div class="bxec-exp-link-cont">
-		<a href="javascript:void(0);" target="_blank" id="<?=$id?>_excal_link">&ndsp;</a>
-		<span id="<?=$id?>_excal_warning" class="bxec-export-warning"><?=GetMessage('EC_EDEV_EXP_WARN')?></span>
-	</div>
-	<span class="bxec-excal-notice-hide">
-		<a title="<?=GetMessage('EC_T_EXPORT_NOTICE_OUTLOOK_TITLE')?>" href="javascript:void(0);" id="<?=$id?>_excal_link_outlook"><?=GetMessage('EC_T_EXPORT_NOTICE_OUTLOOK_LINK')?></a>
-		<div class="bxec-excal-notice-outlook"><?=GetMessage('EC_T_EXPORT_NOTICE_OUTLOOK')?></div>
-	</span>
-</div>
-<?
-	}
-
-	public static function DialogSuperpose($params)
-	{
-		global $APPLICATION;
-		$id = $params['id'];
-
-		$arTypes = array(
-			array("TITLE" => "EC_SUPERPOSE_GR_USER", "ID" => "user")
-		);
-?>
-<div id="bxec_superpose_<?=$id?>" class="bxec-popup bxec-popup-sp-dialog">
-	<div class="bxc-spd-type">
-		<div class="bxc-spd-type-title" onclick="BX.toggleClass(this.parentNode, 'bxc-spd-type-collapsed');">
-			<span class="bxc-spd-type-title-plus"></span>
-			<span class="bxc-spd-type-title-inner"><?= GetMessage("EC_SUPERPOSE_GR_USER")?></span>
-			<a href="javascript:void(0);" class="bxc-spd-del-cat" title="<?= GetMessage('EC_DELETE_ALL_USER_CALENDARS')?>" style="display: none;" id="bxec_sp_dell_all_sp_<?=$id?>"><?= GetMessage('EC_DELETE_DYN_SP_GROUP')?></a>
-		</div>
-		<div class="bxc-spd-type-cont" id="bxec_sp_type_user_cont_<?=$id?>"></div>
-		<?
-		$isExtranetGroup = false;
-
-		if ($params["bSocNet"] && $params["type"] == "group" && intval($params["ownerId"]) > 0 && \Bitrix\Main\Loader::includeModule("extranet"))
-			$isExtranetGroup = CExtranet::IsExtranetSocNetGroup($params["ownerId"]);
-
-		$APPLICATION->IncludeComponent(
-			"bitrix:intranet.user.selector.new", "", array(
-				"MULTIPLE" => "Y",
-				"NAME" => "BXCalUserSelectSP",
-				"VALUE" => array(),
-				"POPUP" => "Y",
-				"ON_CHANGE" => "bxcUserSelectorOnchange",
-				"NAME_TEMPLATE" => CCalendar::GetUserNameTemplate(),
-				"SITE_ID" => SITE_ID,
-				"SHOW_EXTRANET_USERS" => $isExtranetGroup ? "FROM_EXACT_GROUP" : "NONE",
-				"EX_GROUP" => $isExtranetGroup ? $params["ownerId"] : ""
-			), null, array("HIDE_ICONS" => "Y")
-		);
-		?>
-		<span class="bxc-add-guest-link bxc-add-guest-link-sp"  id="<?=$id?>_user_control_link_sp"><i></i><span><?=GetMessage('EC_USER_ADD_SP_TRACKING')?></span></span>
-		<div id="<?=$id?>_sp_user_nf_notice" class="bxec-sprpose-users-nf"><?=GetMessage('EC_SP_DIALOG_USERS_NOT_FOUND')?></div>
-	</div>
-	<div class="bxc-spd-type" id="bxec_sp_type_group_<?=$id?>" style="display: none;">
-		<div class="bxc-spd-type-title" onclick="BX.toggleClass(this.parentNode, 'bxc-spd-type-collapsed');">
-			<span class="bxc-spd-type-title-plus"></span>
-			<span class="bxc-spd-type-title-inner"><?= GetMessage("EC_SUPERPOSE_GR_GROUP")?></span>
-		</div>
-		<div class="bxc-spd-type-cont" id="bxec_sp_type_group_cont_<?=$id?>"></div>
-	</div>
-	<div  class="bxc-spd-type-com" id="bxec_sp_type_common_<?=$id?>" style="display: none;"></div>
-</div>
-<?
-	}
-
-	public static function DialogSettings($params)
-	{
-		$id = $params['id'];
-		$arTabs = array(
-			array('name' => GetMessage('EC_SET_TAB_PERSONAL'), 'title' => GetMessage('EC_SET_TAB_PERSONAL_TITLE'), 'id' => $id."set-tab-0"),
-			array('name' => GetMessage('EC_SET_TAB_BASE'), 'title' => GetMessage('EC_SET_TAB_BASE_TITLE'), 'id' => $id."set-tab-1", 'show' => CCalendarType::CanDo('calendar_type_edit_access', $params['type'])),
-			array('name' => GetMessage('EC_SECT_ACCESS_TAB'), 'title' => GetMessage('EC_SECT_ACCESS_TAB'), 'id' => $id."set-tab-2", 'show' => CCalendarType::CanDo('calendar_type_edit_access', $params['type']))
-		);
-
-		$arDays = self::GetWeekDays();
-		$arWorTimeList = array();
-		for ($i = 0; $i < 24; $i++)
-		{
-			$arWorTimeList[strval($i)] = CCalendar::FormatTime($i, 0);
-			$arWorTimeList[strval($i).'.30'] = CCalendar::FormatTime($i, 30);
-		}
-
-		$timezoneList = CCalendar::GetTimezoneList();
-		$bInPersonal = $params['inPersonalCalendar'];
-?>
-<div id="bxec_uset_<?=$id?>" class="bxec-popup">
-	<div style="width: 500px; height: 1px;"></div>
-	<div class="popup-window-tabs" id="<?=$id?>_set_tabs">
-		<?foreach($arTabs as $tab):?>
-			<span class="popup-window-tab<? if($tab['active']) echo ' popup-window-tab-selected';?>" title="<?= (isset($tab['title']) ? $tab['title'] : $tab['name'])?>" id="<?=$tab['id']?>" <?if($tab['show'] === false)echo'style="display:none;"';?>>
-				<?=$tab['name']?>
-			</span>
-		<?endforeach;?>
-	</div>
-	<div class="popup-window-tabs-content"  id="<?=$id?>_set_tabcont">
-<?/* ####### TAB 0 : PERSONAL ####### */?>
-<div id="<?=$id?>set-tab-0-cont" class="popup-window-tab-content popup-window-tab-content-selected">
-
-	<!-- default meeting calendar -->
-	<?if($bInPersonal):?>
-	<div class="bxec-popup-row">
-		<span class="bxec-field-label-3"><label for="<?=$id?>_set_tz_sel"><?=GetMessage('EC_TIMEZONE')?>:</label></span>
-		<span  class="bxec-field-val-2">
-			<select id="<?=$id?>_set_tz_sel" style="max-width: 235px;">
-				<option value=""> - </option>
-				<?foreach($timezoneList as $tz):?>
-					<option value="<?= $tz['timezone_id']?>"><?= htmlspecialcharsEx($tz['title'])?></option>
-				<?endforeach;?>
-			</select>
-		</span>
-	</div>
-	<div class="bxec-popup-row">
-		<span class="bxec-field-label-3"><label for="<?=$id?>_uset_calend_sel"><?=GetMessage('EC_ADV_MEETING_CAL')?>:</label></span>
-		<span  class="bxec-field-val-2">
-			<select id="<?=$id?>_set_sect_sel"></select>
-		</span>
-	</div>
-
-	<!-- blinking option -->
-	<div class="bxec-popup-row">
-		<span class="bxec-field-label-1"><input id="<?=$id?>_uset_blink" type="checkbox" /></span>
-		<span  class="bxec-field-val-2">
-			<label for="<?=$id?>_uset_blink"><?=GetMessage('EC_BLINK_SET')?></label>
-		</span>
-	</div>
-
-	<!-- show declined -->
-	<div class="bxec-popup-row">
-		<span class="bxec-field-label-1"><input id="<?=$id?>_show_declined" type="checkbox" /></span>
-		<span  class="bxec-field-val-2">
-			<label for="<?=$id?>_show_declined"><?=GetMessage('EC_OPTION_SHOW_DECLINED')?></label>
-		</span>
-	</div>
-	<?endif;/*if($bInPersonal)*/?>
-
-	<div class="bxec-popup-row">
-		<span class="bxec-field-label-1"><input id="<?=$id?>_show_muted" type="checkbox" /></span>
-		<span  class="bxec-field-val-2">
-			<label for="<?=$id?>_show_muted"><?=GetMessage('EC_OPTION_SHOW_MUTED')?></label>
-		</span>
-	</div>
-
-	<div class="bxec-popup-row">
-		<span class="bxec-field-label-1"><input id="<?=$id?>_deny_busy_invitation" type="checkbox" /></span>
-		<span  class="bxec-field-val-2">
-			<label for="<?=$id?>_deny_busy_invitation"><?=GetMessage('EC_DENY_BUSY_INVITATION')?></label>
-		</span>
-	</div>
-
-	<?if($params['bShowSuperpose']):?>
-	<div class="bxec-popup-row">
-		<a id="<?=$id?>-set-manage-sp" href="javascript:void(0);" title="<?=GetMessage('EC_MANAGE_SP_CALENDARS_TITLE')?>"><?= GetMessage('EC_MANAGE_SP_CALENDARS')?></a>
-	</div>
-	<?endif;?>
-
-	<?if($params['bCalDAV'] && $bInPersonal):?>
-	<div class="bxec-popup-row">
-		<a id="<?=$id?>_manage_caldav" href="javascript:void(0);" title="<?=GetMessage('EC_MANAGE_CALDAV_TITLE')?>"><?= GetMessage('EC_MANAGE_CALDAV')?></a>
-	</div>
-	<?endif;?>
-
-	<div class="bxec-popup-row">
-		<a id="<?=$id?>_uset_clear" href="javascript:void(0);"><?= GetMessage('EC_CLEAR_PERS_SETTINGS')?></a>
-	</div>
-</div>
-<?/* ####### END TAB 0 ####### */?>
-
-<?/* ####### TAB 1 : CALENDAR SETTINGS ####### */?>
-<div id="<?=$id?>set-tab-1-cont" class="popup-window-tab-content">
-
-	<!-- Work time -->
-	<div class="bxec-popup-row">
-		<span class="bxec-field-label-3"><label for="<?=$id?>work_time_start"><?= GetMessage("EC_WORK_TIME")?>:</label></span>
-		<span  class="bxec-field-val-2">
-			<select id="<?=$id?>work_time_start">
-					<?foreach($arWorTimeList as $key => $val):?>
-						<option value="<?= $key?>"><?= $val?></option>
-					<?endforeach;?>
-				</select>
-				&mdash;
-				<select id="<?=$id?>work_time_end">
-					<?foreach($arWorTimeList as $key => $val):?>
-						<option value="<?= $key?>"><?= $val?></option>
-					<?endforeach;?>
-				</select>
-		</span>
-	</div>
-
-<!-- Week holidays -->
-<div class="bxec-popup-row">
-	<span class="bxec-field-label-3"><label for="<?=$id?>week_holidays"><?=GetMessage('EC_WEEK_HOLIDAYS')?>:</label></span>
-	<span  class="bxec-field-val-2">
-		<select size="7" multiple=true id="<?=$id?>week_holidays">
-			<?foreach($arDays as $day):?>
-				<option value="<?= $day[2]?>" ><?= $day[0]?></option>
-			<?endforeach;?>
-		</select>
-	</span>
-</div>
-<!-- year holidays -->
-<div class="bxec-popup-row">
-	<span class="bxec-field-label-3"><label for="<?=$id?>year_holidays"><?=GetMessage('EC_YEAR_HOLIDAYS')?>:</label></span>
-	<span  class="bxec-field-val-2"><input type="text" id="<?=$id?>year_holidays" value=""/></span>
-</div>
-<!-- year workdays -->
-<div class="bxec-popup-row">
-	<span class="bxec-field-label-3"><label for="<?=$id?>year_workdays"><?=GetMessage('EC_YEAR_WORKDAYS')?>:</label></span>
-	<span  class="bxec-field-val-2"><input type="text" id="<?=$id?>year_workdays" value=""/></span>
-</div>
-
-<!-- week start -->
-<div class="bxec-popup-row" style="display: none;">
-	<span class="bxec-field-label-3"><label for="<?=$id?>week_start"><?=GetMessage('EC_WEEK_START')?>:</label></span>
-	<span  class="bxec-field-val-2">
-		<select id="<?=$id?>week_start">
-			<?foreach($arDays as $day):?>
-				<option value="<?= $day[2]?>" ><?= $day[0]?></option>
-			<?endforeach;?>
-		</select>
-	</span>
-</div>
-
-<?if (!CCalendar::IsBitrix24()):?>
-<div class="bxec-popup-row">
-	<a href="/bitrix/admin/settings.php?mid=calendar&tabControl_active_tab=edit2" title="<?=GetMessage('EC_MANAGE_CALENDAR_TYPES_TITLE')?>" target="_blank"><?= GetMessage('EC_MANAGE_CALENDAR_TYPES')?></a>
-</div>
-<div class="bxec-popup-row">
-	<a href="/bitrix/admin/settings.php?mid=calendar&tabControl_active_tab=edit1" title="<?=GetMessage('EC_MANAGE_SETTING_TITLE')?>" target="_blank"><?= GetMessage('EC_MANAGE_SETTING')?></a>
-</div>
-<?endif;?>
-
-</div>
-<?/* ####### END TAB 1 ####### */?>
-
-<?/* ####### TAB 2 : PERMISSIONS ####### */?>
-<div id="<?=$id?>set-tab-2-cont" class="popup-window-tab-content">
-
-	<div class="bxec-popup-row">
-		<div class="bxec-access-cont-row">
-			<div id="<?= $id?>type-access-values-cont" class="bxec-access-cont"></div>
-			<?self::GetAccessHTML('calendar_type');?>
-			<div class="bxec-access-link-cont"><a href="javascript:void(0);" id="<?= $id?>type-access-link" class="bxec-access-link"><?= GetMessage('EC_T_ADD')?></a></div>
-		</div>
-	</div>
-
-</div>
-<?/* ####### END TAB 2 ####### */?>
-	</div>
-</div>
-<?
-	}
-
-	public static function DialogExternalCalendars($params)
-	{
-		$id = $params['id'];
-?>
-<div id="bxec_cdav_<?=$id?>" class="bxec-popup">
-	<div class="bxec-dav-list" id="<?=$id?>_bxec_dav_list"></div>
-	<?/*
-	<div class="bxec-dav-notice">
-		<?= GetMessage('EC_CALDAV_NOTICE')?><br><?= GetMessage('EC_CALDAV_NOTICE_GOOGLE')?>
-	</div>
-	*/?>
-	<div class="bxec-dav-new" id="<?=$id?>_bxec_dav_new">
-		<table>
-			<tr>
-				<td class="bxec-dav-lab"><label for="<?=$id?>_bxec_dav_name"><?= GetMessage('EC_ADD_CALDAV_NAME')?>:</label></td>
-				<td class="bxec-dav-inp"><input type="text" id="<?=$id?>_bxec_dav_name" value="" style="width: 420px;" size="47"/></td>
-			</tr>
-			<tr>
-				<td class="bxec-dav-lab"><label for="<?=$id?>_bxec_dav_link"><?= GetMessage('EC_ADD_CALDAV_LINK')?>:</label></td>
-				<td class="bxec-dav-inp"><input type="text" id="<?=$id?>_bxec_dav_link" value="" style="width: 420px;" size="47"/></td>
-			</tr>
-			<tr id="<?=$id?>_bxec_dav_username_cont">
-				<td class="bxec-dav-lab"><label for="<?=$id?>_bxec_dav_username"><?= GetMessage('EC_ADD_CALDAV_USER_NAME')?>:</label></td>
-				<td class="bxec-dav-inp"><input type="text" id="<?=$id?>_bxec_dav_username" value="" style="width: 200px;" size="30"/></td>
-			</tr>
-			<tr id="<?=$id?>_bxec_dav_password_cont">
-				<td class="bxec-dav-lab"><label for="<?=$id?>_bxec_dav_password"><?= GetMessage('EC_ADD_CALDAV_PASS')?>:</label></td>
-				<td class="bxec-dav-inp"><input type="password" id="<?=$id?>_bxec_dav_password" value="" style="width: 200px;" size="30"/></td>
-			</tr>
-			<tr id="<?=$id?>_bxec_dav_sections_cont">
-				<td class="bxec-dav-lab"><label for="<?=$id?>_bxec_dav_sections"><?= GetMessage('EC_ADD_CALDAV_SECTIONS')?>:</label></td>
-				<td class="bxec-dav-inp" id="<?=$id?>_bxec_dav_sections"></td>
-			</tr>
-		</table>
-	</div>
-</div>
-<?
-	}
-
-	public static function DialogMobileCon($params)
-	{
-		$id = $params['id'];
-?>
-<div id="bxec_mobile_<?=$id?>" class="bxec-popup" style="width: 560px;">
-	<div class="bxec-mobile-cont">
-		<div id="bxec-sync-iphone-<?=$id?>"><?= GetMessage('EC_MOBILE_HELP_IPHONE', array('#POINT_SET_PORT#' => GetMessage('EC_SET_PORT')))?></div>
-		<div id="bxec-sync-mac-<?=$id?>"><?= GetMessage('EC_MOBILE_HELP_MAC', array('#POINT_SET_PORT#' => GetMessage('EC_SET_PORT')))?></div>
-		<div id="bxec-sync-android-<?=$id?>"><?= GetMessage("EC_MOBILE_HELP_ANDROID")?></div>
-	</div>
-</div>
-<?
-	}
 
 	public static function GetWeekDays()
 	{
 		return array(
-			array(GetMessage('EC_MO_F'), GetMessage('EC_MO'), 'MO'),
-			array(GetMessage('EC_TU_F'), GetMessage('EC_TU'), 'TU'),
-			array(GetMessage('EC_WE_F'), GetMessage('EC_WE'), 'WE'),
-			array(GetMessage('EC_TH_F'), GetMessage('EC_TH'), 'TH'),
-			array(GetMessage('EC_FR_F'), GetMessage('EC_FR'), 'FR'),
-			array(GetMessage('EC_SA_F'), GetMessage('EC_SA'), 'SA'),
-			array(GetMessage('EC_SU_F'), GetMessage('EC_SU'), 'SU')
+			array(Loc::getMessage('EC_MO_F'), Loc::getMessage('EC_MO'), 'MO'),
+			array(Loc::getMessage('EC_TU_F'), Loc::getMessage('EC_TU'), 'TU'),
+			array(Loc::getMessage('EC_WE_F'), Loc::getMessage('EC_WE'), 'WE'),
+			array(Loc::getMessage('EC_TH_F'), Loc::getMessage('EC_TH'), 'TH'),
+			array(Loc::getMessage('EC_FR_F'), Loc::getMessage('EC_FR'), 'FR'),
+			array(Loc::getMessage('EC_SA_F'), Loc::getMessage('EC_SA'), 'SA'),
+			array(Loc::getMessage('EC_SU_F'), Loc::getMessage('EC_SU'), 'SU')
 		);
 	}
 
@@ -1032,122 +702,10 @@ var EC_MESS = {
 		?>
 		<div  class="bxec-color-inp-cont">
 			<input class="bxec-color-inp" id="<?=$id?>-<?=$key?>-color-inp"/>
-			<a  id="<?=$id?>-<?=$key?>-text-color-inp" href="javascript:void('');" class="bxec-color-text-link"><?= GetMessage('EC_TEXT_COLOR')?></a>
+			<a  id="<?=$id?>-<?=$key?>-text-color-inp" href="javascript:void('');" class="bxec-color-text-link"><?= Loc::getMessage('EC_TEXT_COLOR')?></a>
 		</div>
 		<div class="bxec-color-cont" id="<?=$id?>-<?=$key?>-color-cont">
 		<?foreach($colors as $i => $color):?><span class="bxec-color-it"><a id="<?=$id?>-<?=$key?>-color-<?=$i?>" style="background-color:<?= $color?>" href="javascript:void(0);"></a></span><?endforeach;?>
-		</div>
-		<?
-	}
-
-	public static function __ShowAttendeesDestinationHtml($Params = array())
-	{
-		CSocNetTools::InitGlobalExtranetArrays();
-
-		$id = $Params['id'];
-		$DESTINATION = CCalendar::GetSocNetDestination(false, $Params['event']['ATTENDEES_CODES']);
-		?>
-		<div id="event-grid-att<?= $id?>" class="event-grid-dest-block">
-			<div class="event-grid-dest-wrap-outer">
-				<div class="event-grid-dest-label"><?=GetMessage("EC_EDEV_GUESTS")?>:</div>
-				<div class="event-grid-dest-wrap" id="event-grid-dest-cont">
-					<span id="event-grid-dest-item"></span>
-					<span class="feed-add-destination-input-box" id="event-grid-dest-input-box">
-						<input type="text" value="" class="feed-add-destination-inp" id="event-grid-dest-input">
-					</span>
-					<a href="#" class="feed-add-destination-link" id="event-grid-dest-add-link"></a>
-					<script>
-						<?
-						if (is_array($GLOBALS["arExtranetGroupID"]))
-						{
-							?>
-							if (typeof window['arExtranetGroupID'] == 'undefined')
-							{
-								window['arExtranetGroupID'] = <?=CUtil::PhpToJSObject($GLOBALS["arExtranetGroupID"])?>;
-							}
-							<?
-						}
-						?>
-						BX.message({
-							'BX_FPD_LINK_1':'<?=GetMessageJS("EC_DESTINATION_1")?>',
-							'BX_FPD_LINK_2':'<?=GetMessageJS("EC_DESTINATION_2")?>'
-						});
-						window.editEventDestinationFormName = top.editEventDestinationFormName = 'edit_event_<?=randString(6)?>';
-						//
-						BX.SocNetLogDestination.init({
-							name : editEventDestinationFormName,
-							searchInput : BX('event-grid-dest-input'),
-							extranetUser :  false,
-							userSearchArea: 'I',
-							bindMainPopup : { 'node' : BX('event-grid-dest-cont'), 'offsetTop' : '5px', 'offsetLeft': '15px'},
-							bindSearchPopup : { 'node' : BX('event-grid-dest-cont'), 'offsetTop' : '5px', 'offsetLeft': '15px'},
-							callback : {
-								select : BxEditEventGridSelectCallback,
-								unSelect : BxEditEventGridUnSelectCallback,
-								openDialog : BxEditEventGridOpenDialogCallback,
-								closeDialog : BxEditEventGridCloseDialogCallback,
-								openSearch : BxEditEventGridOpenDialogCallback,
-								closeSearch : BxEditEventGridCloseSearchCallback
-							},
-							items : {
-								users : <?=(empty($DESTINATION['USERS'])? '{}': CUtil::PhpToJSObject($DESTINATION['USERS']))?>,
-								groups : <?=(
-									$DESTINATION["EXTRANET_USER"] == 'Y'
-								|| (array_key_exists("DENY_TOALL", $DESTINATION) && $DESTINATION["DENY_TOALL"])
-									? '{}'
-									: "{'UA' : {'id':'UA','name': '".(!empty($DESTINATION['DEPARTMENT']) ? GetMessageJS("MPF_DESTINATION_3"): GetMessageJS("MPF_DESTINATION_4"))."'}}"
-								)?>,
-								sonetgroups : <?=(empty($DESTINATION['SONETGROUPS'])? '{}': CUtil::PhpToJSObject($DESTINATION['SONETGROUPS']))?>,
-								department : <?=(empty($DESTINATION['DEPARTMENT'])? '{}': CUtil::PhpToJSObject($DESTINATION['DEPARTMENT']))?>,
-								departmentRelation : <?=(empty($DESTINATION['DEPARTMENT_RELATION'])? '{}': CUtil::PhpToJSObject($DESTINATION['DEPARTMENT_RELATION']))?>
-							},
-							itemsLast : {
-								users : <?=(empty($DESTINATION['LAST']['USERS'])? '{}': CUtil::PhpToJSObject($DESTINATION['LAST']['USERS']))?>,
-								sonetgroups : <?=(empty($DESTINATION['LAST']['SONETGROUPS'])? '{}': CUtil::PhpToJSObject($DESTINATION['LAST']['SONETGROUPS']))?>,
-								department : <?=(empty($DESTINATION['LAST']['DEPARTMENT'])? '{}': CUtil::PhpToJSObject($DESTINATION['LAST']['DEPARTMENT']))?>,
-								groups : <?=($DESTINATION["EXTRANET_USER"] == 'Y'? '{}': "{'UA':true}")?>
-							},
-							itemsSelected : <?=(empty($DESTINATION['SELECTED'])? '{}': CUtil::PhpToJSObject($DESTINATION['SELECTED']))?>,
-							destSort : <?=(empty($DESTINATION['DEST_SORT'])? '{}': CUtil::PhpToJSObject($DESTINATION['DEST_SORT']))?>
-						});
-					</script>
-				</div>
-			</div>
-
-			<!-- Meeting host -->
-			<div class="event-grid-host-cont">
-				<span class="event-grid-host-cont-label"><?= GetMessage('EC_EDEV_HOST')?>:</span>
-				<a title="<?= htmlspecialcharsbx($Params['host']['DISPLAY_NAME'])?>" href="<?= $Params['host']['URL']?>" target="_blank" class="bxcal-user"><span class="bxcal-user-avatar-outer"><span class="bxcal-user-avatar"><img src="<?= $Params['host']['AVATAR_SRC']?>" width="<?= $Params['AVATAR_SIZE']?>" height="<?= $Params['AVATAR_SIZE']?>" /></span></span><span class="bxcal-user-name"><?= htmlspecialcharsbx($Params['host']['DISPLAY_NAME'])?></span></a>
-
-			</div>
-
-			<!-- Attendees cont -->
-			<div class="event-grid-attendees-cont">
-				<div id="event-edit-att-y" class="event-grid-attendees-cont-y"></div>
-				<div id="event-edit-att-n" class="event-grid-attendees-cont-n"></div>
-				<div id="event-edit-att-q" class="event-grid-attendees-cont-q"></div>
-			</div>
-		</div>
-
-		<div id="event-grid-meeting-params<?= $id?>" class="event-grid-params">
-			<div class="bxec-add-meet-text"><a id="<?=$id?>_add_meet_text" href="javascript:void(0);"><?=GetMessage('EC_ADD_METTING_TEXT')?></a></div>
-			<div class="bxec-meet-text" id="<?=$id?>_meet_text_cont">
-				<div class="bxec-mt-d"><?=GetMessage('EC_METTING_TEXT')?> (<a id="<?=$id?>_hide_meet_text" href="javascript:void(0);" title="<?=GetMessage('EC_HIDE_METTING_TEXT_TITLE')?>"><?=GetMessage('EC_HIDE')?></a>): </div><br />
-				<textarea name="meeting_text" class="bxec-mt-t" cols="63" id="<?=$id?>_meeting_text" rows="3"></textarea>
-			</div>
-
-			<div class="bxec-popup-row bxec-popup-row-checkbox">
-				<input type="checkbox" id="<?=$id?>_ed_open_meeting" value="Y" name="open_meeting"/>
-				<label style="display: inline-block;" for="<?=$id?>_ed_open_meeting"><?=GetMessage('EC_OPEN_MEETING')?></label>
-			</div>
-			<div class="bxec-popup-row bxec-popup-row-checkbox">
-				<input type="checkbox" id="<?=$id?>_ed_notify_status" value="Y" name="meeting_notify"/>
-				<label for="<?=$id?>_ed_notify_status"><?=GetMessage('EC_NOTIFY_STATUS')?></label>
-			</div>
-			<div class="bxec-popup-row bxec-popup-row-checkbox" id="<?=$id?>_ed_reivite_cont">
-				<input type="checkbox" id="<?=$id?>_ed_reivite" value="Y" name="meeting_reinvite"/>
-				<label for="<?=$id?>_ed_reivite"><?=GetMessage('EC_REINVITE')?></label>
-			</div>
 		</div>
 		<?
 	}

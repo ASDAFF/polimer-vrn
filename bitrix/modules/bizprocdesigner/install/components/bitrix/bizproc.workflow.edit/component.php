@@ -150,13 +150,18 @@ if($_SERVER['REQUEST_METHOD']=='POST' && $_REQUEST['saveajax']=='Y' && check_bit
 	 */
 	function wfeexception_handler($e)
 	{
-		$errors = $e->getErrors();
 		$errorMessages = array();
-		foreach ($errors as $error)
+		if (method_exists($e, 'getErrors'))
 		{
-			$errorMessages[] = CUtil::JSEscape($error['message']);
+			foreach($e->getErrors() as $error)
+			{
+				$errorMessages[] = CUtil::JSEscape($error['message']);
+			}
 		}
-
+		else
+		{
+			$errorMessages[] = CUtil::JSEscape($e->getMessage());
+		}
 		?><!--SUCCESS--><script>
 			alert('<?=GetMessageJS("BIZPROC_WFEDIT_SAVE_ERROR")?>\n<?=implode('\n', $errorMessages)?>');
 			(function(){

@@ -1,8 +1,6 @@
 <?php
 namespace Bitrix\Sale\Delivery;
 
-use Bitrix\Main\ArgumentNullException;
-use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Sale;
 
 class CalculationResult extends Sale\ResultSerializable

@@ -72,6 +72,7 @@ BX.SocNetLogDestination =
 
 	obDepartmentEnable: {},
 	obSonetgroupsEnable: {},
+	obProjectsEnable: {},
 	obLastEnable: {},
 
 	arDialogGroups: {},
@@ -155,6 +156,8 @@ BX.SocNetLogDestination =
 
 BX.SocNetLogDestination.init = function(arParams)
 {
+	var i = null;
+
 	if(!arParams.name)
 	{
 		arParams.name = 'lm';
@@ -249,7 +252,7 @@ BX.SocNetLogDestination.init = function(arParams)
 		&& arParams.items.department
 	)
 	{
-		for(var i in arParams.items.department)
+		for(i in arParams.items.department)
 		{
 			BX.SocNetLogDestination.obDepartmentEnable[arParams.name] = true;
 			break;
@@ -262,9 +265,23 @@ BX.SocNetLogDestination.init = function(arParams)
 		&& arParams.items.sonetgroups
 	)
 	{
-		for(var i in arParams.items.sonetgroups)
+		for(i in arParams.items.sonetgroups)
 		{
 			BX.SocNetLogDestination.obSonetgroupsEnable[arParams.name] = true;
+			break;
+		}
+	}
+
+	BX.SocNetLogDestination.obProjectsEnable[arParams.name] = (!!arParams.enableProjects);
+	if (
+		!BX.SocNetLogDestination.obProjectsEnable[arParams.name]
+		&& BX.SocNetLogDestination.obSonetgroupsEnable[arParams.name]
+		&& arParams.items.projects
+	)
+	{
+		for(i in arParams.items.projects)
+		{
+			BX.SocNetLogDestination.obProjectsEnable[arParams.name] = true;
 			break;
 		}
 	}
@@ -300,6 +317,10 @@ BX.SocNetLogDestination.init = function(arParams)
 	if (BX.SocNetLogDestination.obSonetgroupsEnable[arParams.name])
 	{
 		BX.SocNetLogDestination.obTabs[arParams.name].push('group');
+	}
+	if (BX.SocNetLogDestination.obProjectsEnable[arParams.name])
+	{
+		BX.SocNetLogDestination.obTabs[arParams.name].push('project');
 	}
 	if (BX.SocNetLogDestination.obDepartmentEnable[arParams.name])
 	{
@@ -370,6 +391,19 @@ BX.SocNetLogDestination.init = function(arParams)
 		descLessMode: true,
 		title: BX.message('LM_POPUP_TAB_LAST_CRMEMAILS')
 	});
+
+	if (BX.SocNetLogDestination.obProjectsEnable[arParams.name])
+	{
+		BX.SocNetLogDestination.arDialogGroups[arParams.name].push({
+			bCrm: false,
+			groupCode: 'projects',
+			className: 'bx-lm-element-sonetgroup',
+			classNameExtranetGroup: 'bx-lm-element-extranet',
+			groupboxClassName: 'bx-lm-groupbox-project',
+			descLessMode: true,
+			title: BX.message('LM_POPUP_TAB_LAST_SG_PROJECT')
+		});
+	}
 
 	BX.SocNetLogDestination.arDialogGroups[arParams.name].push({
 		bCrm: false,
@@ -494,7 +528,17 @@ BX.SocNetLogDestination.openContainer = function(name, params)
 		return false;
 	}
 
-	BX.SocNetLogDestination.containerWindow = new BX.PopupWindow('BXSocNetLogDestinationContainer', params.bindNode || BX.SocNetLogDestination.obElementBindMainPopup[name].node, {
+	var bindNode = (
+		params.bindNode
+		&& BX.isNodeInDom(params.bindNode)
+			? params.bindNode
+			: BX.SocNetLogDestination.obElementBindMainPopup[name].node
+	);
+
+	if (!bindNode || !BX.isNodeInDom(bindNode))
+		return;
+
+	BX.SocNetLogDestination.containerWindow = new BX.PopupWindow('BXSocNetLogDestinationContainer', bindNode, {
 		autoHide: true,
 		zIndex: 1200,
 		className: 'bx-finder-popup bx-finder-v2',
@@ -502,7 +546,7 @@ BX.SocNetLogDestination.openContainer = function(name, params)
 		offsetTop: parseInt(BX.SocNetLogDestination.obElementBindMainPopup[name].offsetTop),
 		bindOptions: BX.SocNetLogDestination.obBindOptions[name],
 		closeByEsc: true,
-		closeIcon: BX.SocNetLogDestination.obWindowCloseIcon[name] ? true : false,
+		closeIcon: !!BX.SocNetLogDestination.obWindowCloseIcon[name],
 		lightShadow: true,
 		events: {
 			onPopupShow : function() {
@@ -574,12 +618,12 @@ BX.SocNetLogDestination.openContainer = function(name, params)
 											children: [
 												BX.create('SPAN', {
 													attrs: {
-														id: 'feed-add-post-destination-item'
+														id: 'bx-dest-internal-item'
 													}
 												}),
 												BX.create('SPAN', {
 													attrs: {
-														id: "feed-add-post-destination-input-box",
+														id: "bx-dest-internal-input-box",
 														style: "display: inline-block"
 													},
 													props: {
@@ -589,7 +633,7 @@ BX.SocNetLogDestination.openContainer = function(name, params)
 														BX.create('INPUT', {
 															attrs: {
 																type: "text",
-																id: "feed-add-post-destination-input"
+																id: "bx-dest-internal-input"
 															},
 															props: {
 																className: "feed-add-destination-inp"
@@ -632,19 +676,20 @@ BX.SocNetLogDestination.openContainer = function(name, params)
 
 	if (!!BX.SocNetLogDestination.obShowSearchInput[name])
 	{
-		BX.bind(BX('feed-add-post-destination-input'), 'keyup', BX.delegate(BX.SocNetLogDestination.BXfpSearch, {
+		BX.bind(BX('bx-dest-internal-input'), 'keyup', BX.delegate(BX.SocNetLogDestination.BXfpSearch, {
 			formName: name,
-			inputName: 'feed-add-post-destination-input',
+			inputName: 'bx-dest-internal-input',
 			sendAjax: !!BX.SocNetLogDestination.obSendAjaxSearch[name]
 		}));
-		BX.bind(BX('feed-add-post-destination-input'), 'paste', BX.delegate(BX.SocNetLogDestination.BXfpSearch, {
+		BX.bind(BX('bx-dest-internal-input'), 'paste', BX.defer(BX.SocNetLogDestination.BXfpSearch, {
 			formName: name,
-			inputName: 'feed-add-post-destination-input',
-			sendAjax: !!BX.SocNetLogDestination.obSendAjaxSearch[name]
+			inputName: 'bx-dest-internal-input',
+			sendAjax: !!BX.SocNetLogDestination.obSendAjaxSearch[name],
+			onPasteEvent: true
 		}));
-		BX.bind(BX('feed-add-post-destination-input'), 'keydown', BX.delegate(BX.SocNetLogDestination.BXfpSearchBefore, {
+		BX.bind(BX('bx-dest-internal-input'), 'keydown', BX.delegate(BX.SocNetLogDestination.BXfpSearchBefore, {
 			formName: name,
-			inputName: 'feed-add-post-destination-input'
+			inputName: 'bx-dest-internal-input'
 		}));
 		if (
 			params["itemsHidden"]
@@ -663,8 +708,8 @@ BX.SocNetLogDestination.openContainer = function(name, params)
 						},
 						type: 'sonetgroups',
 						bUndeleted: true,
-						containerInput: BX('feed-add-post-destination-item'),
-						valueInput: BX('feed-add-post-destination-input'),
+						containerInput: BX('bx-dest-internal-item'),
+						valueInput: BX('bx-dest-internal-input'),
 						formName: window.BXSocNetLogDestinationFormName,
 						tagInputName: 'bx-destination-tag',
 						tagLink1: BX.message('BX_FPD_LINK_1'),
@@ -675,7 +720,7 @@ BX.SocNetLogDestination.openContainer = function(name, params)
 			}
 		}
 
-		BX.SocNetLogDestination.obElementSearchInput[name] = BX('feed-add-post-destination-input');
+		BX.SocNetLogDestination.obElementSearchInput[name] = BX('bx-dest-internal-input');
 		BX.defer(BX.focus)(BX.SocNetLogDestination.obElementSearchInput[name]);
 	}
 
@@ -704,6 +749,26 @@ BX.SocNetLogDestination.getDialogContent = function(name)
 						}
 					},
 					html: BX.message('LM_POPUP_TAB_LAST')
+				})
+				: null
+		),
+		(
+			BX.SocNetLogDestination.obProjectsEnable[name]
+				? BX.create('A', {
+					attrs: {
+						hidefocus: 'true',
+						id: 'destProjectTab_' + name,
+						href: '#switchTab'
+					},
+					props: {
+						className: 'bx-finder-box-tab bx-lm-tab-project'
+					},
+					events: {
+						click: function () {
+							return BX.SocNetLogDestination.SwitchTab(name, this, 'project')
+						}
+					},
+					html: BX.message('LM_POPUP_TAB_SG_PROJECT')
 				})
 				: null
 		),
@@ -863,13 +928,25 @@ BX.SocNetLogDestination.getDialogContent = function(name)
 				: null
 		),
 		(
+			BX.SocNetLogDestination.obProjectsEnable[name]
+				? BX.create('DIV', {
+					attrs: {
+						id: 'bx-lm-box-project-content'
+					},
+					props: {
+						className: 'bx-finder-box-tab-content bx-lm-box-tab-content-project' + (!BX.SocNetLogDestination.obLastEnable[name] ? ' bx-finder-box-tab-content-selected' : '')
+					}
+				})
+				: null
+		),
+		(
 			BX.SocNetLogDestination.obSonetgroupsEnable[name]
 				? BX.create('DIV', {
 					attrs: {
 						id: 'bx-lm-box-group-content'
 					},
 					props: {
-						className: 'bx-finder-box-tab-content bx-lm-box-tab-content-sonetgroup' + (!BX.SocNetLogDestination.obLastEnable[name] && BX.SocNetLogDestination.obSonetgroupsEnable[name] ? ' bx-finder-box-tab-content-selected' : '')
+						className: 'bx-finder-box-tab-content bx-lm-box-tab-content-sonetgroup' + (!BX.SocNetLogDestination.obLastEnable[name] && !BX.SocNetLogDestination.obProjectsEnable[name] ? ' bx-finder-box-tab-content-selected' : '')
 					}
 				})
 				: null
@@ -878,7 +955,7 @@ BX.SocNetLogDestination.getDialogContent = function(name)
 			BX.SocNetLogDestination.obDepartmentEnable[name]
 				? BX.create('DIV', {
 					props: {
-						className: 'bx-finder-box-tab-content bx-lm-box-tab-content-department' + (!BX.SocNetLogDestination.obLastEnable[name] && !BX.SocNetLogDestination.obSonetgroupsEnable[name] && BX.SocNetLogDestination.obDepartmentEnable[name] ? ' bx-finder-box-tab-content-selected' : '')
+						className: 'bx-finder-box-tab-content bx-lm-box-tab-content-department' + (!BX.SocNetLogDestination.obLastEnable[name] && !BX.SocNetLogDestination.obProjectsEnable[name] && !BX.SocNetLogDestination.obSonetgroupsEnable[name] ? ' bx-finder-box-tab-content-selected' : '')
 					}
 				})
 				: null
@@ -1177,13 +1254,10 @@ BX.SocNetLogDestination.openDialog = function(name, params)
 		params = {};
 	}
 
-	if (
+	BX.SocNetLogDestination.bByFocusEvent = (
 		typeof params.bByFocusEvent != 'undefined'
 		&& params.bByFocusEvent
-	)
-	{
-		BX.SocNetLogDestination.bByFocusEvent = true;
-	}
+	);
 
 	if (BX.SocNetLogDestination.popupSearchWindow != null)
 	{
@@ -1192,11 +1266,20 @@ BX.SocNetLogDestination.openDialog = function(name, params)
 
 	if (BX.SocNetLogDestination.popupWindow != null)
 	{
-		if (!BX.SocNetLogDestination.bByFocusEvent)
+		var uniquePopupId = BX.SocNetLogDestination.popupWindow.uniquePopupId + '';
+
+		if (
+			uniquePopupId != name
+			|| !BX.SocNetLogDestination.bByFocusEvent
+		)
 		{
 			BX.SocNetLogDestination.popupWindow.close();
 		}
-		return false;
+
+		if (uniquePopupId == name)
+		{
+			return false;
+		}
 	}
 
 	if (
@@ -1209,7 +1292,7 @@ BX.SocNetLogDestination.openDialog = function(name, params)
 
 	if (!!BX.SocNetLogDestination.obUseContainer[name])
 	{
-		if (!BX.SocNetLogDestination.openContainer(name))
+		if (!BX.SocNetLogDestination.openContainer(name, params))
 		{
 			return false;
 		}
@@ -1235,7 +1318,17 @@ BX.SocNetLogDestination.openDialog = function(name, params)
 	}
 	else
 	{
-		BX.SocNetLogDestination.popupWindow = new BX.PopupWindow('BXSocNetLogDestination', params.bindNode || BX.SocNetLogDestination.obElementBindMainPopup[name].node, {
+		var bindNode = (
+			params.bindNode
+			&& BX.isNodeInDom(params.bindNode)
+				? params.bindNode
+				: BX.SocNetLogDestination.obElementBindMainPopup[name].node
+		);
+
+		if (!bindNode || !BX.isNodeInDom(bindNode))
+			return;
+
+		BX.SocNetLogDestination.popupWindow = new BX.PopupWindow('BXSocNetLogDestination', bindNode, {
 			autoHide: true,
 			zIndex: 1200,
 			className: 'bx-finder-popup bx-finder-v2',
@@ -1350,7 +1443,7 @@ BX.SocNetLogDestination.search = function(text, sendAjax, name, nameTemplate, pa
 	else
 	{
 		var items = {
-			'groups': {}, 'users': {}, 'crmemails': {}, 'sonetgroups': {}, 'department': {},
+			'groups': {}, 'users': {}, 'crmemails': {}, 'sonetgroups': {}, 'projects': {}, 'department': {},
 			'contacts': {}, 'companies': {}, 'leads': {}, 'deals': {}
 		};
 		var count = 0;
@@ -1693,7 +1786,10 @@ BX.SocNetLogDestination.search = function(text, sendAjax, name, nameTemplate, pa
 			if (BX.SocNetLogDestination.popupSearchWindow != null)
 			{
 				BX.SocNetLogDestination.popupSearchWindowContent.innerHTML = BX.SocNetLogDestination.getItemLastHtml(items, true, name);
-				BX.SocNetLogDestination.popupSearchWindow.setBindElement(params.bindNode);
+				if (params.bindNode && BX.isNodeInDom(params.bindNode))
+				{
+					BX.SocNetLogDestination.popupSearchWindow.setBindElement(params.bindNode);
+				}
 			}
 			else
 			{
@@ -1704,7 +1800,7 @@ BX.SocNetLogDestination.search = function(text, sendAjax, name, nameTemplate, pa
 			{
 				BX.SocNetLogDestination.containerWindow.adjustPosition();
 			}
-			else
+			else if (BX.SocNetLogDestination.popupSearchWindow)
 			{
 				BX.SocNetLogDestination.popupSearchWindow.adjustPosition();
 			}
@@ -1771,7 +1867,7 @@ BX.SocNetLogDestination.search = function(text, sendAjax, name, nameTemplate, pa
 				{
 					BX.SocNetLogDestination.containerWindow.adjustPosition();
 				}
-				else
+				else if (BX.SocNetLogDestination.popupSearchWindow)
 				{
 					BX.SocNetLogDestination.popupSearchWindow.adjustPosition();
 				}
@@ -1811,6 +1907,7 @@ BX.SocNetLogDestination.search = function(text, sendAjax, name, nameTemplate, pa
 					ADDITIONAL_SEARCH : 'N',
 					SELF : (BX.SocNetLogDestination.obAllowSearchSelf[name] ? 'Y' : 'N'),
 					SEARCH_SONET_GROUPS : (BX.SocNetLogDestination.obAllowSonetGroupsAjaxSearch[name] ? 'Y' : 'N'),
+					USE_PROJECTS: (BX.SocNetLogDestination.obProjectsEnable[name] ? 'Y' : 'N'),
 					SEARCH_SONET_FEATUES : BX.SocNetLogDestination.obAllowSonetGroupsAjaxSearchFeatures[name],
 					SITE_ID : BX.message('SITE_ID')
 				};
@@ -1916,6 +2013,7 @@ BX.SocNetLogDestination.search = function(text, sendAjax, name, nameTemplate, pa
 										if (
 											obUserEmail !== false
 											&& obUserEmail.email.length > 0
+											&& typeof BX.SocNetLogDestination.obItems[name].users[obUserEmail.email] == 'undefined'
 										)
 										{
 											BX.SocNetLogDestination.openInviteEmailUserDialog(obUserEmail, name, BX.SocNetLogDestination.obAllowAddCrmContact[name]);
@@ -1933,6 +2031,21 @@ BX.SocNetLogDestination.search = function(text, sendAjax, name, nameTemplate, pa
 											{
 												bFound = true;
 												BX.SocNetLogDestination.obItems[name].sonetgroups[i] = data.SONET_GROUPS[i];
+											}
+										}
+									}
+								}
+
+								if (typeof data.PROJECTS != 'undefined')
+								{
+									if (Object.keys(data.PROJECTS).length > 0)
+									{
+										for (i in data.PROJECTS)
+										{
+											if (data.PROJECTS.hasOwnProperty(i))
+											{
+												bFound = true;
+												BX.SocNetLogDestination.obItems[name].projects[i] = data.PROJECTS[i];
 											}
 										}
 									}
@@ -2109,7 +2222,17 @@ BX.SocNetLogDestination.openSearch = function(items, name, params)
 	}
 	else
 	{
-		BX.SocNetLogDestination.popupSearchWindow = new BX.PopupWindow('BXSocNetLogDestinationSearch', params.bindNode || BX.SocNetLogDestination.obElementBindSearchPopup[name].node, {
+		var bindNode = (
+			params.bindNode
+			&& BX.isNodeInDom(params.bindNode)
+				? params.bindNode
+				: BX.SocNetLogDestination.obElementBindSearchPopup[name].node
+		);
+
+		if (!bindNode || !BX.isNodeInDom(bindNode))
+			return;
+
+		BX.SocNetLogDestination.popupSearchWindow = new BX.PopupWindow('BXSocNetLogDestinationSearch', bindNode, {
 			autoHide: true,
 			zIndex: 1200,
 			className: 'bx-finder-popup bx-finder-v2',
@@ -2185,8 +2308,29 @@ BX.SocNetLogDestination.drawItemsGroup = function(lastItems, groupCode, name, se
 			: ''
 	);
 
-	for (var i in lastItems[groupCode])
+	var doSort = true;
+	var i = null;
+
+	var keys = lastItems[groupCode]? Object.keys(lastItems[groupCode]): [];
+	for (var item in lastItems[groupCode])
 	{
+		if (item === true)
+		{
+			doSort = false;
+			break;
+		}
+	}
+
+	if (doSort)
+	{
+		keys.sort(function(a, b) {
+			return parseInt(lastItems[groupCode][a]) - parseInt(lastItems[groupCode][b]);
+		});
+	}
+	for (var index = 0; index < keys.length; index++)
+	{
+		i = keys[index];
+
 		if (!BX.SocNetLogDestination.obItems[name][groupCode][i])
 		{
 			continue;
@@ -2496,6 +2640,15 @@ BX.SocNetLogDestination.getTabContentHtml = function(name, type, params)
 						: ''
 				);
 			}
+			else if (type == 'project')
+			{
+				className = 'bx-lm-element-sonetgroup' + (
+					typeof window['arExtranetGroupID'] != 'undefined'
+					&& BX.util.in_array(BX.SocNetLogDestination.obItems[name].projects[i].entityId, window['arExtranetGroupID'])
+						? ' bx-lm-element-extranet'
+						: ''
+				);
+			}
 
 			html += BX.SocNetLogDestination.getHtmlByTemplate7(
 				name,
@@ -2565,7 +2718,15 @@ BX.SocNetLogDestination.getDepartmentRelation = function(name, departmentId)
 				}
 			}
 			BX('bx-lm-category-relation-'+departmentId).innerHTML = html;
-			BX.SocNetLogDestination.popupWindow.adjustPosition();
+
+			if (!!BX.SocNetLogDestination.obUseContainer[name])
+			{
+				BX.SocNetLogDestination.containerWindow.adjustPosition();
+			}
+			else
+			{
+				BX.SocNetLogDestination.popupWindow.adjustPosition();
+			}
 		},
 		onfailure: function(data)	{}
 	});
@@ -2809,7 +2970,7 @@ BX.SocNetLogDestination.SwitchTab = function(name, currentTab, type)
 			{
 				tabsContent[i].innerHTML = BX.SocNetLogDestination.getItemDepartmentHtml(name);
 			}
-			else if (BX.util.in_array(type, ['group', 'email', 'crmemail']))
+			else if (BX.util.in_array(type, ['group', 'project', 'email', 'crmemail']))
 			{
 				var itemType = null;
 
@@ -2824,6 +2985,10 @@ BX.SocNetLogDestination.SwitchTab = function(name, currentTab, type)
 				else if (type == 'group')
 				{
 					itemType = 'sonetgroups';
+				}
+				else if (type == 'project')
+				{
+					itemType = 'projects';
 				}
 
 				tabsContent[i].innerHTML = BX.SocNetLogDestination.getTabContentHtml(name, type, {
@@ -2880,6 +3045,12 @@ BX.SocNetLogDestination.SwitchTab = function(name, currentTab, type)
 	{
 		BX.SocNetLogDestination.initResultNavigation(name, type, {
 			sonetgroups: BX.SocNetLogDestination.obItems[name].sonetgroups
+		});
+	}
+	else if (type == 'project')
+	{
+		BX.SocNetLogDestination.initResultNavigation(name, type, {
+			projects: BX.SocNetLogDestination.obItems[name].projects
 		});
 	}
 	else if (type == 'email')
@@ -2976,7 +3147,10 @@ BX.SocNetLogDestination.selectItem = function(name, element, template, itemId, t
 
 	BX.SocNetLogDestination.obItemsSelected[name][itemId] = type;
 
-	if (!BX.type.isArray(BX.SocNetLogDestination.obItemsLast[name][type]))
+	if (
+		!BX.type.isArray(BX.SocNetLogDestination.obItemsLast[name][type])
+		&& !BX.type.isPlainObject(BX.SocNetLogDestination.obItemsLast[name][type])
+	)
 	{
 		BX.SocNetLogDestination.obItemsLast[name][type] = {};
 	}
@@ -3728,6 +3902,7 @@ BX.SocNetLogDestination.closeDialog = function(silent)
 		}
 	}
 
+	BX.onCustomEvent(window, 'BX.SocNetLogDestination:onDialogClose', [ this ]);
 	return true;
 };
 
@@ -3911,6 +4086,7 @@ BX.SocNetLogDestination.BXfpSetLinkName = function(ob)
 	if (
 		typeof (ob.tagInputName) != 'undefined'
 		&& !!ob.tagInputName
+		&& BX(ob.tagInputName)
 	)
 	{
 		BX(ob.tagInputName).innerHTML = (
@@ -4093,17 +4269,18 @@ BX.SocNetLogDestination.BXfpUnSelectCallback = function(item)
 	var elements = BX.findChildren(BX(this.inputContainerName), {attribute: {'data-id': '' + item.id + ''}}, true);
 	if (elements !== null)
 	{
-		for (var j = 0; j < elements.length; j++)
+		for (var i = 0; i < elements.length; i++)
 		{
 			if (
 				typeof (this.undeleteClassName) == 'undefined'
-				|| !BX.hasClass(elements[j], this.undeleteClassName)
+				|| !BX.hasClass(elements[i], this.undeleteClassName)
 			)
 			{
-				BX.remove(elements[j]);
+				BX.remove(elements[i]);
 			}
 		}
 	}
+
 	BX(this.inputName).value = '';
 	BX.SocNetLogDestination.BXfpSetLinkName(this);
 
@@ -4137,7 +4314,8 @@ BX.SocNetLogDestination.BXfpSearch = function(event)
 		inputNode: (BX.type.isDomNode(this.inputNode) ? this.inputNode : null),
 		linkId: this.tagInputName,
 		sendAjax: (typeof this.sendAjax != 'undefined' ? this.sendAjax : true),
-		multiSelect: true
+		multiSelect: true,
+		onPasteEvent: (typeof this.onPasteEvent != 'undefined' ? this.onPasteEvent : false)
 	});
 };
 
@@ -4237,9 +4415,74 @@ BX.SocNetLogDestination.BXfpDisableBackspace = function(event)
 	}, 5000);
 };
 
+BX.SocNetLogDestination.BXfpBlurInput = function(event)
+{
+	if (
+		(
+			BX.SocNetLogDestination.popupSearchWindow == null
+			|| !BX.SocNetLogDestination.popupSearchWindow.isShown()
+		)
+		&& (
+			BX.SocNetLogDestination.popupWindow == null
+			|| !BX.SocNetLogDestination.popupWindow.isShown()
+		)
+	)
+	{
+		var inputNode = BX.proxy_context;
+
+		if (
+			inputNode
+			&& inputNode.tagName.toUpperCase() == 'INPUT'
+			&& BX.type.isNotEmptyString(inputNode.value)
+		)
+		{
+			inputNode.value = '';
+		}
+
+		var inputBoxNode = (
+			BX.type.isDomNode(this.inputBoxName)
+				? this.inputBoxName
+				: (
+					BX.type.isNotEmptyString(this.inputBoxName)
+						? BX(this.inputBoxName)
+						: null
+				)
+		);
+
+		if (inputBoxNode)
+		{
+			BX.style(inputBoxNode, 'display', 'none');
+		}
+
+		var tagInputNode = (
+			BX.type.isDomNode(this.tagInputName)
+				? this.tagInputName
+				: (
+					BX.type.isNotEmptyString(this.tagInputName)
+						? BX(this.tagInputName)
+						: null
+				)
+		);
+
+		if (tagInputNode)
+		{
+			BX.style(tagInputNode, 'display', 'inline-block');
+		}
+	}
+};
+
+
 BX.SocNetLogDestination.searchHandler = function(event, params)
 {
-	if (!this.searchStarted)
+	var onPasteEvent = (
+		typeof params.onPasteEvent != 'undefined'
+		&& params.onPasteEvent
+	);
+
+	if (
+		!this.searchStarted
+		&& !onPasteEvent
+	)
 	{
 		return false;
 	}
@@ -4247,7 +4490,7 @@ BX.SocNetLogDestination.searchHandler = function(event, params)
 	this.searchStarted = false;
 
 	if (
-		typeof event.clipboardData == 'undefined'
+		!onPasteEvent
 		&& (
 			event.keyCode == 16
 			|| event.keyCode == 17 // ctrl
@@ -4344,6 +4587,7 @@ BX.SocNetLogDestination.searchHandler = function(event, params)
 			|| !BX.SocNetLogDestination.inviteEmailUserWindow.isShown()
 		)
 		{
+
 			inputNode.value = '';
 			BX.style(BX(params.linkId), 'display', 'inline');
 
@@ -4363,14 +4607,7 @@ BX.SocNetLogDestination.searchHandler = function(event, params)
 	}
 	else
 	{
-		if (typeof event.clipboardData != 'undefined')
-		{
-			searchText = event.clipboardData.getData('Text');
-		}
-		else
-		{
-			searchText = inputNode.value;
-		}
+		searchText = inputNode.value;
 
 		BX.SocNetLogDestination.search(
 			searchText,
@@ -4898,6 +5135,11 @@ BX.SocNetLogDestination.abortSearchRequest = function()
 	if (BX.SocNetLogDestination.oXHR)
 	{
 		BX.SocNetLogDestination.oXHR.abort();
+	}
+
+	if (BX.SocNetLogDestination.searchTimeout)
+	{
+		clearTimeout(BX.SocNetLogDestination.searchTimeout);
 	}
 };
 

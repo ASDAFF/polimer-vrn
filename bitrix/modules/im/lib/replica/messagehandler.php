@@ -129,8 +129,6 @@ class MessageHandler extends \Bitrix\Replica\Client\BaseHandler
 		$arFields['PARAMS'] = Array();
 		$arFields['FILES'] = Array();
 
-		//CUserCounter::Increment($arFields['TO_USER_ID'], 'im_message_v2', '**', false);
-
 		if ($arFields['MESSAGE_TYPE'] == IM_MESSAGE_PRIVATE)
 		{
 			foreach ($arRel as $rel)
@@ -141,19 +139,17 @@ class MessageHandler extends \Bitrix\Replica\Client\BaseHandler
 					$arFields['TO_USER_ID'] = $rel['USER_ID'];
 			}
 
-			\CIMContactList::SetRecent(Array(
-				'ENTITY_ID' => $arFields['TO_USER_ID'],
-				'MESSAGE_ID' => $newRecord['ID'],
-				'CHAT_TYPE' => IM_MESSAGE_PRIVATE,
-				'USER_ID' => $arFields['FROM_USER_ID']
-			));
-
-			\CIMContactList::SetRecent(Array(
-				'ENTITY_ID' => $arFields['FROM_USER_ID'],
-				'MESSAGE_ID' => $newRecord['ID'],
-				'CHAT_TYPE' => IM_MESSAGE_PRIVATE,
-				'USER_ID' => $arFields['TO_USER_ID']
-			));
+			foreach ($arRel as $rel)
+			{
+				\CIMContactList::SetRecent(Array(
+					'ENTITY_ID' => $rel['USER_ID'] == $arFields['TO_USER_ID']? $arFields['FROM_USER_ID']: $arFields['TO_USER_ID'],
+					'MESSAGE_ID' => $newRecord['ID'],
+					'CHAT_TYPE' => IM_MESSAGE_PRIVATE,
+					'USER_ID' => $rel['USER_ID'],
+					'CHAT_ID' => $chatId,
+					'RELATION_ID' => $rel['ID']
+				));
+			}
 
 			if (\CModule::IncludeModule('pull'))
 			{
@@ -170,7 +166,12 @@ class MessageHandler extends \Bitrix\Replica\Client\BaseHandler
 						'DATE_CREATE' => time(),
 						'PARAMS' => $arFields['PARAMS'],
 						'FILES' => $arFields['FILES'],
+						'NOTIFY' => true
 					)),
+					'extra' => Array(
+						'im_revision' => IM_REVISION,
+						'im_revision_mobile' => IM_REVISION_MOBILE,
+					),
 				);
 				$pullMessageTo = $pullMessage;
 
@@ -188,14 +189,13 @@ class MessageHandler extends \Bitrix\Replica\Client\BaseHandler
 					}
 				}
 
-				\CPullStack::AddByUser($arFields['TO_USER_ID'], $pullMessageTo);
-				\CPullStack::AddByUser($arFields['FROM_USER_ID'], $pullMessage);
+				\Bitrix\Pull\Event::add($arFields['TO_USER_ID'], $pullMessageTo);
+				\Bitrix\Pull\Event::add($arFields['FROM_USER_ID'], $pullMessage);
 
 				\CPushManager::DeleteFromQueueBySubTag($arFields['FROM_USER_ID'], 'IM_MESS');
-				//self::SendBadges($arFields['TO_USER_ID']);
 			}
 		}
-		else if ($arFields['MESSAGE_TYPE'] == IM_MESSAGE_CHAT || $arFields['MESSAGE_TYPE'] == IM_MESSAGE_OPEN)
+		else if ($arFields['MESSAGE_TYPE'] == IM_MESSAGE_CHAT || $arFields['MESSAGE_TYPE'] == IM_MESSAGE_OPEN || $arFields['MESSAGE_TYPE'] == IM_MESSAGE_OPEN_LINE)
 		{
 			$chat = \Bitrix\Im\Model\ChatTable::getById($chatId);
 			$chatData = $chat->fetch();
@@ -215,7 +215,9 @@ class MessageHandler extends \Bitrix\Replica\Client\BaseHandler
 					'ENTITY_ID' => $relation['CHAT_ID'],
 					'MESSAGE_ID' => $newRecord['ID'],
 					'CHAT_TYPE' => $relation['MESSAGE_TYPE'],
-					'USER_ID' => $relation['USER_ID']
+					'USER_ID' => $relation['USER_ID'],
+					'CHAT_ID' => $relation['CHAT_ID'],
+					'RELATION_ID' => $relation['ID'],
 				));
 			}
 
@@ -234,7 +236,12 @@ class MessageHandler extends \Bitrix\Replica\Client\BaseHandler
 						'DATE_CREATE' => time(),
 						'PARAMS' => $arFields['PARAMS'],
 						'FILES' => $arFields['FILES'],
+						'NOTIFY' => true
 					)),
+					'extra' => Array(
+						'im_revision' => IM_REVISION,
+						'im_revision_mobile' => IM_REVISION_MOBILE,
+					),
 				);
 
 				if ($chatData && \CPullOptions::GetPushStatus())
@@ -242,6 +249,7 @@ class MessageHandler extends \Bitrix\Replica\Client\BaseHandler
 					$pushParams = \CIMMessenger::PreparePushForChat(Array(
 						'CHAT_ID' => $chatId,
 						'CHAT_TITLE' => $chatData['TITLE'],
+						'CHAT_AVATAR' => $chatData['AVATAR'],
 						'FROM_USER_ID' => $newRecord['AUTHOR_ID'],
 						'MESSAGE' => $newRecord['MESSAGE'],
 						'SYSTEM' => $newRecord['AUTHOR_ID'] > 0? 'N': 'Y',
@@ -274,14 +282,14 @@ class MessageHandler extends \Bitrix\Replica\Client\BaseHandler
 				}
 				$pullMessage['push']['skip_users'] = $pullUsersSkip;
 
-				\CPullStack::AddByUsers($pullUsers, $pullMessage);
+				\Bitrix\Pull\Event::add($pullUsers, $pullMessage);
 
-				if ($arFields['MESSAGE_TYPE'] == IM_MESSAGE_OPEN)
+				if ($arFields['MESSAGE_TYPE'] == IM_MESSAGE_OPEN  || $arFields['MESSAGE_TYPE'] == IM_MESSAGE_OPEN_LINE)
 				{
 					\CPullWatch::AddToStack('IM_PUBLIC_'.$chatId, $pullMessage);
 				}
 
-				/* TODO uncomment after fix mantis:66363
+				/*
 				\CIMMessenger::SendMention(Array(
 					'CHAT_ID' => $chatId,
 					'CHAT_TITLE' => $chatData['TITLE'],
@@ -292,7 +300,6 @@ class MessageHandler extends \Bitrix\Replica\Client\BaseHandler
 					'FROM_USER_ID' => $newRecord['AUTHOR_ID'],
 				));
 				*/
-				//\CIMMessenger::SendBadges($usersForBadges);
 
 				foreach(\GetModuleEvents("im", "OnAfterMessagesAdd", true) as $arEvent)
 					\ExecuteModuleEventEx($arEvent, array($newRecord['ID'], $newRecord));
@@ -320,17 +327,13 @@ class MessageHandler extends \Bitrix\Replica\Client\BaseHandler
 		if (!$arFields)
 			return;
 
-		$arFields['DATE_MODIFY'] = time()+\CTimeZone::GetOffset();
-
-		$pullMessage = \Bitrix\Im\Text::parse($arFields['MESSAGE']);
-
 		$relations = \CIMChat::GetRelationById($arFields['CHAT_ID']);
 
 		$arPullMessage = Array(
 			'id' => $arFields['ID'],
 			'type' => $arFields['MESSAGE_TYPE'] == IM_MESSAGE_PRIVATE? 'private': 'chat',
-			'text' => $pullMessage,
-			'date' => $arFields['DATE_MODIFY'],
+			'text' => \Bitrix\Im\Text::parse($arFields['MESSAGE']),
+			'date' => \Bitrix\Main\Type\DateTime::createFromTimestamp($arFields['DATE_CREATE']),
 		);
 		if ($arFields['MESSAGE_TYPE'] == IM_MESSAGE_PRIVATE)
 		{
@@ -361,22 +364,30 @@ class MessageHandler extends \Bitrix\Replica\Client\BaseHandler
 			}
 		}
 
-		\CPullStack::AddByUsers(array_keys($relations), $p=Array(
+		\Bitrix\Pull\Event::add(array_keys($relations), $p=Array(
 			'module_id' => 'im',
 			'command' => $arFields['PARAMS']['IS_DELETED']==='Y'? 'messageDelete': 'messageUpdate',
 			'params' => $arPullMessage,
+			'extra' => Array(
+				'im_revision' => IM_REVISION,
+				'im_revision_mobile' => IM_REVISION_MOBILE,
+			),
 		));
 		foreach ($relations as $rel)
 		{
 			$obCache = new \CPHPCache();
 			$obCache->CleanDir('/bx/imc/recent'.\CIMMessenger::GetCachePath($rel['USER_ID']));
 		}
-		if ($newRecord['MESSAGE_TYPE'] == IM_MESSAGE_OPEN)
+		if ($newRecord['MESSAGE_TYPE'] == IM_MESSAGE_OPEN || $newRecord['MESSAGE_TYPE'] == IM_MESSAGE_OPEN_LINE)
 		{
 			\CPullWatch::AddToStack('IM_PUBLIC_'.$arFields['CHAT_ID'], Array(
 				'module_id' => 'im',
 				'command' => $arFields['PARAMS']['IS_DELETED']==='Y'? 'messageDelete': 'messageUpdate',
 				'params' => $arPullMessage,
+				'extra' => Array(
+					'im_revision' => IM_REVISION,
+					'im_revision_mobile' => IM_REVISION_MOBILE,
+				)
 			));
 		}
 

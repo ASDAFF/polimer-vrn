@@ -99,7 +99,7 @@ BX.Finder = function(container, context, panels, lang, oContext)
 		version: "2"
 	};
 
-	BX.Finder.dBVersion = 7;
+	BX.Finder.dBVersion = 8;
 
 	if (BX.util.in_array(BX.Finder.context, ['destination', 'searchtitle']))
 	{

@@ -111,6 +111,15 @@ class CUserTypeDate extends Main\UserField\TypeBase
 							'find_form', 'Y');
 	}
 
+	function GetFilterData($arUserField, $arHtmlControl)
+	{
+		return array(
+			"id" => $arHtmlControl["ID"],
+			"name" => $arHtmlControl["NAME"],
+			"type" => "date"
+		);
+	}
+
 	function GetAdminListViewHTML($arUserField, $arHtmlControl)
 	{
 		if(strlen($arHtmlControl["VALUE"])>0)
@@ -271,6 +280,7 @@ class CUserTypeDate extends Main\UserField\TypeBase
 			$attrList['name'] = $fieldName;
 
 			$attrList['type'] = 'text';
+			$attrList['tabindex'] = '0';
 			$attrList['value'] = $res;
 
 			$tag .= '<input '.static::buildTagAttributes($attrList).'/>';
@@ -291,5 +301,16 @@ class CUserTypeDate extends Main\UserField\TypeBase
 
 		return static::getHelper()->wrapDisplayResult($html);
 
+	}
+
+	/**
+	 * @param array $arUserField
+	 * @param string $fieldName
+	 * @return string
+	 */
+	public static function FormatField(array $arUserField, $fieldName)
+	{
+		global $DB;
+		return $DB->DateToCharFunction($fieldName, "SHORT");
 	}
 }

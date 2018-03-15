@@ -51,6 +51,7 @@
 			classRowStateLoad: 'main-grid-load-row',
 			classRowStateExpand: 'main-grid-row-expand',
 			classHeaderSortable: 'main-grid-col-sortable',
+			classHeaderNoSortable: 'main-grid-col-no-sortable',
 			classCellStatic: 'main-grid-cell-static',
 			classHeadCell: 'main-grid-cell-head',
 			classPageSize: 'main-grid-panel-select-pagesize',

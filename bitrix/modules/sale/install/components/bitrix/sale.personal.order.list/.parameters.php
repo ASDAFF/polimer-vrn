@@ -123,7 +123,14 @@ if(CModule::IncludeModule("sale"))
 		"PARENT" => "ADDITIONAL_SETTINGS",
 		"SIZE" => 5,
 	);
-	
+
+	$arComponentParameters['PARAMETERS']['REFRESH_PRICES'] = array(
+		"NAME" => GetMessage("SPOL_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"),
+		"TYPE" => "CHECKBOX",
+		"DEFAULT" => "N",
+		"PARENT" => "ADDITIONAL_SETTINGS",
+	);
+
 	$orderSortList = array(
 		'STATUS' => GetMessage("SPOL_ORDER_LIST_SORT_STATUS"),
 		'ID' => GetMessage("SPOL_ORDER_LIST_SORT_ID"),

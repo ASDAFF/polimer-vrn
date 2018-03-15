@@ -151,6 +151,21 @@ $db = \Bitrix\Main\SiteTable::getList(
 while($site = $db->fetch())
 	$sitesList[$site['LID']] = $site['NAME'];
 
+$vatList = array(
+	0 => Loc::getMessage('SALE_SDL_NO_VAT')
+);
+
+if(\Bitrix\Main\Loader::includeModule('catalog'))
+{
+	$dbRes = \Bitrix\Catalog\VatTable::getList(array(
+		'filter' => array('ACTIVE' => 'Y'),
+		'order' => array('SORT' => 'ASC')
+	));
+
+	while($vat = $dbRes->fetch())
+		$vatList[$vat['ID']] = $vat['NAME'];
+}
+
 $glParams = array(
 	'filter' => $filter,
 	'order' => array($by => $order)
@@ -166,7 +181,8 @@ $lAdmin->AddHeaders(array(
 	array("id"=>"ACTIVE", "content"=>Loc::getMessage("SALE_SDL_ACTIVE"),  "sort"=>"ACTIVE", "default"=>true),
 	array("id"=>"ALLOW_EDIT_SHIPMENT", "content"=>Loc::getMessage("SALE_SDL_ALLOW_EDIT_SHIPMENT"),  "sort"=>"ALLOW_EDIT_SHIPMENT", "default"=>false),
 	array("id"=>"CLASS_NAME", "content"=>Loc::getMessage("SALE_SDL_CLASS_NAME"),  "sort"=>"CLASS_NAME", "default"=>false),
-	array("id"=>"SITES", "content"=>Loc::getMessage("SALE_SDL_SITES"), "default"=>false)
+	array("id"=>"SITES", "content"=>Loc::getMessage("SALE_SDL_SITES"), "default"=>false),
+	array("id"=>"VAT_ID", "content"=>Loc::getMessage("SALE_SDL_VAT_ID"), "default"=>false)
 ));
 
 $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
@@ -245,6 +261,8 @@ while ($service = $dbResultList->NavNext(true, "f_"))
 			$sites .= $sitesList[$siteId]." (".$siteId.")<br>";
 
 	$row->AddField("SITES", strlen($sites) > 0 ? $sites : Loc::getMessage('SALE_SDL_ALL'));
+	$row->AddField("VAT_ID", isset($vatList[$f_VAT_ID]) ? $vatList[$f_VAT_ID] : $vatList[0]);
+
 	$groupNameHtml = "";
 
 	if($f_PARENT_ID > 0)
@@ -487,7 +505,7 @@ $oFilter->Begin();
 			<select name="filter_site">
 				<option value=""><?=Loc::getMessage('SALE_SDL_ALL')?></option>
 				<?foreach($sitesList as $siteId => $siteName):?>
-					<option value="<?=$siteId?>"<?=($filter_site == $siteId ? ' selected' : '')?>><?=$siteName.' ('.$siteId.')'?></option>
+					<option value="<?=$siteId?>"<?=($filter_site == $siteId ? ' selected' : '')?>><?=htmlspecialcharsbx($siteName).' ('.$siteId.')'?></option>
 				<?endforeach;?>
 			</select>
 		</td>

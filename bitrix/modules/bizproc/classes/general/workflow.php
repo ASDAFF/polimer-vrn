@@ -6,8 +6,8 @@ IncludeModuleLangFile(__FILE__);
 */
 class CBPWorkflow
 {
+	private $isNew = false;
 	private $instanceId = "";
-	private $workflowTemplateId = 0;
 	private $runtime = null;
 
 	private $rootActivity = null;
@@ -159,6 +159,7 @@ class CBPWorkflow
 		if ($this->GetWorkflowStatus() != CBPWorkflowStatus::Created)
 			throw new Exception("CanNotStartInstanceTwice");
 
+		$this->isNew = true;
 		$this->SetWorkflowStatus(CBPWorkflowStatus::Running);
 
 		try
@@ -222,6 +223,11 @@ class CBPWorkflow
 
 		$persister = CBPWorkflowPersister::GetPersister();
 		$persister->SaveWorkflow($this->rootActivity, true);
+	}
+
+	public function isNew()
+	{
+		return $this->isNew;
 	}
 
 	/**********************  EXTERNAL EVENTS  **************************************************************/

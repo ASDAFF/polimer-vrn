@@ -10,10 +10,14 @@ $description = array(
 	'MAIN' => Loc::getMessage('SALE_HPS_YANDEX_DESCRIPTION')
 );
 
+if (IsModuleInstalled('bitrix24'))
+{
+	$description['REFERRER'] = Loc::getMessage('SALE_HPS_YANDEX_REFERRER');
+}
+
 $data = array(
 	'NAME' => Loc::getMessage('SALE_HPS_YANDEX'),
 	'SORT' => 500,
-	'DOMAIN' => 'BOX',
 	'CODES' => array(
 		"YANDEX_SHOP_ID" => array(
 			"NAME" => Loc::getMessage("SALE_HPS_YANDEX_SHOP_ID"),

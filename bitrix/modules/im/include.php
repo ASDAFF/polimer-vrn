@@ -1,9 +1,13 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
-define("IM_REVISION", 101);
-define("IM_MOBILE_REVISION", 6);
-define("IM_MOBILE_CACHE_VERSION", 1);
+define("IM_REVISION", 116);
+define("IM_REVISION_MOBILE", 8);
+
+define("IM_CALL_REVISION", 1);
+define("IM_CALL_REVISION_MOBILE", 1);
+
+define("IM_MOBILE_CACHE_VERSION", 17);
 
 define("IM_MESSAGE_SYSTEM", "S");
 define("IM_MESSAGE_PRIVATE", "P");
@@ -11,6 +15,7 @@ define("IM_MESSAGE_CHAT", "C");
 define("IM_MESSAGE_OPEN", "O");
 define("IM_MESSAGE_THREAD", "T");
 define("IM_MESSAGE_GROUP", "C");
+define("IM_MESSAGE_OPEN_LINE", "L");
 
 define("IM_NOTIFY_CONFIRM", 1);
 define("IM_NOTIFY_FROM", 2);
@@ -19,6 +24,10 @@ define("IM_NOTIFY_SYSTEM", 4);
 define("IM_STATUS_UNREAD", 0);
 define("IM_STATUS_NOTIFY", 1);
 define("IM_STATUS_READ", 2);
+
+define("IM_MESSAGE_STATUS_RECEIVED", 'received');
+define("IM_MESSAGE_STATUS_ERROR", 'error');
+define("IM_MESSAGE_STATUS_DELIVERED", 'delivered');
 
 define("IM_CALL_NONE", 0);
 define("IM_CALL_VIDEO", 1);
@@ -85,7 +94,7 @@ CModule::AddAutoloadClasses(
 	)
 );
 
-$jsCoreRel = array('im_common', 'im_phone_call_view');
+$jsCoreRel = array('im_common', 'im_phone_call_view', 'clipboard', 'sidepanel');
 $jsCoreRelMobile = array('im_common', 'uploader');
 if (IsModuleInstalled('voximplant'))
 {
@@ -112,7 +121,7 @@ CJSCore::RegisterExt('im_common', array(
 	'js' => '/bitrix/js/im/common.js',
 	'css' => '/bitrix/js/im/css/common.css',
 	'lang' => '/bitrix/modules/im/lang/'.LANGUAGE_ID.'/js_common.php',
-	'rel' => array('ls', 'ajax', 'date', 'fx')
+	'rel' => array('ls', 'ajax', 'date', 'fx', 'user', 'restclient', 'phone_number')
 ));
 
 CJSCore::RegisterExt('im_phone_call_view', array(
@@ -142,11 +151,17 @@ CJSCore::RegisterExt('im_mobile', array(
 	'rel' => $jsCoreRelMobile
 ));
 
+CJSCore::RegisterExt('im_mobile_dialog', array(
+	'js' => '/bitrix/js/im/mobile_dialog.js',
+	'lang' => '/bitrix/modules/im/lang/'.LANGUAGE_ID.'/js_mobile.php',
+	'rel' => $jsCoreRelMobile
+));
+
 CJSCore::RegisterExt('im_window', array(
 	'js' => '/bitrix/js/im/window.js',
 	'css' => '/bitrix/js/im/css/window.css',
 	'lang' => '/bitrix/modules/im/lang/'.LANGUAGE_ID.'/js_window.php',
-	'rel' => Array('popup', 'fx', 'json', 'translit', 'clipboard'),
+	'rel' => Array('popup', 'fx', 'json', 'translit'),
 ));
 
 CJSCore::RegisterExt('meetecho_janus', array(

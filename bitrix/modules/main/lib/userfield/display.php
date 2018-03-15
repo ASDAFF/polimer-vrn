@@ -30,9 +30,13 @@ abstract class Display implements IDisplay
 		$this->userField = $userField;
 	}
 
-	public function setAdditionalParameter($param, $value)
+	public function setAdditionalParameter($param, $value, $storeAsDefault = false)
 	{
 		$this->additionalParameters[$param] = $value;
+		if($storeAsDefault)
+		{
+			$this->defaultAdditionalParameters[$param] = $value;
+		}
 	}
 
 	public function clear()

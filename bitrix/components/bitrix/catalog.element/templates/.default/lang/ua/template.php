@@ -30,4 +30,11 @@ $MESS["CT_BCE_CATALOG_COMMENTS_TAB"] = "Коментарі";
 $MESS["CT_BCE_CATALOG_SHOW_MAX_QUANTITY"] = "Наявність";
 $MESS["CT_BCE_CATALOG_RELATIVE_QUANTITY_MANY"] = "багато";
 $MESS["CT_BCE_CATALOG_RELATIVE_QUANTITY_FEW"] = "мало";
+$MESS["CT_BCE_CATALOG_PRICE_RANGES_TITLE"] = "Ціни";
+$MESS["CT_BCE_CATALOG_RANGE_FROM"] = "від #FROM#";
+$MESS["CT_BCE_CATALOG_RANGE_TO"] = "до #TO#";
+$MESS["CT_BCE_CATALOG_RANGE_MORE"] = "і більше";
+$MESS["CT_BCE_CATALOG_RATIO_PRICE"] = "ціна за #RATIO#";
+$MESS["CT_BCE_CATALOG_GIFT_BLOCK_TITLE_DEFAULT"] = "Оберіть один з подарунків до цього товару";
+$MESS["CT_BCE_CATALOG_GIFTS_MAIN_BLOCK_TITLE_DEFAULT"] = "Оберіть один з товарів, щоб отримати подарунок";
 ?>

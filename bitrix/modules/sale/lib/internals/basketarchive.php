@@ -7,8 +7,7 @@
  */
 namespace Bitrix\Sale\Internals;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use Bitrix\Main;
 
 class BasketArchiveTable extends Main\Entity\DataManager
 {
@@ -116,7 +115,74 @@ class BasketArchiveTable extends Main\Entity\DataManager
 
 			new Main\Entity\DatetimeField('DATE_INSERT'),
 			
-			new Main\Entity\StringField('BASKET_DATA')
+			new Main\Entity\StringField('BASKET_DATA'),
+
+			new Main\Entity\ReferenceField(
+				'BASKET_PACKED',
+				'Bitrix\Sale\Internals\BasketArchivePacked',
+				array('=this.ID' => 'ref.BASKET_ARCHIVE_ID'),
+				array('join_type' => 'INNER')
+			)
 		);
+	}
+
+	/**
+	 * Adds row to entity table
+	 *
+	 * @param array $data An array with fields like
+	 * 	array(
+	 * 		"fields" => array(
+	 * 			"FIELD1" => "value1",
+	 * 			"FIELD2" => "value2",
+	 * 		),
+	 * 		"auth_context" => \Bitrix\Main\Authentication\Context object
+	 *	)
+	 *	or just a plain array of fields.
+	 *
+	 * @return Main\Entity\AddResult Contains ID of inserted row
+	 *
+	 * @throws \Exception
+	 */
+	public static function add(array $data)
+	{
+		$basketData = $data['BASKET_DATA'];
+		unset($data['BASKET_DATA']);
+
+		$result = parent::add($data);
+
+		if ($result->isSuccess())
+		{
+			BasketArchivePackedTable::add(array(
+				"BASKET_ARCHIVE_ID" => $result->getId(),
+				"BASKET_DATA" => $basketData
+			));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Deletes row in entity table by primary key
+	 *
+	 * @param mixed $primary
+	 *
+	 * @return Main\Entity\DeleteResult
+	 *
+	 * @throws \Exception
+	 */
+	public static function delete($primary)
+	{
+		$result = parent::delete($primary);
+
+		if ($result->isSuccess())
+		{
+			$checkOrderData = BasketArchivePackedTable::getById($primary);
+			if ($checkOrderData->fetch())
+			{
+				BasketArchivePackedTable::delete($primary);
+			}
+		}
+
+		return $result;
 	}
 }

@@ -296,8 +296,9 @@ function togglePriceType()
 	if ($arMainCatalog['SUBSCRIPTION'] == 'Y')
 		$aTabs1[] = array("DIV" => "cat_edit4", "TAB" => GetMessage("C2IT_GROUPS"), "TITLE" => GetMessage("C2IT_GROUPS_D"));
 	$aTabs1[] = array("DIV" => "cat_edit6", "TAB" => GetMessage("C2IT_DISCOUNTS"), "TITLE" => GetMessage("C2IT_DISCOUNTS_D"));
+	if (!$productIsSet)
 	$aTabs1[] = array("DIV" => "cat_edit5", "TAB" => GetMessage("C2IT_STORE"), "TITLE" => GetMessage("C2IT_STORE_D"));
-	if($bUseStoreControl)
+	if(!$productIsSet && $bUseStoreControl)
 	{
 		$aTabs1[] = array("DIV" => "cat_edit7", "TAB" => GetMessage("C2IT_BAR_CODE"), "TITLE" => GetMessage("C2IT_BAR_CODE_D"));
 	}
@@ -2273,6 +2274,8 @@ if ('Y' == $arMainCatalog['SUBSCRIPTION']):
 	?><br><?
 	echo GetMessage("C2IT_DISCOUNT_HINT");
 
+	if (!$productIsSet)
+	{
 	$tabControl1->BeginNextTab();
 
 	$stores = array();
@@ -2447,6 +2450,7 @@ if ('Y' == $arMainCatalog['SUBSCRIPTION']):
 			?>
 		</table>
 		<?
+	}
 	}
 
 	if($activitySubscribeTab)

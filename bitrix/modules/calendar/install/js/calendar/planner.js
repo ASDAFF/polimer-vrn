@@ -1,6 +1,6 @@
 // # # #  #  #  # Planner for Event Calendar  # # #  #  #  #
 ;(function(window) {
-function CalendarPlanner(params)
+function CalendarPlanner(params, initialUpdateParams)
 {
 	if (!params)
 		params = {};
@@ -16,6 +16,7 @@ function CalendarPlanner(params)
 	this.proposeTimeLimit = 60; // in days
 	this.expandTimelineDelay = 600;
 	this.limitScaleSizeMode = false;
+	this.globalAnimation = true;
 
 	this.DATE_FORMAT = BX.date.convertBitrixFormat(BX.message("FORMAT_DATE"));
 	this.DATETIME_FORMAT = BX.date.convertBitrixFormat(BX.message("FORMAT_DATETIME"));
@@ -42,14 +43,33 @@ function CalendarPlanner(params)
 	BX.addCustomEvent('OnCalendarPlannerDoSetConfig', BX.proxy(this.DoSetConfig, this));
 	BX.addCustomEvent('OnCalendarPlannerDoUninstall', BX.proxy(this.DoUninstall, this));
 
+
 	//BX.addCustomEvent('OnCalendarPlannerDoProposeTime', BX.proxy(this.DoProposeTime, this));
+	if (initialUpdateParams)
+	{
+		initialUpdateParams.plannerId = this.id;
+		if (initialUpdateParams.selector)
+		{
+			if (initialUpdateParams.selector.from && !initialUpdateParams.selector.from.getTime)
+			{
+				initialUpdateParams.selector.from = BX.parseDate(initialUpdateParams.selector.from);
+			}
+			if (initialUpdateParams.selector.to && !initialUpdateParams.selector.to.getTime)
+			{
+				initialUpdateParams.selector.to = BX.parseDate(initialUpdateParams.selector.to);
+			}
+		}
+		this.globalAnimation = false;
+		this.DoUpdate(initialUpdateParams);
+		setTimeout(BX.delegate(function(){this.globalAnimation = true;}, this), 2000);
+	}
 }
 
 CalendarPlanner.prototype =
 {
 	Show: function(animation)
 	{
-		if (!this.compactMode)
+		if (!this.compactMode || this.globalAnimation === false)
 			animation = false;
 
 		if (this.hideAnimation)
@@ -57,6 +77,11 @@ CalendarPlanner.prototype =
 			this.hideAnimation.stop();
 			this.hideAnimation = null;
 		}
+
+		this.outerWrap = BX(this.id);
+
+		if (!this.outerWrap)
+			return;
 
 		if (!this.built)
 		{
@@ -135,7 +160,6 @@ CalendarPlanner.prototype =
 
 	Hide: function(animation)
 	{
-		//animation = false;
 		if (this.showAnimation)
 		{
 			this.showAnimation.stop();
@@ -255,6 +279,9 @@ CalendarPlanner.prototype =
 		this.entriesListWidth = parseInt(params.entriesListWidth) || this.entriesListWidth || 200;
 		this.timelineCellWidth = params.timelineCellWidth || this.timelineCellWidth || 40;
 
+		this.showEntiesHeader = params.showEntiesHeader === undefined ? true : !!params.showEntiesHeader;
+		this.showEntryName = params.showEntryName === undefined ? true : !!params.showEntryName;
+
 		if (this.scaleType == '1day' && this.timelineCellWidth < 90)
 		{
 			this.timelineCellWidthOrig = this.timelineCellWidth;
@@ -348,7 +375,6 @@ CalendarPlanner.prototype =
 
 	Build: function()
 	{
-		this.outerWrap = BX(this.id);
 		this.outerWrap.style.width = this.width + 'px';
 
 		// Left part - list of users and other resourses
@@ -389,13 +415,23 @@ CalendarPlanner.prototype =
 				BX.create("DIV", {props: {className: 'calendar-planner-users-header'}})
 			);
 
-		this.entriesListTitleCounter = this.entriesListHeader.appendChild(BX.create("span", {props: {className: 'calendar-planner-users-item'}, text: BX.message('EC_PL_ATTENDEES_TITLE') + ' '})).appendChild(BX.create("span"));
+		if (this.showEntiesHeader !== false)
+		{
+			this.entriesListTitleCounter = this.entriesListHeader.appendChild(BX.create("span", {
+				props: {className: 'calendar-planner-users-item'},
+				text: BX.message('EC_PL_ATTENDEES_TITLE') + ' '
+			})).appendChild(BX.create("span"));
 
+			this.settingsButton = this.entriesListHeader.appendChild(BX.create("span", {
+				props: {
+					className: 'calendar-planner-settings-icon',
+					title: BX.message('EC_PL_SETTINGS')
+				}
+			}));
+			BX.bind(this.settingsButton, 'click', BX.proxy(this.ShowSettingsPopup, this));
+		}
 		//this.goToNowButton = this.entriesListHeader.appendChild(BX.create("span", {props: {className: 'calendar-planner-add-icon', title: BX.message('EC_PL_GOTO_NOW')}}));
 
-		this.settingsButton = this.entriesListHeader.appendChild(BX.create("span", {props: {className: 'calendar-planner-settings-icon', title: BX.message('EC_PL_SETTINGS')}}));
-
-		BX.bind(this.settingsButton, 'click', BX.proxy(this.ShowSettingsPopup, this));
 
 		this.entriesListWrap = this.entriesListOuterWrap.appendChild(BX.create("DIV", {props: {className: 'calendar-planner-user-container-inner'}}));
 
@@ -568,7 +604,6 @@ CalendarPlanner.prototype =
 		this.BuildTimeline();
 		this.ClearAccessibilityData();
 		this.UpdateData({accessibility: this.accessibility, entries: this.entries});
-		//this.entriesListWrap.style.top = (parseInt(this.timelineDataCont.offsetTop) + 10) + 'px';
 		this.AdjustPlannerHeight();
 		this.ResizePlannerWidth(this.width);
 
@@ -670,65 +705,69 @@ CalendarPlanner.prototype =
 			// Enties without accessibilitity data should be in the end of the array
 			// But first in the list will be meeting room
 			// And second (or first) will be owner-host of the event
-			params.entries.sort(function(a, b)
+			if (params.entries && params.entries.length)
 			{
-				if (a.type == 'room' || (a.status == 'h' && b.type !== 'room'))
-					return -1;
-				if (b.type == 'room' || (b.status == 'h' && a.type !== 'room'))
-					return 1;
+				params.entries.sort(function(a, b)
+				{
+					if (a.type == 'room' || (a.status == 'h' && b.type !== 'room'))
+						return -1;
+					if (b.type == 'room' || (b.status == 'h' && a.type !== 'room'))
+						return 1;
+
+					var
+						l1 = params.accessibility[a.id] ? params.accessibility[a.id].length : 0,
+						l2 = params.accessibility[b.id] ? params.accessibility[b.id].length : 0;
+					return l2 - l1;
+				});
 
 				var
-					l1 = params.accessibility[a.id] ? params.accessibility[a.id].length : 0,
-					l2 = params.accessibility[b.id] ? params.accessibility[b.id].length : 0;
-				return l2 - l1;
-			});
+					cutData = [],
+					usersCount = 0,
+					cutAmount = 0,
+					dispDataCount = 0,
+					cutDataTitle = [];
 
-			var
-				cutData = [],
-				usersCount = 0,
-				cutAmount = 0,
-				dispDataCount = 0,
-				cutDataTitle = [];
-
-			for (i = 0; i < params.entries.length; i++)
-			{
-				entry = params.entries[i];
-				acc = params.accessibility[entry.id] || [];
-
-				if (entry.type == 'user')
-					usersCount++;
-
-				if (this.minEntryRows && i < this.minEntryRows)
+				for (i = 0; i < params.entries.length; i++)
 				{
-					dispDataCount++;
-					this.DisplayEntryRow(entry, acc);
-				}
-				else
-				{
-					cutAmount++;
-					cutDataTitle.push(entry.name);
-					if (acc.length > 0)
+					entry = params.entries[i];
+					acc = params.accessibility[entry.id] || [];
+
+					if (entry.type == 'user')
+						usersCount++;
+
+					if (this.minEntryRows && (i < this.minEntryRows || params.entries.length == this.minEntryRows + 1))
 					{
-						for (k = 0; k < acc.length; k++)
+						dispDataCount++;
+						this.DisplayEntryRow(entry, acc);
+					}
+					else
+					{
+						cutAmount++;
+						cutDataTitle.push(entry.name);
+						if (acc.length > 0)
 						{
-							cutData.push(this.HandleAccessibilityEntry(acc[k]));
+							for (k = 0; k < acc.length; k++)
+							{
+								cutData.push(this.HandleAccessibilityEntry(acc[k]));
+							}
 						}
 					}
 				}
-			}
 
-			// Update entries title count
-			this.entriesListTitleCounter.innerHTML = '(' + usersCount + ')';
+				// Update entries title count
+				if (this.entriesListTitleCounter)
+					this.entriesListTitleCounter.innerHTML = '(' + usersCount + ')';
 
-			if (cutAmount > 0)
-			{
-				if (dispDataCount == this.maxEntryRows)
+				if (cutAmount > 0)
 				{
-					this.DisplayEntryRow({name: BX.message('EC_PL_ATTENDEES_LAST') + ' (' + cutAmount + ')', type: 'lastUsers', title: cutDataTitle.join(', ')}, cutData);
-				}
-				else
-				{
-					this.DisplayEntryRow({name: BX.message('EC_PL_ATTENDEES_SHOW_MORE') + ' (' + cutAmount + ')', type: 'moreLink'}, cutData);
+					if (dispDataCount == this.maxEntryRows)
+					{
+						this.DisplayEntryRow({name: BX.message('EC_PL_ATTENDEES_LAST') + ' (' + cutAmount + ')', type: 'lastUsers', title: cutDataTitle.join(', ')}, cutData);
+					}
+					else
+					{
+						this.DisplayEntryRow({name: BX.message('EC_PL_ATTENDEES_SHOW_MORE') + ' (' + cutAmount + ')', type: 'moreLink'}, cutData);
+					}
 				}
 			}
 		}
@@ -890,25 +929,44 @@ CalendarPlanner.prototype =
 
 		if (entry.type == 'moreLink')
 		{
-			this.showMoreUsers = entry.rowWrap.appendChild(BX.create("DIV", {
-				props: {
-					className: 'calendar-planner-all-users',
-					title: entry.title || ''
-				},
-				text: entry.name
-			}));
-
-			BX.bind(this.showMoreUsers, 'click', BX.proxy(this.ShowMoreUsers, this));
+			if (this.showEntryName)
+			{
+				this.showMoreUsers = entry.rowWrap.appendChild(BX.create("DIV", {
+					props: {
+						className: 'calendar-planner-all-users', title: entry.title || ''
+					},
+					text: entry.name,
+					events: {'click': BX.proxy(this.ShowMoreUsers, this)}
+				}));
+			}
+			else
+			{
+				this.showMoreUsers = entry.rowWrap.appendChild(BX.create("DIV", {
+					props: {className: 'calendar-planner-users-more', title: entry.name},
+					html: '<span class="calendar-planner-users-more-btn"></span>',
+					events: {'click': BX.proxy(this.ShowMoreUsers, this)}
+				}));
+			}
 		}
 		else if (entry.type == 'lastUsers')
 		{
-			this.showMoreUsers = entry.rowWrap.appendChild(BX.create("DIV", {
-				props: {
-					className: 'calendar-planner-all-users calendar-planner-last-users',
-					title: entry.title || ''
-				},
-				text: entry.name
-			}));
+			if (this.showEntryName)
+			{
+				this.showMoreUsers = entry.rowWrap.appendChild(BX.create("DIV", {
+					props: {
+						className: 'calendar-planner-all-users calendar-planner-last-users',
+						title: entry.title || ''
+					},
+					text: entry.name
+				}));
+			}
+			else
+			{
+				this.showMoreUsers = entry.rowWrap.appendChild(BX.create("DIV", {
+					props: {className: 'calendar-planner-users-more', title: entry.title || entry.name},
+					html: '<span class="calendar-planner-users-last-btn"></span>'
+				}));
+			}
 		}
 		else if (entry.id && entry.type == 'user')
 		{
@@ -917,35 +975,47 @@ CalendarPlanner.prototype =
 				entry.rowWrap.appendChild(BX.create("span", {props: {className: 'calendar-planner-user-status-icon ' + this.entryStatusMap[entry.status], title: BX.message('EC_PL_STATUS_' + entry.status.toUpperCase())}}));
 			}
 
+			entry.rowWrap.id = 'anchor_pl_' + entry.id;
 			entry.rowWrap.appendChild(BX.create("img", {props: {className: 'calendar-planner-user-image-icon', src: entry.avatar}}));
 
-			entry.rowWrap.appendChild(
-				BX.create("span", {props: {className: 'calendar-planner-user-name'}})).appendChild(
-				BX.create("A", {
-						props: {
-							id: 'anchor_pl_' + entry.id,
-							href: entry.url ? entry.url : '#',
-							className: 'calendar-planner-user-name-link'
-						},
-						style: {
-							width: (this.entriesListWidth - 42) + 'px'
-						},
-						text: entry.name
-				}));
+			if (this.showEntryName)
+			{
+				entry.rowWrap.appendChild(
+					BX.create("span", {props: {className: 'calendar-planner-user-name'}})).appendChild(
+					BX.create("A", {
+							props: {
+								//id: 'anchor_pl_' + entry.id,
+								href: entry.url ? entry.url : '#',
+								className: 'calendar-planner-user-name-link'
+							},
+							style: {
+								width: (this.entriesListWidth - 42) + 'px'
+							},
+							text: entry.name
+					}));
+			}
+
 			BX.tooltip(entry.id, "anchor_pl_" + entry.id, "");
 		}
 		else if (entry.id && entry.type == 'room')
 		{
-			entry.rowWrap.appendChild(BX.create("span", {props: {className: 'calendar-planner-user-name'}})).appendChild(BX.create("A", {
-				props: {
-					href: entry.url ? entry.url : '#',
-					className: 'calendar-planner-user-name-link'
-				},
-				style: {
-					width: (this.entriesListWidth - 20) + 'px'
-				},
-				text: entry.name
-			}));
+			if (this.showEntryName)
+			{
+				entry.rowWrap.appendChild(BX.create("span", {props: {className: 'calendar-planner-user-name'}})).appendChild(BX.create("A", {
+					props: {
+						href: entry.url ? entry.url : '#',
+						className: 'calendar-planner-user-name-link'
+					},
+					style: {
+						width: (this.entriesListWidth - 20) + 'px'
+					},
+					text: entry.name
+				}));
+			}
+			else
+			{
+				entry.rowWrap.appendChild(BX.create("DIV", {props: {className: 'calendar-planner-location-image-icon', title: entry.name}}));
+			}
 		}
 		else
 		{
@@ -1081,14 +1151,13 @@ CalendarPlanner.prototype =
 		}
 	},
 
-	//ShowSelector: function(dateFrom, dateTo, animation, focus)
 	ShowSelector: function(params)
 	{
 		var
 			selector = params.selector || this.selector,
 			dateFrom = params.dateFrom,
 			dateTo = params.dateTo,
-			animation = params.animation,
+			animation = params.animation && this.globalAnimation !== false,
 			focus = params.focus;
 
 		selector.style.display = 'block';
@@ -1149,6 +1218,7 @@ CalendarPlanner.prototype =
 		var
 			selectorWidth = parseInt(this.selector.style.width),
 			pos = this.selectorStartLeft + x;
+
 		// Correct cursor position acording to changes of scrollleft
 		pos -= this.selectorStartScrollLeft - this.timelineFixedWrap.scrollLeft;
 
@@ -1353,6 +1423,13 @@ CalendarPlanner.prototype =
 
 	CheckSelectorStatus: function(selectorPos)
 	{
+		if (this.config.useSolidBlueSelector)
+		{
+			BX.removeClass(this.selector, 'calendar-planner-timeline-selector-warning');
+			BX.addClass(this.selector, 'solid');
+			return;
+		}
+
 		if (!selectorPos)
 			selectorPos = this.RoundPos(this.selector.style.left);
 
@@ -2247,6 +2324,9 @@ CalendarPlanner.prototype =
 		if (this.focusSelectorTimeout)
 			this.focusSelectorTimeout = !!clearTimeout(this.focusSelectorTimeout);
 
+		if (this.globalAnimation === false)
+			animation = false;
+
 		if (timeout)
 		{
 			this.focusSelectorTimeout = setTimeout(function(){_this.FocusSelector(animation, false);}, timeout);
@@ -2387,7 +2467,11 @@ CalendarPlanner.prototype =
 		if (scrollLeft !== undefined)
 			_this.timelineFixedWrap.scrollLeft = scrollLeft;
 
-		var i,entry, entrieIds = [];
+		var i, entry, entrieIds = [];
+
+		if (!BX.type.isArray(this.entries))
+			this.entries = [];
+
 		for (i = 0; i < this.entries.length; i++)
 		{
 			entry = this.entries[i];
@@ -2856,6 +2940,7 @@ CalendarPlanner.prototype =
 				offsetLeft: 7,
 				lightShadow: true,
 				content: settingsDialogCont,
+				zIndex: 4000,
 				angle: {postion: 'top'}
 			});
 		popup.show(true);

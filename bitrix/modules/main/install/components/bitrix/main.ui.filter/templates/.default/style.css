@@ -218,8 +218,8 @@
 	width: 25px;
 }
 
-.main-ui-delete {
-	right: -20px;
+.main-ui-delete.main-ui-item-icon {
+	right: -17px;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2010%2010%22%3E%3Cpath%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.065%203.682L2.377.994%201.01%202.362%203.696%205.05.99%207.757l1.368%201.37%202.708-2.71%202.7%202.703%201.37-1.368-2.702-2.7%202.682-2.684L7.748%201%205.065%203.682z%22/%3E%3C/svg%3E');
 	background-repeat: no-repeat;
 	background-position: center;
@@ -228,7 +228,7 @@
 .main-ui-control-field .main-ui-delete,
 .main-ui-select .main-ui-delete,
 .main-ui-control-field-group .main-ui-delete {
-	top: 50%;
+	top: 52%;
 	right: -25px;
 	width: 25px;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2010%2010%22%3E%3Cpath%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M5.065%203.682L2.377.994%201.01%202.362%203.696%205.05.99%207.757l1.368%201.37%202.708-2.71%202.7%202.703%201.37-1.368-2.702-2.7%202.682-2.684L7.748%201%205.065%203.682z%22/%3E%3C/svg%3E');
@@ -262,6 +262,10 @@
 	background-position: center;
 }
 
+.main-ui-filter-icon-edit.main-ui-item-icon {
+	right: 0;
+}
+
 .main-ui-filter-icon-grab {
 	left: -17px;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212%22%20height%3D%2210%22%20viewBox%3D%220%200%2012%2010%22%3E%3Cg%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%3E%3Crect%20width%3D%2212%22%20height%3D%222%22%20rx%3D%221%22/%3E%3Crect%20width%3D%2212%22%20height%3D%222%22%20y%3D%224%22%20rx%3D%221%22/%3E%3Crect%20width%3D%2212%22%20height%3D%222%22%20y%3D%228%22%20rx%3D%221%22/%3E%3C/g%3E%3C/svg%3E');
@@ -270,9 +274,14 @@
 	cursor: move;
 }
 
+.main-ui-item-icon .main-ui-filter-icon-grab {
+	top: 1px;
+}
+
 .main-ui-control-field .main-ui-filter-icon-grab,
 .main-ui-control-field-group .main-ui-filter-icon-grab {
 	left: -22px;
+	top: 2px;
 }
 
 /* END OF ICONS */
@@ -337,8 +346,9 @@
 .main-ui-filter-sidebar-item-text {
 	position: relative;
 	display: inline-block;
-	max-width: -webkit-calc(172px - 40px);
-	max-width: calc(172px - 40px);
+	max-width: 170px;
+	/*max-width: -webkit-calc(172px - 40px);*/
+	/*max-width: calc(172px - 40px);*/
 	-webkit-transition: color .3s ease;
 	transition: color .3s ease;
 	overflow: hidden;
@@ -784,6 +794,19 @@ select::-ms-expand {
 
 .main-ui-filter-field-inline-inner .main-ui-select-name {
 	line-height: 38px;
+}
+
+.main-ui-control-string + .main-ui-control-value-delete {
+	top: 21px;
+}
+
+.main-ui-control-string + .main-ui-control-value-delete .main-ui-control-value-delete-item,
+.main-ui-date-input + .main-ui-control-value-delete .main-ui-control-value-delete-item {
+	top: 9px;
+}
+
+.main-ui-item-pin .main-ui-filter-sidebar-item-text {
+	max-width: 154px;
 }
 
 /* END OF NEW BASIC CONTROLS */

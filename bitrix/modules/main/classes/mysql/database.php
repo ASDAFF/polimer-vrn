@@ -200,6 +200,7 @@ abstract class CDatabaseMysql extends CAllDatabase
 			return false;
 		}
 
+
 		$res = new CDBResult($result);
 		$res->DB = $this;
 		if($DB->ShowSqlStat)

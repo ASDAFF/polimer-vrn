@@ -262,8 +262,18 @@
 		if (!!GroupActions && BX.type.isDomNode(panel))
 		{
 			var panelNode = GroupActions.getPanel();
-			panelNode.innerHTML = '';
-			panelNode.appendChild(BX.firstChild(panel));
+
+			if (BX.type.isDomNode(panelNode))
+			{
+				panelNode.innerHTML = '';
+
+				var panelChild = BX.firstChild(panel);
+
+				if (BX.type.isDomNode(panelChild))
+				{
+					panelNode.appendChild(panelChild);
+				}
+			}
 		}
 	};
 })();

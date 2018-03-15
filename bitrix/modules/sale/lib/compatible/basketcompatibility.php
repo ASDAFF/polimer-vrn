@@ -143,13 +143,16 @@ class BasketCompatibility
 
 		$basketChanged = false;
 
+		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
+		$basketItemEntity = $registry->getBasketItemClassName();
+
 		$publicMode = DiscountCompatibility::usedByClient();
 		foreach ($requestBasketItems as $basketIndex => $basketItemData)
 		{
 			if (isset($basketItemData['SET_PARENT_ID']) && strval($basketItemData['SET_PARENT_ID']) != '')
 			{
 				$parentId = intval($basketItemData['SET_PARENT_ID']);
-				if ($basketItemData['TYPE'] != Sale\Basket::TYPE_SET && !array_key_exists($parentId, $basketParentList))
+				if ($basketItemData['TYPE'] != $basketItemEntity::TYPE_SET && !array_key_exists($parentId, $basketParentList))
 				{
 					$basketChildList[intval($basketItemData['SET_PARENT_ID'])] = $basketItemData['SET_PARENT_ID'];
 				}
@@ -351,8 +354,9 @@ class BasketCompatibility
 							$propList = $propertyCollection->getPropertyValues();
 						}
 
+						$bundleCollection = $parentBasketItem->getBundleCollection();
 						/** @var Sale\BasketItem $foundedBasketItem */
-						if ($foundedBasketItem = Sale\Basket::getExistsItemInBundle($parentBasketItem, $childBasketItem->getField('MODULE'), $childBasketItem->getProductId(), $propList))
+						if ($foundedBasketItem = $bundleCollection->getExistsItem($childBasketItem->getField('MODULE'), $childBasketItem->getProductId(), $propList))
 						{
 							$childBasketCode = $foundedBasketItem->getBasketCode();
 							unset($childBasketItemList[$indexChildBasketItem]);
@@ -365,7 +369,7 @@ class BasketCompatibility
 
 					if (!empty($childBasketItemList))
 					{
-						$basket->setChildBundleCollection($childBasketItemList, $parentBasketItem);
+						$this->setChildBundleCollection($basket, $childBasketItemList, $parentBasketItem);
 					}
 				}
 			}
@@ -390,6 +394,74 @@ class BasketCompatibility
 		));
 
 		return $result;
+	}
+
+	/**
+	 * @param Sale\Basket $basket
+	 * @param array $basketItemList
+	 * @param Sale\BasketItem|null $externalParentBasketItem
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectNotFoundException
+	 */
+	private function setChildBundleCollection(Sale\Basket $basket, array $basketItemList, Sale\BasketItem $externalParentBasketItem = null)
+	{
+		$order = null;
+
+		$isExternalBasketParent = false;
+
+		if ($externalParentBasketItem !== null)
+		{
+			if (!$externalParentBasketItem->isBundleParent())
+			{
+				throw new Main\ObjectException('basketItem not parent');
+			}
+			$isExternalBasketParent = true;
+		}
+
+		/** @var Sale\BasketItem $item */
+		foreach ($basketItemList as $item)
+		{
+			if ($item->isBundleChild() || (!$item->isBundleParent() && $isExternalBasketParent && $externalParentBasketItem !== null))
+			{
+				/** @var Sale\BasketItem $parentBasketItem */
+				$parentBasketItem = $item->getParentBasketItem();
+
+				if (!$parentBasketItem && $externalParentBasketItem !== null)
+				{
+					$parentBasketItem = $externalParentBasketItem;
+				}
+
+				if ($parentBasketItem)
+				{
+					/** @var Sale\Basket $bundleCollection */
+					$bundleCollection = $parentBasketItem->createBundleCollection();
+
+					if ($basket->getItemByBasketCode($parentBasketItem->getBasketCode()))
+					{
+						$bundleCollection->addItem($item);
+					}
+					else
+					{
+						$basket->addItem($item);
+					}
+
+					if ($order === null)
+					{
+						/** @var Sale\Basket $basket */
+						if (!$basket = $parentBasketItem->getCollection())
+						{
+							throw new Main\ObjectNotFoundException('Entity "Basket" not found');
+						}
+
+						/** @var Sale\Order $order */
+						$order = $basket->getOrder();
+					}
+
+					if ($bundleCollection->getOrder() === null && $order instanceof Sale\OrderBase)
+						$bundleCollection->setOrder($order);
+				}
+			}
+		}
 	}
 
 	/**
@@ -586,6 +658,7 @@ class BasketCompatibility
 
 		$item = null;
 		$basket = null;
+		/** @var Sale\Order $order */
 		$order = null;
 		$orderId = null;
 
@@ -617,10 +690,26 @@ class BasketCompatibility
 
 		}
 
+		if ($order !== null &&
+			$fields['ORDER_ID'] > 0 &&
+			(int)$fields['ORDER_ID'] !== (int)$order->getId()
+		)
+		{
+			$result->addError(
+				new Sale\ResultError(
+					Main\Localization\Loc::getMessage('SALE_BASKET_COMPATIBLE_BASKET_ITEM_ERROR_BIND_TO_ORDER'),
+					'BASKET_ITEM_NOT_FOUND'
+				)
+			);
+
+			return $result;
+		}
+
 		if (isset($fields["PROPS"]) && is_array($fields["PROPS"]))
 		{
 			/** @var Sale\BasketPropertiesCollection $property */
 			$property = $item->getPropertyCollection();
+			$property->clearCollection();
 			$property->setProperty($fields["PROPS"]);
 		}
 
@@ -1382,8 +1471,11 @@ class BasketCompatibility
 	{
 		$fields = $basketItem->getFieldValues();
 
+		/** @var Sale\BasketItemCollection $collection */
+		$collection = $basketItem->getCollection();
+
 		/** @var Sale\Basket $basket */
-		if (!$basket = $basketItem->getCollection())
+		if (!$basket = $collection->getBasket())
 		{
 			throw new Main\ObjectNotFoundException('Entity "Basket" not found');
 		}

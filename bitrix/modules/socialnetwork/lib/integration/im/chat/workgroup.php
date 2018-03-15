@@ -7,6 +7,7 @@
 */
 namespace Bitrix\Socialnetwork\Integration\Im\Chat;
 
+use Bitrix\Im\Model\ChatTable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
@@ -71,7 +72,7 @@ class Workgroup
 			}
 		}
 
-		$res = \Bitrix\Im\Model\ChatTable::getList(array(
+		$res = ChatTable::getList(array(
 			'select' => Array('ID', 'ENTITY_ID'),
 			'filter' => array(
 				'=ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
@@ -131,6 +132,8 @@ class Workgroup
 		}
 
 		$groupFields = $groupItem->getFields();
+		$project = $groupItem->isProject();
+
 		$userIdList = array();
 
 		$res = UserToGroupTable::getList(array(
@@ -152,7 +155,9 @@ class Workgroup
 		}
 
 		$chatFields = array(
-			'TITLE' => self::buildChatName($groupFields['NAME']),
+			'TITLE' => self::buildChatName($groupFields['NAME'], array(
+				'project' => $project
+			)),
 			'TYPE' => IM_MESSAGE_CHAT,
 			'ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
 			'ENTITY_ID' => intval($params['group_id']),
@@ -182,9 +187,14 @@ class Workgroup
 		return $result;
 	}
 
-	public static function buildChatName($groupName)
+	public static function buildChatName($groupName, $params = array())
 	{
-		return Loc::getMessage("SOCIALNETWORK_WORKGROUP_CHAT_TITLE", array(
+		$project = (
+			is_array($params)
+			&& isset($params['project'])
+			&& $params['project']
+		);
+		return Loc::getMessage(($project ? "SOCIALNETWORK_WORKGROUP_CHAT_TITLE_PROJECT" : "SOCIALNETWORK_WORKGROUP_CHAT_TITLE"), array(
 			"#GROUP_NAME#" => $groupName
 		));
 	}
@@ -233,6 +243,61 @@ class Workgroup
 		}
 
 		return $chat->setManagers($chatId, $managersInfo, false);
+	}
+
+	public static function unlinkChat($params)
+	{
+		$result = false;
+
+		if (
+			!array($params)
+			|| !isset($params['group_id'])
+			|| intval($params['group_id']) <= 0
+			|| !self::getUseChat()
+			|| !Loader::includeModule('im')
+		)
+		{
+			return $result;
+		}
+
+		$groupItem = Item\Workgroup::getById($params['group_id']);
+		if (!$groupItem)
+		{
+			return $result;
+		}
+
+		$groupFields = $groupItem->getFields();
+
+		$chatMessageFields = array(
+			"MESSAGE" => str_replace('#GROUP_NAME#', $groupFields['NAME'], Loc::getMessage($groupItem->isProject() ? "SOCIALNETWORK_WORKGROUP_CHAT_UNLINKED_PROJECT" : "SOCIALNETWORK_WORKGROUP_CHAT_UNLINKED")),
+			"SYSTEM" => "Y"
+		);
+
+		$res = ChatTable::getList(array(
+			'select' => Array('ID'),
+			'filter' => array(
+				'=ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
+				'=ENTITY_ID' => $params['group_id']
+			)
+		));
+		while ($chat = $res->fetch())
+		{
+			if (ChatTable::update($chat['ID'], array(
+				'ENTITY_TYPE' => false,
+				'ENTITY_ID' => false
+			)))
+			{
+				return \CIMChat::addMessage(array_merge(
+					$chatMessageFields, array(
+						"TO_CHAT_ID" => $chat['ID']
+					)
+				));
+			}
+		}
+
+		$result = true;
+
+		return $result;
 	}
 }
 ?>

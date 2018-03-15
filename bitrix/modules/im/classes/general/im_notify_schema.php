@@ -104,7 +104,7 @@ class CIMNotifySchema
 						"NAME" => GetMessage('IM_NS_LIKE'),
 					),
 					"mention" => Array(
-						"NAME" => GetMessage('IM_NS_MENTION'),
+						"NAME" => GetMessage('IM_NS_MENTION_2'),
 						"PUSH" => 'Y',
 					),
 					"default" => Array(

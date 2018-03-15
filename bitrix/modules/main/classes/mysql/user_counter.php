@@ -271,12 +271,15 @@ class CUserCounter extends CAllUserCounter
 					$ar_lock = $db_lock->Fetch();
 					if($ar_lock["L"] > 0)
 					{
+						$helper = \Bitrix\Main\Application::getConnection()->getSqlHelper();
+
 						$strSQL = "
-						SELECT pc.CHANNEL_ID, uc.USER_ID, uc.SITE_ID, uc.CODE, uc.CNT
-						FROM b_user_counter uc
-						INNER JOIN b_pull_channel pc ON pc.USER_ID = uc.USER_ID
-						WHERE uc.SENT = '0' AND uc.USER_ID IN (".implode(", ", $arParams["USERS_TO_PUSH"]).")
-					";
+							SELECT pc.CHANNEL_ID, uc.USER_ID, uc.SITE_ID, uc.CODE, uc.CNT
+							FROM b_user_counter uc
+							INNER JOIN b_pull_channel pc ON pc.USER_ID = uc.USER_ID
+							INNER JOIN b_user u ON u.ID = uc.USER_ID AND (CASE WHEN u.EXTERNAL_AUTH_ID IN ('".join("', '", \Bitrix\Main\UserTable::getExternalUserTypes())."') THEN 'Y' ELSE 'N' END) = 'N' AND u.LAST_ACTIVITY_DATE > ".$helper->addSecondsToDateTime('(-3600)')."
+							WHERE uc.SENT = '0' AND uc.USER_ID IN (".implode(", ", $arParams["USERS_TO_PUSH"]).")
+						";
 
 						$res = $DB->Query($strSQL, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
 
@@ -286,16 +289,20 @@ class CUserCounter extends CAllUserCounter
 							CUserCounter::addValueToPullMessage($row, $arSites, $pullMessage);
 						}
 
-						$DB->Query("UPDATE b_user_counter SET SENT = '1' WHERE SENT = '0' AND CODE NOT LIKE '**L%'");
+						$DB->Query("UPDATE b_user_counter SET SENT = '1' WHERE SENT = '0' AND CODE NOT LIKE '".CUserCounter::LIVEFEED_CODE."L%'");
 						$DB->Query("SELECT RELEASE_LOCK('".$APPLICATION->GetServerUniqID()."_pull')");
-						foreach ($pullMessage as $channelId => $arMessage)
+
+						if (\CUserCounter::CheckLiveMode())
 						{
-							CPullStack::AddByChannel($channelId, Array(
-								'module_id' => 'main',
-								'command' => 'user_counter',
-								'expiry' => 3600,
-								'params' => $arMessage,
-							));
+							foreach ($pullMessage as $channelId => $arMessage)
+							{
+								\Bitrix\Pull\Event::add($channelId, Array(
+									'module_id' => 'main',
+									'command' => 'user_counter',
+									'expiry' => 3600,
+									'params' => $arMessage,
+								));
+							}
 						}
 					}
 				}
@@ -437,18 +444,24 @@ class CUserCounter extends CAllUserCounter
 					$arSites[] = $row['ID'];
 				}
 
+				$isLF = (
+					substr($code, 0, 2) == CUserCounter::LIVEFEED_CODE
+					&& $code != CUserCounter::LIVEFEED_CODE
+				);
+
+				$helper = \Bitrix\Main\Application::getConnection()->getSqlHelper();
 				$strSQL = "
 					SELECT pc.CHANNEL_ID, uc.USER_ID, uc.SITE_ID, uc.CODE, uc.CNT
 					FROM b_user_counter uc
 					INNER JOIN b_pull_channel pc ON pc.USER_ID = uc.USER_ID
-					WHERE uc.CODE LIKE '**%'
-				";
+					INNER JOIN b_user u ON u.ID = uc.USER_ID AND (CASE WHEN u.EXTERNAL_AUTH_ID IN ('".join("', '", \Bitrix\Main\UserTable::getExternalUserTypes())."') THEN 'Y' ELSE 'N' END) = 'N' AND u.LAST_ACTIVITY_DATE > ".$helper->addSecondsToDateTime('(-3600)')."
+					WHERE uc.CODE ".($isLF ? " LIKE '".CUserCounter::LIVEFEED_CODE."%'" : " = '".$code."'");
 
 				$res = $DB->Query($strSQL, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
 
 				while($row = $res->Fetch())
 				{
-					if ($row["CODE"] == $code)
+					if ($isLF && $row["CODE"] == $code)
 					{
 						continue;
 					}
@@ -468,14 +481,17 @@ class CUserCounter extends CAllUserCounter
 			$DB->Query("SELECT RELEASE_LOCK('".$APPLICATION->GetServerUniqID()."_pull')");
 		}
 
-		foreach ($pullMessage as $channelId => $arMessage)
+		if (\CUserCounter::CheckLiveMode())
 		{
-			CPullStack::AddByChannel($channelId, Array(
-				'module_id' => 'main',
-				'command' => 'user_counter',
-				'expiry' 	=> 3600,
-				'params' => $arMessage,
-			));
+			foreach ($pullMessage as $channelId => $arMessage)
+			{
+				\Bitrix\Pull\Event::add($channelId, Array(
+					'module_id' => 'main',
+					'command' => 'user_counter',
+					'expiry' 	=> 3600,
+					'params' => $arMessage,
+				));
+			}
 		}
 
 		return null;
@@ -497,7 +513,7 @@ class CUserCounterPage extends CAllUserCounterPage
 {
 	public static function checkSendCounter()
 	{
-		global $DB;
+		global $DB, $USER;
 
 		$uniq = CMain::GetServerUniqID();
 		$db_lock = $DB->Query("SELECT GET_LOCK('".$uniq."_counterpull', 0) as L");
@@ -507,15 +523,33 @@ class CUserCounterPage extends CAllUserCounterPage
 			return;
 		}
 
-		$userSQL = "SELECT USER_ID FROM b_user_counter WHERE SENT='0' GROUP BY USER_ID LIMIT ".intval(CAllUserCounterPage::getPageSizeOption(100));
+		$counterPageSize = intval(CAllUserCounterPage::getPageSizeOption(100));
+
+		$userSQL = "SELECT USER_ID FROM b_user_counter WHERE SENT='0' GROUP BY USER_ID LIMIT ".$counterPageSize;
 		$res = $DB->Query($userSQL, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
 
-		$userString = '';
 		$pullMessage = array();
+		$userIdList = array();
 
 		while($row = $res->Fetch())
 		{
-			$userString .= ($userString <> ''? ', ' : '').intval($row["USER_ID"]);
+			$userIdList[] = intval($row["USER_ID"]);
+		}
+
+		if (
+			count($userIdList) >= $counterPageSize
+			&& is_object($USER)
+			&& $USER->isAuthorized()
+			&& !in_array($USER->getId(), $userIdList)
+		)
+		{
+			$userIdList[] = $USER->getId();
+		}
+
+		$userString = '';
+		foreach($userIdList as $userId)
+		{
+			$userString .= ($userString <> ''? ', ' : '').$userId;
 		}
 
 		if ($userString <> '')
@@ -527,11 +561,14 @@ class CUserCounterPage extends CAllUserCounterPage
 				$arSites[] = $row['ID'];
 			}
 
+			$helper = \Bitrix\Main\Application::getConnection()->getSqlHelper();
+
 			$strSQL = "
 				SELECT pc.CHANNEL_ID, uc.USER_ID, uc.SITE_ID, uc.CODE, uc.CNT
 				FROM b_user_counter uc
 				INNER JOIN b_pull_channel pc ON pc.USER_ID = uc.USER_ID
-				WHERE uc.USER_ID IN (".$userString.") AND uc.CODE NOT LIKE '**L%' AND uc.SENT = '0'
+				INNER JOIN b_user u ON u.ID = uc.USER_ID AND (CASE WHEN u.EXTERNAL_AUTH_ID IN ('".join("', '", \Bitrix\Main\UserTable::getExternalUserTypes())."') THEN 'Y' ELSE 'N' END) = 'N' AND u.LAST_ACTIVITY_DATE > ".$helper->addSecondsToDateTime('(-3600)')."
+				WHERE uc.USER_ID IN (".$userString.") AND uc.CODE NOT LIKE '".CUserCounter::LIVEFEED_CODE."L%' AND uc.SENT = '0'
 			";
 
 			$res = $DB->Query($strSQL, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
@@ -544,7 +581,8 @@ class CUserCounterPage extends CAllUserCounterPage
 				SELECT pc.CHANNEL_ID, uc.USER_ID, uc.SITE_ID, uc.CODE, uc.CNT
 				FROM b_user_counter uc
 				INNER JOIN b_pull_channel pc ON pc.USER_ID = uc.USER_ID
-				WHERE uc.USER_ID IN (".$userString.") AND uc.CODE LIKE '**L%'
+				INNER JOIN b_user u ON u.ID = uc.USER_ID AND (CASE WHEN u.EXTERNAL_AUTH_ID IN ('".join("', '", \Bitrix\Main\UserTable::getExternalUserTypes())."') THEN 'Y' ELSE 'N' END) = 'N' AND u.LAST_ACTIVITY_DATE > ".$helper->addSecondsToDateTime('(-3600)')."
+				WHERE uc.USER_ID IN (".$userString.") AND uc.CODE LIKE '".CUserCounter::LIVEFEED_CODE."L%'
 			";
 
 			$res = $DB->Query($strSQL, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
@@ -558,14 +596,17 @@ class CUserCounterPage extends CAllUserCounterPage
 
 		$DB->Query("SELECT RELEASE_LOCK('".$uniq."_counterpull')");
 
-		foreach ($pullMessage as $channelId => $arMessage)
+		if (\CUserCounter::CheckLiveMode())
 		{
-			CPullStack::AddByChannel($channelId, Array(
-				'module_id' => 'main',
-				'command' => 'user_counter',
-				'expiry' => 3600,
-				'params' => $arMessage,
-			));
+			foreach ($pullMessage as $channelId => $arMessage)
+			{
+				\Bitrix\Pull\Event::add($channelId, Array(
+					'module_id' => 'main',
+					'command' => 'user_counter',
+					'expiry' => 3600,
+					'params' => $arMessage,
+				));
+			}
 		}
 	}
 }

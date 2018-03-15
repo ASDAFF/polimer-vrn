@@ -8,6 +8,8 @@
 namespace Bitrix\Socialnetwork;
 
 use Bitrix\Main\Entity;
+use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Application;
 
 class LogIndexTable extends Entity\DataManager
 {
@@ -32,6 +34,12 @@ class LogIndexTable extends Entity\DataManager
 		$fieldsMap = array(
 			'LOG_ID' => array(
 				'data_type' => 'integer',
+			),
+			'LOG_UPDATE' => array(
+				'data_type' => 'datetime',
+			),
+			'DATE_CREATE' => array(
+				'data_type' => 'datetime',
 			),
 			'ITEM_TYPE' => array(
 				'data_type' => 'string',
@@ -66,7 +74,7 @@ class LogIndexTable extends Entity\DataManager
 			return false;
 		}
 
-		$connection = \Bitrix\Main\Application::getConnection();
+		$connection = Application::getConnection();
 		$helper = $connection->getSqlHelper();
 
 		$insertFields = array(
@@ -81,6 +89,24 @@ class LogIndexTable extends Entity\DataManager
 			"CONTENT" => $helper->forSql($content)
 		);
 
+		if (
+			isset($params['logDateUpdate'])
+			&& $params['logDateUpdate'] instanceof \Bitrix\Main\Type\DateTime
+		)
+		{
+			$insertFields["LOG_UPDATE"] = $params['logDateUpdate'];
+			$updateFields["LOG_UPDATE"] = $params['logDateUpdate'];
+		}
+
+		if (
+			isset($params['dateCreate'])
+			&& $params['dateCreate'] instanceof \Bitrix\Main\Type\DateTime
+		)
+		{
+			$insertFields["DATE_CREATE"] = $params['dateCreate'];
+			$updateFields["DATE_CREATE"] = $params['dateCreate'];
+		}
+
 		$merge = $helper->prepareMerge(
 			static::getTableName(),
 			array("ITEM_TYPE", "ITEM_ID"),
@@ -92,6 +118,35 @@ class LogIndexTable extends Entity\DataManager
 		{
 			$connection->query($merge[0]);
 		}
+
+		return true;
+	}
+
+	public static function setLogUpdate($params = array())
+	{
+		$logId = (isset($params['logId']) ? intval($params['logId']) : 0);
+		$value = (!empty($params['value']) ? $params['value'] : false);
+
+		if ($logId <= 0)
+		{
+			return false;
+		}
+
+		$connection = Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		if (!$value)
+		{
+			$value = new SqlExpression($connection->getSqlHelper()->getCurrentDateTimeFunction());
+		}
+
+		$updateFields = array(
+			"LOG_UPDATE" => $value,
+		);
+
+		$tableName = self::getTableName();
+		list($prefix, $values) = $helper->prepareUpdate($tableName, $updateFields);
+		$connection->queryExecute("UPDATE {$tableName} SET {$prefix} WHERE `LOG_ID` = ".$logId);
 
 		return true;
 	}

@@ -37,4 +37,6 @@ $MESS["MAIN_UI_FILTER__DRAG_FIELD_TITLE"] = "Потягніть, щоб відс
 $MESS["MAIN_UI_FILTER__REMOVE_FIELD"] = "Приховати поле";
 $MESS["MAIN_UI_FILTER__CONFIRM_MESSAGE_FOR_ALL"] = "Це дія збереже налаштування фільтру для всіх користувачів. <br>Будуть змінені збережені фільтри та набір полів.";
 $MESS["MAIN_UI_FILTER__CONFIRM_APPLY_FOR_ALL"] = "Зберегти для всіх";
+$MESS["MAIN_UI_FILTER__DATE_NEXT_DAYS_LABEL"] = "Наступні #N# (дня/днів)";
+$MESS["MAIN_UI_FILTER__DATE_PREV_DAYS_LABEL"] = "Останні #N# (дня/днів)";
 ?>

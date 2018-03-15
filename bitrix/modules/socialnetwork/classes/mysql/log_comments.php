@@ -3,6 +3,9 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/classes/ge
 
 use Bitrix\Socialnetwork\Item\LogIndex;
 use Bitrix\Socialnetwork\LogIndexTable;
+use Bitrix\Socialnetwork\Item\LogComment;
+use Bitrix\Socialnetwork\LogTagTable;
+use Bitrix\Socialnetwork\Util;
 
 class CSocNetLogComments extends CAllSocNetLogComments
 {
@@ -13,7 +16,7 @@ class CSocNetLogComments extends CAllSocNetLogComments
 	{
 		global $DB, $APPLICATION, $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
-		$arFields1 = \Bitrix\Socialnetwork\Util::getEqualityFields($arFields);
+		$arFields1 = Util::getEqualityFields($arFields);
 
 		if (
 			$bSetSource 
@@ -223,6 +226,15 @@ class CSocNetLogComments extends CAllSocNetLogComments
 						'fields' => $arFields
 					));
 
+					if (isset($arFields["TAG"]))
+					{
+						LogTagTable::set(array(
+							'itemType' => LogTagTable::ITEM_TYPE_COMMENT,
+							'itemId' => $ID,
+							'tags' => $arFields["TAG"]
+						));
+					}
+
 					if(defined("BX_COMP_MANAGED_CACHE"))
 					{
 						$CACHE_MANAGER->ClearByTag("SONET_LOG_".$arFields["LOG_ID"]);
@@ -258,13 +270,40 @@ class CSocNetLogComments extends CAllSocNetLogComments
 			return false;
 		}
 
+		if (
+			(
+				$bSetSource
+				&& !isset($arFields["SOURCE_ID"])
+			)
+			|| !isset($arFields["LOG_ID"])
+		)
+		{
+			$rsRes = CSocNetLogComments::getList(
+				array(),
+				array("ID" => $ID),
+				false,
+				false,
+				array("LOG_ID", "SOURCE_ID")
+			);
+			if ($arRes = $rsRes->fetch())
+			{
+				$arFields["SOURCE_ID"] = $arRes["SOURCE_ID"];
+				$arFields["LOG_ID"] = $arRes["LOG_ID"];
+			}
+
+			if (!isset($arFields["SOURCE_ID"]))
+			{
+				$bSetSource = false;
+			}
+		}
+
 		if ($bSetSource)
 		{
 			if (strlen($arFields["EVENT_ID"]) > 0)
 			{
 				$arCommentEvent = CSocNetLogTools::FindLogCommentEventByID($arFields["EVENT_ID"]);
 				if (
-					!$arCommentEvent
+					!is_array($arCommentEvent)
 					|| !array_key_exists("UPDATE_CALLBACK", $arCommentEvent)
 					|| !is_callable($arCommentEvent["UPDATE_CALLBACK"])
 				)
@@ -272,34 +311,11 @@ class CSocNetLogComments extends CAllSocNetLogComments
 					$bSetSource = false;
 				}
 			}
-
-			if (
-				!isset($arFields["SOURCE_ID"])
-				|| !isset($arFields["LOG_ID"])
-			)
-			{
-				$rsRes = CSocNetLogComments::GetList(
-					array(),
-					array("ID" => $ID),
-					false,
-					false,
-					array("LOG_ID", "SOURCE_ID")
-				);
-				if ($arRes = $rsRes->Fetch())
-				{
-					$arFields["SOURCE_ID"] = $arRes["SOURCE_ID"];
-					$arFields["LOG_ID"] = $arRes["LOG_ID"];
-				}
-			}
-			
-			if (!isset($arFields["SOURCE_ID"]))
-			{
-				$bSetSource = false;
-			}
 		}
 
 		$arFields1 = \Bitrix\Socialnetwork\Util::getEqualityFields($arFields);
 
+		$arSource = false;
 		if ($bSetSource)
 		{
 			$arSource = CSocNetLogComments::SetSource($arFields, "UPDATE");
@@ -421,6 +437,15 @@ class CSocNetLogComments extends CAllSocNetLogComments
 						'itemType' => LogIndexTable::ITEM_TYPE_COMMENT,
 						'itemId' => $ID,
 						'fields' => $arFields
+					));
+				}
+
+				if (isset($arFields["TAG"]))
+				{
+					LogTagTable::set(array(
+						'itemType' => LogTagTable::ITEM_TYPE_COMMENT,
+						'itemId' => $ID,
+						'tags' => $arFields["TAG"]
 					));
 				}
 			}

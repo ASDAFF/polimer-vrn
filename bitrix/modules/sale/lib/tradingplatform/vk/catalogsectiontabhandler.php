@@ -5,6 +5,7 @@ namespace Bitrix\Sale\TradingPlatform\Vk;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
 use Bitrix\Sale\TradingPlatform\TabHandler;
+use Bitrix\Main\Text\HtmlFilter;
 
 Loc::loadMessages(__FILE__);
 
@@ -47,6 +48,8 @@ class CatalogSectionTabHandler extends TabHandler
 			$dataToDelete = array();
 
 			$sectionsList = new SectionsList($export["ID"]);
+//			in moment of changes setting we must drop cached sections and mapped sections
+			$sectionsList->clearCaches();
 			$sectionsList->setCurrSectionSettings($_POST['VK_EXPORT'][$export["ID"]]);
 
 //			formatted or remove current section
@@ -117,7 +120,7 @@ class CatalogSectionTabHandler extends TabHandler
 			if (!empty($currErrors))
 				$errors[] =
 					Loc::getMessage("SALE_VK_EXPORT_PROFILE") .
-					'"' . $export['DESC'] . '": <br>' .
+					'"' . HtmlFilter::encode($export['DESC']) . '": <br>' .
 					implode('<br>', $currErrors);
 		}
 		
@@ -219,7 +222,7 @@ class CatalogSectionTabHandler extends TabHandler
 //			EXPORT settings - profile
 			$resultHtml .= '
 			<td class="internal-left">
-				<span>' . $export["DESC"] . '</span>
+				<span>' . HtmlFilter::encode($export["DESC"]) . '</span>
 				<input 
 					class="vk_export__profile_id" 
 					type="hidden" 
@@ -250,7 +253,7 @@ class CatalogSectionTabHandler extends TabHandler
 			</td>';
 
 //			TO ALBUM
-			$sectionsSelector = SectionsList::getSectionsSelector($currSettings["TO_ALBUM"]);
+			$sectionsSelector = $sectionsList->getSectionsSelector($currSettings["TO_ALBUM"]);
 			$resultHtml .= '
 			<td>
 				<input 

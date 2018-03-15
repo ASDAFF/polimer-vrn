@@ -756,7 +756,7 @@ class DeliveryPaySystemTable extends \Bitrix\Main\Entity\DataManager
 
 		if($entityType == self::ENTITY_TYPE_DELIVERY)
 		{
-
+			\Bitrix\Sale\Delivery\Services\Manager::getActiveList();
 			$res = Services\Table::getList(array(
 				'filter' => array(
 					'ACTIVE' => 'Y'

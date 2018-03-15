@@ -81,10 +81,6 @@ Asset::getInstance()->addJs($this->GetFolder().'/right.js');
 	});
 </script>
 
-<div id="bx-lists-set-responsible" style="display:none;">
-	<div id="bx-lists-set-responsible-content" class="bx-lists-set-responsible-content"></div>
-</div>
-
 <div class="feed-add-lists-right" id="feed-add-lists-right" style="display: none;">
 	<div class="feed-add-lists-form">
 		<div class="feed-add-post-lists-wrap feed-add-post-destination-wrap" id="feed-add-post-lists-container">
@@ -148,10 +144,5 @@ Asset::getInstance()->addJs($this->GetFolder().'/right.js');
 
 <div id="bx-lists-designer-template-popup" style="display:none;">
 	<div id="bx-lists-designer-template-popup-content" class="bx-lists-designer-template-popup-content">
-	</div>
-</div>
-
-<div id="bx-lists-constants-template-popup" style="display:none;">
-	<div id="bx-lists-constants-template-popup-content" class="bx-lists-designer-template-popup-content">
 	</div>
 </div>

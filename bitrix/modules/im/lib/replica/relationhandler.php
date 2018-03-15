@@ -105,8 +105,8 @@ class RelationHandler extends \Bitrix\Replica\Client\BaseHandler
 			&& intval($oldRecord["LAST_ID"]) < intval($newRecord["LAST_ID"])
 		)
 		{
-			$oldLastRead = $oldRecord["LAST_READ"] instanceof \Bitrix\Main\Type\DateTime? $oldRecord["LAST_READ"]->getTimestamp(): 0;
-			$newLastRead = $newRecord["LAST_READ"] instanceof \Bitrix\Main\Type\DateTime? $newRecord["LAST_READ"]->getTimestamp(): 0;
+			$oldLastRead = $oldRecord["LAST_READ"] instanceof \Bitrix\Main\Type\DateTime? $oldRecord["LAST_READ"]: false;
+			$newLastRead = $newRecord["LAST_READ"] instanceof \Bitrix\Main\Type\DateTime? $newRecord["LAST_READ"]: false;
 			if ($oldLastRead < $newLastRead)
 			{
 				if (\Bitrix\Main\Loader::includeModule('pull'))
@@ -120,16 +120,19 @@ class RelationHandler extends \Bitrix\Replica\Client\BaseHandler
 					));
 					if ($relation = $relationList->fetch())
 					{
-						\CPullStack::AddByUser($relation['USER_ID'], Array(
+						\Bitrix\Pull\Event::add($relation['USER_ID'], Array(
 							'module_id' => 'im',
-							'command' => 'readMessageApponent',
+							'command' => 'readMessageOpponent',
 							'expiry' => 3600,
 							'params' => Array(
+								'dialogId' => intval($newRecord['USER_ID']),
 								'chatId' => intval($newRecord['CHAT_ID']),
 								'userId' => intval($newRecord['USER_ID']),
-								'lastId' => $newRecord['LAST_ID'],
-								'date' => $newLastRead,
-								'count' => 1 //TODO: remove
+								'chatMessageStatus' => ''
+							),
+							'extra' => Array(
+								'im_revision' => IM_REVISION,
+								'im_revision_mobile' => IM_REVISION_MOBILE,
 							),
 						));
 					}

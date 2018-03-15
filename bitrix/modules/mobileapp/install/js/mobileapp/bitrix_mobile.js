@@ -1385,6 +1385,37 @@
 		//params.pulltext, params.downtext, params.loadtext
 		//params.callback - action on pull-down-refresh
 		//params.enable - true|false
+
+
+		if(typeof params.backgroundColor == "undefined")
+		{
+			var bodySelector = (document.body.className.length>0
+					? document.querySelector("."+document.body.className)
+					: null
+			);
+			if(bodySelector != null)
+			{
+				var bodyStyles = getComputedStyle(bodySelector);
+				var rgb2hex = function(rgb){
+					rgb = rgb.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
+					return (rgb && rgb.length === 4) ? "#" +
+						("0" + parseInt(rgb[1],10).toString(16)).slice(-2) +
+						("0" + parseInt(rgb[2],10).toString(16)).slice(-2) +
+						("0" + parseInt(rgb[3],10).toString(16)).slice(-2) : '';
+				};
+				var color  = rgb2hex(bodyStyles.backgroundColor);
+				if(color != "#000000")
+					params.backgroundColor = color;
+				else
+					params.backgroundColor = "#ffffff";
+			}
+		}
+		else
+		{
+			params.backgroundColor = "#ffffff";
+		}
+
+
 		return this.exec("pullDown", params);
 	};
 	/**

@@ -342,14 +342,21 @@ class CSaleYMHandler
 	 * @param string $type
 	 * @return DateInterval
 	 */
-	protected function getTimeInterval($period, $type)
+	public function getTimeInterval($period, $type)
 	{
-		return new DateInterval(
-			'P'.
-			($type == 'H' ? 'T' : '').
-			intval($period).
-			$type
-		);
+		$interval = 'P';
+
+		if($type == 'H' || $type == 'MIN')
+			$interval .= 'T';
+
+		$interval .= strval(intval($period));
+
+		if($type == 'MIN')
+			$type = 'M';
+
+		$interval .= $type;
+
+		return new DateInterval($interval);
 	}
 
 	/**
@@ -480,7 +487,7 @@ class CSaleYMHandler
 		if(!$res->isSuccess())
 		{
 			$this->log(
-				self::LOG_LEVEL_INFO,
+				self::LOG_LEVEL_ERROR,
 				"YMARKET_ORDER_CREATE_ERROR",
 				'processCartRequest',
 				implode('; ',$res->getErrorMessages())
@@ -546,7 +553,28 @@ class CSaleYMHandler
 			if(empty($this->mapDelivery[$delivery->getId()]))
 				continue;
 
-			$calcResult = $delivery->calculate($shipment);
+			$orderClone = $order->createClone();
+			$clonedShipment = null;
+			$orderClone->isStartField();
+
+			foreach ($orderClone->getShipmentCollection() as $shp)
+			{
+				if($shp->isSystem())
+					continue;
+
+				$clonedShipment = $shp;
+				break;
+			}
+
+			/** @var \Bitrix\Sale\Shipment $clonedShipment*/
+			$clonedShipment->setDeliveryService($delivery);
+			$deliveryCalcRes = $orderClone->getShipmentCollection()->calculateDelivery();
+
+			if(!$deliveryCalcRes->isSuccess())
+				continue;
+
+			$orderClone->doFinalAction(true);
+			$calcResult = $clonedShipment->calculateDelivery();
 
 			if(!$calcResult->isSuccess())
 				continue;
@@ -570,7 +598,7 @@ class CSaleYMHandler
 					"id" => $delivery->getId(),
 					"type" => $deliveryType,
 					"serviceName" => substr($delivery->getNameWithParent(), 0, 50),
-					"price" => round(floatval($calcResult->getPrice()), 2),
+					"price" => round(floatval($orderClone->getDeliveryPrice()), 2),
 					"dates" => $arDates
 				);
 
@@ -889,7 +917,7 @@ class CSaleYMHandler
 			if(!$res->isSuccess())
 			{
 				$this->log(
-					self::LOG_LEVEL_INFO,
+					self::LOG_LEVEL_ERROR,
 					"YMARKET_ORDER_CREATE_ERROR",
 					'processOrderAcceptRequest',
 					implode('; ',$res->getErrorMessages())
@@ -1200,6 +1228,8 @@ class CSaleYMHandler
 									'=ENTITY_ID' => $order->getId(),
 									'=CODE' => 'YMARKET_BUYER_INFO_WAITING'
 								));
+
+								$order->setField('MARKED', 'N');
 							}
 						}
 
@@ -2499,5 +2529,14 @@ class CSaleYMHandler
 			return reset($list);
 
 		return null;
+	}
+
+	/**
+	 * Returns true if it is yandex request
+	 * @return bool
+	 */
+	public static function isYandexRequest()
+	{
+		return self::$isYandexRequest;
 	}
 }

@@ -1,6 +1,8 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Main\Mail;
+
 class CPostingGeneral
 {
 	var $LAST_ERROR="";
@@ -743,6 +745,10 @@ class CPostingGeneral
 		}
 
 		$mail_additional_parameters = trim(COption::GetOptionString("subscribe", "mail_additional_parameters"));
+
+		$context = new Mail\Context();
+		$context->setCategory(Mail\Context::CAT_EXTERNAL);
+
 		if($post_arr["DIRECT_SEND"] == "Y")
 		{
 			//personal delivery
@@ -772,7 +778,7 @@ class CPostingGeneral
 				if(is_array($arFields))
 				{
 					$to = CMailTools::EncodeHeaderFrom($arFields["EMAIL"], $post_arr["CHARSET"]);
-					$result = bxmail($to, $arFields["SUBJECT"], $arFields["BODY"], $arFields["HEADER"], $mail_additional_parameters);
+					$result = bxmail($to, $arFields["SUBJECT"], $arFields["BODY"], $arFields["HEADER"], $mail_additional_parameters, $context);
 				}
 				else
 				{
@@ -808,7 +814,7 @@ class CPostingGeneral
 			{
 				$BCC = implode(",", $aStep);
 				$sHeaderStep = $sHeader.$eol."Bcc: ".$BCC;
-				$result = bxmail($post_arr["TO_FIELD"], $sSubject, $sBody, $sHeaderStep, $mail_additional_parameters);
+				$result = bxmail($post_arr["TO_FIELD"], $sSubject, $sBody, $sHeaderStep, $mail_additional_parameters, $context);
 				if($result)
 				{
 					$DB->Query("UPDATE b_posting_email SET STATUS='N' WHERE ID in (".implode(", ", array_keys($aStep)).")");
@@ -917,6 +923,15 @@ class CPostingGeneral
 						AND (U.ID IS NULL OR U.ACTIVE = 'Y')
 						".(strlen($post_arr["SUBSCR_FORMAT"]) <= 0 || $post_arr["SUBSCR_FORMAT"]==="NOT_REF" ? "": "AND S.FORMAT='".($post_arr["SUBSCR_FORMAT"]=="text"? "text": "html")."'")."
 						".(strlen($post_arr["EMAIL_FILTER"]) <= 0 || $post_arr["EMAIL_FILTER"]==="NOT_REF" ? "": "AND ".GetFilterQuery("S.EMAIL", $post_arr["EMAIL_FILTER"], "Y", array("@", ".", "_")))."
+				");
+				$DB->Query("
+					DELETE pe
+					from b_posting_email pe
+					left join b_posting_email pe0 on
+						pe0.POSTING_ID = pe.POSTING_ID
+						and pe0.EMAIL = pe.EMAIL
+					WHERE pe.POSTING_ID = ".$ID."
+					AND pe0.ID < pe.ID
 				");
 
 				//send to user groups

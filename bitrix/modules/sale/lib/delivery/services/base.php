@@ -10,6 +10,7 @@ use Bitrix\Main\EventResult;
 use Bitrix\Sale\Internals\Input;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Delivery\Requests;
 
 Loc::loadMessages(__FILE__);
 
@@ -26,6 +27,7 @@ abstract class Base
 	protected $id = 0;
 	protected $name = "";
 	protected $code = "";
+	protected $vatId = 0;
 	protected $sort = 100;
 	protected $logotip = 0;
 	protected $parentId = 0;
@@ -35,6 +37,8 @@ abstract class Base
 	protected $config = array();
 	protected $restricted = false;
 	protected $trackingClass = "";
+	/** @var Requests\HandlerBase  */
+	protected $deliveryRequestHandler = null;
 	protected $extraServices = array();
 	protected $trackingParams = array();
 	protected $allowEditShipment = array();
@@ -71,7 +75,7 @@ abstract class Base
 		if(!isset($initParams["NAME"]))
 			$initParams["NAME"] = "";
 
-		if(!isset($initParams["CONFIG"]))
+		if(!isset($initParams["CONFIG"]) || !is_array($initParams["CONFIG"]))
 			$initParams["CONFIG"] = array();
 
 		if(!is_array($initParams["CONFIG"]))
@@ -101,6 +105,9 @@ abstract class Base
 
 		if(isset($initParams["ALLOW_EDIT_SHIPMENT"]))
 			$this->allowEditShipment = $initParams["ALLOW_EDIT_SHIPMENT"];
+
+		if(isset($initParams["VAT_ID"]))
+			$this->vatId = intval($initParams["VAT_ID"]);
 
 		if(isset($initParams["RESTRICTED"]))
 			$this->restricted = $initParams["RESTRICTED"];
@@ -234,8 +241,12 @@ abstract class Base
 	/**
 	 * @param \Bitrix\Sale\Shipment $shipment.
 	 * @return \Bitrix\Sale\Delivery\CalculationResult
+	 * @throws SystemException
 	 */
-	abstract protected function calculateConcrete(\Bitrix\Sale\Shipment $shipment);
+	protected function calculateConcrete(\Bitrix\Sale\Shipment $shipment)
+	{
+		throw new SystemException('Not implemented');
+	}
 
 	/**
 	 * @param array $fields
@@ -327,6 +338,14 @@ abstract class Base
 			$configStructure[$key] = $this->glueValuesToConfig($configSection, isset($this->config[$key]) ? $this->config[$key] : array());
 
 		return $configStructure;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getConfigValues()
+	{
+		return $this->config;
 	}
 
 	/**
@@ -449,11 +468,18 @@ abstract class Base
 	}
 
 	/**
-	 * @return Base
+	 * @return Base|null
+	 * @throws SystemException
+	 * @throws \Bitrix\Main\ArgumentNullException
 	 */
 	public function getParentService()
 	{
-		return null;
+		$result = null;
+
+		if(intval($this->parentId) > 0)
+			$result =  Manager::getObjectById($this->parentId);
+
+		return $result;
 	}
 
 	/**
@@ -572,6 +598,14 @@ abstract class Base
 	public function getTrackingParams()
 	{
 		return $this->trackingParams;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isTrackingInherited()
+	{
+		return false;
 	}
 
 	/**
@@ -750,5 +784,34 @@ abstract class Base
 	public function getAdminAdditionalTabs()
 	{
 		return array();
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getVatId()
+	{
+		return $this->vatId;
+	}
+
+	/**
+	 * @param int $vatId
+	 */
+	public function setVatId($vatId)
+	{
+		$this->vatId = $vatId;
+	}
+
+	/**
+	 * @return Requests\HandlerBase
+	 */
+	public function getDeliveryRequestHandler()
+	{
+		return $this->deliveryRequestHandler;
+	}
+
+	public function createProfileObject($fields)
+	{
+		return Manager::createObject($fields);
 	}
 }

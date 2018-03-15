@@ -24,4 +24,5 @@ $MESS["SPOL_ORDER_LIST_SORT_PRICE"] = "Order total";
 $MESS["SPOL_ORDER_LIST_DEFAULT_SORT"] = "Order sorting";
 $MESS["SPOL_RESTRICT_CHANGE_PAYSYSTEM"] = "Orders in these statuses cannot change status";
 $MESS["SPOL_NOT_CHOSEN"] = "(not selected)";
+$MESS["SPOL_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"] = "Recalculate order when payment system status changes";
 ?>

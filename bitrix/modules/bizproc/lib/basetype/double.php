@@ -112,7 +112,9 @@ class Double extends Base
 	{
 		$name = static::generateControlName($field);
 		$controlId = static::generateControlId($field);
-		$renderResult = '<input type="text" size="10" id="'.htmlspecialcharsbx($controlId).'" name="'
+		$className = static::generateControlClassName($fieldType, $field);
+		$renderResult = '<input type="text" class="'.htmlspecialcharsbx($className)
+			.'" size="10" id="'.htmlspecialcharsbx($controlId).'" name="'
 			.htmlspecialcharsbx($name).'" value="'.htmlspecialcharsbx((string) $value).'"/>';
 
 		if ($allowSelection)

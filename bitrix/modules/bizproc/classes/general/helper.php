@@ -1996,9 +1996,9 @@ class CBPHelper
 			}
 			elseif ($arMatches['object'] == "System")
 			{
-				if ($arMatches['field'] == "Now")
+				if (strtolower($arMatches['field']) === "now")
 					$result = date($GLOBALS["DB"]->DateFormatToPHP(CSite::GetDateFormat("FULL")));
-				elseif ($arMatches['field'] == "Date")
+				elseif (strtolower($arMatches['field']) == "date")
 					$result = date($GLOBALS["DB"]->DateFormatToPHP(CSite::GetDateFormat("SHORT")));
 			}
 		}

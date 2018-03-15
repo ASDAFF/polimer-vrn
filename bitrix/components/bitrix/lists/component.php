@@ -332,7 +332,7 @@ if(
 		list(, , $arResult["VARIABLES"]["element_id"]) = CBPHelper::ParseDocumentId($arWorkflowState["DOCUMENT_ID"]);
 }
 
-if($processes && (!CModule::includeModule('bizproc') || !CBPRuntime::isFeatureEnabled()))
+if($processes && !CLists::isFeatureEnabled())
 {
 	ShowError(GetMessage("CC_BLL_ACCESS_DENIDED"));
 	return;

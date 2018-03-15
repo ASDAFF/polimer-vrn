@@ -112,6 +112,8 @@
 
 							<?if($prop["TYPE"] == "Y/N"):?>
 								<?=GetMessage('SPOD_'.($prop["VALUE"] == "Y" ? 'YES' : 'NO'))?>
+							<?elseif ($prop["TYPE"] == "FILE"):?>
+								<?=$prop["VALUE"]?>
 							<?else:?>
 								<?=htmlspecialcharsbx($prop["VALUE"])?>
 							<?endif?>
@@ -359,7 +361,7 @@
 				<? ///// PRICE SUM ?>
 				<tr>
 					<td class="custom_t1"><?=GetMessage('SPOD_PRODUCT_SUM')?>:</td>
-					<td class="custom_t2"><?=$arResult['PRODUCT_SUM_FORMATTED']?></td>
+					<td class="custom_t2"><?=$arResult['PRODUCT_SUM_FORMATED']?></td>
 				</tr>
 
 				<? ///// DELIVERY PRICE: print even equals 2 zero ?>

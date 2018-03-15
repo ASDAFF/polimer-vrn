@@ -445,6 +445,12 @@ if ($arCurrentValues["SHOW_ORDER_PAGE"] !== "N")
 			"PARENT" => "ORDER",
 		);
 
+		$arComponentParameters['PARAMETERS']['ORDER_REFRESH_PRICES'] = array(
+			"NAME" => GetMessage("SPS_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"),
+			"TYPE" => "CHECKBOX",
+			"DEFAULT" => "N",
+			"PARENT" => "ORDER",
+		);
 
 		$arComponentParameters['PARAMETERS']['ACCOUNT_PAYMENT_SELL_USER_INPUT'] = array(
 			"NAME"=>GetMessage("SPS_ACCEPT_USER_AMOUNT"),

@@ -25,19 +25,12 @@ if (check_bitrix_sessid() && CModule::IncludeModule("calendar"))
 			'members' => false,
 		);
 
-		if ($loc_new['mrid'] == $settings['vr_iblock_id'])
-		{
-			$params['VMiblockId'] = $settings['vr_iblock_id'];
-			$check = CCalendar::CheckVideoRoom($params);
-		}
-		else
-		{
-			$params['RMiblockId'] = $settings['rm_iblock_id'];
-			$params['mrid'] = $loc_new['mrid'];
-			$params['mrevid_old'] = 0;
+		$params['RMiblockId'] = $settings['rm_iblock_id'];
+		$params['mrid'] = $loc_new['mrid'];
+		$params['mrevid_old'] = 0;
 
-			$check = CCalendar::CheckMeetingRoom($params);
-		}
+		$check = CCalendar::CheckMeetingRoom($params);
+
 		?><script>top.BXCRES_Check = <?= CUtil::PhpToJSObject($check)?>;</script><?
 	}
 	elseif (isset($_REQUEST['bx_event_calendar_update_planner']) && $_REQUEST['bx_event_calendar_update_planner'] === 'Y')

@@ -81,20 +81,9 @@ var MainUserConsentSelectorManager = function(params)
 
 	this.initSlider = function()
 	{
-		if (!top.BX.Bitrix24 || !top.BX.Bitrix24.Slider)
-		{
-			return;
-		}
-
-
 		this.slider.caller = this;
 		top.BX.addCustomEvent(top, 'main-user-consent-to-list', function () {
-			if (!top || !top.BX || !top.BX.Bitrix24 || !top.BX.Bitrix24.Slider)
-			{
-				return;
-			}
-
-			top.BX.Bitrix24.Slider.close();
+			top.BX.SidePanel.Instance.close();
 		});
 	};
 
@@ -128,12 +117,7 @@ var MainUserConsentSelectorManager = function(params)
 		caller: null,
 		init: function (params)
 		{
-			if (!top.BX.Bitrix24 || !top.BX.Bitrix24.Slider)
-			{
-				return;
-			}
-
-			top.BX.Bitrix24.PageSlider.bindAnchors({
+			top.BX.SidePanel.Instance.bindAnchors({
 				rules: [
 					{
 						condition: params.condition,
@@ -145,16 +129,8 @@ var MainUserConsentSelectorManager = function(params)
 		},
 		onSaved: function ()
 		{
-			if (!top || !top.BX || !top.BX.Bitrix24 || !top.BX.Bitrix24.Slider)
-			{
-				return;
-			}
-
 			this.onClose();
-
-			top.BX.Bitrix24.Slider.close();
-			top.BX.Bitrix24.Slider.resetLastOpenPage();
-			top.BX.Bitrix24.Slider.removeOpenPage();
+			top.BX.SidePanel.Instance.close();
 		},
 		onClose: function ()
 		{
@@ -165,11 +141,6 @@ var MainUserConsentSelectorManager = function(params)
 		},
 		bindOpen: function (element)
 		{
-			if (!top.BX.Bitrix24 || !top.BX.Bitrix24.Slider)
-			{
-				return;
-			}
-
 			BX.bind(element, 'click', this.openHref.bind(this, element));
 		},
 		openHref: function (a, e)
@@ -179,23 +150,15 @@ var MainUserConsentSelectorManager = function(params)
 		},
 		open: function (url, reloadAfterClosing)
 		{
-			if (!top || !top.BX || !top.BX.Bitrix24 || !top.BX.Bitrix24.Slider)
-			{
-				return;
-			}
+			top.BX.SidePanel.Instance.open(url, {
+				cacheable: false,
+				events: {
+					onClose: reloadAfterClosing ? this.onClose.bind(this) : null
+				}
+			});
 
-			top.BX.Bitrix24.Slider.open(url);
 			if (reloadAfterClosing)
 			{
-				var loadHandler = function () {
-					if (!top || !top.BX || !top.BX.Bitrix24 || !top.BX.Bitrix24.Slider || !top.BX.Bitrix24.Slider.getCurrentPage())
-					{
-						return;
-					}
-					var w = top.BX.Bitrix24.Slider.getCurrentPage().getWindow();
-					w.BX.addCustomEvent(w, "BX.Bitrix24.PageSlider:onClose", this.onClose.bind(this));
-				};
-				BX.bind(top.BX.Bitrix24.Slider.getCurrentPage().iframe, 'load', loadHandler.bind(this));
 				top.BX.addCustomEvent(top, 'main-user-consent-saved', this.onSaved.bind(this));
 			}
 		}

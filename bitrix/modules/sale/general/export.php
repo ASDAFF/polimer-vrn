@@ -7,6 +7,28 @@ IncludeModuleLangFile(__FILE__);
 
 $GLOBALS["SALE_EXPORT"] = Array();
 
+final class ExportOneCCRM extends CSaleExport
+{
+	static public function normalizeExternalCode($xml)
+	{
+		static $sales = null;
+
+		list($originatorId, $productXmlId) = explode("#", $xml, 2);
+		if($productXmlId<>'')
+		{
+			if($sales === null)
+				$sales = CCrmExternalSaleHelper::PrepareListItems();
+
+			if(isset($sales[$originatorId]))
+			{
+				$xml = $productXmlId;
+			}
+		}
+
+		return parent::normalizeExternalCode($xml);
+	}
+}
+
 //class CAllSaleExport
 class CSaleExport
 {
@@ -34,7 +56,27 @@ class CSaleExport
 
 	static $siteNameByOrder = "";
 
+	static $documentsToLog;
+
 	protected static $lid = null;
+
+
+	/**
+	 * @param $value
+	 * @return string
+	 */
+	protected static function toText($value)
+	{
+		$value = preg_replace('/<style[^>]*>.*?<\/style>/is', '', $value);
+		$value = preg_replace('/<blockquote[^>]*>.*?<\/blockquote>/is', '', $value);
+		$value = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $value);
+
+		return html_entity_decode(
+			strip_tags(
+				preg_replace('/(<br[^>]*>)+/is'.BX_UTF_PCRE_MODIFIER, "\n", $value)
+			)
+		);
+	}
 
 	static public function getNumberBasketPosition($basketId)
 	{
@@ -46,44 +88,42 @@ class CSaleExport
 		static::$lid = $value;
 	}
 
- 	function setXmlVersion($version) {
-        self::$xmlVersion = $version;
-    }
-    function setXmlEncoding($encoding) {
+    static function setXmlEncoding($encoding)
+    {
         self::$xmlEncoding = $encoding;
     }
 
-    function getXmlRootName()
+    static function getXmlRootName()
     {
         return str_replace(array("#version#","#encoding#"),array(self::$xmlVersion,self::$xmlEncoding),self::$xmlRootName);
     }
 
-	function getCmrXmlRootNameParams()
+	static function getCmrXmlRootNameParams()
 	{
 		return CSaleExport::getTagName("SALE_EXPORT_SHEM_VERSION")."=\"".self::getVersionSchema()."\" ".CSaleExport::getTagName("SALE_EXPORT_SHEM_DATE_CREATE")."=\"".date("Y-m-d")."T".date("G:i:s")."\" ".CSaleExport::getTagName("SALE_EXPORT_DATE_FORMAT")."=\"".CSaleExport::getTagName("SALE_EXPORT_DATE_FORMAT_DF")."=yyyy-MM-dd; ".CSaleExport::getTagName("SALE_EXPORT_DATE_FORMAT_DLF")."=DT\" ".CSaleExport::getTagName("SALE_EXPORT_DATE_FORMAT_DATETIME")."=\"".CSaleExport::getTagName("SALE_EXPORT_DATE_FORMAT_DF")."=".CSaleExport::getTagName("SALE_EXPORT_DATE_FORMAT_TIME")."; ".CSaleExport::getTagName("SALE_EXPORT_DATE_FORMAT_DLF")."=T\" ".CSaleExport::getTagName("SALE_EXPORT_DEL_DT")."=\"T\" ".CSaleExport::getTagName("SALE_EXPORT_FORM_SUMM")."=\"".CSaleExport::getTagName("SALE_EXPORT_FORM_CC")."=18; ".CSaleExport::getTagName("SALE_EXPORT_FORM_CDC")."=2; ".CSaleExport::getTagName("SALE_EXPORT_FORM_CRD")."=.\" ".CSaleExport::getTagName("SALE_EXPORT_FORM_QUANT")."=\"".CSaleExport::getTagName("SALE_EXPORT_FORM_CC")."=18; ".CSaleExport::getTagName("SALE_EXPORT_FORM_CDC")."=2; ".CSaleExport::getTagName("SALE_EXPORT_FORM_CRD")."=.\"";
 	}
 
-	function getDeliveryAddress()
+	static function getDeliveryAddress()
 	{
 		return self::$deliveryAdr;
 	}
-	function setDeliveryAddress($deliveryAdr)
+	static function setDeliveryAddress($deliveryAdr)
 	{
 		self::$deliveryAdr = $deliveryAdr;
 	}
-	function setVersionSchema($versionSchema=false)
+	static function setVersionSchema($versionSchema=false)
 	{
 		self::$versionSchema = $versionSchema;
 	}
-	function setCrmMode($crmMode)
+	static function setCrmMode($crmMode)
 	{
 		self::$crmMode = $crmMode;
 	}
-	function setCurrencySchema($currency)
+	static function setCurrencySchema($currency)
 	{
 		self::$currency = $currency;
 	}
-	function getVersionSchema()
+	static function getVersionSchema()
 	{
 		return doubleval(str_replace(" ", "", str_replace(",", ".", (!empty(self::$versionSchema) ? self::$versionSchema : self::DEFAULT_VERSION))));
 	}
@@ -103,11 +143,11 @@ class CSaleExport
         return $cashBoxOneCId;
     }
 
-	function isExportFromCRM($arOptions)
+	static function isExportFromCRM($arOptions)
 	{
 		return (isset($arOptions["EXPORT_FROM_CRM"]) && $arOptions["EXPORT_FROM_CRM"] === "Y");
 	}
-	function getEndTime($time_limit)
+	static function getEndTime($time_limit)
 	{	//This is an optimization. We assume than no step can take more than one year.
 		if($time_limit > 0)
 			$end_time = time() + $time_limit;
@@ -116,7 +156,7 @@ class CSaleExport
 
 		return $end_time;
 	}
-	function checkTimeIsOver($time_limit,$end_time)
+	static function checkTimeIsOver($time_limit,$end_time)
 	{
 		if(IntVal($time_limit) > 0 && time() > $end_time )
 			return true;
@@ -127,7 +167,7 @@ class CSaleExport
 	{
 		return self::LAST_ORDER_PREFIX;
 	}
-	function getAccountNumberShopPrefix()
+	 function getAccountNumberShopPrefix()
 	{
 		static $accountNumberShopPrefix = null;
 		if($accountNumberShopPrefix === null)
@@ -155,7 +195,7 @@ class CSaleExport
 		}
 		return $delivery;
 	}
-	function getCatalogStore()
+	static function getCatalogStore()
 	{
 		$arStore = array();
 		if(CModule::IncludeModule("catalog"))
@@ -176,7 +216,7 @@ class CSaleExport
 		}
 		return $arStore;
 	}
-	function getOrderDeliveryItem($arOrder, $bVat, $vatRate, $vatSum)
+	static function getOrderDeliveryItem($arOrder, $bVat, $vatRate, $vatSum)
     {
         if(floatval($arOrder["PRICE_DELIVERY"])<=0)
              return;
@@ -241,7 +281,7 @@ class CSaleExport
         <?
     }
 
-	function getCatalogMeasure()
+    static function getCatalogMeasure()
 	{
 		$arMeasures = array();
 		if(CModule::IncludeModule("catalog"))
@@ -257,19 +297,21 @@ class CSaleExport
 
 		return $arMeasures;
 	}
-	function setCatalogMeasure($arMeasures)
+    static function setCatalogMeasure($arMeasures)
 	{
 		self::$measures = $arMeasures;
 	}
-	function setOrderSumTaxMoney($orderTax)
+	static function setOrderSumTaxMoney($orderTax)
 	{
 		self::$orderTax = $orderTax;
 
 	}
-	function getSaleExport()
+    static function getSaleExport()
 	{
-		$arAgent = array();
-		$dbExport = CSaleExport::GetList();
+		$export = new CSaleExport();
+	    $arAgent = array();
+
+		$dbExport = $export->GetList();
 		while($arExport = $dbExport->Fetch())
 		{
 			$arAgent[$arExport["PERSON_TYPE_ID"]] = unserialize($arExport["VARS"]);
@@ -277,7 +319,7 @@ class CSaleExport
 		return $arAgent;
 	}
 
-	function prepareSaleProperty($arOrder, $bExportFromCrm, $bCrmModuleIncluded, $paySystems, $delivery, &$locationStreetPropertyValue)
+	static function prepareSaleProperty($arOrder, $bExportFromCrm, $bCrmModuleIncluded, $paySystems, $delivery, &$locationStreetPropertyValue)
 	{
 		$arProp = Array();
 		$arProp["ORDER"] = $arOrder;
@@ -444,7 +486,7 @@ class CSaleExport
 		return $arProp;
 	}
 
-	function prepareSalePropertyRekv(\Bitrix\Sale\IBusinessValueProvider $entity, $agentParams, $arProp, $locationStreetPropertyValue = '')
+	static function prepareSalePropertyRekv(\Bitrix\Sale\IBusinessValueProvider $entity, $agentParams, $arProp, $locationStreetPropertyValue = '')
 	{
 	    if(!($entity instanceof \Bitrix\Sale\Order))
         {
@@ -550,7 +592,7 @@ class CSaleExport
 	 * @param $delivery
 	 * @param array $options
 	 *
-	 * @return array|void
+	 * @return array
 	 */
 	function getSaleProperties(Bitrix\Sale\Order $order, $arOrder, $agentParams, $bExportFromCrm, $bCrmModuleIncluded, $paySystems, $delivery, array $options = array())
 	{
@@ -561,7 +603,7 @@ class CSaleExport
 		return array('agent'=>$agent, 'arProp'=>$arProp);
 	}
 
-	function getSite()
+	static function getSite()
 	{
 		$arCharSets = array();
 		$dbSitesList = CSite::GetList(($b=""), ($o=""));
@@ -570,13 +612,13 @@ class CSaleExport
 
 		return $arCharSets;
 	}
-	function setSiteNameByOrder($arOrder)
+	static function setSiteNameByOrder($arOrder)
 	{
 		$dbSite = CSite::GetByID($arOrder["LID"]);
 		$arSite = $dbSite->Fetch();
 		self::$siteNameByOrder = $arSite["NAME"];
 	}
-	function getPayment($arOrder)
+	static function getPayment($arOrder)
 	{
 		$result = array();
 		$PaymentParam['select'] =
@@ -636,7 +678,7 @@ class CSaleExport
 		}
 		return $result;
 	}
-	function getShipment($arOrder)
+	static function getShipment($arOrder)
 	{
 		$result = array();
 		$ShipmentParams['select'] =
@@ -646,7 +688,6 @@ class CSaleExport
 				"DATE_INSERT",
 				"CURRENCY",
 				"PRICE_DELIVERY",
-				"DATE_INSERT",
 				"COMMENTS",
 				"DATE_ALLOW_DELIVERY",
 				"STATUS_ID",
@@ -694,6 +735,41 @@ class CSaleExport
 		return $result;
 	}
 
+	protected static function getLastOrderExported($timeUpdate)
+	{
+		$result = array();
+
+		if($timeUpdate <> '')
+		{
+			$r = \Bitrix\Sale\Exchange\Internals\ExchangeLogTable::getList(array(
+				'select' => array(
+					'ENTITY_ID',
+					'ENTITY_DATE_UPDATE'
+				),
+				'filter' => array(
+					'ENTITY_TYPE_ID'=>\Bitrix\Sale\Exchange\EntityType::ORDER,
+					'=ENTITY_DATE_UPDATE'=>$timeUpdate,
+					'=DIRECTION'=>\Bitrix\Sale\Exchange\ManagerExport::getDirectionType()
+				),
+				'order'=>array('ID'=>'ASC'),
+
+			));
+			while ($order = $r->fetch())
+				$result[$order['ENTITY_DATE_UPDATE']->toString()][]=$order['ENTITY_ID'];
+		}
+		return $result;
+	}
+
+	protected static function exportedLastExport($arOrder, array $lastDateUpdateOrders)
+    {
+		$dateUpdate = $arOrder["DATE_UPDATE"]->toString();
+
+		$result = (isset($lastDateUpdateOrders[$dateUpdate]) &&
+			in_array($arOrder['ID'], $lastDateUpdateOrders[$dateUpdate]));
+
+		return $result;
+    }
+
 	/**
 	 * @return array
 	 */
@@ -701,7 +777,7 @@ class CSaleExport
     {
 		if(IntVal($_SESSION["BX_CML2_EXPORT"][self::getOrderPrefix()]) > 0)
 		{
-			$arFilter[">DATE_UPDATE"] = ConvertTimeStamp($_SESSION["BX_CML2_EXPORT"][self::getOrderPrefix()], "FULL");
+			$arFilter[">=DATE_UPDATE"] = ConvertTimeStamp($_SESSION["BX_CML2_EXPORT"][self::getOrderPrefix()], "FULL");
 		}
 		return $arFilter;
     }
@@ -716,7 +792,11 @@ class CSaleExport
 
 	static function ExportOrders2Xml($arFilter = Array(), $nTopCount = 0, $currency = "", $crmMode = false, $time_limit = 0, $version = false, $arOptions = Array())
 	{
-		self::setVersionSchema($version);
+		$lastOrderPrefix = '';
+		$arCharSets = array();
+		$lastDateUpdateOrders = array();
+
+	    self::setVersionSchema($version);
 		self::setCrmMode($crmMode);
 		self::setCurrencySchema($currency);
 
@@ -737,7 +817,11 @@ class CSaleExport
 		}
 
 		if(!self::$crmMode)
+        {
 			$arFilter = static::prepareFilter($arFilter);
+			$timeUpdate = isset($arFilter[">=DATE_UPDATE"])? $arFilter[">=DATE_UPDATE"]:'';
+            $lastDateUpdateOrders = static::getLastOrderExported($timeUpdate);
+        }
 
 		self::$arResultStat = array(
 			"ORDERS" => 0,
@@ -762,7 +846,7 @@ class CSaleExport
 
 <<?=CSaleExport::getTagName("SALE_EXPORT_COM_INFORMATION")?> <?=self::getCmrXmlRootNameParams()?>><?
 
-		$arOrder = array("DATE_UPDATE" => "ASC");
+		$arOrder = array("DATE_UPDATE" => "ASC", "ID"=>"ASC");
 
 		$arSelect = array(
 			"ID", "LID", "PERSON_TYPE_ID", "PAYED", "DATE_PAYED", "EMP_PAYED_ID", "CANCELED", "DATE_CANCELED",
@@ -772,7 +856,7 @@ class CSaleExport
 			"ADDITIONAL_INFO",
 			"COMMENTS", "TAX_VALUE", "STAT_GID", "RECURRING_ID", "ACCOUNT_NUMBER", "SUM_PAID", "DELIVERY_DOC_DATE", "DELIVERY_DOC_NUM", "TRACKING_NUMBER", "STORE_ID",
 			"ID_1C", "VERSION",
-			"USER.XML_ID"
+			"USER.XML_ID", "USER.TIMESTAMP_X"
 		);
 
 		$bCrmModuleIncluded = false;
@@ -802,10 +886,16 @@ class CSaleExport
 
 		while($arOrder = $dbOrderList->Fetch())
 		{
-		    $order = \Bitrix\Sale\Order::load($arOrder['ID']);
-		    /* @var $order \Bitrix\Sale\Order*/
+		    if(!self::$crmMode && static::exportedLastExport($arOrder, $lastDateUpdateOrders))
+            {
+				continue;
+            }
 
-		    $arOrder['DATE_STATUS'] = $arOrder['DATE_STATUS']->toString();
+		    static::$documentsToLog = array();
+			$contentToLog = '';
+
+		    $order = \Bitrix\Sale\Order::load($arOrder['ID']);
+			$arOrder['DATE_STATUS'] = $arOrder['DATE_STATUS']->toString();
 		    $arOrder['DATE_INSERT'] = $arOrder['DATE_INSERT']->toString();
 		    $arOrder['DATE_UPDATE'] = $arOrder['DATE_UPDATE']->toString();
 
@@ -878,6 +968,7 @@ class CSaleExport
 
 			if(self::getVersionSchema() >= self::CONTAINER_VERSION)
             {
+                ob_start();
 				echo '<'.CSaleExport::getTagName("SALE_EXPORT_CONTAINER").'>';
             }
 
@@ -893,6 +984,9 @@ class CSaleExport
 			if(self::getVersionSchema() >= self::CONTAINER_VERSION)
 			{
 				echo '</'.CSaleExport::getTagName("SALE_EXPORT_CONTAINER").'>';
+				$contentToLog = ob_get_contents();
+				ob_end_clean();
+				echo $contentToLog;
 			}
 
 			if (self::$crmMode)
@@ -905,6 +999,23 @@ class CSaleExport
 			else
 			{
 				static::saveExportParams($arOrder);
+			}
+
+			ksort(static::$documentsToLog);
+
+			foreach (static::$documentsToLog as $entityTypeId=>$documentsToLog)
+			{
+				foreach ($documentsToLog as $documentToLog)
+				{
+					$fieldToLog = $documentToLog;
+					$fieldToLog['ENTITY_TYPE_ID'] = $entityTypeId;
+					if(self::getVersionSchema() >= self::CONTAINER_VERSION)
+					{
+						if($entityTypeId == \Bitrix\Sale\Exchange\EntityType::ORDER )
+							$fieldToLog['MESSAGE'] = $contentToLog;
+					}
+					static::log($fieldToLog);
+				}
 			}
 
 			if(self::checkTimeIsOver($time_limit, $end_time))
@@ -990,7 +1101,7 @@ class CSaleExport
 		zip_close($hZip);
 		return true;
 	}
-	function getOrderTax($orderId)
+	static function getOrderTax($orderId)
 	{
 		$arResult = array();
 		if($orderId>0)
@@ -1002,8 +1113,6 @@ class CSaleExport
 				false,
 				array("ID", "TAX_NAME", "VALUE", "VALUE_MONEY", "CODE", "IS_IN_PRICE")
 			);
-			$i=-1;
-			$orderTax = 0;
 			while ($arOrderTax = $dbOrderTax->Fetch())
 			{
 				$arResult[] = $arOrderTax;
@@ -1013,7 +1122,7 @@ class CSaleExport
 		return $arResult;
 	}
 
-	function getOrderSumTaxMoney($arOrderTaxAll)
+	static function getOrderSumTaxMoney($arOrderTaxAll)
 	{
 		$orderTax = 0;
 		if(is_array($arOrderTaxAll) && count($arOrderTaxAll)>0)
@@ -1027,7 +1136,7 @@ class CSaleExport
 		return $orderTax;
 	}
 
-	function getXmlOrderTax($arOrderTaxAll)
+	static function getXmlOrderTax($arOrderTaxAll)
 	{
 		$strResult = "";
 		if(is_array($arOrderTaxAll) && count($arOrderTaxAll)>0)
@@ -1050,7 +1159,7 @@ class CSaleExport
 
 		return $strResult;
 	}
-	function getXmlOrderDiscount($arOrder)
+	static function getXmlOrderDiscount($arOrder)
 	{
 		$strResult='';
 		if(DoubleVal($arOrder["DISCOUNT_VALUE"]) > 0)
@@ -1066,7 +1175,7 @@ class CSaleExport
 		return $strResult;
 	}
 
-   function getShipmentsStoreList(Bitrix\Sale\Order $order)
+   static function getShipmentsStoreList(Bitrix\Sale\Order $order)
     {
         $result = array();
 
@@ -1080,8 +1189,6 @@ class CSaleExport
 			    if ($shipment->isSystem())
 				    continue;
 
-                $storeId = 0;
-
                 $storeId = $shipment->getStoreId();
 
                 if($storeId>0)
@@ -1091,7 +1198,7 @@ class CSaleExport
         return $result;
     }
 
-	function getXmlSaleStore($arShipmentStore, $arStore)
+	static function getXmlSaleStore($arShipmentStore, $arStore)
 	{
 		$bufer = '';
 		if(count($arShipmentStore)>0)
@@ -1132,8 +1239,6 @@ class CSaleExport
 	}
 	function getXmlSaleStoreBasket($arOrder,$arStore)
 	{
-		$bufer = "";
-
 		ob_start();
 		$storeBasket = "
 			<".CSaleExport::getTagName("SALE_EXPORT_STORIES").">
@@ -1143,9 +1248,9 @@ class CSaleExport
 				</".CSaleExport::getTagName("SALE_EXPORT_STORY").">
 			</".CSaleExport::getTagName("SALE_EXPORT_STORIES").">
 			";
-		$bufer = ob_get_clean();
-
-		return $bufer;
+		//$bufer = ob_get_clean();
+		ob_get_clean();
+		return $storeBasket;
 	}
 
 	/**
@@ -1162,9 +1267,30 @@ class CSaleExport
 		return $xml_id;
 	}
 
-	function getXmlBasketItems($type, $arOrder, $arFilter, $arSelect=array(), $arShipment=array())
+	protected static function outputXmlUnit($arBasket)
 	{
-		$bufer = '';
+		if(self::getVersionSchema() > self::DEFAULT_VERSION)
+		{
+			if(IntVal($arBasket["MEASURE_CODE"]) <= 0)
+				$arBasket["MEASURE_CODE"] = 796;
+			?>
+			<<?=CSaleExport::getTagName("SALE_EXPORT_UNIT")?>>
+			<<?=CSaleExport::getTagName("SALE_EXPORT_CODE")?>><?=$arBasket["MEASURE_CODE"]?></<?=CSaleExport::getTagName("SALE_EXPORT_CODE")?>>
+			<<?=CSaleExport::getTagName("SALE_EXPORT_FULL_NAME_UNIT")?>><?=htmlspecialcharsbx(self::$measures[$arBasket["MEASURE_CODE"]])?></<?=CSaleExport::getTagName("SALE_EXPORT_FULL_NAME_UNIT")?>>
+			</<?=CSaleExport::getTagName("SALE_EXPORT_UNIT")?>>
+			<<?=CSaleExport::getTagName("SALE_EXPORT_KOEF")?>>1</<?=CSaleExport::getTagName("SALE_EXPORT_KOEF")?>>
+			<?
+		}
+		else
+		{
+			?>
+			<<?=CSaleExport::getTagName("SALE_EXPORT_BASE_UNIT")?> <?=CSaleExport::getTagName("SALE_EXPORT_CODE")?>="796" <?=CSaleExport::getTagName("SALE_EXPORT_FULL_NAME_UNIT")?>="<?=CSaleExport::getTagName("SALE_EXPORT_SHTUKA")?>" <?=CSaleExport::getTagName("SALE_EXPORT_INTERNATIONAL_ABR")?>="<?=CSaleExport::getTagName("SALE_EXPORT_RCE")?>"><?=CSaleExport::getTagName("SALE_EXPORT_SHT")?></<?=CSaleExport::getTagName("SALE_EXPORT_BASE_UNIT")?>>
+			<?
+		}
+	}
+
+	static function getXmlBasketItems($type, $arOrder, $arFilter, $arSelect=array(), $arShipment=array())
+	{
 		$result = array();
 		ob_start();
 		?><<?=CSaleExport::getTagName("SALE_EXPORT_ITEMS")?>><?
@@ -1185,7 +1311,7 @@ class CSaleExport
 		$vatSum = 0;
 		while ($arBasket = $dbBasket->fetch())
 		{
-			if(strval($arBasket['TYPE'])!='' && $arBasket['TYPE']== \Bitrix\Sale\BasketItemBase::TYPE_SET)
+			if(strval($arBasket['TYPE'])!='' && $arBasket['TYPE']== \Bitrix\Sale\BasketItem::TYPE_SET)
 			    continue;
 
 			$result[] = $arBasket;
@@ -1194,28 +1320,13 @@ class CSaleExport
 				$priceType = $arBasket["NOTES"];
 			?>
 			<<?=CSaleExport::getTagName("SALE_EXPORT_ITEM")?>>
-				<<?=CSaleExport::getTagName("SALE_EXPORT_ID")?>><?=htmlspecialcharsbx(self::normalizeExternalCode($arBasket["PRODUCT_XML_ID"]))?></<?=CSaleExport::getTagName("SALE_EXPORT_ID")?>>
+				<<?=CSaleExport::getTagName("SALE_EXPORT_ID")?>><?=htmlspecialcharsbx(static::normalizeExternalCode($arBasket["PRODUCT_XML_ID"]))?></<?=CSaleExport::getTagName("SALE_EXPORT_ID")?>>
 				<<?=CSaleExport::getTagName("SALE_EXPORT_CATALOG_ID")?>><?=htmlspecialcharsbx($arBasket["CATALOG_XML_ID"])?></<?=CSaleExport::getTagName("SALE_EXPORT_CATALOG_ID")?>>
 				<<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>><?=htmlspecialcharsbx($arBasket["NAME"])?></<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>>
 				<?
-				if(self::getVersionSchema() > self::DEFAULT_VERSION)
-				{
-					if(IntVal($arBasket["MEASURE_CODE"]) <= 0)
-						$arBasket["MEASURE_CODE"] = 796;
-					?>
-					<<?=CSaleExport::getTagName("SALE_EXPORT_UNIT")?>>
-						<<?=CSaleExport::getTagName("SALE_EXPORT_CODE")?>><?=$arBasket["MEASURE_CODE"]?></<?=CSaleExport::getTagName("SALE_EXPORT_CODE")?>>
-						<<?=CSaleExport::getTagName("SALE_EXPORT_FULL_NAME_UNIT")?>><?=htmlspecialcharsbx(self::$measures[$arBasket["MEASURE_CODE"]])?></<?=CSaleExport::getTagName("SALE_EXPORT_FULL_NAME_UNIT")?>>
-					</<?=CSaleExport::getTagName("SALE_EXPORT_UNIT")?>>
-					<<?=CSaleExport::getTagName("SALE_EXPORT_KOEF")?>>1</<?=CSaleExport::getTagName("SALE_EXPORT_KOEF")?>>
-					<?
-				}
-				else
-				{
-					?>
-					<<?=CSaleExport::getTagName("SALE_EXPORT_BASE_UNIT")?> <?=CSaleExport::getTagName("SALE_EXPORT_CODE")?>="796" <?=CSaleExport::getTagName("SALE_EXPORT_FULL_NAME_UNIT")?>="<?=CSaleExport::getTagName("SALE_EXPORT_SHTUKA")?>" <?=CSaleExport::getTagName("SALE_EXPORT_INTERNATIONAL_ABR")?>="<?=CSaleExport::getTagName("SALE_EXPORT_RCE")?>"><?=CSaleExport::getTagName("SALE_EXPORT_SHT")?></<?=CSaleExport::getTagName("SALE_EXPORT_BASE_UNIT")?>>
-					<?
-				}
+
+            	static::outputXmlUnit($arBasket);
+
 				if(DoubleVal($arBasket["DISCOUNT_PRICE"]) > 0)
 				{
 					?>
@@ -1259,7 +1370,7 @@ class CSaleExport
 						<<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>><?=$number?></<?=CSaleExport::getTagName("SALE_EXPORT_VALUE")?>>
 					</<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
 					<?
-					$dbProp = CSaleBasket::GetPropsList(Array("SORT" => "ASC", "ID" => "ASC"), Array("BASKET_ID" => $arBasket["ID"]), false, false, array("NAME", "VALUE", "CODE"));
+					$dbProp = CSaleBasket::GetPropsList(Array("SORT" => "ASC", "ID" => "ASC"), Array("BASKET_ID" => $arBasket["ID"]), false, false, array("NAME", "SORT", "VALUE", "CODE"));
 					while($arPropBasket = $dbProp->Fetch())
 					{
 						?>
@@ -1319,9 +1430,8 @@ class CSaleExport
 		$bufer = ob_get_clean();
 		return array('outputXML'=>$bufer,'result'=>$result);
 	}
-	function getXmlSaleProperties($arOrder, $arShipment, $arPayment, $agent, $agentParams, $bExportFromCrm)
+	static function getXmlSaleProperties($arOrder, $arShipment, $arPayment, $agent, $agentParams, $bExportFromCrm)
 	{
-		$bufer = '';
 		ob_start();
 
         $arShipment = $arShipment[0];
@@ -1471,7 +1581,7 @@ class CSaleExport
 	return $bufer;
 }
 
-    function getXmlRekvProperties($agent, $agentParams)
+    static function getXmlRekvProperties($agent, $agentParams)
     {
 		ob_start();
 		self::OutputXmlRekvProperties($agent, $agentParams);
@@ -1479,7 +1589,7 @@ class CSaleExport
 		return $bufer;
     }
 
-    function OutputXmlRekvProperties($agent, $agentParams)
+    static function OutputXmlRekvProperties($agent, $agentParams)
     {
 		if(!empty($agent["REKV"]))
 		{
@@ -1498,15 +1608,14 @@ class CSaleExport
 		}
     }
 
-
-	function getXmlContragents($arOrder = array(), $arProp = array(), $agent = array(), $arOptions = array())
+	static function getXmlContragents($arOrder = array(), $arProp = array(), $agent = array(), $arOptions = array())
 	{
 		ob_start();
 		self::ExportContragents($arOrder, $arProp, $agent, $arOptions);
 		$ec_bufer = ob_get_clean();
 		return $ec_bufer;
 	}
-	function OutputXmlDocumentsByType($typeDocument, $xmlResult, $arOrder, $documents, \Bitrix\Sale\Order $order=null, $agentParams, $arProp, $locationStreetPropertyValue)
+	static function OutputXmlDocumentsByType($typeDocument, $xmlResult, $arOrder, $documents, \Bitrix\Sale\Order $order=null, $agentParams, $arProp, $locationStreetPropertyValue)
 	{
 		if(is_array($documents) && count($documents)>0)
 		{
@@ -1572,7 +1681,7 @@ class CSaleExport
 			}
 		}
 	}
-	function OutputXmlSiteName($arOrder)
+	static function OutputXmlSiteName($arOrder)
 	{
 		?>
 		<<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
@@ -1581,7 +1690,7 @@ class CSaleExport
 		</<?=CSaleExport::getTagName("SALE_EXPORT_PROPERTY_VALUE")?>>
 		<?
 	}
-	function OutputXmlDeliveryAddress()
+	static function OutputXmlDeliveryAddress()
 	{
 		if(strlen(self::getDeliveryAddress()) > 0)
 		{
@@ -1594,7 +1703,7 @@ class CSaleExport
 			<?
 		}
 	}
-	function OutputXmlDocumentRemove($typeDocument, $document)
+	static function OutputXmlDocumentRemove($typeDocument, $document)
     { global $DB;
         switch($typeDocument)
         {
@@ -1623,11 +1732,11 @@ class CSaleExport
             break;
         }
     }
-	function OutputXmlDocument($typeDocument,$xmlResult, $document=array())
+	static function OutputXmlDocument($typeDocument,$xmlResult, $document=array())
 	{
 		global $DB;
 		?>
-
+		<?ob_start();?>
 	<<?=CSaleExport::getTagName("SALE_EXPORT_DOCUMENT")?>><?
 		switch($typeDocument)
 		{
@@ -1659,7 +1768,7 @@ class CSaleExport
 				echo $xmlResult['Contragents'];
 			?>
 		<<?=CSaleExport::getTagName("SALE_EXPORT_TIME")?>><?=$DB->FormatDate($document["DATE_INSERT_FORMAT"], CSite::GetDateFormat("FULL"), "HH:MI:SS")?></<?=CSaleExport::getTagName("SALE_EXPORT_TIME")?>>
-		<<?=CSaleExport::getTagName("SALE_EXPORT_COMMENTS")?>><?=htmlspecialcharsbx($document["COMMENTS"])?></<?=CSaleExport::getTagName("SALE_EXPORT_COMMENTS")?>>
+		<<?=CSaleExport::getTagName("SALE_EXPORT_COMMENTS")?>><?=htmlspecialcharsbx(self::toText($document["COMMENTS"]))?></<?=CSaleExport::getTagName("SALE_EXPORT_COMMENTS")?>>
 			<?	echo $xmlResult['OrderTax'];
 				echo $xmlResult['OrderDiscount'];
 				echo self::getXmlSaleStore(array_unique($xmlResult['ShipmentsStoreList'], SORT_NUMERIC), $xmlResult['SaleStoreList']);
@@ -1710,7 +1819,7 @@ class CSaleExport
 			}?>
 		<<?=CSaleExport::getTagName("SALE_EXPORT_VERSION")?>><?=(IntVal($document["VERSION"]) > 0 ? $document["VERSION"] : 0)?></<?=CSaleExport::getTagName("SALE_EXPORT_VERSION")?>>
 		<<?=CSaleExport::getTagName("SALE_EXPORT_NUMBER_BASE")?>><?=$document['ORDER_ID']?></<?=CSaleExport::getTagName("SALE_EXPORT_NUMBER_BASE")?>>
-		<?=$xmlResult['Contragents'];?>
+		<?echo $xmlResult['Contragents'];?>
 		<?	switch($typeDocument)
 			{
 				case 'Payment':
@@ -1880,30 +1989,80 @@ class CSaleExport
 		}
 		?>
 	</<?=CSaleExport::getTagName("SALE_EXPORT_DOCUMENT")?>>
-	<?
+		<?$c = ob_get_contents();
+		ob_end_clean();
+		echo $c;
+
+		$typeEntityId = \Bitrix\Sale\Exchange\EntityType::UNDEFINED;
+		switch ($typeDocument)
+		{
+			case 'Order':
+				$typeEntityId = \Bitrix\Sale\Exchange\EntityType::ORDER;
+				break;
+			case 'Payment':
+				$psType = \Bitrix\Sale\PaySystem\Manager::getPsType($document['PAY_SYSTEM_ID']);
+
+				if($psType == 'A')
+					$typeEntityId = \Bitrix\Sale\Exchange\EntityType::PAYMENT_CARD_TRANSACTION;
+                elseif($psType == 'N')
+					$typeEntityId = \Bitrix\Sale\Exchange\EntityType::PAYMENT_CASH_LESS;
+				else//if($psType == 'Y')
+					$typeEntityId = \Bitrix\Sale\Exchange\EntityType::PAYMENT_CASH;
+				break;
+			case 'Shipment':
+				$typeEntityId = \Bitrix\Sale\Exchange\EntityType::SHIPMENT;
+				break;
+		}
+
+		if(intval($typeEntityId)>0)
+		{
+			$filedsTolog = array(
+				'ENTITY_ID' => $document["ID"],
+				'XML_ID' => $document["ID_1C"]
+			);
+
+			if(self::getVersionSchema() < self::CONTAINER_VERSION)
+			    $filedsTolog['MESSAGE'] = $c;
+
+			switch ($typeDocument)
+			{
+                case 'Order':
+					$filedsTolog['ENTITY_DATE_UPDATE'] = new \Bitrix\Main\Type\DateTime(\CAllDatabase::FormatDate($document['DATE_UPDATE']));
+					if(self::getVersionSchema() >= self::CONTAINER_VERSION)
+						$filedsTolog['PARENT_ID'] = $document["ID"];
+                    break;
+				case 'Payment':
+				case 'Shipment':
+				    $filedsTolog['OWNER_ENTITY_ID'] = $document["ORDER_ID"];
+
+				    if(self::getVersionSchema() >= self::CONTAINER_VERSION)
+				        $filedsTolog['PARENT_ID'] = $document["ORDER_ID"];
+					break;
+			}
+
+			static::$documentsToLog[$typeEntityId][] = $filedsTolog;
+		}
 	}
 
 
-	function ExportContragents($arOrder = array(), $arProp = array(), $agent = array(), $arOptions = array())
+	static function ExportContragents($arOrder = array(), $arProp = array(), $agent = array(), $arOptions = array())
 	{
 		$bExportFromCrm = (isset($arOptions["EXPORT_FROM_CRM"]) && $arOptions["EXPORT_FROM_CRM"] === "Y");
 		?>
-
 		<<?=CSaleExport::getTagName("SALE_EXPORT_CONTRAGENTS")?>>
 			<<?=CSaleExport::getTagName("SALE_EXPORT_CONTRAGENT")?>>
 		<?
-		if ($bExportFromCrm): ?>
-				<<?=CSaleExport::getTagName("SALE_EXPORT_ID")?>><?=htmlspecialcharsbx(substr($arProp["CRM"]["CLIENT_ID"]."#".$arProp["CRM"]["CLIENT"]["LOGIN"]."#".$arProp["CRM"]["CLIENT"]["LAST_NAME"]." ".$arProp["CRM"]["CLIENT"]["NAME"]." ".$arProp["CRM"]["CLIENT"]["SECOND_NAME"], 0, 80))?></<?=CSaleExport::getTagName("SALE_EXPORT_ID")?>><?
-		else: ?>
-				<?if(strlen($arOrder["SALE_INTERNALS_ORDER_USER_XML_ID"])>0):?>
-				    <<?=CSaleExport::getTagName("SALE_EXPORT_ID")?>><?=htmlspecialcharsbx($arOrder["SALE_INTERNALS_ORDER_USER_XML_ID"])?></<?=CSaleExport::getTagName("SALE_EXPORT_ID")?>>
-                <?else:
-				    $xmlId = htmlspecialcharsbx(substr($arOrder["USER_ID"]."#".$arProp["USER"]["LOGIN"]."#".$arProp["USER"]["LAST_NAME"]." ".$arProp["USER"]["NAME"]." ".$arProp["USER"]["SECOND_NAME"], 0, 80));
+		if ($bExportFromCrm):
+			$xmlId = htmlspecialcharsbx(substr($arProp["CRM"]["CLIENT_ID"]."#".$arProp["CRM"]["CLIENT"]["LOGIN"]."#".$arProp["CRM"]["CLIENT"]["LAST_NAME"]." ".$arProp["CRM"]["CLIENT"]["NAME"]." ".$arProp["CRM"]["CLIENT"]["SECOND_NAME"], 0, 40));
+		else:
+				if(strlen($arOrder["SALE_INTERNALS_ORDER_USER_XML_ID"])>0):
+                    $xmlId = htmlspecialcharsbx($arOrder["SALE_INTERNALS_ORDER_USER_XML_ID"]);
+                else:
+				    $xmlId = htmlspecialcharsbx(substr($arOrder["USER_ID"]."#".$arProp["USER"]["LOGIN"]."#".$arProp["USER"]["LAST_NAME"]." ".$arProp["USER"]["NAME"]." ".$arProp["USER"]["SECOND_NAME"], 0, 40));
                     \Bitrix\Sale\Exchange\Entity\UserImportBase::updateEmptyXmlId($arOrder["USER_ID"], $xmlId);
-                ?>
-				    <<?=CSaleExport::getTagName("SALE_EXPORT_ID")?>><?=$xmlId?></<?=CSaleExport::getTagName("SALE_EXPORT_ID")?>>
-				<?endif;?><?
+				endif;
 		endif; ?>
+                <<?=CSaleExport::getTagName("SALE_EXPORT_ID")?>><?=$xmlId?></<?=CSaleExport::getTagName("SALE_EXPORT_ID")?>>
 
 				<<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>><?=htmlspecialcharsbx($agent["AGENT_NAME"])?></<?=CSaleExport::getTagName("SALE_EXPORT_ITEM_NAME")?>>
 				<?
@@ -2022,21 +2181,26 @@ class CSaleExport
 					{
 						?><<?=CSaleExport::getTagName("SALE_EXPORT_KPP")?>><?=htmlspecialcharsbx($agent["KPP"])?></<?=CSaleExport::getTagName("SALE_EXPORT_KPP")?>><?
 					}
-					?>
-					<<?=CSaleExport::getTagName("SALE_EXPORT_REGISTRATION_ADDRESS")?>>
-					<?=$address?>
-					</<?=CSaleExport::getTagName("SALE_EXPORT_REGISTRATION_ADDRESS")?>>
-				<?
+					if(strlen($address)>0)
+                    {
+						?><<?=CSaleExport::getTagName("SALE_EXPORT_REGISTRATION_ADDRESS")?>>
+						<?=$address?>
+                        </<?=CSaleExport::getTagName("SALE_EXPORT_REGISTRATION_ADDRESS")?>>
+						<?
+                    }
 				}
 				else
 				{
 					self::$arResultStat["COMPANIES"]++;
 					?>
 					<<?=CSaleExport::getTagName("SALE_EXPORT_OFICIAL_NAME")?>><?=htmlspecialcharsbx($agent["FULL_NAME"])?></<?=CSaleExport::getTagName("SALE_EXPORT_OFICIAL_NAME")?>>
-					<<?=CSaleExport::getTagName("SALE_EXPORT_UR_ADDRESS")?>>
-					<?=$address?>
-					</<?=CSaleExport::getTagName("SALE_EXPORT_UR_ADDRESS")?>>
 					<?
+					if(strlen($address)>0)
+					{
+						?><<?=CSaleExport::getTagName("SALE_EXPORT_UR_ADDRESS")?>>
+						<?=$address?>
+						</<?=CSaleExport::getTagName("SALE_EXPORT_UR_ADDRESS")?>><?
+					}
 					if(strlen($agent["INN"])>0)
 					{
 						?><<?=CSaleExport::getTagName("SALE_EXPORT_INN")?>><?=htmlspecialcharsbx($agent["INN"])?></<?=CSaleExport::getTagName("SALE_EXPORT_INN")?>><?
@@ -2311,6 +2475,15 @@ class CSaleExport
 			</<?=CSaleExport::getTagName("SALE_EXPORT_CONTRAGENT")?>>
 		</<?=CSaleExport::getTagName("SALE_EXPORT_CONTRAGENTS")?>>
 		<?
+
+		$filedsTolog = array(
+			'ENTITY_ID' => $arOrder["USER_ID"],
+			'PARENT_ID' => $arOrder['ID'],
+			'ENTITY_DATE_UPDATE' => new \Bitrix\Main\Type\DateTime(\CAllDatabase::FormatDate($arOrder["SALE_INTERNALS_ORDER_USER_TIMESTAMP_X"])),
+			'XML_ID' => $xmlId
+		);
+
+		static::$documentsToLog[\Bitrix\Sale\Exchange\EntityType::USER_PROFILE][] = $filedsTolog;
 	}
 
     public static function getFormatDate($value)
@@ -2561,7 +2734,7 @@ class CSaleExport
 	 * @param \Bitrix\Sale\IBusinessValueProvider $entity
 	 * @return array
 	 */
-	protected function getProvidersInstanceByEntity(\Bitrix\Sale\IBusinessValueProvider $entity)
+	static protected function getProvidersInstanceByEntity(\Bitrix\Sale\IBusinessValueProvider $entity)
 	{
         $providersInstance = array(
             'ORDER'     =>  self::getProviderInstanceByProviderCode($entity, 'ORDER'     ),
@@ -2592,7 +2765,7 @@ class CSaleExport
         return $providersInstance;
     }
 
-    protected function getProviderInstanceByProviderCode(\Bitrix\Sale\IBusinessValueProvider $entity, $providerCode)
+    static protected function getProviderInstanceByProviderCode(\Bitrix\Sale\IBusinessValueProvider $entity, $providerCode)
 	{
 		$providerInstance = null;
 		$order = null;
@@ -2946,4 +3119,37 @@ class CSaleExport
 
 		return $value;
 	}
+
+	/**
+	 * @param array $fields
+	 * @return \Bitrix\Main\Entity\AddResult
+     * @deprecated
+	 */
+	static public function log(array $fields)
+	{
+		$params['ENTITY_ID'] = $fields['ENTITY_ID'];
+		$params['ENTITY_TYPE_ID'] = $fields['ENTITY_TYPE_ID'];
+		$params['DIRECTION'] = \Bitrix\Sale\Exchange\ManagerExport::getDirectionType();
+
+		if (strlen($fields['XML_ID'])>0)
+			$params['XML_ID'] = $fields['XML_ID'];
+
+		if (strlen($fields['ENTITY_DATE_UPDATE'])>0)
+			$params['ENTITY_DATE_UPDATE'] = $fields['ENTITY_DATE_UPDATE'];
+
+		if (intval($fields['PARENT_ID'])>0)
+			$params['PARENT_ID'] = $fields['PARENT_ID'];
+
+		if (intval($fields['OWNER_ENTITY_ID'])>0)
+			$params['OWNER_ENTITY_ID'] = $fields['OWNER_ENTITY_ID'];
+
+		if (strlen($fields['MARKED'])>0)
+		    $params['MARKED'] = $fields['MARKED'];
+
+		$params['MESSAGE'] = \Bitrix\Sale\Exchange\Internals\LoggerDiag::isOn()? $fields['MESSAGE']:null;
+
+		$params['DATE_INSERT'] = new \Bitrix\Main\Type\DateTime();
+
+		return \Bitrix\Sale\Exchange\Internals\ExchangeLogTable::add($params);
+    }
 }

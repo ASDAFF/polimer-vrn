@@ -1227,6 +1227,21 @@ class CSiteCheckerTest
 
 	function check_pull_stream()
 	{
+		if (IsModuleInstalled('xmpp') && CModule::IncludeModule('xmpp'))
+		{
+			$arMessage = array(
+				"query" => array(
+					"." => array("type" => "get"),
+					"common" => array("#" => ""),
+				),
+			);
+			$t = microtime(1);
+			$arResponce = CXMPPUtility::_SendToServer($arMessage, $errorNo, $errorStr);
+			if (microtime(1) - $t > 1)
+				return $this->Result(false, 'XMPP server has failed');
+		}
+
+
 		if (CModule::IncludeModule('pull'))
 		{
 			$text = md5(mt_rand(100000,999999));
@@ -2618,7 +2633,7 @@ class CSiteCheckerTest
 						),
 					"TAG" => "SITE_CHECKER",
 					"MODULE_ID" => "MAIN",
-					'TYPE' => 'ERROR'
+					'NOTIFY_TYPE' => CAdminNotify::TYPE_NORMAL
 				);
 				CAdminNotify::Add($ar);
 				break;

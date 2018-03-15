@@ -131,6 +131,16 @@ class CUserTypeInteger extends \Bitrix\Main\UserField\TypeBase
 			'>';
 	}
 
+	function GetFilterData($arUserField, $arHtmlControl)
+	{
+		return array(
+			"id" => $arHtmlControl["ID"],
+			"name" => $arHtmlControl["NAME"],
+			"type" => "number",
+			"filterable" => ""
+		);
+	}
+
 	function GetAdminListViewHTML($arUserField, $arHtmlControl)
 	{
 		if(strlen($arHtmlControl["VALUE"])>0)
@@ -188,7 +198,7 @@ class CUserTypeInteger extends \Bitrix\Main\UserField\TypeBase
 
 	public static function GetPublicView($arUserField, $arAdditionalParameters = array())
 	{
-		$value = static::getFieldValue($arUserField, $arAdditionalParameters);
+		$value = static::normalizeFieldValue($arUserField["VALUE"]);
 
 		$html = '';
 		$first = true;
@@ -255,6 +265,7 @@ class CUserTypeInteger extends \Bitrix\Main\UserField\TypeBase
 
 			$attrList['type'] = 'text';
 			$attrList['value'] = $res;
+			$attrList['tabindex'] = '0';
 
 			$html .= static::getHelper()->wrapSingleField('<input '.static::buildTagAttributes($attrList).'/>');
 		}

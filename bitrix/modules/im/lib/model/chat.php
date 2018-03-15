@@ -13,7 +13,7 @@ Loc::loadMessages(__FILE__);
  * <li> ID int mandatory
  * <li> TITLE string(255) optional
  * <li> DESCRIPTION text optional
- * <li> TYPE string(2) optional
+ * <li> TYPE string(1) optional
  * <li> AUTHOR_ID int mandatory
  * <li> AVATAR int optional
  * <li> COLOR string optional
@@ -52,6 +52,14 @@ class ChatTable extends Entity\DataManager
 				'primary' => true,
 				'autocomplete' => true,
 				'title' => Loc::getMessage('CHAT_ENTITY_ID_FIELD'),
+			),
+			'PARENT_ID' => array(
+				'data_type' => 'integer',
+				'default_value' => 0,
+			),
+			'PARENT_MID' => array(
+				'data_type' => 'integer',
+				'default_value' => 0,
 			),
 			'TITLE' => array(
 				'data_type' => 'string',
@@ -132,9 +140,18 @@ class ChatTable extends Entity\DataManager
 				'data_type' => 'integer',
 				'default_value' => 0
 			),
+			'MESSAGE_COUNT' => array(
+				'data_type' => 'integer',
+				'default_value' => 0,
+			),
 			'LAST_MESSAGE_ID' => array(
 				'data_type' => 'integer',
 				'default_value' => 0
+			),
+			'LAST_MESSAGE_STATUS' => array(
+				'data_type' => 'string',
+				'default_value' => IM_MESSAGE_STATUS_RECEIVED,
+				'validation' => array(__CLASS__, 'validateMessageStatus'),
 			),
 			'DATE_CREATE' => array(
 				'data_type' => 'datetime',
@@ -152,7 +169,7 @@ class ChatTable extends Entity\DataManager
 	public static function validateType()
 	{
 		return array(
-			new Entity\Validator\Length(null, 2),
+			new Entity\Validator\Length(null, 1),
 		);
 	}
 	public static function validateColor()
@@ -188,7 +205,13 @@ class ChatTable extends Entity\DataManager
 	public static function getCurrentDate()
 	{
 		return new \Bitrix\Main\Type\DateTime();
-	}	
+	}
+	public static function validateMessageStatus()
+	{
+		return array(
+			new Entity\Validator\Length(null, 50),
+		);
+	}
 }
 
 class_alias("Bitrix\\Im\\Model\\ChatTable", "Bitrix\\Im\\ChatTable", false);

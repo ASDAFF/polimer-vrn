@@ -1,6 +1,7 @@
 CREATE TABLE b_im_chat(
 	ID int(18) not null auto_increment,
 	PARENT_ID int(18) null DEFAULT 0,
+	PARENT_MID int(18) null DEFAULT 0,
 	TITLE varchar(255) null,
 	DESCRIPTION text null,
 	COLOR varchar(255) null,
@@ -17,14 +18,16 @@ CREATE TABLE b_im_chat(
 	ENTITY_DATA_2 varchar(255) null,
 	ENTITY_DATA_3 varchar(255) null,
 	DISK_FOLDER_ID int(18) null,
+	MESSAGE_COUNT int(18) DEFAULT 0,
 	LAST_MESSAGE_ID int(18) null,
+	LAST_MESSAGE_STATUS varchar(50) DEFAULT 'received',
 	DATE_CREATE datetime null,
 	PRIMARY KEY (ID),
 	KEY IX_IM_CHAT_1 (AUTHOR_ID),
 	KEY IX_IM_CHAT_2 (ENTITY_TYPE, ENTITY_ID, AUTHOR_ID),
 	KEY IX_IM_CHAT_3 (CALL_NUMBER, AUTHOR_ID),
 	KEY IX_IM_CHAT_4 (TYPE),
-	KEY IX_IM_CHAT_5 (PARENT_ID)
+	KEY IX_IM_CHAT_5 (PARENT_ID, PARENT_MID)
 );
 
 CREATE TABLE b_im_message(
@@ -105,15 +108,18 @@ CREATE TABLE b_im_relation (
 	LAST_READ datetime null,
 	STATUS smallint(1) DEFAULT 0,
 	CALL_STATUS smallint(1) DEFAULT 0,
+	MESSAGE_STATUS varchar(50) DEFAULT 'received',
 	NOTIFY_BLOCK char(1) DEFAULT 'N',
 	MANAGER char(1) DEFAULT 'N',
+	COUNTER int(18) DEFAULT 0,
 	PRIMARY KEY (ID),
 	KEY IX_IM_REL_1 (CHAT_ID),
 	KEY IX_IM_REL_2 (USER_ID, MESSAGE_TYPE, STATUS),
 	KEY IX_IM_REL_3 (USER_ID, MESSAGE_TYPE, CHAT_ID),
 	KEY IX_IM_REL_4 (USER_ID, STATUS),
 	KEY IX_IM_REL_5 (MESSAGE_TYPE, STATUS),
-	KEY IX_IM_REL_6 (CHAT_ID, USER_ID)
+	KEY IX_IM_REL_6 (CHAT_ID, USER_ID),
+	KEY IX_IM_REL_7 (STATUS, COUNTER, ID ASC)
 );
 
 CREATE TABLE b_im_recent(
@@ -121,8 +127,25 @@ CREATE TABLE b_im_recent(
 	ITEM_TYPE char(1) default 'P' not null,
 	ITEM_ID int(18) not null,
 	ITEM_MID int(18) not null,
+	ITEM_CID int(18) DEFAULT 0,
+	ITEM_RID int(18) DEFAULT 0,
+	ITEM_OLID int(18) DEFAULT 0,
+	PINNED char(1) DEFAULT 'N',
+	DATE_UPDATE datetime null,
 	PRIMARY KEY (USER_ID, ITEM_TYPE, ITEM_ID),
-	KEY IX_IM_REC_1 (ITEM_TYPE, ITEM_ID)
+	KEY IX_IM_REC_1 (ITEM_TYPE, ITEM_ID),
+	KEY IX_IM_REC_2 (DATE_UPDATE)
+);
+
+CREATE TABLE b_im_last_search (
+	ID int(18) not null auto_increment,
+	USER_ID int(18) not null,
+	DIALOG_ID varchar(50) not null,
+	ITEM_CID int(18) not null DEFAULT 0,
+	ITEM_RID int(18) not null DEFAULT 0,
+	PRIMARY KEY PK_B_IM_LAST_SEARCH (ID DESC),
+	KEY IX_IM_LS_1 (USER_ID),
+	KEY IX_IM_LS_2 (USER_ID, DIALOG_ID)
 );
 
 CREATE TABLE b_im_bot(
@@ -250,4 +273,13 @@ CREATE TABLE b_im_external_avatar
 	AVATAR_ID int(11) NOT NULL,
 	PRIMARY KEY PK_B_IM_EXTERNAL_AVATAR (ID),
 	KEY IX_IMOL_NA_1 (LINK_MD5)
+);
+CREATE TABLE b_im_no_relation_permission_disk
+(
+	ID int(11) NOT NULL auto_increment,
+	CHAT_ID int(18) null,
+	USER_ID int(18) null,
+	ACTIVE_TO datetime null,
+  PRIMARY KEY PK_B_IM_NO_RELATION_PERMISSION_DISK (ID),
+	KEY IX_IM_USER_ID_CHAT_ID (USER_ID, CHAT_ID)
 );

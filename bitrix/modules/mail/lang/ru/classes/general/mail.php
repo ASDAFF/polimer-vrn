@@ -46,6 +46,7 @@ $MESS ['MAIL_ERR_DB'] = "Ошибка базы данных";
 
 $MESS ['MAIL_ERR_API_DEFAULT'] = "Неизвестная ошибка (mail api)";
 $MESS ['MAIL_ERR_API_OP_DENIED'] = "Операция не доступна";
+$MESS ['MAIL_ERR_API_OLD_TOKEN'] = "Токен устарел, получите новый";
 $MESS ['MAIL_ERR_API_DENIED'] = "Доступ к сервису запрещен";
 $MESS ['MAIL_ERR_API_NAME_OCCUPIED'] = "Логин занят";
 $MESS ['MAIL_ERR_API_USER_NOTFOUND'] = "Логин не существует";

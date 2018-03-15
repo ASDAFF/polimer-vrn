@@ -525,9 +525,11 @@ class CBPRequestInformationOptionalActivity
 	protected static function validateTaskEventParameters($arTask, $eventParameters)
 	{
 		if (
-			isset($arTask['PARAMETERS']['CommentRequired'])
+			isset($arTask['PARAMETERS']['ShowComment'])
+			&& $arTask['PARAMETERS']['ShowComment'] === 'Y'
+			&& isset($arTask['PARAMETERS']['CommentRequired'])
 			&& empty($eventParameters['COMMENT'])
-			&& $arTask['PARAMETERS']['CommentRequired'] == 'Y'
+			&& $arTask['PARAMETERS']['CommentRequired'] === 'Y'
 		)
 		{
 			$label = strlen($arTask["PARAMETERS"]["CommentLabelMessage"]) > 0 ? $arTask["PARAMETERS"]["CommentLabelMessage"] : GetMessage("BPAR_ACT_COMMENT");
@@ -697,6 +699,7 @@ class CBPRequestInformationOptionalActivity
 		}
 
 		$arFieldTypes = $documentService->GetDocumentFieldTypes($documentType);
+		unset($arFieldTypes['N:Sequence']);
 		$arDocumentFields = $documentService->GetDocumentFields($documentType);
 
 		$ar = array();

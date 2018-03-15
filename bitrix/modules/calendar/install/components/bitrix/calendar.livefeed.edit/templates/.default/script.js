@@ -348,14 +348,24 @@
 				return BX.PreventDefault(e);
 			}
 
+			var
+				_this = this,
+				fromTime = this.parseTime(this.pFromTime.value),
+				toTime = this.parseTime(this.pToTime.value),
+				fromDate = BX.parseDate(BX.util.trim(this.pFromDate.value)),
+				toDate = BX.parseDate(BX.util.trim(this.pToDate.value));
+
+			if (fromDate && fromTime)
+				fromDate.setHours(fromTime.h, fromTime.m, 0);
+			if (toDate && toTime)
+				toDate.setHours(toTime.h, toTime.m, 0);
+
+			BX(this.id + '_time_from_real').value = BX.date.format(this.TIME_FORMAT, fromDate.getTime() / 1000);
+			BX(this.id + '_time_to_real').value = BX.date.format(this.TIME_FORMAT, toDate.getTime() / 1000);
+
 			// Check Meeting and Video Meeting rooms accessibility
 			if (this.Loc && this.Loc.NEW && this.Loc.NEW.substr(0, 5) == 'ECMR_' && !this.bLocationChecked && window.setBlogPostFormSubmitted)
 			{
-				var
-					_this = this,
-					fromDate = this.ParseDate(BX.util.trim(this.pFromDate.value) + ' ' + BX.util.trim(this.pFromTime.value)),
-					toDate = this.ParseDate(BX.util.trim(this.pToDate.value) + ' ' + BX.util.trim(this.pToTime.value));
-
 				top.BXCRES_Check = null;
 				this.CheckMeetingRoom(
 					{
@@ -571,55 +581,156 @@
 			this.bAdditional = value;
 		},
 
-		ParseTime: function(str)
+		parseTime: function(str)
 		{
-			var h, m, arTime;
+			var date = this.parseDate(BX.date.format(this.DATE_FORMAT, new Date()) + ' ' + str, false);
+			return date ? {
+				h: date.getHours(),
+				m: date.getMinutes()
+			} : date;
+		},
+
+		parseDate: function(str, format, trimSeconds)
+		{
+			var
+				i, cnt, k,
+				regMonths,
+				bUTC = false;
+
+			if (!format)
+				format = BX.message('FORMAT_DATETIME');
+
 			str = BX.util.trim(str);
-			str = str.toLowerCase();
 
-			if (this.bAMPM)
+			if (trimSeconds !== false)
+				format = format.replace(':SS', '');
+
+			if (BX.type.isNotEmptyString(str))
 			{
-				var ampm = 'pm';
-				if (str.indexOf('am') != -1)
-					ampm = 'am';
-
-				str = str.replace(/[^\d:]/ig, '');
-				arTime = str.split(':');
-				h = parseInt(arTime[0] || 0, 10);
-				m = parseInt(arTime[1] || 0, 10);
-
-				if (h == 12)
+				regMonths = '';
+				for (i = 1; i <= 12; i++)
 				{
-					if (ampm == 'am')
-						h = 0;
-					else
-						h = 12;
+					regMonths = regMonths + '|' + BX.message('MON_'+i);
 				}
-				else if (h != 0)
+
+				var
+					expr = new RegExp('([0-9]+|[a-z]+' + regMonths + ')', 'ig'),
+					aDate = str.match(expr),
+					aFormat = BX.message('FORMAT_DATE').match(/(DD|MI|MMMM|MM|M|YYYY)/ig),
+					aDateArgs = [],
+					aFormatArgs = [],
+					aResult = {};
+
+				if (!aDate)
 				{
-					if (ampm == 'pm' && h < 12)
+					return null;
+				}
+
+				if(aDate.length > aFormat.length)
+				{
+					aFormat = format.match(/(DD|MI|MMMM|MM|M|YYYY|HH|H|SS|TT|T|GG|G)/ig);
+				}
+
+				for(i = 0, cnt = aDate.length; i < cnt; i++)
+				{
+					if(BX.util.trim(aDate[i]) != '')
 					{
-						h += 12;
+						aDateArgs[aDateArgs.length] = aDate[i];
 					}
 				}
+
+				for(i = 0, cnt = aFormat.length; i < cnt; i++)
+				{
+					if(BX.util.trim(aFormat[i]) != '')
+					{
+						aFormatArgs[aFormatArgs.length] = aFormat[i];
+					}
+				}
+
+				var m = BX.util.array_search('MMMM', aFormatArgs);
+				if (m > 0)
+				{
+					aDateArgs[m] = BX.getNumMonth(aDateArgs[m]);
+					aFormatArgs[m] = "MM";
+				}
+				else
+				{
+					m = BX.util.array_search('M', aFormatArgs);
+					if (m > 0)
+					{
+						aDateArgs[m] = BX.getNumMonth(aDateArgs[m]);
+						aFormatArgs[m] = "MM";
+					}
+				}
+
+				for(i = 0, cnt = aFormatArgs.length; i < cnt; i++)
+				{
+					k = aFormatArgs[i].toUpperCase();
+					aResult[k] = k == 'T' || k == 'TT' ? aDateArgs[i] : parseInt(aDateArgs[i], 10);
+				}
+
+				if(aResult['DD'] > 0 && aResult['MM'] > 0 && aResult['YYYY'] > 0)
+				{
+					var d = new Date();
+
+					if(bUTC)
+					{
+						d.setUTCDate(1);
+						d.setUTCFullYear(aResult['YYYY']);
+						d.setUTCMonth(aResult['MM'] - 1);
+						d.setUTCDate(aResult['DD']);
+						d.setUTCHours(0, 0, 0);
+					}
+					else
+					{
+						d.setDate(1);
+						d.setFullYear(aResult['YYYY']);
+						d.setMonth(aResult['MM'] - 1);
+						d.setDate(aResult['DD']);
+						d.setHours(0, 0, 0);
+					}
+
+					if(
+						(!isNaN(aResult['HH']) || !isNaN(aResult['GG']) || !isNaN(aResult['H']) || !isNaN(aResult['G']))
+						&& !isNaN(aResult['MI'])
+					)
+					{
+						if (!isNaN(aResult['H']) || !isNaN(aResult['G']))
+						{
+							var bPM = (aResult['T']||aResult['TT']||'am').toUpperCase()=='PM';
+							var h = parseInt(aResult['H']||aResult['G']||0, 10);
+							if(bPM)
+							{
+								aResult['HH'] = h + (h == 12 ? 0 : 12);
+							}
+							else
+							{
+								aResult['HH'] = h < 12 ? h : 0;
+							}
+						}
+						else
+						{
+							aResult['HH'] = parseInt(aResult['HH']||aResult['GG']||0, 10);
+						}
+
+						if (isNaN(aResult['SS']))
+							aResult['SS'] = 0;
+
+						if(bUTC)
+						{
+							d.setUTCHours(aResult['HH'], aResult['MI'], aResult['SS']);
+						}
+						else
+						{
+							d.setHours(aResult['HH'], aResult['MI'], aResult['SS']);
+						}
+					}
+
+					return d;
+				}
 			}
-			else
-			{
-				arTime = str.split(':');
-				h = arTime[0] || 0;
-				m = arTime[1] || 0;
 
-				if (h.toString().length > 2)
-					h = parseInt(h.toString().substr(0, 2));
-				m = parseInt(m);
-			}
-
-			if (isNaN(h) || h > 24)
-				h = 0;
-			if (isNaN(m) || m > 60)
-				m = 0;
-
-			return {h: h, m: m};
+			return null;
 		},
 
 		TimezoneSwitch: function()

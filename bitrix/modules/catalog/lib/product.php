@@ -154,10 +154,10 @@ class ProductTable extends Main\Entity\DataManager
 				'default_value' => self::STATUS_NO,
 				'title' => Loc::getMessage('PRODUCT_ENTITY_WITHOUT_ORDER_FIELD'),
 			)),
-			'SELECT_BEST_PRICE' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y')
-			),
+			'SELECT_BEST_PRICE' => new Main\Entity\BooleanField('SELECT_BEST_PRICE', array(
+				'values' => array(self::STATUS_NO, self::STATUS_YES),
+				'default_value' => self::STATUS_YES
+			)),
 			'VAT_ID' => new Main\Entity\IntegerField('VAT_ID', array(
 				'default_value' => 0,
 				'title' => Loc::getMessage('PRODUCT_ENTITY_VAT_ID_FIELD')

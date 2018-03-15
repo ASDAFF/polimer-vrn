@@ -8,14 +8,6 @@ if ($arParams["FUTURE_MONTH_COUNT"] <= 0)
 
 $curUserId = $USER->IsAuthorized() ? $USER->GetID() : '';
 
-if (!function_exists('getTSFormat')) // TODO: clean this function from result_modifier.php in bitrix24 template
-{
-	function getTSFormat()
-	{
-		return CSite::GetDateFormat("FULL");
-	}
-}
-
 if(!CModule::IncludeModule("calendar") || !class_exists("CCalendar"))
 	return ShowError(GetMessage("EC_CALENDAR_MODULE_NOT_INSTALLED"));
 

@@ -19,4 +19,5 @@ $MESS["REPORT_CHART_TYPE_BAR"] = "Histogramm";
 $MESS["REPORT_CHART_TYPE_PIE"] = "Kreisdiagramm";
 $MESS["REPORT_UNKNOWN_FIELD_DEFINITION"] = "Im Bericht wird ein nicht existierendes Feld verwendet. Möglicherweise ist das ein benutzerdefiniertes Feld, welches gelöscht wurde. Sie müssen die Einstellungen des Berichts überprüfen und erneut speichern.";
 $MESS["REPORT_HELPER_NOT_DEFINED"] = "Es wurde keine Hilfsklasse definiert.";
+$MESS["REPORT_COLUMNS_HAS_CYCLIC_DEPENDENCY"] = "Bericht kann nicht erstellt werden, weil es in einer oder in mehreren Spalten einen zirkelbezug gibt. Stellen Sie bitte sicher, dass die Spalten mit der Operation \"% vom Feldwert\" nicht den Zirkelbezug aufweisen.";
 ?>

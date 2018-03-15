@@ -248,9 +248,9 @@ else if ($_SERVER["REQUEST_METHOD"]=="POST" && $_REQUEST["start_download"]=="Y" 
 
 	if ($strErrorMessage == '')
 	{
-		$tmpFileName = strtolower($_FILES['tarfile']['tmp_name']);
+		$tmpFileName = strtolower($_FILES['tarfile']['name']);
 		if (
-			substr($tmpFileName, -6) !== '.tar.gz'
+			substr($tmpFileName, -7) !== '.tar.gz'
 			&& substr($tmpFileName, -4) !== '.tar'
 		)
 			$strErrorMessage .= GetMessage('TR_ERROR_TARFILE_EXTENTION').'<br>';

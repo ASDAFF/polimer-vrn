@@ -7,7 +7,7 @@ $arComponentParameters = array(
 			"NAME" => GetMessage("SOPC_PATH_TO_PAYMENT"),
 			"TYPE" => "STRING",
 			"MULTIPLE" => "N",
-			"DEFAULT" => "/personal/order/payment",
+			"DEFAULT" => "/personal/order/payment/",
 			"COLS" => 25,
 		),
 		"SET_TITLE" => array()
@@ -42,6 +42,13 @@ if (isset($paySystemList))
 		"ADDITIONAL_VALUES"=>"N",
 	);
 }
+
+$arComponentParameters['PARAMETERS']['REFRESH_PRICES'] = array(
+	"NAME" => GetMessage("SPOC_REFRESH_PRICE"),
+	"TYPE" => "CHECKBOX",
+	"DEFAULT" => "N",
+	"PARENT" => "ORDER",
+);
 
 if (CBXFeatures::IsFeatureEnabled('SaleAccounts'))
 {

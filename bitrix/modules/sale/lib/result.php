@@ -52,10 +52,32 @@ class Result extends Entity\Result
 		}
 	}
 
+	public function get($offset)
+	{
+		if (isset($this->data[$offset]) || array_key_exists($offset, $this->data))
+		{
+			return $this->data[$offset];
+		}
+
+		return null;
+	}
+
+	public function set($offset, $value)
+	{
+		if ($offset === null)
+		{
+			$this->data[] = $value;
+		}
+		else
+		{
+			$this->data[$offset] = $value;
+		}
+	}
+
 	/**
 	 * @param Error[] $errors
 	 *
-	 * @return null
+	 * @return void
 	 */
 	public function addWarnings(array $errors)
 	{
@@ -76,11 +98,12 @@ class Result extends Entity\Result
 		$this->warnings[] = $error;
 	}
 
-
 	/**
 	 * Adds the error.
 	 *
 	 * @param Error $error
+	 *
+	 * @return void
 	 */
 	public function addError(Error $error)
 	{

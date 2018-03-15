@@ -184,7 +184,15 @@
 		{
 			for (var i = 0; i < arguments.length; i++)
 			{
-				text = text+' | '+(typeof(arguments[i]) == 'object'? JSON.stringify(arguments[i]): arguments[i]);
+				try
+				{
+					text = text+' | '+(typeof(arguments[i]) == 'object'? JSON.stringify(arguments[i]): arguments[i]);
+				}
+				catch (e)
+				{
+					text = text+' | (circular structure)';
+				}
+
 			}
 			BX.desktop.log(BX.message('USER_ID')+'.video.log', text.substr(3));
 		}
@@ -381,7 +389,7 @@
 					return false;
 				}
 
-				//this.log("Adding local stream.", userId, JSON.stringify(this.pc[userId]));
+				this.log("Adding local stream.", userId, this.pc[userId]);
 
 				this.pcStart[userId] = true;
 

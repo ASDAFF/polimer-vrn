@@ -100,12 +100,16 @@ class ChatHandler extends \Bitrix\Replica\Client\BaseHandler
 						\CIMContactList::CleanChatCache($rel['USER_ID']);
 					}
 
-					\CPullStack::AddByUser($rel['USER_ID'], Array(
+					\Bitrix\Pull\Event::add($rel['USER_ID'], Array(
 						'module_id' => 'im',
 						'command' => 'chatRename',
 						'params' => Array(
 							'chatId' => $newRecord['CHAT_ID'],
-							'chatTitle' => htmlspecialcharsbx($newRecord['TITLE']),
+							'name' => $newRecord['TITLE'],
+						),
+						'extra' => Array(
+							'im_revision' => IM_REVISION,
+							'im_revision_mobile' => IM_REVISION_MOBILE,
 						),
 					));
 				}
@@ -134,12 +138,16 @@ class ChatHandler extends \Bitrix\Replica\Client\BaseHandler
 						\CIMContactList::CleanChatCache($relation['USER_ID']);
 					}
 
-					\CPullStack::AddByUser($relation['USER_ID'], Array(
+					\Bitrix\Pull\Event::add($relation['USER_ID'], Array(
 						'module_id' => 'im',
 						'command' => 'chatAvatar',
 						'params' => Array(
 							'chatId' => $newRecord['CHAT_ID'],
-							'chatAvatar' => $avatarImage,
+							'avatar' => $avatarImage,
+						),
+						'extra' => Array(
+							'im_revision' => IM_REVISION,
+							'im_revision_mobile' => IM_REVISION_MOBILE,
 						),
 					));
 				}
@@ -167,12 +175,16 @@ class ChatHandler extends \Bitrix\Replica\Client\BaseHandler
 						\CIMContactList::CleanChatCache($relation['USER_ID']);
 					}
 
-					\CPullStack::AddByUser($relation['USER_ID'], Array(
+					\Bitrix\Pull\Event::add($relation['USER_ID'], Array(
 						'module_id' => 'im',
 						'command' => 'chatChangeColor',
 						'params' => Array(
 							'chatId' => $newRecord['CHAT_ID'],
-							'chatColor' => \Bitrix\Im\Color::getColor($newRecord['COLOR']),
+							'color' => \Bitrix\Im\Color::getColor($newRecord['COLOR']),
+						),
+						'extra' => Array(
+							'im_revision' => IM_REVISION,
+							'im_revision_mobile' => IM_REVISION_MOBILE,
 						),
 					));
 				}

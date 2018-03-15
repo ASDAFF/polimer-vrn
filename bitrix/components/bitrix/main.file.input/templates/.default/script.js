@@ -11,7 +11,7 @@
 				this.button = BX("mfi-" + params.controlId + "-button");
 				this.editor = null;
 				if(BX("mfi-" + params.controlId + "-editor")) {
-					this.editor = new BX.AvatarEditor();
+					this.editor = new BX.AvatarEditor({enableCamera : params.enableCamera});
 					BX.addCustomEvent(this.editor, "onApply", BX.delegate(this.addFile, this));
 					BX.bind(BX("mfi-" + params.controlId + "-editor"), "click", BX.delegate(this.editor.click, this.editor));
 				}

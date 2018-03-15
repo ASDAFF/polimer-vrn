@@ -168,7 +168,7 @@ BX.Kanban.Column.prototype =
 	 */
 	addItem: function(item, beforeItem)
 	{
-		if (!item instanceof BX.Kanban.Item)
+		if (!(item instanceof BX.Kanban.Item))
 		{
 			throw new Error("item must be an instance of BX.Kanban.Item");
 		}

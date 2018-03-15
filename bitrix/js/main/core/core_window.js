@@ -2679,7 +2679,7 @@ BX.CMenu.prototype.addItem = function(item)
 					BX.onCustomEvent('onMenuItemHover', [this.BXMENULEVEL, this.OPENER])
 				}
 			},
-			html: '<span class="bx-core-popup-menu-item-icon' + (item.GLOBAL_ICON ? ' '+item.GLOBAL_ICON : '') + '"></span><span class="bx-core-popup-menu-item-text">'+(item.HTML||BX.util.htmlspecialchars(item.TEXT))+'</span>'
+			html: '<span class="bx-core-popup-menu-item-icon' + (item.GLOBAL_ICON ? ' '+item.GLOBAL_ICON : '') + '"></span><span class="bx-core-popup-menu-item-text">'+(item.HTML||(item.TEXT? BX.util.htmlspecialchars(item.TEXT) : ''))+'</span>'
 		});
 
 		if (bHasMenu && !item.DISABLED)

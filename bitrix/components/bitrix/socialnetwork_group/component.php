@@ -23,6 +23,7 @@ $arDefaultUrlTemplates404 = array(
 	"group" => "group/#group_id#/",
 	"group_general" => "group/#group_id#/general/",
 	"group_edit" => "group/#group_id#/edit/",
+	"group_tempate/edit" => "group/#group_id#/template/edit/",
 	"group_requests" => "group/#group_id#/requests/",
 	"group_requests_out" => "group/#group_id#/requests_out/",
 	"group_mods" => "group/#group_id#/moderators/",
@@ -101,11 +102,14 @@ $arDefaultUrlTemplates404 = array(
 	"group_forum_message_edit" => "group/#group_id#/forum/message/#action#/#topic_id#/#message_id#/",
 
 	"group_tasks" => "group/#group_id#/tasks/",
+	"group_tasks_board" => "group/#group_id#/tasks/board/",
 	"group_tasks_task" => "group/#group_id#/tasks/task/#action#/#task_id#/",
 	"group_tasks_view" => "group/#group_id#/tasks/view/#action#/#view_id#/",
 	"group_tasks_report" => "group/#group_id#/tasks/report/",
 	"group_tasks_report_construct" => "group/#group_id#/tasks/report/construct/#report_id#/#action#/",
 	"group_tasks_report_view" => "group/#group_id#/tasks/report/view/#report_id#/",
+
+	//"group_tasks_import" => "group/#group_id#/tasks/import/",
 
 	"group_log" => "group/#group_id#/log/",
 	"group_log_rss" => "group/#group_id#/log/rss/?bx_hit_hash=#sign#&events=#events#",

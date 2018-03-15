@@ -351,7 +351,8 @@ final class Manager
 		return setcookie(
 			self::getCookieName($ip),
 			$cookieData,
-			time()+self::COOKIE_EXPIRED
+			time()+self::COOKIE_EXPIRED,
+			'/'
 		);
 	}
 

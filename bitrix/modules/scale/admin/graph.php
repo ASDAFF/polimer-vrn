@@ -24,6 +24,7 @@ $APPLICATION->SetTitle(Loc::getMessage("SCALE_GRAPH_TITLE"));
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/scale/css/scale-page-style.css");
 $APPLICATION->AddHeadScript("/bitrix/js/scale/core.js");
+\CUserCounter::Increment($USER->GetID(),'SCALE_GRAPH_VISITS', SITE_ID, false);
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
 

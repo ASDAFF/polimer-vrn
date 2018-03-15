@@ -26,7 +26,7 @@ class CatalogProductsViewedComponent extends ElementList
 	public function onPrepareComponentParams($params)
 	{
 		$params['PRODUCT_DISPLAY_MODE'] = isset($params['PRODUCT_DISPLAY_MODE']) && $params['PRODUCT_DISPLAY_MODE'] === 'N' ? 'N' : 'Y';
-		$params['IBLOCK_MODE'] = isset($params['IBLOCK_MODE']) && $params['IBLOCK_MODE'] === 'single' ? 'single' : 'multi';
+		$params['IBLOCK_MODE'] = isset($params['IBLOCK_MODE']) && $params['IBLOCK_MODE'] === 'multi' ? 'multi' : 'single';
 
 		if ($params['IBLOCK_MODE'] === 'single' && (int)$params['IBLOCK_ID'] > 0)
 		{
@@ -65,7 +65,11 @@ class CatalogProductsViewedComponent extends ElementList
 			return array();
 		}
 
-		$basketUserId = (int)CSaleBasket::GetBasketUserID(false);
+		$skipUserInit = false;
+		if (!Catalog\Product\Basket::isNotCrawler())
+			$skipUserInit = true;
+
+		$basketUserId = (int)CSaleBasket::GetBasketUserID($skipUserInit);
 		if ($basketUserId <= 0)
 		{
 			return array();

@@ -57,9 +57,9 @@ class CSecurityXSSDetectVariables
 	protected function pushValue($name, $value, $containsQuote = false)
 	{
 		if($containsQuote)
-			$this->searchValuesWithQuotes[$name] = $value;
+			$this->searchValuesWithQuotes[] = array("name" => $name, "value" => $value);
 		else
-			$this->searchValuesWithoutQuotes[$name] = $value;
+			$this->searchValuesWithoutQuotes[] = array("name" => $name, "value" => $value);
 
 		return true;
 	}

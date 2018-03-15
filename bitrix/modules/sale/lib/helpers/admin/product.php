@@ -3,6 +3,8 @@ namespace Bitrix\Sale\Helpers\Admin;
 
 use Bitrix\Iblock\PropertyTable;
 use Bitrix\Main\ArgumentNullException;
+use Bitrix\Sale\Basket;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Fuser;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Provider;
@@ -78,12 +80,19 @@ class Product
 		if(strlen($siteId) <= 0)
 			return array();
 
+		$context = array(
+			'SITE_ID' => $siteId
+		);
+
 		$order = Order::create($siteId);
 
 		if(intval($userId) > 0)
+		{
 			$order->setFieldNoDemand("USER_ID", intval($userId));
+			$context['USER_ID'] = $userId;
+		}
 
-		$basket = \Bitrix\Sale\Basket::create($siteId);
+		$basket = Basket::create($siteId);
 		$order->setBasket($basket);
 
 		if(intval($userId) > 0)
@@ -94,12 +103,16 @@ class Product
 
 		foreach($productsData as $productFields)
 		{
-			$item = $basket->createItem($productFields["MODULE"], $productFields["OFFER_ID"]);
-			$item->setField('QUANTITY', $productFields['QUANTITY']);
-			$item->setField("NAME", $productFields["NAME"]);
+			if (isset($productFields['OFFER_ID']))
+			{
+				$productFields['PRODUCT_ID'] = $productFields['OFFER_ID'];
+			}
 
-			if(isset($productFields["PRODUCT_PROVIDER_CLASS"]) && strlen($productFields["PRODUCT_PROVIDER_CLASS"]) > 0)
-				$item->setField("PRODUCT_PROVIDER_CLASS", trim($productFields["PRODUCT_PROVIDER_CLASS"]));
+			$r = Catalog\Product\Basket::addProductToBasket($basket, $productFields, $context);
+			if (!$r->isSuccess())
+			{
+				return null;
+			}
 		}
 
 		return Provider::getProductData($basket, array("PRICE", "AVAILABLE_QUANTITY"));
@@ -385,7 +398,7 @@ class Product
 			$this->resultData[$productId]['PROPERTIES'] = array();
 			$this->resultData[$productId]['PICTURE_URL'] = $this->createImageUrl($productId);
 			$this->resultData[$productId]['MODULE'] = "catalog";
-			$this->resultData[$productId]["PRODUCT_PROVIDER_CLASS"] = "CCatalogProductProvider";
+			$this->resultData[$productId]["PRODUCT_PROVIDER_CLASS"] = '\Bitrix\Catalog\Product\CatalogProvider';
 			$this->resultData[$productId]["STORES"] = $this->getStoresData($productId);
 
 			if($this->isOffer($productData) && !empty($this->iblockData[$productData['PRODUCT_ID']]))
@@ -799,6 +812,8 @@ class Product
 		{
 			if ($propData["PROPERTY_TYPE"] == "F")
 				$res = self::showImageOrDownloadLink($value, $orderId, $arSize);
+			elseif($propData["PROPERTY_TYPE"] == "S" && $propData["USER_TYPE"] == "HTML" && isset($value["TEXT"]))
+				$res = $value["TEXT"];
 			else
 				$res = $value;
 		}

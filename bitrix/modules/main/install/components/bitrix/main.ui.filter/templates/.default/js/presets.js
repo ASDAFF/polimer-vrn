@@ -25,40 +25,60 @@
 
 		bindOnPresetClick: function()
 		{
-			var presets = this.getPresets();
-			var self = this;
-
-			(presets || []).forEach(function(current) {
-				BX.bind(current, 'click', BX.delegate(self._onPresetClick, self));
-			});
+			(this.getPresets() || []).forEach(function(current) {
+				BX.bind(current, 'click', BX.delegate(this._onPresetClick, this));
+			}, this);
 		},
 
+		/**
+		 * Gets add preset field
+		 * @return {?HTMLElement}
+		 */
 		getAddPresetField: function()
 		{
 			return BX.Filter.Utils.getByClass(this.getContainer(), this.parent.settings.classAddPresetField);
 		},
 
+
+		/**
+		 * Gets add preset name input
+		 * @return {?HTMLInputElement}
+		 */
 		getAddPresetFieldInput: function()
 		{
 			return BX.Filter.Utils.getByClass(this.getAddPresetField(), this.parent.settings.classAddPresetFieldInput);
 		},
 
+
+		/**
+		 * Clears add preset input value
+		 */
 		clearAddPresetFieldInput: function()
 		{
 			var input = this.getAddPresetFieldInput();
 			input && (input.value = '');
 		},
 
+
+		/**
+		 * Finds preset node by child node
+		 * @param {?HTMLElement} node
+		 * @return {?HTMLElement}
+		 */
 		normalizePreset: function(node)
 		{
 			if (!BX.hasClass(node, this.parent.settings.classPreset))
 			{
-				node = BX.findParent(node, {class: this.parent.settings.classPreset}, true, false);
+				node = BX.findParent(node, {className: this.parent.settings.classPreset}, true, false);
 			}
 
 			return node;
 		},
 
+
+		/**
+		 * Deactivates all presets
+		 */
 		deactivateAllPresets: function()
 		{
 			var presets = this.getPresets();
@@ -93,6 +113,11 @@
 			});
 		},
 
+
+		/**
+		 * Highlights preset node as active
+		 * @param {?HTMLElement|string} preset - preset node or preset id
+		 */
 		activatePreset: function(preset)
 		{
 			this.deactivateAllPresets();
@@ -108,6 +133,12 @@
 			}
 		},
 
+
+		/**
+		 * Gets preset node by preset id
+		 * @param {string} id
+		 * @return {?HTMLElement}
+		 */
 		getPresetNodeById: function(id)
 		{
 			var presets = this.getPresets();
@@ -118,11 +149,22 @@
 			return result.length > 0 ? result[0] : null;
 		},
 
+
+		/**
+		 * Gets preset id by preset node
+		 * @param {?HTMLElement} preset
+		 */
 		getPresetId: function(preset)
 		{
 			return BX.data(preset, 'id');
 		},
 
+
+		/**
+		 * Updates preset name
+		 * @param {?HTMLElement} presetNode
+		 * @param {string} name
+		 */
 		updatePresetName: function(presetNode, name)
 		{
 			var nameNode;
@@ -138,6 +180,13 @@
 			}
 		},
 
+
+		/**
+		 * Removes preset
+		 * @param {HTMLElement} presetNode
+		 * @param {string} presetId
+		 * @param {boolean} isDefault
+		 */
 		removePreset: function(presetNode, presetId, isDefault)
 		{
 			var currentPresetId = this.getCurrentPresetId();
@@ -180,6 +229,11 @@
 			}
 		},
 
+
+		/**
+		 * Pin preset (Sets as default preset)
+		 * @param {string} presetId
+		 */
 		pinPreset: function(presetId)
 		{
 			if (!BX.type.isNotEmptyString(presetId))
@@ -191,7 +245,7 @@
 
 			if (this.parent.getParam('VALUE_REQUIRED_MODE'))
 			{
-				if (presetId == 'default_filter')
+				if (presetId === 'default_filter')
 				{
 					return;
 				}
@@ -238,7 +292,7 @@
 
 			if (BX.hasClass(target, settings.classPresetEditButton))
 			{
-				this.enableEditPresetName(presetNode, target);
+				this.enableEditPresetName(presetNode);
 			}
 
 			if (BX.hasClass(target, settings.classPresetDeleteButton))
@@ -255,6 +309,11 @@
 				{
 					this.updateEditablePreset(this.getCurrentPresetId());
 				}
+
+				var currentPreset = this.getPreset(this.getCurrentPresetId());
+				var preset = this.getPreset(presetId);
+				currentPreset.ADDITIONAL = [];
+				preset.ADDITIONAL = [];
 
 				this.activatePreset(presetNode);
 				this.applyPreset(presetId);
@@ -276,6 +335,11 @@
 			}
 		},
 
+
+		/**
+		 * Applies default preset
+		 * @return {BX.Promise}
+		 */
 		applyPinnedPreset: function()
 		{
 			var Filter = this.parent;
@@ -303,6 +367,11 @@
 			return promise;
 		},
 
+
+		/**
+		 * Updates editable presets
+		 * @param {string} presetId
+		 */
 		updateEditablePreset: function(presetId)
 		{
 			var fields = this.parent.getFilterFieldsValues();
@@ -315,11 +384,22 @@
 			preset.ROWS = presetRows;
 		},
 
+
+		/**
+		 * Gets preset input node
+		 * @param presetNode
+		 * @return {?HTMLInputElement}
+		 */
 		getPresetInput: function(presetNode)
 		{
 			return BX.Filter.Utils.getByClass(presetNode, this.parent.settings.classPresetEditInput);
 		},
 
+
+		/**
+		 * Enable edit preset name
+		 * @param {HTMLElement} presetNode
+		 */
 		enableEditPresetName: function(presetNode)
 		{
 			var input = this.getPresetInput(presetNode);
@@ -346,11 +426,22 @@
 			}
 		},
 
+
+		/**
+		 * Gets preset name node element
+		 * @param {HTMLElement} presetNode
+		 * @return {?HTMLElement}
+		 */
 		getPresetNameNode: function(presetNode)
 		{
 			return BX.Filter.Utils.getByClass(presetNode, this.parent.settings.classPresetName);
 		},
 
+
+		/**
+		 * Disable edit name for preset
+		 * @param {HTMLElement} presetNode
+		 */
 		disableEditPresetName: function(presetNode)
 		{
 			var input = this.getPresetInput(presetNode);
@@ -364,6 +455,13 @@
 			}
 		},
 
+
+		/**
+		 * Gets preset object
+		 * @param {string} presetId
+		 * @param {boolean} [isDefault = false] - gets from default presets collection
+ 		 * @return {?object}
+		 */
 		getPreset: function(presetId, isDefault)
 		{
 			var presets = this.parent.getParam(isDefault ? 'DEFAULT_PRESETS' : 'PRESETS', []);
@@ -377,9 +475,24 @@
 				return current.ID === presetId;
 			});
 
+			if (presetId === 'tmp_filter' && !filtered.length)
+			{
+				var tmpPreset = BX.clone(this.getPreset('default_filter'));
+				tmpPreset.ID = 'tmp_filter';
+				presets.push(tmpPreset);
+				filtered.push(tmpPreset);
+			}
+
 			return filtered.length !== 0 ? filtered[0] : null;
 		},
 
+
+		/**
+		 * Gets preset field by preset name (id)
+		 * @param {string} presetId
+		 * @param {string} fieldName
+		 * @return {?object}
+		 */
 		getPresetField: function(presetId, fieldName)
 		{
 			var preset = this.getPreset(presetId);
@@ -389,7 +502,7 @@
 			{
 				field = preset.FIELDS.filter(function(current) {
 					return current.NAME === fieldName;
-				}, this);
+				});
 
 				field = field.length ? field[0] : null;
 			}
@@ -397,12 +510,17 @@
 			return field;
 		},
 
+
+		/**
+		 * Applies preset by id
+		 * @param {string} presetId
+		 * @param {boolean} [noValues = false]
+		 */
 		applyPreset: function(presetId, noValues)
 		{
-			var preset;
-
 			presetId = noValues ? 'default_filter' : presetId || 'default_filter';
-			preset = this.getPreset(presetId);
+
+			var preset = this.getPreset(presetId);
 
 			if (presetId !== 'default_preset')
 			{
@@ -413,6 +531,12 @@
 			this.updatePresetFields(preset, noValues);
 		},
 
+
+		/**
+		 * Extends preset
+		 * @param {object} preset
+		 * @return {object}
+		 */
 		extendPreset: function(preset)
 		{
 			var defaultPreset = BX.clone(this.getPreset('default_filter'));
@@ -420,7 +544,7 @@
 			if (BX.type.isPlainObject(preset))
 			{
 				preset = BX.clone(preset);
-				preset.FIELDS.forEach(function(curr, i) {
+				preset.FIELDS.forEach(function(curr) {
 					var index;
 					var someField = defaultPreset.FIELDS.some(function(defCurr, defIndex) {
 						var result = false;
@@ -453,6 +577,12 @@
 			return preset;
 		},
 
+
+		/**
+		 * Checks field is empty
+		 * @param {object} field
+		 * @return {boolean}
+		 */
 		isEmptyField: function(field)
 		{
 			var result = true;
@@ -483,14 +613,35 @@
 
 			if (field.TYPE === this.parent.types.CUSTOM_ENTITY)
 			{
-				if (BX.type.isPlainObject(field.VALUES) && field.VALUES._label && field.VALUES._value)
+				if (BX.type.isPlainObject(field.VALUES))
 				{
-					result = false;
+					if (BX.type.isNotEmptyString(field.VALUES._label) && BX.type.isNotEmptyString(field.VALUES._value))
+					{
+						result = false;
+					}
+
+					if (BX.type.isPlainObject(field.VALUES._label) &&
+						BX.type.isPlainObject(field.VALUES._value) &&
+						Object.keys(field.VALUES._label).length &&
+						Object.keys(field.VALUES._value).length)
+					{
+						result = false;
+					}
+
+					if (BX.type.isArray(field.VALUES._label) &&
+						BX.type.isArray(field.VALUES._value) &&
+						field.VALUES._label.length &&
+						field.VALUES._value.length)
+					{
+						result = false;
+					}
 				}
 			}
 
 			if (field.TYPE === this.parent.types.DATE)
 			{
+				var datesel = '_datesel' in field.VALUES ? field.VALUES._datesel : field.SUB_TYPE.VALUE;
+
 				if (BX.type.isPlainObject(field.VALUES) &&
 					(field.VALUES._from ||
 					field.VALUES._to ||
@@ -499,16 +650,20 @@
 					field.VALUES._year ||
 					field.VALUES._days) ||
 					(
-						field.VALUES._datesel === this.parent.dateTypes.CURRENT_DAY ||
-						field.VALUES._datesel === this.parent.dateTypes.CURRENT_WEEK ||
-						field.VALUES._datesel === this.parent.dateTypes.CURRENT_MONTH ||
-						field.VALUES._datesel === this.parent.dateTypes.CURRENT_QUARTER ||
-						field.VALUES._datesel === this.parent.dateTypes.LAST_7_DAYS ||
-						field.VALUES._datesel === this.parent.dateTypes.LAST_30_DAYS ||
-						field.VALUES._datesel === this.parent.dateTypes.LAST_60_DAYS ||
-						field.VALUES._datesel === this.parent.dateTypes.LAST_90_DAYS ||
-						field.VALUES._datesel === this.parent.dateTypes.LAST_WEEK ||
-						field.VALUES._datesel === this.parent.dateTypes.LAST_MONTH
+						datesel === this.parent.dateTypes.CURRENT_DAY ||
+						datesel === this.parent.dateTypes.CURRENT_WEEK ||
+						datesel === this.parent.dateTypes.CURRENT_MONTH ||
+						datesel === this.parent.dateTypes.CURRENT_QUARTER ||
+						datesel === this.parent.dateTypes.LAST_7_DAYS ||
+						datesel === this.parent.dateTypes.LAST_30_DAYS ||
+						datesel === this.parent.dateTypes.LAST_60_DAYS ||
+						datesel === this.parent.dateTypes.LAST_90_DAYS ||
+						datesel === this.parent.dateTypes.LAST_WEEK ||
+						datesel === this.parent.dateTypes.LAST_MONTH ||
+						datesel === this.parent.dateTypes.TOMORROW ||
+						datesel === this.parent.dateTypes.YESTERDAY ||
+						datesel === this.parent.dateTypes.NEXT_WEEK ||
+						datesel === this.parent.dateTypes.NEXT_MONTH
 					)
 				)
 				{
@@ -535,11 +690,21 @@
 			return result;
 		},
 
+
+		/**
+		 * Resets preset
+		 * @param {boolean} [noValues]
+		 */
 		resetPreset: function(noValues)
 		{
-			this.applyPreset(null, noValues);
+			this.applyPreset('', noValues);
 		},
 
+
+		/**
+		 * Gets preset fields elements
+		 * @return {?HTMLElement[]}
+		 */
 		getFields: function()
 		{
 			var container = this.parent.getFieldListContainer();
@@ -553,6 +718,12 @@
 			return fields;
 		},
 
+
+		/**
+		 * Gets field element by field object
+		 * @param {object} fieldData
+		 * @return {?HTMLElement}
+		 */
 		getField: function(fieldData)
 		{
 			var fields = this.getFields();
@@ -575,6 +746,11 @@
 			return field;
 		},
 
+
+		/**
+		 * Removes field element by field object
+		 * @param {object} field
+		 */
 		removeField: function(field)
 		{
 			var index, fieldName;
@@ -617,6 +793,11 @@
 			this.parent.saveFieldsSort();
 		},
 
+
+		/**
+		 * Adds field into filter field list by field object
+		 * @param {object} fieldData
+		 */
 		addField: function(fieldData)
 		{
 			var container, control, controls;
@@ -677,6 +858,12 @@
 			this.parent.saveFieldsSort();
 		},
 
+
+		/**
+		 * Creates field control by field object
+		 * @param {object} fieldData
+		 * @return {?HTMLElement}
+		 */
 		createControl: function(fieldData)
 		{
 			var control;
@@ -708,16 +895,6 @@
 					break;
 				}
 
-				case this.parent.types.USER : {
-					control = this.parent.getFields().createUser(fieldData);
-					break;
-				}
-
-				case this.parent.types.ENTITY : {
-					control = this.parent.getFields().createEntity(fieldData);
-					break;
-				}
-
 				case this.parent.types.CUSTOM : {
 					control = this.parent.getFields().createCustom(fieldData);
 					break;
@@ -742,17 +919,57 @@
 			return control;
 		},
 
+
 		/**
 		 * Removes not compared properties
 		 * @param {object} fields
+		 * @param {boolean} [noClean]
 		 */
-		removeNotCompareVariables: function(fields)
+		removeNotCompareVariables: function(fields, noClean)
 		{
-			if ('FIND' in fields)
+			if (BX.type.isPlainObject(fields))
 			{
-				delete fields.FIND;
+				var dateType = this.parent.dateTypes;
+
+				if ('FIND' in fields)
+				{
+					delete fields.FIND;
+				}
+
+				if (!noClean)
+				{
+					Object.keys(fields).forEach(function(key) {
+						if (key.indexOf('_numsel') !== -1)
+						{
+							delete fields[key];
+						}
+
+						if (key.indexOf('_datesel') !== -1)
+						{
+							var datesel = fields[key];
+
+							if (datesel === dateType.EXACT ||
+								datesel === dateType.RANGE ||
+								datesel === dateType.PREV_DAYS ||
+								datesel === dateType.NEXT_DAYS ||
+								datesel === dateType.YEAR ||
+								datesel === dateType.MONTH ||
+								datesel === dateType.QUARTER ||
+								datesel === dateType.NONE)
+							{
+								delete fields[key];
+							}
+						}
+
+						if (fields[key] === '')
+						{
+							delete fields[key];
+						}
+					});
+				}
 			}
 		},
+
 
 		/**
 		 * Checks is modified preset field values
@@ -762,7 +979,7 @@
 		isPresetValuesModified: function(presetId)
 		{
 			var currentPresetData = this.getPreset(presetId);
-			var presetFields = this.parent.preparePresetSettingsFields(currentPresetData.FIELDS, currentPresetData.ROWS);
+			var presetFields = this.parent.preparePresetSettingsFields(currentPresetData.FIELDS);
 			var currentFields = this.parent.getFilterFieldsValues();
 
 			this.removeNotCompareVariables(presetFields);
@@ -771,54 +988,80 @@
 			var comparedPresetFields = BX.Filter.Utils.sortObject(presetFields);
 			var comparedCurrentFields = BX.Filter.Utils.sortObject(currentFields);
 
-			return !BX.Filter.Utils.objectsIsEquails(comparedPresetFields, comparedCurrentFields);
+			return !Object.keys(comparedPresetFields).every(function(key) {
+				return (
+					comparedPresetFields[key] === comparedCurrentFields[key] ||
+					((BX.type.isPlainObject(comparedPresetFields[key]) || BX.type.isArray(comparedPresetFields[key])) &&
+					 BX.Filter.Utils.objectsIsEquals(comparedPresetFields[key], comparedCurrentFields[key]))
+				);
+			});
 		},
 
+
+		/**
+		 * Gets additional preset values
+		 * @param {string} presetId
+		 * @return {?object}
+		 */
 		getAdditionalValues: function(presetId)
 		{
 			var currentPresetData = this.getPreset(presetId);
-			var presetFields = this.parent.preparePresetSettingsFields(currentPresetData.FIELDS, currentPresetData.ROWS);
+			var notEmptyFields = currentPresetData.FIELDS.filter(function(field) {
+				return !this.isEmptyField(field);
+			}, this);
+			var presetFields = this.parent.preparePresetSettingsFields(notEmptyFields);
 			var currentFields = this.parent.getFilterFieldsValues();
 
-			this.removeNotCompareVariables(presetFields);
-			this.removeNotCompareVariables(currentFields);
+			this.removeNotCompareVariables(presetFields, true);
+			this.removeNotCompareVariables(currentFields, true);
 
 			this.removeSameProperties(currentFields, presetFields);
 
 			return currentFields;
 		},
 
+
+		/**
+		 * Removes same object properties
+		 * @param {object} object1
+		 * @param {object} object2
+		 */
 		removeSameProperties: function(object1, object2)
 		{
-			var keys1 = Object.keys(object1);
-
-			keys1.forEach(function(key) {
-				if (key in object2)
-				{
-					if (BX.type.isPlainObject(object1[key]))
-					{
-						var comparedObject1 = BX.Filter.Utils.sortObject(object1);
-						var comparedObject2 = BX.Filter.Utils.sortObject(object2);
-
-						if (!BX.Filter.Utils.objectsIsEquails(comparedObject1, comparedObject2))
-						{
-							object1[key] = this.removeSameProperties(object1[key], object2[key]);
-						}
-						else
-						{
-							delete object1[key];
-						}
-					}
-					else
+			if (BX.type.isPlainObject(object1) && BX.type.isPlainObject(object2))
+			{
+				Object.keys(object2).forEach(function(key) {
+					if (key in object1)
 					{
 						delete object1[key];
 					}
-				}
-			}, this);
-
-			return object1;
+				});
+			}
 		},
 
+
+		/**
+		 * Removes additional field by field name
+		 * @param {string} name
+		 */
+		removeAdditionalField: function(name)
+		{
+			var preset = this.getPreset(this.getCurrentPresetId());
+
+			if (BX.type.isArray(preset.ADDITIONAL))
+			{
+				preset.ADDITIONAL = preset.ADDITIONAL.filter(function(field) {
+					return field.NAME !== name;
+				});
+			}
+		},
+
+
+		/**
+		 * Updates preset fields list
+		 * @param {object} preset
+		 * @param {boolean} [noValues = false]
+		 */
 		updatePresetFields: function(preset, noValues)
 		{
 			var fields, fieldListContainer;
@@ -827,6 +1070,26 @@
 			if (BX.type.isPlainObject(preset) && ('FIELDS' in preset))
 			{
 				fields = preset.FIELDS;
+
+				if (BX.type.isArray(preset.ADDITIONAL))
+				{
+					preset.ADDITIONAL.forEach(function(field) {
+						var replaced = false;
+						field.IS_PRESET_FIELD = true;
+						fields.forEach(function(presetField, index) {
+							if (field.NAME === presetField.NAME)
+							{
+								fields[index] = field;
+								replaced = true;
+							}
+						});
+
+						if (!replaced)
+						{
+							fields.push(field);
+						}
+					});
+				}
 
 				(fields || []).forEach(function(fieldData, index) {
 					fieldData.TABINDEX = index+1;
@@ -902,29 +1165,51 @@
 
 				if (fieldNodes.length)
 				{
-					fieldNodes.forEach(function(current) {
+					fieldNodes.forEach(function(current, index) {
 						if (BX.type.isDomNode(current))
 						{
+							if (preset.ID !== 'tmp_filter' &&
+								preset.ID !== 'default_filter' &&
+								!('IS_PRESET_FIELD' in fields[index]) &&
+								!this.isEmptyField(fields[index]))
+							{
+								BX.addClass(current, this.parent.settings.classPresetField);
+							}
+
 							BX.append(current, fieldListContainer);
 						}
-					});
+					}, this);
 
 					this.parent.enableFieldsDragAndDrop();
 				}
 			}
 		},
 
+
+		/**
+		 * Shows current preset fields
+		 */
 		showCurrentPresetFields: function()
 		{
 			var preset = this.getCurrentPresetData();
 			this.updatePresetFields(preset);
 		},
 
+
+		/**
+		 * Gets current preset element
+		 * @return {?HTMLElement}
+		 */
 		getCurrentPreset: function()
 		{
 			return BX.Filter.Utils.getByClass(this.getContainer(), this.parent.settings.classPresetCurrent);
 		},
 
+
+		/**
+		 * Gets current preset id
+		 * @return {*}
+		 */
 		getCurrentPresetId: function()
 		{
 			var current = this.getCurrentPreset();
@@ -936,12 +1221,17 @@
 			}
 			else
 			{
-				currentId = "default_filter";
+				currentId = "tmp_filter";
 			}
 
 			return currentId;
 		},
 
+
+		/**
+		 * Gets current preset data
+		 * @return {?object}
+		 */
 		getCurrentPresetData: function()
 		{
 			var currentId = this.getCurrentPresetId();
@@ -956,32 +1246,62 @@
 			return currentData;
 		},
 
+
+		/**
+		 * Gets presets container element
+		 * @return {?HTMLElement}
+		 */
 		getContainer: function()
 		{
 			return BX.Filter.Utils.getByClass(this.parent.getFilter(), this.parent.settings.classPresetsContainer);
 		},
 
 
+		/**
+		 * Gets preset nodes
+		 * @return {?HTMLElement[]}
+		 */
 		getPresets: function()
 		{
 			return BX.Filter.Utils.getByClass(this.getContainer(), this.parent.settings.classPreset, true);
 		},
 
+
+		/**
+		 * Gets default presets elements
+		 * @return {?HTMLElement[]}
+		 */
 		getDefaultPresets: function()
 		{
 			return BX.Filter.Utils.getByClass(this.getContainer(), this.parent.settings.classDefaultFilter, true);
 		},
 
+
+		/**
+		 * Gets default preset element
+		 * @return {?HTMLElement}
+		 */
 		getPinnedPresetNode: function()
 		{
 			return BX.Filter.Utils.getByClass(this.getContainer(), this.parent.settings.classPinnedPreset);
 		},
 
+
+		/**
+		 * Checks preset is pinned (default)
+		 * @param presetId
+		 * @return {boolean}
+		 */
 		isPinned: function(presetId)
 		{
 			return this.getPinnedPresetId() === presetId;
 		},
 
+
+		/**
+		 * Gets pinned (default) preset id
+		 * @return {string}
+		 */
 		getPinnedPresetId: function()
 		{
 			var node = this.getPinnedPresetNode();

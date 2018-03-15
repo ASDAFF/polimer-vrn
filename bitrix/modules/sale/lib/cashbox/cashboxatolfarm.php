@@ -4,6 +4,7 @@ namespace Bitrix\Sale\Cashbox;
 
 use Bitrix\Main;
 use Bitrix\Main\Localization;
+use Bitrix\Sale\Cashbox\Internals\CashboxTable;
 use Bitrix\Sale\Result;
 use Bitrix\Catalog;
 
@@ -58,7 +59,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 				'attributes' => array(
 					'email' => $data['client_email'] ?: '',
 					'phone' => $phone,
-					'sno' => $this->getValueFromSettings('TAX', 'SNO'),
+					'sno' => $this->getValueFromSettings('TAX', 'SNO')
 				),
 				'payments' => array(),
 				'items' => array(),
@@ -69,7 +70,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 		foreach ($data['payments'] as $payment)
 		{
 			$result['receipt']['payments'][] = array(
-				'type' => (int)$this->getValueFromSettings('PAYMENT_TYPE', $payment['is_cash']),
+				'type' => (int)$this->getValueFromSettings('PAYMENT_TYPE', $payment['type']),
 				'sum' => (float)$payment['sum']
 			);
 		}
@@ -93,7 +94,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 	/**
 	 * @return string
 	 */
-	private function getCallbackUrl()
+	protected function getCallbackUrl()
 	{
 		$context = Main\Application::getInstance()->getContext();
 		$scheme = $context->getRequest()->isHttps() ? 'https' : 'http';
@@ -187,7 +188,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 	/**
 	 * @return array
 	 */
-	private function getCheckTypeMap()
+	protected function getCheckTypeMap()
 	{
 		return array(
 			SellCheck::getType() => 'sell',
@@ -203,7 +204,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 	 * @return string
 	 * @throws Main\SystemException
 	 */
-	private function getUrl($operation, $token, array $queryData = array())
+	protected function getUrl($operation, $token, array $queryData = array())
 	{
 		$groupCode = $this->getField('NUMBER_KKM');
 
@@ -245,10 +246,8 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 			return $validateResult;
 		}
 
-		$checkTypeMap = $this->getCheckTypeMap();
-		$checkType = $checkTypeMap[$check::getType()];
-
-		$url = $this->getUrl(static::OPERATION_CHECK_REGISTRY, $token, array('CHECK_TYPE' => $checkType));
+		$operation = $check::getCalculatedSign() === Check::CALCULATED_SIGN_INCOME ? 'sell' : 'sell_refund';
+		$url = $this->getUrl(static::OPERATION_CHECK_REGISTRY, $token, array('CHECK_TYPE' => $operation));
 
 		$result = $this->send(static::REQUEST_TYPE_POST, $url, $checkQuery);
 		if (!$result->isSuccess())
@@ -264,7 +263,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 				return $printResult;
 			}
 
-			$url = $this->getUrl(static::OPERATION_CHECK_REGISTRY, $token, array('CHECK_TYPE' => $checkType));
+			$url = $this->getUrl(static::OPERATION_CHECK_REGISTRY, $token, array('CHECK_TYPE' => $operation));
 			$result = $this->send(static::REQUEST_TYPE_POST, $url, $checkQuery);
 			if (!$result->isSuccess())
 				return $result;
@@ -337,6 +336,12 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 			$response = $result->getData();
 		}
 
+		if ($response['status'] === 'wait')
+		{
+			$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_CASHBOX_ATOL_REQUEST_STATUS_WAIT')));
+			return $result;
+		}
+
 		return static::applyCheckResult($response);
 	}
 
@@ -344,13 +349,22 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 	 * @param array $checkData
 	 * @return Result
 	 */
-	private function validate(array $checkData)
+	protected function validate(array $checkData)
 	{
 		$result = new Result();
 
 		if ($checkData['receipt']['attributes']['email'] === '' && $checkData['receipt']['attributes']['phone'] === '')
 		{
 			$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_CASHBOX_ATOL_ERR_EMPTY_PHONE_EMAIL')));
+		}
+
+		foreach ($checkData['receipt']['items'] as $item)
+		{
+			if ($item['tax'] === null)
+			{
+				$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_CASHBOX_ATOL_ERR_EMPTY_TAX')));
+				break;
+			}
 		}
 
 		return $result;
@@ -367,6 +381,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 		$result = new Result();
 
 		$http = new Main\Web\HttpClient();
+		$http->setHeader('Content-Type', 'application/json; charset=utf-8');
 
 		if ($method === static::REQUEST_TYPE_POST)
 		{
@@ -416,6 +431,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 		$settings = array(
 			'AUTH' => array(
 				'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_SETTINGS_AUTH'),
+				'REQUIRED' => 'Y',
 				'ITEMS' => array(
 					'LOGIN' => array(
 						'TYPE' => 'STRING',
@@ -429,6 +445,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 			),
 			'SERVICE' => array(
 				'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_SETTINGS_SERVICE'),
+				'REQUIRED' => 'Y',
 				'ITEMS' => array(
 					'INN' => array(
 						'TYPE' => 'STRING',
@@ -444,21 +461,26 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 
 		$settings['PAYMENT_TYPE'] = array(
 			'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_SETTINGS_P_TYPE'),
+			'REQUIRED' => 'Y',
 			'ITEMS' => array()
 		);
 
-		$systemPaymentType = array('Y' => 0, 'N' => 1, 'A' => 1);
+		$systemPaymentType = array(
+			Check::PAYMENT_TYPE_CASH => 0,
+			Check::PAYMENT_TYPE_CASHLESS => 1,
+		);
 		foreach ($systemPaymentType as $type => $value)
 		{
 			$settings['PAYMENT_TYPE']['ITEMS'][$type] = array(
 				'TYPE' => 'STRING',
-				'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_SETTINGS_P_TYPE_LABEL_'.$type),
+				'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_SETTINGS_P_TYPE_LABEL_'.ToUpper($type)),
 				'VALUE' => $value
 			);
 		}
 
 		$settings['VAT'] = array(
 			'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_BITRIX_SETTINGS_VAT'),
+			'REQUIRED' => 'Y',
 			'ITEMS' => array(
 				'NOT_VAT' => array(
 					'TYPE' => 'STRING',
@@ -492,6 +514,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 
 		$settings['TAX'] = array(
 			'LABEL' => Localization\Loc::getMessage('SALE_CASHBOX_ATOL_FARM_SETTINGS_SNO'),
+			'REQUIRED' => 'Y',
 			'ITEMS' => array(
 				'SNO' => array(
 					'TYPE' => 'ENUM',
@@ -513,29 +536,15 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 	}
 
 	/**
-	 * @param $data
-	 * @return Result
+	 * @return array
 	 */
-	public static function validateSettings($data)
+	public static function getGeneralRequiredFields()
 	{
-		$result = new Result();
+		$generalRequiredFields = parent::getGeneralRequiredFields();
 
-		if (empty($data['NUMBER_KKM']))
-		{
-			$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_CASHBOX_ATOL_VALIDATE_E_NUMBER_KKM')));
-		}
-
-		if (empty($data['SETTINGS']['SERVICE']['INN']))
-		{
-			$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_CASHBOX_ATOL_VALIDATE_E_INN')));
-		}
-
-		if (empty($data['SETTINGS']['SERVICE']['P_ADDRESS']))
-		{
-			$result->addError(new Main\Error(Localization\Loc::getMessage('SALE_CASHBOX_ATOL_VALIDATE_E_ADDRESS')));
-		}
-
-		return $result;
+		$map = CashboxTable::getMap();
+		$generalRequiredFields['NUMBER_KKM'] = $map['NUMBER_KKM']['title'];
+		return $generalRequiredFields;
 	}
 
 	/**
@@ -549,7 +558,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 	/**
 	 * @param $token
 	 */
-	private function setToken($token)
+	private function setAccessToken($token)
 	{
 		Main\Config\Option::set('sale', $this->getOptionName(), $token);
 	}
@@ -595,7 +604,7 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 		if ($result->isSuccess())
 		{
 			$response = $result->getData();
-			$this->setToken($response['token']);
+			$this->setAccessToken($response['token']);
 
 			return $response['token'];
 		}
@@ -612,4 +621,5 @@ class CashboxAtolFarm extends Cashbox implements IPrintImmediately, ICheckable
 	{
 		return Errors\Error::TYPE;
 	}
+
 }

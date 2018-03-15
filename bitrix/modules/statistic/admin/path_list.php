@@ -220,7 +220,7 @@ if($find_diagram_type=="COUNTER"):
 					?>
 					<tr>
 						<td nowrap><?=$i?></td>
-						<td nowrap><a title="<?=GetMessage("STAT_GO")?>" href="<?=$page?>">&raquo;</a>&nbsp;<?
+						<td nowrap><a title="<?=GetMessage("STAT_GO")?>" href="<?=htmlspecialcharsbx($page)?>">&raquo;</a>&nbsp;<?
 							$new_path_id = GetStatPathID($page, $path_id);
 							$arParent[$new_path_id] = $path_id;
 							$path_id = $new_path_id;
@@ -230,16 +230,16 @@ if($find_diagram_type=="COUNTER"):
 								$action_js = ($table_id==""? $sTableID:$table_id).".GetAdminList('".CUtil::JSEscape($action_url)."');";
 									?><a href="javascript:void(0)" onclick="<?echo htmlspecialcharsbx($action_js)?>"><?
 								if($err_404=="Y"):
-									?><span class="stat_attention"><?echo TruncateText($page,65)?></span><?
+									?><span class="stat_attention"><?echo htmlspecialcharsEx(TruncateText($page,65))?></span><?
 								else:
-									echo TruncateText($page,65);
+									echo htmlspecialcharsEx(TruncateText($page,65));
 								endif;
 								?></a><?
 							else :
 								if($err_404=="Y"):
-									?><span class="stat_attention"><?echo TruncateText($page,65)?></span><?
+									?><span class="stat_attention"><?echo htmlspecialcharsEx(TruncateText($page,65))?></span><?
 								else:
-									echo TruncateText($page,65);
+									echo htmlspecialcharsEx(TruncateText($page,65));
 								endif;
 							endif;
 							$arFilter["PATH_ID"] = $path_id;

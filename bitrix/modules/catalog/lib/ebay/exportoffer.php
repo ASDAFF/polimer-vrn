@@ -118,9 +118,9 @@ class ExportOffer implements \Iterator
 		$order = array("ID" => "ASC");
 		$arSelect = array("ID", "LID", "IBLOCK_ID", "IBLOCK_SECTION_ID", "NAME", "PREVIEW_PICTURE", "PREVIEW_TEXT",
 			"PREVIEW_TEXT_TYPE", "DETAIL_PICTURE", "LANG_DIR", "DETAIL_PAGE_URL", "DETAIL_TEXT");
-		
+
 		$filter = array("IBLOCK_ID" => $this->iBlockId);
-		
+
 //		if set start position - limit result by ID
 		if($this->startPosition)
 			$filter[">=ID"] = $this->startPosition;

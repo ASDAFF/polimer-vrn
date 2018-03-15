@@ -77,4 +77,5 @@ $MESS["BLOG_POST_CREATE_TASK_FAILURE_TITLE"] = "Ошибка";
 $MESS["BLOG_POST_CREATE_TASK_SUCCESS_DESCRIPTION"] = "Вы можете перейти к просмотру и редактированию задачи";
 $MESS["BLOG_POST_CREATE_TASK_ERROR_GET_DATA"] = "Не удалось получить данные для создания задачи";
 $MESS["BLOG_POST_LINK_COPIED"] = "Ссылка скопирована";
+$MESS["BLOG_POST_LIMITED_VIEW"] = "(получатели увидят пост после конвертации видео)";
 ?>

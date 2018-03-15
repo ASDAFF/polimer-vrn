@@ -6,6 +6,8 @@
  * @copyright 2001-2014 Bitrix
  */
 
+use Bitrix\Main\UI\Extension;
+
 /**
  * HTML form elements
  */
@@ -707,13 +709,43 @@ function convertTimeToMilitary ($strTime, $fromFormat = 'H:MI T', $toFormat = 'H
 	return FormatDate($DB->dateFormatToPHP($toFormat), $ts);
 }
 
-function FormatDate($format="", $timestamp="", $now=false)
+/**
+ * @param string|array $format
+ * @param int|bool|\Bitrix\Main\Type\DateTime $timestamp
+ * @param int|bool|\Bitrix\Main\Type\DateTime $now
+ * 
+ * @return string
+ */
+function FormatDate($format = "", $timestamp = false, $now = false)
 {
 	global $DB;
-
-	if($now === false)
+	
+	if ($timestamp === false)
+	{
+		$timestamp = time();
+	}
+	else if ($timestamp instanceof \Bitrix\Main\Type\DateTime)
+	{
+		$timestamp = $timestamp->getTimestamp();
+	}
+	else
+	{
+		$timestamp = intval($timestamp);
+	}
+	
+	if ($now === false)
+	{
 		$now = time();
-
+	}
+	else if ($now instanceof \Bitrix\Main\Type\DateTime)
+	{
+		$now = $now->getTimestamp();
+	}
+	else
+	{
+		$now = intval($now);
+	}
+	
 	switch($format)
 	{
 		case "SHORT":
@@ -733,59 +765,132 @@ function FormatDate($format="", $timestamp="", $now=false)
 				if($seconds_ago < 60)
 					return FormatDate($format_value, $timestamp, $now);
 			}
-			elseif(preg_match('/^s(\d+)/', $format_interval, $match))
+			elseif(preg_match('/^s(\d+)\>?(\d+)?/', $format_interval, $match))
 			{
-				if($seconds_ago < intval($match[1]))
+				if (isset($match[1]) && isset($match[2]))
+				{
+					if(
+						$seconds_ago < intval($match[1])
+						&& $seconds_ago > intval($match[2])
+					)
+					{
+						return FormatDate($format_value, $timestamp, $now);
+					}
+				}
+				else if($seconds_ago < intval($match[1]))
+				{
 					return FormatDate($format_value, $timestamp, $now);
+				}
 			}
 			elseif($format_interval == "i")
 			{
 				if($seconds_ago < 60*60)
 					return FormatDate($format_value, $timestamp, $now);
 			}
-			elseif(preg_match('/^i(\d+)/', $format_interval, $match))
+			elseif(preg_match('/^i(\d+)\>?(\d+)?/', $format_interval, $match))
 			{
-				if($seconds_ago < intval($match[1])*60)
+				if (isset($match[1]) && isset($match[2]))
+				{
+					if(
+						$seconds_ago < intval($match[1])*60
+						&& $seconds_ago > intval($match[2])*60
+					)
+					{
+						return FormatDate($format_value, $timestamp, $now);
+					}
+				}
+				else if($seconds_ago < intval($match[1])*60)
+				{
 					return FormatDate($format_value, $timestamp, $now);
+				}
 			}
 			elseif($format_interval == "H")
 			{
 				if($seconds_ago < 24*60*60)
 					return FormatDate($format_value, $timestamp, $now);
 			}
-			elseif(preg_match('/^H(\d+)/', $format_interval, $match))
+			elseif(preg_match('/^H(\d+)\>?(\d+)?/', $format_interval, $match))
 			{
-				if($seconds_ago < intval($match[1])*60*60)
+				if (isset($match[1]) && isset($match[2]))
+				{
+					if(
+						$seconds_ago < intval($match[1])*60*60
+						&& $seconds_ago > intval($match[2])*60*60
+					)
+					{
+						return FormatDate($format_value, $timestamp, $now);
+					}
+				}
+				else if($seconds_ago < intval($match[1])*60*60)
+				{
 					return FormatDate($format_value, $timestamp, $now);
+				}
 			}
 			elseif($format_interval == "d")
 			{
 				if($seconds_ago < 31*24*60*60)
 					return FormatDate($format_value, $timestamp, $now);
 			}
-			elseif(preg_match('/^d(\d+)/', $format_interval, $match))
+			elseif(preg_match('/^d(\d+)\>?(\d+)?/', $format_interval, $match))
 			{
-				if($seconds_ago < intval($match[1])*24*60*60)
+				if (isset($match[1]) && isset($match[2]))
+				{
+					if(
+						$seconds_ago < intval($match[1])*24*60*60
+						&& $seconds_ago > intval($match[2])*24*60*60
+					)
+					{
+						return FormatDate($format_value, $timestamp, $now);
+					}
+				}
+				else if($seconds_ago < intval($match[1])*24*60*60)
+				{
 					return FormatDate($format_value, $timestamp, $now);
+				}
 			}
 			elseif($format_interval == "m")
 			{
 				if($seconds_ago < 365*24*60*60)
 					return FormatDate($format_value, $timestamp, $now);
 			}
-			elseif(preg_match('/^m(\d+)/', $format_interval, $match))
+			elseif(preg_match('/^m(\d+)\>?(\d+)?/', $format_interval, $match))
 			{
-				if($seconds_ago < intval($match[1])*31*24*60*60)
+				if (isset($match[1]) && isset($match[2]))
+				{
+					if(
+						$seconds_ago < intval($match[1])*31*24*60*60
+						&& $seconds_ago > intval($match[2])*31*24*60*60
+					)
+					{
+						return FormatDate($format_value, $timestamp, $now);
+					}
+				}
+				else if($seconds_ago < intval($match[1])*31*24*60*60)
+				{
 					return FormatDate($format_value, $timestamp, $now);
+				}
+			}
+			elseif($format_interval == "now")
+			{
+				if($timestamp == $now)
+				{
+					return FormatDate($format_value, $timestamp, $now);
+				}
 			}
 			elseif($format_interval == "today")
 			{
 				$arNow = localtime($now);
-				//le = number of seconds scince midnight
-				//$le = $arSDate[0]+$arSDate[1]*60+$arSDate[2]*3600;
-				//today_1 = truncate(now)
 				$today_1 = mktime(0, 0, 0, $arNow[4]+1, $arNow[3], $arNow[5]+1900);
-				//today_2 = truncate(now)+1
+				$today_2 = mktime(0, 0, 0, $arNow[4]+1, $arNow[3]+1, $arNow[5]+1900);
+				if($timestamp >= $today_1 && $timestamp < $today_2)
+				{
+					return FormatDate($format_value, $timestamp, $now);
+				}
+			}
+			elseif($format_interval == "todayFuture")
+			{
+				$arNow = localtime($now);
+				$today_1 = $now;
 				$today_2 = mktime(0, 0, 0, $arNow[4]+1, $arNow[3]+1, $arNow[5]+1900);
 				if($timestamp >= $today_1 && $timestamp < $today_2)
 				{
@@ -1039,12 +1144,12 @@ function FormatDate($format="", $timestamp="", $now=false)
 			$timeFormat = ($ampm === AM_PM_LOWER? "g:i a" : ($ampm === AM_PM_UPPER? "g:i A" : "H:i"));
 			$formats = array();
 			$formats["tomorrow"] =  "tomorrow, ".$timeFormat;
-			$formats["-"] = preg_replace('/:s$/', '', $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")));
+			$formats["-"] = preg_replace('/:s/', '', $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")));
 			$formats["s"] = "sago";
 			$formats["i"] = "iago";
 			$formats["today"] = "today, ".$timeFormat;
 			$formats["yesterday"] = "yesterday, ".$timeFormat;
-			$formats[""] = preg_replace('/:s$/', '', $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")));
+			$formats[""] = preg_replace('/:s/', '', $DB->DateFormatToPHP(CSite::GetDateFormat("FULL")));
 			$result .= FormatDate($formats, $timestamp, $now);
 			break;
 		case "X":
@@ -2300,8 +2405,8 @@ function FormatText($strText, $strTextType="text")
 
 function htmlspecialcharsEx($str)
 {
-	static $search =  array("&amp;",     "&lt;",     "&gt;",     "&quot;",     "&#34",     "&#x22",     "&#39",     "&#x27",     "<",    ">",    "\"");
-	static $replace = array("&amp;amp;", "&amp;lt;", "&amp;gt;", "&amp;quot;", "&amp;#34", "&amp;#x22", "&amp;#39", "&amp;#x27", "&lt;", "&gt;", "&quot;");
+	static $search =  array("&amp;",     "&lt;",     "&gt;",     "&quot;",     "&#34;",     "&#x22;",     "&#39;",     "&#x27;",     "<",    ">",    "\"");
+	static $replace = array("&amp;amp;", "&amp;lt;", "&amp;gt;", "&amp;quot;", "&amp;#34;", "&amp;#x22;", "&amp;#39;", "&amp;#x27;", "&lt;", "&gt;", "&quot;");
 	return str_replace($search, $replace, $str);
 }
 
@@ -3630,6 +3735,27 @@ function GetCountryArray($lang=LANGUAGE_ID)
 	return $arCountry;
 }
 
+function GetCountries($lang=LANGUAGE_ID)
+{
+	static $result = null;
+	if(!is_null($result))
+		return $result;
+
+	include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/countries.php");
+	$msg = IncludeModuleLangFile(__FILE__, $lang, true);
+
+	$result = array();
+	foreach ($arCounries as $country => $countryId)
+	{
+		$result[] = array(
+			'ID' => $countryId,
+			'CODE' => $country,
+			'NAME' => $msg["COUNTRY_".$countryId]
+		);
+	}
+	return $result;
+}
+
 function GetCountryIdByCode($code)
 {
 	include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/countries.php");
@@ -3637,6 +3763,20 @@ function GetCountryIdByCode($code)
 	if(isset($arCounries[$code]))
 		return $arCounries[$code];
 	return false;
+}
+
+function GetCountryCodeById($countryId)
+{
+	$countryId = (int)$countryId;
+
+	static $countryCodes = null;
+	if(is_null($countryCodes))
+	{
+		include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/countries.php");
+		$countryCodes = array_flip($arCounries);
+	}
+
+	return isset($countryCodes[$countryId]) ? $countryCodes[$countryId] : '';
 }
 
 function minimumPHPVersion($vercheck)
@@ -4430,16 +4570,20 @@ JS;
 	{
 		$ret = '';
 
-		$ext = preg_replace('/[^a-z0-9_]/i', '', $ext);
-		if (
-			!self::IsExtRegistered($ext)
-			|| (
-				isset(self::$arCurrentlyLoadedExt[$ext])
-				&& self::$arCurrentlyLoadedExt[$ext]
-			)
-		)
+		$ext = preg_replace('/[^a-z0-9_\.]/i', '', $ext);
+
+		if (!self::IsExtRegistered($ext))
 		{
-			return '';
+			$success = Extension::register($ext);
+			if (!$success)
+			{
+				return "";
+			}
+		}
+
+		if (isset(self::$arCurrentlyLoadedExt[$ext]) && self::$arCurrentlyLoadedExt[$ext])
+		{
+			return "";
 		}
 
 		if(isset(self::$arRegisteredExt[$ext]['oninit']) && is_callable(self::$arRegisteredExt[$ext]['oninit']))
@@ -4480,10 +4624,7 @@ JS;
 		{
 			foreach (self::$arRegisteredExt[$ext]['rel'] as $rel_ext)
 			{
-				if (self::IsExtRegistered($rel_ext) && !self::$arCurrentlyLoadedExt[$rel_ext])
-				{
-					$ret .= self::_loadExt($rel_ext, $bReturn);
-				}
+				$ret .= self::_loadExt($rel_ext, $bReturn);
 			}
 		}
 
@@ -4548,7 +4689,7 @@ JS;
 
 	public static function IsExtRegistered($ext)
 	{
-		$ext = preg_replace('/[^a-z0-9_]/i', '', $ext);
+		$ext = preg_replace('/[^a-z0-9_\.]/i', '', $ext);
 		return is_array(self::$arRegisteredExt[$ext]);
 	}
 
@@ -4557,7 +4698,7 @@ JS;
 		return self::$arRegisteredExt[$ext];
 	}
 
-	private function _RegisterStandardExt()
+	private static function _RegisterStandardExt()
 	{
 		require_once($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/main/jscore.php');
 	}
@@ -6358,10 +6499,10 @@ function NormalizePhone($number, $minLength = 10)
 	return $number;
 }
 
-function bxmail($to, $subject, $message, $additional_headers="", $additional_parameters="")
+function bxmail($to, $subject, $message, $additional_headers="", $additional_parameters="", \Bitrix\Main\Mail\Context $context=null)
 {
 	if(function_exists("custom_mail"))
-		return custom_mail($to, $subject, $message, $additional_headers, $additional_parameters);
+		return custom_mail($to, $subject, $message, $additional_headers, $additional_parameters, $context);
 
 	if($additional_parameters!="")
 		return @mail($to, $subject, $message, $additional_headers, $additional_parameters);
@@ -6502,6 +6643,8 @@ function ini_get_bool($param)
 /**
  * Sorting array by column.
  * You can use short mode: Collection::sortByColumn($arr, 'value'); This is equal Collection::sortByColumn($arr, array('value' => SORT_ASC))
+ *
+ * Pay attention: if two members compare as equal, their relative order in the sorted array is undefined. The sorting is not stable.
  *
  * More example:
  * Collection::sortByColumn($arr, array('value' => array(SORT_NUMERIC, SORT_ASC), 'attr' => SORT_DESC), array('attr' => 'strlen'), 'www');

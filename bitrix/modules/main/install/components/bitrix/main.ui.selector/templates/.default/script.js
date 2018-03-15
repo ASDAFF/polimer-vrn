@@ -21,7 +21,10 @@
 		this.blockInit = false;
 
 		this.id = "";
+		this.inputId = null;
 		this.input = null;
+		this.tagId = null;
+		this.tag = null;
 		this.options = null;
 		this.callback = null;
 		this.items = null;
@@ -30,13 +33,13 @@
 		this.entitiesSet = [
 			'users', 'emails', 'crmemails', 'groups', 'sonetgroups', 'department', 'departmentRelation', 'contacts', 'companies', 'leads', 'deals'
 		];
+		this.auxObject = null;
 	};
 
 	BX.Main.Selector.controls = {};
 
 	BX.Main.Selector.create = function(params)
 	{
-
 		if(
 			typeof params.id == 'undefined'
 			|| !params.id
@@ -71,10 +74,13 @@
 			}
 
 			this.id = params.id;
+			this.inputId = (params.inputId ? params.inputId : null);
 			this.input = (params.inputId && BX(params.inputId) ? BX(params.inputId) : null);
 			this.containerNode = (params.containerId && BX(params.containerId) ? BX(params.containerId) : null);
 			this.bindNode = (params.bindId && BX(params.bindId) ? BX(params.bindId) : this.containerNode);
+			this.tagId = (params.tagId ? params.tagId : null);
 			this.tag = (params.tagId && BX(params.tagId) ? BX(params.tagId) : null);
+			this.openDialogWhenInit = (typeof params.openDialogWhenInit == 'undefined' || !!params.openDialogWhenInit);
 
 			this.options = params.options || {};
 			this.callback = params.callback || null;
@@ -96,6 +102,7 @@
 					offsetTop: '5px',
 					offsetLeft: '15px'
 				},
+				userSearchArea: this.getOption('userSearchArea'),
 				useClientDatabase: (this.getOption('useClientDatabase') == 'Y'),
 				sendAjaxSearch: (this.getOption('sendAjaxSearch') != 'N'),
 				showSearchInput: (this.getOption('useSearch') == 'Y'),
@@ -108,6 +115,7 @@
 				enableDepartments: (this.getOption('enableDepartments') == 'Y'),
 				departmentSelectDisable: (this.getOption('departmentSelectDisable') == 'Y'),
 				enableSonetgroups: (this.getOption('enableSonetgroups') == 'Y'),
+				enableProjects: (this.getOption('enableProjects') == 'Y'),
 				isCrmFeed: (this.getOption('isCrmFeed') == 'Y'),
 				callback : {
 					select : this.callback.select,
@@ -158,20 +166,22 @@
 					});
 				}
 
-				BX.bind(this.input, "keyup", BX.proxy(BX.SocNetLogDestination.BXfpSearch, {
-					formName: this.id,
-					inputName: params.inputId,
-					tagInputName: params.tagId
-				}));
 				BX.bind(this.input, "keydown", BX.proxy(BX.SocNetLogDestination.BXfpSearchBefore, {
 					formName: this.id,
 					inputName: params.inputId
 				}));
-				BX.bind(this.input, "paste", BX.proxy(BX.SocNetLogDestination.BXfpSearch, {
+
+				this.auxObject = {
 					formName: this.id,
 					inputName: params.inputId,
 					tagInputName: params.tagId
-				}));
+				};
+
+				BX.bind(this.input, "bxchange", BX.proxy(BX.SocNetLogDestination.BXfpSearch, this.auxObject));
+			}
+			else if(parameters.showSearchInput)
+			{
+				this.initDialog()
 			}
 
 			if (this.items.hidden)
@@ -240,7 +250,10 @@
 					else
 					{
 						this.getData(BX.delegate(function(data) {
-							this.openDialog(openDialogParams);
+							if (!!this.openDialogWhenInit)
+							{
+								this.openDialog(openDialogParams);
+							}
 
 							BX.onCustomEvent(window, 'BX.Main.Selector:afterInitDialog', [ {
 								id: this.id
@@ -257,9 +270,52 @@
 										return;
 									}
 
-									this.openDialog({
-										bindNode: params.bindNode
-									});
+									if (params.bindNode)
+									{
+										var inputNode = BX.findChild(params.bindNode, { tagName : "input", attr : { "type": "text"} }, true);
+										if (inputNode)
+										{
+											BX.bind(inputNode, "keydown", BX.proxy(BX.SocNetLogDestination.BXfpSearchBefore, {
+												formName: this.id,
+												inputName: null,
+												inputNode: inputNode
+											}));
+
+											if (
+												true
+												|| !this.auxObject
+												|| (
+													(
+														!BX.type.isNotEmptyString(this.auxObject.inputName)
+														|| !BX(this.auxObject.inputName)
+													)
+													&& !BX(this.auxObject.inputNode)
+												)
+											)
+											{
+												this.auxObject = {
+													formName: this.id,
+													inputName: null,
+													inputNode: inputNode,
+													tagInputName: params.tagId
+												};
+
+												BX.SocNetLogDestination.obElementBindMainPopup[this.id].node = inputNode;
+												BX.SocNetLogDestination.obElementBindSearchPopup[this.id].node = inputNode;
+												BX.SocNetLogDestination.obItemsSelected[this.id] = {};
+											}
+
+											if (this.auxObject)
+											{
+												BX.bind(inputNode, "bxchange", BX.proxy(BX.SocNetLogDestination.BXfpSearch, this.auxObject));
+											}
+
+										}
+
+										this.openDialog({
+											bindNode: params.bindNode
+										});
+									}
 								}, this));
 							}
 						}, this));
@@ -274,8 +330,12 @@
 				this.id,
 				openDialogParams
 			);
-
 			this.mainPopupWindow = BX.SocNetLogDestination.popupWindow;
+		},
+
+		closeDialog: function()
+		{
+			BX.SocNetLogDestination.closeDialog();
 		},
 
 		getData: function(callback)

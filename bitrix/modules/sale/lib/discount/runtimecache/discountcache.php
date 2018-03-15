@@ -5,6 +5,7 @@ namespace Bitrix\Sale\Discount\RuntimeCache;
 
 use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Sale\Internals\DiscountCouponTable;
 use Bitrix\Sale\Internals\DiscountEntitiesTable;
 use Bitrix\Sale\Internals\DiscountGroupTable;
 use Bitrix\Sale\Internals\DiscountModuleTable;
@@ -127,7 +128,7 @@ final class DiscountCache
 			}
 
 			if (!empty($needToLoad))
-				$resultEntities = array_merge_recursive($resultEntities, DiscountEntitiesTable::getByDiscount($needToLoad));
+				self::recursiveMerge($resultEntities, DiscountEntitiesTable::getByDiscount($needToLoad));
 
 			$this->discountEntities[$cacheKey] = array($discountIds, $resultEntities);
 		}
@@ -136,19 +137,18 @@ final class DiscountCache
 
 	public function getDiscounts(array $discountIds, array $executeModuleFilter, $siteId, array $couponList = array())
 	{
-		$cacheKey = 'D' . implode('_', $discountIds) . '-S' . $siteId;
+		$cacheKey = 'D'.implode('_', $discountIds).'-S'.$siteId;
 		if(!empty($couponList))
 		{
-			$cacheKey .= '-C' . implode('_', array_keys($couponList));
+			$cacheKey .= '-C'. implode('_', array_keys($couponList));
 		}
 
-		$cacheKey .= '-MF' . implode('_', $executeModuleFilter);
+		$cacheKey .= '-MF'.implode('_', $executeModuleFilter);
 		$cacheKey = md5($cacheKey);
 
 		if(!isset($this->discounts[$cacheKey]))
 		{
 			$currentList = array();
-			$discountApply = array();
 
 			$currentDatetime = new DateTime();
 			$discountSelect = array(
@@ -172,7 +172,25 @@ final class DiscountCache
 				)
 			);
 
-			if (empty($couponList))
+			$couponsDiscount = array();
+			if (!empty($couponList))
+			{
+				$iterator = DiscountCouponTable::getList(array(
+					'select' => array('DISCOUNT_ID', 'COUPON'),
+					'filter' => array('@DISCOUNT_ID' => $discountIds,'@COUPON' => array_keys($couponList)),
+					'order' => array('DISCOUNT_ID' => 'ASC')
+				));
+				while ($row = $iterator->fetch())
+				{
+					$id = (int)$row['DISCOUNT_ID'];
+					if (isset($couponsDiscount[$id]))
+						continue;
+					$couponsDiscount[$id] = $row['COUPON'];
+				}
+				unset($id, $row, $iterator);
+			}
+
+			if (empty($couponsDiscount))
 			{
 				$discountFilter['=USE_COUPONS'] = 'N';
 			}
@@ -183,10 +201,9 @@ final class DiscountCache
 					'=USE_COUPONS' => 'N',
 					array(
 						'=USE_COUPONS' => 'Y',
-						'@COUPON.COUPON' => array_keys($couponList)
+						'@ID' => array_keys($couponsDiscount)
 					)
 				);
-				$discountSelect['DISCOUNT_COUPON'] = 'COUPON.COUPON';
 			}
 
 			//todo remove order. It's unnecessary because we rearrange discounts after by benefit for client.
@@ -199,14 +216,10 @@ final class DiscountCache
 			while($discount = $discountIterator->fetch())
 			{
 				$discount['ID'] = (int)$discount['ID'];
-				if(isset($discountApply[$discount['ID']]))
-				{
-					continue;
-				}
 				$discountApply[$discount['ID']] = true;
 				if($discount['USE_COUPONS'] == 'Y')
 				{
-					$discount['COUPON'] = $couponList[$discount['DISCOUNT_COUPON']];
+					$discount['COUPON'] = $couponList[$couponsDiscount[$discount['ID']]];
 				}
 				$discount['CONDITIONS'] = $discount['CONDITIONS_LIST'];
 				$discount['ACTIONS'] = $discount['ACTIONS_LIST'];
@@ -220,5 +233,34 @@ final class DiscountCache
 		}
 
 		return $this->discounts[$cacheKey];
+	}
+
+	/**
+	 * Added keys from source array to destination array.
+	 *
+	 * @param array &$dest			Destination array.
+	 * @param array $src			Source array.
+	 * @return void
+	 */
+	private static function recursiveMerge(&$dest, $src)
+	{
+		if (!is_array($dest) || !is_array($src))
+			return;
+		if (empty($dest))
+		{
+			$dest = $src;
+			return;
+		}
+		foreach ($src as $key => $value)
+		{
+			if (!isset($dest[$key]))
+			{
+				$dest[$key] = $value;
+				continue;
+			}
+			if (is_array($dest[$key]))
+				self::recursiveMerge($dest[$key], $value);
+		}
+		unset($value, $key);
 	}
 }

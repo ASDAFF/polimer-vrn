@@ -172,7 +172,7 @@ Class socialnetwork extends CModule
 
 		RegisterModuleDependences("main", "OnAfterUserAdd", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\UserToGroup", "onAfterUserAdd");
 		RegisterModuleDependences("main", "OnAfterUserUpdate", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\UserToGroup", "onAfterUserUpdate");
-		RegisterModuleDependences("iblock", "OnBeforeIBlockSectionUpdate", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "OnBeforeIBlockSectionUpdate");
+		RegisterModuleDependences("iblock", "OnBeforeIBlockSectionUpdate", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "onBeforeIBlockSectionUpdate");
 		RegisterModuleDependences("iblock", "OnAfterIBlockSectionUpdate", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "onAfterIBlockSectionUpdate");
 		RegisterModuleDependences("iblock", "onBeforeIBlockSectionDelete", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "onBeforeIBlockSectionDelete");
 		RegisterModuleDependences("iblock", "OnAfterIBlockSectionDelete", "socialnetwork", "\\Bitrix\\Socialnetwork\\Item\\Workgroup", "onAfterIBlockSectionDelete");
@@ -186,7 +186,10 @@ Class socialnetwork extends CModule
 		$eventManager->registerEventHandler('main', 'onRatingListViewed', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\RatingVoteList', 'onViewed');
 		$eventManager->registerEventHandler('mobile', 'onSetContentView', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\LogEntry', 'onSetContentView');
 		$eventManager->registerEventHandler('mobile', 'onGetContentId', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\LogEntry', 'onGetContentId');
-
+		$eventManager->registerEventHandler('pull', 'onGetMobileCounter', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Pull\Counter', 'onGetMobileCounter');
+		$eventManager->registerEventHandler('pull', 'onGetMobileCounterTypes', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Pull\Counter', 'onGetMobileCounterTypes');
+		$eventManager->registerEventHandler('intranet', 'onEmployeeDepartmentsChanged', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Intranet\Structure\Employee', 'onEmployeeDepartmentsChanged');
+		
 		CAgent::AddAgent("CSocNetMessages::SendEventAgent();", "socialnetwork", "N", 600);
 
 		$arUserOptions = CUserOptions::GetOption("intranet", "~gadgets_sonet_user", false, 0);
@@ -204,12 +207,17 @@ Class socialnetwork extends CModule
 		$this->__SetLogFilter();
 
 		CModule::IncludeModule("socialnetwork");
-		if(
-			strtolower($DB->type) == 'mysql'
-			&& $DB->Query("CREATE fulltext index IXF_SONET_LOG_INDEX on b_sonet_log_index (CONTENT)", true)
-		)
+		if(strtolower($DB->type) == 'mysql')
 		{
-			\Bitrix\Socialnetwork\LogIndexTable::getEntity()->enableFullTextIndex("CONTENT");
+			if ($DB->Query("CREATE fulltext index IXF_SONET_LOG_INDEX on b_sonet_log_index (CONTENT)", true))
+			{
+				\Bitrix\Socialnetwork\LogIndexTable::getEntity()->enableFullTextIndex("CONTENT");
+			}
+
+			if ($DB->Query("CREATE fulltext index IXF_SONET_GROUP on b_sonet_group (SEARCH_INDEX)", true))
+			{
+				\Bitrix\Socialnetwork\WorkgroupTable::getEntity()->enableFullTextIndex("SEARCH_INDEX");
+			}
 		}
 
 		if (CModule::IncludeModule("search"))
@@ -403,6 +411,9 @@ Class socialnetwork extends CModule
 		$eventManager->unregisterEventHandler('main', 'onRatingListViewed', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Main\RatingVoteList', 'onViewed');
 		$eventManager->unregisterEventHandler('mobile', 'onSetContentView', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\LogEntry', 'onSetContentView');
 		$eventManager->unregisterEventHandler('mobile', 'onGetContentId', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Mobile\LogEntry', 'onGetContentId');
+		$eventManager->unregisterEventHandler('pull', 'onGetMobileCounter', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Pull\Counter', 'onGetMobileCounter');
+		$eventManager->unregisterEventHandler('pull', 'onGetMobileCounterTypes', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Pull\Counter', 'onGetMobileCounterTypes');
+		$eventManager->unregisterEventHandler('intranet', 'onEmployeeDepartmentsChanged', 'socialnetwork', '\Bitrix\Socialnetwork\Integration\Intranet\Structure\Employee', 'onEmployeeDepartmentsChanged');
 
 		UnRegisterModule("socialnetwork");
 		return true;

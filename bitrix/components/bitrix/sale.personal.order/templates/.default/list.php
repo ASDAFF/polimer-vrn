@@ -21,6 +21,7 @@ $arChildParams = array(
 	"CACHE_GROUPS" => $arParams["CACHE_GROUPS"],
 	"DEFAULT_SORT" => $arParams["ORDER_DEFAULT_SORT"],
 	"RESTRICT_CHANGE_PAYSYSTEM" => $arParams["RESTRICT_CHANGE_PAYSYSTEM"],
+	"REFRESH_PRICES" => $arParams["REFRESH_PRICES"]
 );
 
 foreach ($arParams as $key => $val)

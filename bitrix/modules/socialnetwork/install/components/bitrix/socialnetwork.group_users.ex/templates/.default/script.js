@@ -102,13 +102,7 @@
 				arItems[arItems.length] = {
 					text : BX.message('GUEAddToUsersTitle'),
 					className : "menu-popup-no-icon",
-					onclick : function(e) {
-						if (BX.SGCP)
-						{
-							BX.SGCP.ShowForm('invite', invitePopupName, e);
-						}
-						return BX.PreventDefault(e);
-					}
+					href: BX.message('GUEPathToGroupInvite')
 				};
 			}
 
@@ -158,13 +152,7 @@
 				arItems[arItems.length] = {
 					text : BX.message('GUEAddToUsersTitle'),
 					className : "menu-popup-no-icon",
-					onclick : function(e) {
-						if (BX.SGCP)
-						{
-							BX.SGCP.ShowForm('invite', invitePopupName, e);
-						}
-						return BX.PreventDefault(e);
-					}
+					href: BX.message('GUEPathToGroupInvite')
 				};
 			}
 
@@ -290,7 +278,7 @@
 				ACTION: data.action,
 				GROUP_ID: parseInt(BX.message('GUEGroupId')),
 				sessid: BX.bitrix_sessid(),
-				site: BX.util.urlencode(BX.message('GUESiteId'))
+				site: BX.util.urlencode(BX.message('SITE_ID'))
 			};
 
 			if (data.action == 'UNCONNECT_DEPT')
@@ -352,7 +340,7 @@
 						'GROUP_ID': parseInt(BX.message('GUEGroupId')),
 						'USER_ID' : [ newOwnerID ],
 						'sessid': BX.bitrix_sessid(),
-						'site': BX.util.urlencode(BX.message('GUESiteId'))
+						'site': BX.util.urlencode(BX.message('SITE_ID'))
 					},
 					onsuccess: BX.proxy(function(data) {
 						this.processAJAXResponse(data, popup);

@@ -804,7 +804,10 @@ $tabControl->BeginNextTab();
 						<td><?=GetMessage("BIZPROC_WFS_PARAM_TYPE")?>:</td>
 						<td>
 							<select id="WFSFormTypeC" onchange="WFSSwitchTypeControl(this.value, 'C');">
-								<?foreach ($arWorkflowParameterTypes as $k => $v):?>
+								<?foreach ($arWorkflowParameterTypes as $k => $v):
+									if ($k === 'file'  || $k === 'F')
+										continue;
+								?>
 									<option value="<?= $k ?>"><?= htmlspecialcharsbx($v) ?></option>
 								<?endforeach;?>
 							</select><br />

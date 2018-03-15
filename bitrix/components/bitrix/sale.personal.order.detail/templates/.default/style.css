@@ -1528,11 +1528,14 @@ div.sale-order-detail-payment-options-methods-template {
 		text-align: center;
 	}
 }
-
+@media (min-width: 580px) and (max-width: 768px){
+	.sale-order-detail-order-item-td-title, .sale-order-detail-order-item-td-text {
+		display: inline-block !important;
+	}
+}
 @media (min-width: 580px) {
 	.sale-order-detail-order-item-td-title, .sale-order-detail-order-item-td-text {
 		line-height: 20px;
-		display: inline-block !important;
 		padding: 2px 5px;
 		text-align: left;
 		vertical-align: middle;

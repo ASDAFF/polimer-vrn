@@ -27,7 +27,7 @@ $publicMode = isset($arParams["PUBLIC_MODE"]) && $arParams["PUBLIC_MODE"] === tr
 			}
 			else
 			{
-				?><a href="<?=$entity['ENTITY_LINK']?>" target="_blank"
+				?><a href="<?=htmlspecialcharsbx($entity['ENTITY_LINK'])?>" target="_blank"
 					 id="balloon_<?=$entityType."_".$entityId."_".$_suf?>"><?=htmlspecialcharsbx($entity['ENTITY_TITLE'])?></a><?
 			}
 

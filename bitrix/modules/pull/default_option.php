@@ -20,4 +20,14 @@ $pull_default_option = array(
 	'signature_algo' => 'sha1',
 	'guest' => 'N',
 );
+
+if ($va = getenv('BITRIX_VA_VER'))
+{
+	$pull_default_option['nginx'] = 'Y';
+	$pull_default_option['nginx_version'] = 1;
+	if (version_compare($va, '4.4', '>='))
+		$pull_default_option['nginx_version'] = 2;
+	if (version_compare($va, '7.1', '>='))
+		$pull_default_option['nginx_version'] = 3;
+}
 ?>

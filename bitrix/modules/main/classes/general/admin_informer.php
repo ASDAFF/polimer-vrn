@@ -143,7 +143,7 @@ class CAdminInformer
 		if(!$USER->IsAuthorized())
 			return false;
 
-		if ($USER->CanDoOperation("cache_control") && !CHTMLPagesCache::isOn())
+		if ($USER->CanDoOperation("cache_control") && !\Bitrix\Main\Composite\Helper::isOn())
 		{
 			self::AddItem(array(
 				"TITLE" => GetMessage("top_panel_ai_composite_title"),

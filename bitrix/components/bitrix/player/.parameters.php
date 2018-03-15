@@ -204,6 +204,14 @@ if ($arCurrentValues["USE_PLAYLIST"] == 'Y')
 		"DEFAULT" => "",
 		"HIDDEN" => $hidden,
 	);
+
+	$arParams["USE_PLAYLIST_AS_SOURCES"] = Array(
+		"PARENT" => "BASE_SETTINGS",
+		"NAME" => GetMessage("PC_PAR_USE_PLAYLIST_AS_SOURCES"),
+		"TYPE" => "CHECKBOX",
+		"DEFAULT" => "N",
+		"HIDDEN" => $hidden,
+	);
 }
 
 if ($type == 'flv')
@@ -288,6 +296,12 @@ else
 
 if ($adv_mode)
 {
+	$arParams["TYPE"] = array(
+		"PARENT" => "ADDITIONAL_SETTINGS",
+		"NAME" => GetMessage("PC_PAR_FILE_TYPE"),
+		"DEFAULT" => "",
+		"HIDDEN" => $hidden,
+	);
 	$arParams["PREVIEW"] = Array(
 		"PARENT" => "APPEARANCE",
 		"NAME" => GetMessage("PC_PAR_PREVIEW_IMAGE"),
@@ -785,6 +799,16 @@ $arParams["AUTOSTART"] = Array(
 	"TYPE" => "CHECKBOX",
 	"DEFAULT" => "N"
 );
+
+if ($arCurrentValues['AUTOSTART'] != 'Y')
+{
+	$arParams["AUTOSTART_ON_SCROLL"] = Array(
+		"PARENT" => $playback_parent,
+		"NAME" => GetMessage("PC_PAR_AUTOSTART_ON_SCROLL"),
+		"TYPE" => "CHECKBOX",
+		"DEFAULT" => "N"
+	);
+}
 
 $arParams["REPEAT"] = Array(
 	"PARENT" => $playback_parent,

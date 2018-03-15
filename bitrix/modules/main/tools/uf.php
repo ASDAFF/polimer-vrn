@@ -93,7 +93,7 @@ if(check_bitrix_sessid())
 
 			if(isset($request['FORM']))
 			{
-				$view->setAdditionalParameter('form_name', $request['FORM']);
+				$view->setAdditionalParameter('form_name', $request['FORM'], true);
 			}
 
 			break;
@@ -103,6 +103,11 @@ if(check_bitrix_sessid())
 			$view = new \Bitrix\Main\UserField\DisplayView();
 
 		break;
+	}
+
+	if(isset($request['CONTEXT']))
+	{
+		$view->setAdditionalParameter('CONTEXT', $request['CONTEXT'], true);
 	}
 
 	$userFieldDispatcher->setView($view);

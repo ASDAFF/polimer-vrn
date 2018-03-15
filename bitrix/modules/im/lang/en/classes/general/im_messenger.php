@@ -35,4 +35,6 @@ $MESS["IM_MESSAGE_FILE_DOWN"] = "Download:";
 $MESS["IM_QUOTE"] = "Quote";
 $MESS["IM_MESSAGE_ATTACH"] = "Attachment";
 $MESS["IM_MESSAGE_ICON"] = "icon";
+$MESS["IM_MESSAGE_MENTION_PUSH_2_M"] = "#USER# has mentioned you";
+$MESS["IM_MESSAGE_MENTION_PUSH_2_F"] = "#USER# has mentioned you";
 ?>

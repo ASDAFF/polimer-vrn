@@ -16,7 +16,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 					document.getElementById("tr_max_level").style.display = 'block';
 				}
 			}
-			if (v == 'random') {
+			else
+			{
 				document.getElementById("bpcrUserParameterTitle").innerHTML = "<?= GetMessage("BPCRU_PD_USER_RANDOM") ?>";
 				document.getElementById("tr_max_level").style.display = 'none';
 			}

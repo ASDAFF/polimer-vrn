@@ -47,7 +47,8 @@
 
 		return this.query(this.mode, {
 			FIELDS: param.FIELDS,
-			FORM: param.FORM || ''
+			FORM: param.FORM || '',
+			CONTEXT: param.CONTEXT || ''
 		}, callback);
 	};
 
@@ -557,12 +558,13 @@
 		var
 			baseValue = BX.Main.UF.TypeFile.superclass.getValue.apply(this, arguments),
 			node = fieldStack[field].NODE,
-			deletedFieldName = field + '_deleted[]',
 			deletedNodeList = [],
 			i;
 
 		if(fieldStack[field].FIELD.MULTIPLE === 'Y')
 		{
+			var deletedFieldName = field + '_del[]';
+
 			if(BX.type.isArray(baseValue) && baseValue.length > 0)
 			{
 				deletedNodeList = BX.Main.UF.TypeFile.superclass.findInput.apply(this, [node, deletedFieldName]);
@@ -572,7 +574,7 @@
 					var pos = BX.util.array_search(deletedNodeList[i].value, baseValue);
 					if(pos >= 0)
 					{
-						baseValue[pos] = null;
+						baseValue[pos] = {'old_id': deletedNodeList[i].value, 'del': 'Y', 'tmp_name': ''};
 					}
 				}
 			}
@@ -581,13 +583,15 @@
 		}
 		else if(baseValue > 0)
 		{
+			var deletedFieldName = field + '_del';
+
 			deletedNodeList = BX.Main.UF.TypeFile.superclass.findInput.apply(this, [node, deletedFieldName]);
 
 			for(i = 0; i < deletedNodeList.length; i++)
 			{
 				if(baseValue == deletedNodeList[i].value)
 				{
-					baseValue = '';
+					baseValue = {'old_id': baseValue, 'del': 'Y', 'tmp_name': ''};
 					break;
 				}
 			}

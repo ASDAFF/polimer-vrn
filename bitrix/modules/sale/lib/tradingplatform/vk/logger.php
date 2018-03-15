@@ -351,7 +351,7 @@ class Logger
 				'=EXPORT_ID' => $exportId,
 				'=ERROR_CODE' => "LOG",
 			),
-			'order' => array('TIME' => 'ASC'),
+			'order' => array('TIME' => 'ASC', 'ID' => 'ASC'),
 		));
 		
 		$log = "";

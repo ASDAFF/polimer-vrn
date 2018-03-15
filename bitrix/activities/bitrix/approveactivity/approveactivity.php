@@ -637,12 +637,14 @@ class CBPApproveActivity
 				throw new CBPNotSupportedException(GetMessage("BPAA_ACT_NO_ACTION"));
 
 			if (
-				isset($arTask['PARAMETERS']['CommentRequired'])
+				isset($arTask['PARAMETERS']['ShowComment'])
+				&& $arTask['PARAMETERS']['ShowComment'] === 'Y'
+				&& isset($arTask['PARAMETERS']['CommentRequired'])
 				&& empty($arEventParameters['COMMENT'])
 				&&
-				($arTask['PARAMETERS']['CommentRequired'] == 'Y'
-					|| $arTask['PARAMETERS']['CommentRequired'] == 'YA' && $arEventParameters["APPROVE"]
-					|| $arTask['PARAMETERS']['CommentRequired'] == 'YR' && !$arEventParameters["APPROVE"]
+				($arTask['PARAMETERS']['CommentRequired'] === 'Y'
+					|| $arTask['PARAMETERS']['CommentRequired'] === 'YA' && $arEventParameters["APPROVE"]
+					|| $arTask['PARAMETERS']['CommentRequired'] === 'YR' && !$arEventParameters["APPROVE"]
 				)
 			)
 			{

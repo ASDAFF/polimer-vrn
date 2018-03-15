@@ -8,7 +8,9 @@ class CAllSocNetUser
 		global $APPLICATION;
 
 		if (!CSocNetGroup::__ValidateID($ID))
+		{
 			return false;
+		}
 
 		$ID = IntVal($ID);
 		$bSuccess = True;
@@ -34,6 +36,7 @@ class CAllSocNetUser
 			CSocNetLogComments::DeleteNoDemand($ID);
 			CSocNetFeatures::DeleteNoDemand($ID);
 			CSocNetSubscription::DeleteEx($ID);
+			\Bitrix\Socialnetwork\Item\UserContentView::deleteNoDemand($ID);
 
 			CUserOptions::DeleteOption("socialnetwork", "~menu_".SONET_ENTITY_USER."_".$ID, false, 0);
 		}
@@ -102,7 +105,7 @@ class CAllSocNetUser
 		if (!$USER->IsAuthorized())
 			return;
 
-		CUser::SetLastActivityDate($USER->GetID());
+		CUser::SetLastActivityDate($USER->GetID(), true);
 	}
 
 	public static function OnUserInitialize($user_id, $arFields = array())
@@ -150,8 +153,8 @@ class CAllSocNetUser
 		$userID = IntVal($userID);
 		if ($userID <= 0)
 			return false;
-
-		return CUser::IsOnLine($userID, 120);
+		
+		return CUser::IsOnLine($userID); // TODO change to use CUser::GetOnlineStatus see more in docs.bx
 	}
 
 	public static function IsFriendsAllowed()
@@ -381,6 +384,7 @@ class CAllSocNetUser
 			"EMAIL" => GetMessage("SONET_UP1_EMAIL"),
 			"TIME_ZONE" => GetMessage("SONET_UP1_TIME_ZONE"),
 			"LAST_LOGIN" => GetMessage("SONET_UP1_LAST_LOGIN"),
+			"LAST_ACTIVITY_DATE" => GetMessage("SONET_UP1_LAST_ACTIVITY_DATE"),
 			"DATE_REGISTER" => GetMessage("SONET_UP1_DATE_REGISTER"),
 			"LID" => GetMessage("SONET_UP1_LID"),
 			"PASSWORD" => GetMessage("SONET_UP1_PASSWORD"),

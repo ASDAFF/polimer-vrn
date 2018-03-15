@@ -72,7 +72,16 @@ function BWFVCAddCondition(field, val)
 
 	var newCell = newRow.insertCell(-1);
 	newCell.id = "id_td_document_value_" + bwfvc_counter;
-	newCell.innerHTML = '<input type="text" id="id_' + field + '" name="' + field + '" value="' + val + '">';
+
+	var valueInput = BX.create('INPUT', {
+		attrs: {
+			type: 'text',
+			id: 'id_' + field,
+			name: field,
+			value: val
+		}
+	});
+	newCell.appendChild(valueInput);
 
 	var newCell = newRow.insertCell(-1);
 	newCell.align="right";

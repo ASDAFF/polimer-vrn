@@ -134,12 +134,6 @@ if($arCurrentValues["SHOW_PRODUCTS"] == "Y")
 			"DEFAULT" => "N",
 			"PARENT" => "LIST",
 		),
-		"SHOW_SUBSCRIBE" => array(
-			"NAME" => GetMessage('SBBL_SHOW_SUBSCRIBE'),
-			"TYPE" => "CHECKBOX",
-			"DEFAULT" => "N",
-			"PARENT" => "LIST",
-		),
 		"SHOW_IMAGE" => array(
 			"NAME" => GetMessage('SBBL_SHOW_IMAGE'),
 			"TYPE" => "CHECKBOX",

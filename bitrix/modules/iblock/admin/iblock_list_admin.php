@@ -794,14 +794,10 @@ if($lAdmin->EditAction())
 									"QUANTITY_FROM" => $CATALOG_QUANTITY_FROM[$elID][$arCatalogGroup["ID"]],
 									"QUANTITY_TO" => $CATALOG_QUANTITY_TO[$elID][$arCatalogGroup["ID"]],
 								);
+								if (is_string($arFields['PRICE']))
+									$arFields['PRICE'] = str_replace(',', '.', $arFields['PRICE']);
 								if($arFields["PRICE"] < 0 || trim($arFields["PRICE"]) === '')
-								{
 									CPrice::Delete($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]]);
-								}
-								elseif((int)($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]])>0)
-								{
-									CPrice::Update((int)($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]]), $arFields);
-								}
 								elseif((int)$CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]] > 0)
 									CPrice::Update($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]], $arFields);
 								elseif($arFields["PRICE"] >= 0)
@@ -848,6 +844,8 @@ if($lAdmin->EditAction())
 									"QUANTITY_FROM" => $CATALOG_QUANTITY_FROM[$elID][$arCatalogGroup["ID"]],
 									"QUANTITY_TO" => $CATALOG_QUANTITY_TO[$elID][$arCatalogGroup["ID"]]
 								);
+								if (is_string($arFields['PRICE']))
+									$arFields['PRICE'] = str_replace(',', '.', $arFields['PRICE']);
 								if($arFields["PRICE"] < 0 || trim($arFields["PRICE"]) === '')
 									CPrice::Delete($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]]);
 								elseif((int)$CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]] > 0)
@@ -1827,6 +1825,7 @@ while($arRes = $rsData->NavNext(true, "f_"))
 	if($f_TYPE=="S")
 	{
 		$bReadOnly = !CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, $f_ID, "section_edit");
+		$mainEntityEditPrice = true;
 	}
 	else
 	{
@@ -3086,15 +3085,12 @@ if ($bCatalog)
 {
 	if ($strUseStoreControl == "Y" && in_array("CATALOG_BAR_CODE", $arSelectedFields) && !empty($arElemID))
 	{
-		$rsProducts = CCatalogProduct::GetList(
-			array(),
-			array("ID" => $arElemID),
-			false,
-			false,
-			array('ID', 'BARCODE_MULTI')
-		);
 		$productsWithBarCode = array();
-		while ($product = $rsProducts->Fetch())
+		$rsProducts = Catalog\ProductTable::getList(array(
+			'select' => array('ID', 'BARCODE_MULTI'),
+			'filter' => array('@ID' => $arElemID)
+		));
+		while ($product = $rsProducts->fetch())
 		{
 			if (isset($arRows['E'.$product["ID"]]))
 			{
@@ -3217,7 +3213,7 @@ if ($bCatalog)
 		$arRatioList = array();
 		$iterator = Catalog\MeasureRatioTable::getList(array(
 			'select' => array('ID', 'PRODUCT_ID', 'RATIO'),
-			'filter' => array('@PRODUCT_ID' => $arRowKeys, '=IS_DEFAULT' => 'Y')
+			'filter' => array('@PRODUCT_ID' => $arElemID, '=IS_DEFAULT' => 'Y')
 		));
 		while ($row = $iterator->fetch())
 		{

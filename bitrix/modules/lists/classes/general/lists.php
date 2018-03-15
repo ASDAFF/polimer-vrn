@@ -12,6 +12,8 @@ Loc::loadMessages(__FILE__);
 
 class CLists
 {
+	private static $featuresCache = array();
+
 	function SetPermission($iblock_type_id, $arGroups)
 	{
 		global $DB, $CACHE_MANAGER;
@@ -1148,6 +1150,8 @@ class CLists
 	public static function getChildSection($baseSectionId, array $listSection, array &$listChildSection)
 	{
 		$baseSectionId = intval($baseSectionId);
+		if (!$baseSectionId)
+			return;
 		if(!in_array($baseSectionId, $listChildSection))
 			$listChildSection[] = $baseSectionId;
 
@@ -1740,9 +1744,11 @@ class CLists
 	/**
 	 * The method return number of elements by iblock id.
 	 *
-	 * @param $iblockId
+	 * @param $iblockId Iblock id.
 	 * @return int
 	 * @throws ArgumentException
+	 * @throws \Bitrix\Main\Db\SqlQueryException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getNumberOfElements($iblockId)
 	{
@@ -1758,6 +1764,25 @@ class CLists
 		$result = $queryObject->fetch();
 
 		return intval($result["COUNT"]);
+	}
+
+	public static function isFeatureEnabled($featureName = '')
+	{
+		if (!IsModuleInstalled("bizproc"))
+			return false;
+
+		if (!CModule::IncludeModule("bitrix24"))
+			return true;
+
+		$featureName = (string)$featureName;
+
+		if ($featureName === "")
+			$featureName = "lists_processes";
+
+		if (!isset(static::$featuresCache[$featureName]))
+			static::$featuresCache[$featureName] = \Bitrix\Bitrix24\Feature::isFeatureEnabled($featureName);
+
+		return static::$featuresCache[$featureName];
 	}
 }
 ?>

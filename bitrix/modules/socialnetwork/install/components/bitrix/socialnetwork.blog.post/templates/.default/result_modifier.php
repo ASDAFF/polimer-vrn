@@ -65,4 +65,21 @@ if (empty($arResult["urlToHide"]))
 	);
 }
 
+$parser = new \CTextParser();
+$hashTags = $parser->detectTags(htmlspecialcharsBack($arResult["Post"]["DETAIL_TEXT"]));
+
+if (
+	!empty($arResult["Category"])
+	&& !empty($hashTags)
+)
+{
+	foreach($arResult["Category"] as $key => $category)
+	{
+		if (in_array($category['~NAME'], $hashTags))
+		{
+			unset($arResult["Category"][$key]);
+		}
+	}
+}
+
 ?>

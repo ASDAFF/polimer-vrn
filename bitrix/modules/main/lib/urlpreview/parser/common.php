@@ -3,7 +3,7 @@
 namespace Bitrix\Main\UrlPreview\Parser;
 use Bitrix\Main\UrlPreview\HtmlDocument;
 use Bitrix\Main\UrlPreview\Parser;
-use Bitrix\Main\Web\HttpHeaders;
+use Bitrix\Main\Web\Uri;
 
 class Common extends Parser
 {
@@ -49,6 +49,21 @@ class Common extends Parser
 				else if(count($imageCandidates) > 1)
 				{
 					$document->setExtraField('IMAGES', $imageCandidates);
+				}
+			}
+		}
+		if(strlen($document->getExtraField('VIDEO')) == 0)
+		{
+			preg_match_all("/<video.+?<\/video>/mis", $document->getHtml(), $videoTags);
+			foreach($videoTags[0] as $videoTag)
+			{
+				$videoInfo = $this->getVideoInfo($videoTag);
+				if(!empty($videoInfo))
+				{
+					$document->setExtraField('VIDEO', $videoInfo['src']);
+					$document->setExtraField('VIDEO_TYPE', $videoInfo['type']);
+					$document->setExtraField('VIDEO_WIDTH', $videoInfo['width']);
+					$document->setExtraField('VIDEO_HEIGHT', $videoInfo['height']);
 				}
 			}
 		}
@@ -136,5 +151,78 @@ class Common extends Parser
 			}
 		}
 		return $result;
+	}
+
+	/**
+	 * Parse one <video> tag and try to get valid information off it.
+	 *
+	 * @param string $html - one <video> from the document.
+	 * @return array
+	 */
+	protected function getVideoInfo($html = '')
+	{
+		$maxWeight = -1;
+		$result = array();
+		$uri = new Uri('/');
+		$document = new HtmlDocument($html, $uri);
+		$videoElements = $document->extractElementAttributes('video');
+		foreach($videoElements as $videoElement)
+		{
+			if(!isset($videoElement['src']))
+			{
+				$sourceElements = $document->extractElementAttributes('source');
+				foreach($sourceElements as $sourceElement)
+				{
+					if(
+						(isset($sourceElement['type']) &&
+						$this->isValidVideoMimeType($sourceElement['type'])) ||
+						!isset($videoElement['src']))
+					{
+						$videoElement['src'] = $sourceElement['src'];
+						$videoElement['type'] = $sourceElement['type'];
+						break;
+					}
+				}
+			}
+			if(isset($videoElement['src']))
+			{
+				if(
+					(isset($videoElement['width']) &&
+					isset($videoElement['height']) &&
+					$videoElement['width'] * $videoElement['height'] > $maxWeight) ||
+					(empty($result))
+				)
+				{
+					$result = $videoElement;
+					$maxWeight = 0;
+					if(isset($videoElement['width']) && isset($videoElement['height']))
+					{
+						$maxWeight = $videoElement['width'] * $videoElement['height'];
+					}
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Returns true if $type is a valid video mime-type.
+	 *
+	 * @param string $type
+	 * @return bool
+	 */
+	protected function isValidVideoMimeType($type = '')
+	{
+		if(empty($type))
+		{
+			return false;
+		}
+
+		static $validTypes = array(
+			'video/mp4', 'video/x-flv', 'video/webm', 'video/ogg', 'video/quicktime'
+		);
+
+		return in_array($type, $validTypes);
 	}
 }

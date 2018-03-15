@@ -19,9 +19,35 @@ if (!Loader::includeModule('catalog'))
 Loc::loadMessages(__FILE__);
 
 $currenciesList = Currency\CurrencyManager::getCurrencyList();
-$priceTypeList = CCatalogGroup::GetListArray();
+$basePriceType = -1;
+$priceTypeList = array();
+foreach (CCatalogGroup::GetListArray() as $row)
+{
+	$row['ID'] = (int)$row['ID'];
+	$row['NAME_LANG'] = (string)$row['NAME_LANG'];
+	$priceTypeList[$row['ID']] = htmlspecialcharsbx('['.$row['NAME'].']'.($row['NAME_LANG'] != '' ? ' ' : '').$row['NAME_LANG']);
+	if ($row['BASE'] == 'Y')
+		$basePriceType = $row['ID'];
+}
+unset($row);
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
+
+$sourcePriceType = (isset($_SESSION['CHANGE_PRICE_PARAMS']['INITIAL_PRICE_TYPE'])
+	? (int)$_SESSION['CHANGE_PRICE_PARAMS']['INITIAL_PRICE_TYPE']
+	: 0
+);
+if ($sourcePriceType < 0 || !isset($priceTypeList[$sourcePriceType]))
+	$sourcePriceType = 0;
+
+$destinationPriceType = (isset($_SESSION['CHANGE_PRICE_PARAMS']['PRICE_TYPE'])
+	? (int)$_SESSION['CHANGE_PRICE_PARAMS']['PRICE_TYPE']
+	: 0
+);
+if ($destinationPriceType < 0 || !isset($priceTypeList[$destinationPriceType]))
+	$destinationPriceType = 0;
+
+
 ?>
 <style>
 	.inactive-element
@@ -43,25 +69,15 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 			<td>
 				<span class="adm-select-wrap">
 					<select id="initialPriceTypeSelect" class="adm-select inactive-element" style="width: 169px;" disabled>
+						<option value="0"<?=($sourcePriceType == 0 ? ' selected' : ''); ?>><?
+							echo Loc::getMessage('IBLIST_CHPRICE_PRICE_TYPE_EMPTY'); ?></option>
 						<?
-						foreach ($priceTypeList as $priceTypeElement)
+						foreach ($priceTypeList as $id => $title)
 						{
-							?>
-							<option <?
-							if ( isset($_SESSION['CHANGE_PRICE_PARAMS']['INITIAL_PRICE_TYPE'])
-								&& $_SESSION['CHANGE_PRICE_PARAMS']['INITIAL_PRICE_TYPE'] === $priceTypeElement['ID'] )
-							{
-								echo('selected');
-							}
-
-							?> value=<?=$priceTypeElement['ID']?> >
-								<?
-									$priceTypeName = (strlen($priceTypeElement['NAME_LANG'])) ? $priceTypeElement['NAME_LANG'] : $priceTypeElement['NAME'];
-								?>
-								<?=htmlspecialcharsbx($priceTypeName)?>
-							</option>
-							<?
+							?><option value="<?=$id; ?>"<?=($sourcePriceType == $id ? ' selected' : ''); ?>><?
+							echo $title; ?></option><?
 						}
+						unset($id, $title);
 						?>
 					</select>
 				</span>
@@ -99,24 +115,15 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 				<td width="25%">
 					<span class="adm-select-wrap">
 						<select id="tablePriceTypeIdSelect" class="adm-select" style="width: 169px;">
+							<option value="0"<?=($destinationPriceType == 0 ? ' selected' : ''); ?>><?
+								echo Loc::getMessage('IBLIST_CHPRICE_PRICE_TYPE_EMPTY'); ?></option>
 							<?
-							foreach ($priceTypeList as $priceTypeElement)
+							foreach ($priceTypeList as $id => $title)
 							{
-								?>
-								<option <?
-								if ( isset($_SESSION['CHANGE_PRICE_PARAMS']['PRICE_TYPE'])
-									&& ($_SESSION['CHANGE_PRICE_PARAMS']['PRICE_TYPE'] === $priceTypeElement['ID']) )
-								{
-									echo('selected');
-								}
-								?> value=<?=$priceTypeElement['ID']?>>
-									<?
-									$priceTypeName = (strlen($priceTypeElement['NAME_LANG'])) ? $priceTypeElement['NAME_LANG'] : $priceTypeElement['NAME'];
-									?>
-									<?=htmlspecialcharsbx($priceTypeName)?>
-								</option>
-								<?
+								?><option value="<?=$id; ?>"<?=($destinationPriceType == $id ? ' selected' : ''); ?>><?
+								echo $title; ?></option><?
 							}
+							unset($id, $title);
 							?>
 						</select>
 					</span>
@@ -268,7 +275,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 	</table>
 </form>
 <div style="margin-top: 45px;">
-	<label style="position:relative">
+	<div style="position:relative">
 		<span style="color:red;position:absolute;left:-10px;">*</span>
 		<div>
 			<?=Loc::getMessage('IBLIST_CHPRICE_UNITS_NOTE_PERCENT')?>
@@ -276,19 +283,27 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admi
 		<div>
 			<?=Loc::getMessage('IBLIST_CHPRICE_UNITS_NOTE_CURRENCY')?>
 		</div>
-	</label>
+	</div>
 </div>
 
 <?
 
 $javascriptParams = array(
 	"tableReloadId" => htmlspecialcharsbx($_POST['sTableID']),
-	"alertMessages" => array("onePriceType" => Loc::getMessage('IBLIST_CHPRICE_ALERT_ONE_PRICE_TYPE'), "nullValue" => Loc::getMessage('IBLIST_CHPRICE_ALERT_NOT_NULL'))
+	"alertMessages" => array(
+		"onePriceType" => Loc::getMessage('IBLIST_CHPRICE_ALERT_ONE_PRICE_TYPE'),
+		"nullValue" => Loc::getMessage('IBLIST_CHPRICE_ALERT_NOT_NULL'),
+		"equalPriceTypes" => Loc::getMessage('IBLIST_CHPRICE_ERR_EQUAL_PRICE_TYPES'),
+		"basePriceChange" => Loc::getMessage('IBLIST_CHPRICE_ERR_BASE_PRICE_SELECTED'),
+		"destinationPriceEmpty" => Loc::getMessage('IBLIST_CHPRICE_ERR_DESTINATION_PRICE_EMPTY'),
+		"sourcePriceEmpty" => Loc::getMessage('IBLIST_CHPRICE_ERR_SOURCE_PRICE_EMPTY')
+	),
+	"basePriceType" => (string)$basePriceType
 );
 $javascriptParams = CUtil::PhpToJSObject($javascriptParams);
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/catalog/iblock_change_price.js');
 ?>
-<script>
+<script type="text/javascript">
 	var iblockChangeScript = BX.Catalog.Admin.IblockChangePrice();
 	iblockChangeScript.init(<?=$javascriptParams?>);
 </script>

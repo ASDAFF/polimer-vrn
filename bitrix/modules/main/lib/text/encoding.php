@@ -63,10 +63,10 @@ class Encoding
 			$cvt = new static;
 
 			$res = $cvt->convertByMbstring($data, $charsetFrom, $charsetTo);
-			if($res === '')
+			if (!is_string($res) || $res === '')
 			{
 				$res = $cvt->convertByIconv($data, $charsetFrom, $charsetTo);
-				if($res === '')
+				if (!is_string($res) || $res === '')
 				{
 					$res = $cvt->convertByTables($data, $charsetFrom, $charsetTo);
 				}

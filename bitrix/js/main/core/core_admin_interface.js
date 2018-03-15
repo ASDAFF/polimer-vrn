@@ -1677,12 +1677,19 @@ BX.adminList.prototype.Init = function()
 
 	if(!!this.FORM)
 	{
-		this.ACTION_SELECTOR = this.FORM.action;
-		this.ACTION_BUTTON = this.FORM.apply;
-		this.ACTION_TARGET = this.FORM.action_target;
+		this.ACTION_SELECTOR = this.FORM.elements.action;
+		this.ACTION_BUTTON = this.FORM.elements.apply;
+		this.ACTION_TARGET = this.FORM.elements.action_target;
 
-		BX.bind(this.ACTION_SELECTOR, 'change', BX.proxy(this.UpdateCheckboxCounter, this));
-		BX.bind(this.ACTION_TARGET, 'click', BX.proxy(this.UpdateCheckboxCounter, this));
+		if(this.ACTION_SELECTOR)
+		{
+			BX.bind(this.ACTION_SELECTOR, 'change', BX.proxy(this.UpdateCheckboxCounter, this));
+		}
+
+		if(this.ACTION_TARGET)
+		{
+			BX.bind(this.ACTION_TARGET, 'click', BX.proxy(this.UpdateCheckboxCounter, this));
+		}
 	}
 
 	if (!!this.TABLE && this.TABLE.tBodies[0] && this.TABLE.tBodies[0].rows.length > 0)
@@ -2860,7 +2867,7 @@ BX.adminViewTabControl.prototype.DisableTab = function(tab_id)
 					j--;
 				}
 			}
-			
+
 			if (!bFound)
 			{
 				j = parseInt(i) + 1;
@@ -3842,7 +3849,7 @@ BX.AdminFilter = function(filter_id, aRows)
 
 			window[table_id].GetAdminList(filterUrl);
 		})();
-		
+
 		return false;
 	};
 

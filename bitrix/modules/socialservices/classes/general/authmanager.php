@@ -874,6 +874,45 @@ class CSocServAuth
 		}
 	}
 
+	public static function getControllerUrl()
+	{
+		return 'https://www.bitrix24.com/controller';
+
+		// this may be needed later
+/*
+		static $controllerUrl = '';
+		if(
+			$controllerUrl === ''
+			&& \Bitrix\Main\Loader::includeModule('bitrix24')
+		)
+		{
+			$controllerUrl = 'https://www.bitrix24.com/controller';
+			$controllerUrlList = array(
+				'de' => 'https://www.bitrix24.de/controller',
+				'ua' => 'https://www.bitrix24.ua/controller',
+				'ru' => 'https://www.bitrix24.ru/controller',
+				'eu' => 'https://www.bitrix24.eu/controller',
+				'la' => 'https://www.bitrix24.es/controller',
+				'br' => 'https://www.bitrix24.com.br/controller',
+				'in' => 'https://www.bitrix24.in/controller',
+				'cn' => 'https://www.bitrix24.cn/controller',
+				'kz' => 'https://www.bitrix24.kz/controller',
+				'by' => 'https://www.bitrix24.by/controller',
+				'fr' => 'https://www.bitrix24.fr/controller',
+				'pl' => 'https://www.bitrix24.pl/controller',
+			);
+
+			$lang = \CBitrix24::getLicensePrefix();
+			if(array_key_exists($lang, $controllerUrlList))
+			{
+				$controllerUrl = $controllerUrlList[$lang];
+			}
+		}
+
+		return $controllerUrl;
+*/
+	}
+
 	public function GetSettings()
 	{
 		return false;

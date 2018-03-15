@@ -22,6 +22,8 @@ class PaymentCollection
 	/** @var OrderBase */
 	protected $order;
 
+	private static $eventClassName = null;
+
 	/**
 	 * @return Order
 	 */
@@ -384,13 +386,17 @@ class PaymentCollection
 				unset($itemsFromDb[$payment->getId()]);
 		}
 
-		$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
-		$paymentClassName = $registry->getPaymentClassName();
-		$itemEventName = $paymentClassName::getEntityEventName();
+		if (self::$eventClassName === null)
+		{
+			$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
+			$paymentClassName = $registry->getPaymentClassName();
+			self::$eventClassName = $paymentClassName::getEntityEventName();
+		}
+
 		foreach ($itemsFromDb as $k => $v)
 		{
 			/** @var Main\Event $event */
-			$event = new Main\Event('sale', "OnBefore".$itemEventName."Deleted", array(
+			$event = new Main\Event('sale', "OnBefore".self::$eventClassName."Deleted", array(
 					'VALUES' => $v,
 			));
 			$event->send();
@@ -398,7 +404,7 @@ class PaymentCollection
 			Internals\PaymentTable::delete($k);
 
 			/** @var Main\Event $event */
-			$event = new Main\Event('sale', "On".$itemEventName."Deleted", array(
+			$event = new Main\Event('sale', "On".self::$eventClassName."Deleted", array(
 					'VALUES' => $v,
 			));
 			$event->send();

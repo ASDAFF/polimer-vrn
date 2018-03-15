@@ -5,6 +5,8 @@ namespace Bitrix\Sale\Helpers\Admin\Blocks;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Type\Date;
+use Bitrix\Sale\Cashbox\Internals\CashboxTable;
+use Bitrix\Sale\Cashbox;
 use Bitrix\Sale\Delivery\CalculationResult;
 use Bitrix\Sale\Helpers\Admin\OrderEdit;
 use Bitrix\Sale\Delivery\Services;
@@ -16,10 +18,11 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Result;
 use Bitrix\Main\Entity\EntityError;
 use Bitrix\Main;
-use Bitrix\Sale\Services\Company\Manager;
+use Bitrix\Sale\Services\Company;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentCollection;
 use Bitrix\Sale\Services\Base;
+use Bitrix\Sale\Delivery\Requests;
 
 Loc::loadMessages(__FILE__);
 
@@ -170,7 +173,7 @@ class OrderShipment
 			{
 				$userCompanyId = null;
 
-				$userCompanyList = Manager::getUserCompanyList($USER->GetID());
+				$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 				if (is_array($userCompanyList) && count($userCompanyList) == 1)
 				{
 					$userCompanyId = reset($userCompanyList);
@@ -228,6 +231,21 @@ class OrderShipment
 			if ($saleModulePermissions >= "W")
 			{
 				$companies = str_replace("#URL#", "/bitrix/admin/sale_company_edit.php?lang=".$lang, Loc::getMessage('SALE_ORDER_SHIPMENT_ADD_COMPANY'));
+			}
+		}
+
+		if ($data['FFD_105_ENABLED'] === 'Y')
+		{
+			$checkLink = '<tr><td class="tac" id="SHIPMENT_CHECK_LIST_ID_'.$data['ID'].'">';
+
+			if (!empty($data['CHECK']))
+			{
+				$checkLink .= OrderShipment::buildCheckHtml($data['CHECK']);
+			}
+			$checkLink .= '</td></tr>';
+			if ($data['HAS_ENABLED_CASHBOX'] === 'Y')
+			{
+				$checkLink .= '<tr><td class="adm-detail-content-cell-r tac"><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderShipment.prototype.showCreateCheckWindow('.$data['ID'].');">'.Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_ADD').'</a></td></tr>';
 			}
 		}
 
@@ -303,6 +321,17 @@ class OrderShipment
 				</tbody>
 			</table>
 		</div>';
+	}
+	if ($data['FFD_105_ENABLED'] === 'Y' && $data['ID'] > 0)
+	{
+		$result .= '<div class="adm-bus-table-container caption border" style="padding-top:10px;">
+					<div class="adm-bus-table-caption-title" style="background: #eef5f5;">'.Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_LINK_TITLE').'</div>
+					<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table">
+						<tbody>
+						'.$checkLink.'
+						</tbody>
+					</table>
+				</div>';
 	}
 
 	$result .= '<div class="adm-bus-table-container caption border">
@@ -386,6 +415,35 @@ class OrderShipment
 		<div id="DELIVERY_INFO_'.$index.'">'.$extraServiceHTML.'
 		</div>
 	</div>';
+
+		if(!empty($data['DELIVERY_REQUEST_NAME']) || !empty($data['DELIVERY_REQUEST_ERROR_DESCRIPTION']))
+		{
+			$result .= '<div class="adm-bus-table-container caption border">
+				<div class="adm-bus-table-caption-title" style="background: #eef5f5;">'.Loc::getMessage('SALE_ORDER_SHIPMENT_DEL_REQ_INFO').'</div>
+				<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
+					<tbody>';
+
+			if(!empty($data['DELIVERY_REQUEST_NAME']))
+			{
+				$result .='<tr>
+						<td class="adm-detail-content-cell-l" width="40%">'.Loc::getMessage('SALE_ORDER_SHIPMENT_DEL_REQ').':</td>
+						<td class="adm-detail-content-cell-r"><a href="'.$data['DELIVERY_REQUEST_LINK'].'"">'.$data['DELIVERY_REQUEST_NAME'].'</a></td>
+					</tr>';
+			}
+
+			if(!empty($data['DELIVERY_REQUEST_ERROR_DESCRIPTION']))
+			{
+				$result .= '<tr>
+						<td valign="top" class="adm-detail-content-cell-l" width="40%">'.Loc::getMessage('SALE_ORDER_SHIPMENT_DEL_REQ_ERROR').':</td>
+						<td class="adm-detail-content-cell-r">'.$data['DELIVERY_REQUEST_ERROR_DESCRIPTION'].'</td>
+					</tr>';
+			}
+
+			$result .= '
+					</tbody>
+				</table>
+			</div>';
+		}
 
 		if(is_array($data['DELIVERY_ADDITIONAL_INFO_EDIT']) && !empty($data['DELIVERY_ADDITIONAL_INFO_EDIT']))
 		{
@@ -620,7 +678,7 @@ class OrderShipment
 
 		self::$shipment = $shipment;
 		$data = self::prepareData(!empty($dataForRecovery));
-		$data['COMPANIES'] = Manager::getListWithRestrictions($shipment, \Bitrix\Sale\Services\Company\Restrictions\Manager::MODE_MANAGER);
+		$data['COMPANIES'] = Company\Manager::getListWithRestrictions($shipment, \Bitrix\Sale\Services\Company\Restrictions\Manager::MODE_MANAGER);
 
 		$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
@@ -628,7 +686,7 @@ class OrderShipment
 
 		if($saleModulePermissions == "P")
 		{
-			$userCompanyList = Manager::getUserCompanyList($USER->GetID());
+			$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 			if (!empty($userCompanyList) && is_array($userCompanyList) && count($userCompanyList) == 1)
 			{
 				$userCompanyId = reset($userCompanyList);
@@ -773,6 +831,7 @@ class OrderShipment
 			'SALE_ORDER_SHIPMENT_CONFIRM_DELETE_SHIPMENT' => Loc::getMessage('SALE_ORDER_SHIPMENT_CONFIRM_DELETE_SHIPMENT'),
 			'SALE_ORDER_SHIPMENT_PROFILE' => Loc::getMessage('SALE_ORDER_SHIPMENT_PROFILE'),
 			'SALE_ORDER_SHIPMENT_TRACKING_S_EMPTY' => Loc::getMessage('SALE_ORDER_SHIPMENT_TRACKING_S_EMPTY'),
+			'SALE_ORDER_SHIPMENT_CASHBOX_CHECK_ADD_WINDOW_TITLE' => Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_ADD_WINDOW_TITLE'),
 		);
 
 		return "<script>
@@ -1127,6 +1186,21 @@ class OrderShipment
 
 		$dateInsert = new Date($data['DATE_INSERT']);
 
+		$checkLink = '';
+		if ($data['FFD_105_ENABLED'] === 'Y')
+		{
+			$checkLink .= '<tr><td class="tac" id="SHIPMENT_CHECK_LIST_ID_'.$data['ID'].'">';
+			if (!empty($data['CHECK']))
+			{
+				$checkLink .= OrderShipment::buildCheckHtml($data['CHECK']);
+			}
+			$checkLink .= "</td></tr>";
+			if($formType != 'archive' && $data['HAS_ENABLED_CASHBOX'] === 'Y')
+			{
+				$checkLink .= '<tr><td class="adm-detail-content-cell-r tac"><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderShipment.prototype.showCreateCheckWindow('.$data['ID'].');">'.Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_ADD').'</a></td></tr>';
+			}
+		}
+
 		$sectionDelete = '';
 		$allowedDeliveryStatusesDelete = DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('delete'));
 		if (in_array($data["STATUS_ID"], $allowedDeliveryStatusesDelete) && !$data['ORDER_LOCKED'] && $formType != 'archive')
@@ -1203,8 +1277,19 @@ class OrderShipment
 										</tr>
 									</tbody>
 								</table>
-							</div>
-							<div class="adm-bus-table-container caption border">
+							</div>';
+		if ($checkLink)
+		{
+			$result .= '<div class="adm-bus-table-container caption border" style="padding-top:10px;">
+						<div class="adm-bus-table-caption-title" style="background: #eef5f5;">'.Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_LINK_TITLE').'</div>
+						<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table">
+							<tbody>
+							'.$checkLink.'
+							</tbody>
+						</table>
+					</div>';
+		}
+		$result .= '<div class="adm-bus-table-container caption border">
 								<div class="adm-bus-moreInfo_part1">
 									<div class="adm-bus-table-caption-title" style="background: #eef5f5;">'.Loc::getMessage('SALE_ORDER_SHIPMENT_BLOCK_STATUS').'</div>
 									<table class="adm-detail-content-table edit-table" border="0" width="100%" cellpadding="0" cellspacing="0">
@@ -1258,6 +1343,35 @@ class OrderShipment
 				<div id="DELIVERY_INFO_' . $index . '">
 				' . $extraServiceHTML . '
 				</div>
+			</div>';
+		}
+
+		if(!empty($data['DELIVERY_REQUEST_NAME']) || !empty($data['DELIVERY_REQUEST_ERROR_DESCRIPTION']))
+		{
+			$result .= '<div class="adm-bus-table-container caption border">
+				<div class="adm-bus-table-caption-title" style="background: #eef5f5;">'.Loc::getMessage('SALE_ORDER_SHIPMENT_DEL_REQ_INFO').'</div>
+				<table border="0" cellspacing="0" cellpadding="0" width="100%" class="adm-detail-content-table edit-table ">
+					<tbody>';
+
+			if(!empty($data['DELIVERY_REQUEST_NAME']))
+			{
+				$result .= '<tr>
+						<td class="adm-detail-content-cell-l" width="40%">'.Loc::getMessage('SALE_ORDER_SHIPMENT_DEL_REQ').':</td>
+						<td class="adm-detail-content-cell-r"><a href="'.$data['DELIVERY_REQUEST_LINK'].'"">'.$data['DELIVERY_REQUEST_NAME'].'</a></td>
+					</tr>';
+			}
+
+			if(!empty($data['DELIVERY_REQUEST_ERROR_DESCRIPTION']))
+			{
+				$result .= '<tr>
+						<td valign="top" class="adm-detail-content-cell-l" width="40%">'.Loc::getMessage('SALE_ORDER_SHIPMENT_DEL_REQ_ERROR').':</td>
+						<td class="adm-detail-content-cell-r">'.$data['DELIVERY_REQUEST_ERROR_DESCRIPTION'].'</td>
+					</tr>';
+			}
+
+			$result.='						
+					</tbody>
+				</table>
 			</div>';
 		}
 
@@ -1369,6 +1483,28 @@ class OrderShipment
 		$class = ($isActive && $canChangeStatus) ? '' : 'class="not_active"';
 		$shipmentStatus = '<span><span id="BUTTON_SHIPMENT_SHORT_' . $index . '" '.$class.'>' . htmlspecialcharsbx($shipmentStatusList[$data['STATUS_ID']]) . '</span>'.$triangle.'</span>';
 
+		$checkLink = '';
+		if ($data['FFD_105_ENABLED'] === 'Y' &&
+			(
+				($formType != 'archive' && $data['HAS_ENABLED_CASHBOX'] === 'Y') ||
+				!empty($data['CHECK'])
+			)
+		)
+		{
+			$checkLink = '<td class="adm-detail-content-cell-l vat">'.Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_LINK_TITLE').':</td><td class="adm-detail-content-cell-l vat">';
+			$checkLink .= '<div id="SHIPMENT_CHECK_LIST_ID_SHORT_VIEW'.$data['ID'].'">';
+			if (!empty($data['CHECK']))
+			{
+				$checkLink .= OrderShipment::buildCheckHtml($data['CHECK']);
+			}
+			$checkLink .= "</div>";
+			if ($formType != 'archive' && $data['HAS_ENABLED_CASHBOX'] === 'Y')
+			{
+				$checkLink .= '<div><a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderShipment.prototype.showCreateCheckWindow('.$data['ID'].');">'.Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_ADD').'</a></div>';
+			}
+			$checkLink .='</td>';
+		}
+
 		$result = '<div class="adm-bus-pay-section-content" id="SHIPMENT_SECTION_SHORT_'.$index.'">
 						<table class="adm-detail-content-table edit-table" border="0" width="100%" cellpadding="0" cellspacing="0">
 							<tbody>
@@ -1380,6 +1516,7 @@ class OrderShipment
 									<td class="adm-detail-content-cell-l vat"><div class="delivery-status">'.Loc::getMessage('SALE_ORDER_SHIPMENT_ALLOW_DELIVERY').': '.$allowDelivery.'</div></td>
 									<td class="adm-detail-content-cell-l vat"><div class="deducted-status">'.Loc::getMessage('SALE_ORDER_SHIPMENT_DEDUCTED').': '.$deducted.'</div></td>
 									<td class="adm-detail-content-cell-l vat"><div class="shipment-status">'.Loc::getMessage('SALE_ORDER_SHIPMENT_DELIVERY_STATUS').': '.$shipmentStatus.'</div></td>
+									'.$checkLink.'
 								</tr>
 							</tbody>
 						</table>
@@ -1428,7 +1565,7 @@ class OrderShipment
 		{
 			if (empty($userCompanyList))
 			{
-				$userCompanyList = Manager::getUserCompanyList($USER->GetID());
+				$userCompanyList = Company\Manager::getUserCompanyList($USER->GetID());
 			}
 
 			$isUserResponsible = false;
@@ -1541,6 +1678,43 @@ class OrderShipment
 			$fields['DELIVERY_ADDITIONAL_INFO_EDIT'] = $delivery->getAdditionalInfoShipmentEdit(self::$shipment);
 			$fields['DELIVERY_ADDITIONAL_INFO_VIEW'] = $delivery->getAdditionalInfoShipmentView(self::$shipment);
 		}
+
+		$res = Requests\ShipmentTable::getList(array(
+			'filter' => array('=SHIPMENT_ID' => self::$shipment->getId()),
+			'select' => array(
+				'*',
+				'REQUEST_DATE' => 'REQUEST.DATE'
+			)
+		));
+
+		if($request = $res->fetch())
+		{
+			if(intval($request['REQUEST_ID']) > 0)
+			{
+				$fields['DELIVERY_REQUEST_NAME'] = Loc::getMessage(
+					'SALE_ORDER_SHIPMENT_DEL_REQ_NAME',
+					array(
+						'#REQUEST_ID#' => $request['REQUEST_ID'],
+						'#REQUEST_DATE#' => $request['REQUEST_DATE']->format(\Bitrix\Main\Type\Date::getFormat())
+				));
+				$fields['DELIVERY_REQUEST_LINK'] = '/bitrix/admin/sale_delivery_request_view.php?lang='.LANGUAGE_ID.'&ID='.intval($request['REQUEST_ID']);
+			}
+
+			$sanitizer = new \CBXSanitizer;
+			$sanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_MIDDLE);
+
+			if(strlen($request['ERROR_DESCRIPTION']) > 0)
+				$fields['DELIVERY_REQUEST_ERROR_DESCRIPTION'] = $sanitizer->SanitizeHtml($request['ERROR_DESCRIPTION']);
+		}
+
+		$fields['FFD_105_ENABLED'] = Cashbox\Manager::isSupportedFFD105() ? 'Y' : 'N';
+		if ($fields['FFD_105_ENABLED'] === 'Y')
+		{
+			$fields['CHECK'] = Cashbox\CheckManager::getCheckInfo(self::$shipment);
+		}
+
+		$dbRes = CashboxTable::getList(array('filter' => array('=ACTIVE' => 'Y', '=ENABLED' => 'Y')));
+		$fields['HAS_ENABLED_CASHBOX'] = ($dbRes->fetch()) ? 'Y' : 'N';
 
 		$fields['ORDER_LOCKED'] = Order::isLocked($fields['ORDER_ID']);
 		return $fields;
@@ -1872,5 +2046,37 @@ class OrderShipment
 	public static function setBackUrl($backUrl)
 	{
 		self::$backUrl = $backUrl;
+	}
+
+	/**
+	 * @param $checkList
+	 *
+	 * @return string
+	 */
+	public static function buildCheckHtml($checkList)
+	{
+		$result = '';
+		foreach ($checkList as $check)
+		{
+			$result .= '<div>';
+
+			if (strlen($check['LINK']) > 0)
+			{
+				$result .= '<a href="'.$check['LINK'].'" target="_blank">'.Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_LINK', array('#CHECK_ID#' => $check['ID'])).'</a>';
+			}
+			else
+			{
+				$result .='<tspan>'.Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_LINK', array('#CHECK_ID#' => $check['ID']));
+				if ($check['STATUS'] === 'P')
+				{
+					$result .= ' (<a href="javascript:void(0);" onclick="BX.Sale.Admin.OrderShipment.prototype.sendQueryCheckStatus('.$check['ID'].');">'.Loc::getMessage('SALE_ORDER_SHIPMENT_CHECK_CHECK_STATUS').'</a>)';
+				}
+				$result .= '</tspan>';
+			}
+
+			$result .= '</div>';
+		}
+
+		return $result;
 	}
 }

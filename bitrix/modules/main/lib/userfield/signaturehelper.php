@@ -32,6 +32,7 @@ class SignatureHelper
 
 		if(!empty($fieldParam['VALUE']))
 		{
+			$fieldParam['VALUE'] = str_replace("\r\n", "\n", $fieldParam['VALUE']);
 			$signatureParam['VALUE'] = $fieldParam['VALUE'];
 		}
 

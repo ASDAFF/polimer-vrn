@@ -96,47 +96,6 @@ $templateCheckStatus = CBPWorkflowTemplateLoader::checkTemplateActivities($arWor
 if(!$canWrite)
 	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
 
-function print_rrr($var)
-{
-	if(is_array($var))
-	{
-		if($var == array_values($var))
-		{
-			foreach($var as $key => $value)
-			{
-				$var[$key] = print_rrr($value);
-			}
-			return "Array(".implode(", ", $var).")";
-		}
-
-		$res = "\nArray(\n";
-		$first = true;
-		foreach($var as $key => $value)
-		{
-			if($first)
-				$first = false;
-			else
-				$res .= ",\n";
-			$res .= "'".CUtil::JSEscape($key)."' => ".print_rrr($value);
-		}
-		$res .= "\n)";
-
-		return $res;
-	}
-	elseif(is_bool($var))
-	{
-		if($var === true)
-			return 'true';
-		else
-			return 'false';
-	}
-	else
-		return "'".CUtil::JSEscape($var)."'";
-
-}
-//echo print_rrr($arTemplate);
-
-
 //////////////////////////////////////////
 // AJAX
 //////////////////////////////////////////
@@ -181,13 +140,18 @@ if($_SERVER['REQUEST_METHOD']=='POST' && $_REQUEST['saveajax']=='Y' && check_bit
 	 */
 	function wfeexception_handler($e)
 	{
-		$errors = $e->getErrors();
 		$errorMessages = array();
-		foreach ($errors as $error)
+		if (method_exists($e, 'getErrors'))
 		{
-			$errorMessages[] = CUtil::JSEscape($error['message']);
+			foreach($e->getErrors() as $error)
+			{
+				$errorMessages[] = CUtil::JSEscape($error['message']);
+			}
 		}
-
+		else
+		{
+			$errorMessages[] = CUtil::JSEscape($e->getMessage());
+		}
 		?><!--SUCCESS--><script>
 		alert('<?=GetMessageJS("BIZPROC_WFEDIT_SAVE_ERROR")?>\n<?=implode('\n', $errorMessages)?>');
 		(function(){
@@ -292,8 +256,8 @@ if($_SERVER['REQUEST_METHOD']=='POST' && $_REQUEST['import_template']=='Y' && ch
 	<?else:?>
 		<?$ID = $r;?>
 	<?endif;?>
-	window.location = '/bitrix/admin/<?=MODULE_ID?>_bizproc_workflow_edit.php?<?=($ID>0?"ID=".$ID."&":"")?>'+
-		'entity=<?=AddSlashes(urlencode(ENTITY))?>&document_type=<?=AddSlashes(urlencode($document_type))?>&lang=<?=LANGUAGE_ID?>';
+	window.location = '<?=CUtil::JSEscape('/bitrix/admin/'.MODULE_ID.'_bizproc_workflow_edit.php?'.($ID>0?"ID=".$ID."&":"")
+		.'entity='.AddSlashes(urlencode(ENTITY)).'&document_type='.AddSlashes(urlencode($document_type)).'&lang='.LANGUAGE_ID)?>';
 	</script>
 	<?
 	die();
@@ -338,13 +302,13 @@ $arSubMenu = Array();
 
 $arSubMenu[] = array(
 	"TEXT"	    => GetMessage("BIZPROC_WFEDIT_MENU_ADD_STATE"),
-	"ACTION"	=> "if(confirm('".GetMessage("BIZPROC_WFEDIT_MENU_ADD_WARN")."'))window.location='/bitrix/admin/".MODULE_ID."_bizproc_workflow_edit.php?lang=".LANGUAGE_ID."&init=statemachine&entity=".AddSlashes(ENTITY)."&document_type=".AddSlashes($document_type)."';",
+	"ACTION"	=> "if(confirm('".GetMessage("BIZPROC_WFEDIT_MENU_ADD_WARN")."'))window.location='".CUtil::JSEscape("/bitrix/admin/".MODULE_ID."_bizproc_workflow_edit.php?lang=".LANGUAGE_ID."&init=statemachine&entity=".AddSlashes(ENTITY)."&document_type=".AddSlashes($document_type))."';",
 	"TITLE"	    => GetMessage("BIZPROC_WFEDIT_MENU_ADD_STATE_TITLE"),
 );
 
 $arSubMenu[] = array(
 	"TEXT"	=> GetMessage("BIZPROC_WFEDIT_MENU_ADD_SEQ"),
-	"ACTION"	=> "if(confirm('".GetMessage("BIZPROC_WFEDIT_MENU_ADD_WARN")."'))window.location='/bitrix/admin/".MODULE_ID."_bizproc_workflow_edit.php?lang=".LANGUAGE_ID."&entity=".AddSlashes(ENTITY)."&document_type=".AddSlashes($document_type)."';",
+	"ACTION"	=> "if(confirm('".GetMessage("BIZPROC_WFEDIT_MENU_ADD_WARN")."'))window.location='".CUtil::JSEscape("/bitrix/admin/".MODULE_ID."_bizproc_workflow_edit.php?lang=".LANGUAGE_ID."&entity=".AddSlashes(ENTITY)."&document_type=".AddSlashes($document_type))."';",
 	"TITLE"	=> GetMessage("BIZPROC_WFEDIT_MENU_ADD_SEQ_TITLE"),
 );
 
@@ -391,8 +355,9 @@ function BCPProcessExport()
 		alert('<?= GetMessageJS("BIZPROC_EMPTY_EXPORT") ?>');
 		return false;
 	}
-	window.open('/bitrix/admin/<?=MODULE_ID?>_bizproc_workflow_edit.php?<?=($ID>0?"ID=".$ID."&":"")?>'+
-		'entity=<?=AddSlashes(urlencode(ENTITY))?>&document_type=<?=AddSlashes(urlencode($document_type))?>&lang=<?=LANGUAGE_ID?>&<?=bitrix_sessid_get()?>&export_template=Y');
+	window.open('<?=CUtil::JSEscape('/bitrix/admin/'.MODULE_ID.'_bizproc_workflow_edit.php?'.($ID>0?"ID=".$ID."&":"")
+			.'entity='.AddSlashes(urlencode(ENTITY)).'&document_type='.AddSlashes(urlencode($document_type))
+			.'&lang='.LANGUAGE_ID.'&'.bitrix_sessid_get().'&export_template=Y')?>');
 }
 
 function BCPProcessImport()
@@ -426,7 +391,8 @@ function BCPProcessImport()
 
 	new BX.CDialog({
 		title: '<?= GetMessageJS("BIZPROC_IMPORT_TITLE") ?>',
-		content: '<form action="/bitrix/admin/<?=MODULE_ID?>_bizproc_workflow_edit.php?<?=($ID>0?"ID=".$ID."&":"")?>entity=<?=AddSlashes(urlencode(ENTITY))?>&document_type=<?=AddSlashes(urlencode($document_type))?>&lang=<?=LANGUAGE_ID?>" method="POST" id="import_template_form" enctype="multipart/form-data"><table cellspacing="0" cellpadding="0" border="0" width="100%"><tr valign="top"><td width="50%" align="right"><?= GetMessageJS("BIZPROC_IMPORT_FILE") ?>:</td><td width="50%" align="left"><input type="file" size="35" name="import_template_file" value=""></td></tr></table><input type="hidden" name="import_template" value="Y"><input type="hidden" id="id_import_template_name" name="import_template_name" value=""><input type="hidden" name="import_template_description" id="id_import_template_description" value=""><input type="hidden" id="id_import_template_autostart" name="import_template_autostart" value=""><?= bitrix_sessid_post() ?></form>',
+		content: '<?=CUtil::JSEscape('<form action="/bitrix/admin/'.MODULE_ID.'_bizproc_workflow_edit.php?'.($ID>0?"ID=".$ID."&":"")
+			.'entity='.AddSlashes(urlencode(ENTITY)).'&document_type='.AddSlashes(urlencode($document_type)).'&lang='.LANGUAGE_ID.'" method="POST" id="import_template_form" enctype="multipart/form-data"><table cellspacing="0" cellpadding="0" border="0" width="100%"><tr valign="top"><td width="50%" align="right"><?= GetMessageJS("BIZPROC_IMPORT_FILE") ?>:</td><td width="50%" align="left"><input type="file" size="35" name="import_template_file" value=""></td></tr></table><input type="hidden" name="import_template" value="Y"><input type="hidden" id="id_import_template_name" name="import_template_name" value=""><input type="hidden" name="import_template_description" id="id_import_template_description" value=""><input type="hidden" id="id_import_template_autostart" name="import_template_autostart" value="">'.bitrix_sessid_post().'</form>')?>',
 		buttons: [btnOK, BX.CDialog.btnCancel],
 		width: 500,
 		height: 150
@@ -448,8 +414,9 @@ function BCPSaveUserParams()
 	var data = JSToPHP(arUserParams, 'USER_PARAMS');
 
 	jsExtLoader.onajaxfinish = BCPSaveTemplateComplete;
-	jsExtLoader.startPost('/bitrix/admin/<?=MODULE_ID?>_bizproc_workflow_edit.php?<?=($ID>0?"ID=".$ID."&":"")?>'+
-		'entity=<?=AddSlashes(urlencode(ENTITY))?>&document_type=<?=AddSlashes(urlencode($document_type))?>&lang=<?=LANGUAGE_ID?>&<?=bitrix_sessid_get()?>&saveajax=Y&saveuserparams=Y', data);
+	jsExtLoader.startPost('<?=CUtil::JSEscape('/bitrix/admin/'.MODULE_ID.'_bizproc_workflow_edit.php?'.($ID>0?"ID=".$ID."&":"")
+			.'entity='.AddSlashes(urlencode(ENTITY)).'&document_type='.AddSlashes(urlencode($document_type))
+			.'&lang='.LANGUAGE_ID.'&'.bitrix_sessid_get().'&saveajax=Y&saveuserparams=Y')?>', data);
 }
 
 function BCPSaveTemplate(save)
@@ -465,10 +432,10 @@ function BCPSaveTemplate(save)
 			JSToPHP(arWorkflowTemplate, 'arWorkflowTemplate');
 
 	jsExtLoader.onajaxfinish = BCPSaveTemplateComplete;
-	// TODO: add sessid
-	jsExtLoader.startPost('/bitrix/admin/<?=MODULE_ID?>_bizproc_workflow_edit.php?<?=($ID>0?"ID=".$ID."&":"")?>'+
-		'entity=<?=AddSlashes(urlencode(ENTITY))?>&document_type=<?=AddSlashes(urlencode($document_type))?>&lang=<?=LANGUAGE_ID?>&<?=bitrix_sessid_get()?>&saveajax=Y'+
-		(save ? '&back_url=<?=AddSlashes(urlencode($back_url))?>': '&apply=Y')
+	jsExtLoader.startPost('<?=CUtil::JSEscape('/bitrix/admin/'.MODULE_ID.'_bizproc_workflow_edit.php?'.($ID>0?"ID=".$ID."&":"")
+			.'entity='.AddSlashes(urlencode(ENTITY)).'&document_type='.AddSlashes(urlencode($document_type))
+			.'&lang='.LANGUAGE_ID.'&'.bitrix_sessid_get().'&saveajax=Y')?>'+
+		(save ? '&back_url=<?=CUtil::JSEscape(AddSlashes(urlencode($back_url)))?>': '&apply=Y')
 		, data);
 }
 

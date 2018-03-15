@@ -12,6 +12,7 @@ use Bitrix\Main;
 use Bitrix\Sale\Cashbox\CheckManager;
 use Bitrix\Sale\Compatible;
 use Bitrix\Sale\Internals;
+use Bitrix\Sale\Helpers;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -151,6 +152,7 @@ class Notify
 			"ORDER_LIST" => $basketList,
 			"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"]),
 			"DELIVERY_PRICE" => $entity->getDeliveryPrice(),
+			"ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($entity) ? Helpers\Order::getPublicLink($entity) : ""
 		);
 
 		$send = true;
@@ -215,7 +217,8 @@ class Notify
 			"ORDER_DATE" => $entity->getDateInsert()->toString(),
 			"EMAIL" => static::getUserEmail($entity),
 			"ORDER_CANCEL_DESCRIPTION" => $entity->getField('REASON_CANCELED'),
-			"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"])
+			"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"]),
+			"ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($entity) ? Helpers\Order::getPublicLink($entity) : ""
 		);
 
 		$eventName = static::EVENT_ORDER_CANCEL_SEND_EMAIL_EVENT_NAME;
@@ -279,7 +282,8 @@ class Notify
 			"ORDER_ACCOUNT_NUMBER_ENCODE" => urlencode(urlencode($entity->getField("ACCOUNT_NUMBER"))),
 			"ORDER_DATE" => $entity->getDateInsert()->toString(),
 			"EMAIL" => static::getUserEmail($entity),
-			"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"])
+			"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"]),
+			"ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($entity) ? Helpers\Order::getPublicLink($entity) : ""
 		);
 
 		$eventName = static::EVENT_ORDER_PAID_SEND_EMAIL_EVENT_NAME;
@@ -365,7 +369,8 @@ class Notify
 				"EMAIL" => static::getUserEmail($entity),
 				"ORDER_DESCRIPTION" => $statusData["DESCRIPTION"],
 				"TEXT" => "",
-				"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"])
+				"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"]),
+				"ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($entity) ? Helpers\Order::getPublicLink($entity) : ""
 			);
 
 			if ($entity->getField("DATE_INSERT") instanceof Main\Type\Date)
@@ -513,39 +518,44 @@ class Notify
 				"SHIPMENT_STATUS" => $statusData["NAME"],
 				"EMAIL" => static::getUserEmail($order),
 				"TEXT" => "",
-				"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"])
+				"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"]),
+				"ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($order) ? Helpers\Order::getPublicLink($order) : ""
 			);
 
-			$event = new Main\Event('sale', static::EVENT_SHIPMENT_STATUS_EMAIL, array(
-				'EVENT_NAME' => $statusEventName,
-				'VALUES' => $fields
-			));
-			$event->send();
-
-			if ($event->getResults())
+			$eventManager = Main\EventManager::getInstance();
+			if ($eventsList = $eventManager->findEventHandlers('sale', static::EVENT_SHIPMENT_STATUS_EMAIL))
 			{
-				/** @var Main\EventResult $eventResult */
-				foreach($event->getResults() as $eventResult)
-				{
-					if($eventResult->getType() === Main\EventResult::ERROR)
-					{
-						$isSend = false;
-					}
-					elseif($eventResult->getType() == Main\EventResult::SUCCESS)
-					{
-						if ($eventResultParams = $eventResult->getParameters())
-						{
-							/** @var Result $eventResultData */
-							if (!empty($eventResultParams) && is_array($eventResultParams))
-							{
-								if (!empty($eventResultParams['EVENT_NAME']))
-								{
-									$statusEventName = $eventResultParams['EVENT_NAME'];
-								}
+				$event = new Main\Event('sale', static::EVENT_SHIPMENT_STATUS_EMAIL, array(
+					'EVENT_NAME' => $statusEventName,
+					'VALUES' => $fields
+				));
+				$event->send();
 
-								if (!empty($eventResultParams['VALUES']) && is_array($eventResultParams['VALUES']))
+				if ($event->getResults())
+				{
+					/** @var Main\EventResult $eventResult */
+					foreach($event->getResults() as $eventResult)
+					{
+						if($eventResult->getType() === Main\EventResult::ERROR)
+						{
+							$isSend = false;
+						}
+						elseif($eventResult->getType() == Main\EventResult::SUCCESS)
+						{
+							if ($eventResultParams = $eventResult->getParameters())
+							{
+								/** @var Result $eventResultData */
+								if (!empty($eventResultParams) && is_array($eventResultParams))
 								{
-									$fields = $eventResultParams['VALUES'];
+									if (!empty($eventResultParams['EVENT_NAME']))
+									{
+										$statusEventName = $eventResultParams['EVENT_NAME'];
+									}
+
+									if (!empty($eventResultParams['VALUES']) && is_array($eventResultParams['VALUES']))
+									{
+										$fields = $eventResultParams['VALUES'];
+									}
 								}
 							}
 						}
@@ -658,39 +668,44 @@ class Notify
 				"ORDER_STATUS" => $statusData["NAME"],
 				"EMAIL" => static::getUserEmail($entity),
 				"TEXT" => "",
-				"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"])
+				"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"]),
+				"ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($entity) ? Helpers\Order::getPublicLink($entity) : ""
 			);
 
-			$event = new Main\Event('sale', static::EVENT_ON_ORDER_ALLOW_PAY_STATUS_EMAIL, array(
-				'EVENT_NAME' => $statusEventName,
-				'VALUES' => $fields
-			));
-			$event->send();
-
-			if ($event->getResults())
+			$eventManager = Main\EventManager::getInstance();
+			if ($eventsList = $eventManager->findEventHandlers('sale', static::EVENT_ON_ORDER_ALLOW_PAY_STATUS_EMAIL))
 			{
-				/** @var Main\EventResult $eventResult */
-				foreach($event->getResults() as $eventResult)
-				{
-					if($eventResult->getType() === Main\EventResult::ERROR)
-					{
-						$isSend = false;
-					}
-					elseif($eventResult->getType() == Main\EventResult::SUCCESS)
-					{
-						if ($eventResultParams = $eventResult->getParameters())
-						{
-							/** @var Result $eventResultData */
-							if (!empty($eventResultParams) && is_array($eventResultParams))
-							{
-								if (!empty($eventResultParams['EVENT_NAME']))
-								{
-									$statusEventName = $eventResultParams['EVENT_NAME'];
-								}
+				$event = new Main\Event('sale', static::EVENT_ON_ORDER_ALLOW_PAY_STATUS_EMAIL, array(
+					'EVENT_NAME' => $statusEventName,
+					'VALUES' => $fields
+				));
+				$event->send();
 
-								if (!empty($eventResultParams['VALUES']) && is_array($eventResultParams['VALUES']))
+				if ($event->getResults())
+				{
+					/** @var Main\EventResult $eventResult */
+					foreach($event->getResults() as $eventResult)
+					{
+						if($eventResult->getType() === Main\EventResult::ERROR)
+						{
+							$isSend = false;
+						}
+						elseif($eventResult->getType() == Main\EventResult::SUCCESS)
+						{
+							if ($eventResultParams = $eventResult->getParameters())
+							{
+								/** @var Result $eventResultData */
+								if (!empty($eventResultParams) && is_array($eventResultParams))
 								{
-									$fields = $eventResultParams['VALUES'];
+									if (!empty($eventResultParams['EVENT_NAME']))
+									{
+										$statusEventName = $eventResultParams['EVENT_NAME'];
+									}
+
+									if (!empty($eventResultParams['VALUES']) && is_array($eventResultParams['VALUES']))
+									{
+										$fields = $eventResultParams['VALUES'];
+									}
 								}
 							}
 						}
@@ -788,7 +803,8 @@ class Notify
 			"ORDER_TRACKING_NUMBER" => $entity->getField('TRACKING_NUMBER'),
 			"BCC" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER['SERVER_NAME']),
 			"EMAIL" => static::getUserEmail($order),
-			"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER['SERVER_NAME'])
+			"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER['SERVER_NAME']),
+			"ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($order) ? Helpers\Order::getPublicLink($order) : ""
 		);
 
 		$event = new \CEvent;
@@ -854,6 +870,7 @@ class Notify
 			"SHIPMENT_DATE" => $entity->getField("DATE_INSERT")->toString(),
 			"EMAIL" => static::getUserEmail($order),
 			"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"]),
+			"ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($order) ? Helpers\Order::getPublicLink($order) : ""
 		);
 
 		$eventName = static::EVENT_SHIPMENT_DELIVER_SEND_EMAIL_EVENT_NAME;
@@ -926,6 +943,7 @@ class Notify
 				"EMAIL" => static::getUserEmail($order),
 				"SALE_EMAIL" => Main\Config\Option::get("sale", "order_email", "order@".$_SERVER["SERVER_NAME"]),
 				"CHECK_LINK" => $check['LINK'],
+				"ORDER_PUBLIC_URL" => Helpers\Order::isAllowGuestView($order) ? Helpers\Order::getPublicLink($order) : ""
 			);
 
 			$eventName = static::EVENT_ON_CHECK_PRINT_SEND_EMAIL;
@@ -948,9 +966,9 @@ class Notify
 	{
 		$userEmail = "";
 
-		if (!empty(static::$cacheUserData[$order->getUserId()]))
+		if (!empty(static::$cacheUserData[$order->getId()]))
 		{
-			$userData = static::$cacheUserData[$order->getUserId()];
+			$userData = static::$cacheUserData[$order->getId()];
 			if (!empty($userData['EMAIL']))
 			{
 				$userEmail = $userData['EMAIL'];
@@ -966,7 +984,7 @@ class Notify
 				if ($propUserEmail = $propertyCollection->getUserEmail())
 				{
 					$userEmail = $propUserEmail->getValue();
-					static::$cacheUserData[$order->getUserId()]['EMAIL'] = $userEmail;
+					static::$cacheUserData[$order->getId()]['EMAIL'] = $userEmail;
 				}
 			}
 		}
@@ -979,7 +997,7 @@ class Notify
 											   ));
 			if ($userData = $userRes->fetch())
 			{
-				static::$cacheUserData[$order->getUserId()] = $userData;
+				static::$cacheUserData[$order->getId()] = $userData;
 				$userEmail = $userData['EMAIL'];
 			}
 		}

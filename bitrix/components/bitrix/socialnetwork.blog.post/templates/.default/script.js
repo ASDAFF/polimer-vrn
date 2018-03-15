@@ -160,6 +160,7 @@ function showBlogPost(id, source)
 			complete : function(){
 				el.style.maxHeight = 'none';
 				BX.LazyLoad.showImages(true);
+				BX.onCustomEvent(window, 'OnLFRecordWasExpanded', [el2]);
 			}
 		})).animate();
 	}
@@ -413,6 +414,7 @@ function __blogPostSetFollow(log_id)
 					if (
 						parseInt(BX.message('USER_ID')) > 0
 						&& postData.isGroupReadOnly != 'Y'
+						&& postData.isShareForbidden != 'Y'
 					)
 					{
 						menuItems.push({
@@ -1394,3 +1396,42 @@ window.hideRenderedSharingNodes = function(newNodes)
 	}
 
 };
+
+(function() {
+	if (!!BX.SBPostManager)
+		return false;
+
+	BX.SBPostManager = function() {
+		this.inited = false;
+		this.tagLinkPattern = '';
+	};
+
+	BX.SBPostManager.prototype.init = function(params) {
+		this.tagLinkPattern = (BX.type.isNotEmptyString(params.tagLinkPattern) ? params.tagLinkPattern : '');
+		this.inited = true;
+	};
+
+	BX.SBPostManager.prototype.clickTag = function(tagValue)
+	{
+		var result = false;
+
+		if (
+			BX.type.isNotEmptyString(tagValue)
+			&& BX.type.isNotEmptyString(this.tagLinkPattern)
+		)
+		{
+			top.location.href = this.tagLinkPattern.replace('#tag#', tagValue);
+			result = true;
+		}
+
+		return result;
+	};
+
+}());
+
+if (typeof oSBPostManager == 'undefined')
+{
+	oSBPostManager = new BX.SBPostManager;
+	window.oSBPostManager = oSBPostManager;
+}
+

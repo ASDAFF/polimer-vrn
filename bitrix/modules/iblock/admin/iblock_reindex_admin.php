@@ -115,6 +115,7 @@ if ($arID = $lAdmin->GroupAction())
 					{
 						$conn->commitTransaction();
 						CIBlock::clearIblockTagCache($ID);
+						CIBlock::CleanCache($ID);
 					}
 					unset($result);
 					break;

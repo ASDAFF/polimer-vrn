@@ -613,7 +613,7 @@ if(!empty($arUser))
 		$dateFrom = MkDateTime(FmtDate($filter_date_order_from,"D.M.Y"),"d.m.Y");
 
 		if ($dateFrom)
-			$arOrderFilter["DATE_FROM"] = Trim($filter_date_order_from);
+			$arOrderFilter[">=DATE_INSERT"] = Trim($filter_date_order_from);
 	}
 
 	if (strlen($filter_date_order_to) > 0)
@@ -628,7 +628,7 @@ if(!empty($arUser))
 			}
 
 			$filter_date_order_to = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL", SITE_ID)), mktime($arDate["HH"], $arDate["MI"], $arDate["SS"], $arDate["MM"], $arDate["DD"], $arDate["YYYY"]));
-			$arOrderFilter["DATE_TO"] = $filter_date_order_to;
+			$arOrderFilter["<=DATE_INSERT"] = $filter_date_order_to;
 		}
 		else
 			$filter_date_order_to = "";
@@ -645,7 +645,7 @@ if(!empty($arUser))
 		$dateFrom = MkDateTime(FmtDate($filter_order_date_up_from,"D.M.Y"),"d.m.Y");
 
 		if ($dateFrom)
-			$arOrderFilter["DATE_UPDATE_FROM"] = trim($filter_order_date_up_from);
+			$arOrderFilter[">=DATE_UPDATE"] = trim($filter_order_date_up_from);
 	}
 	if (strlen($filter_order_date_up_to) > 0)
 	{
@@ -659,7 +659,7 @@ if(!empty($arUser))
 			}
 
 			$filter_order_date_up_to = date($DB->DateFormatToPHP(CSite::GetDateFormat("FULL", SITE_ID)), mktime($arDate["HH"], $arDate["MI"], $arDate["SS"], $arDate["MM"], $arDate["DD"], $arDate["YYYY"]));
-			$arOrderFilter["DATE_UPDATE_TO"] = $filter_order_date_up_to;
+			$arOrderFilter["<=DATE_UPDATE"] = $filter_order_date_up_to;
 		}
 		else
 			$filter_order_date_up_to = "";
@@ -767,7 +767,6 @@ if(!empty($arUser))
 
 	$orderHeader = array(
 		array("id"=>"ID", "content"=>"ID", "sort"=>"ID", "default"=>true),
-		array("id"=>"STATUS_ID","content"=>GetMessage("BUYERS_H_STATUS"), "sort"=>"STATUS_ID", "default"=>true),
 		array("id"=>"PAYED", "content"=>GetMessage("BUYERS_H_PAID"), "sort"=>"PAYED", "default"=>true),
 		array("id"=>"ALLOW_DELIVERY", "content"=>GetMessage("BUYER_LAST_H_ALLOW_DELIVERY"), "sort"=>"", "default"=>true),
 		array("id"=>"PRODUCT", "content"=>GetMessage("BUYERS_H_ALL_PRODUCT"), "sort"=>"", "default"=>true),
@@ -927,7 +926,6 @@ if(!empty($arUser))
 
 	//FILTER BASKET
 	$arFilterFields = array(
-		"basket_status",
 		"filter_basket_lid",
 		"basket_name_product",
 	);
@@ -947,29 +945,6 @@ if(!empty($arUser))
 	if (strlen($filter_basket_lid)>0)
 		$arBasketFilter["LID"] = trim($filter_basket_lid);
 
-	if (strlen(trim($basket_status)) > 0)
-	{
-		if ($basket_status == "avail")
-		{
-			$arBasketFilter["CAN_BUY"] = "Y";
-			$arBasketFilter["DELAY"] = "N";
-		}
-		elseif ($basket_status == "no")
-		{
-			$arBasketFilter["CAN_BUY"] = "N";
-			$arBasketFilter["SUBSCRIBE"] = "N";
-		}
-		elseif ($basket_status == "delay")
-		{
-			$arBasketFilter["CAN_BUY"] = "Y";
-			$arBasketFilter["DELAY"] = "Y";
-		}
-		elseif ($basket_status == "subscribe")
-		{
-			$arBasketFilter["CAN_BUY"] = "N";
-			$arBasketFilter["SUBSCRIBE"] = "Y";
-		}
-	}
 	if (strlen(trim($basket_name_product)) > 0)
 		$arBasketFilter["%NAME"] = $basket_name_product;
 
@@ -1011,7 +986,6 @@ if(!empty($arUser))
 	$BasketHeader = array(
 		array("id"=>"DATE_INSERT", "content"=>GetMessage("BUYER_BH_DATE_INSERT"), "sort"=>"DATE_INSERT", "default"=>true),
 		array("id"=>"NAME","content"=>GetMessage("BUYER_BH_NAME"), "sort"=>"NAME", "default"=>true),
-		array("id"=>"DELAY", "content"=>GetMessage("BUYER_BH_DELAY"), "sort"=>"DELAY", "default"=>true),
 		array("id"=>"PRICE", "content"=>GetMessage("BUYER_BH_PRICE"), "sort"=>"PRICE", "default"=>true),
 		array("id"=>"QUANTITY", "content"=>GetMessage("BUYER_BH_QUANTITY"), "sort"=>"QUANTITY", "default"=>true),
 	);
@@ -1036,17 +1010,6 @@ if(!empty($arUser))
 	foreach ($arBasketData as $arBasket)
 	{
 		$row =& $lAdmin_tab4->AddRow($arBasket["PRODUCT_ID"], $arBasket, '', '');
-
-		$status = "";
-		if($arBasket["DELAY"] == "N" && $arBasket["CAN_BUY"] == "Y")
-			$status = GetMessage("BUYER_B_STATUS_ADD");
-		if($arBasket["DELAY"] == "Y" && $arBasket["CAN_BUY"] == "Y")
-			$status = GetMessage("BUYER_B_STATUS_DELAY");
-		if($arBasket["CAN_BUY"] == "N" && $arBasket["SUBSCRIBE"] == "N")
-			$status = GetMessage("BUYER_B_STATUS_NO");
-		if($arBasket["CAN_BUY"] == "N" && $arBasket["SUBSCRIBE"] == "Y")
-			$status = GetMessage("BUYER_B_STATUS_NOTIFY");
-		$row->AddField("DELAY", $status);
 
 		$name = "<a href=\"".$arBasket["DETAIL_PAGE_URL"]."\">".$arBasket["NAME"]."</a>
 			<input type=\"hidden\" value=\"".$arBasket["PRODUCT_ID"]."\" name=\"PRODUCT_ID[".$arBasket["LID"]."][]\" />";
@@ -1431,7 +1394,7 @@ if(!empty($arUser))
 		$subscriptionHeaders['USER_CONTACT'] = array('id' => 'USER_CONTACT','content' => Loc::getMessage('CS_USER_CONTACT'),
 			'sort' => 'USER_CONTACT', 'default' => true);
 		$subscriptionHeaders['USER_ID'] = array('id' => 'USER_ID', 'content' => Loc::getMessage('CS_USER'),
-			'default' => false);
+			'default' => true);
 		$subscriptionHeaders['CONTACT_TYPE'] = array('id' => 'CONTACT_TYPE','content' => Loc::getMessage('CS_CONTACT_TYPE'),
 			'sort' => 'CONTACT_TYPE', 'default' => true, 'align' => 'center');
 		$subscriptionHeaders['ACTIVE'] = array('id' => 'ACTIVE', 'content' => Loc::getMessage('CS_ACTIVE'),
@@ -1532,21 +1495,23 @@ if(!empty($arUser))
 
 			$row->addActions($actions);
 		}
-
-		$listUserId = array_keys($listUserData);
-		$listUsers = implode(' | ', $listUserId);
-		$userQuery = CUser::getList($byUser = 'ID', $orderUser = 'ASC',
-			array('ID' => $listUsers) ,
-			array('FIELDS' => array('ID' ,'LOGIN', 'NAME', 'LAST_NAME')));
-		while($user = $userQuery->fetch())
+		if (!empty($listUserData))
 		{
-			if(is_array($listUserData[$user['ID']]))
+			$listUserId = array_keys($listUserData);
+			$listUsers = implode(' | ', $listUserId);
+			$userQuery = CUser::getList($byUser = 'ID', $orderUser = 'ASC',
+				array('ID' => $listUsers) ,
+				array('FIELDS' => array('ID' ,'LOGIN', 'NAME', 'LAST_NAME')));
+			while($user = $userQuery->fetch())
 			{
-				foreach($listUserData[$user['ID']] as $subscribeId)
+				if(is_array($listUserData[$user['ID']]))
 				{
-					$userString='<a href="/bitrix/admin/user_edit.php?ID='.$user['ID'].'&lang='.LANGUAGE_ID.'" target="_blank">'.
-						CUser::formatName(CSite::getNameFormat(false), $user, true, false).'</a>';
-					$rowList[$subscribeId]->addField('USER_ID', $userString);
+					foreach($listUserData[$user['ID']] as $subscribeId)
+					{
+						$userString='<a href="/bitrix/admin/user_edit.php?ID='.$user['ID'].'&lang='.LANGUAGE_ID.'" target="_blank">'.
+							CUser::formatName(CSite::getNameFormat(false), $user, true, true).'</a>';
+						$rowList[$subscribeId]->addField('USER_ID', $userString);
+					}
 				}
 			}
 		}
@@ -1834,7 +1799,6 @@ if(!empty($arUser))
 					$arFilterFieldsTmp = array(
 						GetMessage("BUYER_F_DATE_UPDATE"),
 						GetMessage("BUYER_F_LID"),
-						GetMessage("BUYER_F_STATUS"),
 						GetMessage("BUYER_F_PAYED"),
 						GetMessage("BUYER_F_DELIVERY"),
 						GetMessage("BUYER_F_PRICE"),
@@ -1875,27 +1839,6 @@ if(!empty($arUser))
 						<td>
 							<?echo $selectLID?>
 							<input type="hidden" name="USER_ID" value="<?=$ID?>" >
-						</td>
-					</tr>
-					<tr>
-						<td valign="top"><?echo GetMessage("BUYER_F_STATUS")?>:<br /><img src="/bitrix/images/sale/mouse.gif" width="44" height="21" border="0" alt=""></td>
-						<td valign="top">
-							<select name="filter_order_status[]" multiple size="3">
-								<option value="">(<?=GetMessage('BUYER_BASKET_F_STATUS_ALL')?>)</option>
-								<?
-								$dbStatusList = CSaleStatus::GetList(
-										array("SORT" => "ASC"),
-										array("LID" => LANGUAGE_ID),
-										false,
-										false,
-										array("ID", "NAME", "SORT")
-									);
-								while ($arStatusList = $dbStatusList->GetNext())
-								{
-									?><option value="<?=$arStatusList["ID"] ?>"<?if (is_array($filter_order_status) && in_array($arStatusList["ID"], $filter_order_status)) echo " selected"?>>[<?= $arStatusList["ID"] ?>] <?= $arStatusList["NAME"] ?></option><?
-								}
-								?>
-							</select>
 						</td>
 					</tr>
 					<tr>
@@ -1963,21 +1906,6 @@ if(!empty($arUser))
 						$arFilterFieldsTmp
 					);
 					$oFilter4->Begin();
-					?>
-					<tr>
-						<td><?=GetMessage('BUYER_BASKET_F_STATUS')?>:</td>
-						<td>
-							<select name="basket_status">
-								<option value="">(<?=GetMessage('BUYER_BASKET_F_STATUS_ALL')?>)</option>
-								<option value="avail" <?=($basket_status=="avail" ? 'selected' : '')?> ><?=GetMessage('BUYER_BASKET_F_STATUS_AVAIL')?></option>
-								<option value="delay" <?=($basket_status=="delay" ? 'selected' : '')?>><?=GetMessage('BUYER_BASKET_F_STATUS_DELAY')?></option>
-								<option value="no" <?=($basket_status=="no" ? 'selected' : '')?>><?=GetMessage('BUYER_BASKET_F_STATUS_NO')?></option>
-								<option value="subscribe" <?=($basket_status=="subscribe" ? 'selected' : '')?>><?=GetMessage('BUYER_BASKET_F_STATUS_SUB')?></option>
-							</select>
-							<input type="hidden" name="USER_ID" value="<?=$ID?>" >
-						</td>
-					</tr>
-					<?
 					$selectLID = "<select name=\"filter_basket_lid\">";
 					$selectLID .= "<option value=\"\">(".GetMessage('BUYER_VIEW_F_ALL').")</option>";
 					foreach ($arSites as $arSite)

@@ -247,5 +247,40 @@ class Util
 			$update .= $key."=".$value." ";
 		}
 	}
+
+	public static function detectTags($fieldList, $codeList = array())
+	{
+		static $parser = null;
+
+		$result = array();
+
+		if (
+			!is_array($fieldList)
+			|| !is_array($codeList)
+		)
+		{
+			return false;
+		}
+
+		foreach($codeList as $code)
+		{
+			if (
+				empty($code)
+				|| empty($fieldList[$code])
+			)
+			{
+				continue;
+			}
+
+			if ($parser === null)
+			{
+				$parser = new \CTextParser();
+			}
+
+			$result = array_merge($result, $parser->detectTags($fieldList[$code]));
+		}
+
+		return array_unique($result);
+	}
 }
 ?>

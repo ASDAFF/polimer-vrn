@@ -77,4 +77,5 @@ $MESS["BLOG_POST_CREATE_TASK_FAILURE_TITLE"] = "Fehler";
 $MESS["BLOG_POST_CREATE_TASK_SUCCESS_DESCRIPTION"] = "Sie können jetzt die Aufgabe anzeigen und bearbeiten.";
 $MESS["BLOG_POST_CREATE_TASK_ERROR_GET_DATA"] = "Daten können nicht erhalten werden, um eine Aufgabe zu erstellen.";
 $MESS["BLOG_POST_LINK_COPIED"] = "Link kopiert";
+$MESS["BLOG_POST_LIMITED_VIEW"] = "(Nutzer werden den Beitrag sehen, nachdem das Video konvertiert wird)";
 ?>

@@ -559,7 +559,9 @@ HTML form
 			BX('config_' + currentSelectedType).style.display = 'block';
 		}
 		</script>
-		<form name="yandex_form" method="POST">
+		<form name="yandex_form" method="POST" action="<?=$APPLICATION->GetCurPage(); ?>">
+			<input type="hidden" name="lang" value="<?=LANGUAGE_ID; ?>">
+			<input type="hidden" name="bxpublic" value="Y">
 			<input type="hidden" name="Update" value="Y" />
 			<input type="hidden" name="IBLOCK_ID" value="<? echo $intIBlockID; ?>" />
 			<? echo bitrix_sessid_post(); ?>

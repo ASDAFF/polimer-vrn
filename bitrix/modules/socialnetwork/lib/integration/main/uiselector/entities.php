@@ -15,6 +15,9 @@ Loc::loadMessages(__FILE__);
 
 class Entities
 {
+	const EXTRANET_CONTEXT_EXTERNAL = 'E';
+	const EXTRANET_CONTEXT_INTERNAL = 'I';
+
 	public static function getData($options = array())
 	{
 		$result = array(
@@ -49,6 +52,7 @@ class Entities
 		if (
 			!Handler::isExtranetUser()
 			&& \Bitrix\Socialnetwork\ComponentHelper::getAllowToAllDestination()
+			&& (!isset($options["enableAll"]) || $options["enableAll"] != 'N')
 		)
 		{
 			$lastItems['GROUPS'] = array(
@@ -118,10 +122,36 @@ class Entities
 					'id' => $lastUserList,
 					'CRM_ENTITY' => ModuleManager::isModuleInstalled('crm')
 				));
+				if (
+					isset($options['extranetContext'])
+					&& in_array($options['extranetContext'], array(self::EXTRANET_CONTEXT_INTERNAL, self::EXTRANET_CONTEXT_EXTERNAL))
+				)
+				{
+					foreach($items['USERS'] as $key => $value)
+					{
+						if (isset($value["isExtranet"]))
+						{
+							if (
+								(
+									$value["isExtranet"] == 'Y'
+									&& $options['extranetContext'] == self::EXTRANET_CONTEXT_INTERNAL
+								)
+								|| (
+									$value["isExtranet"] == 'N'
+									&& $options['extranetContext'] == self::EXTRANET_CONTEXT_EXTERNAL
+								)
+							)
+							{
+								unset($items['USERS'][$key]);
+							}
+						}
+					}
+				}
 			}
+
 			if ($options["allowEmailInvitation"] == "Y")
 			{
-//					\Bitrix\Socialnetwork\ComponentHelper::fillSelectedUsersToInvite($_POST, $arParams, $arResult);
+//				\Bitrix\Socialnetwork\ComponentHelper::fillSelectedUsersToInvite($_POST, $arParams, $arResult);
 				\CSocNetLogDestination::fillEmails($items);
 			}
 		}

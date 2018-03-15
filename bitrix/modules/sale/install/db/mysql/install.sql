@@ -36,12 +36,14 @@ create table if not exists b_sale_basket
 	ORDER_ID int null,
 	PRODUCT_ID int not null,
 	PRODUCT_PRICE_ID int null,
+	PRICE_TYPE_ID int null,
 	PRICE decimal(18, 4) not null,
 	CURRENCY char(3) not null,
 	BASE_PRICE decimal(18, 4) null,
 	VAT_INCLUDED char(1) not null default 'Y',
 	DATE_INSERT datetime not null,
 	DATE_UPDATE datetime not null,
+	DATE_REFRESH datetime null,
 	WEIGHT double(18, 2) null,
 	QUANTITY double(18, 4) not null default '0',
 	LID char(2) not null,
@@ -316,6 +318,17 @@ create table if not exists b_sale_pay_system_action
 	LOGOTIP int null,
 	IS_CASH char(1) not null default 'N',
 	CAN_PRINT_CHECK char(1) not null default 'N',
+	primary key (ID)
+);
+
+create table if not exists b_sale_pay_system_rest_handlers
+(
+	ID int not null auto_increment,
+	NAME varchar(255) not null,
+	CODE varchar(50) NULL,
+	SORT int not null default '100',
+	SETTINGS text null,
+	unique IX_SALE_PS_HANDLER_CODE(CODE),
 	primary key (ID)
 );
 
@@ -698,7 +711,8 @@ create table if not exists b_sale_order_rules_descr
 	RULE_ID int not null,
 	DESCR text not null,
 	primary key (ID),
-	index IX_SALE_ORDER_RULES_DS_ORD(ORDER_ID)
+	index IX_SALE_ORDER_RULES_DS_ORD(ORDER_ID),
+	index IX_SALE_ORDER_RULES_DS_RULE(RULE_ID)
 );
 
 create table if not exists b_sale_order_discount_data
@@ -1212,6 +1226,18 @@ create table if not exists b_sale_product2product
 	index IXS_PRODUCT2PRODUCT_PRODUCT_ID(PRODUCT_ID)
 );
 
+create table if not exists b_sale_order_product_stat
+(
+	ID int not null auto_increment,
+	PRODUCT_ID int not null,
+	RELATED_PRODUCT_ID int not null,
+	ORDER_DATE datetime not null,
+	CNT int not null DEFAULT 1,
+	primary key (ID),
+	unique IXS_PRODUCT2PRODUCT_ON_DATE (PRODUCT_ID, RELATED_PRODUCT_ID, ORDER_DATE),
+	index IXS_ORDER_DATE (ORDER_DATE)
+);
+
 create table if not exists b_sale_person_type_site (
 	PERSON_TYPE_ID int(18) NOT NULL default '0',
 	SITE_ID char(2) NOT NULL default '',
@@ -1366,6 +1392,7 @@ create table if not exists b_sale_delivery_srv
 	CURRENCY char(3) NOT NULL,
 	TRACKING_PARAMS VARCHAR(255) NULL,
 	ALLOW_EDIT_SHIPMENT char(1) NOT NULL DEFAULT 'Y',
+	VAT_ID INT NULL,
 	primary key (ID),
 	index IX_BSD_SRV_CODE(CODE),
 	index IX_BSD_SRV_PARENT_ID(PARENT_ID)
@@ -1508,11 +1535,6 @@ create table if not exists b_sale_tp_ebay_cat
 	CATEGORY_ID int NOT NULL,
 	PARENT_ID int NOT NULL,
 	LEVEL int NOT NULL,
-	CONDITION_ID_VALUES varchar(255) NOT NULL,
-	CONDITION_ID_DEFINITION_URL varchar(255) NOT NULL,
-	ITEM_SPECIFIC_ENABLED char(1) NOT NULL,
-	VARIATIONS_ENABLED char(1) NOT NULL,
-	PRODUCT_CREATION_ENABLED char(1) NOT NULL,
 	LAST_UPDATE datetime NOT NULL,
 	PRIMARY KEY (ID)
 );
@@ -1522,14 +1544,12 @@ create table if not exists b_sale_tp_ebay_cat_var
 	ID int NOT NULL AUTO_INCREMENT,
 	CATEGORY_ID int NOT NULL,
 	NAME varchar(255) NOT NULL,
-	VALUE varchar(255) NOT NULL,
+	VALUE text NULL,
 	REQUIRED char(1) NOT NULL,
 	MIN_VALUES int NOT NULL,
 	MAX_VALUES int NOT NULL,
 	SELECTION_MODE varchar (255) NOT NULL,
 	ALLOWED_AS_VARIATION char(1) NOT NULL,
-	DEPENDENCY_NAME varchar(255) NOT NULL,
-	DEPENDENCY_VALUE varchar(255) NOT NULL,
 	HELP_URL varchar(255) NOT NULL,
 	PRIMARY KEY (ID)
 );
@@ -1661,6 +1681,7 @@ create table if not exists b_sale_order_archive(
 	DEDUCTED char(1) NOT NULL DEFAULT 'N',
 	CANCELED char(1) NOT NULL DEFAULT 'N',
 	PRICE decimal(18, 4) NOT NULL,
+	SUM_PAID decimal(18,2) NULL,
 	CURRENCY char(3) NOT NULL,
 	XML_ID varchar(255) NULL,
 	ID_1C varchar(36) NULL,
@@ -1680,6 +1701,12 @@ create table if not exists b_sale_order_archive(
 	index IXS_COMPANY_ID(COMPANY_ID),
 	index IXS_ORDER_ID(ORDER_ID),
 	index IXS_ACCOUNT_NUMBER(ACCOUNT_NUMBER)
+);
+
+create table if not exists b_sale_order_archive_packed(
+	ORDER_ARCHIVE_ID int NOT NULL,
+	ORDER_DATA mediumtext NULL,
+	PRIMARY KEY (ORDER_ARCHIVE_ID)
 );
 
 create table if not exists b_sale_basket_archive(
@@ -1705,6 +1732,12 @@ create table if not exists b_sale_basket_archive(
 	index IXS_ARCHIVE_ID(ARCHIVE_ID)
 );
 
+create table if not exists b_sale_basket_archive_packed(
+	BASKET_ARCHIVE_ID int NOT NULL,
+	BASKET_DATA mediumtext NULL,
+	PRIMARY KEY (BASKET_ARCHIVE_ID)
+);
+
 create table if not exists b_sale_company_group (
   ID INT(11) NOT NULL AUTO_INCREMENT,
   COMPANY_ID INT(11) NOT NULL,
@@ -1721,13 +1754,6 @@ create table if not exists b_sale_company_resp_grp (
   INDEX IX_B_SALE_COMP_RESP_GRP_CMP_ID (COMPANY_ID)
 );
 
-create table if not exists b_sale_kkm_model (
-	ID INT(11) NOT NULL AUTO_INCREMENT,
-	NAME varchar(255) NOT NULL,
-	SETTINGS text NULL,
-	PRIMARY KEY (ID)
-);
-
 create table if not exists b_sale_cashbox (
 	ID INT(11) NOT NULL AUTO_INCREMENT,
 	NAME varchar(255) NOT NULL,
@@ -1738,7 +1764,7 @@ create table if not exists b_sale_cashbox (
 	ACTIVE char(1) not null default 'Y',
 	USE_OFFLINE char(1) not null default 'N',
 	ENABLED char(1) not null default 'N',
-	KKM_ID INT(11) NULL,
+	KKM_ID varchar(20) NULL,
 	OFD varchar(255) NULL,
 	OFD_SETTINGS text NULL,
 	NUMBER_KKM varchar(64) NULL,
@@ -1826,4 +1852,50 @@ create table if not exists b_sale_buyer_stat (
 	index IXS_COUNT_FULL_PAID_ORDER(COUNT_FULL_PAID_ORDER),
 	index IXS_COUNT_PART_PAID_ORDER(COUNT_PART_PAID_ORDER),
 	index IXS_SUM_PAID(SUM_PAID)
+);
+
+create table if not exists b_sale_delivery_req(
+	ID INT NOT NULL AUTO_INCREMENT,
+	DATE TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	DELIVERY_ID INT NOT NULL,
+	STATUS INT NULL,
+	EXTERNAL_ID VARCHAR(100) NOT NULL,
+	PRIMARY KEY (ID)
+);
+
+create table if not exists b_sale_delivery_req_shp(
+	ID INT NOT NULL AUTO_INCREMENT,
+	SHIPMENT_ID INT NOT NULL,
+	REQUEST_ID INT NULL,
+	EXTERNAL_ID VARCHAR(50) NULL,
+	ERROR_DESCRIPTION VARCHAR(2048) NULL,
+	PRIMARY KEY (ID)
+);
+
+create table if not exists b_sale_check_related_entities (
+	ID int not null AUTO_INCREMENT,
+	CHECK_ID int not null,
+	ENTITY_ID int not null,
+	ENTITY_TYPE char(1) not null,
+	ENTITY_CHECK_TYPE varchar(50) null,
+	PRIMARY KEY (ID)
+);
+
+create table if not exists b_sale_exchange_log (
+	ID INT NOT NULL AUTO_INCREMENT,
+	ENTITY_ID INT NOT NULL,
+	ENTITY_TYPE_ID INT NOT NULL,
+	PARENT_ID INT NULL DEFAULT NULL,
+	OWNER_ENTITY_ID INT NULL DEFAULT NULL,
+	ENTITY_DATE_UPDATE DATETIME NULL DEFAULT NULL,
+	XML_ID VARCHAR(50) NULL DEFAULT NULL,
+	MARKED VARCHAR(1) NULL DEFAULT NULL,
+	DESCRIPTION TEXT NULL,
+	MESSAGE LONGTEXT NULL,
+	DATE_INSERT DATETIME NULL DEFAULT NULL,
+	DIRECTION VARCHAR(1) NOT NULL,
+	PRIMARY KEY (ID),
+	INDEX IX_EXCHANGE_LOG1 (ENTITY_ID, ENTITY_TYPE_ID),
+	INDEX IX_EXCHANGE_LOG2 (ENTITY_DATE_UPDATE),
+	INDEX IX_EXCHANGE_LOG3 (DATE_INSERT)				
 );

@@ -32,5 +32,41 @@ if (array_key_exists("filter_extranet", $_REQUEST) && $_REQUEST["filter_extranet
 
 $arResult["LIST_NAV_ID"] = (!empty($arParams["LIST_NAV_ID"]) ? $arParams["LIST_NAV_ID"] : "sonet_user_groups");
 
+if (
+	empty($arParams["USER_ID"])
+	|| intval($arParams["USER_ID"]) <= 0
+)
+{
+	$arParams["USER_ID"] = ($USER->isAuthorized() ? $USER->getId() : 0);
+}
+
+if (!isset($arParams["ALLOW_CREATE_GROUP"]))
+{
+	if (intval($arParams["USER_ID"]) > 0)
+	{
+		$currentUserPerms = CSocNetUserPerms::InitUserPerms($USER->GetID(), intval($arParams["USER_ID"]), CSocNetUser::IsCurrentUserModuleAdmin());
+
+		$arParams["ALLOW_CREATE_GROUP"] = (
+		$currentUserPerms["IsCurrentUser"]
+		&& (
+			CSocNetUser::IsCurrentUserModuleAdmin()
+			|| $APPLICATION->GetGroupRight("socialnetwork", false, "Y", "Y", array(SITE_ID, false)) >= "K"
+		)
+			? 'Y'
+			: 'N'
+		);
+
+		if (empty($arParams["HREF"]))
+		{
+			$arParams["HREF"] = CComponentEngine::makePathFromTemplate($arParams["PATH_TO_GROUP_CREATE"], array("user_id" => $arParams["USER_ID"]));
+		}
+	}
+	else
+	{
+		$arParams["HREF"] = "";
+		$arParams["ALLOW_CREATE_GROUP"] = "N";
+	}
+}
+
 $this->IncludeComponentTemplate();
 ?>

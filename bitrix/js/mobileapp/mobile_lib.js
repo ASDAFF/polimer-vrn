@@ -873,6 +873,10 @@
 
 				return false;
 			},
+			postToComponent: function (eventName, params, code)
+			{
+				window.webkit.messageHandlers.components.postMessage({event:eventName, params:params, code:code})
+			},
 			addEventListener: function (eventObject, eventName, listener)
 			{
 				BXMobileApp.addCustomEvent(eventObject, eventName,listener)

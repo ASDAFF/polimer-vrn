@@ -14,6 +14,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\UserToGroupTable;
+use Bitrix\Main\Localization\Loc;
 
 global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
@@ -227,7 +228,14 @@ else
 		$arResult["Urls"]["User"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER"], array("user_id" => $arParams["USER_ID"]));
 		$arResult["Urls"]["Group"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP"], array("group_id" => $arParams["GROUP_ID"]));
 
-		if ($arParams["PAGE_ID"] != "group_features" && ($arParams["SET_TITLE"] == "Y" || $arParams["SET_NAV_CHAIN"] != "N"))
+		$strTitleFormatted = "";
+
+		if (
+			$arParams["PAGE_ID"] != "group_features"
+			&& (
+				$arParams["SET_TITLE"] == "Y"
+				|| $arParams["SET_NAV_CHAIN"] != "N")
+		)
 		{
 			$arParams["TITLE_NAME_TEMPLATE"] = str_replace(
 				array("#NOBR#", "#/NOBR#"),
@@ -243,26 +251,26 @@ else
 			);
 			$strTitleFormatted = CUser::FormatName($arParams['TITLE_NAME_TEMPLATE'], $arTmpUser, $bUseLogin);
 		}
+		elseif($arParams["PAGE_ID"] == "group_features")
+		{
+			$strTitleFormatted = $arResult["Group"]["NAME"];
+		}
+
+		$pageTitle = (
+			$arParams["PAGE_ID"] == "group_features"
+				? Loc::getMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_C3_GROUP_SETTINGS_PROJECT" : "SONET_C3_GROUP_SETTINGS")
+				: Loc::getMessage("SONET_C3_USER_SETTINGS")
+		);
 
 		if ($arParams["SET_TITLE"] == "Y")
 		{
-			if ($arParams["PAGE_ID"] == "group_features")
-				$APPLICATION->SetTitle($arResult["Group"]["NAME"].": ".GetMessage("SONET_C3_GROUP_SETTINGS"));
-			else
-				$APPLICATION->SetTitle($strTitleFormatted.": ".GetMessage("SONET_C3_USER_SETTINGS"));
+			$APPLICATION->SetTitle($strTitleFormatted.": ".$pageTitle);
 		}
+
 		if ($arParams["SET_NAV_CHAIN"] != "N")
 		{
-			if ($arParams["PAGE_ID"] == "group_features")
-			{
-				$APPLICATION->AddChainItem($arResult["Group"]["NAME"], $arResult["Urls"]["Group"]);
-				$APPLICATION->AddChainItem(GetMessage("SONET_C3_GROUP_SETTINGS"));
-			}
-			else
-			{
-				$APPLICATION->AddChainItem($strTitleFormatted, $arResult["Urls"]["User"]);
-				$APPLICATION->AddChainItem(GetMessage("SONET_C3_USER_SETTINGS"));
-			}
+			$APPLICATION->AddChainItem($strTitleFormatted, ($arParams["PAGE_ID"] == "group_features" ? $arResult["Urls"]["Group"] : $arResult["Urls"]["User"]));
+			$APPLICATION->AddChainItem($pageTitle);
 		}
 
 		$arResult["ShowForm"] = "Input";

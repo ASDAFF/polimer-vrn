@@ -151,9 +151,20 @@ if (($ids = $lAdmin->GroupAction()) && !$bReadOnly)
 	$dbResultList = PaymentTable::getList($params);
 
 	$payments = $dbResultList->fetchAll();
-	foreach ($payments as $payment)
+	foreach ($payments as $item)
 	{
-		if ($payment['ID'] <= 0 || $payment['ORDER_ID'] <= 0)
+		if ($item['ID'] <= 0 || $item['ORDER_ID'] <= 0)
+			continue;
+
+		/** @var \Bitrix\Sale\Order $currentOrder */
+		$currentOrder = Order::load($item['ORDER_ID']);
+
+		/** @var \Bitrix\Sale\PaymentCollection $paymentCollection */
+		$paymentCollection = $currentOrder->getPaymentCollection();
+
+		/** @var \Bitrix\Sale\Payment $payment */
+		$payment = $paymentCollection->getItemById($item['ID']);
+		if (!$payment)
 			continue;
 
 		switch ($_REQUEST['action'])
@@ -161,28 +172,25 @@ if (($ids = $lAdmin->GroupAction()) && !$bReadOnly)
 			case "delete":
 				@set_time_limit(0);
 
-				Application::getConnection()->startTransaction();
-				/** @var \Bitrix\Sale\Order $ord */
-				$ord = Order::load($payment['ORDER_ID']);
-
-				/** @var \Bitrix\Sale\PaymentCollection $paymentCollection */
-				$paymentCollection = $ord->getPaymentCollection();
-				$item = $paymentCollection->getItemById($payment['ID']);
-				$result = $item->delete();
+				$result = $payment->delete();
+				if ($result->isSuccess())
+					$result = $currentOrder->save();
 
 				if (!$result->isSuccess())
-				{
-					Application::getConnection()->rollbackTransaction();
 					$lAdmin->AddGroupError(implode('\n', $result->getErrorMessages()));
-				}
-				else
-				{
-					$result = $ord->save();
-					if ($result->isSuccess())
-						Application::getConnection()->commitTransaction();
-					else
-						$lAdmin->AddGroupError(implode('\n', $result->getErrorMessages()));
-				}
+
+				break;
+			case "paid":
+			case "paid_n":
+				@set_time_limit(0);
+				$paid = $_REQUEST['action'] === 'paid' ? 'Y' : 'N';
+				$result = $payment->setPaid($paid);
+				if ($result->isSuccess())
+					$result = $currentOrder->save();
+
+				if (!$result->isSuccess())
+					$lAdmin->AddGroupError(implode('\n', $result->getErrorMessages()));
+
 				break;
 		}
 	}
@@ -453,6 +461,8 @@ while ($payment = $dbResultList->Fetch())
 $lAdmin->AddGroupActionTable(
 	array(
 		"delete" => GetMessage("MAIN_ADMIN_LIST_DELETE"),
+		"paid" => GetMessage("SALE_ORDER_PAYMENT_PAID"),
+		"paid_n" => GetMessage("SALE_ORDER_PAYMENT_PAID_N"),
 	)
 );
 

@@ -71,7 +71,7 @@ $this->addExternalJs($templateFolder."/utils.js");
 							<span class="main-buttons-item-drag-button"></span>
 							<span class="main-buttons-item-text-marker"></span>
 						</span><?
-						?><span class="main-buttons-item-counter<?=$arParams["CLASS_ITEM_COUNTER"] ? " ".$arParams["CLASS_ITEM_COUNTER"] : ""?>"><?=$arItem["COUNTER"] > 99 ? '99+' : $arItem["COUNTER"]?></span>
+						?><span class="main-buttons-item-counter<?=$arParams["CLASS_ITEM_COUNTER"] ? " ".$arParams["CLASS_ITEM_COUNTER"] : ""?>"><?=$arItem["COUNTER"] > $arItem['MAX_COUNTER_SIZE'] ? $arItem['MAX_COUNTER_SIZE'].'+' : $arItem["COUNTER"]?></span>
 					</a>
 					<? if ($arItem["SUB_LINK"]) : ?>
 						<a class="main-buttons-item-sublink<?=" ".$arItem["SUB_LINK"]["CLASS"]?>" href="<?=$arItem["SUB_LINK"]["URL"]?>"></a>

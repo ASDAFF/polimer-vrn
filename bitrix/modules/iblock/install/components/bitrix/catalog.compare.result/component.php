@@ -1211,7 +1211,10 @@ if (!empty($arCompare) && is_array($arCompare))
 }
 else
 {
-	$actionByAjax = (isset($_REQUEST['ajax_action']) && $_REQUEST['ajax_action'] == 'Y');
+	$actionByAjax = (
+		(isset($_REQUEST['ajax_action']) && $_REQUEST['ajax_action'] == 'Y')
+		|| (isset($_REQUEST['compare_result_reload']) && $_REQUEST['compare_result_reload'] == 'Y')
+	);
 	if ($actionByAjax)
 	{
 		$APPLICATION->RestartBuffer();

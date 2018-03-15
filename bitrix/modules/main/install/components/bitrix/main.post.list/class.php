@@ -984,8 +984,8 @@ HTML;
 			}
 
 			$JSResult += array(
-				'errorMessage' => $arParams["ERROR_MESSAGE"],
-				'okMessage' => $arParams["OK_MESSAGE"],
+				'errorMessage' => (isset($arParams["~ERROR_MESSAGE"]) ? $arParams["~ERROR_MESSAGE"] : (isset($arParams["ERROR_MESSAGE"]) ? $arParams["ERROR_MESSAGE"] : '')),
+				'okMessage' => (isset($arParams["~OK_MESSAGE"]) ? $arParams["~OK_MESSAGE"] : (isset($arParams["OK_MESSAGE"]) ? $arParams["OK_MESSAGE"] : '')),
 				'status' => "success",
 				'message' => $SHParser->getInnerHTML('<!--LOAD_SCRIPT-->', '<!--END_LOAD_SCRIPT-->').$message,
 				'messageBBCode' => $arParams["~RECORDS"][$record]["~POST_MESSAGE_TEXT"],

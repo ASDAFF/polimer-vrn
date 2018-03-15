@@ -552,6 +552,9 @@ class CBitrixCatalogSmartFilter extends CBitrixComponent
 				$cache[$PROPERTY_TYPE][$key] = $rsLink->Fetch();
 			}
 
+			if (!$cache[$PROPERTY_TYPE][$key])
+				return null;
+
 			$value = $cache[$PROPERTY_TYPE][$key]["NAME"];
 			$sort = $cache[$PROPERTY_TYPE][$key]["SORT"];
 			if ($cache[$PROPERTY_TYPE][$key]["CODE"])
@@ -571,6 +574,9 @@ class CBitrixCatalogSmartFilter extends CBitrixComponent
 				$cache[$PROPERTY_TYPE][$key] = $rsLink->Fetch();
 				$cache[$PROPERTY_TYPE][$key]['DEPTH_NAME'] = str_repeat(".", $cache[$PROPERTY_TYPE][$key]["DEPTH_LEVEL"]).$cache[$PROPERTY_TYPE][$key]["NAME"];
 			}
+
+			if (!$cache[$PROPERTY_TYPE][$key])
+				return null;
 
 			$value = $cache[$PROPERTY_TYPE][$key]['DEPTH_NAME'];
 			$sort = $cache[$PROPERTY_TYPE][$key]["LEFT_MARGIN"];
@@ -658,7 +664,9 @@ class CBitrixCatalogSmartFilter extends CBitrixComponent
 
 		if (strlen($url_id))
 		{
-			$resultItem["VALUES"][$htmlKey]['URL_ID'] = urlencode(str_replace("/", "-", $url_id));
+			$error = "";
+			$utf_id = \Bitrix\Main\Text\Encoding::convertEncoding($url_id, LANG_CHARSET, "utf-8", $error);
+			$resultItem["VALUES"][$htmlKey]['URL_ID'] = rawurlencode(str_replace("/", "-", $utf_id));
 		}
 
 		return $htmlKey;
@@ -914,10 +922,16 @@ class CBitrixCatalogSmartFilter extends CBitrixComponent
 
 	public function searchValue($item, $lookupValue)
 	{
-		foreach($item as $itemId => $arValue)
+		$error = "";
+		$searchValue = \Bitrix\Main\Text\Encoding::convertEncoding($lookupValue, LANG_CHARSET, "utf-8", $error);
+		if (!$error)
 		{
-			if (urlencode($lookupValue) === $arValue["URL_ID"])
-				return $itemId;
+			$encodedValue = rawurlencode($searchValue);
+			foreach($item as $itemId => $arValue)
+			{
+				if ($encodedValue === $arValue["URL_ID"])
+					return $itemId;
+			}
 		}
 		return false;
 	}

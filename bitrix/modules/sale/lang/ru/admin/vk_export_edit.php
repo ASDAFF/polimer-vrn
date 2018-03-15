@@ -11,6 +11,9 @@ $MESS["SALE_VK_TAB_EXPORT"] = "Обмен";
 $MESS["SALE_VK_TAB_EXPORT_DESC"] = "Обмен данными";
 $MESS["SALE_VK_TAB_SETTINGS"] = "Настройки";
 $MESS["SALE_VK_TAB_SETTINGS_DESC"] = "Настройки обмена";
+$MESS["SALE_VK_TAB_MAP"] = "Карта экспорта";
+$MESS["SALE_VK_TAB_MAP_DESC"] = "Список разделов, отмеченных для экспорта";
+$MESS["SALE_VK_TAB_MAP_LOAD"] = "Подготовка карты...";
 
 $MESS["SALE_VK_SETTINGS_BUTTON_CONFIRM"] = "Вы хотите продолжить?";
 

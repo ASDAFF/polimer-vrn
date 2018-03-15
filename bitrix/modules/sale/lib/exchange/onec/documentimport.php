@@ -5,6 +5,7 @@ use Bitrix\Main;
 use Bitrix\Sale\Exchange;
 use Bitrix\Main\Type;
 use Bitrix\Sale\Internals\Fields;
+use Bitrix\Sale\PriceMaths;
 
 /**
  * Class DocumentImport
@@ -163,6 +164,9 @@ class DocumentImport
             case 'ITEM_UNIT':
                 $result = self::resolveUnitParams($value, $fieldsInfo);
                 break;
+			case 'DISCOUNTS':
+				$result = self::resolveDiscountsParams($value, $fieldsInfo);
+				break;
         }
         return $result;
     }
@@ -208,6 +212,7 @@ class DocumentImport
                 $result[] = $fields;
             }
         }
+
         return $result;
     }
 
@@ -353,6 +358,35 @@ class DocumentImport
         return $result;
     }
 
+	/**
+	 * @param array $value
+	 * @param array $fieldsInfo
+	 * @return null
+	 */
+	protected static function resolveDiscountsParams(array $value, array $fieldsInfo)
+	{
+		$result = null;
+		$message = self::getMessage();
+
+		if (is_array($value["#"][$message["CC_BSC1_DISCOUNTS"]][0]["#"][$message["CC_BSC1_DISCOUNT"]])
+			&& !empty($value["#"][$message["CC_BSC1_DISCOUNTS"]][0]["#"][$message["CC_BSC1_DISCOUNT"]]))
+		{
+			$field = $value["#"][$message["CC_BSC1_DISCOUNTS"]][0]["#"][$message["CC_BSC1_DISCOUNT"]];
+			foreach($fieldsInfo['FIELDS'] as $name => $info)
+			{
+				if(!empty($field[0]["#"][$message["CC_BSC1_".$name]][0]["#"]))
+				{
+					$fieldValue = $field[0]["#"][$message["CC_BSC1_".$name]][0]["#"];
+					self::internalizeFields($fieldValue, $info);
+
+					$result[$name] = $fieldValue;
+				}
+			}
+		}
+		return $result;
+	}
+
+
     /**
      * @param $value
      * @param array $fieldsInfo
@@ -400,11 +434,16 @@ class DocumentImport
             $discountPrice = "";
             if (doubleval($item['QUANTITY']) > 0)
             {
-                $price = roundEx($item['SUMM'] / $item['QUANTITY'], 4);
-                $priceone = roundEx($priceone, 4);
+            	$price = PriceMaths::roundPrecision($item['SUMM'] / $item['QUANTITY']);
+				$priceone = PriceMaths::roundPrecision($priceone);
 
-                if ($priceone != $price)
-                    $discountPrice = DoubleVal($priceone - $price);
+                if(isset($item['DISCOUNTS']['SUMM']) && $item['DISCOUNTS']['SUMM']<>'')
+				{
+					if ($priceone != $price)
+						$discountPrice = DoubleVal($priceone - $price);
+				}
+				else
+					$price = $priceone;
 
                 $basketItems = Array(
                     'ID' => $item['ID'],
@@ -418,6 +457,7 @@ class DocumentImport
                     'ATTRIBUTES' => !empty($item['REK_VALUES']['PROP_BASKET']) ? $item['REK_VALUES']['PROP_BASKET']:null,
                     'TAX' => array(
                         'VAT_RATE' => !empty($item['TAXES']['TAX_VALUE']) ? $item['TAXES']['TAX_VALUE']/100:null,
+                        'VAT_INCLUDED' => !empty($item['TAXES']['IN_PRICE']) ? $item['TAXES']['IN_PRICE']:'Y'//if tax is null then always included by default
                     ),
                     'DISCOUNT' => array(
                         'PRICE' => $discountPrice

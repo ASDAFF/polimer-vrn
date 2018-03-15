@@ -74,4 +74,5 @@ if ($result['SUCCESS'])
 	}
 }
 
+$result['SUCCESS'] = (empty($result['ERROR']));
 echo CUtil::PhpToJSObject($result);

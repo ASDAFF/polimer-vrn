@@ -12,7 +12,6 @@ if(isset($_GET['action']) && $_GET['action'] == 'showFile')
 	define('BX_SECURITY_SESSION_READONLY', true);
 }
 
-
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
 if(!\Bitrix\Main\Loader::includeModule('disk'))

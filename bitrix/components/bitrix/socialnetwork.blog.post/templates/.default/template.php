@@ -9,6 +9,8 @@
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use \Bitrix\Main\Localization\Loc;
+
 $APPLICATION->SetAdditionalCSS('/bitrix/components/bitrix/socialnetwork.log.ex/templates/.default/style.css');
 $APPLICATION->SetAdditionalCSS('/bitrix/components/bitrix/socialnetwork.blog.blog/templates/.default/style.css');
 if (!$arResult["bFromList"])
@@ -19,7 +21,7 @@ if (!$arResult["bFromList"])
 $ajax_page = $APPLICATION->GetCurPageParam("", array("logajax", "bxajaxid", "logout"));
 $voteId = false;
 
-$extensions = array('ajax', 'viewer', 'tooltip', 'popup');
+$extensions = array('ajax', 'viewer', 'tooltip', 'popup', 'clipboard');
 if ($arResult["bTasksAvailable"])
 {
 	$extensions[] = 'tasks_util_query';
@@ -74,6 +76,18 @@ $APPLICATION->SetPageProperty("BodyClass", $bodyClass);
 			<?
 		}
 		?>
+	});
+
+	BX.ready(function() {
+		if (
+			typeof oSBPostManager != 'undefined'
+			&& !oSBPostManager.inited
+		)
+		{
+			oSBPostManager.init({
+				tagLinkPattern: '<?=(!empty($arParams["PATH_TO_LOG_TAG"]) ? CUtil::JSEscape($arParams["PATH_TO_LOG_TAG"]) : '')?>'
+			});
+		}
 	});
 </script><?
 
@@ -217,6 +231,27 @@ else
 			?>
 			var postDest<?=$arResult["Post"]["ID"]?> = <?=CUtil::PhpToJSObject($postDest)?>;
 
+			BX.ready(function () {
+				if (
+					(
+						typeof oLF == 'undefined'
+						|| !oLF.filterApi
+					)
+					&& BX('blg-post-<?=$arResult["Post"]["ID"]?>')
+				)
+				{
+					BX('blg-post-<?=$arResult["Post"]["ID"]?>').addEventListener('click', BX.delegate(function(e) {
+						var tagValue = BX.getEventTarget(e).getAttribute('bx-tag-value');
+						if (BX.type.isNotEmptyString(tagValue))
+						{
+							if (this.clickTag(tagValue))
+							{
+								e.preventDefault();
+							}
+						}
+					}, oSBPostManager), true);
+				}
+			});
 		</script>
 		<div class="<?=$className?>" id="blg-post-<?=$arResult["Post"]["ID"]?>">
 			<?
@@ -302,6 +337,8 @@ else
 
 					if (!empty($arResult["Post"]["SPERM_SHOW"]))
 					{
+						?><span class="feed-add-post-destination-cont<?=($arResult["Post"]["LIMITED_VIEW"] ? ' feed-add-post-destination-limited-view' : '')?>"><?
+
 						?><span class="feed-add-post-destination-icon"><span style="position: absolute; left: -3000px; overflow: hidden;">&nbsp;-&gt;&nbsp;</span></span><?
 
 						$cnt =
@@ -520,6 +557,12 @@ else
 
 						if($i > 3)
 							echo "</span>";
+
+						if ($arResult["Post"]["LIMITED_VIEW"])
+						{
+							?><span class="feed-add-post-destination-new feed-add-post-destination-limited-view"><?=Loc::getMessage('BLOG_POST_LIMITED_VIEW')?></span><?
+						}
+						?></span><? // feed-add-post-destination-cont
 					}
 
 					if(
@@ -552,11 +595,7 @@ else
 					$className = "";
 					if ($arResult["bFromList"])
 					{
-						$className .= " feed-post-contentview";
-						if (!$arResult["Post"]["hasVideoInline"])
-						{
-							$className .= " feed-post-text-block-inner";
-						}
+						$className .= " feed-post-contentview feed-post-text-block-inner";
 					}
 					?><div class="<?=$className?>"<?if($arResult["bFromList"]) {?> id="feed-post-contentview-BLOG_POST-<?=intval($arResult["Post"]["ID"])?>" bx-content-view-xml-id="BLOG_POST-<?=intval($arResult["Post"]["ID"])?>"<? }?>>
 						<div class="feed-post-text-block-inner-inner" id="blog_post_body_<?=$arResult["Post"]["ID"]?>"><?=$arResult["Post"]["textFormated"]?><?
@@ -626,7 +665,7 @@ else
 						}
 						?></div>
 					</div><?
-					if($arResult["bFromList"] && !$arResult["Post"]["hasVideoInline"])
+					if($arResult["bFromList"])
 					{
 						?><div class="feed-post-text-more" onclick="showBlogPost('<?=$arResult["Post"]["ID"]?>', this)" id="blog_post_more_<?=$arResult["Post"]["ID"]?>"><?
 						?><div class="feed-post-text-more-but"></div><?
@@ -637,9 +676,9 @@ else
 							var arMoreButtonID = [];
 						}
 						arMoreButtonID[arMoreButtonID.length] = {
-							'outerBlockID' : 'blog_post_outer_<?=$arResult["Post"]["ID"]?>',
-							'bodyBlockID' : 'blog_post_body_<?=$arResult["Post"]["ID"]?>',
-							'moreButtonBlockID' : 'blog_post_more_<?=$arResult["Post"]["ID"]?>'
+							outerBlockID : 'blog_post_outer_<?=$arResult["Post"]["ID"]?>',
+							bodyBlockID : 'blog_post_body_<?=$arResult["Post"]["ID"]?>',
+							moreButtonBlockID : 'blog_post_more_<?=$arResult["Post"]["ID"]?>'
 						};
 					</script><?
 					}
@@ -693,17 +732,17 @@ else
 				{
 					?><div class="feed-com-tags-block">
 						<noindex>
-						<div class="feed-com-files-title"><?=GetMessage("BLOG_BLOG_BLOG_CATEGORY")?></div>
-						<div class="feed-com-files-cont"><?
-							$i=0;
-							foreach($arResult["Category"] as $v)
-							{
-								if($i!=0)
-									echo ",";
-								?> <a href="<?=$v["urlToCategory"]?>" rel="nofollow" class="feed-com-tag"><?=$v["NAME"]?></a><?
-								$i++;
-							}
-						?></div>
+							<div class="feed-com-files-title"><?=GetMessage("BLOG_BLOG_BLOG_CATEGORY")?></div>
+							<div class="feed-com-files-cont" id="blogpost-tags-<?=intval($arResult["Post"]['ID'])?>"><?
+								$i=0;
+								foreach($arResult["Category"] as $v)
+								{
+									if($i!=0)
+										echo ",";
+									?> <a href="<?=$v["urlToCategory"]?>" rel="nofollow" class="feed-com-tag" bx-tag-value="<?=$v["NAME"]?>"><?=$v["NAME"]?></a><?
+									$i++;
+								}
+							?></div>
 						</noindex>
 					</div><?
 				}

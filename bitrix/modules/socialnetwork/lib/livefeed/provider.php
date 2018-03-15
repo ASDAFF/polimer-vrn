@@ -173,7 +173,7 @@ abstract class Provider
 		return self::PERMISSION_DENY;
 	}
 
-	protected function getLogId()
+	public function getLogId()
 	{
 		$result = false;
 

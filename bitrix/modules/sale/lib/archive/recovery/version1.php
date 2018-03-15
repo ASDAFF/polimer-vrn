@@ -183,6 +183,10 @@ class Version1 extends Base
 				foreach ($oldShipmentCollections as $oldItemStore)
 				{
 					$basketItemId = $oldItemStore['BASKET_ID'];
+
+					if (empty($basketItemsMap[$basketItemId]))
+						continue;
+
 					/** @var Sale\ShipmentItem $shipmentItem */
 					$shipmentItem = $newShipmentItemCollection->createItem($basketItemsMap[$basketItemId]);
 					$shipmentItem->setFieldsNoDemand($oldItemStore);

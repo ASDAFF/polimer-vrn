@@ -7,7 +7,6 @@ BX.Lists.LiveFeedClass = (function ()
 		this.socnetGroupId = parameters.socnetGroupId;
 		this.randomString = parameters.randomString;
 		this.listData = parameters.listData;
-		this.manyTemplate = false;
 
 		var _this = this;
 		BX.addCustomEvent('onDisplayClaimLiveFeed', function(iblock) {
@@ -29,6 +28,10 @@ BX.Lists.LiveFeedClass = (function ()
 
 	LiveFeedClass.prototype.init = function (iblock)
 	{
+		this.manyTemplate = false;
+		this.constantsPopup = null;
+		this.templateId = null;
+
 		if(iblock instanceof Array)
 		{
 			var iblockId = iblock[0],
@@ -401,6 +404,7 @@ BX.Lists.LiveFeedClass = (function ()
 					BX.Lists.modalWindow({
 						modalId: 'bx-lists-popup',
 						title: BX.message("LISTS_SELECT_STAFF_SET_RIGHT"),
+						draggable: true,
 						overlay: false,
 						autoHide: true,
 						contentStyle: {
@@ -415,13 +419,6 @@ BX.Lists.LiveFeedClass = (function ()
 								BX('bx-lists-total-div-id').appendChild(BX('feed-add-lists-right'));
 							},
 							onAfterPopupShow : function(popup) {
-								var title = BX.findChild(popup.contentContainer,
-									{className: 'bx-lists-popup-title'}, true);
-								if (title)
-								{
-									title.style.cursor = "move";
-									BX.bind(title, "mousedown", BX.proxy(popup._startDrag, popup));
-								}
 								BX.PopupMenu.destroy('settings-lists');
 							}
 						},
@@ -565,6 +562,7 @@ BX.Lists.LiveFeedClass = (function ()
 						BX.Lists.modalWindow({
 							modalId: 'bx-lists-popup',
 							title: BX.message("LISTS_DESIGNER_POPUP_TITLE"),
+							draggable: true,
 							overlay: false,
 							contentStyle: {
 								width: '400px',
@@ -579,13 +577,6 @@ BX.Lists.LiveFeedClass = (function ()
 										.appendChild(BX('bx-lists-designer-template-popup-content'));
 								},
 								onAfterPopupShow : function(popup) {
-									var title = BX.findChild(popup.contentContainer,
-										{className: 'bx-lists-popup-title'}, true);
-									if (title)
-									{
-										title.style.cursor = "move";
-										BX.bind(title, "mousedown", BX.proxy(popup._startDrag, popup));
-									}
 									BX.PopupMenu.destroy('settings-lists');
 								}
 							},
@@ -705,6 +696,7 @@ BX.Lists.LiveFeedClass = (function ()
 					BX.Lists.modalWindow({
 						modalId: 'bx-lists-popup',
 						title: BX('bx-lists-title-notify-admin-popup').value,
+						draggable: true,
 						overlay: false,
 						contentStyle: {
 							width: '600px',
@@ -719,13 +711,6 @@ BX.Lists.LiveFeedClass = (function ()
 									.appendChild(BX('bx-lists-notify-admin-popup-content'));
 							},
 							onAfterPopupShow : function(popup) {
-								var title = BX.findChild(popup.contentContainer,
-									{className: 'bx-lists-popup-title'}, true);
-								if (title)
-								{
-									title.style.cursor = "move";
-									BX.bind(title, "mousedown", BX.proxy(popup._startDrag, popup));
-								}
 								BX.PopupMenu.destroy('settings-lists');
 							}
 						},
@@ -758,9 +743,7 @@ BX.Lists.LiveFeedClass = (function ()
 
 	LiveFeedClass.prototype.setResponsible = function (templateId)
 	{
-		var modalWindow = null;
-		if(BX.PopupWindowManager.getCurrentPopup())
-			BX.PopupWindowManager.getCurrentPopup().close();
+		this.templateId = templateId;
 
 		BX.Lists.ajax({
 			method: 'POST',
@@ -771,7 +754,7 @@ BX.Lists.LiveFeedClass = (function ()
 			},
 			onsuccess: BX.delegate(function (result)
 			{
-				if(result.status == 'success')
+				if(result.status === 'success')
 				{
 					BX.Lists.ajax({
 						url: BX.Lists.addToLinkParam(this.ajaxUrl, 'action', 'setResponsible'),
@@ -780,134 +763,13 @@ BX.Lists.LiveFeedClass = (function ()
 						data: {
 							iblockId: BX('bx-lists-selected-list').value,
 							randomString: this.randomString,
-							templateId: templateId
+							templateId: this.templateId
 						},
 						onsuccess: BX.delegate(function (data)
 						{
-							if(this.manyTemplate && !templateId)
-							{
-								BX.adjust(BX('bx-lists-constants-template-popup-content'), {
-									html: data
-								});
-							}
-							else
-							{
-								BX.adjust(BX('bx-lists-set-responsible-content'), {
-									html: data
-								});
-							}
+							this.showConstantsPopup(data);
 						}, this)
 					});
-
-					if(this.manyTemplate && !templateId)
-					{
-						modalWindow = BX.Lists.modalWindow({
-							modalId: 'bx-lists-popup',
-							title: BX.message("LISTS_DESIGNER_POPUP_TITLE"),
-							overlay: false,
-							contentStyle: {
-								width: '600px',
-								paddingTop: '10px',
-								paddingBottom: '10px'
-							},
-							content: [BX('bx-lists-constants-template-popup-content')],
-							events : {
-								onPopupClose : function() {
-									BX('bx-lists-constants-template-popup-content').innerHTML = '';
-									BX('bx-lists-constants-template-popup')
-										.appendChild(BX('bx-lists-constants-template-popup-content'));
-									modalWindow = null;
-								},
-								onAfterPopupShow : function(popup) {
-									var title = BX.findChild(popup.contentContainer, {
-										className: 'bx-lists-popup-title'}, true);
-									if (title)
-									{
-										title.style.cursor = "move";
-										BX.bind(title, "mousedown", BX.proxy(popup._startDrag, popup));
-									}
-									BX.PopupMenu.destroy('settings-lists');
-								}
-							},
-							buttons: [
-								BX.create('a', {
-									text : BX.message("LISTS_CANCEL_BUTTON_CLOSE"),
-									props: {
-										className: 'webform-small-button webform-button-cancel'
-									},
-									events : {
-										click : BX.delegate(function (e) {
-											if(!!modalWindow) modalWindow.close();
-										}, this)
-									}
-								})
-							]
-						});
-					}
-					else
-					{
-						modalWindow = BX.Lists.modalWindow({
-							modalId: 'bx-lists-popup',
-							title: BX.message("LISTS_SELECT_STAFF_SET_RESPONSIBLE"),
-							overlay: false,
-							withoutWindowManager: true,
-							contentStyle: {
-								width: '600px',
-								paddingTop: '10px',
-								paddingBottom: '10px'
-							},
-							content: [BX('bx-lists-set-responsible-content')],
-							events : {
-								onPopupClose : function() {
-									BX('bx-lists-set-responsible-content').innerHTML = '';
-									BX('bx-lists-set-responsible')
-										.appendChild(BX('bx-lists-set-responsible-content'));
-									modalWindow = null;
-								},
-								onAfterPopupShow : function(popup) {
-									var title = BX.findChild(popup.contentContainer,
-										{className: 'bx-lists-popup-title'}, true);
-									if (title)
-									{
-										title.style.cursor = "move";
-										BX.bind(title, "mousedown", BX.proxy(popup._startDrag, popup));
-									}
-									BX.PopupMenu.destroy('settings-lists');
-								}
-							},
-							buttons: [
-								BX.create('a', {
-									text : BX.message("LISTS_SAVE_BUTTON_SET_RIGHT"),
-									props: {
-										className: 'webform-small-button webform-small-button-accept'
-									},
-									events : {
-										click : BX.delegate(function (e)
-										{
-											var form = BX.findChild(BX('bx-lists-set-responsible-content'),
-												{tag: 'FORM'}, true);
-											if(form)
-											{
-												form.modalWindow = modalWindow;
-												form.onsubmit(form, e);
-											}
-										})
-									}
-								}),
-								BX.create('a', {
-									text : BX.message("LISTS_CANCEL_BUTTON_SET_RIGHT"),
-									props: {
-										className: 'webform-small-button webform-button-cancel'
-									},
-									events : {
-										click : BX.delegate(function (e) {
-											if(!!modalWindow) modalWindow.close();
-										}, this)
-									}
-								})
-							]
-						});
-					}
 				}
 				else
 				{
@@ -925,6 +787,117 @@ BX.Lists.LiveFeedClass = (function ()
 					}
 				}
 			}, this)
+		});
+	};
+
+	LiveFeedClass.prototype.showConstantsPopup = function(contentHtml)
+	{
+		if(BX.PopupWindowManager.getCurrentPopup())
+			BX.PopupWindowManager.getCurrentPopup().close();
+
+		if(this.manyTemplate && !this.templateId)
+		{
+			this.constantsPopup = BX.Lists.modalWindow({
+				modalId: 'bx-lists-popup',
+				title: BX.message("LISTS_DESIGNER_POPUP_TITLE"),
+				overlay: false,
+				draggable: true,
+				contentStyle: {
+					width: '600px',
+					paddingBottom: '10px'
+				},
+				content: [this.getConstantsForm(contentHtml)],
+				events : {
+					onPopupClose : function() {
+						this.constantsPopup = null;
+					}.bind(this),
+					onAfterPopupShow : function(popup) {
+						BX.PopupMenu.destroy('settings-lists');
+					}
+				},
+				buttons: [
+					BX.create('a', {
+						text : BX.message("LISTS_CANCEL_BUTTON_CLOSE"),
+						props: {
+							className: 'webform-small-button webform-button-cancel'
+						},
+						events : {
+							click : BX.delegate(function (e) {
+								if(!!this.constantsPopup) this.constantsPopup.close();
+							}, this)
+						}
+					})
+				]
+			});
+		}
+		else
+		{
+			this.constantsPopup = BX.Lists.modalWindow({
+				modalId: 'bx-lists-popup',
+				title: BX.message("LISTS_SELECT_STAFF_SET_RESPONSIBLE"),
+				overlay: false,
+				draggable: true,
+				withoutWindowManager: true,
+				contentStyle: {
+					width: '600px',
+					paddingBottom: '10px'
+				},
+				content: [this.getConstantsForm(contentHtml)],
+				events : {
+					onPopupClose : function() {
+						this.constantsPopup = null;
+					}.bind(this),
+					onAfterPopupShow : function(popup) {
+						BX.PopupMenu.destroy('settings-lists');
+					}
+				},
+				buttons: [
+					BX.create('a', {
+						text : BX.message("LISTS_SAVE_BUTTON_SET_RIGHT"),
+						props: {
+							className: 'webform-small-button webform-small-button-accept'
+						},
+						events : {
+							click : BX.delegate(function (e)
+							{
+								var form = BX.findChild(BX('bx-lists-set-responsible-content'),
+									{tag: 'FORM'}, true);
+								if(form)
+								{
+									form.modalWindow = this.constantsPopup;
+									form.onsubmit(form, e);
+								}
+							}, this)
+						}
+					}),
+					BX.create('a', {
+						text : BX.message("LISTS_CANCEL_BUTTON_SET_RIGHT"),
+						props: {
+							className: 'webform-small-button webform-button-cancel'
+						},
+						events : {
+							click : BX.delegate(function (e) {
+								if (!!this.constantsPopup) this.constantsPopup.close();
+							}, this)
+						}
+					})
+				]
+			});
+		}
+	};
+
+	LiveFeedClass.prototype.getConstantsForm = function(html)
+	{
+		return BX.create("div", {
+			children: [
+				BX.create("div", {
+					props: {
+						id: "bx-lists-set-responsible-content",
+						className: "bx-lists-set-responsible-content"
+					},
+					html: html
+				})
+			]
 		});
 	};
 

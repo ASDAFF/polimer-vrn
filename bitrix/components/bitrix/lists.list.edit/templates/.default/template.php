@@ -52,11 +52,10 @@ if($arResult["IBLOCK_ID"])
 		"action" => "BX.Lists['".$jsClass."'].copyIblock()",
 	);
 
-	$arToolbar[] = array(
-		"TEXT"=>$arResult["IBLOCK"]["ELEMENTS_NAME"],
-		"TITLE"=>GetMessage("CT_BLLE_TOOLBAR_LIST_TITLE"),
-		"LINK"=>$arResult["LIST_URL"],
-		"ICON"=>"btn-view-elements",
+	$listAction[] = array(
+		"id" => 'fieldSettings',
+		"text" => GetMessage("CT_BLLE_TOOLBAR_FIELDS_TITLE".$typeTranslation),
+		"action" => 'document.location.href="'.$arResult["LIST_FIELDS_URL"].'"',
 	);
 }
 

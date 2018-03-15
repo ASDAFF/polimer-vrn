@@ -873,7 +873,7 @@ class Actions
 		if ($maxBound && $resultValue < 0)
 		{
 			$resultValue = 0;
-			$value = $order['PRICE_DELIVERY'];
+			$value = -$order['PRICE_DELIVERY'];
 		}
 
 		if ($resultValue < 0)

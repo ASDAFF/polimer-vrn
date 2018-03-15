@@ -418,21 +418,25 @@ class Imap
 	/**
 	 * Returns mailboxes list
 	 *
-	 * @param string $mailbox Mailbox name pattern.
+	 * @param string $pattern Mailbox name pattern.
 	 * @param string &$error Error message.
 	 * @return array|false
 	 */
-	public function listMailboxes($mailbox, &$error)
+	public function listMailboxes($pattern, &$error)
 	{
 		$error = null;
 
 		if (!$this->authenticate($error))
 			return false;
 
-		$mailbox = str_replace('*', '%', $mailbox, $recursive);
+		$pattern = $this->decodeUtf7Imap($pattern);
+		$pattern = preg_replace('/ \*+ /x', '*', $pattern);
 
 		$response = $this->executeCommand(sprintf(
-			'LIST "" "%s"', static::escapeQuoted($this->encodeUtf7Imap($mailbox))
+			'LIST "" "%s"',
+			static::escapeQuoted($this->encodeUtf7Imap(
+				preg_replace('/ \* /x', '%', $pattern)
+			))
 		), $error);
 
 		if ($error)
@@ -469,6 +473,8 @@ class Imap
 			elseif (preg_match('/^ " ( .* ) " $/ix', $sname, $quoted))
 				$sname = static::unescapeQuoted($quoted[1]);
 
+			$sname = $this->decodeUtf7Imap($sname);
+
 			// #79498
 			if (strtoupper($sdelim) != 'NIL')
 				$sname = rtrim($sname, $sdelim);
@@ -476,23 +482,42 @@ class Imap
 			$list[] = array(
 				'flags' => $sflags,
 				'delim' => strtoupper($sdelim) == 'NIL' ? null : $sdelim,
-				'name'  => $this->decodeUtf7Imap($sname),
+				'name'  => $sname,
 			);
 		}
 
-		if ($recursive > 0)
+		if (preg_match('/ \* $/x', $pattern))
 		{
 			foreach ($list as $i => $item)
 			{
 				if ($item['delim'] === null)
 					continue;
 
+				$subpattern = sprintf('%s%s*', $item['name'], $item['delim']);
+				if ($subpattern == $pattern)
+				{
+					continue;
+				}
+
 				if (!preg_match('/ ( ^ | \x20 ) \x5c ( Noinferiors | HasNoChildren ) ( \x20 | $ ) /ix', $item['flags']))
 				{
-					$children = $this->listMailboxes(sprintf('%s%s*', $item['name'], $item['delim']), $error);
+					$children = $this->listMailboxes($subpattern, $error);
 
 					if ($children === false)
 						return false;
+
+					$regex = sprintf(
+						'/^ %s %s . /ix',
+						preg_quote($item['name'], '/'),
+						preg_quote($item['delim'], '/')
+					);
+					$children = array_filter(
+						$children,
+						function ($child) use (&$regex)
+						{
+							return preg_match($regex, $child['name']);
+						}
+					);
 
 					if (!empty($children))
 						$list[$i]['children'] = $children;
@@ -507,6 +532,21 @@ class Imap
 	{
 		$error = null;
 
+		$params = array(
+			'offset' => 0,
+			'limit'  => -1,
+		);
+		if (is_array($mailbox))
+		{
+			$params  = array_merge($params, $mailbox);
+			$mailbox = $mailbox['mailbox'];
+		}
+
+		if (!($params['offset'] > 0))
+			$params['offset'] = 0;
+		if (!($params['limit'] > 0))
+			$params['limit'] = -1;
+
 		if (!$this->select($mailbox, $error))
 			return false;
 
@@ -517,9 +557,12 @@ class Imap
 		if ($this->sessMailbox['exists'] > 0)
 		{
 			$response = $this->executeCommand(
-				$this->sessMailbox['uidvalidity'] > 0
-					? 'FETCH 1:* (UID INTERNALDATE RFC822.SIZE FLAGS)'
-					: 'FETCH 1:* (INTERNALDATE RFC822.SIZE FLAGS)',
+				sprintf(
+					'FETCH %u:%s (%sINTERNALDATE RFC822.SIZE FLAGS)',
+					$params['offset']+1,
+					$params['limit'] > 0 ? $params['offset']+$params['limit'] : '*',
+					$uidtoken > 0 ? 'UID ' : ''
+				),
 				$error
 			);
 

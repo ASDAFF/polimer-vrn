@@ -371,27 +371,27 @@ if ('' == $strImportErrorMessage)
 			if (isset($arIBlock['FIELDS']['CODE']['DEFAULT_VALUE']))
 			{
 				$arTransSettings = $arIBlock['FIELDS']['CODE']['DEFAULT_VALUE'];
-				$boolTranslitElement = ('Y' == $arTransSettings['TRANSLITERATION'] ? true : false);
+				$boolTranslitElement = ($arTransSettings['TRANSLITERATION'] == 'Y');
 				$arTranslitElement = array(
 					"max_len" => $arTransSettings['TRANS_LEN'],
 					"change_case" => $arTransSettings['TRANS_CASE'],
 					"replace_space" => $arTransSettings['TRANS_SPACE'],
 					"replace_other" => $arTransSettings['TRANS_OTHER'],
-					"delete_repeat_replace" => ('Y' == $arTransSettings['TRANS_EAT'] ? true : false),
-					"use_google" => ('Y' == $arTransSettings['USE_GOOGLE'] ? true : false),
+					"delete_repeat_replace" => ($arTransSettings['TRANS_EAT'] == 'Y'),
+					"use_google" => ($arTransSettings['USE_GOOGLE'] == 'Y'),
 				);
 			}
 			if (isset($arIBlock['FIELDS']['SECTION_CODE']['DEFAULT_VALUE']))
 			{
 				$arTransSettings = $arIBlock['FIELDS']['SECTION_CODE']['DEFAULT_VALUE'];
-				$boolTranslitSection = ('Y' == $arTransSettings['TRANSLITERATION'] ? true : false);
+				$boolTranslitSection = ($arTransSettings['TRANSLITERATION'] == 'Y');
 				$arTranslitSection = array(
 					"max_len" => $arTransSettings['TRANS_LEN'],
 					"change_case" => $arTransSettings['TRANS_CASE'],
 					"replace_space" => $arTransSettings['TRANS_SPACE'],
 					"replace_other" => $arTransSettings['TRANS_OTHER'],
-					"delete_repeat_replace" => ('Y' == $arTransSettings['TRANS_EAT'] ? true : false),
-					"use_google" => ('Y' == $arTransSettings['USE_GOOGLE'] ? true : false),
+					"delete_repeat_replace" => ($arTransSettings['TRANS_EAT'] == 'Y'),
+					"use_google" => ($arTransSettings['USE_GOOGLE'] == 'Y'),
 				);
 			}
 		}

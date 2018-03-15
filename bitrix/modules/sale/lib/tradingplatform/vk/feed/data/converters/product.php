@@ -306,7 +306,10 @@ class Product extends DataConverter
 						));
 						$hlBlockItemId = $resHlBlocks->fetch();
 						$hlBlockItemId = $hlBlockItemId['ID'];
-
+//						HL directory may not exist in some strange situations
+						if(!$hlBlockItemId)
+							continue;
+						
 //						get entity class for current hl
 						$hlBlock = HighloadBlockTable::getById($hlBlockItemId)->fetch();
 						$hlEntity = HighloadBlockTable::compileEntity($hlBlock);
@@ -342,7 +345,7 @@ class Product extends DataConverter
 //		adding PHOTOS
 		$photoId = (strlen($data["DETAIL_PICTURE"]) > 0) ? $data["DETAIL_PICTURE"] : $data["PREVIEW_PICTURE"];
 		if ($photoId)
-			$result["PHOTOS"] = array($photoId => array("PHOTOS_BX_ID" => $photoId));
+			$result["PHOTOS"] = array($photoId => array("PHOTO_BX_ID" => $photoId));
 
 //		adding special VK photos
 		$vkPhotosKey = 'PHOTOS_FOR_VK_' . $data["IBLOCK_ID"];
@@ -354,7 +357,7 @@ class Product extends DataConverter
 			foreach ($resOfferProps[$vkPhotosKey]["VALUE"] as $ph)
 			{
 				$result["PHOTOS_FOR_VK"][$ph] = array(
-					"PHOTOS_BX_ID" => $ph,
+					"PHOTO_BX_ID" => $ph,
 				);
 			}
 		}
@@ -389,8 +392,8 @@ class Product extends DataConverter
 		if ($photoMainBxId && $photoMainUrl)
 			$result["PHOTO_MAIN"] = array(
 				$photoMainBxId => array(
-					"PHOTOS_BX_ID" => $photoMainBxId,
-					"PHOTOS_URL" => $photoMainUrl,
+					"PHOTO_BX_ID" => $photoMainBxId,
+					"PHOTO_URL" => $photoMainUrl,
 				),
 			);
 
@@ -402,7 +405,7 @@ class Product extends DataConverter
 		{
 			foreach ($data["PROPERTIES"]["MORE_PHOTO"]["VALUE"] as $ph)
 			{
-				$result["PHOTOS"][$ph] = array("PHOTOS_BX_ID" => $ph);
+				$result["PHOTOS"][$ph] = array("PHOTO_BX_ID" => $ph);
 			}
 		}
 
@@ -416,7 +419,7 @@ class Product extends DataConverter
 			foreach ($data["PROPERTIES"][$vkPhotosKey]["VALUE"] as $ph)
 			{
 				$result["PHOTOS_FOR_VK"][$ph] = array(
-					"PHOTOS_BX_ID" => $ph,
+					"PHOTO_BX_ID" => $ph,
 				);
 			}
 		}

@@ -40,7 +40,7 @@ class ImportSettings implements Exchange\ISettings
             self::$currentSettings['finalStatusId'][Exchange\EntityType::ORDER_NAME] = "F";
             self::$currentSettings['finalStatusOnDelivery'][Exchange\EntityType::ORDER_NAME] = Option::get("sale", "1C_FINAL_STATUS_ON_DELIVERY", "");
 
-            self::$currentSettings['changeStatusFor'][Exchange\EntityType::ORDER_NAME] = Option::get("sale", "1C_CHANGE_STATUS_FROM_1C", "");
+            self::$currentSettings['changeStatusFor'][Exchange\EntityType::ORDER_NAME] = Option::get("sale", "1C_CHANGE_STATUS_FROM_1C", "Y");
             self::$currentSettings['changeStatusFor'][Exchange\EntityType::SHIPMENT_NAME] = '';
             self::$currentSettings['changeStatusFor'][Exchange\EntityType::PAYMENT_CASH_NAME] = '';
             self::$currentSettings['changeStatusFor'][Exchange\EntityType::PAYMENT_CASH_LESS_NAME] = '';

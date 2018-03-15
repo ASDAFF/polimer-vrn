@@ -89,8 +89,12 @@ class CRatings extends CAllRatings
 					".$ID." RATING_ID,
 					U.ID as ENTITY_ID
 				FROM
-					b_user U LEFT JOIN b_rating_user RU ON RU.RATING_ID = ".$ID." and RU.ENTITY_ID = U.ID
-				WHERE RU.ID IS NULL	";
+					b_user U 
+				LEFT JOIN b_rating_user RU ON RU.RATING_ID = ".$ID." and RU.ENTITY_ID = U.ID
+				WHERE 
+					U.ACTIVE = 'Y' 
+					AND (CASE WHEN U.EXTERNAL_AUTH_ID IN ('".join("', '", \Bitrix\Main\UserTable::getExternalUserTypes())."') THEN 'Y' ELSE 'N' END) = 'N'
+					AND RU.ID IS NULL	";
 			$res = $DB->Query($strSql, false, $err_mess.__LINE__);
 			// authority calc
 			if ($arRating['AUTHORITY'] == 'Y')
@@ -387,6 +391,7 @@ class CRatings extends CAllRatings
 					b_user U
 				WHERE ".(!empty($strModulesSql)? "U.ID = MS.ENTITY_ID AND": "")."
 				U.ACTIVE = 'Y'
+				AND (CASE WHEN U.EXTERNAL_AUTH_ID IN ('".join("', '", \Bitrix\Main\UserTable::getExternalUserTypes())."') THEN 'Y' ELSE 'N' END) = 'N'	
 				AND U.LAST_LOGIN > DATE_SUB(NOW(), INTERVAL ".intval($communityLastVisit)." DAY)
 			";
 		}
@@ -399,6 +404,7 @@ class CRatings extends CAllRatings
 					b_user U
 				WHERE ".(!empty($strModulesSql)? "U.ID = MS.ENTITY_ID AND": "")."
 				U.ACTIVE = 'Y'
+				AND (CASE WHEN U.EXTERNAL_AUTH_ID IN ('".join("', '", \Bitrix\Main\UserTable::getExternalUserTypes())."') THEN 'Y' ELSE 'N' END) = 'N'	
 				AND U.LAST_LOGIN > DATE_SUB(NOW(), INTERVAL ".intval($communityLastVisit)." DAY)
 			";
 		}
@@ -655,7 +661,9 @@ class CRatings extends CAllRatings
 				b_rating_vote RV LEFT JOIN b_rating_vote RV0 ON RV0.USER_ID = ".intval($USER->GetId())." and RV0.OWNER_ID = RV.USER_ID,
 				b_user U
 			WHERE
-				RV.ENTITY_TYPE_ID = '".$DB->ForSql($arParam['ENTITY_TYPE_ID'])."'
+				U.ACTIVE = 'Y'
+				AND (CASE WHEN U.EXTERNAL_AUTH_ID IN ('".join("', '", \Bitrix\Main\UserTable::getExternalUserTypes())."') THEN 'Y' ELSE 'N' END) = 'N'	
+				AND RV.ENTITY_TYPE_ID = '".$DB->ForSql($arParam['ENTITY_TYPE_ID'])."'
 				and RV.ENTITY_ID =  ".intval($arParam['ENTITY_ID'])."
 				and RV.USER_ID = U.ID
 				".($bplus? " and RV.VALUE > 0 ": " and RV.VALUE < 0 ")."
@@ -677,7 +685,9 @@ class CRatings extends CAllRatings
 				b_rating_vote RV LEFT JOIN b_rating_vote RV0 ON RV0.USER_ID = ".intval($USER->GetId())." and RV0.OWNER_ID = RV.USER_ID,
 				b_user U
 			WHERE
-				RV.ENTITY_TYPE_ID = '".$DB->ForSql($arParam['ENTITY_TYPE_ID'])."'
+				U.ACTIVE = 'Y'
+				AND (CASE WHEN U.EXTERNAL_AUTH_ID IN ('".join("', '", \Bitrix\Main\UserTable::getExternalUserTypes())."') THEN 'Y' ELSE 'N' END) = 'N'	
+				AND RV.ENTITY_TYPE_ID = '".$DB->ForSql($arParam['ENTITY_TYPE_ID'])."'
 				and RV.ENTITY_ID =  ".intval($arParam['ENTITY_ID'])."
 				and RV.USER_ID = U.ID
 				".($bplus? " and RV.VALUE > 0 ": " and RV.VALUE < 0 ")."

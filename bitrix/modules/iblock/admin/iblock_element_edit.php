@@ -614,6 +614,10 @@ do{ //one iteration loop
 					);
 				}
 			}
+			else
+			{
+				$PROP[$k1] = array();
+			}
 		}
 
 		$DESCRIPTION_PROP = $_POST["DESCRIPTION_PROP"];
@@ -906,7 +910,7 @@ do{ //one iteration loop
 						$arDETAIL_PICTURE["COPY_FILE"] = "Y";
 
 					$arFields = array(
-						"ACTIVE" => $_POST["ACTIVE"],
+						"ACTIVE" => (isset($_POST["ACTIVE"]) ? $_POST["ACTIVE"] : 'N'),
 						"MODIFIED_BY" => $USER->GetID(),
 						"IBLOCK_ID" => $IBLOCK_ID,
 						"ACTIVE_FROM" => $_POST["ACTIVE_FROM"],
@@ -1539,7 +1543,9 @@ else
 
 	if($bVarsFromForm)
 	{
-		if(!isset($ACTIVE)) $ACTIVE = "N"; //It is checkbox. So it is not set in POST.
+		//save compatibility with old custom form
+		if (!isset($ACTIVE))
+			$ACTIVE = 'N';
 		$DB->InitTableVarsForEdit("b_iblock_element", "", "str_");
 		$str_IBLOCK_ELEMENT_SECTION = $IBLOCK_SECTION;
 		$str_IPROPERTY_TEMPLATES = $_POST["IPROPERTY_TEMPLATES"];
@@ -1558,6 +1564,7 @@ else
 	$useCustomFormPropertyId = true;
 	if ($bCustomForm)
 		$useCustomFormPropertyId = ((string)Main\Config\Option::get('iblock', 'custom_edit_form_use_property_id') == 'Y');
+	$db_prop_values = false; //it is a db cache
 	$arPROP_tmp = array();
 	$properties = CIBlockProperty::GetList(
 		array("SORT"=>"ASC", "NAME"=>"ASC", "ID" => "ASC"),
@@ -1579,56 +1586,68 @@ else
 			$prop_values = $PROP[$prop_fields["ID"]];
 			$prop_values_with_descr = $prop_values;
 		}
-		elseif ($bVarsFromForm)
+		elseif ($bVarsFromForm && $prop_fields["PROPERTY_TYPE"] == Iblock\PropertyTable::TYPE_FILE)
 		{
-			if($prop_fields["PROPERTY_TYPE"]=="F")
+			if ($db_prop_values === false)
 			{
-				$db_prop_values = CIBlockElement::GetProperty($IBLOCK_ID, $WF_ID, "id", "asc", Array("ID"=>$prop_fields["ID"], "EMPTY"=>"N"));
-				while($res = $db_prop_values->Fetch())
+				$db_prop_values = array();
+				$rs_prop_values = CIBlockElement::GetProperty($IBLOCK_ID, $WF_ID, "id", "asc", array("EMPTY"=>"N"));
+				while ($res = $rs_prop_values->Fetch())
+					$db_prop_values[$res["ID"]][] = $res;
+			}
+			if (isset($db_prop_values[$prop_fields["ID"]]))
+			{
+				foreach ($db_prop_values[$prop_fields["ID"]] as $res)
 				{
 					$prop_values[$res["PROPERTY_VALUE_ID"]] = $res["VALUE"];
 					$prop_values_with_descr[$res["PROPERTY_VALUE_ID"]] = array("VALUE"=>$res["VALUE"],"DESCRIPTION"=>$res["DESCRIPTION"]);
 				}
 			}
-			elseif(is_array($PROP))
+		}
+		elseif ($bVarsFromForm && is_array($PROP))
+		{
+			if(array_key_exists($prop_fields["ID"], $PROP))
+				$prop_values = $PROP[$prop_fields["ID"]];
+			else
+				$prop_values = $PROP[$prop_fields["CODE"]];
+			$prop_values_with_descr = $prop_values;
+		}
+		elseif ($bVarsFromForm)
+		{
+			$prop_values = "";
+			$prop_values_with_descr = $prop_values;
+		}
+		elseif ($historyId > 0)
+		{
+			$vx = $arResult["DOCUMENT"]["PROPERTIES"][$combineIndex];
+
+			$prop_values = array();
+			if (is_array($vx["VALUE"]) && is_array($vx["DESCRIPTION"]))
 			{
-				if(array_key_exists($prop_fields["ID"], $PROP))
-					$prop_values = $PROP[$prop_fields["ID"]];
-				else
-					$prop_values = $PROP[$prop_fields["CODE"]];
-				$prop_values_with_descr = $prop_values;
+				for ($i = 0, $cnt = count($vx["VALUE"]); $i < $cnt; $i++)
+					$prop_values[] = array("VALUE" => $vx["VALUE"][$i], "DESCRIPTION" => $vx["DESCRIPTION"][$i]);
 			}
 			else
 			{
-				$prop_values = "";
-				$prop_values_with_descr = $prop_values;
+				$prop_values[] = array("VALUE" => $vx["VALUE"], "DESCRIPTION" => $vx["DESCRIPTION"]);
 			}
+
+			$prop_values_with_descr = $prop_values;
 		}
-		else
+		elseif ($ID > 0)
 		{
-			if ($historyId > 0)
+			if (empty($clearedByCopyProperties) || !in_array($prop_fields["ID"], $clearedByCopyProperties))
 			{
-				$vx = $arResult["DOCUMENT"]["PROPERTIES"][$combineIndex];
-
-				$prop_values = array();
-				if (is_array($vx["VALUE"]) && is_array($vx["DESCRIPTION"]))
+				if ($db_prop_values === false)
 				{
-					for ($i = 0, $cnt = count($vx["VALUE"]); $i < $cnt; $i++)
-						$prop_values[] = array("VALUE" => $vx["VALUE"][$i], "DESCRIPTION" => $vx["DESCRIPTION"][$i]);
+					$db_prop_values = array();
+					$rs_prop_values = CIBlockElement::GetProperty($IBLOCK_ID, $WF_ID, "id", "asc", array("EMPTY"=>"N"));
+					while ($res = $rs_prop_values->Fetch())
+						$db_prop_values[$res["ID"]][] = $res;
 				}
-				else
+				if (isset($db_prop_values[$prop_fields["ID"]]))
 				{
-					$prop_values[] = array("VALUE" => $vx["VALUE"], "DESCRIPTION" => $vx["DESCRIPTION"]);
-				}
-
-				$prop_values_with_descr = $prop_values;
-			}
-			elseif($ID>0)
-			{
-				if (empty($clearedByCopyProperties) || !in_array($prop_fields["ID"], $clearedByCopyProperties))
-				{
-					$db_prop_values = CIBlockElement::GetProperty($IBLOCK_ID, $WF_ID, "id", "asc", array("ID"=>$prop_fields["ID"], "EMPTY"=>"N"));
-					while($res = $db_prop_values->Fetch())
+					foreach ($db_prop_values[$prop_fields["ID"]] as $res)
 					{
 						if($res["WITH_DESCRIPTION"]=="Y")
 							$prop_values[$res["PROPERTY_VALUE_ID"]] = array("VALUE"=>$res["VALUE"], "DESCRIPTION"=>$res["DESCRIPTION"]);
@@ -2319,7 +2338,13 @@ $tabControl->BeginCustomField("PREVIEW_TEXT", GetMessage("IBLOCK_FIELD_PREVIEW_T
 	<?else:?>
 	<tr id="tr_PREVIEW_TEXT_TYPE">
 		<td><?echo GetMessage("IBLOCK_DESC_TYPE")?></td>
-		<td><input type="radio" name="PREVIEW_TEXT_TYPE" id="PREVIEW_TEXT_TYPE_text" value="text"<?if($str_PREVIEW_TEXT_TYPE!="html")echo " checked"?>> <label for="PREVIEW_TEXT_TYPE_text"><?echo GetMessage("IBLOCK_DESC_TYPE_TEXT")?></label> / <input type="radio" name="PREVIEW_TEXT_TYPE" id="PREVIEW_TEXT_TYPE_html" value="html"<?if($str_PREVIEW_TEXT_TYPE=="html")echo " checked"?>> <label for="PREVIEW_TEXT_TYPE_html"><?echo GetMessage("IBLOCK_DESC_TYPE_HTML")?></label></td>
+		<td>
+			<?if($arIBlock["FIELDS"]["PREVIEW_TEXT_TYPE_ALLOW_CHANGE"]["DEFAULT_VALUE"] === "N"):?>
+				<input type="hidden" name="PREVIEW_TEXT_TYPE" value="<?echo $str_PREVIEW_TEXT_TYPE?>"><?echo $str_PREVIEW_TEXT_TYPE!="html"? GetMessage("IBLOCK_DESC_TYPE_TEXT"): GetMessage("IBLOCK_DESC_TYPE_HTML")?>
+			<?else:?>
+				<input type="radio" name="PREVIEW_TEXT_TYPE" id="PREVIEW_TEXT_TYPE_text" value="text"<?if($str_PREVIEW_TEXT_TYPE!="html")echo " checked"?>> <label for="PREVIEW_TEXT_TYPE_text"><?echo GetMessage("IBLOCK_DESC_TYPE_TEXT")?></label> / <input type="radio" name="PREVIEW_TEXT_TYPE" id="PREVIEW_TEXT_TYPE_html" value="html"<?if($str_PREVIEW_TEXT_TYPE=="html")echo " checked"?>> <label for="PREVIEW_TEXT_TYPE_html"><?echo GetMessage("IBLOCK_DESC_TYPE_HTML")?></label>
+			<?endif?>
+		</td>
 	</tr>
 	<tr id="tr_PREVIEW_TEXT">
 		<td colspan="2" align="center">
@@ -2439,7 +2464,13 @@ $tabControl->BeginCustomField("DETAIL_TEXT", GetMessage("IBLOCK_FIELD_DETAIL_TEX
 	<?else:?>
 	<tr id="tr_DETAIL_TEXT_TYPE">
 		<td><?echo GetMessage("IBLOCK_DESC_TYPE")?></td>
-		<td><input type="radio" name="DETAIL_TEXT_TYPE" id="DETAIL_TEXT_TYPE_text" value="text"<?if($str_DETAIL_TEXT_TYPE!="html")echo " checked"?>> <label for="DETAIL_TEXT_TYPE_text"><?echo GetMessage("IBLOCK_DESC_TYPE_TEXT")?></label> / <input type="radio" name="DETAIL_TEXT_TYPE" id="DETAIL_TEXT_TYPE_html" value="html"<?if($str_DETAIL_TEXT_TYPE=="html")echo " checked"?>> <label for="DETAIL_TEXT_TYPE_html"><?echo GetMessage("IBLOCK_DESC_TYPE_HTML")?></label></td>
+		<td>
+			<?if($arIBlock["FIELDS"]["DETAIL_TEXT_TYPE_ALLOW_CHANGE"]["DEFAULT_VALUE"] === "N"):?>
+				<input type="hidden" name="DETAIL_TEXT_TYPE" value="<?echo $str_DETAIL_TEXT_TYPE?>"><?echo $str_DETAIL_TEXT_TYPE!="html"? GetMessage("IBLOCK_DESC_TYPE_TEXT"): GetMessage("IBLOCK_DESC_TYPE_HTML")?>
+			<?else:?>
+				<input type="radio" name="DETAIL_TEXT_TYPE" id="DETAIL_TEXT_TYPE_text" value="text"<?if($str_DETAIL_TEXT_TYPE!="html")echo " checked"?>> <label for="DETAIL_TEXT_TYPE_text"><?echo GetMessage("IBLOCK_DESC_TYPE_TEXT")?></label> / <input type="radio" name="DETAIL_TEXT_TYPE" id="DETAIL_TEXT_TYPE_html" value="html"<?if($str_DETAIL_TEXT_TYPE=="html")echo " checked"?>> <label for="DETAIL_TEXT_TYPE_html"><?echo GetMessage("IBLOCK_DESC_TYPE_HTML")?></label>
+			<?endif?>
+		</td>
 	</tr>
 	<tr id="tr_DETAIL_TEXT">
 		<td colspan="2" align="center">

@@ -25,7 +25,6 @@
 			'refused': 'main-user-consent-request-refused',
 			'accepted': 'main-user-consent-request-accepted'
 		},
-		textList: {},
 		current: null,
 		autoSave: false,
 		isFormSubmitted: false,
@@ -303,10 +302,52 @@
 				this.nodes.container.style.display = 'none';
 			}
 		},
+
+		cache: {
+			list: [],
+			stringifyKey: function (key)
+			{
+				return BX.type.isString(key) ? key : JSON.stringify({'key': key});
+			},
+			set: function (key, data)
+			{
+				var item = this.get(key);
+				if (item)
+				{
+					item.data = data;
+				}
+				else
+				{
+					this.list.push({
+						'key': this.stringifyKey(key),
+						'data': data
+					});
+				}
+			},
+			getData: function (key)
+			{
+				var item = this.get(key);
+				return item ? item.data : null;
+			},
+			get: function (key)
+			{
+				key = this.stringifyKey(key);
+				var filtered = this.list.filter(function (item) {
+					return (item.key == key);
+				});
+				return (filtered.length > 0 ? filtered[0] : null);
+			},
+			has: function (key)
+			{
+				return !!this.get(key);
+			}
+		},
 		requestConsent: function (id, sendData, onAccepted, onRefused)
 		{
 			sendData = sendData || {};
 			sendData.id = id;
+
+			var cacheHash = this.cache.stringifyKey(sendData);
 
 			if (!this.popup.isInit)
 			{
@@ -322,12 +363,12 @@
 
 			if (this.current && this.current.config.text)
 			{
-				this.textList[id] = this.current.config.text;
+				this.cache.set(cacheHash, this.current.config.text);
 			}
 
-			if (this.textList.hasOwnProperty(id))
+			if (this.cache.has(cacheHash))
 			{
-				this.setTextToPopup(this.textList[id]);
+				this.setTextToPopup(this.cache.getData(cacheHash));
 			}
 			else
 			{
@@ -337,8 +378,8 @@
 					'getText', sendData,
 					function (data)
 					{
-						this.textList[id] = data.text || '';
-						this.setTextToPopup(this.textList[id]);
+						this.cache.set(cacheHash, data.text || '');
+						this.setTextToPopup(this.cache.getData(cacheHash));
 					},
 					function ()
 					{

@@ -449,6 +449,13 @@ class CUserTypeString extends \Bitrix\Main\UserField\TypeBase
 			}
 			$first = false;
 
+			$res = \Bitrix\Main\Text\HtmlFilter::encode($res);
+
+			if($arUserField['SETTINGS']['ROWS'] > 1 && strlen($res) > 0)
+			{
+				$res = nl2br($res);
+			}
+
 			if (strlen($arUserField['PROPERTY_VALUE_LINK']) > 0)
 			{
 				$res = '<a href="'.htmlspecialcharsbx(str_replace('#VALUE#', urlencode($res), $arUserField['PROPERTY_VALUE_LINK'])).'">'.$res.'</a>';
@@ -521,6 +528,7 @@ class CUserTypeString extends \Bitrix\Main\UserField\TypeBase
 			$attrList['class'] = static::getHelper()->getCssClassName().(isset($attrList['class']) ? ' '.$attrList['class'] : '');
 
 			$attrList['name'] = $fieldName;
+			$attrList['tabindex'] = '0';
 
 			if($arUserField["SETTINGS"]["ROWS"] < 2)
 			{

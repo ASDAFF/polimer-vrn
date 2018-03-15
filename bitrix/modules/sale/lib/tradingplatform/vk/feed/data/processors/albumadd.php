@@ -72,7 +72,7 @@ class AlbumAdd extends DataProcessor
 //			ADD or EDIT albums
 			if ($richLog)
 				$logger->addLog("Add or edit albums", $data);
-			$albumsData = Vk\Api\ApiHelper::extractItemsFromArray($data, array("SECTION_ID", "TITLE", "FLAG_EDIT", "PHOTO_VK_ID", "album_vk_id"));
+			$albumsData = Vk\Api\ApiHelper::extractItemsFromArray($data, array("SECTION_ID", "TITLE", "FLAG_EDIT", "PHOTO_VK_ID", "ALBUM_VK_ID"));
 			$albumsAddEditResults = $this->executer->executeMarketAlbumAddEdit(array(
 				"owner_id" => $this->vkGroupId,
 				"data" => $albumsData,
@@ -87,7 +87,7 @@ class AlbumAdd extends DataProcessor
 			{
 				if (isset($item["flag_album_add_result"]) && $item["flag_album_add_result"])
 					$dataToMapping[] = array(
-						"value_external" => $item["album_vk_id"],
+						"value_external" => $item["ALBUM_VK_ID"],
 						"value_internal" => $item["SECTION_ID"],
 					);
 			}
@@ -99,8 +99,8 @@ class AlbumAdd extends DataProcessor
 //			add saved data to CACHE to accelereate export process. Cache updated every hour (for long exports)
 			if (!empty($data))
 			{
-				$dataToCache = Vk\Api\ApiHelper::extractItemsFromArray($data, array('album_vk_id'));
-				$dataToCache = Vk\Api\ApiHelper::changeArrayMainKey($dataToCache, 'album_vk_id');
+				$dataToCache = Vk\Api\ApiHelper::extractItemsFromArray($data, array('ALBUM_VK_ID'));
+				$dataToCache = Vk\Api\ApiHelper::changeArrayMainKey($dataToCache, 'ALBUM_VK_ID');
 				$vkExportedData->addData($dataToCache);
 			}
 

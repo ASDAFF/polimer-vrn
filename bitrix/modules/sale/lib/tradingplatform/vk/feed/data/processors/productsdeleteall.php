@@ -27,13 +27,13 @@ class ProductsDeleteAll extends DataProcessor
 //		delete ALL from mapping
 		$productsMappedToRemove = array();
 		foreach ($productsMapped as $productMapped)
-			$productsMappedToRemove[] = array("VALUE_EXTERNAL" => $productMapped["vk_id"]);
+			$productsMappedToRemove[] = array("VALUE_EXTERNAL" => $productMapped["VK_ID"]);
 		
 		if (!empty($productsMappedToRemove))
 			Vk\Map::removeProductMapping($productsMappedToRemove, $this->exportId);
 
 
-		$productsFromVk = Vk\Api\ApiHelper::extractItemsFromArray($productsFromVk, array("vk_id"));
+		$productsFromVk = Vk\Api\ApiHelper::extractItemsFromArray($productsFromVk, array("VK_ID"));
 		$productsFromVk = array_chunk($productsFromVk, Vk\Vk::MAX_EXECUTION_ITEMS);    // max 25 items in execute()
 		foreach ($productsFromVk as $chunk)
 		{

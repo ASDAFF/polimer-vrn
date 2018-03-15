@@ -63,22 +63,19 @@ if($arParams['CAN_EDIT']): ?>
 
 <? foreach($arResult["ITEMS"] as $item): ?>
 	<div class="bp-bx-application">
-		<a href="<?= $item["LIST_URL"]?>">
+		<a href="<?= $item["LIST_URL"]?>" class="bp-bx-application-link">
 			<span class="bp-bx-application-icon"><?= $item["IMAGE"] ?></span>
-		<span class="bp-bx-application-title-wrapper">
-			<span class="bp-bx-application-title">
-				<span class="bx-lists-application-link">
-					<span><?= $item["NAME"] ?></span></span>
+			<span class="bp-bx-application-title-wrapper">
+				<span class="bp-bx-application-title"><?= $item["NAME"] ?></span>
+				<? if($claim && $arParams['CAN_EDIT']): ?>
+					<span class="bp-bx-application-check">
+						<input type="checkbox" value="" id="bx-lists-show-live-feed-<?= intval($item['ID']) ?>"
+						<?= intval($item['SHOW_LIVE_FEED']) ? 'checked' : '' ?>
+					        onclick="javascript:BX.Lists['<?=$jsClass?>'].showLiveFeed(<?= $item['ID'] ?>);">
+						<label for="bx-lists-show-live-feed-<?= $item['ID'] ?>"><?= GetMessage("CT_BLL_TOOLBAR_SHOW_LIVE_FEED") ?></label>
+					</span>
+				<? endif; ?>
 			</span>
-			<? if($claim && $arParams['CAN_EDIT']): ?>
-				<span class="bp-bx-application-check">
-				<input type="checkbox" value="" id="bx-lists-show-live-feed-<?= intval($item['ID']) ?>"
-					<?= intval($item['SHOW_LIVE_FEED']) ? 'checked' : '' ?>
-					   onclick="javascript:BX.Lists['<?=$jsClass?>'].showLiveFeed(<?= $item['ID'] ?>);">
-				<label for="bx-lists-show-live-feed-<?= $item['ID'] ?>"><?= GetMessage("CT_BLL_TOOLBAR_SHOW_LIVE_FEED") ?></label>
-			</span>
-			<? endif; ?>
-		</span>
 		</a>
 	</div>
 <? endforeach; ?>

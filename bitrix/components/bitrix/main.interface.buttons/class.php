@@ -19,6 +19,10 @@ class CMainInterfaceButtons extends CBitrixComponent
 	 */
 	protected $userOptionsCategory = "ui";
 
+	/**
+	 * @var int
+	 */
+	protected $maxCounterSize = 99;
 
 	/**
 	 * User options settings key
@@ -416,6 +420,12 @@ class CMainInterfaceButtons extends CBitrixComponent
 		$item["CLASS_SUBMENU_ITEM"] = $this->prepareItemClass($item["CLASS_SUBMENU_ITEM"]);
 		$item["DATA_ID"] = $item["ID"];
 		$item["ID"] = $this->prepareItemId($item["ID"]);
+
+		$item["MAX_COUNTER_SIZE"] = array_key_exists('MAX_COUNTER_SIZE', $item)
+			? $item["MAX_COUNTER_SIZE"]
+			: $this->maxCounterSize ;
+
+
 		$item["ON_CLICK"] = $this->prepareItemOnClickString($item["ON_CLICK"]);
 
 		if (isset($item["COUNTER"]))

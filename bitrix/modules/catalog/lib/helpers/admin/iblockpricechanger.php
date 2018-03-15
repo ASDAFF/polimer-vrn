@@ -289,7 +289,7 @@ class IblockPriceChanger
 		if ($targetType == 0)
 			return $result;
 
-		if ($initialType > 0 && $targetType == $basePriceId)
+		if ($initialType > 0 && $targetType == $initialType)
 			return $result;
 
 		foreach ($priceElementsListSplitedByType as $typeElements => $priceElementsIdList)
@@ -459,6 +459,7 @@ class IblockPriceChanger
 						$priceResult = \CPrice::Update(
 							$destinationPrice['ID'],
 							array(
+								'PRODUCT_ID' => $productId,
 								'CATALOG_GROUP_ID' => $destinationPrice['CATALOG_GROUP_ID'],
 								'PRICE' => $destinationPrice['PRICE'],
 								'CURRENCY' => $destinationPrice['CURRENCY'],

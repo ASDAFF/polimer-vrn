@@ -135,11 +135,6 @@ BX.UserContentView.getInViewScopeNode = function(nodeId)
 			)
 		)
 		{
-/*
-			var fullContentNode = (this.fullContentNodeList[nodeId] ? this.fullContentNodeList[nodeId] : node);
-			var timeout = this.viewAreaTimePeriodMin * (fullContentNode && parseInt(fullContentNode.clientHeight) > 0 ? fullContentNode.clientHeight / this.viewAreaAverageHeight : 1);
-			timeout = (timeout > this.viewAreaTimePeriodMin ? (timeout < this.viewAreaTimePeriodMax ? timeout : this.viewAreaTimePeriodMax) : this.viewAreaTimePeriodMin);
-*/
 			setTimeout(BX.delegate(function() {
 				if (BX.UserContentView.isNodeVisibleOnScreen(this))
 				{
@@ -191,6 +186,15 @@ BX.UserContentView.setRead = function(node)
 				xmlId: xmlId,
 				save: this.getSaveValue(node)
 			});
+
+			var eventParams = {
+				xmlId: xmlId
+			};
+			BX.onCustomEvent(window, 'BX.UserContentView.onSetRead', [eventParams]);
+			if (typeof BXMobileApp != 'undefined')
+			{
+				BXMobileApp.onCustomEvent("BX.UserContentView.onSetRead", eventParams, true);
+			}
 /*BX.addClass(node, 'feed-post-contentview-read');*/
 		}
 	}

@@ -89,10 +89,8 @@ class Quarter
 	 */
 	public static function getEndDate($quarter, $year)
 	{
-		$startDate = new Date(self::getStartDate($quarter, $year));
-		$endDate = $startDate->add("3 months - 1 day");
-		$endDateString = $endDate->toString();
-
-		return $endDateString;
+		$date = Date::createFromTimestamp(\MakeTimeStamp(self::getStartDate($quarter, $year)));
+		$date->add("3 months");
+		return $date->toString();
 	}
 }

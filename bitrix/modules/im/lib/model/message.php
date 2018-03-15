@@ -7,7 +7,7 @@ Loc::loadMessages(__FILE__);
 
 /**
  * Class MessageTable
- * 
+ *
  * Fields:
  * <ul>
  * <li> ID int mandatory
@@ -216,7 +216,7 @@ class MessageTable extends Main\Entity\DataManager
 	/**
 	 * Return current date for DATE_CREATE field.
 	 *
-	 * @return array
+	 * @return \Bitrix\Main\Type\DateTime
 	 */
 	public static function getCurrentDate()
 	{

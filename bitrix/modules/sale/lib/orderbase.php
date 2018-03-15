@@ -231,14 +231,14 @@ abstract class OrderBase
 	public function setBasket(Basket $basket)
 	{
 		if ($this->getId())
+		{
 			throw new Main\NotSupportedException();
+		}
 
 		$result = new Result();
 
 		$basket->setOrder($this);
-
 		$this->basketCollection = $basket;
-//		$basket->refreshData(array('PRICE', 'QUANTITY'));
 
 		if (!$this->isMathActionOnly())
 		{
@@ -251,16 +251,26 @@ abstract class OrderBase
 			}
 		}
 
-//		/** @var Result $r */
-//		$r = $this->setField("PRICE", $basket->getPrice());
-//		if (!$r->isSuccess(true))
-//		{
-//			$result->addErrors($r->getErrors());
-//			return $result;
-//		}
-		//$this->setField("CURRENCY", $basket->get)
-
 		return $result;
+	}
+
+	/**
+	 * @param BasketBase $basket
+	 *
+	 * @return Result
+	 * @throws Main\NotSupportedException
+	 */
+	public function appendBasket(BasketBase $basket)
+	{
+		if ($this->getId())
+		{
+			throw new Main\NotSupportedException();
+		}
+
+		$basket->setOrder($this);
+		$this->basketCollection = $basket;
+
+		return new Result();
 	}
 
 	/**
@@ -301,6 +311,18 @@ abstract class OrderBase
 	 */
 	public function setField($name, $value)
 	{
+		$priceRoundedFields = array(
+			'PRICE' => 'PRICE',
+			'PRICE_DELIVERY' => 'PRICE_DELIVERY',
+			'SUM_PAID' => 'SUM_PAID',
+			'PRICE_PAYMENT' => 'PRICE_PAYMENT',
+			'DISCOUNT_VALUE' => 'DISCOUNT_VALUE',
+		);
+		if (isset($priceRoundedFields[$name]))
+		{
+			$value = PriceMaths::roundPrecision($value);
+		}
+
 		if ($this->isCalculatedField($name))
 		{
 			$this->calculatedFields->set($name, $value);
@@ -323,6 +345,18 @@ abstract class OrderBase
 	 */
 	public function setFieldNoDemand($name, $value)
 	{
+		$priceRoundedFields = array(
+			'PRICE' => 'PRICE',
+			'PRICE_DELIVERY' => 'PRICE_DELIVERY',
+			'SUM_PAID' => 'SUM_PAID',
+			'PRICE_PAYMENT' => 'PRICE_PAYMENT',
+			'DISCOUNT_VALUE' => 'DISCOUNT_VALUE',
+		);
+		if (isset($priceRoundedFields[$name]))
+		{
+			$value = PriceMaths::roundPrecision($value);
+		}
+
 		if ($this->isCalculatedField($name))
 		{
 			$this->calculatedFields->set($name, $value);
@@ -399,6 +433,16 @@ abstract class OrderBase
 
 	abstract public function loadPropertyCollection();
 
+	/**
+	 * Full refresh order data.
+	 *
+	 * @param array $select
+	 * @return Result
+	 */
+	public function refreshData($select = array())
+	{
+		return new Result();
+	}
 
 	/**
 	 * @return int
@@ -521,7 +565,7 @@ abstract class OrderBase
 			$this->refreshVat();
 		}
 
-		return $this->getField('USE_VAT') == "Y"? true : false;
+		return $this->getField('USE_VAT') === 'Y';
 	}
 
 	/**
@@ -583,8 +627,27 @@ abstract class OrderBase
 		{
 			$this->resetVat();
 
-			$basketVatRate = $basket->getVatRate();
-			if ($basketVatRate > 0)
+			$vatRate = $basket->getVatRate();
+			$isUsedVat = ($vatRate > 0) ? 'Y' : 'N';
+			$vatSum = $basket->getVatSum();
+
+			$shipmentCollection = $this->shipmentCollection;
+			if ($shipmentCollection)
+			{
+				/** @var Shipment $shipment */
+				foreach ($shipmentCollection as $shipment)
+				{
+					$shipmentVatRate = $shipment->getVatRate();
+					if ($shipmentVatRate)
+					{
+						$isUsedVat = 'Y';
+						$vatSum += $shipment->getVatSum();
+						$vatRate = max($vatRate, $shipmentVatRate);
+					}
+				}
+			}
+
+			if ($isUsedVat === 'Y')
 			{
 				/** @var Result $r */
 				$r = $this->setField('USE_VAT', 'Y');
@@ -594,14 +657,14 @@ abstract class OrderBase
 				}
 
 				/** @var Result $r */
-				$r = $this->setField('VAT_RATE', $basketVatRate);
+				$r = $this->setField('VAT_RATE', $vatRate);
 				if (!$r->isSuccess())
 				{
 					$result->addErrors($r->getErrors());
 				}
 
 				/** @var Result $r */
-				$r = $this->setField('VAT_SUM', $basket->getVatSum());
+				$r = $this->setField('VAT_SUM', $vatSum);
 				if (!$r->isSuccess())
 				{
 					$result->addErrors($r->getErrors());
@@ -685,10 +748,71 @@ abstract class OrderBase
 
 	/**
 	 * @param string $event
-	 * @return bool
+	 * @return array
 	 */
 	public static function getEventListUsed($event)
 	{
 		return array();
 	}
+
+	/**
+	 * @param $action
+	 * @param BasketItemBase $basketItem
+	 * @param null $name
+	 * @param null $oldValue
+	 * @param null $value
+	 * @return Result
+	 */
+	public function onBasketModify($action, BasketItemBase $basketItem, $name = null, $oldValue = null, $value = null)
+	{
+		return new Result();
+	}
+
+
+	/**
+	 * @internal
+	 * @return Result
+	 */
+	public function onBeforeBasketRefresh()
+	{
+		return new Result();
+	}
+
+
+	/**
+	 * @internal
+	 * @return Result
+	 */
+	public function onAfterBasketRefresh()
+	{
+		return new Result();
+	}
+
+	/**
+	 * @param string $reasonMarked
+	 * @return Result
+	 */
+	public function addMarker($reasonMarked)
+	{
+		return new Result();
+	}
+
+	/**
+	 * Get the entity of taxes
+	 *
+	 * @return Tax
+	 */
+	public function getTax()
+	{
+		if ($this->tax === null)
+		{
+			$this->tax = $this->loadTax();
+		}
+		return $this->tax;
+	}
+
+	/**
+	 * @return Tax
+	 */
+	abstract protected function loadTax();
 }

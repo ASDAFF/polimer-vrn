@@ -28,7 +28,7 @@ $arAscDesc = array(
 	'desc' => GetMessage('IBLOCK_SORT_DESC'),
 );
 
-$singleIblockMode = isset($arCurrentValues['IBLOCK_MODE']) && $arCurrentValues['IBLOCK_MODE'] === 'single';
+$singleIblockMode = !isset($arCurrentValues['IBLOCK_MODE']) || $arCurrentValues['IBLOCK_MODE'] === 'single';
 $showFromSection = $singleIblockMode && isset($arCurrentValues['SHOW_FROM_SECTION']) && $arCurrentValues['SHOW_FROM_SECTION'] === 'Y';
 
 $arComponentParameters = array(
@@ -56,10 +56,10 @@ $arComponentParameters = array(
 			'NAME' => GetMessage('CP_CPV_IBLOCK_MODE'),
 			'TYPE' => 'LIST',
 			'VALUES' => array(
-				'multi' => GetMessage('CP_CPV_IBLOCK_MODE_MULTI'),
-				'single' => GetMessage('CP_CPV_IBLOCK_MODE_SINGLE')
+				'single' => GetMessage('CP_CPV_IBLOCK_MODE_SINGLE'),
+				'multi' => GetMessage('CP_CPV_IBLOCK_MODE_MULTI')
 			),
-			'DEFAULT' => 'multi',
+			'DEFAULT' => 'single',
 			'REFRESH' => 'Y',
 		),
 		'IBLOCK_TYPE' => array(

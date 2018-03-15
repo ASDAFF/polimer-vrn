@@ -1,13 +1,10 @@
 <?
 class CCalendarReminder
 {
-	public static function ReminderAgent($eventId = 0, $userId = 0, $viewPath = '', $calendarType = '', $ownerId = 0)
+	public static function ReminderAgent($eventId = 0, $userId = 0, $viewPath = '', $calendarType = '', $ownerId = 0, $index = 0)
 	{
-		if ($eventId > 0 && $userId > 0 && $calendarType != '')
+		if ($eventId > 0 && $userId > 0 && $calendarType != '' && \Bitrix\Main\Loader::includeModule("im"))
 		{
-			if (!\Bitrix\Main\Loader::includeModule("im"))
-				return false;
-
 			$event = false;
 			$skipReminding = false;
 			$bTmpUser = CCalendar::TempUser(false, true);
@@ -21,7 +18,8 @@ class CCalendarReminder
 						"ID" => $eventId,
 						"DELETED" => "N",
 						"FROM_LIMIT" => CCalendar::Date(time() - 3600, false),
-						"TO_LIMIT" => CCalendar::Date(CCalendar::GetMaxTimestamp(), false)
+						"TO_LIMIT" => CCalendar::Date(CCalendar::GetMaxTimestamp(), false),
+						"ACTIVE_SECTION" => "Y"
 					),
 					'parseRecursion' => true,
 					'maxInstanceCount' => 3,
@@ -73,13 +71,13 @@ class CCalendarReminder
 					}
 					$arNotifyFields['MESSAGE'] = GetMessage('EC_EVENT_REMINDER', Array(
 						'#EVENT_NAME#' => $event["NAME"],
-						'#DATE_FROM#' => CCalendar::Date($fromTs, $event['DT_SKIP_TIME'] !== 'Y')
+						'#DATE_FROM#' => CCalendar::Date($fromTs, $event['DT_SKIP_TIME'] !== 'Y', true, true)
 					));
 
 					$sectionName = $section['NAME'];
 					$ownerName = CCalendar::GetOwnerName($calendarType, $ownerId);
 					if ($calendarType == 'user' && $ownerId == $userId)
-						$arNotifyFields['MESSAGE'] .= ' '.GetMessage('EC_EVENT_REMINDER_IN_PERSONAL', Array('#CALENDAR_NAME#' => $sectionName));
+						$arNotifyFields['MESSAGE'] .= ' '.GetMessage('EC_EVENT_REMINDER_IN_PERSONAL', Array('#CALENDAR_NAME#' => htmlspecialcharsbx($sectionName)));
 					else if($calendarType == 'user')
 						$arNotifyFields['MESSAGE'] .= ' '.GetMessage('EC_EVENT_REMINDER_IN_USER', Array('#CALENDAR_NAME#' => $sectionName, '#USER_NAME#' => $ownerName));
 					else if($calendarType == 'group')
@@ -89,20 +87,25 @@ class CCalendarReminder
 
 					if ($viewPath != '')
 					{
-						$viewPath .= '&EVENT_DATE='.CCalendar::Date($fromTs, false);
+						$viewPath = CHTTP::urlDeleteParams($viewPath, array("EVENT_DATE"));
+						$viewPath = CHTTP::urlAddParams($viewPath, array('EVENT_DATE' => CCalendar::Date($fromTs, false)));
 						$arNotifyFields['MESSAGE'] .= "\n".GetMessage('EC_EVENT_REMINDER_DETAIL', Array('#URL_VIEW#' => $viewPath));
 					}
 
 					$arNotifyFields["PUSH_MESSAGE"] = GetMessage('EC_EVENT_REMINDER_PUSH', Array(
 						'#EVENT_NAME#' => $event["NAME"],
-						'#DATE_FROM#' => CCalendar::Date($fromTs, $event['DT_SKIP_TIME'] !== 'Y')
+						'#DATE_FROM#' => CCalendar::GetFromToHtml(
+							$fromTs,
+							$fromTs + $event['DT_LENGTH'],
+							$event['DT_SKIP_TIME'] == 'Y',
+							$event['DT_LENGTH']
+						)
 					));
+					$arNotifyFields["PUSH_MESSAGE"] = str_replace('&ndash;', '-', $arNotifyFields["PUSH_MESSAGE"]);
+
 					$arNotifyFields["PUSH_MESSAGE"] = substr($arNotifyFields["PUSH_MESSAGE"], 0, \CCalendarNotify::PUSH_MESSAGE_MAX_LENGTH);
 
-					if (\Bitrix\Main\Loader::includeModule("im"))
-					{
-						CIMNotify::Add($arNotifyFields);
-					}
+					CIMNotify::Add($arNotifyFields);
 
 					foreach(GetModuleEvents("calendar", "OnRemindEvent", true) as $arEvent)
 						ExecuteModuleEventEx($arEvent, array(
@@ -122,7 +125,8 @@ class CCalendarReminder
 							'userId' => $userId,
 							'viewPath' => $viewPath,
 							'calendarType' => $calendarType,
-							'ownerId' => $ownerId
+							'ownerId' => $ownerId,
+							'maxIndex' => 10
 						);
 
 						// 1. clean reminders
@@ -135,19 +139,23 @@ class CCalendarReminder
 						}
 
 						// 2. Set new reminders
-						$reminder = $nextEvent['REMIND'][0];
-						if ($reminder)
+						foreach($nextEvent['REMIND'] as $reminder)
 						{
-							$delta = intVal($reminder['count']) * 60; //Minute
-							if ($reminder['type'] == 'hour')
-								$delta = $delta * 60; //Hour
-							elseif ($reminder['type'] == 'day')
-								$delta =  $delta * 60 * 24; //Day
+							if ($reminder)
+							{
+								$delta = intVal($reminder['count']) * 60; //Minute
+								if ($reminder['type'] == 'hour')
+									$delta = $delta * 60; //Hour
+								elseif ($reminder['type'] == 'day')
+									$delta =  $delta * 60 * 24; //Day
 
-							// $startTs - UTC timestamp;  date("Z", $startTs) - offset of the server
-							$agentTime = $startTs + date("Z", $startTs);
-							if (($agentTime - $delta) >= (time() - 60 * 5)) // Inaccuracy - 5 min
-								self::AddAgent(CCalendar::Date($agentTime - $delta), $remAgentParams);
+								// $startTs - UTC timestamp;  date("Z", $startTs) - offset of the server
+								$agentTime = $startTs + date("Z", $startTs);
+								if (($agentTime - $delta) >= (time() - 60 * 5)) // Inaccuracy - 5 min
+								{
+									self::AddAgent(CCalendar::Date($agentTime - $delta), $remAgentParams);
+								}
+							}
 						}
 					}
 				}
@@ -162,29 +170,48 @@ class CCalendarReminder
 
 	public static function RemoveAgent($params)
 	{
-		CAgent::RemoveAgent("CCalendar::ReminderAgent(".$params['eventId'].", ".$params['userId'].", '".$params['viewPath']."', '".$params['calendarType']."', ".$params['ownerId'].");", "calendar");
+		// remove obsolete agents
+		$res = CAgent::getList(array(), array(
+			'NAME' => "CCalendar::ReminderAgent(".$params['eventId'].", ".$params['userId']."%",
+			'MODULE_ID' => 'calendar')
+		);
+		while($item = $res->fetch())
+		{
+			CAgent::Delete($item['ID']);
+		}
 	}
 
 	public static function AddAgent($remindTime, $params)
 	{
 		global $DB;
-		self::RemoveAgent($params);
 		if (strlen($remindTime) > 0 && $DB->IsDate($remindTime, false, LANG, "FULL"))
 		{
 			$tzEnabled = CTimeZone::Enabled();
 			if ($tzEnabled)
+			{
 				CTimeZone::Disable();
+			}
+			$indexParam = '';
+			if (isset($params['index']))
+				$indexParam = ', '.$params['index'];
+
 			CAgent::AddAgent(
-				"CCalendar::ReminderAgent(".intVal($params['eventId']).", ".intVal($params['userId']).", '".addslashes($params['viewPath'])."', '".addslashes($params['calendarType'])."', ".intVal($params['ownerId']).");",
+				"CCalendar::ReminderAgent(".intVal($params['eventId']).", ".intVal($params['userId']).", '".addslashes($params['viewPath'])."', '".addslashes($params['calendarType'])."', ".intVal($params['ownerId']).$indexParam.");",
 				"calendar",
-				"N",
-				86400,
+				"Y",
+				0,
 				"",
 				"Y",
-				$remindTime
+				$remindTime,
+				100,
+				false,
+				false
 			);
+
 			if ($tzEnabled)
+			{
 				CTimeZone::Enable();
+			}
 		}
 	}
 
@@ -194,10 +221,9 @@ class CCalendarReminder
 		$reminders = $params['reminders'];
 		$arFields = $params['arFields'];
 		$userId = $params['userId'];
-		$bNew = $params['bNew'];
 
 		$path = $params['path'];
-		$path = CHTTP::urlDeleteParams($path, array("action", "sessid", "bx_event_calendar_request", "EVENT_ID"));
+		$path = CHTTP::urlDeleteParams($path, array("action", "sessid", "bx_event_calendar_request", "EVENT_ID", "EVENT_DATE"));
 		$viewPath = CHTTP::urlAddParams($path, array('EVENT_ID' => $eventId));
 
 		$remAgentParams = array(
@@ -205,15 +231,16 @@ class CCalendarReminder
 			'userId' => $arFields["CREATED_BY"],
 			'viewPath' => $viewPath,
 			'calendarType' => $arFields["CAL_TYPE"],
-			'ownerId' => $arFields["OWNER_ID"]
+			'ownerId' => $arFields["OWNER_ID"],
+			'maxIndex' => 10
 		);
 
 		// 1. clean reminders
-		if (!$bNew) // if we edit event here can be "old" reminders
-			self::RemoveAgent($remAgentParams);
+		self::RemoveAgent($remAgentParams);
 
 		// 2. Set new reminders
 		$startTs = $arFields['DATE_FROM_TS_UTC']; // Start of the event in UTC
+		$i = 0;
 
 		foreach($reminders as $reminder)
 		{
@@ -225,6 +252,8 @@ class CCalendarReminder
 
 			// $startTs - UTC timestamp;  date('Z', $startTs) - offset of the server
 			$agentTime = $startTs + date('Z', $startTs);
+			$remAgentParams['index'] = $i++;
+
 			if (($agentTime - $delta) >= (time() - 60 * 5)) // Inaccuracy - 5 min
 			{
 				self::AddAgent(CCalendar::Date($agentTime - $delta), $remAgentParams);
@@ -281,7 +310,9 @@ class CCalendarReminder
 						// $startTs - UTC timestamp;  date("Z", $startTs) - offset of the server
 						$agentTime = $startTs + date("Z", $startTs);
 						if (($agentTime - $delta) >= (time() - 60 * 5)) // Inaccuracy - 5 min
+						{
 							self::AddAgent(CCalendar::Date($agentTime - $delta), $remAgentParams);
+						}
 					}
 				}
 			}

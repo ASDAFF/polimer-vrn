@@ -18,28 +18,21 @@ BX.Lists = (function ()
 			params = params || {};
 			params.title = params.title || false;
 			params.bindElement = params.bindElement || null;
-			params.overlay = typeof params.overlay == "undefined" ? true : params.overlay;
+			params.overlay = typeof params.overlay === "undefined" ? true : params.overlay;
 			params.autoHide = params.autoHide || false;
-			params.closeIcon = typeof params.closeIcon == "undefined"? {right: "20px", top: "10px"} : params.closeIcon;
+			params.closeIcon = typeof params.closeIcon === "undefined"? {right: "20px", top: "10px"} : params.closeIcon;
 			params.modalId = params.modalId || 'lists_modal_window_' + (Math.random() * (200000 - 100) + 100);
-			params.withoutContentWrap = typeof params.withoutContentWrap == "undefined" ?
+			params.withoutContentWrap = typeof params.withoutContentWrap === "undefined" ?
 				false : params.withoutContentWrap;
 			params.contentClassName = params.contentClassName || '';
 			params.contentStyle = params.contentStyle || {};
 			params.content = params.content || [];
 			params.buttons = params.buttons || false;
 			params.events = params.events || {};
+			params.draggable = params.draggable || false;
 			params.withoutWindowManager = !!params.withoutWindowManager || false;
 
 			var contentDialogChildren = [];
-			if (params.title) {
-				contentDialogChildren.push(BX.create('div', {
-					props: {
-						className: 'bx-lists-popup-title'
-					},
-					text: params.title
-				}));
-			}
 			if (params.withoutContentWrap) {
 				contentDialogChildren = contentDialogChildren.concat(params.content);
 			}
@@ -119,6 +112,8 @@ BX.Lists = (function ()
 					return windowsWithoutManager[params.modalId]
 				}
 				modalWindow = new BX.PopupWindow(params.modalId, params.bindElement, {
+					titleBar: params.title,
+					draggable: params.draggable,
 					content: contentDialog,
 					closeByEsc: true,
 					closeIcon: params.closeIcon,
@@ -133,6 +128,8 @@ BX.Lists = (function ()
 			else
 			{
 				modalWindow = BX.PopupWindowManager.create(params.modalId, params.bindElement, {
+					titleBar: params.title,
+					draggable: params.draggable,
 					content: contentDialog,
 					closeByEsc: true,
 					closeIcon: params.closeIcon,

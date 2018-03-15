@@ -575,6 +575,7 @@ class DiscountCompatibility
 			return;
 		$publicMode = self::usedByClient();
 
+		$loadBasketProperties = array();
 		foreach ($basket as $basketCode => $basketItem)
 		{
 			$code = ($publicMode ? $basketItem['ID'] : $basketCode);
@@ -587,23 +588,66 @@ class DiscountCompatibility
 					: $basketItem['PRICE'] + $basketItem['DISCOUNT_PRICE']
 				);
 			}
+			$checkProperties = true;
 			if (self::isCustomPrice($basketItem))
 			{
 				if (array_key_exists($code, self::$basketDiscountList))
 					unset(self::$basketDiscountList[$code]);
+				$checkProperties = false;
 			}
 			if (\CSaleBasketHelper::isSetItem($basketItem))
 			{
 				$basketItem['PRICE'] = $basketItem['BASE_PRICE'];
 				$basketItem['DISCOUNT_PRICE'] = 0;
+				$checkProperties = false;
 			}
 			if (isset(self::$basketItemsData[$code]))
 			{
 				if (isset(self::$basketItemsData[$code]['PRICE_TYPE_ID']))
 					$basketItem['PRICE_TYPE_ID'] = self::$basketItemsData[$code]['PRICE_TYPE_ID'];
 			}
+
+			if ($checkProperties)
+			{
+				if (!isset($basketItem['PROPERTIES']))
+				{
+					if (isset($basketItem['PROPS']))
+						$basketItem['PROPERTIES'] = $basketItem['PROPS'];
+					elseif (isset($basketItem['ID']))
+					{
+						$loadBasketProperties[$basketItem['ID']] = $basketCode;
+						$basketItem['PROPERTIES'] = array();
+					}
+				}
+			}
+
 			$basket[$basketCode] = $basketItem;
 		}
+
+		if (!empty($loadBasketProperties))
+		{
+			$iterator = Sale\BasketPropertiesCollection::getList(array(
+				'select' => array('*'),
+				'filter' => array('BASKET_ID' => 'ASC', 'SORT' => 'ASC', 'ID' => 'ASC')
+			));
+			while ($row = $iterator->fetch())
+			{
+				$id = $row['ID'];
+				if (!isset($loadBasketProperties[$id]))
+					continue;
+				$basketCode = $loadBasketProperties[$id];
+				$basket[$basketCode]['PROPERTIES'][] = array(
+					'CODE' => ((string)$row['CODE'] != '' ? $row['CODE'] : $row['NAME']),
+					'ID' => $row['ID'],
+					'VALUE' => $row['VALUE'],
+					'SORT' => $row['SORT'],
+					'NAME' => $row['NAME']
+				);
+			}
+			unset($row, $iterator);
+		}
+		unset($loadBasketProperties);
+
 		unset($basketCode, $basketItem);
 	}
 
@@ -956,39 +1000,59 @@ class DiscountCompatibility
 	 * Round prices.
 	 *
 	 * @param array &$basket	Basket items.
+	 * @param array $orderData  Order (without basket).
 	 * @return void
 	 */
-	public static function roundPrices(array &$basket)
+	public static function roundPrices(array &$basket, array $orderData = array())
 	{
 		if (empty($basket))
 			return;
 
 		$publicMode = self::usedByClient();
+
+		$clearedBasket = array();
 		foreach ($basket as $basketCode => $basketItem)
 		{
 			if (\CSaleBasketHelper::isSetItem($basketItem))
 				continue;
-			$code = ($publicMode ? $basketItem['ID'] : $basketCode);
-			$basketItem['MODULE_ID'] = $basketItem['MODULE'];
-			$roundResult = Sale\OrderDiscountManager::roundPrice(
-				$basketItem,
-				array()
-			);
-			if (empty($roundResult) || !is_array($roundResult))
-				continue;
-
-			$basket[$basketCode]['PRICE'] = $roundResult['PRICE'];
-			$basket[$basketCode]['DISCOUNT_PRICE'] = $roundResult['DISCOUNT_PRICE'];
-
-			if (!isset(self::$discountResult['BASKET_ROUND']))
-				self::$discountResult['BASKET_ROUND'] = array();
-			self::$discountResult['BASKET_ROUND'][$code] = array(
-				'APPLY' => 'Y',
-				'ROUND_RULE' => $roundResult['ROUND_RULE']
-			);
-			unset($roundResult);
+			$clearedBasket[$basketCode] = $basketItem;
 		}
 		unset($basketCode, $basketItem);
+
+		if (!empty($clearedBasket))
+		{
+			$result = Sale\OrderDiscountManager::roundBasket(
+				$clearedBasket,
+				array(),
+				$orderData
+			);
+			foreach ($result as $basketCode => $roundResult)
+			{
+				if (empty($roundResult) || !is_array($roundResult))
+					continue;
+
+				$code = ($publicMode ? $basket[$basketCode]['ID'] : $basketCode);
+
+				$basket[$basketCode]['PRICE'] = $roundResult['PRICE'];
+				$basket[$basketCode]['DISCOUNT_PRICE'] = $roundResult['DISCOUNT_PRICE'];
+				//TODO: remove this code after create calculation percent of discount
+				if ($basket[$basketCode]['PRICE'] > $basket[$basketCode]['BASE_PRICE'])
+				{
+					$basket[$basketCode]['BASE_PRICE'] = $basket[$basketCode]['PRICE'];
+					$basket[$basketCode]['DISCOUNT_PRICE'] = 0;
+				}
+
+				if (!isset(self::$discountResult['BASKET_ROUND']))
+					self::$discountResult['BASKET_ROUND'] = array();
+				self::$discountResult['BASKET_ROUND'][$code] = array(
+					'APPLY' => 'Y',
+					'ROUND_RULE' => $roundResult['ROUND_RULE']
+				);
+			}
+			unset($basketCode, $roundResult, $result);
+		}
+		unset($clearedBasket);
+		unset($publicMode);
 	}
 
 	/**
@@ -1355,11 +1419,15 @@ class DiscountCompatibility
 				$basketId = -1;
 				foreach (self::$previousOrderData['BASKET_ITEMS'] as $key => $item)
 				{
-					if ($maxPrice < $item['PRICE'])
+					$resultKey = ($publicMode ? $item['ID'] : $key);
+					if (isset($stepResult['BASKET'][$resultKey]))
 					{
-						$maxPrice = $item['PRICE'];
-						$maxKey = $key;
-						$basketId = ($publicMode ? $item['ID'] : $key);
+						if ($maxPrice < $item['PRICE'])
+						{
+							$maxPrice = $item['PRICE'];
+							$maxKey = $key;
+							$basketId = $resultKey;
+						}
 					}
 				}
 				unset($key, $item);

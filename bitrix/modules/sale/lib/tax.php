@@ -112,12 +112,6 @@ class Tax
 			throw new Main\ObjectNotFoundException('Entity "Order" not found');
 		}
 
-		/** @var Basket $basket */
-		if (!$basket = $order->getBasket())
-		{
-			throw new Main\ObjectNotFoundException('Entity "Basket" not found');
-		}
-
 		$taxResult = array();
 
 		$taxList = $this->getTaxList();
@@ -205,8 +199,6 @@ class Tax
 		/** @var Result $result */
 		$result = new Result();
 
-		$taxResult = array();
-
 		/** @var Order $order */
 		if (!$order = $this->getOrder())
 		{
@@ -232,12 +224,7 @@ class Tax
 
 		$fields = array(
 			"TAX_LOCATION" => $order->getTaxLocation(),
-			"DELIVERY_PRICE" => $order->getDeliveryPrice(),
-			"USE_VAT" => $order->isUsedVat(),
-
-			"VAT_RATE" => $order->getVatRate(),
 			"VAT_SUM" => $basket->getVatSum(),
-
 			"CURRENCY" => $order->getCurrency(),
 		);
 
@@ -259,8 +246,39 @@ class Tax
 			$options['COUNT_DELIVERY_TAX'] = ($isDeliveryCalculate === true ? "Y" : "N");
 		}
 
+		$shipmentCollection = $order->getShipmentCollection();
+		if (!$shipmentCollection)
+		{
+			throw new Main\ObjectNotFoundException('Entity "ShipmentCollection" not found');
+		}
 
-		\CSaleTax::calculateDeliveryTax($fields, $options, $errors = array());
+		/** @var Shipment $shipment */
+		foreach ($shipmentCollection as $shipment)
+		{
+			if ($shipment->isSystem())
+				continue;
+
+			$service = $shipment->getDelivery();
+			if ($service === null)
+				continue;
+
+			$additionalFields = array(
+				"DELIVERY_PRICE" => $shipment->getPrice()
+			);
+
+			$vatRate = $shipment->getVatRate();
+			if ($vatRate)
+			{
+				$additionalFields["USE_VAT"] = true;
+				$additionalFields["VAT_RATE"] = $vatRate;
+			}
+
+			$fields = array_merge($fields, $additionalFields);
+			\CSaleTax::calculateDeliveryTax($fields, $options, $errors = array());
+		}
+
+
+		$taxResult = array();
 
 		if (array_key_exists('TAX_PRICE', $fields) && floatval($fields['TAX_PRICE']) > 0)
 		{
@@ -375,26 +393,19 @@ class Tax
 				}
 			}
 
-			$vat1cFound = false;
-			$taxListModify = array();
+			// one tax to order
+			$taxListModify1C = array();
 			foreach($oldTaxList as $taxOrder)
 			{
-				if($taxOrder['CODE']=='VAT1C')
-					$vat1cFound = true;
+				if($taxOrder['CODE'] == 'VAT1C')
+				{
+					$taxListModify1C[] = $taxOrder;
+				}
 			}
 
-			if($vat1cFound)
+			if(count($taxListModify1C)>0)
 			{
-				foreach($oldTaxList as $taxOrder)
-				{
-					if($taxOrder['CODE']!='VAT')
-					{
-						$taxListModify[] = $taxOrder;
-					}
-				}
-
-				if(count($taxListModify)>0)
-					$oldTaxList = $taxListModify;
+				$oldTaxList = $taxListModify1C;
 			}
 		}
 		else
@@ -524,7 +535,19 @@ class Tax
 			return $result;
 		}
 
-		return $this->calculateDelivery();
+		$taxResult = $r->getData();
+
+		$r = $this->calculateDelivery();
+		if (!$r->isSuccess())
+		{
+			$result->addErrors($r->getErrors());
+			return $result;
+		}
+		$taxResult = array_merge($taxResult, $r->getData());
+
+		$result->setData($taxResult);
+
+		return $result;
 	}
 
 	/**

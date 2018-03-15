@@ -30,6 +30,12 @@ class CBPSocnetBlogPostActivity
 		$siteId = $this->PostSite ? $this->PostSite : SITE_ID;
 		$ownerId = CBPHelper::ExtractUsers($this->OwnerId, $documentId, true);
 
+		if (empty($ownerId))
+		{
+			$this->WriteToTrackingService(GetMessage('SNBPA_EMPTY_OWNER'), 0, CBPTrackingType::Error);
+			return CBPActivityExecutionStatus::Closed;
+		}
+
 		$pathToPost = COption::GetOptionString("socialnetwork", "userblogpost_page", false, $siteId);
 		$pathToSmile = COption::GetOptionString("socialnetwork", "smile_page", false, $siteId);
 		$blogGroupID = COption::GetOptionString("socialnetwork", "userbloggroup_id", false, $siteId);
@@ -50,6 +56,14 @@ class CBPSocnetBlogPostActivity
 			));
 		}
 
+		$socnetRights = $this->getSocnetRights($this->UsersTo);
+
+		if (empty($socnetRights))
+		{
+			$this->WriteToTrackingService(GetMessage('SNBPA_EMPTY_USERS'), 0, CBPTrackingType::Error);
+			return CBPActivityExecutionStatus::Closed;
+		}
+
 		try
 		{
 			$postFields = array(
@@ -64,7 +78,7 @@ class CBPSocnetBlogPostActivity
 				'PERMS_POST'       => array(),
 				'PERMS_COMMENT'    => array(),
 				'MICRO'            => $micro,
-				'SOCNET_RIGHTS'    => $this->getSocnetRights($this->UsersTo),
+				'SOCNET_RIGHTS'    => $socnetRights,
 				'=DATE_CREATE'     => $DB->CurrentTimeFunction(),
 				'AUTHOR_ID'        => $ownerId,
 				'BLOG_ID'          => $blog['ID'],
@@ -237,10 +251,11 @@ class CBPSocnetBlogPostActivity
 		if (!array_key_exists("OwnerId", $arTestProperties) || count($arTestProperties["OwnerId"]) <= 0)
 			$arErrors[] = array("code" => "NotExist", "parameter" => "OwnerId", "message" => GetMessage("SNBPA_EMPTY_OWNER"));
 
-		global $USER;
-		$isAdmin = ($USER->IsAdmin() || CModule::IncludeModule("bitrix24") && CBitrix24::IsPortalAdmin($USER->GetID()));
-		if (!$isAdmin && $arTestProperties["OwnerId"] != "user_".$USER->GetID())
+		$ownerId = array_key_exists("OwnerId", $arTestProperties) ? $arTestProperties["OwnerId"] : null;
+		if ($user && $ownerId !== $user->getBizprocId() && !$user->isAdmin())
+		{
 			$arErrors[] = array("code" => "NotExist", "parameter" => "OwnerId", "message" => GetMessage("SNBPA_EMPTY_OWNER"));
+		}
 
 		if (!array_key_exists("UsersTo", $arTestProperties) || count($arTestProperties["UsersTo"]) <= 0)
 			$arErrors[] = array("code" => "NotExist", "parameter" => "UsersTo", "message" => GetMessage("SNBPA_EMPTY_USERS"));
@@ -250,7 +265,6 @@ class CBPSocnetBlogPostActivity
 
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = "")
 	{
-		global $USER;
 		$sites = array();
 		$b = $o = '';
 		$sitesIterator = CSite::GetList($b, $o, Array('ACTIVE' => 'Y'));
@@ -268,13 +282,15 @@ class CBPSocnetBlogPostActivity
 			'currentValues' => $arCurrentValues
 		));
 
+		$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
+
 		$dialog->setMap(array(
 			'OwnerId' => array(
 				'Name' => GetMessage("SNBPA_OWNER_ID"),
 				'FieldName' => 'owner_id',
 				'Type' => 'user',
 				'Required' => true,
-				'Default' => 'user_'.$USER->GetID()
+				'Default' => $user->getBizprocId()
 			),
 			'UsersTo' => array(
 				'Name' => GetMessage("SNBPA_USERS_TO"),
@@ -300,6 +316,10 @@ class CBPSocnetBlogPostActivity
 				'Type' => 'select',
 				'Options' => $sites
 			)
+		));
+
+		$dialog->setRuntimeData(array(
+			'user' => $user
 		));
 
 		return $dialog;
@@ -328,8 +348,8 @@ class CBPSocnetBlogPostActivity
 		if (strlen($arProperties["PostSite"]) <= 0)
 			$arProperties["PostSite"] = $arCurrentValues["post_site_x"];
 
-		global $USER;
-		if ($USER->IsAdmin() || (CModule::IncludeModule("bitrix24") && CBitrix24::IsPortalAdmin($USER->GetID())))
+		$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
+		if ($user->isAdmin())
 		{
 			$arProperties["OwnerId"] = CBPHelper::UsersStringToArray($arCurrentValues["owner_id"], $documentType, $arErrors);
 			if (count($arErrors) > 0)
@@ -337,7 +357,7 @@ class CBPSocnetBlogPostActivity
 		}
 		else
 		{
-			$arProperties["OwnerId"] = "user_".$USER->GetID();
+			$arProperties["OwnerId"] = $user->getBizprocId();
 		}
 
 		$arProperties["UsersTo"] = CBPHelper::UsersStringToArray($arCurrentValues["users_to"], $documentType, $arErrors);

@@ -144,8 +144,7 @@ if($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_se
 			$arResult["LINK"] = Cashbox\Manager::getConnectionLink();
 			break;		
 		case "reload_settings":
-			
-			$cashbox = array('HANDLER' => $request->get('handler'), 'KKM_ID' => (int)$request->get('kkmId'));
+			$cashbox = array('HANDLER' => $request->get('handler'), 'KKM_ID' => $request->get('kkmId'));
 			$handler = $cashbox['HANDLER'];
 			if (class_exists($handler))
 			{
@@ -153,6 +152,30 @@ if($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_se
 				require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/sale/admin/cashbox_settings.php");
 				$arResult["HTML"] = ob_get_contents();
 				ob_end_clean();
+
+				$arResult['GENERAL_REQUIRED_FIELDS'] = $handler::getGeneralRequiredFields();
+
+				$kkmList = $cashbox['HANDLER']::getSupportedKkmModels();
+				if ($kkmList)
+				{
+					$requiredClass = '';
+					if (isset($arResult['GENERAL_REQUIRED_FIELDS']['KKM_ID']))
+						$requiredClass = 'class="adm-required-field"';
+
+					$arResult["MODEL_HTML"] = '<tr id="tr_KKM_ID">
+							<td width="40%" class="adm-detail-content-cell-l"><span '.$requiredClass.'>'.Loc::getMessage("SALE_CASHBOX_KKM_ID").'</span>:</td>
+							<td width="60%" class="adm-detail-content-cell-r">
+								<select name="KKM_ID" id="KKM_ID" onchange="BX.Sale.Cashbox.reloadSettings()">
+									<option value="">'.Loc::getMessage('SALE_CASHBOX_KKM_NO_CHOOSE').'</option>';
+
+					foreach ($kkmList as $code => $kkm)
+					{
+						$selected = ($code === $cashbox['KKM_ID']) ? 'selected' : '';
+						$arResult["MODEL_HTML"] .= '<option value="'.$code.'" '.$selected.'>'.htmlspecialcharsbx($kkm['NAME']).'</option>';
+					}
+
+					$arResult["MODEL_HTML"] .= '</select></td></tr>';
+				}
 			}
 
 			break;
@@ -164,6 +187,213 @@ if($arResult["ERROR"] === '' && $saleModulePermissions >= "W" && check_bitrix_se
 			require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/sale/admin/cashbox_ofd_settings.php");
 			$arResult["HTML"] = ob_get_contents();
 			ob_end_clean();
+
+			break;
+		case "get_order_entities":
+			global $USER, $APPLICATION;
+
+			$formData = $request->get('formData');
+			$orderId = $formData['data']['ORDER_ID'];
+			if ($orderId > 0)
+			{
+				$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
+
+				$order = Order::load($orderId);
+				if ($order === null)
+				{
+					$arResult["ERROR"] = "Error! Access denied";
+					break;
+				}
+
+				$userId = $USER->GetID();
+				$userCompanyList = \Bitrix\Sale\Services\Company\Manager::getUserCompanyList($userId);
+
+				if ($saleModulePermissions == 'P')
+				{
+					if ($order->getUserId() !== $userId && !in_array($order->getField("COMPANY_ID"), $userCompanyList))
+					{
+						$arResult["ERROR"] = "Error! Access denied";
+						break;
+					}
+				}
+
+				$paymentCollection = $order->getPaymentCollection();
+				/** @var Payment $payment */
+				foreach ($paymentCollection as $payment)
+				{
+					$arResult['PAYMENTS'][] = array(
+						'ID' => $payment->getId(),
+						'CODE' => 'P_'.$payment->getId()
+					);
+				}
+
+				if (Cashbox\Manager::isSupportedFFD105())
+				{
+					$shipmentCollection = $order->getShipmentCollection();
+					/** @var \Bitrix\Sale\Shipment $shipment */
+					foreach ($shipmentCollection as $shipment)
+					{
+						if ($shipment->isSystem())
+							continue;
+
+						$arResult['SHIPMENTS'][] = array(
+							'ID' => $shipment->getId(),
+							'CODE' => 'S_'.$shipment->getId(),
+						);
+					}
+				}
+			}
+
+			break;
+		case "get_data_for_check":
+			global $USER, $APPLICATION;
+
+			$formData = $request->get('formData');
+			$orderId = $formData['data']['ORDER_ID'];
+			$entityCode = $formData['data']['ENTITY_CODE'];
+			list($entityType, $entityId) = explode('_', $entityCode);
+			$entityType = $entityType === 'S' ? Cashbox\Check::SUPPORTED_ENTITY_TYPE_SHIPMENT : Cashbox\Check::SUPPORTED_ENTITY_TYPE_PAYMENT;
+
+			if ($orderId > 0)
+			{
+				$saleModulePermissions = $APPLICATION->GetGroupRight("sale");
+
+				$order = Order::load($orderId);
+				if ($order === null)
+				{
+					$arResult["ERROR"] = "Order not found";
+					break;
+				}
+
+				$userId = $USER->GetID();
+				$userCompanyList = \Bitrix\Sale\Services\Company\Manager::getUserCompanyList($userId);
+
+				if ($saleModulePermissions == 'P')
+				{
+					if ($order->getUserId() !== $userId && !in_array($order->getField("COMPANY_ID"), $userCompanyList))
+					{
+						$arResult["ERROR"] = "Error! Access denied";
+						break;
+					}
+				}
+
+				$typeList = Cashbox\CheckManager::getCheckTypeMap();
+				/** @var Cashbox\Check $typeClass */
+				foreach ($typeList as $id => $typeClass)
+				{
+					if (
+						$typeClass::getSupportedEntityType() === $entityType ||
+						$typeClass::getSupportedEntityType() === Cashbox\Check::SUPPORTED_ENTITY_TYPE_ALL
+					)
+					{
+						if (class_exists($typeClass))
+							$arResult['CHECK_TYPES'][] = array("ID" => $id, "NAME" => $typeClass::getName());
+					}
+				}
+
+				$checkType = $arResult['CHECK_TYPES'][0]['ID'];
+				if ($entityType === Cashbox\Check::SUPPORTED_ENTITY_TYPE_PAYMENT)
+				{
+					$relatedEntities = Cashbox\CheckManager::getRelatedEntitiesForPayment($checkType, $entityId);
+				}
+				else
+				{
+					$relatedEntities = Cashbox\CheckManager::getRelatedEntitiesForShipment($checkType, $entityId);
+				}
+
+				$arResult = $arResult + $relatedEntities;
+
+				$arResult['FFD_105_ENABLED'] = Cashbox\Manager::isSupportedFFD105();
+			}
+
+			break;
+		case 'get_related_entities':
+			$entityCode = $request->get('entityCode');
+			$checkType = $request->get('checkType');
+			list($entityType, $entityId) = explode('_', $entityCode);
+			if ($entityType === 'S')
+			{
+				$arResult = Cashbox\CheckManager::getRelatedEntitiesForShipment($checkType, $entityId);
+			}
+			else
+			{
+				$arResult = Cashbox\CheckManager::getRelatedEntitiesForPayment($checkType, $entityId);
+			}
+
+			$arResult['FFD_105_ENABLED'] = Cashbox\Manager::isSupportedFFD105();
+
+			break;
+		case "add_check":
+			global $APPLICATION, $USER;
+
+			$formData = $request->get('formData');
+			$typeId = $formData['data']['CHECK_TYPE'];
+			$orderId = (int)$formData['data']['ORDER_ID'];
+			$paymentData = $formData['data']['PAYMENTS'];
+			$shipmentData = $formData['data']['SHIPMENTS'];
+			$entityCode = $formData['data']['ENTITY_CODE'];
+			list($entityType, $entityId) = explode('_', $entityCode);
+
+			$order = Order::load($orderId);
+
+			$userId = $USER->GetID();
+			$userCompanyList = \Bitrix\Sale\Services\Company\Manager::getUserCompanyList($userId);
+
+			if ($saleModulePermissions == 'P')
+			{
+				if ($order->getUserId() !== $userId && !in_array($order->getField("COMPANY_ID"), $userCompanyList))
+				{
+					$arResult["ERROR"] = "Error! Access denied";
+					break;
+				}
+			}
+
+			$paymentCollection = $order->getPaymentCollection();
+			$entities = array();
+			if ($entityType === 'P')
+			{
+				$entities[] = $paymentCollection->getItemById($entityId);
+			}
+
+			$shipmentCollection = $order->getShipmentCollection();
+			if ($entityType === 'S')
+			{
+				$entities[] = $shipmentCollection->getItemById($entityId);
+			}
+
+			$relatedEntities = array();
+			if ($paymentData)
+			{
+				foreach ($paymentData as $id => $data)
+				{
+					$relatedEntities[$data['TYPE']][] = $paymentCollection->getItemById($id);
+				}
+			}
+
+			if ($shipmentData)
+			{
+				foreach ($shipmentData as $id => $data)
+				{
+					$relatedEntities[Cashbox\Check::SHIPMENT_TYPE_NONE][] = $shipmentCollection->getItemById($id);
+				}
+			}
+
+			if (!Cashbox\Manager::isSupportedFFD105())
+			{
+				foreach ($relatedEntities as $type => $entityList)
+				{
+					foreach ($entityList as $item)
+					{
+						$entities[] = $item;
+					}
+				}
+
+				$relatedEntities = array();
+			}
+
+			$addResult = Cashbox\CheckManager::addByType($entities, $typeId, $relatedEntities);
+			if (!$addResult->isSuccess())
+				$arResult["ERROR"] = implode("\n", $addResult->getErrorMessages());
 
 			break;
 		default:

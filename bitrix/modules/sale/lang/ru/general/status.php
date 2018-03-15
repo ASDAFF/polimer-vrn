@@ -8,6 +8,7 @@ $MESS["SKGS_STATUS_TEXT"] = "текст";
 $MESS["SKGS_SHIPMENT_ID"] = "код отгрузки";
 $MESS["SKGS_SHIPMENT_DATE"] = "дата создания отгрузки";
 $MESS["SKGS_SHIPMENT_STATUS"] = "статус отгрузки";
+$MESS["SKGS_ORDER_PUBLIC_LINK"] = "ссылка для просмотра заказа без авторизации (требуется настройка в модуле интернет-магазина)";
 $MESS["SKGS_CHANGING_STATUS_TO"] = "Изменение статуса заказа на ";
 $MESS["SKGS_CHANGING_SHIPMENT_STATUS_TO"] = "Изменение статуса отгрузки на ";
 $MESS["SKGS_STATUS_MAIL_SUBJ"] = "#SERVER_NAME#: Изменение статуса заказа N#ORDER_ID#";

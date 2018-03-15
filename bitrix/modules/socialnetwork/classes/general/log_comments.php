@@ -2,7 +2,11 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Socialnetwork\Item\LogIndex;
+use Bitrix\Socialnetwork\LogTable;
+use Bitrix\Socialnetwork\LogCommentTable;
 use Bitrix\Socialnetwork\LogIndexTable;
+use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Socialnetwork\LogTagTable;
 
 class CAllSocNetLogComments
 {
@@ -13,7 +17,7 @@ class CAllSocNetLogComments
 	{
 		static $arSiteWorkgroupsPage;
 
-		global $DB, $USER_FIELD_MANAGER;
+		global $DB, $USER_FIELD_MANAGER, $APPLICATION;
 
 		if (
 			!$arSiteWorkgroupsPage
@@ -30,7 +34,7 @@ class CAllSocNetLogComments
 
 		if ($ACTION != "ADD" && IntVal($ID) <= 0)
 		{
-			$GLOBALS["APPLICATION"]->ThrowException("System error 870164", "ERROR");
+			$APPLICATION->ThrowException("System error 870164", "ERROR");
 			return false;
 		}
 
@@ -38,14 +42,14 @@ class CAllSocNetLogComments
 
 		if ((is_set($arFields, "ENTITY_TYPE") || $ACTION=="ADD") && StrLen($arFields["ENTITY_TYPE"]) <= 0)
 		{
-			$GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GLC_EMPTY_ENTITY_TYPE"), "EMPTY_ENTITY_TYPE");
+			$APPLICATION->ThrowException(GetMessage("SONET_GLC_EMPTY_ENTITY_TYPE"), "EMPTY_ENTITY_TYPE");
 			return false;
 		}
 		elseif (is_set($arFields, "ENTITY_TYPE"))
 		{
 			if (!in_array($arFields["ENTITY_TYPE"], CSocNetAllowed::GetAllowedEntityTypes()))
 			{
-				$GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GLC_ERROR_NO_ENTITY_TYPE"), "ERROR_NO_ENTITY_TYPE");
+				$APPLICATION->ThrowException(GetMessage("SONET_GLC_ERROR_NO_ENTITY_TYPE"), "ERROR_NO_ENTITY_TYPE");
 				return false;
 			}
 
@@ -54,7 +58,7 @@ class CAllSocNetLogComments
 
 		if ((is_set($arFields, "ENTITY_ID") || $ACTION=="ADD") && IntVal($arFields["ENTITY_ID"]) <= 0)
 		{
-			$GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GLC_EMPTY_ENTITY_ID"), "EMPTY_ENTITY_ID");
+			$APPLICATION->ThrowException(GetMessage("SONET_GLC_EMPTY_ENTITY_ID"), "EMPTY_ENTITY_ID");
 			return false;
 		}
 		elseif (is_set($arFields, "ENTITY_ID"))
@@ -69,7 +73,7 @@ class CAllSocNetLogComments
 			}
 			if (StrLen($newEntityType) <= 0)
 			{
-				$GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GL_ERROR_CALC_ENTITY_TYPE"), "ERROR_CALC_ENTITY_TYPE");
+				$APPLICATION->ThrowException(GetMessage("SONET_GL_ERROR_CALC_ENTITY_TYPE"), "ERROR_CALC_ENTITY_TYPE");
 				return false;
 			}
 
@@ -78,7 +82,7 @@ class CAllSocNetLogComments
 				$arResult = CSocNetGroup::GetByID($arFields["ENTITY_ID"]);
 				if ($arResult == false)
 				{
-					$GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GLC_ERROR_NO_ENTITY_ID"), "ERROR_NO_ENTITY_ID");
+					$APPLICATION->ThrowException(GetMessage("SONET_GLC_ERROR_NO_ENTITY_ID"), "ERROR_NO_ENTITY_ID");
 					return false;
 				}
 			}
@@ -87,7 +91,7 @@ class CAllSocNetLogComments
 				$dbResult = CUser::GetByID($arFields["ENTITY_ID"]);
 				if (!$dbResult->Fetch())
 				{
-					$GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GLC_ERROR_NO_ENTITY_ID"), "ERROR_NO_ENTITY_ID");
+					$APPLICATION->ThrowException(GetMessage("SONET_GLC_ERROR_NO_ENTITY_ID"), "ERROR_NO_ENTITY_ID");
 					return false;
 				}
 			}
@@ -95,13 +99,13 @@ class CAllSocNetLogComments
 
 		if ((is_set($arFields, "LOG_ID") || $ACTION=="ADD") && intval($arFields["LOG_ID"]) <= 0)
 		{
-			$GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GLC_EMPTY_LOG_ID"), "EMPTY_LOG_ID");
+			$APPLICATION->ThrowException(GetMessage("SONET_GLC_EMPTY_LOG_ID"), "EMPTY_LOG_ID");
 			return false;
 		}
 
 		if ((is_set($arFields, "EVENT_ID") || $ACTION=="ADD") && strlen($arFields["EVENT_ID"]) <= 0)
 		{
-			$GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GLC_EMPTY_EVENT_ID"), "EMPTY_EVENT_ID");
+			$APPLICATION->ThrowException(GetMessage("SONET_GLC_EMPTY_EVENT_ID"), "EMPTY_EVENT_ID");
 			return false;
 		}
 		elseif (is_set($arFields, "EVENT_ID"))
@@ -110,7 +114,7 @@ class CAllSocNetLogComments
 			$arEvent = CSocNetLogTools::FindLogCommentEventByID($arFields["EVENT_ID"]);
 			if (!$arEvent)
 			{
-				$GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GLC_ERROR_NO_FEATURE_ID"), "ERROR_NO_FEATURE");
+				$APPLICATION->ThrowException(GetMessage("SONET_GLC_ERROR_NO_FEATURE_ID"), "ERROR_NO_FEATURE");
 				return false;
 			}
 		}
@@ -120,14 +124,14 @@ class CAllSocNetLogComments
 			$dbResult = CUser::GetByID($arFields["USER_ID"]);
 			if (!$dbResult->Fetch())
 			{
-				$GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GLC_ERROR_NO_USER_ID"), "ERROR_NO_USER_ID");
+				$APPLICATION->ThrowException(GetMessage("SONET_GLC_ERROR_NO_USER_ID"), "ERROR_NO_USER_ID");
 				return false;
 			}
 		}
 
 		if (is_set($arFields, "LOG_DATE") && (!$DB->IsDate($arFields["LOG_DATE"], false, LANG, "FULL")))
 		{
-			$GLOBALS["APPLICATION"]->ThrowException(GetMessage("SONET_GLC_EMPTY_DATE_CREATE"), "EMPTY_LOG_DATE");
+			$APPLICATION->ThrowException(GetMessage("SONET_GLC_EMPTY_DATE_CREATE"), "EMPTY_LOG_DATE");
 			return false;
 		}
 
@@ -211,6 +215,11 @@ class CAllSocNetLogComments
 						'itemId' => $ID
 					));
 
+					LogTagTable::deleteByItem(array(
+						'itemType' => LogTagTable::ITEM_TYPE_COMMENT,
+						'itemId' => $ID
+					));
+
 					if (intval($arComment["LOG_ID"]) > 0)
 					{
 						CSocNetLogComments::UpdateLogData($arComment["LOG_ID"], false, true);
@@ -276,6 +285,8 @@ class CAllSocNetLogComments
 
 	function SendEvent($ID, $mailTemplate = "SONET_NEW_EVENT", $bTransport = false)
 	{
+		global $DB;
+
 		$arSocNetAllowedSubscribeEntityTypesDesc = CSocNetAllowed::GetAllowedEntityTypesDesc();
 
 		$ID = IntVal($ID);
@@ -518,7 +529,7 @@ class CAllSocNetLogComments
 							"FROM_USER_ID" => (intval($arLogComment["USER_ID"]) > 0 ? $arLogComment["USER_ID"] : 1),
 							"TO_USER_ID" => $arSubscriber["USER_ID"],
 							"MESSAGE" => $arLogComment["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["TITLE"]." #BR# ".$arLogComment["FIELDS_FORMATTED"]["EVENT_FORMATTED"]["MESSAGE"].(strlen($link) > 0 ? "#BR# ".$link : ""),
-							"=DATE_CREATE" => $GLOBALS["DB"]->CurrentTimeFunction(),
+							"=DATE_CREATE" => $DB->CurrentTimeFunction(),
 							"MESSAGE_TYPE" => SONET_MESSAGE_SYSTEM,
 							"IS_LOG" => "Y"
 						);
@@ -597,7 +608,7 @@ class CAllSocNetLogComments
 
 		if (
 			!$bHasAccessAll
-			|| strtolower($GLOBALS["DB"]->type) != "mysql"
+			|| strtolower($DB->type) != "mysql"
 		)
 		{
 			CUserCounter::IncrementWithSelect(
@@ -651,25 +662,48 @@ class CAllSocNetLogComments
 		$dbResult = CSocNetLogComments::GetList(array(), array("LOG_ID" => $log_id), array());
 		$comments_count = $dbResult;
 
-		$dbResult = CSocNetLog::GetList(array(), array("ID" => $log_id), false, false, array("ID", "COMMENTS_COUNT", "LOG_DATE"));
-		while ($arResult = $dbResult->Fetch())
+		$res = LogTable::getList(array(
+			'filter' => array(
+				"ID" => $log_id
+			),
+			'select' => array("ID", "LOG_DATE")
+		));
+		while ($logFields = $res->fetch())
 		{
 			$arFields = array("COMMENTS_COUNT" => $comments_count);
 			if ($bSetDateByLastComment)
 			{
-				$dbComment = CSocNetLogComments::GetList(array("LOG_DATE" => "DESC"), array("LOG_ID" => $log_id), false, false, array("ID", "LOG_DATE"));
+				$resComments = LogCommentTable::getList(array(
+					'order' => array(
+						"LOG_DATE" => "DESC"
+					),
+					'filter' => array(
+						"LOG_ID" => $log_id
+					),
+					'select' => array("ID", "LOG_DATE")
+				));
 				$arFields["LOG_UPDATE"] = (
-					($arComment = $dbComment->Fetch())
-						? $arComment["LOG_DATE"]
-						: $arResult["LOG_DATE"]
+					($commentFields = $resComments->fetch())
+						? $commentFields["LOG_DATE"]
+						: $logFields["LOG_DATE"]
 				);
 			}
 			elseif ($bSetDate)
 			{
-				$arFields["=LOG_UPDATE"] = $GLOBALS["DB"]->CurrentTimeFunction();
+				$connection = \Bitrix\Main\Application::getConnection();
+				$helper = $connection->getSqlHelper();
+				$arFields["LOG_UPDATE"] = new SqlExpression($helper->getCurrentDateTimeFunction());
 			}
 
-			CSocNetLog::Update($arResult["ID"], $arFields);
+			LogTable::update($logFields["ID"], $arFields);
+			if (isset($arFields["LOG_UPDATE"]))
+			{
+				LogIndexTable::setLogUpdate(array(
+					'logId' => $logFields["ID"],
+					'value' => ($bSetDateByLastComment ? $arFields["LOG_UPDATE"] : false),
+				));
+			}
+
 			CSocNetLogFollow::DeleteByLogID($log_id, "Y", true); // not only delete but update to NULL for existing records
 		}
 	}

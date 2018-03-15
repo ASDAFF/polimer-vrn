@@ -76,7 +76,15 @@ HTML;
 	<?if ($arParams["ALLOW_UPLOAD"] != "N")
 	{
 		?><div class="webform-field-upload" id="mfi-<?=$arParams['CONTROL_ID']?>-button"><?
-			?><span class="webform-small-button webform-button-upload"><?=($arParams["ALLOW_UPLOAD"] == "I" ? GetMessage('MFI_INPUT_CAPTION_ADD_IMAGE') : GetMessage('MFI_INPUT_CAPTION_ADD'))?></span><?
+			if (isset($arParams["INPUT_CAPTION"]) && !empty($arParams["INPUT_CAPTION"]))
+			{
+				$inputCaption = $arParams["INPUT_CAPTION"];
+			}
+			else
+			{
+				$inputCaption = ($arParams["ALLOW_UPLOAD"] == "I" ? GetMessage('MFI_INPUT_CAPTION_ADD_IMAGE') : GetMessage('MFI_INPUT_CAPTION_ADD'));
+			}
+			?><span class="webform-small-button webform-button-upload"><?=$inputCaption?></span><?
 			if ($arParams["MULTIPLE"] == "N")
 			{
 				?><span class="webform-small-button webform-button-replace"><?=($arParams["ALLOW_UPLOAD"] == "I" ? GetMessage('MFI_INPUT_CAPTION_REPLACE_IMAGE') : GetMessage('MFI_INPUT_CAPTION_REPLACE'))?></span><?
@@ -118,6 +126,7 @@ HTML;
 				"allowUpload" => $arParams["ALLOW_UPLOAD"],
 				"allowUploadExt" => $arParams["ALLOW_UPLOAD_EXT"],
 				"uploadMaxFilesize" => $arParams['MAX_FILE_SIZE'],
+				"enableCamera" => $arParams['ENABLE_CAMERA'] !== "N",
 
 				"urlUpload" => $arParams["URL_TO_UPLOAD"]
 			))?>);

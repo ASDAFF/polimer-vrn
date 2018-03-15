@@ -1,6 +1,8 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Main;
+
 /**
  * Bizproc API Helper for external usage.
  */
@@ -10,6 +12,7 @@ class CBPDocument
 	const PARAM_MODIFIED_DOCUMENT_FIELDS = 'ModifiedDocumentField';
 	const PARAM_USE_FORCED_TRACKING = 'UseForcedTracking';
 	const PARAM_IGNORE_SIMULTANEOUS_PROCESSES_LIMIT = 'IgnoreSimultaneousProcessesLimit';
+	const PARAM_DOCUMENT_EVENT_TYPE = 'DocumentEventType';
 
 	public static function MigrateDocumentType($oldType, $newType)
 	{
@@ -317,6 +320,9 @@ class CBPDocument
 		if (!isset($arParameters[static::PARAM_MODIFIED_DOCUMENT_FIELDS]))
 			$arParameters[static::PARAM_MODIFIED_DOCUMENT_FIELDS] = false;
 
+		if (!isset($arParameters[static::PARAM_DOCUMENT_EVENT_TYPE]))
+			$arParameters[static::PARAM_DOCUMENT_EVENT_TYPE] = CBPDocumentEventType::None;
+
 		try
 		{
 			$wi = $runtime->CreateWorkflow($workflowTemplateId, $documentId, $arParameters, $parentWorkflow);
@@ -358,6 +364,8 @@ class CBPDocument
 
 		if (!isset($arParameters[static::PARAM_MODIFIED_DOCUMENT_FIELDS]))
 			$arParameters[static::PARAM_MODIFIED_DOCUMENT_FIELDS] = false;
+
+		$arParameters[static::PARAM_DOCUMENT_EVENT_TYPE] = $autoExecute;
 
 		$arWT = CBPWorkflowTemplateLoader::SearchTemplatesByDocumentType($documentType, $autoExecute);
 		foreach ($arWT as $wt)
@@ -444,10 +452,15 @@ class CBPDocument
 		$errors = array();
 		if ($terminate)
 			static::TerminateWorkflow($workflowId, $documentId, $errors);
-		\Bitrix\Bizproc\WorkflowInstanceTable::delete($workflowId);
-		CBPTaskService::DeleteByWorkflow($workflowId);
-		CBPTrackingService::DeleteByWorkflow($workflowId);
-		CBPStateService::DeleteWorkflow($workflowId);
+
+		if (!$errors)
+		{
+			\Bitrix\Bizproc\WorkflowInstanceTable::delete($workflowId);
+			CBPTaskService::DeleteByWorkflow($workflowId);
+			CBPTrackingService::DeleteByWorkflow($workflowId);
+			CBPStateService::DeleteWorkflow($workflowId);
+		}
+
 		return $errors;
 	}
 
@@ -821,6 +834,30 @@ class CBPDocument
 
 		if (mode == "only_users")
 		{
+			if (BX.getClass('BX.Bizproc.UserSelector') && BX.Bizproc.UserSelector.canUse())
+			{
+				var controlNode = BX(id);
+				if (controlNode.__userSelector)
+				{
+					controlNode.__userSelector.onBindClick();
+					return;
+				}
+
+				BX.Bizproc.UserSelector.loadData(function()
+				{
+					controlNode.__userSelector = new BX.Bizproc.UserSelector({
+						bindTo: controlNode,
+						addCallback: function(user)
+						{
+							controlNode.value += user['name'] + ' ['+user['id']+']; ';
+						}
+					});
+					controlNode.__userSelector.onBindClick();
+				});
+				controlNode.__userSelector = true;
+				return;
+			}
+
 			BX.WindowManager.setStartZIndex(1150);
 			(new BX.CDialog({
 				'content_url': '/bitrix/admin/'+module
@@ -914,6 +951,10 @@ class CBPDocument
 			$s = '<table cellpadding="0" cellspacing="0" border="0"><tr><td valign="top"><textarea ';
 			$s .= 'rows="'.($arParams['rows']>0?intval($arParams['rows']):5).'" ';
 			$s .= 'cols="'.($arParams['cols']>0?intval($arParams['cols']):50).'" ';
+			if (!empty($arParams['maxlength']))
+			{
+				$s .= 'maxlength="'.intval($arParams['maxlength']).'" ';
+			}
 			$s .= 'name="'.htmlspecialcharsbx($name).'" ';
 			$s .= 'id="'.htmlspecialcharsbx($id).'" ';
 			$s .= '>'.htmlspecialcharsbx($values);
@@ -956,6 +997,10 @@ class CBPDocument
 		{
 			$s = '<input type="text" ';
 			$s .= 'size="'.($arParams['size']>0?intval($arParams['size']):70).'" ';
+			if (!empty($arParams['maxlength']))
+			{
+				$s .= 'maxlength="'.intval($arParams['maxlength']).'" ';
+			}
 			$s .= 'name="'.htmlspecialcharsbx($name).'" ';
 			$s .= 'id="'.htmlspecialcharsbx($id).'" ';
 			$s .= 'value="'.htmlspecialcharsbx($values).'"> ';
@@ -1064,7 +1109,7 @@ class CBPDocument
 			array("DOCUMENT_TYPE" => $documentType, "ACTIVE"=>"Y", '!AUTO_EXECUTE' => CBPDocumentEventType::Automation),
 			false,
 			false,
-			array("ID", "NAME", "DESCRIPTION", "MODIFIED", "USER_ID", "AUTO_EXECUTE", "USER_NAME", "USER_LAST_NAME", "USER_LOGIN", "USER_SECOND_NAME")
+			array("ID", "NAME", "DESCRIPTION", "MODIFIED", "USER_ID", "AUTO_EXECUTE", "USER_NAME", "USER_LAST_NAME", "USER_LOGIN", "USER_SECOND_NAME", 'PARAMETERS')
 		);
 		while ($arWorkflowTemplate = $dbWorkflowTemplate->GetNext())
 		{
@@ -1095,6 +1140,8 @@ class CBPDocument
 					$arWorkflowTemplate["AUTO_EXECUTE_TEXT"] .= ", ";
 				$arWorkflowTemplate["AUTO_EXECUTE_TEXT"] .= GetMessage("BPCGDOC_AUTO_EXECUTE_DELETE");
 			}
+
+			$arWorkflowTemplate['HAS_PARAMETERS'] = count($arWorkflowTemplate['PARAMETERS']) > 0;
 
 			$arResult[] = $arWorkflowTemplate;
 		}
@@ -1520,6 +1567,86 @@ class CBPDocument
 			return $result;
 		}
 		return false;
+	}
+
+	public static function signParameters(array $parameters)
+	{
+		$signer = new Main\Security\Sign\Signer;
+		$jsonData = Main\Web\Json::encode($parameters);
+
+		return $signer->sign($jsonData, 'bizproc_wf_params');
+	}
+
+	/**
+	 * @param string $unsignedData
+	 * @return array
+	 */
+	public static function unsignParameters($unsignedData)
+	{
+		$signer = new Main\Security\Sign\Signer;
+
+		try
+		{
+			$unsigned = $signer->unsign($unsignedData, 'bizproc_wf_params');
+			$result = Main\Web\Json::decode($unsigned);
+		}
+		catch (\Exception $e)
+		{
+			$result = array();
+		}
+
+		return $result;
+	}
+
+	public static function getTemplatesForStart($userId, $documentType, $documentId = null, array $parameters = array())
+	{
+		if (!isset($parameters['UserGroups']))
+		{
+			$parameters['UserGroups'] = CUser::GetUserGroup($userId);
+		}
+		if (!isset($parameters['DocumentStates']))
+		{
+			$parameters['DocumentStates'] = static::GetDocumentStates($documentType, $documentId);
+		}
+		$op = CBPCanUserOperateOperation::StartWorkflow;
+
+		$templates = array();
+		$dbWorkflowTemplate = CBPWorkflowTemplateLoader::GetList(
+			array(),
+			array(
+				"DOCUMENT_TYPE" => $documentType,
+				"ACTIVE" => "Y",
+				'!AUTO_EXECUTE' => CBPDocumentEventType::Automation
+			),
+			false,
+			false,
+			array("ID", "NAME", "DESCRIPTION", "PARAMETERS")
+		);
+		while ($arWorkflowTemplate = $dbWorkflowTemplate->fetch())
+		{
+			$parameters['WorkflowTemplateId'] = $arWorkflowTemplate['ID'];
+			if ($documentId)
+			{
+				if (!CBPDocument::CanUserOperateDocument($op, $userId, $documentId, $parameters))
+				{
+					continue;
+				}
+			}
+			elseif (!CBPDocument::CanUserOperateDocumentType($op, $userId, $documentType, $parameters))
+			{
+				continue;
+			}
+
+			$templates[] = array(
+				'id' => $arWorkflowTemplate['ID'],
+				'name' => $arWorkflowTemplate['NAME'],
+				'description' => $arWorkflowTemplate['DESCRIPTION'],
+				'hasParameters' => count($arWorkflowTemplate['PARAMETERS']) > 0,
+				'isConstantsTuned' => CBPWorkflowTemplateLoader::isConstantsTuned($arWorkflowTemplate["ID"])
+			);
+		}
+
+		return $templates;
 	}
 }
 ?>

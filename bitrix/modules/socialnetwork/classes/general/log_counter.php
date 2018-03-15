@@ -95,7 +95,7 @@ class CAllSocNetLogCounter
 						: (
 							$bGroupCounters
 								? "SLR0.GROUP_CODE"
-								: "'**".($bMultiple ? $type.$entityId : "")."'"
+								: "'".CUserCounter::LIVEFEED_CODE.($bMultiple ? $type.$entityId : "")."'"
 						)
 				)
 		);
@@ -335,7 +335,8 @@ class CAllSocNetLogCounter
 			WHERE
 				U.ACTIVE = 'Y'
 				AND U.LAST_ACTIVITY_DATE IS NOT NULL
-				AND	U.LAST_ACTIVITY_DATE > ".CSocNetLogCounter::dbWeeksAgo(2)."
+				AND U.LAST_ACTIVITY_DATE > ".CSocNetLogCounter::dbWeeksAgo(2)."
+				AND CASE WHEN U.EXTERNAL_AUTH_ID IN ('".implode("','", \Bitrix\Main\UserTable::getExternalUserTypes())."') THEN 'N' ELSE 'Y' END = 'Y'
 				".(
 					(
 						$type == "LC"

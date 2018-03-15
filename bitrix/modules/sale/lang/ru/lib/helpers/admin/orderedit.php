@@ -15,6 +15,10 @@ $MESS["SALE_ORDEREDIT_BASKET_ITEM_DEL_ERROR"] = "Ошибка удаления �
 $MESS["SALE_ORDEREDIT_UNMARK_ERROR"] = "Ошибка отмены пометки заказа как проблемного";
 $MESS["SALE_ORDEREDIT_LOCKED"] = "Заказ временно заблокирован пользователем #ID# (#DATE#)";
 $MESS["SALE_ORDEREDIT_PRODUCT_IS_NOT_AVAILABLE"] = "Товар \"#NAME_ID#\" недоступен";
+$MESS["SALE_ORDEREDIT_PRODUCT_QUANTITY_IS_EMPTY"] = "Недостаточное количество товара \"#NAME#\"";
 $MESS["SALE_ORDEREDIT_CLOSE"] = "Закрыть";
 $MESS["SALE_ORDEREDIT_MESSAGE"] = "Сообщение";
+$MESS["SALE_ORDEREDIT_CONFIRM"] = "Подтверждение";
+$MESS["SALE_ORDEREDIT_CONFIRM_CONTINUE"] = "Продолжить";
+$MESS["SALE_ORDEREDIT_CONFIRM_ABORT"] = "Прервать";
 ?>

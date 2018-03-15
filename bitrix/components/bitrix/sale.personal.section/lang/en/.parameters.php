@@ -68,4 +68,5 @@ $MESS["SPS_USER_INFO_EMAIL"] = "E-mail address";
 $MESS["SPS_USER_INFO_PERSON_TYPE_NAME"] = "Payer type";
 $MESS["SPS_ORDER_HIDE_USER_INFO"] = "Don't show in user information area";
 $MESS["SPS_CHAIN_MAIN_FIELD"] = "Section name in breadcrumbs";
+$MESS["SPS_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"] = "Recalculate order when payment system status changes";
 ?>

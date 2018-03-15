@@ -1,8 +1,9 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-class CBPMailActivity
-	extends CBPActivity
+use Bitrix\Main\Mail;
+
+class CBPMailActivity extends CBPActivity
 {
 	const DEFAULT_SEPARATOR = ',';
 
@@ -18,6 +19,7 @@ class CBPMailActivity
 			"MailSubject" => "",
 			"MailText" => "",
 			"MailMessageType" => "plain",
+			"MailMessageEncoded" => 0,
 			"MailCharset" => "windows-1251",
 			"DirrectMail" => "Y",
 			"MailSite" => null,
@@ -147,6 +149,12 @@ class CBPMailActivity
 
 		$charset = $this->MailCharset;
 
+		$mailText = $this->MailText;
+		if ($this->MailMessageEncoded)
+		{
+			$mailText = htmlspecialcharsback($mailText);
+		}
+
 		if (!$this->IsPropertyExists("DirrectMail") || $this->DirrectMail == "Y")
 		{
 			global $APPLICATION;
@@ -160,9 +168,12 @@ class CBPMailActivity
 			$mailSubject = $APPLICATION->ConvertCharset($this->MailSubject, SITE_CHARSET, $charset);
 			$mailSubject = CBPMailActivity::EncodeSubject($mailSubject, $charset);
 
-			$mailText = $APPLICATION->ConvertCharset(CBPHelper::ConvertTextForMail($this->MailText), SITE_CHARSET, $charset);
+			$mailText = $APPLICATION->ConvertCharset(CBPHelper::ConvertTextForMail($mailText), SITE_CHARSET, $charset);
 
 			$eol = CAllEvent::GetMailEOL();
+
+			$context = new Mail\Context();
+			$context->setCategory(Mail\Context::CAT_EXTERNAL);
 
 			bxmail(
 				$strMailUserTo,
@@ -172,7 +183,9 @@ class CBPMailActivity
 				"Reply-To: ".$strMailUserFrom.$eol.
 				"X-Priority: 3 (Normal)".$eol.
 				"Content-Type: text/".($this->MailMessageType == "html" ? "html" : "plain")."; charset=".$charset.$eol.
-				"X-Mailer: PHP/".phpversion()
+				"X-Mailer: PHP/".phpversion(),
+				"",
+				$context
 			);
 		}
 		else
@@ -188,7 +201,7 @@ class CBPMailActivity
 				"REPLY_TO" => $strMailUserFrom,
 				"RECEIVER" => $strMailUserTo,
 				"TITLE" => $this->MailSubject,
-				"MESSAGE" => CBPHelper::ConvertTextForMail($this->MailText),
+				"MESSAGE" => CBPHelper::ConvertTextForMail($mailText),
 			);
 
 			$files = (array)$this->ParseValue($this->getRawProperty('File'), 'file');
@@ -276,6 +289,7 @@ class CBPMailActivity
 			"MailSubject" => "mail_subject",
 			"MailText" => "mail_text",
 			"MailMessageType" => "mail_message_type",
+			"MailMessageEncoded" => "mail_message_encoded",
 			"MailCharset" => "mail_charset",
 			"DirrectMail" => "dirrect_mail",
 			"MailSite" => "mail_site",
@@ -385,6 +399,19 @@ class CBPMailActivity
 		$arErrors = self::ValidateProperties($arProperties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
 		if (count($arErrors) > 0)
 			return false;
+
+		$arProperties['MailMessageEncoded'] = 0;
+		if ($arProperties['MailMessageType'] === 'html')
+		{
+			$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+			$rawData = $request->getPostList()->getRaw('mail_text');
+			if ($request->isAjaxRequest())
+			{
+				\CUtil::decodeURIComponent($rawData);
+			}
+			$arProperties['MailText'] = htmlspecialcharsbx($rawData);
+			$arProperties['MailMessageEncoded'] = 1;
+		}
 
 		$arCurrentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
 		$arCurrentActivity["Properties"] = $arProperties;

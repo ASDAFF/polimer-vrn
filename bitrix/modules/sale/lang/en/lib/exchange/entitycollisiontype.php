@@ -22,4 +22,6 @@ $MESS["SALE_COLLISION_TYPE_PAYMENT_CASH_BOX_CHECK_NOT_FOUND"] = "1C submitted a 
 $MESS["SALE_COLLISION_TYPE_ORDER_SYNCHRONIZE_BASKET_ITEMS_MODIFY_ERROR"] = "Error updating shopping cart.";
 $MESS["SALE_COLLISION_TYPE_BEFORE_UPDATE_PAYMENT_DELETED_ERROR"] = "Error syncing the order with 1C. Cannot update the order. Exported payments were not deleted.";
 $MESS["SALE_COLLISION_TYPE_BEFORE_UPDATE_SHIPMENT_DELETED_ERROR"] = "Error syncing the order with 1C. Cannot update the order. Exported shipments were not deleted.";
+$MESS["SALE_COLLISION_TYPE_ORDER_SHIPPED_BY_STATUS_ERROR"] = "The order was marked as fully shipped while updating data. However documentation supplied by 1C does not confirm full shipment.";
+$MESS["SALE_COLLISION_TYPE_ORDER_BASKET_ITEMS_CURRENCY_MODIFY"] = "Currency conversion was performed while completing order tables";
 ?>

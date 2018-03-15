@@ -56,6 +56,9 @@ if(isset($_POST["EBAY_SETTINGS"]) && is_array($_POST["EBAY_SETTINGS"]))
 	$bSaved = $ebay->saveSettings($settings);
 }
 
+if(!isset($settings[$SITE_ID]))
+	LocalRedirect("/bitrix/admin/sale_ebay_general.php?lang=".LANG."&SITE_ID=".$SITE_ID."&back_url=".urlencode($APPLICATION->GetCurPageParam()));
+
 $siteSettings = $settings[$SITE_ID];
 $details = new \Bitrix\Sale\TradingPlatform\Ebay\Api\Details($SITE_ID);
 unset ($settings);
@@ -199,7 +202,7 @@ $tabControl->BeginNextTab();
 					<select name="EBAY_SETTINGS[MAPS][SHIPMENT][<?=$service?>]">
 						<option value=""><?=Loc::getMessage("SALE_EBAY_NOT_MAPPED")?></option>
 						<?foreach($arDeliveryList as $deliveryId => $deliveryName):?>
-							<option value="<?=$deliveryId?>"<?=(isset($siteSettings["MAPS"]["SHIPMENT"][$service]) && $siteSettings["MAPS"]["SHIPMENT"][$service] ==  $deliveryId ? " selected" : "")?>><?=$deliveryName?></option>
+							<option value="<?=$deliveryId?>"<?=(isset($siteSettings["MAPS"]["SHIPMENT"][$service]) && $siteSettings["MAPS"]["SHIPMENT"][$service] ==  $deliveryId ? " selected" : "")?>><?=htmlspecialcharsbx($deliveryName)?></option>
 						<?endforeach;?>
 					</select>
 				</td>

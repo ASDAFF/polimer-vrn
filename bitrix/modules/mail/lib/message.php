@@ -348,11 +348,11 @@ class Message
 				if (strlen(trim($value)) >= 10 && $subject['sgnlen'] >= 10)
 				{
 					$dist = $subject['strlen']-strlen($value);
-					if ($dist < 10)
+					if (abs($dist) < 10)
 					{
-						if ($dist >= 0 && strpos($subject['value'], $value) === $dist)
+						if ($dist >= 0 && strpos($subject['value'], $value) !== false)
 							return true;
-						else if (levenshtein($subject['value'], $value) < 10)
+						if (max($subject['strlen'], strlen($value)) < 256 && levenshtein($subject['value'], $value) < 10)
 							return true;
 					}
 				}
@@ -505,11 +505,21 @@ class Message
 
 		$data = static::reduceTags($text);
 
+		$shortHeadRegex = '/(?:^|\n)\s*
+			-{3,}.{4,40}?-{3,}[\t\x20]*\n
+			(?<head>(?:[\t\x20]*\n)?
+			(?<date>.{5,50}\d),?\x20
+			[^\d\n]{0,20}(?<time>\d{1,2}\:\d{2}(?:\:\d{2})?\x20?(?:am|pm)?),?\x20
+			(?<from>.+):(?:\s*\n)?)
+		/ix'.BX_UTF_PCRE_MODIFIER;
+
+		$hasMarker = preg_match($shortHeadRegex, $data);
 		$fullHeadRegex = '/(?:^|\n)\s*
-			(?<marker>-{3,}.{4,40}?-{3,}[\t\x20]*\n)?
+			(?<marker>-{3,}.{4,40}?-{3,}[\t\x20]*\n)'.($hasMarker ? '' : '?').'
 			(?<head>(?:[\t\x20]*\n)?
 			(?<lines>(?:[^\:\n]{1,20}:[\t\x20]+.+(?:\n|$)){2,8})(?:\s*\n)?)
 		/x'.BX_UTF_PCRE_MODIFIER;
+
 		if (preg_match($fullHeadRegex, $data, $matches, PREG_OFFSET_CAPTURE))
 		{
 			$score  = (int) !empty($matches['marker'][0]);
@@ -534,13 +544,6 @@ class Message
 			}
 		}
 
-		$shortHeadRegex = '/(?:^|\n)\s*
-			-{3,}.{4,40}?-{3,}[\t\x20]*\n
-			(?<head>(?:[\t\x20]*\n)?
-			(?<date>.{5,50}\d),?\x20
-			[^\d\n]{0,20}(?<time>\d{1,2}\:\d{2}(?:\:\d{2})?\x20?(?:am|pm)?),?\x20
-			(?<from>.+):(?:\s*\n)?)
-		/ix'.BX_UTF_PCRE_MODIFIER;
 		if (preg_match($shortHeadRegex, $data, $matches, PREG_OFFSET_CAPTURE))
 		{
 			$score  = 0;

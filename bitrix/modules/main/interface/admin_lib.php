@@ -1084,7 +1084,7 @@ window.'.$this->name.' = new PopupMenu("'.$this->id.'"'.
 		return null;
 	}
 
-	function GetGlobalIconClass($old_icon)
+	public static function GetGlobalIconClass($old_icon)
 	{
 		switch($old_icon)
 		{
@@ -1179,6 +1179,7 @@ window.'.$this->name.' = new PopupMenu("'.$this->id.'"'.
 						(isset($action["AUTOHIDE"]) && $action["AUTOHIDE"] == false? "'AUTOHIDE':false,":"").
 						(isset($action["DEFAULT"]) && $action["DEFAULT"] == true? "'DEFAULT':true,":"").
 						($action["TEXT"]<>""? "'TEXT':'".CUtil::JSEscape($action["TEXT"])."',":"").
+						($action["HTML"]<>""? "'HTML':'".CUtil::JSEscape($action["HTML"])."',":"").
 						(isset($action["TITLE"]) && $action["TITLE"]<>""? "'TITLE':'".CUtil::JSEscape($action["TITLE"])."',":"").
 						(isset($action["SHOW_TITLE"]) && $action["SHOW_TITLE"] == true ? "'SHOW_TITLE':true,":"").
 						($action["ACTION"]<>""? "'ONCLICK':'".CUtil::JSEscape(htmlspecialcharsback($action["ACTION"]))."',":"").
@@ -1632,6 +1633,11 @@ class CAdminResult extends CDBResult
 
 		$this->nInitialSize = $nPageSize["nPageSize"];
 
+		parent::NavStart($nPageSize, $bShowAll, $iNumPage);
+	}
+
+	protected function parentNavStart($nPageSize, $bShowAll, $iNumPage)
+	{
 		parent::NavStart($nPageSize, $bShowAll, $iNumPage);
 	}
 

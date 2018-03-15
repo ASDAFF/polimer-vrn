@@ -113,7 +113,7 @@ foreach($arResult['MAP_TYPES_LIST'] as $type => $name)
 									<?
 										$result .= '<span class="adres"><b>'.htmlspecialcharsbx($val["TITLE"]).':</b> '.htmlspecialcharsbx($val["ADDRESS"]).'</span>';
 										$menu[] = array(
-											'TEXT' => $result,
+											'HTML' => $result,
 											'ONCLICK' => 'BX.Sale.Store.Choose.setChangeStore("'.$val["ID"].'", "'.$rnd.'");'
 										);
 									?>

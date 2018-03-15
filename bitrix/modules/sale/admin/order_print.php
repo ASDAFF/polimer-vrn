@@ -295,7 +295,7 @@ else
 		</tr>
 
 		<tr>
-			<td align="right" valign="top"><?echo GetMessage("SALE_PR_SHABLON")?>:<br><img src="/bitrix/images/sale/mouse.gif" width="44" height="21" border="0" alt=""></td>
+			<td align="right" valign="top"><?echo GetMessage("SALE_PR_SHABLON")?>:</td>
 			<td>
 				<select size="5" multiple name="REPORT_ID[]">
 					<?
@@ -345,11 +345,7 @@ else
 											continue;
 									}
 
-									$arReports[] = array(
-										"PATH" => $_SERVER["DOCUMENT_ROOT"]."/bitrix/admin/reports/".$file,
-										"FILE" => $file,
-										"TITLE" => $rep_title
-									);
+									$arReports[$file] = $rep_title;
 								}
 							}
 						}
@@ -360,12 +356,12 @@ else
 					{
 						while (($file = readdir($handle)) !== false)
 						{
-							if ($file == "." || $file == "..")
+							if ($file == "." || $file == ".." || isset($arReports[$file]))
 								continue;
 
 							if (is_file($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/reports/".$file)
-								&& !in_array($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/reports/".$file, $arReports)
-								&& ToUpper(substr($file, -4))==".PHP")
+								&& ToUpper(substr($file, -4))==".PHP"
+							)
 							{
 								$rep_title = $file;
 								if (is_file($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/ru/reports/".$file))
@@ -403,23 +399,15 @@ else
 										continue;
 								}
 
-								$arReports[] = array(
-									"PATH" => $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/reports/".$file,
-									"FILE" => $file,
-									"TITLE" => $rep_title
-								);
+								$arReports[$file] = $rep_title;
 							}
 						}
 					}
 					closedir($handle);
 
-					$countArReport = count($arReports);
-					for ($ir = 0; $ir < $countArReport; $ir++):
-						?>
-						<option value="<?echo substr($arReports[$ir]["FILE"], 0, strlen($arReports[$ir]["FILE"])-4); ?>"><?echo $arReports[$ir]["TITLE"];?></option>
-						<?
-					endfor;
-					?>
+					foreach ($arReports as $file => $title):?>
+						<option value="<?echo substr($file, 0, strlen($file)-4); ?>"><?=$title;?></option>
+					<?endforeach;?>
 				</select>
 			</td>
 		</tr>

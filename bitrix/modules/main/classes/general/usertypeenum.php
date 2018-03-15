@@ -365,7 +365,7 @@ EOT;
 
 			$result .= '<span id="'.\Bitrix\Main\Text\HtmlFilter::encode($valueContainerId).'" style="display: none">';
 
-			for($i = 0; $i < count($startValue); $i++)
+			for($i = 0, $n = count($startValue); $i < $n; $i++)
 			{
 				$result .= '<input type="hidden" name="'.$arHtmlControl["NAME"].'" value="'.\Bitrix\Main\Text\HtmlFilter::encode($startValue[$i]['VALUE']).'" />';
 			}
@@ -499,9 +499,11 @@ EOT;
 	{
 		$rsEnum = call_user_func_array(array($arUserField["USER_TYPE"]["CLASS_NAME"], "getlist"), array($arUserField));
 		$items = array();
-		while($arEnum = $rsEnum->GetNext())
-			$items[$arEnum["ID"]] = $arEnum["VALUE"];
-
+		if ($rsEnum)
+		{
+			while($arEnum = $rsEnum->GetNext())
+				$items[$arEnum["ID"]] = $arEnum["VALUE"];
+		}
 		return array(
 			"id" => $arHtmlControl["ID"],
 			"name" => $arHtmlControl["NAME"],
@@ -659,7 +661,7 @@ EOT;
 			&& ($arUserField["SETTINGS"]["DISPLAY"] != "CHECKBOX" || $arUserField["MULTIPLE"] <> "Y")
 		)
 		{
-			$enum = array(null => ($arUserField["SETTINGS"]["CAPTION_NO_VALUE"] <> '' ? htmlspecialcharsbx($arUserField["SETTINGS"]["CAPTION_NO_VALUE"]) : GetMessage("USER_TYPE_ENUM_NO_VALUE")));
+			$enum = array(null => htmlspecialcharsbx(static::getEmptyCaption($arUserField)));
 		}
 
 		$obEnum = new \CUserFieldEnum;
@@ -672,6 +674,13 @@ EOT;
 		$arUserField["USER_TYPE"]["FIELDS"] = $enum;
 	}
 
+	protected static function getEmptyCaption($arUserField)
+	{
+		return $arUserField["SETTINGS"]["CAPTION_NO_VALUE"] <> ''
+			? $arUserField["SETTINGS"]["CAPTION_NO_VALUE"]
+			: GetMessage("USER_TYPE_ENUM_NO_VALUE");
+	}
+
 	public static function GetPublicView($arUserField, $arAdditionalParameters = array())
 	{
 		static::getEnumList($arUserField, $arAdditionalParameters);
@@ -680,21 +689,25 @@ EOT;
 
 		$html = '';
 		$first = true;
+		$empty = true;
 
 		foreach($value as $res)
 		{
-			$textRes = $res;
+			if(array_key_exists($res, $arUserField["USER_TYPE"]["FIELDS"]))
+			{
+				$textRes = $arUserField['USER_TYPE']['FIELDS'][$res];
+				$empty = false;
+			}
+			else
+			{
+				continue;
+			}
 
 			if(!$first)
 			{
 				$html .= static::getHelper()->getMultipleValuesSeparator();
 			}
 			$first = false;
-
-			if(array_key_exists($res, $arUserField["USER_TYPE"]["FIELDS"]))
-			{
-				$textRes = $arUserField['USER_TYPE']['FIELDS'][$res];
-			}
 
 			if(strlen($arUserField['PROPERTY_VALUE_LINK']) > 0)
 			{
@@ -706,6 +719,13 @@ EOT;
 			}
 
 			$html .= static::getHelper()->wrapSingleField($res);
+		}
+
+		if($empty)
+		{
+			$html .= static::getHelper()->wrapSingleField(
+				htmlspecialcharsbx(static::getEmptyCaption($arUserField))
+			);
 		}
 
 		static::initDisplay();
@@ -767,7 +787,7 @@ EOT;
 
 			$result .= '<span '.static::buildTagAttributes($attrList).'>';
 
-			for($i = 0; $i < count($startValue); $i++)
+			for($i = 0, $n = count($startValue); $i < $n; $i++)
 			{
 				$attrList = array(
 					'type' => 'hidden',
@@ -898,14 +918,17 @@ EOT;
 					$attrList['checked'] = 'checked';
 				}
 
+				$attrList['tabindex'] = '0';
+
 				$tag .= '<label><input '.static::buildTagAttributes($attrList).'>'.htmlspecialcharsbx($val).'</label><br />';
-				$html .= static::getHelper()->wrapSingleField($tag);
+				$html .= static::getHelper()->wrapSingleField($tag, array(static::USER_TYPE_ID.'-checkbox'));
 			}
 		}
 		else
 		{
 			$attrList = array(
 				'name' => $fieldName,
+				'tabindex' => '0',
 			);
 
 			if($arUserField["SETTINGS"]["LIST_HEIGHT"] > 1)
@@ -941,7 +964,7 @@ EOT;
 			}
 			$tag .= '</select>';
 
-			$html .= static::getHelper()->wrapSingleField($tag);
+			$html .= static::getHelper()->wrapSingleField($tag, array(static::USER_TYPE_ID.($arUserField['MULTIPLE'] === 'Y' ? '-multiselect' : '-select')));
 		}
 
 		static::initDisplay();

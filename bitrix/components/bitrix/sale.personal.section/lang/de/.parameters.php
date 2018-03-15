@@ -68,4 +68,5 @@ $MESS["SPS_USER_INFO_EMAIL"] = "E-Mail-Adresse";
 $MESS["SPS_USER_INFO_PERSON_TYPE_NAME"] = "Kundengruppe";
 $MESS["SPS_ORDER_HIDE_USER_INFO"] = "Im Bereich der Nutzerinformationen nicht anzeigen";
 $MESS["SPS_CHAIN_MAIN_FIELD"] = "Name des Bereichs in Breadcrumbs";
+$MESS["SPS_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"] = "Bestellung neu kalkulieren, wenn der Status des Zahlungssystems geändert wurde";
 ?>

@@ -69,6 +69,12 @@ class CSalePredictionProductDetailComponent extends CBitrixComponent
 			$manager = Bitrix\Sale\Discount\Prediction\Manager::getInstance();
 			$basket = \Bitrix\Sale\Basket::loadItemsForFUser(\Bitrix\Sale\Fuser::getId(), SITE_ID)->getOrderableItems();
 
+			global $USER;
+			if ($USER instanceof \CUser && $USER->getId())
+			{
+				$manager->setUserId($USER->getId());
+			}
+
 			$this->arResult['PREDICTION_TEXT'] = $manager->getFirstPredictionTextByProduct($basket, $potentialBuy);
 		}
 

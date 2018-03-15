@@ -30,9 +30,9 @@ class ProductsDelete extends DataProcessor
 		$productsMappedToRemove = array();
 		foreach ($productsMapped as $key => $productMapped)
 		{
-			if (!isset($productsFromVk[$productMapped["vk_id"]]))
+			if (!isset($productsFromVk[$productMapped["VK_ID"]]))
 			{
-				$productsMappedToRemove[] = array("VALUE_EXTERNAL" => $productMapped["vk_id"]);
+				$productsMappedToRemove[] = array("VALUE_EXTERNAL" => $productMapped["VK_ID"]);
 				unset($productsMapped[$key]);
 			}
 		}
@@ -54,7 +54,7 @@ class ProductsDelete extends DataProcessor
 			foreach ($resDelete as $res)
 			{
 				if ($res["flag_product_delete_result"])
-					$productsMappedToRemove[] = array("VALUE_EXTERNAL" => $res["vk_id"]);
+					$productsMappedToRemove[] = array("VALUE_EXTERNAL" => $res["VK_ID"]);
 			}
 
 			// remove success deleted items

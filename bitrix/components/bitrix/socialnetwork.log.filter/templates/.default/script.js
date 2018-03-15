@@ -73,6 +73,9 @@ BitrixLFFilter = function ()
 
 	this.popupMenu = null;
 	this.menuItems = [];
+
+	this.actualSearchString = '';
+	this.minSearchStringLength = 2;
 };
 
 BitrixLFFilter.prototype.initLentaMenu = function(params)
@@ -143,13 +146,47 @@ BitrixLFFilter.prototype.initFilter = function(params)
 
 	if (version >= 2)
 	{
+		if (
+			typeof params != 'undefined'
+			&& typeof params.minSearchStringLength != 'undefined'
+			&& parseInt(params.minSearchStringLength) > 0
+		)
+		{
+			this.minSearchStringLength = parseInt(params.minSearchStringLength);
+		}
+
+		var filterInstance = BX.Main.filterManager.getById(filterId);
+		if (
+			filterInstance
+			&& (
+				filterInstance.getSearch().getSquares().length > 0
+				|| filterInstance.getSearch().getSearchString().length > 0
+			)
+		)
+		{
+			var pagetitleContainer = BX.findParent(BX(filterId + '_filter_container'), { className: 'pagetitle-wrap'});
+			if (pagetitleContainer)
+			{
+				BX.addClass(pagetitleContainer, "pagetitle-wrap-filter-opened");
+			}
+		}
+
 		BX.addCustomEvent("BX.Livefeed:refresh", BX.delegate(function() {
-			BX.Main.filterManager.getById(filterId).getPreset().resetPreset(true);
-			BX.Main.filterManager.getById(filterId).getSearch().clearForm();
+			var filterInstance = BX.Main.filterManager.getById(filterId);
+			if (filterInstance)
+			{
+				filterInstance.getPreset().resetPreset(true);
+				filterInstance.getSearch().clearForm();
+			}
 		}, this));
 		BX.addCustomEvent("BX.Main.Filter:beforeApply", BX.delegate(function(eventFilterId, values, ob, filterPromise) {
-
-			if (eventFilterId != filterId)
+			if (
+				eventFilterId != filterId
+				|| (
+					this.actualSearchString.length > 0
+					&& this.actualSearchString.length < this.minSearchStringLength
+				)
+			)
 			{
 				return;
 			}
@@ -157,7 +194,13 @@ BitrixLFFilter.prototype.initFilter = function(params)
 			BX.onCustomEvent(window, 'BX.Livefeed.Filter:beforeApply', [values, filterPromise]);
 		}, this));
 		BX.addCustomEvent("BX.Main.Filter:apply", BX.delegate(function(eventFilterId, values, ob, filterPromise, filterParams) {
-			if (eventFilterId != filterId)
+			if (
+				eventFilterId != filterId
+				|| (
+					this.actualSearchString.length > 0
+					&& this.actualSearchString.length < this.minSearchStringLength
+				)
+			)
 			{
 				return;
 			}
@@ -167,14 +210,22 @@ BitrixLFFilter.prototype.initFilter = function(params)
 		BX.addCustomEvent('BX.Filter.Search:input', BX.delegate(function(eventFilterId, searchString) {
 			if (eventFilterId == filterId)
 			{
-				BX.onCustomEvent(window, 'BX.Livefeed.Filter:searchInput', [ searchString ]);
+				this.actualSearchString = (typeof searchString != 'undefined' ? BX.util.trim(searchString) : '');
+
+				if (
+					this.actualSearchString.length > 0
+					&& this.actualSearchString.length >= this.minSearchStringLength
+				)
+				{
+					BX.onCustomEvent(window, 'BX.Livefeed.Filter:searchInput', [ searchString ]);
+				}
 			}
-		}));
-		BX.addCustomEvent('BX.Main.Filter:blur', BX.delegate(function(filterObject) {
+		}, this));
+		BX.addCustomEvent('BX.Main.Filter:blur', BX.delegate(function(filterInstance) {
 			if (
-				filterObject.getParam('FILTER_ID') == filterId
-				&& filterObject.getSearch().getSquares().length <= 0
-				&& filterObject.getSearch().getSearchString().length <= 0
+				filterInstance.getParam('FILTER_ID') == filterId
+				&& filterInstance.getSearch().getSquares().length <= 0
+				&& filterInstance.getSearch().getSearchString().length <= 0
 			)
 			{
 				var pagetitleContainer = BX.findParent(BX(filterId + '_filter_container'), { className: 'pagetitle-wrap'});

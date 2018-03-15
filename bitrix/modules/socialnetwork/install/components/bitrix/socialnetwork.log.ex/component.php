@@ -14,6 +14,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
 use Bitrix\Main\Loader;
+use \Bitrix\Socialnetwork\UserToGroupTable;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/socialnetwork.log.ex/include.php");
 
@@ -25,11 +26,13 @@ if (!CModule::IncludeModule("socialnetwork"))
 	return;
 }
 
+$arResult["isExtranetSite"] = (CModule::IncludeModule('extranet') && CExtranet::IsExtranetSite());
+
 $pathToUser = COption::GetOptionString("main", "TOOLTIP_PATH_TO_USER", false, SITE_ID);
 $pathToUser = ($pathToUser ? $pathToUser : SITE_DIR."company/personal/user/#user_id#/");
 
 $folderUsers = COption::GetOptionString("socialnetwork", "user_page", false, SITE_ID);
-$folderUsers = ($folderUsers ? $folderUsers : (CModule::IncludeModule('extranet') && CExtranet::IsExtranetSite() ? SITE_DIR."contacts/personal/" : SITE_DIR."company/personal/"));
+$folderUsers = ($folderUsers ? $folderUsers : ($arResult["isExtranetSite"] ? SITE_DIR."contacts/personal/" : SITE_DIR."company/personal/"));
 
 $folderWorkgroups = COption::GetOptionString("socialnetwork", "workgroups_page", false, SITE_ID);
 $folderWorkgroups = ($folderWorkgroups ? $folderWorkgroups : SITE_DIR."workgroups/");
@@ -319,16 +322,17 @@ if (IsModuleInstalled("webdav") || IsModuleInstalled("disk"))
 $arParams["COMMENT_PROPERTY"][] = "UF_SONET_COM_URL_PRV";
 
 $arPresetFilters = $arResultPresetFilters = false;
-$user_id = IntVal($USER->GetID());
+$arResult["currentUserId"] = intval($USER->getId());
+
 if (
 	$USER->IsAuthorized()
 	&& $arParams["SHOW_EVENT_ID_FILTER"] != "N"
 )
 {
-	$arPresetFilters = CUserOptions::GetOption("socialnetwork", "~log_filter_".SITE_ID, $user_id);
+	$arPresetFilters = CUserOptions::GetOption("socialnetwork", "~log_filter_".SITE_ID, $arResult["currentUserId"]);
 	if (!is_array($arPresetFilters))
 	{
-		$arPresetFilters = CUserOptions::GetOption("socialnetwork", "~log_filter", $user_id);
+		$arPresetFilters = CUserOptions::GetOption("socialnetwork", "~log_filter", $arResult["currentUserId"]);
 	}
 }
 
@@ -661,22 +665,22 @@ if (intval($arParams["PHOTO_THUMBNAIL_SIZE"]) <= 0)
 	$arParams["PHOTO_THUMBNAIL_SIZE"] = 48;
 
 if(
-	$user_id > 0
+	$arResult["currentUserId"] > 0
 	&& (
 		(
 			$arParams["ENTITY_TYPE"] != SONET_ENTITY_GROUP 
 		) 
 		|| 
 		(
-			CSocNetFeaturesPerms::CanPerformOperation($user_id, SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "full_post", CSocNetUser::IsCurrentUserModuleAdmin())
-			|| CSocNetFeaturesPerms::CanPerformOperation($user_id, SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "write_post")
-			|| CSocNetFeaturesPerms::CanPerformOperation($user_id, SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "moderate_post")
-			|| CSocNetFeaturesPerms::CanPerformOperation($user_id, SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "premoderate_post")
+			CSocNetFeaturesPerms::CanPerformOperation($arResult["currentUserId"], SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "full_post", CSocNetUser::IsCurrentUserModuleAdmin())
+			|| CSocNetFeaturesPerms::CanPerformOperation($arResult["currentUserId"], SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "write_post")
+			|| CSocNetFeaturesPerms::CanPerformOperation($arResult["currentUserId"], SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "moderate_post")
+			|| CSocNetFeaturesPerms::CanPerformOperation($arResult["currentUserId"], SONET_ENTITY_GROUP, $arParams["GROUP_ID"], "blog", "premoderate_post")
 		)
 	)
 )
 {
-	$arResult["MICROBLOG_USER_ID"] = $user_id;
+	$arResult["MICROBLOG_USER_ID"] = $arResult["currentUserId"];
 }
 
 if (IsModuleInstalled("photogallery"))
@@ -765,7 +769,7 @@ if (
 				$arResult["Group"]['OPENED'] == 'Y'
 				&& $USER->IsAuthorized()
 				&& !$bCurrentUserIsAdmin
-				&& !in_array(CSocNetUserToGroup::GetUserRole($user_id, $arResult["Group"]["ID"]), array(SONET_ROLES_OWNER, SONET_ROLES_MODERATOR, SONET_ROLES_USER))
+				&& !in_array(CSocNetUserToGroup::GetUserRole($arResult["currentUserId"], $arResult["Group"]["ID"]), array(SONET_ROLES_OWNER, SONET_ROLES_MODERATOR, SONET_ROLES_USER))
 			)
 			{
 				$arResult["Group"]['READ_ONLY'] = 'Y';
@@ -803,7 +807,7 @@ if (
 				if(!preg_match("/^(U|D|DR)/", $code)) //Users and Departments
 					unset($arAccessCodes[$i]);
 			$arFilter["LOG_RIGHTS"] = $arAccessCodes;
-			$arFilter["!USER_ID"] = $USER->GetID();
+			$arFilter["!USER_ID"] = $arResult["currentUserId"];
 			$arResult["IS_FILTERED"] = true;
 			$arParams["SET_LOG_COUNTER"] = $arParams["SET_LOG_PAGE_CACHE"] = "N";
 			$arResult["SHOW_UNREAD"] = $arParams["SHOW_UNREAD"] = "N";
@@ -811,7 +815,7 @@ if (
 		}
 		elseif($arParams["DISPLAY"] === "mine")
 		{
-			$arFilter["USER_ID"] = $USER->GetID();
+			$arFilter["USER_ID"] = $arResult["currentUserId"];
 			$arResult["IS_FILTERED"] = true;
 			$arParams["SET_LOG_COUNTER"] = $arParams["SET_LOG_PAGE_CACHE"] = "N";
 			$arResult["SHOW_UNREAD"] = $arParams["SHOW_UNREAD"] = "N";
@@ -990,44 +994,6 @@ if (
 		$arFilter["ALL"] = "Y";
 
 	if (
-		$ENTITY_TYPE != "" 
-		&& $ENTITY_ID > 0
-		&& !array_key_exists("EVENT_ID", $arFilter)
-	)
-	{
-		$arFilter["EVENT_ID"] = array();
-		$arSocNetLogEvents = CSocNetAllowed::GetAllowedLogEvents();
-
-		foreach($arSocNetLogEvents as $event_id_tmp => $arEventTmp)
-		{
-			if (
-				array_key_exists("HIDDEN", $arEventTmp)
-				&& $arEventTmp["HIDDEN"]
-			)
-				continue;
-
-			$arFilter["EVENT_ID"][] = $event_id_tmp;
-		}
-
-		$arFeatures = CSocNetFeatures::GetActiveFeatures($ENTITY_TYPE, $ENTITY_ID);
-		$arSocNetFeaturesSettings = CSocNetAllowed::GetAllowedFeatures();
-
-		foreach($arFeatures as $feature_id)
-		{
-			if(
-				array_key_exists($feature_id, $arSocNetFeaturesSettings)
-				&& array_key_exists("subscribe_events", $arSocNetFeaturesSettings[$feature_id])
-			)
-			{
-				foreach ($arSocNetFeaturesSettings[$feature_id]["subscribe_events"] as $event_id_tmp => $arEventTmp)
-				{
-					$arFilter["EVENT_ID"][] = $event_id_tmp;
-				}
-			}
-		}
-	}
-
-	if (
 		!$arFilter["EVENT_ID"]
 		|| (is_array($arFilter["EVENT_ID"]) && count($arFilter["EVENT_ID"]) <= 0)
 	)
@@ -1042,8 +1008,7 @@ if (
 	else
 	{
 		$arFilter["SITE_ID"] = (
-			CModule::IncludeModule('extranet')
-			&& CExtranet::IsExtranetSite()
+			$arResult["isExtranetSite"]
 				? SITE_ID
 				: array(SITE_ID, false)
 		);
@@ -1184,29 +1149,21 @@ if (
 
 		if (!empty($filterData["TAG"]))
 		{
-			$tagsList = explode(' ', $filterData["TAG"]);
-			$tagsList = array_map(
-				function($tag) {
-					return $tag;
-				},
-				$tagsList
-			);
-			$tagsList = array_values(array_unique(array_filter($tagsList, function($tag) {
-				return !empty($tag);
-			})));
-
-			if (!empty($tagsList))
+			$filterData["TAG"] = trim($filterData["TAG"]);
+			if (!empty($filterData["TAG"]))
 			{
 				$filtered = true;
-				if (count($tagsList) == 1)
-				{
-					$arFilter["=TAG"] = $tagsList[0];
-				}
-				else
-				{
-					$arFilter["@TAG"] = $tagsList;
-				}
+				$arFilter["=TAG"] = $filterData["TAG"];
 			}
+		}
+
+		$filterContent = trim($filterData["FIND"]);
+		if (!empty($filterContent))
+		{
+			$filtered = true;
+
+			$operation = \Bitrix\Socialnetwork\LogIndexTable::getEntity()->fullTextIndexEnabled("CONTENT") ? '*' : '*%';
+			$arFilter[$operation."CONTENT"] = \Bitrix\Socialnetwork\Item\LogIndex::prepareToken($filterContent);
 		}
 
 		if (
@@ -1223,22 +1180,29 @@ if (
 		if (!empty($filterData["DATE_CREATE_from"]))
 		{
 			$filtered = true;
-			$arFilter[">=LOG_DATE"] = $filterData["DATE_CREATE_from"];
+			if (!empty($filterContent))
+			{
+				$arFilter[">=CONTENT_DATE_CREATE"] = $filterData["DATE_CREATE_from"];
+			}
+			else
+			{
+				$arFilter[">=LOG_DATE"] = $filterData["DATE_CREATE_from"];
+			}
 		}
 
 		if (!empty($filterData["DATE_CREATE_to"]))
 		{
 			$filtered = true;
-			$arFilter["<=LOG_DATE"] = ConvertTimeStamp(MakeTimeStamp($filterData["DATE_CREATE_to"], CSite::getDateFormat("SHORT")) + 86399, "FULL");
-		}
+			$dateCreateToValue = ConvertTimeStamp(MakeTimeStamp($filterData["DATE_CREATE_to"], CSite::getDateFormat("SHORT")) + 86399, "FULL");
 
-		$filterContent = trim($filterData["FIND"]);
-		if (!empty($filterContent))
-		{
-			$filtered = true;
-
-			$operation = \Bitrix\Socialnetwork\LogIndexTable::getEntity()->fullTextIndexEnabled("CONTENT") ? '*' : '*%';
-			$arFilter[$operation."CONTENT"] = \Bitrix\Socialnetwork\Item\LogIndex::prepareToken($filterContent);
+			if (!empty($filterContent))
+			{
+				$arFilter["<=CONTENT_DATE_CREATE"] = $dateCreateToValue;
+			}
+			else
+			{
+				$arFilter["<=LOG_DATE"] = $dateCreateToValue;
+			}
 		}
 
 		if ($filtered)
@@ -1259,6 +1223,12 @@ if (
 	{
 		$arParams["CRM_ENTITY_TYPE"] = trim($arParams["CRM_ENTITY_TYPE"]);
 		$arParams["CRM_ENTITY_ID"] = intval($arParams["CRM_ENTITY_ID"]);
+
+		if (Loader::includeModule('crm'))
+		{
+			$arResult["CRM_ENTITY_TYPE_NAME"] = CCrmOwnerType::ResolveName(CCrmLiveFeedEntity::ResolveEntityTypeID($arParams['CRM_ENTITY_TYPE']));
+			$arResult["CRM_ENTITY_ID"] = $arParams["CRM_ENTITY_ID"];
+		}
 
 		if (strlen($arParams["CRM_ENTITY_TYPE"]) > 0)
 		{
@@ -1308,7 +1278,7 @@ if (
 
 	if ($bGetComments)
 	{
-		$arOrder = array("LOG_UPDATE" => "DESC");
+		$arOrder = (!empty($filterContent) ? array("CONTENT_LOG_UPDATE" => "DESC") : array("LOG_UPDATE" => "DESC"));
 	}
 	elseif ($arParams["USE_FOLLOW"] == "Y")
 	{
@@ -1316,7 +1286,7 @@ if (
 	}
 	elseif ($arParams["USE_COMMENTS"] == "Y")
 	{
-		$arOrder = array("LOG_UPDATE" => "DESC");
+		$arOrder = (!empty($filterContent) ? array("CONTENT_LOG_UPDATE" => "DESC") : array("LOG_UPDATE" => "DESC"));
 	}
 	else
 	{
@@ -1382,7 +1352,7 @@ if (
 		)
 	)
 	{
-		$arResult["LAST_LOG_TS"] = CUserCounter::GetLastDate($user_id, $arResult["COUNTER_TYPE"]);
+		$arResult["LAST_LOG_TS"] = CUserCounter::GetLastDate($arResult["currentUserId"], $arResult["COUNTER_TYPE"]);
 
 		if($arResult["LAST_LOG_TS"] == 0)
 		{
@@ -1469,22 +1439,19 @@ if (
 	{
 		$arResult["USE_SMART_FILTER"] = "Y";
 		$arListParams["MY_GROUPS_ONLY"] = (
-			CSocNetLogSmartFilter::GetDefaultValue($user_id) == "Y"
+			CSocNetLogSmartFilter::GetDefaultValue($arResult["currentUserId"]) == "Y"
 				? "Y"
 				: "N"
 		);
 	}
 
 	if (
-		CModule::IncludeModule('extranet')
-		&& (
-			CExtranet::IsExtranetSite()
-			|| $preset_filter_id == 'extranet'
-			|| (
-				!empty($filterData)
-				&& !empty($filterData["EXTRANET"])
-				&& $filterData["EXTRANET"] == 'Y'
-			)
+		$arResult["isExtranetSite"]
+		|| $preset_filter_id == 'extranet'
+		|| (
+			!empty($filterData)
+			&& !empty($filterData["EXTRANET"])
+			&& $filterData["EXTRANET"] == 'Y'
 		)
 	)
 	{
@@ -1510,7 +1477,7 @@ if (
 		$rsLogPages = \Bitrix\Socialnetwork\LogPageTable::getList(array(
 			'order' => array(),
 			'filter' => array(
-				"USER_ID" => $user_id,
+				"USER_ID" => $arResult["currentUserId"],
 				"=SITE_ID" => SITE_ID,
 				"=GROUP_CODE" => $groupCode,
 				"PAGE_SIZE" => $arParams["PAGE_SIZE"],
@@ -1531,9 +1498,32 @@ if (
 
 			$arFilter[">=LOG_UPDATE"] = ConvertTimeStamp($dateLastPageStartTS - 60*60*24*4, "FULL");
 		}
+		elseif(
+			$arResult["isExtranetSite"]
+			&& !CSocNetUser::IsCurrentUserModuleAdmin()
+		) // extranet user
+		{
+			$res = UserToGroupTable::getList(array(
+				'order' => array(
+					'DATE_CREATE' => 'ASC'
+				),
+				'filter' => array(
+					'USER_ID' => $arResult["currentUserId"],
+					'@ROLE' => UserToGroupTable::getRolesMember()
+				),
+				'select' => array('DATE_CREATE')
+			));
+			if ($relation = $res->fetch())
+			{
+				$arFilter[">=LOG_UPDATE"] = $relation['DATE_CREATE'];
+			}
+		}
 		elseif (
-			$groupCode != '**'
-			|| $arResult["MY_GROUPS_ONLY"] != 'Y'
+			(
+				$groupCode != '**'
+				|| $arResult["MY_GROUPS_ONLY"] != 'Y'
+			)
+			&& $arResult["PAGE_NUMBER"] <= 1
 		)
 		{
 			$rsLogPages = \Bitrix\Socialnetwork\LogPageTable::getList(array(
@@ -1664,7 +1654,7 @@ if (
 			&& (intval($arActivity["ASSOCIATED_ENTITY_ID"]) > 0)
 		)
 		{
-			$taskItem = new CTaskItem(intval($arActivity["ASSOCIATED_ENTITY_ID"]), $USER->GetId());
+			$taskItem = new CTaskItem(intval($arActivity["ASSOCIATED_ENTITY_ID"]), $arResult["currentUserId"]);
 			if (!$taskItem->CheckCanRead())
 			{
 				unset($arActivity2Log[$arActivity["ID"]]);
@@ -1699,7 +1689,7 @@ if (
 		&& $arParams["SET_LOG_PAGE_CACHE"] == "Y"
 	)
 	{
-		CSocNetLogPages::DeleteEx($user_id, SITE_ID, $arParams["PAGE_SIZE"], (strlen($arResult["COUNTER_TYPE"]) > 0 ? $arResult["COUNTER_TYPE"] : "**"));
+		CSocNetLogPages::DeleteEx($arResult["currentUserId"], SITE_ID, $arParams["PAGE_SIZE"], (strlen($arResult["COUNTER_TYPE"]) > 0 ? $arResult["COUNTER_TYPE"] : "**"));
 		$bNeedSetLogPage = true;
 	}
 
@@ -1802,13 +1792,20 @@ if (
 	$arResult["dateLastPageId"] = $arTmpEvent["ID"];
 
 	$arResult["WORKGROUPS_PAGE"] = $folderWorkgroups;
+	$arResult["LOG_COUNTER"] = $arResult["LOG_COUNTER_IMPORTANT"] = 0;
 
 	if (
 		$USER->IsAuthorized()
 		&& $arParams["SET_LOG_COUNTER"] == "Y"
 	)
 	{
-		$arCounters = CUserCounter::GetValues($user_id, SITE_ID);
+		$arCounters = CUserCounter::GetValues($arResult["currentUserId"], SITE_ID);
+
+		if (isset($arCounters["BLOG_POST_IMPORTANT"]))
+		{
+			$arResult["LOG_COUNTER_IMPORTANT"] = intval($arCounters["BLOG_POST_IMPORTANT"]);
+		}
+
 		if (isset($arCounters[$arResult["COUNTER_TYPE"]]))
 		{
 			$arResult["LOG_COUNTER"] = intval($arCounters[$arResult["COUNTER_TYPE"]]);
@@ -1830,7 +1827,7 @@ if (
 		$rs = \Bitrix\Socialnetwork\LogViewTable::getList(array(
 			'order' => array(),
 			'filter' => array(
-				"USER_ID" => $USER->GetID(),
+				"USER_ID" => $arResult["currentUserId"],
 				"EVENT_ID" => 'tasks'
 			),
 			'select' => array('TYPE')
@@ -1861,7 +1858,7 @@ if (
 		));
 
 		CSocNetLogPages::Set(
-			$user_id,
+			$arResult["currentUserId"],
 			ConvertTimeStamp(MakeTimeStamp($dateLastPage, CSite::GetDateFormat("FULL")) - $arResult["TZ_OFFSET"], "FULL"),
 			$arParams["PAGE_SIZE"],
 			$arResult["PAGE_NUMBER"],
@@ -1885,7 +1882,7 @@ if (
 			&& $arResult["EXPERT_MODE"] != "Y"
 		)
 		{
-			$arResult["EXPERT_MODE_SET"] = \Bitrix\Socialnetwork\LogViewTable::checkExpertModeAuto($user_id, $tasksNum, $arParams["PAGE_SIZE"]);
+			$arResult["EXPERT_MODE_SET"] = \Bitrix\Socialnetwork\LogViewTable::checkExpertModeAuto($arResult["currentUserId"], $tasksNum, $arParams["PAGE_SIZE"]);
 			if ($arResult["EXPERT_MODE_SET"])
 			{
 				$arParams["SET_LOG_COUNTER"] = "N";
@@ -1903,16 +1900,20 @@ if (
 	)
 	{
 		CUserCounter::ClearByUser(
-			$user_id,
+			$arResult["currentUserId"],
 			array(SITE_ID, "**"),
 			$arResult["COUNTER_TYPE"],
 			true
 		);
-		CUserCounter::ClearByUser(
-			$user_id,
-			SITE_ID,
-			"BLOG_POST_IMPORTANT"
-		);
+
+		if (intval($arResult["LOG_COUNTER_IMPORTANT"]) > 0)
+		{
+			CUserCounter::ClearByUser(
+				$arResult["currentUserId"],
+				SITE_ID,
+				"BLOG_POST_IMPORTANT"
+			);
+		}
 
 		$db_events = GetModuleEvents("socialnetwork", "OnSonetLogCounterClear");
 		while ($arEvent = $db_events->Fetch())

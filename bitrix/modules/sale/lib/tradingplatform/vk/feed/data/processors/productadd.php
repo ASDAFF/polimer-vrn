@@ -74,7 +74,6 @@ class ProductAdd extends DataProcessor
 
 //			UPLOAD main photo
 //			todo: need a photo mapping check before upload.
-//			todo: and maybe we need comments and likes
 			if (!empty($data))
 			{
 				if ($richLog)
@@ -93,7 +92,7 @@ class ProductAdd extends DataProcessor
 					if ($richLog)
 						$logger->addLog("Upload product photos");
 					$productPhotosSaveResults = self::$apiHelper->uploadPhotos($product["PHOTOS"], $this->vkGroupId, 'PRODUCT_PHOTOS', $timer);
-					$product["PHOTOS"] = Vk\Api\ApiHelper::addResultToData($product["PHOTOS"], $productPhotosSaveResults, "PHOTOS_BX_ID");
+					$product["PHOTOS"] = Vk\Api\ApiHelper::addResultToData($product["PHOTOS"], $productPhotosSaveResults, "PHOTO_BX_ID");
 				}
 			}
 			unset($product);
@@ -115,10 +114,10 @@ class ProductAdd extends DataProcessor
 			$dataToMapping = array();
 			foreach ($data as $product)
 			{
-				if (isset($product["flag_product_add_result"]) && $product["flag_product_add_result"])
+				if (isset($product["FLAG_PRODUCT_ADD_RESULT"]) && $product["FLAG_PRODUCT_ADD_RESULT"])
 				{
 					$dataToMapping[] = array(
-						"value_external" => $product["vk_id"],
+						"value_external" => $product["VK_ID"],
 						"value_internal" => $product["BX_ID"],
 					);
 				}
@@ -144,8 +143,8 @@ class ProductAdd extends DataProcessor
 					{
 						$productsToAlbums[] = array(
 							"BX_ID" => $productId,
-							"vk_id" => $data[$productId]["vk_id"],
-							"album_vk_id" => self::$albumsMapped[$toAlbumSectionId]["album_vk_id"],
+							"VK_ID" => $data[$productId]["VK_ID"],
+							"ALBUM_VK_ID" => self::$albumsMapped[$toAlbumSectionId]["ALBUM_VK_ID"],
 						);
 					}
 				}
@@ -169,8 +168,8 @@ class ProductAdd extends DataProcessor
 //			add saved data to CACHE to accelereate export process. Cache updated every hour (for long exports)
 			if (!empty($data))
 			{
-				$dataToCache = Vk\Api\ApiHelper::extractItemsFromArray($data, array('vk_id'));
-				$dataToCache = Vk\Api\ApiHelper::changeArrayMainKey($dataToCache, 'vk_id');
+				$dataToCache = Vk\Api\ApiHelper::extractItemsFromArray($data, array('VK_ID'));
+				$dataToCache = Vk\Api\ApiHelper::changeArrayMainKey($dataToCache, 'VK_ID');
 				$vkExportedData->addData($dataToCache);
 			}
 			

@@ -36,6 +36,7 @@ $MESS["CAL_PATH_TO_GROUP"] = "Workgroup view page";
 $MESS["CAL_PATH_TO_USER_CALENDAR"] = "User calendar view page";
 $MESS["CAL_PATH_TO_GROUP_CALENDAR"] = "Workgroup calendar view page";
 $MESS["CAL_USER_NAME_TEMPLATE"] = "User name template";
+$MESS["CAL_SYNC_BY_PUSH"] = "Synchronize calendar using Webhook instead of agent if possible";
 $MESS["CAL_USER_SHOW_LOGIN"] = "Show user login";
 $MESS["CAL_RESERVE_MEETING"] = "Meeting Room Parameters";
 $MESS["CAL_TYPE_XML_ID_WARN"] = "The symbolic code is invalid or not unique.";

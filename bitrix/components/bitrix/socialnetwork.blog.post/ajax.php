@@ -130,6 +130,12 @@ if ($action == 'get_data')
 		}
 	}
 
+	$isShareForbidden = \Bitrix\Socialnetwork\ComponentHelper::getBlogPostLimitedViewStatus(array(
+		'logId' => intval($logId),
+		'postId' => intval($postId),
+		'authorId' => $post["AUTHOR_ID"]
+	));
+
 	$postUrl = CComponentEngine::makePathFromTemplate(
 		$pathToPost,
 		array(
@@ -155,6 +161,7 @@ if ($action == 'get_data')
 	echo CUtil::phpToJSObject(array(
 		'perms' => $perms,
 		'isGroupReadOnly' => ($isGroupReadOnly ? 'Y' : 'N'),
+		'isShareForbidden' => ($isShareForbidden ? 'Y' : 'N'),
 		'logId' => intval($logId),
 		'logFavoritesUserId' => intval($logFavoritesUserId),
 		'authorId' => intval($post["AUTHOR_ID"]),

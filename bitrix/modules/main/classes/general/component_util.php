@@ -511,7 +511,8 @@ class CComponentUtil
 					"NAME" => GetMessage("COMP_PROP_SET_TITLE"),
 					"TYPE" => "CHECKBOX",
 					"DEFAULT" => "Y",
-					"ADDITIONAL_VALUES" => "N"
+					"ADDITIONAL_VALUES" => "N",
+					"REFRESH" => "Y"
 				);
 			}
 			elseif ($arParamKeys[$i] == "CACHE_TIME")
@@ -836,7 +837,7 @@ class CComponentUtil
 			}
 		}
 
-		if (CHTMLPagesCache::isOn())
+		if (\Bitrix\Main\Composite\Helper::isOn())
 		{
 			$arComponentParameters["GROUPS"]["COMPOSITE_SETTINGS"] = array(
 				"NAME" => GetMessage("COMP_GROUP_COMPOSITE_SETTINGS"),
@@ -1460,7 +1461,7 @@ class CComponentUtil
 
 		if (empty($arFormatTime[$dateTimeFormat]))
 		{
-			$arFormatTime[$dateTimeFormat] = preg_replace('/[\/.,\s]+$/', '', preg_replace('/^[\/.,\s]+/', '', preg_replace('/[dDjlFmMnYyo]/', '', $dateTimeFormat)));
+			$arFormatTime[$dateTimeFormat] = preg_replace(array('/[dDjlFmMnYyo]/', '/^[\/.,\s\-]+/', '/[\/.,\s\-]+$/'), '', $dateTimeFormat);
 		}
 		$timeFormat = $arFormatTime[$dateTimeFormat];
 

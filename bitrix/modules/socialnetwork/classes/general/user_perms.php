@@ -287,7 +287,9 @@ class CAllSocNetUserPerms
 		$userID = IntVal($userID);
 
 		if ($userID <= 0)
+		{
 			return false;
+		}
 
 		$arReturn["Operations"] = array();
 		if ($currentUserID <= 0)
@@ -297,32 +299,43 @@ class CAllSocNetUserPerms
 			$arReturn["Operations"]["modifyuser"] = false;
 			$arReturn["Operations"]["viewcontacts"] = false;
 			foreach ($arSocNetUserOperations as $operation => $defPerm)
+			{
 				$arReturn["Operations"][$operation] = CSocNetUserPerms::CanPerformOperation($currentUserID, $userID, $operation, false);
+			}
 		}
 		else
 		{
 			$arReturn["IsCurrentUser"] = ($currentUserID == $userID);
-			if ($arReturn["IsCurrentUser"])
-				$arReturn["Relation"] = false;
-			else
-				$arReturn["Relation"] = CSocNetUserRelations::GetRelation($currentUserID, $userID);
+			$arReturn["Relation"] = (
+				$arReturn["IsCurrentUser"]
+					? false
+					: CSocNetUserRelations::GetRelation($currentUserID, $userID)
+			);
 
-			if ($bCurrentUserIsAdmin || $arReturn["IsCurrentUser"])
+			if (
+				$bCurrentUserIsAdmin
+				|| $arReturn["IsCurrentUser"]
+			)
 			{
 				$arReturn["Operations"]["modifyuser"] = true;
 				$arReturn["Operations"]["viewcontacts"] = true;
 				foreach ($arSocNetUserOperations as $operation => $defPerm)
+				{
 					$arReturn["Operations"][$operation] = true;
+				}
 			}
 			else
 			{
 				$arReturn["Operations"]["modifyuser"] = false;
-				if (CSocNetUser::IsFriendsAllowed())
-					$arReturn["Operations"]["viewcontacts"] = ($arReturn["Relation"] == SONET_RELATIONS_FRIEND);
-				else
-					$arReturn["Operations"]["viewcontacts"] = true;
+				$arReturn["Operations"]["viewcontacts"] = (
+					CSocNetUser::IsFriendsAllowed()
+						? ($arReturn["Relation"] == SONET_RELATIONS_FRIEND)
+						: true
+				);
 				foreach ($arSocNetUserOperations as $operation => $defPerm)
+				{
 					$arReturn["Operations"][$operation] = CSocNetUserPerms::CanPerformOperation($currentUserID, $userID, $operation, false);
+				}
 			}
 
 			$arReturn["Operations"]["modifyuser_main"] = false;
@@ -341,10 +354,10 @@ class CAllSocNetUserPerms
 				)
 			)
 			{
-				$arReturn["Operations"]["modifyuser_main"] = true;				
+				$arReturn["Operations"]["modifyuser_main"] = true;
 			}
 		}
-		
+
 		return $arReturn;
 	}
 

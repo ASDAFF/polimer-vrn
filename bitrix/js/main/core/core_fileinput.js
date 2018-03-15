@@ -888,13 +888,19 @@ BX["UI"].FileInput.prototype = {
 			BX.remove(input);
 			input = tmp;
 		}
-		if (input_name.indexOf('[') < 0)
+
+		if (this.uploadParams["maxCount"] <= 1)
 		{
 			var n = BX.findChild(this.agent.form, {tagName : "INPUT", attr : {name : (input_name)}}, false);
 			if (n)
 			{
 				BX.adjust(n, { attrs : { disabled : true }});
-				BX.adjust(BX.findChild(this.agent.form, {tagName : "INPUT", attr : {name : (input_name + '_del')}}, false), { attrs : { disabled : true } } );
+				var nDelName = input_name + '_del';
+				if (input_name.indexOf('[') > 0)
+					nDelName = input_name.substr(0, input_name.indexOf('[')) + '_del' + input_name.substr(input_name.indexOf('['));
+				n = BX.findChild(this.agent.form, {tagName : "INPUT", attr : {name : nDelName}}, false);
+				if (n)
+					BX.adjust(n, { attrs : { disabled : true } } );
 			}
 		}
 	},
@@ -907,9 +913,6 @@ BX["UI"].FileInput.prototype = {
 		if (item && BX(node))
 		{
 			var file = (data && data['file'] && data['file']['files'] && data['file']['files']['default'] ? data['file']['files']['default'] : false);
-			this.replaceInput(item, data);
-			if (node.firstChild && BX.hasClass(node.firstChild, "adm-fileinput-item-saved"))
-				BX.removeClass(node.firstChild, "adm-fileinput-item-saved");
 
 			this.counters.uploaded.setItem(item.id, item.dialogName);
 
@@ -921,6 +924,10 @@ BX["UI"].FileInput.prototype = {
 			{
 				this.amountFrameCounter(item.id, item);
 			}
+
+			this.replaceInput(item, data);
+			if (node.firstChild && BX.hasClass(node.firstChild, "adm-fileinput-item-saved"))
+				BX.removeClass(node.firstChild, "adm-fileinput-item-saved");
 
 			node.removeAttribute("bx-progress-bound");
 			BX.removeClass(node, "adm-fileinput-item-uploading");
@@ -1049,7 +1056,7 @@ BX["UI"].FileInput.prototype = {
 			node = this.agent.getItem(item.id).node;
 		if (node.hint)
 			node.hint.Destroy();
-		var hint = '<span class="adm-fileinput-drag-area-popup-title">' + item.name + '</span>';
+		var hint = '<span class="adm-fileinput-drag-area-popup-title">' + BX.util.htmlspecialchars(item.name) + '</span>';
 		if (item.size)
 			hint += '<span class="adm-fileinput-drag-area-popup-param">' + BX.message('JS_CORE_FILE_INFO_SIZE') + ':&nbsp;<span>' + item.size + '</span></span>';
 		if (item.dialogName == "BX.UploaderImage")

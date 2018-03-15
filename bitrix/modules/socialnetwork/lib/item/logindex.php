@@ -168,21 +168,30 @@ class LogIndex
 
 		$eventId = (isset($fields['EVENT_ID']) ? trim($fields['EVENT_ID']) : false);
 		$sourceId = (isset($fields['SOURCE_ID']) ? intval($fields['SOURCE_ID']) : 0);
+		$logId = (isset($fields['LOG_ID']) ? intval($fields['LOG_ID']) : 0);
+		$logDateUpdate = $dateCreate = false;
 
 		if (
 			empty($eventId)
 			|| $sourceId <= 0
 		)
 		{
-			$res = false;
 			if ($itemType == LogIndexTable::ITEM_TYPE_LOG)
 			{
+				$logId = $itemId;
 				$res = LogTable::getList(array(
 					'filter' => array(
 						'=ID' => $itemId
 					),
-					'select' => array('ID', 'EVENT_ID', 'SOURCE_ID')
+					'select' => array('ID', 'EVENT_ID', 'SOURCE_ID', 'LOG_UPDATE')
 				));
+				if ($logEntry = $res->fetch())
+				{
+					$eventId = (isset($logEntry['EVENT_ID']) ? trim($logEntry['EVENT_ID']) : false);
+					$sourceId = (isset($logEntry['SOURCE_ID']) ? intval($logEntry['SOURCE_ID']) : 0);
+					$logDateUpdate = $logEntry['LOG_UPDATE'];
+					$dateCreate = $logEntry['LOG_DATE'];
+				}
 			}
 			elseif ($itemType == LogIndexTable::ITEM_TYPE_COMMENT)
 			{
@@ -190,18 +199,23 @@ class LogIndex
 					'filter' => array(
 						'=ID' => $itemId
 					),
-					'select' => array('ID', 'EVENT_ID', 'SOURCE_ID')
+					'select' => array(
+						'ID',
+						'LOG_ID',
+						'EVENT_ID',
+						'SOURCE_ID',
+						'LOG_UPDATE' => 'LOG.LOG_UPDATE',
+						'LOG_DATE'
+					)
 				));
-			}
-
-			if (
-				$res
-				&& ($item = $res->fetch())
-			)
-			{
-				$eventId = (isset($item['EVENT_ID']) ? trim($item['EVENT_ID']) : false);
-				$sourceId = (isset($item['SOURCE_ID']) ? intval($item['SOURCE_ID']) : 0);
-				$itemId = (isset($item['ID']) ? intval($item['ID']) : 0);
+				if ($comment = $res->fetch())
+				{
+					$eventId = (isset($comment['EVENT_ID']) ? trim($comment['EVENT_ID']) : false);
+					$sourceId = (isset($comment['SOURCE_ID']) ? intval($comment['SOURCE_ID']) : 0);
+					$logId = (isset($comment['LOG_ID']) ? intval($comment['LOG_ID']) : 0);
+					$logDateUpdate = $comment['LOG_UPDATE'];
+					$dateCreate = $comment['LOG_DATE'];
+				}
 			}
 		}
 
@@ -253,42 +267,104 @@ class LogIndex
 			}
 		}
 
-		if (!empty($content))
+		if (empty($content))
 		{
-			$logId = 0;
+			return;
+		}
 
+		if ($logId <= 0)
+		{
 			if ($itemType == LogIndexTable::ITEM_TYPE_LOG)
 			{
 				$logId = $itemId;
 			}
 			elseif ($itemType == LogIndexTable::ITEM_TYPE_COMMENT)
 			{
-				$logId = (isset($fields['LOG_ID']) ? intval($fields['LOG_ID']) : 0);
-				if ($logId <= 0)
+				$res = LogCommentTable::getList(array(
+					'filter' => array(
+						'=ID' => $itemId
+					),
+					'select' => array(
+						'ID',
+						'LOG_ID',
+						'LOG.LOG_UPDATE',
+						'LOG_UPDATE' => 'LOG.LOG_UPDATE',
+						'LOG_DATE'
+					)
+				));
+				if ($comment = $res->fetch())
 				{
-					$res = LogCommentTable::getList(array(
-						'filter' => array(
-							'=ID' => $itemId
-						),
-						'select' => array('ID', 'LOG_ID')
-					));
-					if ($comment = $res->fetch())
-					{
-						$logId = intval($comment['LOG_ID']);
-					}
+					$logId = intval($comment['LOG_ID']);
+					$logDateUpdate = $comment['LOG_UPDATE'];
+					$dateCreate = $comment['LOG_DATE'];
 				}
 			}
+		}
 
-			if ($logId > 0)
+		if ($logId <= 0)
+		{
+			return;
+		}
+
+		if (
+			!$logDateUpdate
+			|| (
+				!$dateCreate
+				&& $itemType == LogIndexTable::ITEM_TYPE_LOG
+			)
+		)
+		{
+			$res = LogTable::getList(array(
+				'filter' => array(
+					'=ID' => $logId
+				),
+				'select' => array('ID', 'LOG_UPDATE', 'LOG_DATE')
+			));
+			if ($logEntry = $res->fetch())
 			{
-				LogIndexTable::set(array(
-					'itemType' => $itemType,
-					'itemId' => $itemId,
-					'logId' => $logId,
-					'content' => $content,
-				));
+				$logDateUpdate = $logEntry['LOG_UPDATE'];
+				if ($itemType == LogIndexTable::ITEM_TYPE_LOG)
+				{
+					$dateCreate = $logEntry['LOG_DATE'];
+				}
 			}
 		}
+
+		if (
+			!$dateCreate
+			&& $itemType == LogIndexTable::ITEM_TYPE_COMMENT
+		)
+		{
+			$res = LogCommentTable::getList(array(
+				'filter' => array(
+					'=ID' => $itemId
+				),
+				'select' => array('ID', 'LOG_DATE')
+			));
+			if ($logComment = $res->fetch())
+			{
+				$dateCreate = $logComment['LOG_DATE'];
+			}
+		}
+
+		$indexFields = array(
+			'itemType' => $itemType,
+			'itemId' => $itemId,
+			'logId' => $logId,
+			'content' => $content,
+		);
+
+		if ($logDateUpdate)
+		{
+			$indexFields['logDateUpdate'] = $logDateUpdate;
+		}
+
+		if ($dateCreate)
+		{
+			$indexFields['dateCreate'] = $dateCreate;
+		}
+
+		LogIndexTable::set($indexFields);
 	}
 
 	public static function deleteIndex($params = array())

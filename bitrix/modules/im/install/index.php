@@ -47,9 +47,19 @@ class im extends CModule
 	{
 		global $DB, $APPLICATION;
 
-		$this->errors = false;
-		if(!$DB->Query("SELECT 'x' FROM b_im_chat", true))
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/im/install/db/".strtolower($DB->type)."/install.sql");
+		if(strtolower($DB->type) !== 'mysql')
+		{
+			$this->errors = array(
+				GetMessage('IM_DB_NOT_SUPPORTED'),
+			);
+		}
+		else
+		{
+			$this->errors = false;
+			if(!$DB->Query("SELECT 'x' FROM b_im_chat", true))
+				$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/im/install/db/".strtolower($DB->type)."/install.sql");
+		}
+
 
 		if($this->errors !== false)
 		{
@@ -69,7 +79,10 @@ class im extends CModule
 		RegisterModuleDependences("perfmon", "OnGetTableSchema", "im", "CIMTableSchema", "OnGetTableSchema");
 		RegisterModuleDependences("im", "OnGetNotifySchema", "im", "CIMNotifySchema", "OnGetNotifySchema");
 		RegisterModuleDependences("main", "OnFileDelete", "im", "CIMEvent", "OnFileDelete");
+		RegisterModuleDependences("disk", "onAfterDeleteFile", "im", "CIMDisk", "OnAfterDeleteFile");
 		RegisterModuleDependences("main", "OnApplicationsBuildList", "im", "DesktopApplication", "OnApplicationsBuildList");
+		RegisterModuleDependences("main", "OnUserOnlineStatusGetCustomOnlineStatus", "im", "CIMStatus", "OnUserOnlineStatusGetCustomStatus");
+		RegisterModuleDependences("main", "OnUserOnlineStatusGetCustomOfflineStatus", "im", "CIMStatus", "OnUserOnlineStatusGetCustomStatus");
 		RegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'im', 'CIMRestService', 'OnRestServiceBuildDescription');
 		RegisterModuleDependences('rest', 'OnRestAppDelete', 'im', 'CIMRestService', 'OnRestAppDelete');
 
@@ -77,6 +90,11 @@ class im extends CModule
 		CAgent::AddAgent("CIMMail::MailMessageAgent();", "im", "N", 600);
 		CAgent::AddAgent("CIMDisk::RemoveTmpFileAgent();", "im", "N", 43200);
 		CAgent::AddAgent("\\Bitrix\\Im\\Bot::deleteExpiredTokenAgent();", "im", "N", 86400);
+		CAgent::AddAgent("\\Bitrix\\Im\\Disk\\NoRelationPermission::cleaningAgent();", "im", "N", 3600);
+
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		$eventManager->registerEventHandler('pull', 'onGetMobileCounter', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounter');
+		$eventManager->registerEventHandler('pull', 'onGetMobileCounterTypes', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounterTypes');
 
 		$solution = COption::GetOptionString("main", "wizard_solution", false);
 		if ($solution == 'community')
@@ -85,7 +103,7 @@ class im extends CModule
 		}
 
 		CModule::IncludeModule("im");
-		
+
 		if(CIMMessenger::IsMysqlDb() && $DB->Query("CREATE fulltext index IXF_IM_MESS_1 on b_im_message (MESSAGE)", true))
 		{
 			\Bitrix\Im\Model\MessageTable::getEntity()->enableFullTextIndex("MESSAGE");
@@ -101,13 +119,13 @@ class im extends CModule
 			));
 			CAgent::AddAgent("CIMConvert::UndeliveredMessageAgent();", "im", "N", 20, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+20, "FULL"));
 		}
-		
+
 		$this->InstallTemplateRules();
 		$this->InstallEvents();
 		$this->InstallUserFields();
 
 		CIMChat::InstallGeneralChat();
-		
+
 		return true;
 	}
 
@@ -121,7 +139,7 @@ class im extends CModule
 			CopyDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/im/install/admin', $_SERVER['DOCUMENT_ROOT'].'/bitrix/admin', true, true);
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates", True, True);
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/public", $_SERVER["DOCUMENT_ROOT"]."/", True, True);
-			
+
 			CUrlRewriter::add(array(
 				"CONDITION" => "#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#",
 				"RULE" => "alias=\$1",
@@ -132,7 +150,7 @@ class im extends CModule
 				"RULE" => "",
 				"PATH" => "/desktop_app/router.php",
 			));
-			
+
 			$GLOBALS["APPLICATION"]->SetFileAccessPermission('/desktop_app/', array("*" => "R"));
 			$GLOBALS["APPLICATION"]->SetFileAccessPermission('/online/', array("*" => "R"));
 		}
@@ -150,7 +168,7 @@ class im extends CModule
 
 		return true;
 	}
-	
+
 	function InstallTemplateRules()
 	{
 		if (
@@ -166,7 +184,7 @@ class im extends CModule
 				$delete_after_copy = false
 			);
 		}
-		
+
 		$default_site_id = CSite::GetDefSite();
 		if ($default_site_id)
 		{
@@ -222,7 +240,7 @@ class im extends CModule
 		$arFields = array();
 		$arFields['ENTITY_ID'] = 'USER';
 		$arFields['FIELD_NAME'] = 'UF_IM_SEARCH';
-		
+
 		$rs = CUserTypeEntity::GetList(array(), array(
 			"ENTITY_ID" => $arFields["ENTITY_ID"],
 			"FIELD_NAME" => $arFields["FIELD_NAME"],
@@ -262,7 +280,7 @@ class im extends CModule
 		elseif($step==2)
 		{
 			$this->UnInstallDB(array("savedata" => $_REQUEST["savedata"]));
-			
+
 			if(!isset($_REQUEST["saveemails"]) || $_REQUEST["saveemails"] != "Y")
 				$this->UnInstallEvents();
 
@@ -299,7 +317,10 @@ class im extends CModule
 		CAgent::RemoveAgent("CIMMail::MailMessageAgent();", "im");
 		CAgent::RemoveAgent("CIMDisk::RemoveTmpFileAgent();", "im");
 		CAgent::RemoveAgent("\\Bitrix\\Im\\Bot::deleteExpiredTokenAgent();", "im");
+		CAgent::RemoveAgent("\\Bitrix\\Im\\Disk\\NoRelationPermission::cleaningAgent();", "im");
 		UnRegisterModuleDependences("im", "OnGetNotifySchema", "im", "CIMNotifySchema", "OnGetNotifySchema");
+		UnRegisterModuleDependences("main", "OnFileDelete", "im", "CIMEvent", "OnFileDelete");
+		UnRegisterModuleDependences("disk", "onAfterDeleteFile", "im", "CIMDisk", "OnAfterDeleteFile");
 		UnRegisterModuleDependences("perfmon", "OnGetTableSchema", "im", "CIMTableSchema", "OnGetTableSchema");
 		UnRegisterModuleDependences('main', 'OnAddRatingVote', 'im', 'CIMEvent', 'OnAddRatingVote');
 		UnRegisterModuleDependences('main', 'OnAfterUserAdd', 'im', 'CIMEvent', 'OnAfterUserAdd');
@@ -307,11 +328,17 @@ class im extends CModule
 		UnRegisterModuleDependences("main", "OnBeforeUserSendPassword", "im", "CIMEvent", "OnBeforeUserSendPassword");
 		UnRegisterModuleDependences('main', 'OnCancelRatingVote', 'im', 'CIMEvent', 'OnCancelRatingVote');
 		UnRegisterModuleDependences('main', 'OnAfterUserUpdate', 'im', 'CIMEvent', 'OnAfterUserUpdate');
+		UnRegisterModuleDependences("main", "OnUserOnlineStatusGetCustomOnlineStatus", "im", "CIMStatus", "OnUserOnlineStatusGetCustomStatus");
+		UnRegisterModuleDependences("main", "OnUserOnlineStatusGetCustomOfflineStatus", "im", "CIMStatus", "OnUserOnlineStatusGetCustomStatus");
 		UnRegisterModuleDependences("pull", "OnGetDependentModule", "im", "CIMEvent", "OnGetDependentModule");
 		UnRegisterModuleDependences("main", "OnProlog", "main", "", "", "/modules/im/ajax_hit.php");
 		UnRegisterModuleDependences("main", "OnApplicationsBuildList", "im", "DesktopApplication", "OnApplicationsBuildList");
 		UnRegisterModuleDependences('rest', 'OnRestServiceBuildDescription', 'im', 'CIMRestService', 'OnRestServiceBuildDescription');
 		UnRegisterModuleDependences('rest', 'OnRestAppDelete', 'im', 'CIMRestService', 'OnRestAppDelete');
+
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		$eventManager->unRegisterEventHandler('pull', 'onGetMobileCounter', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounter');
+		$eventManager->unRegisterEventHandler('pull', 'onGetMobileCounterTypes', 'im', '\Bitrix\Im\Counter', 'onGetMobileCounterTypes');
 
 		$this->UnInstallUserFields($arParams);
 
@@ -334,9 +361,9 @@ class im extends CModule
 	function UnInstallEvents()
 	{
 		global $DB;
-		
+
 		include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/events/del_events.php");
-		
+
 		return true;
 	}
 

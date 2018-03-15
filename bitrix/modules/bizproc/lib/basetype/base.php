@@ -292,6 +292,24 @@ class Base
 		return $name;
 	}
 
+	protected static function generateControlClassName(FieldType $fieldType, array $field)
+	{
+		$prefix = isset($field['ClassNamePrefix']) ? (string)$field['ClassNamePrefix'] : 'bizproc-type-control';
+		$classes = array($prefix);
+		$classes[] = $prefix.'-'.static::getType();
+
+		if ($fieldType->isMultiple())
+		{
+			$classes[] = $prefix.'-multiple';
+		}
+		if ($fieldType->isRequired())
+		{
+			$classes[] = $prefix.'-required';
+		}
+
+		return implode(' ', $classes);
+	}
+
 	/**
 	 * @param array $controls
 	 * @param string $wrapperId
@@ -328,8 +346,9 @@ class Base
 	{
 		$name = static::generateControlName($field);
 		$controlId = static::generateControlId($field);
+		$className = static::generateControlClassName($fieldType, $field);
 		// example: control rendering
-		return '<input type="text" size="40" id="'.htmlspecialcharsbx($controlId).'" name="'
+		return '<input type="text" class="'.htmlspecialcharsbx($className).'" size="40" id="'.htmlspecialcharsbx($controlId).'" name="'
 			.htmlspecialcharsbx($name).'" value="'.htmlspecialcharsbx((string) $value).'"/>';
 	}
 

@@ -267,9 +267,29 @@ if($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('manage
 	{
 		$settingsItems[] = array(
 			"text" => GetMessage("MAIN_MENU_COMPOSITE"),
-			"url" => "composite.php?lang=".LANGUAGE_ID,
 			"more_url" => array(),
+			"items_id" => "menu_composite",
 			"title" => GetMessage("MAIN_MENU_COMPOSITE_ALT"),
+			"items" => array(
+				array(
+					"text" => GetMessage("MAIN_MENU_COMPOSITE_SETTINGS"),
+					"url" => "composite.php?lang=".LANGUAGE_ID,
+					"more_url" => array(),
+					"title" => GetMessage("MAIN_MENU_COMPOSITE_ALT"),
+				),
+				array(
+					"text" => GetMessage("MAIN_MENU_COMPOSITE_PAGES"),
+					"url" => "composite_pages.php?lang=".LANGUAGE_ID,
+					"more_url" => array(),
+					"title" => GetMessage("MAIN_MENU_COMPOSITE_PAGES_ALT"),
+				),
+				array(
+					"text" => GetMessage("MAIN_MENU_COMPOSITE_LOG"),
+					"url" => "composite_log.php?lang=".LANGUAGE_ID,
+					"more_url" => array(),
+					"title" => GetMessage("MAIN_MENU_COMPOSITE_LOG_ALT"),
+				)
+			)
 		);
 
 		$urlItems[] = array(
@@ -493,7 +513,7 @@ if($USER->CanDoOperation('view_other_settings') || $USER->CanDoOperation('view_e
 	);
 }
 
-if($USER->CanDoOperation('install_updates'))
+if($USER->CanDoOperation('install_updates') || (in_array(LANGUAGE_ID, array("ru", "ua", "bg")) && ($USER->CanDoOperation('view_all_users') || $USER->CanDoOperation('view_subordinate_users') || $USER->CanDoOperation('edit_own_profile') || $USER->CanDoOperation('view_groups') || $USER->CanDoOperation('view_other_settings'))))
 {
 	$arMarket = array();
 	if(method_exists($adminMenu, "IsSectionActive"))
@@ -621,36 +641,39 @@ if($USER->CanDoOperation('install_updates'))
 	}
 
 	$aMenu[] = $arMarketMenu;
-	$aMenu[] = array(
-		"sort" => 200,
-		"parent_menu" => "global_menu_marketplace",
-		"icon" => "update_menu_icon_partner",
-		"page_icon" => "update_page_icon_partner",
-		"text" => GetMessage("MAIN_MENU_UPDATES_PARTNER_NEW"),
-		"url" => "update_system_partner.php?lang=".LANGUAGE_ID,
-		"more_url" => array("update_system_partner.php"),
-		"title" => GetMessage("MAIN_MENU_UPDATES_PARTNER_NEW_ALT"),
-	);
-	$aMenu[] = array(
-		"sort" => 300,
-		"parent_menu" => "global_menu_marketplace",
-		"icon" => "update_marketplace_modules",
-		"page_icon" => "update_marketplace_modules_page_icon",
-		"text" => GetMessage("MAIN_MENU_UPDATES_PARTNER_MODULES"),
-		"url" => "partner_modules.php?lang=".LANGUAGE_ID,
-		"more_url" => array("partner_modules.php"),
-		"title" => GetMessage("MAIN_MENU_UPDATES_PARTNER_MODULES_ALT"),
-	);
-	$aMenu[] = array(
-		"sort" => 400,
-		"parent_menu" => "global_menu_marketplace",
-		"icon" => "update_menu_icon",
-		"page_icon" => "update_page_icon",
-		"text" => GetMessage("MAIN_MENU_UPDATES_NEW"),
-		"url" => "update_system.php?lang=".LANGUAGE_ID,
-		"more_url" => array("sysupdate_log.php", "sysupdate.php", "update_system.php", "buy_support.php"),
-		"title" => GetMessage("MAIN_MENU_UPDATES_NEW_ALT"),
-	);
+	if($USER->CanDoOperation('install_updates'))
+	{
+		$aMenu[] = array(
+			"sort"        => 200,
+			"parent_menu" => "global_menu_marketplace",
+			"icon"        => "update_menu_icon_partner",
+			"page_icon"   => "update_page_icon_partner",
+			"text"        => GetMessage("MAIN_MENU_UPDATES_PARTNER_NEW"),
+			"url"         => "update_system_partner.php?lang=".LANGUAGE_ID,
+			"more_url"    => array("update_system_partner.php"),
+			"title"       => GetMessage("MAIN_MENU_UPDATES_PARTNER_NEW_ALT"),
+		);
+		$aMenu[] = array(
+			"sort"        => 300,
+			"parent_menu" => "global_menu_marketplace",
+			"icon"        => "update_marketplace_modules",
+			"page_icon"   => "update_marketplace_modules_page_icon",
+			"text"        => GetMessage("MAIN_MENU_UPDATES_PARTNER_MODULES"),
+			"url"         => "partner_modules.php?lang=".LANGUAGE_ID,
+			"more_url"    => array("partner_modules.php"),
+			"title"       => GetMessage("MAIN_MENU_UPDATES_PARTNER_MODULES_ALT"),
+		);
+		$aMenu[] = array(
+			"sort"        => 400,
+			"parent_menu" => "global_menu_marketplace",
+			"icon"        => "update_menu_icon",
+			"page_icon"   => "update_page_icon",
+			"text"        => GetMessage("MAIN_MENU_UPDATES_NEW"),
+			"url"         => "update_system.php?lang=".LANGUAGE_ID,
+			"more_url"    => array("sysupdate_log.php", "sysupdate.php", "update_system.php", "buy_support.php"),
+			"title"       => GetMessage("MAIN_MENU_UPDATES_NEW_ALT"),
+		);
+	}
 }
 
 if($USER->CanDoOperation('edit_other_settings'))

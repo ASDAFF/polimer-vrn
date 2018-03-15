@@ -153,7 +153,7 @@ class MessageParamHandler extends \Bitrix\Replica\Client\BaseHandler
 			$relations = \CIMMessenger::GetRelationById($id);
 			if (!isset($relations[$newRecord["PARAM_VALUE"]]))
 				return;
-			
+
 			if ($message['AUTHOR_ID'] > 0 && $message['AUTHOR_ID'] != $newRecord["PARAM_VALUE"])
 			{
 				$message['MESSAGE'] = str_replace('<br />', ' ', \Bitrix\Im\Text::parse($message['MESSAGE']));
@@ -209,10 +209,14 @@ class MessageParamHandler extends \Bitrix\Replica\Client\BaseHandler
 
 			foreach ($relations as $rel)
 			{
-				\CPullStack::AddByUser($rel['USER_ID'], Array(
+				\Bitrix\Pull\Event::add($rel['USER_ID'], Array(
 					'module_id' => 'im',
 					'command' => 'messageLike',
-					'params' => $arPullMessage
+					'params' => $arPullMessage,
+					'extra' => Array(
+						'im_revision' => IM_REVISION,
+						'im_revision_mobile' => IM_REVISION_MOBILE,
+					),
 				));
 			}
 		}

@@ -34,7 +34,7 @@ CJSCore::init(array('lists'));
 			LEACT_DELETE_POPUP_TITLE: '<?=GetMessageJS("LEACT_DELETE_POPUP_TITLE")?>',
 			LEACT_DELETE_POPUP_ACCEPT_BUTTON: '<?=GetMessageJS("LEACT_DELETE_POPUP_ACCEPT_BUTTON")?>',
 			LEACT_DELETE_POPUP_CANCEL_BUTTON: '<?=GetMessageJS("LEACT_DELETE_POPUP_CANCEL_BUTTON")?>',
-			LEACT_TOOLBAR_ELEMENT_DELETE_WARNING: '<?=GetMessageJS("LEACT_TOOLBAR_ELEMENT_DELETE_WARNING")?>'
+			LEACT_TOOLBAR_ELEMENT_DELETE_WARNING: '<?=GetMessageJS("LEACT_TOOLBAR_ELEMENT_DELETE_WARNING_BRIEF")?>'
 		});
 	});
 </script>
@@ -43,11 +43,10 @@ CJSCore::init(array('lists'));
 <div class="leac-title-wrap">
 	<div class="leac-title-menu">
 		<div class="sidebar-buttons">
-			<span id="leac-button-add-element-<?=$arResult['IBLOCK_ID']?>"
-				class="webform-small-button bx24-top-toolbar-button webform-small-button-blue bx24-top-toolbar-add">
+			<span id="leac-button-add-element-<?=$arResult['IBLOCK_ID']?>" class="webform-small-button webform-small-button-blue">
 				<span class="webform-small-button-icon"></span>
 				<span class="webform-small-button-text">
-					<?=Loc::getMessage('LEACT_TITLE_ADD_ELEMENT_BUTTON')?>
+					<?=htmlspecialcharsbx($arResult['BUTTON_NAME_ELEMENT_ADD'])?>
 				</span>
 			</span>
 		</div>

@@ -90,7 +90,10 @@ class Api
 			
 			$vk = Vk\Vk::getInstance();
 			if ($vk->getRichLog($this->exportId))
-				$logger->addLog('Catch error in method '.$method, array('ERROR'=>$this->response["error"], "PARAMS" => $params));
+				$logger->addLog(
+					'Catch error in method ' . $method,
+					array('ERROR' => $this->response["error"] . ' - ' . $this->response["error_msg"], "PARAMS" => $params)
+				);
 			
 			$logger->addError($this->response["error"]["error_code"], $method);
 			
@@ -105,7 +108,10 @@ class Api
 			{
 				$vk = Vk\Vk::getInstance();
 				if ($vk->getRichLog($this->exportId))
-					$logger->addLog('Execute error in method '.$method, array('ERROR'=>$er["error_code"], "PARAMS" => $params));
+					$logger->addLog(
+						'Execute error in method ' . $method,
+						array('ERROR' => $er["error_code"] . ' (' . $er["method"] . ') - ' . $er["error_msg"], "PARAMS" => $params,
+							"RESPONSE" => $this->response));
 				$logger->addError($er["error_code"]);
 			}
 		}

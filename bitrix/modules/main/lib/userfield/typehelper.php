@@ -13,19 +13,19 @@ class TypeHelper
 		$this->userTypeId = $userTypeId;
 	}
 
-	public function getCssClassName()
+	public function getCssClassName(array $additionalCss = array())
 	{
-		return 'fields '.$this->userTypeId;
+		return trim('fields '.$this->userTypeId.' '.implode(' ', $additionalCss));
 	}
 
-	public function wrapSingleField($html)
+	public function wrapSingleField($html, array $additionalCss = array())
 	{
-		return '<span class="'.HtmlFilter::encode(static::getCssClassName()).'">'.$html.'</span>';
+		return '<span class="'.HtmlFilter::encode(static::getCssClassName($additionalCss)).' field-item">'.$html.'</span>';
 	}
 
-	public function wrapDisplayResult($html)
+	public function wrapDisplayResult($html, $additionalCss = array())
 	{
-		return static::wrapSingleField($html);
+		return '<span class="'.HtmlFilter::encode(static::getCssClassName($additionalCss)).' field-wrap">'.$html.'</span>';
 	}
 
 	public function getMultipleValuesSeparator()

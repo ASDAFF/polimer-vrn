@@ -51,7 +51,7 @@ ob_start();
 				?>
 			<!--/noindex-->
 			<div class="feed-com-informers">
-				<span class="feed-comment-time-wrap"><span class="feed-time"><a href="#VIEW_URL##com#ID#">#DATE#</a></span></span>
+				<span class="feed-comment-time-wrap"><span class="feed-time"><a href="#VIEW_URL##com#ID#" rel="nofollow">#DATE#</a></span></span>
 				#BEFORE_ACTIONS#
 				<?if ( $arParams["SHOW_POST_FORM"] == "Y" )
 				{

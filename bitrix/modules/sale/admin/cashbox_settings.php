@@ -8,6 +8,7 @@ namespace Bitrix\Sale\Cashbox\AdminPage\Settings
 	if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 		die();
 
+	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/cashbox/inputs/file.php");
 	require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/delivery/inputs.php");
 
 	global $APPLICATION;
@@ -34,8 +35,21 @@ namespace Bitrix\Sale\Cashbox\AdminPage\Settings
 				foreach ($settings as $group => $block)
 				{
 					$result .= '<tr class="heading"><td colspan="2">'.$block['LABEL'].'</td></tr>';
+
+					$className = 'adm-detail-content-cell-l';
+					if (isset($block['REQUIRED']) && $block['REQUIRED'] === 'Y')
+						$className .= ' adm-required-field';
+
 					foreach ($block['ITEMS'] as $code => $item)
 					{
+						$itemClassName = $className;
+						if ($item['REQUIRED'] === 'Y'
+							&& $block['REQUIRED'] !== 'Y'
+						)
+						{
+							$itemClassName .= ' adm-required-field';
+						}
+
 						$value = null;
 						if (isset($cashboxSettings[$group][$code]))
 							$value = $cashboxSettings[$group][$code];
@@ -49,7 +63,7 @@ namespace Bitrix\Sale\Cashbox\AdminPage\Settings
 							$value++;
 						}
 
-						$result .= '<td width="45%" class="adm-detail-content-cell-l">'.$item['LABEL'].':</td><td width="55%" valign="top" class="adm-detail-content-cell-r">'.Input\Manager::getEditHtml('SETTINGS['.$group.']['.$code.']', $item, $value).'</td></tr>';
+						$result .= '<td width="45%" class="'.$itemClassName.'">'.$item['LABEL'].':</td><td width="55%" valign="top" class="adm-detail-content-cell-r">'.Input\Manager::getEditHtml('SETTINGS['.$group.']['.$code.']', $item, $value).'</td></tr>';
 					}
 				}
 			}

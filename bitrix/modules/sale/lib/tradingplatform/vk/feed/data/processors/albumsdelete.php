@@ -27,9 +27,9 @@ class AlbumsDelete extends DataProcessor
 		$albumsMappedToRemove = array();
 		foreach ($albumsMapped as $key => $albumMapped)
 		{
-			if (!isset($albumsFromVk[$albumMapped["album_vk_id"]]))
+			if (!isset($albumsFromVk[$albumMapped["ALBUM_VK_ID"]]))
 			{
-				$albumsMappedToRemove[] = array("VALUE_EXTERNAL" => $albumMapped["album_vk_id"]);
+				$albumsMappedToRemove[] = array("VALUE_EXTERNAL" => $albumMapped["ALBUM_VK_ID"]);
 				unset($albumsMapped[$key]);
 			}
 		}
@@ -51,7 +51,7 @@ class AlbumsDelete extends DataProcessor
 			foreach ($resDelete as $res)
 			{
 				if ($res["flag_album_delete_result"])
-					$albumsMappedToRemove[] = array("VALUE_EXTERNAL" => $res["album_vk_id"]);
+					$albumsMappedToRemove[] = array("VALUE_EXTERNAL" => $res["ALBUM_VK_ID"]);
 			}
 
 // 			remove success deleted items

@@ -324,3 +324,158 @@
 	display: inline-block;
 	min-height:68px;
 }
+
+.sonet-groups-list-container {
+	min-height: 300px;
+}
+
+/* LOADER AND FADE */
+.sonet-groups-internal-mask {
+	position: relative;
+/*	min-height: 100vh; */
+}
+
+.sonet-groups-internal-mask:after {
+	content: "";
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(235,241,244,.45);
+	z-index: 8;
+}
+
+.sonet-groups-loader-container {
+	display: none;
+	position: absolute;
+	top: 130px;
+	left: 50%;
+	width: 110px;
+	height: 110px;
+	margin-left: -55px;
+	visibility: hidden;
+	opacity: 0;
+	z-index: 120;
+}
+
+.sonet-groups-loader-circular {
+	position: absolute;
+	top: 50%;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 110px;
+	width: 110px;
+	margin-top: -55px;
+	-webkit-animation: rotate 2s linear infinite;
+	animation: rotate 2s linear infinite;
+	-webkit-transform-origin: center center;
+	transform-origin: center center;
+}
+
+.sonet-groups-loader-path {
+	stroke: #BFC3C8;
+	stroke-width: 1.5;
+	stroke-dasharray: 20, 200;
+	stroke-dashoffset: 0;
+	-webkit-animation: dash 1.5s ease-in-out infinite;
+	animation: dash 1.5s ease-in-out infinite;
+	stroke-linecap: round;
+}
+
+@-webkit-keyframes rotate {
+	100% {
+		-webkit-transform: rotate(360deg);
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes rotate {
+	100% {
+		-webkit-transform: rotate(360deg);
+		transform: rotate(360deg);
+	}
+}
+
+@-webkit-keyframes dash {
+	0% {
+		stroke-dasharray: 1, 200;
+		stroke-dashoffset: 0;
+	}
+	50% {
+		stroke-dasharray: 89, 200;
+		stroke-dashoffset: -35px;
+	}
+	100% {
+		stroke-dasharray: 89, 200;
+		stroke-dashoffset: -124px;
+	}
+}
+
+@keyframes dash {
+	0% {
+		stroke-dasharray: 1, 200;
+		stroke-dashoffset: 0;
+	}
+	50% {
+		stroke-dasharray: 89, 200;
+		stroke-dashoffset: -35px;
+	}
+	100% {
+		stroke-dasharray: 89, 200;
+		stroke-dashoffset: -124px;
+	}
+}
+
+.sonet-groups-show-loader {
+	-webkit-animation: showLoader .5s linear forwards;
+	animation: showLoader .5s linear forwards;
+}
+
+.sonet-groups-hide-loader {
+	-webkit-animation: hideLoader .5s linear forwards;
+	animation: hideLoader .5s linear forwards;
+}
+
+@-webkit-keyframes showLoader {
+	0% { opacity: 0; }
+	50% { opacity: 0; }
+	100% {
+		opacity: 1;
+		visibility: visible;
+	}
+}
+
+@keyframes showLoader {
+	0% { opacity: 0; }
+	50% { opacity: 0; }
+	100% {
+		opacity: 1;
+		visibility: visible;
+	}
+}
+
+@-webkit-keyframes hideLoader {
+	0% { opacity: 1;
+		visibility: visible;
+	}
+	50% { opacity: 1; }
+	99.999% {visibility: visible;}
+	100% {
+		opacity: 0;
+		visibility: hidden;
+	}
+}
+
+@keyframes hideLoader {
+	0% { opacity: 1;
+		visibility: visible;
+	}
+	50% { opacity: 1; }
+	99.999% {visibility: visible;}
+	100% {
+		opacity: 0;
+		visibility: hidden;
+	}
+}

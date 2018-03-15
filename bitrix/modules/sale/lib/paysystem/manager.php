@@ -14,6 +14,7 @@ use Bitrix\Sale\Basket;
 use Bitrix\Sale\Internals\EntityCollection;
 use Bitrix\Sale\Internals\PaymentTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
+use Bitrix\Sale\Internals\PaySystemRestHandlersTable;
 use Bitrix\Sale\Internals\ServiceRestrictionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
@@ -106,6 +107,15 @@ final class Manager
 	}
 
 	/**
+	 * @param array $data
+	 * @return \Bitrix\Main\Entity\AddResult
+	 */
+	public static function add(array $data)
+	{
+		return PaySystemActionTable::add($data);
+	}
+
+	/**
 	 * @param Request $request
 	 * @return array|false
 	 */
@@ -121,17 +131,23 @@ final class Manager
 
 			foreach (self::getHandlerDirectories() as $type => $path)
 			{
+				$className = '';
+
 				if (File::isFileExists($documentRoot.$path.$name.'/handler.php'))
 				{
 					$className = static::getClassNameFromPath($item['ACTION_FILE']);
 					if (!class_exists($className))
 						require_once($documentRoot.$path.$name.'/handler.php');
+				}
+				else if (static::isRestHandler($name))
+				{
+					$className = '\Bitrix\Sale\PaySystem\RestHandler';
+				}
 
-					if (class_exists($className) && is_callable(array($className, 'isMyResponse')))
-					{
-						if ($className::isMyResponse($request, $item['ID']))
-							return $item;
-					}
+				if (class_exists($className) && is_callable(array($className, 'isMyResponse')))
+				{
+					if ($className::isMyResponse($request, $item['ID']))
+						return $item;
 				}
 			}
 		}
@@ -216,53 +232,6 @@ final class Manager
 	}
 
 	/**
-	 * @param array $arPSCorrespondence
-	 * @return array
-	 */
-	private static function convertCodesToNewFormat(array $arPSCorrespondence)
-	{
-		if ($arPSCorrespondence)
-		{
-			foreach ($arPSCorrespondence as $i => $property)
-			{
-				if ($property['TYPE'] == 'SELECT')
-				{
-					$options = array();
-					foreach ($property['VALUE'] as $code => $value)
-						$options[$code] = $value['NAME'];
-
-					$arPSCorrespondence[$i] = array(
-						'NAME' => $property['NAME'],
-						'INPUT' => array(
-							'TYPE' => 'ENUM',
-							'OPTIONS' => $options
-						)
-					);
-				}
-				else if ($property['TYPE'] == 'FILE')
-				{
-					$arPSCorrespondence[$i] = array(
-						'NAME' => $property['NAME'],
-						'INPUT' => array(
-							'TYPE' => 'FILE'
-						)
-					);
-				}
-
-				if (array_key_exists('DESCR', $property))
-					$arPSCorrespondence[$i]['DESCRIPTION'] = $property['DESCR'];
-
-				if (!isset($arPSCorrespondence[$i]['GROUP']))
-					$arPSCorrespondence[$i]['GROUP'] = (isset($property['GROUP'])) ? $property['GROUP'] : 'PS_OTHER';
-			}
-
-			return $arPSCorrespondence;
-		}
-
-		return array();
-	}
-
-	/**
 	 * @param $paySystemId
 	 * @return string
 	 */
@@ -327,7 +296,7 @@ final class Manager
 			'USER' => array()
 		);
 
-		$oldHandlerList = array('yandex_3x', 'bill', 'bill_de', 'bill_ua', 'bill_en', 'bill_la', 'paymaster', 'assist', 'liqpay', 'qiwi', 'sberbank_new', 'webmoney_web', 'money.mail', 'payment_forward_calc', 'payment_forward', 'roboxchange', 'cash');
+		$oldHandlerList = array('yandex_3x', 'bill', 'bill_de', 'bill_ua', 'bill_en', 'bill_la', 'paymaster', 'assist', 'liqpay', 'qiwi', 'sberbank_new', 'sberbank', 'webmoney_web', 'money.mail', 'payment_forward_calc', 'payment_forward', 'roboxchange', 'cash');
 
 		foreach (self::getHandlerDirectories() as $type => $dir)
 		{
@@ -398,6 +367,9 @@ final class Manager
 				}
 			}
 		}
+
+		$result['USER'] = array_merge(static::getRestHandlers(), $result['USER']);
+
 		return $result;
 	}
 
@@ -427,39 +399,8 @@ final class Manager
 	 */
 	public static function getHandlerDescription($handler)
 	{
-		$path = null;
-		$data = array();
-		$documentRoot = Application::getDocumentRoot();
-
-		if (strpos($handler, '/') !== false)
-		{
-			$psTitle = '';
-			$arPSCorrespondence = array();
-
-			$actionFile = $documentRoot.$handler.'/.description.php';
-			if (File::isFileExists($actionFile))
-			{
-				require $actionFile;
-
-				if ($arPSCorrespondence)
-				{
-					$codes = self::convertCodesToNewFormat($arPSCorrespondence);
-
-					if ($codes)
-						$data = array('NAME' => $psTitle, 'SORT' => 100, 'CODES' => $codes);
-				}
-			}
-		}
-		else
-		{
-			$path = self::getPathToHandlerFolder($handler);
-			if ($path !== null)
-			{
-				$path = $documentRoot.$path.'/.description.php';
-				if (File::isFileExists($path))
-					require $path;
-			}
-		}
+		$service = new Service(array('ACTION_FILE' => $handler));
+		$data = $service->getHandlerDescription();
 
 		$eventParams = array('handler' => $handler);
 		$event = new Event('sale', self::EVENT_ON_GET_HANDLER_DESC, $eventParams);
@@ -769,5 +710,31 @@ final class Manager
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @return array
+	 */
+	private function getRestHandlers()
+	{
+		$result = array();
+
+		$dbRes = PaySystemRestHandlersTable::getList();
+		while ($item = $dbRes->fetch())
+		{
+			$result[$item['CODE']] = $item['NAME'].' ('.$item['CODE'].')';
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $handler
+	 * @return bool
+	 */
+	public static function isRestHandler($handler)
+	{
+		$dbRes = PaySystemRestHandlersTable::getList(array('filter' => array('CODE' => $handler)));
+		return (bool)$dbRes->fetch();
 	}
 }

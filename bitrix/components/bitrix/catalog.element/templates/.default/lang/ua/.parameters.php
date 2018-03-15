@@ -115,4 +115,9 @@ $MESS["CP_BCE_TPL_PRODUCT_BLOCK_QUANTITY"] = "Кількість";
 $MESS["CP_BCE_TPL_PRODUCT_BLOCK_BUTTONS"] = "Дії";
 $MESS["CP_BCE_TPL_PRODUCT_BLOCK_COMPARE"] = "Порівняння";
 $MESS["CP_BCE_TPL_PRODUCT_BLOCK_QUANTITY_LIMIT"] = "Залишок";
+$MESS["CP_BCE_TPL_IMAGE_RESOLUTION"] = "Співвідношення сторін зображення товару";
+$MESS["CP_BCE_TPL_MESS_PRICE_RANGES_TITLE"] = "Назва блоку c розширеними цінами";
+$MESS["CP_BCE_TPL_MESS_PRICE_RANGES_TITLE_DEFAULT"] = "Ціни";
+$MESS["CP_BCE_TPL_PRODUCT_BLOCK_PRICE_RANGES"] = "Діапазони цін";
+$MESS["CP_BCE_TPL_USE_RATIO_IN_RANGES"] = "Враховувати коефіцієнти для діапазонів цін";
 ?>

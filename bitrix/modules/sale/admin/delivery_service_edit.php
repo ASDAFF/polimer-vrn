@@ -43,6 +43,7 @@ if (($isItReloadingProcess || $isItSavingProcess) && $saleModulePermissions == "
 	if(isset($_POST["CODE"]))           $fields["CODE"] = trim($_POST["CODE"]);
 	if(isset($_POST["SORT"]))           $fields["SORT"] = intval($_POST["SORT"]);
 	if(isset($_POST["NAME"]))           $fields["NAME"] = trim($_POST["NAME"]);
+	if(isset($_POST["VAT_ID"]))         $fields["VAT_ID"] = intval($_POST["VAT_ID"]);
 	if(isset($_POST["CONFIG"]))         $fields["CONFIG"] = $_POST["CONFIG"];
 	if(isset($_POST["CURRENCY"]))       $fields["CURRENCY"] = trim($_POST["CURRENCY"]);
 	if(isset($_POST["PARENT_ID"]))      $fields["PARENT_ID"] = intval($_POST["PARENT_ID"]);
@@ -117,6 +118,8 @@ if (($isItReloadingProcess || $isItSavingProcess) && $saleModulePermissions == "
 
 				if($service)
 					$fields = $service->prepareFieldsForSaving($fields);
+				else
+					$srvStrError = Loc::getMessage('SALE_DSE_DELIVERY_SERVICE_CREATE_ERROR');
 			}
 			catch(\Bitrix\Main\SystemException $e)
 			{
@@ -344,7 +347,7 @@ $isGroup = $fields["CLASS_NAME"] == '\Bitrix\Sale\Delivery\Services\Group';
 
 $service = null;
 
-if(isset($fields["CLASS_NAME"]) && strlen($fields["CLASS_NAME"]) > 0)
+if((isset($fields["CLASS_NAME"]) && strlen($fields["CLASS_NAME"]) > 0) || $parentService)
 {
 	/* We must convert handler config from post as it was taken from database */
 	if($isItSavingProcess && strlen($srvStrError) > 0)
@@ -359,7 +362,15 @@ if(isset($fields["CLASS_NAME"]) && strlen($fields["CLASS_NAME"]) > 0)
 		catch(\Bitrix\Main\SystemException $e){}
 	}
 
-	$service = Services\Manager::createObject($fields);
+	if($parentService && get_class($parentService) != 'Bitrix\Sale\Delivery\Services\Group')
+	{
+		$service = $parentService->createProfileObject($fields);
+		$fields['CLASS_NAME'] = get_class($service);
+	}
+	else
+	{
+		$service = Services\Manager::createObject($fields);
+	}
 
 	if($service)
 	{
@@ -470,7 +481,9 @@ if($showExtraServices && $ID > 0)
 	);
 }
 
-if($service && $ID > 0 && strlen($service->getTrackingClass()))
+$isTrackingTabShow = $service && $ID > 0 && strlen($service->getTrackingClass()) > 0 && !$service->isTrackingInherited();
+
+if($isTrackingTabShow)
 {
 	$aTabs[] = array(
 		"DIV" => "edit_tracking",
@@ -673,6 +686,21 @@ if($showExtraServices && $ID > 0)
 else
 {
 	$extraServicesHtml = "";
+}
+
+$vatList = array(
+	0 => Loc::getMessage('SALE_DSE_FORM_NO_VAT')
+);
+
+if(\Bitrix\Main\Loader::includeModule('catalog'))
+{
+	$dbRes = \Bitrix\Catalog\VatTable::getList(array(
+		'filter' => array('ACTIVE' => 'Y'),
+		'order' => array('SORT' => 'ASC')
+	));
+
+	while($vat = $dbRes->fetch())
+		$vatList[$vat['ID']] = $vat['NAME'];
 }
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_after.php");
@@ -963,6 +991,18 @@ $tabControl->BeginNextTab();
 			</td>
 		</tr>
 	<?endif;?>
+	<?if(array_key_exists("VAT_ID", $showFieldsList)):?>
+		<tr>
+			<td width="40%"><?=Loc::getMessage("SALE_DSE_FORM_VAT_ID")?>:</td>
+			<td width="60%">
+				<select name="VAT_ID">
+					<?foreach($vatList as $vatId => $vatName):?>
+						<option value="<?=$vatId?>" <?=(isset($fields["VAT_ID"]) && $vatId == $fields["VAT_ID"] ? " selected" : "" )?>><?=htmlspecialcharsbx($vatName)?></option>
+					<?endforeach;?>
+				</select>
+			</td>
+		</tr>
+	<?endif;?>
 	<?$hiddensConfigHtml = "";?>
 	<?if(is_array($serviceConfig) && !empty($serviceConfig)):?>
 		<?foreach($serviceConfig as $sectionKey => $configSection):?>
@@ -1007,7 +1047,7 @@ $tabControl->BeginNextTab();
 		<tr><td><?=$extraServicesHtml?></td></tr>
 	<?endif;?>
 
-	<?if($service && $ID > 0 && strlen($service->getTrackingClass()) > 0):?>
+	<?if($isTrackingTabShow):?>
 		<?$tabControl->BeginNextTab();
 			$tManager = Delivery\Tracking\Manager::getInstance();
 			$tracking = $tManager->getTrackingObjectByDeliveryId($ID);

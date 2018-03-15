@@ -120,6 +120,16 @@ elseif ($APPLICATION->GetGroupRight("sale") >= "W" && check_bitrix_sessid())
 				$arResult["ERROR"] = 'Error during process stopped';
 			
 			break;
+		
+		
+		case "loadExportMap":
+			$sectionsList = new Vk\SectionsList($exportId);
+			$sectionsMap = $sectionsList->getSectionMapToPrint();
+			
+			$arResult['COMPLETED'] = true;
+			$arResult['MAP'] = $sectionsMap;
+			
+			break;
 	}
 }
 else

@@ -83,9 +83,7 @@ class ConverterDocumentOrder extends Converter
 						$settings = $this->getSettings();
 						if($settings->changeStatusFor(EntityType::ORDER) == 'Y')
 							$fields[$k] = $params['REK_VALUES']['1C_STATUS_ID'];
-
 					}
-
 					break;
 				case '1C_PAYED_DATE':
 				case '1C_DELIVERY_DATE':

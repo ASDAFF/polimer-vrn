@@ -7,11 +7,11 @@
  */
 
 use Bitrix\Main;
+use Bitrix\Main\Composite;
 use Bitrix\Main\Localization\CultureTable;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Page\AssetLocation;
 use Bitrix\Main\Page\AssetMode;
-use Bitrix\Main\Page\Frame;
 
 define('BX_SPREAD_SITES', 2);
 define('BX_SPREAD_DOMAIN', 4);
@@ -304,6 +304,12 @@ abstract class CAllMain
 		else
 		{
 			include($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/interface/auth/wrapper.php");
+		}
+
+		$autoCompositeArea = \Bitrix\Main\Composite\Internals\AutomaticArea::getCurrentArea();
+		if ($autoCompositeArea)
+		{
+			$autoCompositeArea->end();
 		}
 
 		if($show_epilog)
@@ -3061,7 +3067,7 @@ abstract class CAllMain
 	{
 		global $USER;
 
-		$isFrameAjax = Bitrix\Main\Page\Frame::getUseHTMLCache() && Bitrix\Main\Page\Frame::isAjaxRequest();
+		$isFrameAjax = Composite\Engine::getUseHTMLCache() && Composite\Engine::isAjaxRequest();
 		if (isset($GLOBALS["USER"]) && is_object($USER) && $USER->IsAuthorized() && !isset($_REQUEST["bx_hit_hash"]) && !$isFrameAjax)
 		{
 			echo CTopPanel::GetPanelHtml();
@@ -3072,7 +3078,7 @@ abstract class CAllMain
 	{
 		global $USER;
 
-		$isFrameAjax = Bitrix\Main\Page\Frame::getUseHTMLCache() && Bitrix\Main\Page\Frame::isAjaxRequest();
+		$isFrameAjax = Composite\Engine::getUseHTMLCache() && Composite\Engine::isAjaxRequest();
 		if (isset($GLOBALS["USER"]) && is_object($USER) && $USER->IsAuthorized() && !isset($_REQUEST["bx_hit_hash"]) && !$isFrameAjax)
 		{
 			$this->showPanelWasInvoked = true;
@@ -3142,7 +3148,7 @@ abstract class CAllMain
 			return true;
 		}
 	}
-	
+
 	public function AddBufferContent($callback)
 	{
 		$args = array();
@@ -3218,7 +3224,7 @@ abstract class CAllMain
 			return "";
 		}
 
-		Frame::checkAdminPanel();
+		Composite\Engine::checkAdminPanel();
 
 		if (function_exists("getmoduleevents"))
 		{
@@ -3247,8 +3253,7 @@ abstract class CAllMain
 			}
 		}
 
-		$composite = Frame::getInstance();
-		$compositeContent = $composite->startBuffering($content);
+		$compositeContent = Composite\Engine::startBuffering($content);
 		$content = implode("", $this->buffer_content).$content;
 
 		if (function_exists("getmoduleevents"))
@@ -3259,7 +3264,7 @@ abstract class CAllMain
 			}
 		}
 
-		$wasContentModified = $composite->endBuffering($content, $compositeContent);
+		$wasContentModified = Composite\Engine::endBuffering($content, $compositeContent);
 		if (!$wasContentModified && $asset->canMoveJsToBody())
 		{
 			$asset->moveJsToBody($content);
@@ -3559,6 +3564,11 @@ abstract class CAllMain
 
 		self::EpilogActions();
 
+		if (!defined('BX_WITH_ON_AFTER_EPILOG'))
+		{
+			define('BX_WITH_ON_AFTER_EPILOG', true);
+		}
+
 		foreach(GetModuleEvents("main", "OnAfterEpilog", true) as $arEvent)
 		{
 			ExecuteModuleEventEx($arEvent);
@@ -3584,7 +3594,14 @@ abstract class CAllMain
 		//files cleanup
 		CMain::FileAction();
 
-		if (CUserCounter::CheckLiveMode())
+		if (
+			(
+				!defined('BX_SENDPULL_COUNTER_QUEUE_DISABLE')
+				|| BX_SENDPULL_COUNTER_QUEUE_DISABLE !== true
+			)
+			&& CUserCounter::CheckLiveMode()
+
+		)
 		{
 			CUserCounterPage::checkSendCounter();
 		}

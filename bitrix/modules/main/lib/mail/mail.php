@@ -44,6 +44,8 @@ class Mail
 	protected $headers;
 	protected $body;
 	protected $additionalParameters;
+	/** @var  Context */
+	protected $context;
 
 	public function __construct(array $mailParams)
 	{
@@ -60,14 +62,16 @@ class Mail
 		{
 			$this->trackReadLink = Tracking::getLinkRead(
 				$mailParams['TRACK_READ']['MODULE_ID'],
-				$mailParams['TRACK_READ']['FIELDS']
+				$mailParams['TRACK_READ']['FIELDS'],
+				isset($mailParams['TRACK_READ']['URL_PAGE']) ? $mailParams['TRACK_READ']['URL_PAGE'] : null
 			);
 		}
 		if(array_key_exists('TRACK_CLICK', $mailParams) && !empty($mailParams['TRACK_CLICK']))
 		{
 			$this->trackClickLink = Tracking::getLinkClick(
 				$mailParams['TRACK_CLICK']['MODULE_ID'],
-				$mailParams['TRACK_CLICK']['FIELDS']
+				$mailParams['TRACK_CLICK']['FIELDS'],
+				isset($mailParams['TRACK_CLICK']['URL_PAGE']) ? $mailParams['TRACK_CLICK']['URL_PAGE'] : null
 			);
 			if(!empty($mailParams['TRACK_CLICK']['URL_PARAMS']))
 			{
@@ -94,6 +98,11 @@ class Mail
 		$this->setBody($mailParams['BODY']);
 		$this->setHeaders($mailParams['HEADER']);
 		$this->setAdditionalParameters();
+
+		if(array_key_exists('CONTEXT', $mailParams) && is_object($mailParams['CONTEXT']))
+		{
+			$this->context = $mailParams['CONTEXT'];
+		}
 	}
 
 	/**
@@ -132,10 +141,13 @@ class Mail
 			$mail = static::createInstance($mailParams);
 
 			$mailResult = bxmail(
-				$mail->getTo(), $mail->getSubject(), $mail->getBody(), $mail->getHeaders(),
-				$mail->getAdditionalParameters()
+				$mail->getTo(),
+				$mail->getSubject(),
+				$mail->getBody(),
+				$mail->getHeaders(),
+				$mail->getAdditionalParameters(),
+				$mail->getContext()
 			);
-
 
 			if($mailResult)
 				$result = true;
@@ -496,6 +508,14 @@ class Mail
 	}
 
 	/**
+	 * @return Context|null
+	 */
+	public function getContext()
+	{
+		return $this->context;
+	}
+
+	/**
 	 * @return string
 	 */
 	public function dump()
@@ -780,10 +800,18 @@ class Mail
 	 */
 	private function trackRead($html)
 	{
-		if($this->trackReadLink)
+		if(!$this->trackReadLink)
 		{
-			$html .= '<img src="' . $this->trackLinkProtocol . "://" . $this->settingServerName . $this->trackReadLink . '" border="0" height="1" width="1" alt="Read" />';
+			return $html;
 		}
+
+		$url = $this->trackReadLink;
+		if (substr($url, 0, 4) !== 'http')
+		{
+			$url = $this->trackLinkProtocol . "://" . $this->settingServerName . $url;
+		}
+
+		$html .= '<img src="' . $url . '" border="0" height="1" width="1" alt="" />';
 
 		return $html;
 	}
@@ -822,7 +850,12 @@ class Mail
 				$parsedHref[0] .= (strpos($parsedHref[0], '?') === false ? '?' : '&') . substr($hrefAddParam, 1);
 				$href = implode("#", $parsedHref);
 			}
-			$href = $this->trackLinkProtocol . '://' . $this->settingServerName . $this->trackClickLink . '&url=' . urlencode($href);
+
+			$href = $this->trackClickLink . '&url=' . urlencode($href) . '&sign=' . urlencode(Tracking::getSign($href));
+			if (!preg_match('/^http:\/\/|https:\/\//', $this->trackClickLink))
+			{
+				$href = $this->trackLinkProtocol . '://' . $this->settingServerName . $href;
+			}
 		}
 
 		return $matches[1].$matches[2].$href.$matches[4].$matches[5];

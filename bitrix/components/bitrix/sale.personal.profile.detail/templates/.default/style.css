@@ -112,6 +112,10 @@
 .sale-profile-detail-form .input-add-multiple{
 	margin-top:10px;
 }
+.sale-personal-profile-detail-property-radio .radio input[type="radio"]{
+	position: relative;
+	margin-left: 0;
+}
 @media (max-width: 992px)
 {
 	.sale-personal-profile-detail-form-title-row h4

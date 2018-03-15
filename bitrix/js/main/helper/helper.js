@@ -110,12 +110,17 @@ BX.Helper =
 			{
 				if (typeof BX.Bitrix24.LeftMenuClass == "object")
 				{
-					if (typeof BX.Bitrix24.LeftMenuClass.getStructure == "function")
+					if (typeof BX.Bitrix24.LeftMenuClass.getStructureForHelper == "function")
 					{
-						var structure = BX.Bitrix24.LeftMenuClass.getStructure();
+						var structure = BX.Bitrix24.LeftMenuClass.getStructureForHelper();
 						this.frameNode.contentWindow.postMessage({action: 'throwMenu', menu: structure}, '*');
 					}
 				}
+			}
+
+			if(event.data.action == "getNewArticleCount")
+			{
+				this.frameNode.contentWindow.postMessage({action: 'throwNewArticleCount', articleCount: this.notifyNum}, '*');
 			}
 		}, this));
 
@@ -178,6 +183,8 @@ BX.Helper =
 			BX.addClass(this.topBar,'bx-help-nav-fixed');
 			BX.addClass(this.topBar, 'bx-help-nav-show');
 		}
+
+		this.topBar.style.top = this.getCord().top + 'px';
 
 		this.popupLoader.classList.remove('bx-help-popup-loader-show');
 	},
@@ -283,7 +290,7 @@ BX.Helper =
 			BX.removeClass(this.closeBtn, 'bx-help-close-anim');
 
 
-		this.topBar.style.top = this.getCord().top + 'px';
+		this.topBar.style.removeProperty("top");
 
 		this.helpTimer = setTimeout(BX.proxy(function()
 		{
@@ -335,7 +342,6 @@ BX.Helper =
 		this.popupNode.style.display = 'block';
 		this.popupNode.style.top = top + 'px';
 		this.popupNode.style.paddingBottom = top + 'px';
-		this.topBar.style.top = top + 'px';
 		this.popupLoader.style.top = top + 'px';
 
 		if(this.isAdmin == 'N')

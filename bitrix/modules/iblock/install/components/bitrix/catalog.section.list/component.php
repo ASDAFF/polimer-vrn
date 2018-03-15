@@ -46,6 +46,17 @@ if($this->startResultCache(false, ($arParams["CACHE_GROUPS"]==="N"? false: $USER
 		ShowError(GetMessage("IBLOCK_MODULE_NOT_INSTALLED"));
 		return;
 	}
+
+	$existIblock = Iblock\IblockSiteTable::getList(array(
+		'select' => array('IBLOCK_ID'),
+		'filter' => array('=IBLOCK_ID' => $arParams['IBLOCK_ID'], '=SITE_ID' => SITE_ID, '=IBLOCK.ACTIVE' => 'Y')
+	))->fetch();
+	if (empty($existIblock))
+	{
+		$this->abortResultCache();
+		return;
+	}
+
 	$arFilter = array(
 		"ACTIVE" => "Y",
 		"GLOBAL_ACTIVE" => "Y",

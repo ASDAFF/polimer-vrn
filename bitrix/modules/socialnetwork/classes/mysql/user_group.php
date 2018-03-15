@@ -1,8 +1,6 @@
 <?
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/classes/general/user_group.php");
 
-use Bitrix\Socialnetwork\UserToGroupTable;
-
 class CSocNetUserToGroup extends CAllSocNetUserToGroup
 {
 	/***************************************/
@@ -189,6 +187,7 @@ class CSocNetUserToGroup extends CAllSocNetUserToGroup
 			"GROUP_NAME" => Array("FIELD" => "G.NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
 			"GROUP_DESCRIPTION" => Array("FIELD" => "G.DESCRIPTION", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
 			"GROUP_ACTIVE" => Array("FIELD" => "G.ACTIVE", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
+			"GROUP_PROJECT" => Array("FIELD" => "G.PROJECT", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
 			"GROUP_IMAGE_ID" => Array("FIELD" => "G.IMAGE_ID", "TYPE" => "int", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
 			"GROUP_VISIBLE" => Array("FIELD" => "G.VISIBLE", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),
 			"GROUP_OWNER_ID" => Array("FIELD" => "G.OWNER_ID", "TYPE" => "int", "FROM" => "INNER JOIN b_sonet_group G ON (UG.GROUP_ID = G.ID)"),

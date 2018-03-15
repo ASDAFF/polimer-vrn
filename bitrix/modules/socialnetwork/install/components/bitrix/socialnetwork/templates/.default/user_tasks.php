@@ -6,30 +6,25 @@ include("util_profile.php");
 
 if (CSocNetFeatures::IsActiveFeature(SONET_ENTITY_USER, $arResult["VARIABLES"]["user_id"], "tasks"))
 {
-	if(class_exists('Bitrix\Tasks\Ui\Filter\Task'))
-	{
-		\Bitrix\Tasks\Ui\Filter\Task::setUserId($arResult[ "VARIABLES" ][ "user_id" ]);
-		$state = \Bitrix\Tasks\Ui\Filter\Task::listStateInit()->getState();
+	\Bitrix\Tasks\Ui\Filter\Task::setUserId($arResult[ "VARIABLES" ][ "user_id" ]);
+	$state = \Bitrix\Tasks\Ui\Filter\Task::listStateInit()->getState();
 
-		switch ($state[ 'VIEW_SELECTED' ][ 'CODENAME' ])
-		{
-			case 'VIEW_MODE_GANTT':
-				$componentName = 'bitrix:tasks.task.gantt';
-				break;
-			case 'VIEW_MODE_KANBAN':
-				$componentName = 'bitrix:tasks.kanban';
-				break;
-			case 'VIEW_MODE_TIMELINE':
-				$componentName = 'bitrix:tasks.timeline';
-				break;
-			default:
-				$componentName = 'bitrix:tasks.task.list';
-				break;
-		}
-	}
-	else
+	switch ($state[ 'VIEW_SELECTED' ][ 'CODENAME' ])
 	{
-		$componentName = 'bitrix:tasks.list';
+		case 'VIEW_MODE_GANTT':
+			$componentName = 'bitrix:tasks.task.gantt';
+			break;
+		case 'VIEW_MODE_PLAN':
+//			case 'VIEW_MODE_KANBAN':
+			$componentName = 'bitrix:tasks.kanban';
+			break;
+		//		case 'VIEW_MODE_TIMELINE':
+		//			$componentName = 'bitrix:tasks.timeline';
+		//			break;
+		default:
+			\Bitrix\Tasks\Ui\Filter\Task::listStateInit()->setViewMode(\CTaskListState::VIEW_MODE_LIST);
+			$componentName = 'bitrix:tasks.task.list';
+			break;
 	}
 
 	$APPLICATION->IncludeComponent(
@@ -37,6 +32,7 @@ if (CSocNetFeatures::IsActiveFeature(SONET_ENTITY_USER, $arResult["VARIABLES"]["
 		".default",
 		Array(
 			"INCLUDE_INTERFACE_HEADER" => "Y",
+			"PERSONAL" => $state["VIEW_SELECTED"]["CODENAME"] == "VIEW_MODE_PLAN" ? "Y" : "N",
 			"USER_ID" => $arResult["VARIABLES"]["user_id"],
 			"STATE" => array(
 				'ROLES'=>$state['ROLES'],

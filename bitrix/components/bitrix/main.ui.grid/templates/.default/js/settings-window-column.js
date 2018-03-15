@@ -115,7 +115,16 @@
 		 */
 		setTitle: function(title)
 		{
-			this.getLabel().innerText = title;
+			this.getLabel().innerText = !!title && title !== "undefined" ? title : this.getDefaultTitle();
+		},
+
+
+		/**
+		 * @return {boolean}
+		 */
+		isEdited: function()
+		{
+			return this.getTitle() !== this.getDefaultTitle();
 		},
 
 

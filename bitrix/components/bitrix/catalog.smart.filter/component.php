@@ -19,7 +19,7 @@ if(!Loader::includeModule('iblock'))
 
 $FILTER_NAME = (string)$arParams["FILTER_NAME"];
 
-if($this->StartResultCache(false, 'v5'.($arParams["CACHE_GROUPS"]? $USER->GetGroups(): false)))
+if($this->StartResultCache(false, 'v7'.($arParams["CACHE_GROUPS"]? $USER->GetGroups(): false)))
 {
 	$arResult["FACET_FILTER"] = false;
 	$arResult["COMBO"] = array();
@@ -893,7 +893,8 @@ if ($arParams["XML_EXPORT"] === "Y" && $_REQUEST["mode"] === "xml")
 	$APPLICATION->RestartBuffer();
 	while(ob_end_clean());
 	header("Content-Type: text/xml; charset=utf-8");
-	echo $APPLICATION->convertCharset($xml, LANG_CHARSET, "utf-8");
+	$error = "";
+	echo \Bitrix\Main\Text\Encoding::convertEncoding($xml, LANG_CHARSET, "utf-8", $error);
 	CMain::FinalActions();
 	die();
 }

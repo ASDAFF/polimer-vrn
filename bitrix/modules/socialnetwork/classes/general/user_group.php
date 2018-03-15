@@ -169,7 +169,6 @@ class CAllSocNetUserToGroup
 
 		if (
 			$bSuccess 
-			&& $bSendExclude 
 			&& in_array($arUser2Group["ROLE"], array(SONET_ROLES_MODERATOR, SONET_ROLES_USER))
 		)
 		{
@@ -180,23 +179,30 @@ class CAllSocNetUserToGroup
 				$chatNotificationResult = UserToGroup::addInfoToChat(array(
 					'group_id' => $arUser2Group["GROUP_ID"],
 					'user_id' => $arUser2Group["USER_ID"],
-					'action' => UserToGroup::CHAT_ACTION_OUT
+					'action' => UserToGroup::CHAT_ACTION_OUT,
+					'sendMessage' => $bSendExclude
 				));
 
-				$arMessageFields = array(
-					"TO_USER_ID" => $arUser2Group["USER_ID"],
-					"FROM_USER_ID" => 0,
-					"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
-					"NOTIFY_MODULE" => "socialnetwork",
-					"NOTIFY_EVENT" => "invite_group",
-					"NOTIFY_TAG" => "SOCNET|INVITE_GROUP|".intval($arUser2Group["USER_ID"])."|".intval($arUser2Group["ID"]),					
-					"NOTIFY_MESSAGE" => str_replace(array("#NAME#"), array($arUser2Group["GROUP_NAME"]), GetMessage("SONET_UG_EXCLUDE_MESSAGE"))
-				);
+				if ($bSendExclude)
+				{
+					$arMessageFields = array(
+						"TO_USER_ID" => $arUser2Group["USER_ID"],
+						"FROM_USER_ID" => 0,
+						"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
+						"NOTIFY_MODULE" => "socialnetwork",
+						"NOTIFY_EVENT" => "invite_group",
+						"NOTIFY_TAG" => "SOCNET|INVITE_GROUP|".intval($arUser2Group["USER_ID"])."|".intval($arUser2Group["ID"]),
+						"NOTIFY_MESSAGE" => str_replace(array("#NAME#"), array($arUser2Group["GROUP_NAME"]), GetMessage("SONET_UG_EXCLUDE_MESSAGE"))
+					);
 
-				CIMNotify::Add($arMessageFields);
+					CIMNotify::Add($arMessageFields);
+				}
 			}
 
-			if (!$chatNotificationResult)
+			if (
+				$bSendExclude
+				&& !$chatNotificationResult
+			)
 			{
 				CSocNetUserToGroup::notifyImToModerators(array(
 					"TYPE" => "exclude",
@@ -2508,7 +2514,7 @@ class CAllSocNetUserToGroup
 		return $arReturn;
 	}
 
-	function __SpeedFileCheckMessages($userID)
+	public static function __SpeedFileCheckMessages($userID)
 	{
 		global $DB;
 
@@ -2545,7 +2551,7 @@ class CAllSocNetUserToGroup
 			$CACHE_MANAGER->Clean("socnet_cg_".$userID);
 	}
 
-	function __SpeedFileDelete($userID)
+	public static function __SpeedFileDelete($userID)
 	{
 		global $CACHE_MANAGER;
 
@@ -2610,7 +2616,7 @@ class CAllSocNetUserToGroup
 		}
 	}
 
-	function NotifyImToModerators($arNotifyParams)
+	public static function NotifyImToModerators($arNotifyParams)
 	{
 		if (!CModule::IncludeModule("im"))
 		{

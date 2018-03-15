@@ -9,13 +9,13 @@ use Bitrix\Main\Type as MainType;
 class DateTime
 {
 	/** @var MainType\Date */
-	protected static $date;
+	protected $date;
 
 	/** @var MainType\DateTime */
-	protected static $dateTime;
+	protected $dateTime;
 
 	/** @var ?number */
-	protected static $timestamp;
+	protected $timestamp;
 
 
 	/**
@@ -24,16 +24,40 @@ class DateTime
 	 */
 	public function __construct($timestamp = "")
 	{
-		static::$timestamp = $timestamp;
+		$this->timestamp = $timestamp;
 
-		if (empty(static::$timestamp))
+		if (empty($this->timestamp))
 		{
-			static::$date = new MainType\Date();
-			static::$timestamp = static::$date->getTimestamp();
+			$this->date = new MainType\Date();
+			$this->timestamp = $this->date->getTimestamp();
 		}
 
-		static::$dateTime = MainType\DateTime::createFromTimestamp(static::$timestamp);
+		$this->dateTime = MainType\DateTime::createFromTimestamp($this->timestamp);
+		static::adjustTime($this->dateTime);
 	}
+
+
+	/**
+	 * Adjusts time relative current timezone offset
+	 * @param MainType\DateTime $dateTime
+	 * @return int timestamp
+	 */
+	public static function adjustTime(MainType\DateTime $dateTime)
+	{
+		if(\CTimeZone::Enabled())
+		{
+			static $diff = null;
+			if($diff === null)
+			{
+				$diff = \CTimeZone::GetOffset();
+			}
+			if($diff <> 0)
+			{
+				$dateTime->add(($diff > 0? "-":"")."PT".abs($diff)."S");
+			}
+		}
+	}
+
 
 
 	/**
@@ -42,7 +66,8 @@ class DateTime
 	 */
 	public function month()
 	{
-		return static::$dateTime->format("n");
+		$date = new MainType\Date($this->toString());
+		return $date->format("n");
 	}
 
 
@@ -52,7 +77,8 @@ class DateTime
 	 */
 	public function year()
 	{
-		return static::$dateTime->format("Y");
+		$date = new MainType\Date($this->toString());
+		return $date->format("Y");
 	}
 
 
@@ -62,7 +88,8 @@ class DateTime
 	 */
 	public function quarter()
 	{
-		return Quarter::get(static::$dateTime);
+		$date = new MainType\Date($this->toString());
+		return Quarter::get($date);
 	}
 
 
@@ -73,7 +100,9 @@ class DateTime
 	public function quarterStart()
 	{
 		$startDate = Quarter::getStartDate($this->quarter(), $this->year());
-		return MainType\DateTime::createFromTimestamp(MakeTimeStamp($startDate))->toString();
+		$dateTime = MainType\DateTime::createFromTimestamp(MakeTimeStamp($startDate));
+		static::adjustTime($dateTime);
+		return $dateTime->toString();
 	}
 
 
@@ -84,7 +113,9 @@ class DateTime
 	public function quarterEnd()
 	{
 		$endDate = Quarter::getEndDate($this->quarter(), $this->year());
-		return MainType\DateTime::createFromTimestamp(MakeTimeStamp($endDate))->add("1 days - 1 second")->toString();
+		$dateTime = MainType\DateTime::createFromUserTime($endDate);
+		$dateTime->add("- 1 second");
+		return $dateTime->toString();
 	}
 
 
@@ -95,8 +126,10 @@ class DateTime
 	 */
 	public function offset($offset)
 	{
-		$date = MainType\DateTime::createFromTimestamp(static::$timestamp);
-		return $date->add($offset)->toString();
+		$date = MainType\DateTime::createFromTimestamp($this->getTimestamp());
+		$date->add($offset);
+		static::adjustTime($date);
+		return $date->toString();
 	}
 
 
@@ -106,7 +139,7 @@ class DateTime
 	 */
 	public function toString()
 	{
-		return static::$dateTime->toString();
+		return $this->dateTime->toString();
 	}
 
 
@@ -116,6 +149,6 @@ class DateTime
 	 */
 	public function getTimestamp()
 	{
-		return static::$timestamp;
+		return $this->timestamp;
 	}
 }

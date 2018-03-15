@@ -1,11 +1,14 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
+<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+/** @var CBitrixComponentTemplate $this */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CDatabase $DB */
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
 
-<?
 $pageId = "user";
 include("util_menu.php");
-?>
 
-<?
 $APPLICATION->IncludeComponent(
 	"bitrix:socialnetwork.user_profile",
 	"",
@@ -89,6 +92,6 @@ $APPLICATION->IncludeComponent(
 		"PATH_TO_USER_SYNCHRONIZE" => !empty($arResult["PATH_TO_USER_SYNCHRONIZE"]) ? $arResult["PATH_TO_USER_SYNCHRONIZE"] : null,
 		"PATH_TO_USER_CODES" => $arResult["PATH_TO_USER_CODES"],
 	),
-	$component
+	$this->getComponent()
 );
 ?>

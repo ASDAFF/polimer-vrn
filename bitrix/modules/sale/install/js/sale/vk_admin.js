@@ -85,14 +85,15 @@
 
 
 		exportProcessProlog: function () {
+			// hide button "start export"
 			BX.adjust(BX('vk_export_button__startFeed_all'), {props: {disabled: true}});
-			BX.adjust(BX('vk_export_button__startFeed_add'), {style: {display: 'none'}});
-			BX.adjust(BX('vk_export_button__startFeed_delete'), {style: {display: 'none'}});
-
-			BX.addClass(BX('vk_export_button__startFeed_add'), 'adm-btn-disabled');
-			BX.addClass(BX('vk_export_button__startFeed_delete'), 'adm-btn-disabled');
-			// maybe we can disable onclick on buttons without hide them? see repo
-
+			// hide additional buttons
+			var buttons = document.getElementsByClassName("adm-btn-menu");
+			for (var i = 0; i < buttons.length; i++) {
+				BX.adjust(buttons[i], {style: {display: 'none'}});
+				BX.addClass(buttons[i], 'adm-btn-disabled');
+			}
+			// hide system buttons
 			BX.adjust(BX('vk_export_button__save'), {props: {disabled: true}});
 			BX.adjust(BX('vk_export_button__apply'), {props: {disabled: true}});
 			BX.adjust(BX('vk_export_button__cancel'), {props: {disabled: true}});
@@ -100,14 +101,15 @@
 
 
 		exportProcessEpilog: function () {
+			// show button "start export"
 			BX.adjust(BX('vk_export_button__startFeed_all'), {props: {disabled: false}});
-			BX.adjust(BX('vk_export_button__startFeed_add'), {style: {display: 'inline-block'}});
-			BX.adjust(BX('vk_export_button__startFeed_delete'), {style: {display: 'inline-block'}});
-
-			BX.removeClass(BX('vk_export_button__startFeed_add'), 'adm-btn-disabled');
-			BX.removeClass(BX('vk_export_button__startFeed_delete'), 'adm-btn-disabled');
-			// maybe we can disable onclick on buttons without hide them? see repo
-
+			// show additional buttons
+			var buttons = document.getElementsByClassName("adm-btn-menu");
+			for (var i = 0; i < buttons.length; i++) {
+				BX.adjust(buttons[i], {style: {display: 'inline-block'}});
+				BX.removeClass(buttons[i], 'adm-btn-disabled');
+			}
+			// show system buttons
 			BX.adjust(BX('vk_export_button__save'), {props: {disabled: false}});
 			BX.adjust(BX('vk_export_button__apply'), {props: {disabled: false}});
 			BX.adjust(BX('vk_export_button__cancel'), {props: {disabled: false}});
@@ -179,9 +181,53 @@
 				},
 
 				onfailure: function () {
+					BX.closeWait();
 					BX.debug('Feed SALE_VK_SETTINGS_RESET_ERROR');
 				}
 			});
+		},
+
+		loadExportMapOk: false,
+		loadExportMap: function(exportId) {
+			if(!BX.Sale.VkAdmin.loadExportMapOk) {
+
+				BX.showWait();
+				var postData = {
+					action: "loadExportMap",
+					exportId: exportId,
+					sessid: BX.bitrix_sessid()
+				};
+
+				BX.ajax({
+					timeout: 120,
+					method: 'POST',
+					dataType: 'json',
+					url: BX.Sale.VkAdmin.ajaxUrl,
+					data: postData,
+
+					onsuccess: function (result) {
+						BX.closeWait();
+
+						if (result && result.COMPLETED) {
+							BX.adjust(BX('vk_export_map_edit_table__content'), {html: result.MAP});
+							BX.Sale.VkAdmin.loadExportMapOk = true;
+						}
+					},
+					onfailure: function () {
+						BX.closeWait();
+						BX.debug('LOAD EXPORT MAP ERROR');
+					}
+				});
+
+
+				// BX.adjust(BX('vk_export_map_edit_table__content'), {html: 'map'});
+				// BX.Sale.VkAdmin.loadExportMapOk = true;
+			}
+		},
+
+		changeVkGroupLink: function()
+		{
+			BX("vk_export_groupselector__link").href = 'https://vk.com/club' + BX("vk_export_groupselector").value;
 		}
 	};
 })(window);

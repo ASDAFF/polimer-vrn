@@ -32,7 +32,7 @@ if (is_array($arResult["RECORDS"]))
 	{
 		if (strlen($record['data']["DOCUMENT_URL"]) > 0 && strlen($record['data']["DOCUMENT_NAME"]) > 0)
 		{
-			$record['data']['DOCUMENT_NAME'] = '<a href="'.$record['data']["DOCUMENT_URL"].'" class="lists-folder-title-link">'.htmlspecialcharsbx($record['data']['DOCUMENT_NAME']).'</a>';
+			$record['data']['DOCUMENT_NAME'] = '<a href="'.htmlspecialcharsbx($record['data']["DOCUMENT_URL"]).'" class="lists-folder-title-link">'.htmlspecialcharsbx($record['data']['DOCUMENT_NAME']).'</a>';
 		}
 
 		if($record['data']['DOCUMENT_STATE'])
@@ -88,8 +88,8 @@ elseif(!IsModuleInstalled("intranet"))
 	); ?>
 </div>
 <div class="pagetitle-container pagetitle-align-right-container <?=$pagetitleAlignRightContainer?>">
-	<span class="webform-small-button webform-small-button-blue bx24-top-toolbar-add" id="lists-title-action-add">
-		<?=Loc::getMessage("CT_BLL_BUTTON_NEW_PROCESSES")?>
+	<span class="webform-small-button webform-small-button-blue" id="lists-title-action-add">
+		<span class="webform-small-button-text"><?=Loc::getMessage("CT_BLL_BUTTON_NEW_PROCESSES")?></span>
 	</span>
 </div>
 <?

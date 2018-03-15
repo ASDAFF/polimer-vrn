@@ -23,15 +23,11 @@ class CUserTypeDateTime extends Main\UserField\TypeBase
 	function GetDBColumnType($arUserField)
 	{
 		global $DB;
-		switch(strtolower($DB->type))
+		if(strtolower($DB->type) == "oracle")
 		{
-			case "mysql":
-				return "datetime";
-			case "oracle":
-				return "date";
-			case "mssql":
-				return "datetime";
+			return "date";
 		}
+		return "datetime";
 	}
 
 	function PrepareSettings($arUserField)
@@ -48,8 +44,10 @@ class CUserTypeDateTime extends Main\UserField\TypeBase
 			else
 				$def = array("TYPE"=>"NONE","VALUE"=>"");
 		}
+
 		return array(
 			"DEFAULT_VALUE" => array("TYPE"=>$def["TYPE"], "VALUE"=>$def["VALUE"]),
+			"USE_SECOND" => $arUserField["SETTINGS"]["USE_SECOND"] === 'N' ? 'N' : 'Y',
 		);
 	}
 
@@ -78,6 +76,30 @@ class CUserTypeDateTime extends Main\UserField\TypeBase
 			</td>
 		</tr>
 		';
+
+		if($bVarsFromForm)
+		{
+			$value = $GLOBALS[$arHtmlControl["NAME"]]["USE_SECOND"] === 'N' ? 'N' : 'Y';
+		}
+		elseif(is_array($arUserField))
+		{
+			$value = $arUserField["SETTINGS"]["USE_SECOND"] === 'N' ? 'N' : 'Y';
+		}
+		else
+		{
+			$value = "Y";
+		}
+
+		$result .= '
+		<tr>
+			<td class="adm-detail-valign-top">'.GetMessage("USER_TYPE_DT_USE_SECOND").':</td>
+			<td>
+				<input type="hidden" name="'.$arHtmlControl["NAME"].'[USE_SECOND]" value="N" />
+				<label><input type="checkbox" value="Y" name="'.$arHtmlControl["NAME"].'[USE_SECOND]" '.($value === 'Y' ? ' checked="checked"' : '').' />&nbsp;'.GetMessage('MAIN_YES').'</label>
+			</td>
+		</tr>
+		';
+
 		return $result;
 	}
 
@@ -109,6 +131,16 @@ class CUserTypeDateTime extends Main\UserField\TypeBase
 							$arHtmlControl['NAME'].'_to',
 							$GLOBALS[$arHtmlControl['NAME'].'_to'],
 							'find_form', 'Y');
+	}
+
+	function GetFilterData($arUserField, $arHtmlControl)
+	{
+		return array(
+			"id" => $arHtmlControl["ID"],
+			"name" => $arHtmlControl["NAME"],
+			"type" => "date",
+			'time' => true
+		);
 	}
 
 	function GetAdminListViewHTML($arUserField, $arHtmlControl)
@@ -229,8 +261,11 @@ class CUserTypeDateTime extends Main\UserField\TypeBase
 
 		$html = '';
 		$first = true;
+
 		foreach($value as $res)
 		{
+			$res = \CDatabase::FormatDate($res, \CLang::GetDateFormat("FULL"), static::getFormat($res, $arUserField));
+
 			if(!$first)
 			{
 				$html .= static::getHelper()->getMultipleValuesSeparator();
@@ -280,7 +315,7 @@ class CUserTypeDateTime extends Main\UserField\TypeBase
 			}
 			else
 			{
-				$attrList['onclick'] = 'BX.calendar({node: this, field: this, bTime: true, bSetFocus: false})';
+				$attrList['onclick'] = 'BX.calendar({node: this, field: this, bTime: true, bSetFocus: false, bUseSecond: '.($arUserField['SETTINGS']['USE_SECOND'] === 'N' ? 'false' : 'true').'})';
 			}
 
 			if(isset($attrList['class']) && is_array($attrList['class']))
@@ -291,12 +326,13 @@ class CUserTypeDateTime extends Main\UserField\TypeBase
 			$attrList['name'] = $fieldName;
 
 			$attrList['type'] = 'text';
-			$attrList['value'] = $res;
+			$attrList['tabindex'] = '0';
+			$attrList['value'] = \CDatabase::FormatDate($res, \CLang::GetDateFormat("FULL"), static::getFormat($res, $arUserField));
 
 			$tag .= '<input '.static::buildTagAttributes($attrList).'/>';
 			$tag .= '<i '.static::buildTagAttributes(array(
 					'class' => static::getHelper()->getCssClassName().' icon',
-					'onclick' => 'BX.calendar({node: this.previousSibling, field: this.previousSibling, bTime: true, bSetFocus: false});',
+					'onclick' => 'BX.calendar({node: this.previousSibling, field: this.previousSibling, bTime: true, bSetFocus: false, bUseSecond: '.($arUserField['SETTINGS']['USE_SECOND'] === 'N' ? 'false' : 'true').'});',
 				)).'></i>';
 
 			$html .= static::getHelper()->wrapSingleField($tag);
@@ -312,5 +348,27 @@ class CUserTypeDateTime extends Main\UserField\TypeBase
 		return static::getHelper()->wrapDisplayResult($html);
 
 	}
+
+	protected static function getFormat($value, $arUserField)
+	{
+		$format = CLang::GetDateFormat("FULL");
+
+		if($arUserField['SETTINGS']['USE_SECOND'] === 'N' && MakeTimeStamp($value) % 60 <= 0)
+		{
+			$format = str_replace(':SS', '', $format);
+		}
+
+		return $format;
+	}
+
+	/**
+	 * @param array $arUserField
+	 * @param string $fieldName
+	 * @return string
+	 */
+	public static function FormatField(array $arUserField, $fieldName)
+	{
+		global $DB;
+		return $DB->DateToCharFunction($fieldName, "FULL");
+	}
 }
-?>

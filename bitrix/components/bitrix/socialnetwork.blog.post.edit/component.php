@@ -252,10 +252,8 @@ $arParams["POST_PROPERTY"][] = "UF_BLOG_POST_URL_PRV";
 
 $arResult['BLOG_POST_LISTS'] = (
 	CModule::IncludeModule("lists")
-	&& CModule::IncludeModule("bizproc")
-	&& CBPRuntime::isFeatureEnabled()
+	&& CLists::isFeatureEnabled()
 	&& !$arResult["bExtranetSite"]
-	&& COption::GetOptionString("lists", "turnProcessesOn") == "Y"
 	&& !$arParams["SOCNET_GROUP_ID"]
 	&& IsModuleInstalled('intranet')
 );
@@ -419,6 +417,10 @@ if(
 )
 {
 	$arPost = CBlogTools::htmlspecialcharsExArray($arPost);
+
+	$arPost['DETAIL_TEXT'] = preg_replace("/\[tag\](.+?)\[\/tag\]/is".BX_UTF_PCRE_MODIFIER, "\\1", $arPost['DETAIL_TEXT']);
+	$arPost['~DETAIL_TEXT'] = preg_replace("/\[tag\](.+?)\[\/tag\]/is".BX_UTF_PCRE_MODIFIER, "\\1", $arPost['~DETAIL_TEXT']);
+
 	$arResult["Post"] = $arPost;
 	if($arParams["SET_TITLE"]=="Y")
 	{
@@ -995,7 +997,7 @@ if (
 					{
 						$arFields["MICRO"] = "Y";
 						$arFields["TITLE"] = preg_replace(array("/\n+/is".BX_UTF_PCRE_MODIFIER, "/\s+/is".BX_UTF_PCRE_MODIFIER), " ", blogTextParser::killAllTags($arFields["DETAIL_TEXT"]));
-						$arFields["TITLE"] = trim(str_replace("\xA0", "", $arFields["TITLE"]));
+						$arFields["TITLE"] = trim($arFields["TITLE"], " \t\n\r\0\x0B\xA0");
 						if(strlen($arFields["TITLE"]) <= 0)
 						{
 							$arFields["TITLE"] = GetMessage("BLOG_EMPTY_TITLE_PLACEHOLDER2");
@@ -1024,7 +1026,17 @@ if (
 					$newCategoryIdList = array();
 					$postItem = new \Bitrix\Blog\Item\Post;
 					$postItem->setFields($arFields);
-					$arTagInline = $postItem->detectTags();
+
+					$codeList = array('DETAIL_TEXT');
+					if (
+						!isset($arFields['MICRO'])
+						|| $arFields['MICRO'] != 'Y'
+					)
+					{
+						$codeList[] = 'TITLE';
+					}
+					$arTagInline = \Bitrix\Socialnetwork\Util::detectTags($arFields, $codeList);
+
 					$arTag = array_merge($arTagPrev, $arTagInline);
 					$arTag = array_intersect_key($arTag, array_unique(array_map('ToLower', $arTag)));
 
@@ -1200,11 +1212,13 @@ if (
 									}
 									else
 									{
+										$bError = true;
 										$arResult["ERROR_MESSAGE"] = GetMessage("SBPE_EXISTING_POST_PREMODERATION");
 									}
 								}
 								else
 								{
+									$bError = true;
 									$arResult["ERROR_MESSAGE"] = GetMessage("SBPE_MULTIPLE_PREMODERATION");
 								}
 							}
@@ -1242,6 +1256,8 @@ if (
 						$bError = true;
 						$arResult["ERROR_MESSAGE"] .= GetMessage("BLOG_BPE_DESTINATION_EMPTY");
 					}
+
+					$mentionList = $mentionListOld = array();
 
 					if(!$bError)
 					{
@@ -1337,6 +1353,7 @@ if (
 						}
 
 						preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/ies".BX_UTF_PCRE_MODIFIER, $_POST["POST_MESSAGE"], $arMention);
+						$mentionList = (!empty($arMention) ? $arMention[1] : array());
 
 						$APPLICATION->ResetException();
 						$bAdd = false;
@@ -1426,6 +1443,8 @@ if (
 
 							$arOldPost = CBlogPost::GetByID($arParams["ID"]);
 							preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/ies".BX_UTF_PCRE_MODIFIER, $arOldPost["DETAIL_TEXT"], $arMentionOld);
+							$mentionListOld = (!empty($arMentionOld) ? $arMentionOld[1] : array());
+
 							$socnetRightsOld = CBlogPost::GetSocnetPerms($arParams["ID"]);
 
 							unset($arFields["DATE_PUBLISH"]);
@@ -1602,12 +1621,15 @@ if (
 							$arPostFields = $USER_FIELD_MANAGER->GetUserFields("BLOG_POST", $newID, LANGUAGE_ID);
 							if (
 								($arPostFields["UF_BLOG_POST_IMPRTNT"]["VALUE"] != $arPostFieldsOLD["UF_BLOG_POST_IMPRTNT"]["VALUE"])
-								||
-								($arParams["ID"] > 0 &&
-									($arResult["Post"]["~DETAIL_TEXT"] != $arFields["DETAIL_TEXT"] ||
-										$arResult["Post"]["~TITLE"] != $arFields["TITLE"])))
+								|| (
+									$arParams["ID"] > 0
+									&& (
+										$arResult["Post"]["~DETAIL_TEXT"] != $arFields["DETAIL_TEXT"]
+										|| $arResult["Post"]["~TITLE"] != $arFields["TITLE"]
+									)
+								)
+							)
 							{
-
 								if ($arPostFields["UF_BLOG_POST_IMPRTNT"]["VALUE"] != $arPostFieldsOLD["UF_BLOG_POST_IMPRTNT"]["VALUE"])
 								{
 									if ($arPostFields["UF_BLOG_POST_IMPRTNT"]["VALUE"])
@@ -1639,8 +1661,15 @@ if (
 						}
 
 						if(
-							($bAdd && $newID && $arFields["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH)
-							|| ($arOldPost["PUBLISH_STATUS"] != BLOG_PUBLISH_STATUS_PUBLISH && $arFields["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH)
+							(
+								$bAdd
+								&& $newID
+								&& $arFields["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH
+							)
+							|| (
+								$arOldPost["PUBLISH_STATUS"] != BLOG_PUBLISH_STATUS_PUBLISH
+								&& $arFields["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH
+							)
 						)
 						{
 							$arFields["ID"] = $newID;
@@ -1648,7 +1677,6 @@ if (
 								"bSoNet" => true,
 								"UserID" => $arResult["UserID"],
 								"allowVideo" => $arResult["allowVideo"],
-								//"bGroupMode" => $arResult["bGroupMode"],
 								"PATH_TO_SMILE" => $arParams["PATH_TO_SMILE"],
 								"PATH_TO_POST" => $arParams["PATH_TO_POST"],
 								"SOCNET_GROUP_ID" => $arParams["SOCNET_GROUP_ID"],
@@ -1658,27 +1686,12 @@ if (
 							);
 							$logId = CBlogPost::Notify($arFields, $arBlog, $arParamsNotify);
 
-							if(COption::GetOptionString("blog","send_blog_ping", "N") == "Y")
-							{
-								if(strlen($serverName) <= 0)
-								{
-									$dbSite = CSite::GetByID(SITE_ID);
-									$arSite = $dbSite->Fetch();
-									$serverName = htmlspecialcharsEx($arSite["SERVER_NAME"]);
-									if (strlen($serverName) <=0)
-									{
-										if (defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME)>0)
-											$serverName = SITE_SERVER_NAME;
-										else
-											$serverName = COption::GetOptionString("main", "server_name", "");
-										if (strlen($serverName) <=0)
-											$serverName = $_SERVER["SERVER_NAME"];
-									}
-								}
-
-								$blogUrl = "http://".$serverName.CComponentEngine::MakePathFromTemplate(htmlspecialcharsBack($arParams["PATH_TO_BLOG"]), array("blog" => $arBlog["URL"], "user_id" => $arBlog["OWNER_ID"], "group_id" => $arBlog["SOCNET_GROUP_ID"]));
-								CBlog::SendPing($arBlog["NAME"], $blogUrl);
-							}
+							\Bitrix\Blog\Util::sendBlogPing(array(
+								'siteId' => SITE_ID,
+								'serverName' => $serverName,
+								'pathToBlog' => $arParams["PATH_TO_BLOG"],
+								'blogFields' => $arBlog
+							));
 						}
 					}
 
@@ -1758,101 +1771,26 @@ if (
 						{
 							BXClearCache(true, "/".SITE_ID."/blog/last_messages_list/");
 
-							$arFieldsIM = Array(
-								"TYPE" => "POST",
-								"TITLE" => $arFields["TITLE"],
-								"URL" => $postUrl,
-								"ID" => $newID,
-								"FROM_USER_ID" => $arParams["USER_ID"],
-								"TO_USER_ID" => array(),
-								"TO_SOCNET_RIGHTS" => $arFields["SOCNET_RIGHTS"],
-								"TO_SOCNET_RIGHTS_OLD" => array(
-									"U" => $socnetRightsOld["U"],
-									"SG" => $socnetRightsOld["SG"],
-								)
-							);
-							if (!empty($arMentionOld))
-							{
-								$arFieldsIM["MENTION_ID_OLD"] = $arMentionOld[1];
-							}
-							if (!empty($arMention))
-							{
-								$arFieldsIM["MENTION_ID"] = $arMention[1];
-							}
+							\Bitrix\Socialnetwork\ComponentHelper::notifyBlogPostCreated(array(
+								'post' => array(
+									'ID' => $newID,
+									'TITLE' => $arFields["TITLE"],
+									'AUTHOR_ID' => $arParams["USER_ID"]
+								),
+								'siteId' => SITE_ID,
+								'postUrl' => $postUrl,
+								'socnetRights' => $arFields["SOCNET_RIGHTS"],
+								'socnetRightsOld' => (!empty($socnetRightsOld) ? $socnetRightsOld : array()),
+								'mentionListOld' => $mentionListOld,
+								'mentionList' => $mentionList
+							));
 
-							$arUserIDSent = CBlogPost::NotifyIm($arFieldsIM);
-							if (!$arUserIDSent)
-							{
-								$arUserIDSent = array();
-							}
-
-							$arUserIdToMail = array();
-
-							if (!empty($arFields["SOCNET_RIGHTS"]))
-							{
-								if (is_array($arFields["SOCNET_RIGHTS"]))
-								{
-//									\Bitrix\Blog\Broadcast::checkMode();
-
-									\Bitrix\Blog\Broadcast::send(array(
-										"EMAIL_FROM" => COption::GetOptionString("main","email_from", "nobody@nobody.com"),
-										"SOCNET_RIGHTS" => $arFields["SOCNET_RIGHTS"],
-										"SOCNET_RIGHTS_OLD" => $socnetRightsOld,
-										"ENTITY_TYPE" => "POST",
-										"ENTITY_ID" => $newID,
-										"AUTHOR_ID" => $arFields["AUTHOR_ID"],
-										"URL" => $postUrl,
-										"EXCLUDE_USERS" => array_merge(array($arFields["AUTHOR_ID"]), array($arUserIDSent))
-									));
-								}
-
-								foreach($arFields["SOCNET_RIGHTS"] as $v)
-								{
-									if(substr($v, 0, 1) == "U")
-									{
-										$u = IntVal(substr($v, 1));
-										if (
-											$u > 0
-											&& !in_array($u, $arUserIdToMail)
-											&& empty($socnetRightsOld["U"][$u])
-											&& $u != $arParams["USER_ID"]
-										)
-										{
-											$arUserIdToMail[] = $u;
-										}
-									}
-								}
-							}
-
-							if (!empty($arUserIdToMail))
-							{
-								CBlogPost::NotifyMail(array(
-									"type" => "POST",
-									"siteId" => SITE_ID,
-									"userId" => $arUserIdToMail,
-									"authorId" => $arParams["USER_ID"],
-									"postId" => $newID,
-									"postUrl" => CComponentEngine::MakePathFromTemplate(
-										'/pub/post.php?post_id=#post_id#',
-										array(
-											"post_id"=> $newID
-										)
-									)
-								));
-							}
-
-							if (
-								isset($arFieldsIM["MENTION_ID"])
-								&& !empty($arFieldsIM["MENTION_ID"])
-							)
+							if (!empty($mentionList))
 							{
 								$arMentionedDestCode = array();
-								foreach($arFieldsIM["MENTION_ID"] as $val)
+								foreach($mentionList as $val)
 								{
-									if (
-										!isset($arFieldsIM["MENTION_ID_OLD"])
-										|| !in_array($val, $arFieldsIM["MENTION_ID_OLD"])
-									)
+									if (!in_array($val, $mentionListOld))
 									{
 										$arMentionedDestCode[] = "U".$val;
 									}

@@ -186,6 +186,10 @@ class Command
 				'command' => 'deleteCommand',
 				'params' => Array(
 					'commandId' => $commandId
+				),
+				'extra' => Array(
+					'im_revision' => IM_REVISION,
+					'im_revision_mobile' => IM_REVISION_MOBILE,
 				)
 			));
 		}
@@ -335,7 +339,7 @@ class Command
 				continue;
 			}
 			$executed[$hash] = true;
-			
+
 			if ($count >= 10)
 			{
 				break;
@@ -366,7 +370,7 @@ class Command
 
 				call_user_func_array(array($params["CLASS"], $params["METHOD_COMMAND_ADD"]), Array($messageId, $messageFields));
 			}
-			
+
 		}
 		unset($messageFields['COMMAND']);
 		unset($messageFields['COMMAND_ID']);
@@ -463,7 +467,7 @@ class Command
 		$messageFields['KEYBOARD'] = $messageFields['KEYBOARD']? $messageFields['KEYBOARD']: null;
 		$messageFields['MENU'] = $messageFields['MENU']? $messageFields['MENU']: null;
 
-		if (self::isChat($messageFields['DIALOG_ID']))
+		if (Common::isChatId($messageFields['DIALOG_ID']))
 		{
 			$chatId = intval(substr($messageFields['DIALOG_ID'], 4));
 			if ($chatId <= 0)
@@ -499,11 +503,11 @@ class Command
 				}
 				if ($botId > 0)
 				{
-					$ar['MESSAGE'] = Loc::getMessage("COMMAND_BOT_ANSWER", Array("#BOT_NAME#" => "[USER=".$botId."]".\Bitrix\Im\User::getInstance($botId)->getFullName()."[/USER][BR]")).$ar['MESSAGE'];
+					$ar['MESSAGE'] = Loc::getMessage("COMMAND_BOT_ANSWER", Array("#BOT_NAME#" => "[USER=".$botId."]".\Bitrix\Im\User::getInstance($botId)->getFullName()."[/USER]\n ")).$ar['MESSAGE'];
 				}
 				else
 				{
-					$ar['MESSAGE'] = "[B]".Loc::getMessage("COMMAND_SYSTEM_ANSWER", Array("#COMMAND#" => "/".$commands[$commandId]['COMMAND']))."[/B]\n".$ar['MESSAGE'];
+					$ar['MESSAGE'] = "[B]".Loc::getMessage("COMMAND_SYSTEM_ANSWER", Array("#COMMAND#" => "/".$commands[$commandId]['COMMAND']))."[/B]\n ".$ar['MESSAGE'];
 				}
 			}
 
@@ -557,11 +561,11 @@ class Command
 				}
 				if ($botId > 0)
 				{
-					$ar['MESSAGE'] = Loc::getMessage("COMMAND_BOT_ANSWER", Array("#BOT_NAME#" => "[USER=".$botId."]".\Bitrix\Im\User::getInstance($botId)->getFullName()."[/USER][BR]")).$ar['MESSAGE'];
+					$ar['MESSAGE'] = Loc::getMessage("COMMAND_BOT_ANSWER", Array("#BOT_NAME#" => "[USER=".$botId."]".\Bitrix\Im\User::getInstance($botId)->getFullName()."[/USER]\n ")).$ar['MESSAGE'];
 				}
 				else
 				{
-					$ar['MESSAGE'] = "[B]".Loc::getMessage("COMMAND_SYSTEM_ANSWER", Array("#COMMAND#" => "/".$commands[$commandId]['COMMAND']))."[/B]\n".$ar['MESSAGE'];
+					$ar['MESSAGE'] = "[B]".Loc::getMessage("COMMAND_SYSTEM_ANSWER", Array("#COMMAND#" => "/".$commands[$commandId]['COMMAND']))."[/B]\n ".$ar['MESSAGE'];
 				}
 			}
 
@@ -591,23 +595,12 @@ class Command
 		return $dialogId;
 	}
 
-	public static function isChat($dialogId)
-	{
-		$isChat = false;
-		if (is_string($dialogId) && substr($dialogId, 0, 4) == 'chat')
-		{
-			$isChat = true;
-		}
-
-		return $isChat;
-	}
-
 	private static function findCommands($fields)
 	{
 		$command = substr($fields['COMMAND'], 0, 1) == '/'? substr($fields['COMMAND'], 1): $fields['COMMAND'];
 		$execParams = isset($fields['EXEC_PARAMS'])? $fields['EXEC_PARAMS']: '';
 		$messageFields = isset($fields['MESSAGE_FIELDS'])? $fields['MESSAGE_FIELDS']: Array();
-		
+
 		if ($messageFields['MESSAGE_TYPE'] != IM_MESSAGE_PRIVATE)
 		{
 			$relations = \CIMChat::GetRelationById($messageFields['TO_CHAT_ID']);
@@ -668,8 +661,6 @@ class Command
 			Array('COMMAND' => '>>', 'TITLE' => Loc::getMessage("COMMAND_DEF_QUOTE_TITLE"), 'PARAMS' => Loc::getMessage("COMMAND_DEF_QUOTE_PARAMS"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y'),
 			Array('COMMAND' => 'rename', 'TITLE' => Loc::getMessage("COMMAND_DEF_RENAME_TITLE"), 'PARAMS' => Loc::getMessage("COMMAND_DEF_RENAME_PARAMS"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y', 'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_CHAT"), 'CONTEXT' => 'chat'),
 			Array('COMMAND' => 'webrtcDebug', 'TITLE' => Loc::getMessage("COMMAND_DEF_WD_TITLE"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y', 'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_DEBUG"), 'CONTEXT' => 'call'),
-			Array('COMMAND' => 'startTrackStatus', 'TITLE' => Loc::getMessage("COMMAND_DEF_STTS_TITLE"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y', 'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_DIALOG"), 'CONTEXT' => 'user'),
-			Array('COMMAND' => 'stopTrackStatus', 'TITLE' => Loc::getMessage("COMMAND_DEF_SPTS_TITLE"), 'HIDDEN' => 'N', 'EXTRANET_SUPPORT' => 'Y', 'CATEGORY' => Loc::getMessage("COMMAND_DEF_CATEGORY_DIALOG"), 'CONTEXT' => 'user'),
 		);
 
 		$imCommands = Array();
@@ -901,7 +892,7 @@ class Command
 
 		return $result;
 	}
-	
+
 	public static function clearCache()
 	{
 		$cache = \Bitrix\Main\Data\Cache::createInstance();

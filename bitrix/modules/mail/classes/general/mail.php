@@ -25,6 +25,7 @@ class CMail
 	const ERR_API_LONG_NAME          = 113;
 	const ERR_API_LONG_PASSWORD      = 114;
 	const ERR_API_OP_DENIED          = 115;
+	const ERR_API_OLD_TOKEN          = 116;
 
 	const ERR_API_DOMAIN_OCCUPIED    = 201;
 	const ERR_API_BAD_DOMAIN         = 202;
@@ -69,6 +70,8 @@ class CMail
 				return GetMessage('MAIL_ERR_API_LONG_PASSWORD');
 			case self::ERR_API_OP_DENIED:
 				return GetMessage('MAIL_ERR_API_OP_DENIED');
+			case self::ERR_API_OLD_TOKEN:
+				return getMessage('MAIL_ERR_API_OLD_TOKEN');
 			case self::ERR_API_DOMAIN_OCCUPIED:
 				return GetMessage('MAIL_ERR_API_DOMAIN_OCCUPIED');
 			case self::ERR_API_BAD_DOMAIN:
@@ -1145,7 +1148,7 @@ class CMailHeader
 			$str = preg_replace('/(=\?[^?]+\?(Q|B)\?[^?]*\?=)(\s)+=\?/i', '\1=?', $str);
 		if(!preg_match("'=\?(.*)\?(B|Q)\?(.*)\?='i", $str))
 		{
-			if(strlen($charset_document)>0 && $charset_document!=$charset_to)
+			if ($charset_document != '')
 				$str = CMailUtil::ConvertCharset($str, $charset_document, $charset_to);
 		}
 		else
@@ -1162,10 +1165,9 @@ class CMailHeader
 
 	function Parse($message_header, $charset)
 	{
-		if(preg_match("'content-type:.*?charset=([^\r\n;]+)'is", $message_header, $res))
+		$this->charset = defined('BX_MAIL_DEFAULT_CHARSET') && BX_MAIL_DEFAULT_CHARSET != '' ? BX_MAIL_DEFAULT_CHARSET : $charset;
+		if(preg_match("'content-type:.*?charset\s*=\s*([^\r\n;]+)'is", $message_header, $res))
 			$this->charset = strtolower(trim($res[1], ' "'));
-		elseif($this->charset=='' && defined("BX_MAIL_DEFAULT_CHARSET"))
-			$this->charset = BX_MAIL_DEFAULT_CHARSET;
 
 		$ar_message_header_tmp = explode("\r\n", $message_header);
 
@@ -1751,7 +1753,8 @@ class CAllMailMessage
 
 				$arFields['BODY_BB'] = \Bitrix\Mail\Message::parseMessage($msg);
 
-				$msg = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $message_body_html);
+				$msg = preg_replace('/<!--.*?-->/is', '', $message_body_html);
+				$msg = preg_replace('/<script[^>]*>.*?<\/script>/is', '', $msg);
 				$msg = preg_replace('/<title[^>]*>.*?<\/title>/is', '', $msg);
 
 				$sanitizer = new \CBXSanitizer();
@@ -2160,32 +2163,41 @@ class CAllMailUtil
 		$from = trim(strtolower($from));
 		$to   = trim(strtolower($to));
 
-		if (in_array($from, array('utf-8', 'utf8')))
+		$escape = function ($matches)
 		{
-			$regex = '/
-				([\x00-\x7F]
-					|[\xC2-\xDF][\x80-\xBF]
-					|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF])
-				|(\xE0[\xA0-\xBF]|[\xE1-\xEC\xEE\xEF][\x80-\xBF]|\xED[\x80-\x9F]
-					|\xF0[\x90-\xBF][\x80-\xBF]{0,2}|[\xF1-\xF3][\x80-\xBF]{1,3}|\xF4[\x80-\x8F][\x80-\xBF]{0,2}
-					|[\x80-\xFF])
-			/x';
+			return isset($matches[2]) ? '?' : $matches[1];
+		};
 
-			$str = preg_replace_callback($regex, function ($matches)
+		if ($from != $to)
+		{
+			if (in_array($from, array('utf-8', 'utf8')))
 			{
-				return isset($matches[2])
-					? str_repeat('?', CUtil::binStrlen($matches[2]))
-					: $matches[1];
-			}, $str);
+				// escape all invalid (rfc-3629) utf-8 characters
+				$str = preg_replace_callback('/
+					([\x00-\x7F]+
+						|[\xC2-\xDF][\x80-\xBF]
+						|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF]
+						|\xF0[\x90-\xBF][\x80-\xBF]{2}|[\xF1-\xF3][\x80-\xBF]{3}|\xF4[\x80-\x8F][\x80-\xBF]{2})
+					|([\x80-\xFF])
+				/x', $escape, $str);
+			}
+
+			if ($result = Bitrix\Main\Text\Encoding::convertEncoding($str, $from, $to, $error))
+				$str = $result;
+			else
+				addMessage2Log(sprintf('Failed to convert email part. (%s -> %s : %s)', $from, $to, $error));
 		}
 
-		if ($from == $to)
-			return $str;
-
-		if ($result = Bitrix\Main\Text\Encoding::convertEncoding($str, $from, $to, $error))
-			$str = $result;
-		else
-			addMessage2Log(sprintf('Failed to convert email part. (%s -> %s : %s)', $from, $to, $error));
+		if (in_array($to, array('utf-8', 'utf8')))
+		{
+			// escape invalid (rfc-3629) and 4-bytes utf-8 characters
+			$str = preg_replace_callback('/
+				([\x00-\x7F]+
+					|[\xC2-\xDF][\x80-\xBF]
+					|\xE0[\xA0-\xBF][\x80-\xBF]|[\xE1-\xEC\xEE\xEF][\x80-\xBF]{2}|\xED[\x80-\x9F][\x80-\xBF])
+				|([\x80-\xFF])
+			/x', $escape, $str);
+		}
 
 		return $str;
 	}

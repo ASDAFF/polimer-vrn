@@ -44,7 +44,7 @@ class OrderDiscountTable extends Main\Entity\DataManager
 		'SORT',
 		'PRIORITY',
 		'LAST_DISCOUNT',
-		'ACTIONS_DESCR',
+		'ACTIONS_DESCR'
 	);
 	protected static $replaceFields = array(
 		'DISCOUNT_ID' => 'ID',
@@ -54,7 +54,7 @@ class OrderDiscountTable extends Main\Entity\DataManager
 	);
 	protected static $revertFields = array(
 		'CONDITIONS' => 'CONDITIONS_LIST',
-		'ACTIONS' => 'ACTIONS_LIST',
+		'ACTIONS' => 'ACTIONS_LIST'
 	);
 
 	/**

@@ -16,6 +16,8 @@ class ShipmentItemStoreCollection
 
 	private static $errors = array();
 
+	private static $eventClassName = null;
+
 	/**
 	 * @return ShipmentItem
 	 */
@@ -303,7 +305,15 @@ class ShipmentItemStoreCollection
 		$oldBarcodeList = array();
 
 		$itemsFromDb = array();
-		if ($this->getShipmentItem() && $this->getShipmentItem()->getId() > 0)
+
+		$shipmentItem = $this->getShipmentItem();
+
+		$originalValues = $shipmentItem->getFields()
+									   ->getOriginalValues();
+
+		$shipmentItemIsNew = (array_key_exists('ID', $originalValues) && $originalValues['ID'] === null);
+
+		if ($this->getShipmentItem() && $this->getShipmentItem()->getId() > 0 && !$shipmentItemIsNew)
 		{
 			$itemsFromDbList = Internals\ShipmentItemStoreTable::getList(
 				array(
@@ -326,12 +336,15 @@ class ShipmentItemStoreCollection
 				unset($itemsFromDb[$shipmentItemStore->getId()]);
 		}
 
-		$itemEventName = ShipmentItemStore::getEntityEventName();
+		if (self::$eventClassName === null)
+		{
+			self::$eventClassName = ShipmentItemStore::getEntityEventName();
+		}
 
 		foreach ($itemsFromDb as $k => $v)
 		{
 			/** @var Main\Event $event */
-			$event = new Main\Event('sale', "OnBefore".$itemEventName."Deleted", array(
+			$event = new Main\Event('sale', "OnBefore".self::$eventClassName."Deleted", array(
 					'VALUES' => $v,
 			));
 			$event->send();
@@ -339,7 +352,7 @@ class ShipmentItemStoreCollection
 			Internals\ShipmentItemStoreTable::delete($k);
 
 			/** @var Main\Event $event */
-			$event = new Main\Event('sale', "On".$itemEventName."Deleted", array(
+			$event = new Main\Event('sale', "On".self::$eventClassName."Deleted", array(
 					'VALUES' => $v,
 			));
 			$event->send();

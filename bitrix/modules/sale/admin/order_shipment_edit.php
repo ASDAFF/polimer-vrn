@@ -1,8 +1,9 @@
 <?
 use Bitrix\Main\Application;
-use \Bitrix\Main\Page\Asset;
-use \Bitrix\Sale\Order;
+use Bitrix\Main\Page\Asset;
+use Bitrix\Sale\Order;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Delivery\Requests;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/include.php");
@@ -272,7 +273,7 @@ foreach ($dirs as $dir)
 			while (($file = readdir($handle)) !== false)
 			{
 				$file_contents = '';
-				if ($file == "." || $file == ".." || $file == ".access.php")
+				if ($file == "." || $file == ".." || $file == ".access.php" || isset($arReports[$file]))
 					continue;
 				if (is_file($dir.$file) && ToUpper(substr($file, -4)) == ".PHP")
 				{
@@ -311,7 +312,7 @@ foreach ($dirs as $dir)
 							continue;
 					}
 
-					$arReports[] = array(
+					$arReports[$file] = array(
 						"TEXT" => $rep_title,
 						"ONCLICK" => "window.open('/bitrix/admin/sale_order_print_new.php?&ORDER_ID=".$orderId."&SHIPMENT_ID=".$shipmentId."&doc=".substr($file, 0, strlen($file)-4)."&".bitrix_sessid_get()."', '_blank');"
 					);
@@ -329,6 +330,62 @@ foreach ($dirs as $dir)
 		"MENU" => $arReports
 	);
 }
+
+if($shipmentId > 0)
+{
+	$deliveryId = $shipment->getDeliveryId();
+	$deliveryRequestHandler = Requests\Manager::getDeliveryRequestHandlerByDeliveryId($deliveryId);
+
+	if($deliveryRequestHandler)
+	{
+		$rTypesMenu = array();
+		$requestId = Requests\Manager::getRequestIdByShipmentId($shipmentId);
+
+		if($requestId > 0)
+		{
+			foreach(Requests\Manager::getDeliveryRequestShipmentActions($shipment) as $action => $actionName)
+			{
+				$rTypesMenu[] = array(
+					"TEXT" => $actionName,
+					"LINK" =>"javascript:BX.Sale.Delivery.Request.processRequest({action: 'actionShipmentExecute', deliveryId: ".$deliveryId.", requestAction: '".CUtil::JSEscape($action)."', requestId: ".$requestId.", shipmentIds: [".$shipmentId."], lang: '".LANGUAGE_ID."'})"
+				);
+			}
+
+			if(!empty($rTypesMenu))
+				$rTypesMenu[] = array("SEPARATOR" => true);
+
+			$rTypesMenu[] = array(
+				"TEXT" => Loc::getMessage('SOPE_DELIVERY_REQUEST_SHIPMENT_UPDATE'),
+				"LINK" => "javascript:BX.Sale.Delivery.Request.processRequest({action: 'updateShipmentsFromDeliveryRequest', shipmentIds: [".$shipmentId."]}, true)"
+			);
+
+			$rTypesMenu[] = array(
+				"TEXT" => Loc::getMessage('SOPE_DELIVERY_REQUEST_SHIPMENT_DELETE'),
+				"LINK" => "javascript:BX.Sale.Delivery.Request.processRequest({action: 'deleteShipmentsFromDeliveryRequest', shipmentIds: [".$shipmentId."]}, true)"
+			);
+		}
+		else
+		{
+			$rTypesMenu[] = array(
+				"TEXT" => Loc::getMessage('SOPE_DELIVERY_REQUEST_CREATE'),
+				"LINK" => "/bitrix/admin/sale_delivery_request.php?lang=".LANGUAGE_ID."&ACTION=CREATE_DELIVERY_REQUEST&SHIPMENT_IDS[]=".$shipmentId."&BACK_URL=".urlencode($APPLICATION->GetCurPageParam())
+			);
+
+			$rTypesMenu[] = array(
+				"TEXT" => Loc::getMessage('SOPE_DELIVERY_REQUEST_ADD'),
+				"LINK" => "/bitrix/admin/sale_delivery_request.php?lang=".LANGUAGE_ID."&ACTION=ADD_SHIPMENTS_TO_REQUEST&SHIPMENT_IDS[]=".$shipmentId."&BACK_URL=".urlencode($APPLICATION->GetCurPageParam())
+			);
+		}
+
+		$aMenu[] = array(
+			"TEXT" => Loc::getMessage('SOPE_DELIVERY_REQUEST'),
+			"TITLE" => Loc::getMessage('SOPE_DELIVERY_REQUEST_TITLE'),
+			"LINK" => 'javascript:void(0)',
+			"MENU" => $rTypesMenu
+		);
+	}
+}
+
 $context = new CAdminContextMenu($aMenu);
 $context->Show();
 
@@ -379,6 +436,8 @@ $shipmentOrderBasket = new \Bitrix\Sale\Helpers\Admin\Blocks\OrderBasketShipment
 <?=bitrix_sessid_post();?>
 <?
 \Bitrix\Main\Page\Asset::getInstance()->addJs("/bitrix/js/sale/admin/order_ajaxer.js");
+\Bitrix\Sale\Delivery\Requests\Manager::initJs();
+
 echo \Bitrix\Sale\Helpers\Admin\Blocks\OrderAdditional::getScripts();
 echo \Bitrix\Sale\Helpers\Admin\OrderEdit::getScripts($saleOrder, $formId);
 echo \Bitrix\Sale\Helpers\Admin\Blocks\OrderShipment::getScripts();

@@ -16,6 +16,7 @@ $sale_default_option = array(
 	'1C_IMPORT_UPDATE_BASKET_QUANTITY' => 'Y',
 	'1C_IMPORT_NEW_PAYMENT' => 'Y',
 	'1C_IMPORT_NEW_SHIPMENT' => 'Y',
-	'1C_IMPORT_NEW_ORDER_NEW_SHIPMENT' => 'Y'
+	'1C_IMPORT_NEW_ORDER_NEW_SHIPMENT' => 'Y',
+	'value_precision' => 2,
+	'product_viewed_save' => 'N'
 );
-?>

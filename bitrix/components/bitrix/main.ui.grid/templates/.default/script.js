@@ -774,6 +774,13 @@
 			);
 		},
 
+		isNoSortableHeader: function(item)
+		{
+			return (
+				BX.hasClass(item, this.settings.get('classHeaderNoSortable'))
+			);
+		},
+
 		bindOnClickHeader: function()
 		{
 			var self = this;
@@ -1588,6 +1595,38 @@
 			}
 
 			return this.loader;
+		},
+
+		blockSorting: function()
+		{
+			var headerCells = BX.Grid.Utils.getByClass(
+				this.getContainer(),
+				this.settings.get('classHeadCell')
+			);
+
+			headerCells.forEach(function(header) {
+				if (this.isSortableHeader(header))
+				{
+					BX.removeClass(header, this.settings.get('classHeaderSortable'));
+					BX.addClass(header, this.settings.get('classHeaderNoSortable'));
+				}
+			}, this);
+		},
+
+		unblockSorting: function()
+		{
+			var headerCells = BX.Grid.Utils.getByClass(
+				this.getContainer(),
+				this.settings.get('classHeadCell')
+			);
+
+			headerCells.forEach(function(header) {
+				if (this.isNoSortableHeader(header) && header.dataset.sortBy)
+				{
+					BX.addClass(header, this.settings.get('classHeaderSortable'));
+					BX.removeClass(header, this.settings.get('classHeaderNoSortable'));
+				}
+			}, this);
 		},
 
 		confirmDialog: function(action, then, cancel)

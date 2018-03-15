@@ -52,13 +52,14 @@ class MainUserConsentRequestComponent extends CBitrixComponent
 			$this->errors->setError(new Error(Loc::getMessage('MAIN_USER_CONSENT_REQUEST_COMP_CLASS_ERR_ID')));
 			return false;
 		}
-
+		$agreement->getText();
+		
 		$agreementData = $agreement->getData();
 		$this->arResult['INPUT_LABEL'] = $agreement->getLabelText();
 
 		if (isset($this->arParams['REPLACE']['fields']) && is_array($this->arParams['REPLACE']['fields']))
 		{
-			$this->arParams['REPLACE']['fields'][] = Loc::getMessage('MAIN_USER_CONSENT_REQUEST_COMP_IP');
+			$this->arParams['REPLACE']['fields'] = $this->prepareResultReplaceFields($this->arParams['REPLACE']['fields']);
 		}
 
 		$config = array(
@@ -89,6 +90,29 @@ class MainUserConsentRequestComponent extends CBitrixComponent
 		$this->arResult['CONFIG'] = $config;
 
 		return true;
+	}
+
+	protected function prepareResultReplaceFields($inputFieldNames)
+	{
+		$resultFieldNames = array();
+		foreach ($inputFieldNames as $fieldName)
+		{
+			$fieldName = trim($fieldName);
+			if (substr($fieldName, -1, 1) == ':')
+			{
+				$fieldName = substr($fieldName, 0, -1);
+				$fieldName = trim($fieldName);
+			}
+			if (!$fieldName)
+			{
+				continue;
+			}
+
+			$resultFieldNames[] = $fieldName;
+		}
+
+		$resultFieldNames[] = Loc::getMessage('MAIN_USER_CONSENT_REQUEST_COMP_IP');
+		return $resultFieldNames;
 	}
 
 	protected function printErrors()

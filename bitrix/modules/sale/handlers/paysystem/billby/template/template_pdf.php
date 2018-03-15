@@ -396,6 +396,20 @@ $arCurFormat = CCurrencyLang::GetCurrencyFormat($params['CURRENCY']);
 $currency = preg_replace('/(^|[^&])#/', '${1}', $arCurFormat['FORMAT_STRING']);
 	$currency = strip_tags($currency);
 
+// Precision
+$currencyFormat = CCurrencyLang::GetFormatDescription($params['CURRENCY']);
+if ($currencyFormat === false)
+	$currencyFormat = CCurrencyLang::GetDefaultValues();
+$currencyPrecision = (int)$currencyFormat['DECIMALS'];
+if ($currencyPrecision <= 0)
+	$currencyPrecision = 2;
+$salePrecision = (int)Bitrix\Main\Config\Option::get('sale', 'value_precision', 2);
+if ($salePrecision <= 0)
+	$salePrecision = 2;
+$salePrecision = min($salePrecision, SALE_VALUE_PRECISION);
+$precision = min($salePrecision, $currencyPrecision);
+
+
 $columnList = array('NUMBER', 'NAME', 'QUANTITY', 'MEASURE', 'PRICE', 'SUM', 'VAT_RATE', 'VAT_SUM', 'TOTAL');
 $arCols = array();
 $vatRateColumn = 0;
@@ -518,7 +532,7 @@ if (count($params['BASKET_ITEMS']) > 0)
 					if ($basketItem['VAT_RATE'] == 0.0)
 						$data = CSalePdf::prepareToPdf(Loc::getMessage('SALE_HPS_BILLBY_TOTAL_VAT_RATE_NO'));
 					else
-						$data = CSalePdf::prepareToPdf(roundEx($basketItem['VAT_RATE'] * 100, SALE_VALUE_PRECISION)."%");
+						$data = CSalePdf::prepareToPdf(roundEx($basketItem['VAT_RATE'] * 100, $precision)."%");
 					$arCols[$columnId]['IS_DIGIT'] = true;
 					break;
 				case 'VAT_SUM':
@@ -557,11 +571,11 @@ if (count($params['BASKET_ITEMS']) > 0)
 			$arProps[$n][] = $pdf::prepareToPdf(sprintf("%s: %s", $basketPropertyItem["NAME"], $basketPropertyItem["VALUE"]));
 		}
 
-		$sum += doubleval($basketItem['PRICE'] * $basketItem['QUANTITY']);
+		$sum += roundEx(doubleval($basketItem['PRICE'] * $basketItem['QUANTITY']), $precision);
 		$vat = max($vat, $basketItem['VAT_RATE']);
-		$totalSum += $basketItemSum;
-		$totalVatSum += $basketItemVatSum;
-		$totalSumWithVat += $basketItemTotal;
+		$totalSum += roundEx($basketItemSum, $precision);
+		$totalVatSum += roundEx($basketItemVatSum, $precision);
+		$totalSumWithVat += roundEx($basketItemTotal, $precision);
 	}
 
 	if ($params['DELIVERY_PRICE'] > 0)
@@ -617,7 +631,7 @@ if (count($params['BASKET_ITEMS']) > 0)
 					if ($vat == 0.0)
 						$data = CSalePdf::prepareToPdf(Loc::getMessage('SALE_HPS_BILLBY_TOTAL_VAT_RATE_NO'));
 					else
-						$data = CSalePdf::prepareToPdf(roundEx($vat * 100, SALE_VALUE_PRECISION)."%");
+						$data = CSalePdf::prepareToPdf(roundEx($vat * 100, $precision)."%");
 					$arCols[$columnId]['IS_DIGIT'] = true;
 					break;
 				case 'VAT_SUM':
@@ -638,10 +652,10 @@ if (count($params['BASKET_ITEMS']) > 0)
 				$arCells[$n][$columnId] = $data;
 		}
 
-		$sum += doubleval($params['DELIVERY_PRICE']);
-		$totalSum += $basketItemSum;
-		$totalVatSum += $basketItemVatSum;
-		$totalSumWithVat += $basketItemTotal;
+		$sum += roundEx(doubleval($params['DELIVERY_PRICE']), $precision);
+		$totalSum += roundEx($basketItemSum, $precision);
+		$totalVatSum += roundEx($basketItemVatSum, $precision);
+		$totalSumWithVat += roundEx($basketItemTotal, $precision);
 	}
 
 	$totalRowIsLast = false;
@@ -723,7 +737,7 @@ if (count($params['BASKET_ITEMS']) > 0)
 						"%s%s%s:",
 						($tax["IS_IN_PRICE"] == "Y") ? Loc::getMessage('SALE_HPS_BILLBY_INCLUDING') : "",
 						$tax["TAX_NAME"],
-						($vat <= 0 && $tax["IS_PERCENT"] == "Y") ? sprintf(' (%s%%)', roundEx($tax["VALUE"], SALE_VALUE_PRECISION)) : ""
+						($vat <= 0 && $tax["IS_PERCENT"] == "Y") ? sprintf(' (%s%%)', roundEx($tax["VALUE"], $precision)) : ""
 					));
 					$arCells[$n][$arColumnKeys[$columnCount-1]] = CSalePdf::prepareToPdf(SaleFormatCurrency($tax["VALUE_MONEY"], $params['CURRENCY'], true));
 				}
@@ -927,15 +941,15 @@ if ($params['BILLBY_TOTAL_SHOW'] == 'Y')
 {
 	$pdf->SetFont($fontFamily, 'B', $fontSize);
 
-	$inWords = in_array($params['CURRENCY'], array("RUR", "RUB", "UAH", "KZT", "BYN"));
+	$inWords = in_array($params['CURRENCY'], array("RUR", "RUB", "UAH", "KZT", "BYR", "BYN"));
 	$textWidth = $width;
 
 	$pdf->Ln(5);
 	$text = Loc::getMessage('SALE_HPS_BILLBY_TOTAL_VAT').': ';
 	if ($inWords)
-		$text .= Number2Word_Rus(roundEx($totalVatSum, 2), "Y", $params['CURRENCY']);
+		$text .= Number2Word_Rus(roundEx($totalVatSum, $precision), "Y", $params['CURRENCY']);
 	else
-		$text .= SaleFormatCurrency($totalVatSum, $params['CURRENCY'], false);
+		$text .= SaleFormatCurrency(roundEx($totalVatSum, $precision), $params['CURRENCY'], false);
 	unset($totalVatSum);
 	if (!empty($text))
 	{
@@ -951,9 +965,9 @@ if ($params['BILLBY_TOTAL_SHOW'] == 'Y')
 
 	$text = Loc::getMessage('SALE_HPS_BILLBY_TOTAL_SUM_WITH_VAT').': ';
 	if ($inWords)
-		$text .= Number2Word_Rus($params['SUM'], "Y", $params['CURRENCY']);
+		$text .= Number2Word_Rus($totalSumWithVat, "Y", $params['CURRENCY']);
 	else
-		$text .= SaleFormatCurrency($params['SUM'], $params['CURRENCY'], false);
+		$text .= SaleFormatCurrency($totalSumWithVat, $params['CURRENCY'], false);
 
 	if (!empty($text))
 	{
@@ -1134,20 +1148,22 @@ if ($_REQUEST['GET_CONTENT'] == 'Y')
 else if ($_REQUEST['DOWNLOAD'] == 'Y')
 	$dest = 'D';
 
-return $pdf->Output(
-	sprintf(
-		'Schet No %s ot %s.pdf',
-		str_replace(
-			array(
-				chr(0), chr(1), chr(2), chr(3), chr(4), chr(5), chr(6), chr(7), chr(8), chr(9), chr(10), chr(11),
-				chr(12), chr(13), chr(14), chr(15), chr(16), chr(17), chr(18), chr(19), chr(20), chr(21), chr(22),
-				chr(23), chr(24), chr(25), chr(26), chr(27), chr(28), chr(29), chr(30), chr(31),
-				'"', '*', '/', ':', '<', '>', '?', '\\', '|'
-			),
-			'_',
-			strval($params["ACCOUNT_NUMBER"])
+$fileNAme = sprintf(
+	'Schet No %s ot %s.pdf',
+	str_replace(
+		array(
+			chr(0), chr(1), chr(2), chr(3), chr(4), chr(5), chr(6), chr(7), chr(8), chr(9), chr(10), chr(11),
+			chr(12), chr(13), chr(14), chr(15), chr(16), chr(17), chr(18), chr(19), chr(20), chr(21), chr(22),
+			chr(23), chr(24), chr(25), chr(26), chr(27), chr(28), chr(29), chr(30), chr(31),
+			'"', '*', '/', ':', '<', '>', '?', '\\', '|'
 		),
-		ConvertDateTime($params['PAYMENT_DATE_INSERT'], 'YYYY-MM-DD')
-	), $dest
+		'_',
+		strval($params["ACCOUNT_NUMBER"])
+	),
+	ConvertDateTime($params['PAYMENT_DATE_INSERT'], 'YYYY-MM-DD')
 );
+
+$trFileName = CUtil::translit($fileName, 'ru', array('max_len' => 1024, 'safe_chars' => '.', 'replace_space' => '-'));
+
+return $pdf->Output($trFileName, $dest, $fileName);
 ?>

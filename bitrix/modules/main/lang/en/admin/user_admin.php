@@ -87,4 +87,5 @@ $MESS["USER_DONT_KNOW"] = "(unknown)";
 $MESS["USER_MALE"] = "Male";
 $MESS["USER_FEMALE"] = "Female";
 $MESS["MAIN_USER_ADMIN_FIELD_ID"] = "ID";
+$MESS["MAIN_USER_ADMIN_PAGES"] = "page";
 ?>

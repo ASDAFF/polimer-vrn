@@ -307,7 +307,7 @@ if($_REQUEST["action"]=="js_send" && check_bitrix_sessid() && $POST_RIGHT>="W")
 				$nEmailsTotal = $nEmailsNone + $nEmailsSent + $nEmailsError;
 
 				$message = array_merge($message, array(
-					"DETAILS" => $arMailingChain['SUBJECT'].$messageDetails
+					"DETAILS" => htmlspecialcharsbx($arMailingChain['SUBJECT']) . $messageDetails
 						.'#PROGRESS_BAR#'
 						.'<p>'.GetMessage("MAILING_ADM_SENDING_PROCESSED").' <b>'.($nEmailsSent + $nEmailsError).'</b> '
 						.GetMessage("MAILING_ADM_SENDING_PROCESSED_OF").' <b>'.$nEmailsTotal.'</b></p>'

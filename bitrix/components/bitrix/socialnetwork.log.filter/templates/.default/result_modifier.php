@@ -248,6 +248,9 @@ if (
 if (SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$arResult["EnableFulltextSearch"] = \Bitrix\Socialnetwork\LogIndexTable::getEntity()->fullTextIndexEnabled("CONTENT");
+
+	$config = \Bitrix\Main\Application::getConnection()->getConfiguration();
+	$arResult["ftMinTokenSize"] = (isset($config["ft_min_token_size"]) ? $config["ft_min_token_size"] : CSQLWhere::FT_MIN_TOKEN_SIZE);
 }
 
 ?>

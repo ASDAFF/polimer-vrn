@@ -13,21 +13,18 @@ table.BXECControls  td{padding: 0;}
 .bxec-spr{background-image: url(/bitrix/images/calendar/sprite.png?v=1);}
 
 /* TABS month-week-day  */
-.bxcal .bxec-tabs-cnt{position: relative;height: 32px;}
+.bxcal .bxec-tabs-cnt{position: relative;height: 32px; margin-bottom: 16px;}
 .bxcal .bxec-tabs-div{width: 100%; height: 32px; position: absolute; top: 0 !important; z-index: 100;}
 
 .bxec-tabs-div .bxec-tab-div {height: 32px; float: left; margin: 0 4px 0 0; cursor: pointer;}
-.bxec-tabs-div b, .bxec-tabs-div .bxec-tab-c, .bxec-tabs-div i{display: block; background-image: url(/bitrix/images/calendar/sprite.png?v=1); height: 32px; float: left; cursor: pointer;}
+.bxec-tabs-div b, .bxec-tabs-div .bxec-tab-c, .bxec-tabs-div i{display: block; height: 32px; float: left; cursor: pointer;}
 .bxec-tab-div b {width: 3px;}
 .bxec-tab-div i {width: 4px;}
 .bxec-tabs-div div.bxec-tab-div div.bxec-tab-c span{display: inline-block; text-align: center; margin: 10px 15px 0 15px; font-family:Verdana, Arial, "Helvetica Neue", Helvetica, sans-serif; font-size: 12px; color: #7B7B7B;}
 .bxec-tabs-div .bxec-tab-div-act div.bxec-tab-c span{font-weight: bold; color: #000!important; margin: 7px 15px 0 15px!important;}
-.bxec-tabs-div .bxec-tab-div b {background-position: 0 -347px;}
-.bxec-tabs-div .bxec-tab-div .bxec-tab-c {background-position: 0 -377px;}
-.bxec-tabs-div .bxec-tab-div i {background-position: -8px -347px;}
-.bxec-tabs-div .bxec-tab-div-act b {background-position: 0 -275px!important;}
-.bxec-tabs-div .bxec-tab-div-act .bxec-tab-c {background-position: 0 -311px!important;}
-.bxec-tabs-div .bxec-tab-div-act i {background-position: -8px -275px!important;}
+.bxec-tabs-div .bxec-tab-div .bxec-tab-c {background-color: white;}
+.bxec-tabs-div .bxec-tab-div-act .bxec-tab-c {background-color: lightgray;}
+
 
 .bxec-tabs-cnt .bxec-bot-bg{height: 3px; background: url(/bitrix/images/calendar/sprite.png?v=1) 0 -445px; position: absolute; bottom: -1px; left: 0; width: 100%; z-index: 99;}
 div.bxec-set-but{width: 18px; height: 18px; background-position: -282px 0; float: right; margin:7px 8px 0 0; cursor: pointer; border: 1px solid #B5B4B3; visibility: hidden;}
@@ -38,8 +35,7 @@ div.bxec-set-but{width: 18px; height: 18px; background-position: -282px 0; float
 .bxcal div.bxec-preview-calendar{width: 140px; height: 120px; border: 1px solid black;}
 
 .bxcal table.BXEC-Calendar{width:100%;}
-.bxcal table.BXEC-Calendar-week{width:100%;border-collapse: collapse;
-border-left: 1px solid #C9C9C9!important; border-right: 1px solid #C9C9C9!important;}
+.bxcal table.BXEC-Calendar-week{width:100%;border-collapse: collapse;}
 
 .bxcal-six-rows  table.BXEC-Calendar{}
 
@@ -54,16 +50,15 @@ table.BXEC-Calendar-week td.bxec-pad2 {
 table.BXEC-Calendar-week td.bxec-pad2 img{display: none !important;}
 
 tr.bxec-days-tbl-more-ev td {border-bottom:  3px double #C9C9C9 !important;}
-tr.bxec-days-tbl-more-ev td.bxec-pad, tr.bxec-days-tbl-more-ev td.bxec-pad2{background: url(/bitrix/images/calendar/title_wd_bg.gif) repeat-x !important;}
-tr.bxec-days-tbl-title td.bxec-pad, tr.bxec-days-tbl-title td.bxec-pad2{background: url(/bitrix/images/calendar/title_wd_bg.gif) repeat-x !important;}
-tr.bxec-days-tbl-more-ev td.bxec-pad, tr.bxec-days-tbl-more-ev td.bxec-pad2 {background: url(/bitrix/images/calendar/title_wd_bg.gif) repeat-x 0 -79px !important;}
+tr.bxec-days-tbl-more-ev td.bxec-pad, tr.bxec-days-tbl-more-ev td.bxec-pad2{}
+tr.bxec-days-tbl-title td.bxec-pad, tr.bxec-days-tbl-title td.bxec-pad2{}
+tr.bxec-days-tbl-more-ev td.bxec-pad, tr.bxec-days-tbl-more-ev td.bxec-pad2 {}
 tr.bxec-days-tbl-more-ev td.bxec-pad, tr.bxec-days-tbl-more-ev td.bxec-pad2 {border-bottom:  3px double #C9C9C9 !important;}
 
 table.BXEC-Calendar-week td {border-color: #C9C9C9; border-style: solid;}
 
 table.BXEC-Calendar-week tr.bxec-days-tbl-title td{
 	height: 80px;
-	background: url(/bitrix/images/calendar/day_bg.gif) repeat-x;
 	vertical-align: top;
 	border-width: 1px 1px 0;
 }
@@ -75,14 +70,12 @@ table.BXEC-Calendar-week tr.bxec-days-tbl-more-ev td div.bxec-wdv-more-ev{
 }
 
 /* current day*/
-table.BXEC-Calendar-week tr.bxec-days-tbl-title td.bxec-cur-day {background: #F2F8D6 url(/bitrix/images/calendar/cur_day_bg.gif) repeat-x !important;}
 table.BXEC-Calendar-week tr.bxec-days-tbl-more-ev td.bxec-cur-day {background-color: #F2F8D6 !important;}
 
 table.BXEC-Calendar-week tr.bxec-days-tbl-title td a.bxec-day-link{color: #0C283D !important; text-decoration: none!important; margin-left: 10px;}
 table.BXEC-Calendar-week tr.bxec-days-tbl-title td.bxec-hol-day a.bxec-day-link{color: #CE070C !important; text-decoration: none!important; font-weight: bold;}
 table.BXEC-Calendar-week tr.bxec-days-tbl-title td a.bxec-day-link:hover{text-decoration: underline !important;}
 
-table.BXEC-Calendar-week tr.bxec-days-tbl-title td.bxec-day-t-selected {background: #FFFFC7 url(/bitrix/images/calendar/sel_day_bg.gif) repeat-x !important;}
 table.BXEC-Calendar-week tr.bxec-days-tbl-more-ev td.bxec-day-t-selected {background-color: #FFFFC7 !important;}
 
 table.BXEC-Calendar-week tr.bxec-days-tbl-grid td.bxec-cont{overflow: auto; overflow-x: hidden; height: 460px; border-width: 0;}
@@ -242,7 +235,7 @@ div.bxec-tl-event div.bxec-event-actions{float: left !important;}
 .bxec-tl-event .bxec-tl-event-resizer-cnt{position: absolute; bottom: -2px; left: -1px; width: 100%; height: 8px; cursor: s-resize;}
 
 .bxec-iconkit {background-image: url(/bitrix/images/calendar/iconkit.gif);}
-table.BXEC-Calendar tr.bxec-days-title td {height: 20px; border: 1px solid #D9D9D9;}
+table.BXEC-Calendar tr.bxec-days-title td {height: 20px;}
 
 table.BXEC-Calendar div.bxec-days-grid-cont {position: relative; height: 100%;border:1px solid #D9D9D9;border-top-width: 0;}
 
@@ -436,7 +429,7 @@ span.ec-colpic-def-but-over{background-color: #FFC678; border: 1px solid #4B4B6F
 .bxec-popup-row-from-to .bxec-field-time a {visibility: hidden; position: absolute; top: 0; left: -1px; width: 1px!important; height: 29px!important;}
 .bxec-field-time input{font-size: 14px;}
 .bxec-field-time .bxec-time-icon{display: block; background:url(/bitrix/images/calendar/sprite.png?v=1)no-repeat -60px -45px!important; position: absolute; right: 1px; top: 4px;height: 19px;width: 18px;}
-div.bx-clock-div{z-index: 1600!important;}
+/* div.bx-clock-div{z-index: 1600!important;}*/
 .bxec-from-lbl {display:inline-block; width: 260px;}
 .bxec-field-lbl-imp {font-weight: bold;}
 .bxec-popup .bxec-field-label-edev {width: 200px; display: inline-block; text-align: right;}
@@ -1351,17 +1344,16 @@ span.bxec-link{padding: 1px 5px; background: #fef8cd; border: 1px dashed #ffa8a8
 	transition: height 0.15s linear;
 }
 	/*sceleton*/
-.bxc-month-title {display: block; background: url(/bitrix/images/calendar/sprite.png?v=1) repeat scroll 0 -448px transparent; overflow: hidden; visibility: hidden;}
+.bxc-month-title {display: block; overflow: hidden; visibility: hidden;}
 .bxc-month-title b{display: inline-block; height: 20px;}
 .bxc-month-title b i{display: inline-block; font-family:Verdana, Arial, "Helvetica Neue", Helvetica, sans-serif !important; font-weight: normal!important;font-style:normal!important;text-decoration: none!important; font-size: 12px!important; color: #7E7D79!important; margin: 2px 0 0 10px!important;}
 
 .bxc-day{position: relative;}
-.bxc-day .bxc-day-title{display: block; width: 100%; position: absolute; top: 0; left: 0; height: 20px; background: #F1F5F7;}
+.bxc-day .bxc-day-title{display: block; width: 100%; position: absolute; top: 0; left: 0; height: 20px;}
 .bxc-day .bxc-day-title a.bxc-day-link{text-decoration: none; color: #606263!important; font-family:Verdana, Arial, "Helvetica Neue", Helvetica, sans-serif !important; font-size: 14px; font-weight: bold!important; display: inline-block; margin: 1px 0 0 11px;}
 .bxc-day .bxc-day-title a.bxc-day-link:hover{text-decoration: underline!important;}
 .bxc-day .bxc-day-more{display: block; position: absolute; bottom: 0; left: 0; height:16px; cursor: pointer; color: #454545; font-size: 11px; font-family:Verdana, Arial, "Helvetica Neue", Helvetica, sans-serif; font-weight: normal; text-decoration: underline !important; background: url(/bitrix/images/calendar/sprite.png?v=1) right -70px no-repeat; padding: 0 20px 0 5px;}
 
-.bxc-day-drag .bxc-day-title{background: #fcfbf2;}
 .bxc-day-drag,
 table.BXEC-Calendar-week tr.bxec-days-tbl-title td.bxc-day-drag,
 table.BXEC-Calendar-week tr.bxec-days-tbl-more-ev td.bxc-day-drag

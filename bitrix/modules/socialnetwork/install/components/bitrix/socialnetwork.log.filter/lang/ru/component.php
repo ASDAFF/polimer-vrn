@@ -34,4 +34,5 @@ $MESS["SONET_C30_FILTER_EVENT_ID_BP"] = "Бизнес-процессы";
 $MESS["SONET_C30_FILTER_FAVORITES"] = "Избранные записи пользователя";
 $MESS["SONET_C30_FILTER_EXTRANET"] = "Экстранет";
 $MESS["SONET_C30_FILTER_TAG"] = "Тег";
+$MESS["SONET_C30_FILTER_LIST_YES"] = "Да";
 ?>

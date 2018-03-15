@@ -185,21 +185,21 @@ class CSecurityXSSDetect
 	 */
 	protected function findInArray($string, $searches)
 	{
-		foreach($searches as $name => $search)
+		foreach($searches as $i => $search)
 		{
-			$pos = static::fastStrpos($string, $search);
+			$pos = static::fastStrpos($string, $search["value"]);
 			if ($pos !== false)
 			{
 				$prevChar = static::fastSubstr($string, $pos - 1, 1);
 				$isFound = ($prevChar !== '\\');
-				if ($isFound && preg_match("/^[a-zA-Z_]/", $search))
+				if ($isFound && preg_match("/^[a-zA-Z_]/", $search["value"]))
 				{
 					$isFound = preg_match("/^[a-zA-Z_]/", $prevChar) <= 0;
 				}
 			}
 
 			if ($isFound)
-				return $name;
+				return $i;
 		}
 		return null;
 	}
@@ -213,10 +213,7 @@ class CSecurityXSSDetect
 		$search = $this->findInArray($body, $this->quotedSearches);
 		if ($search !== null)
 		{
-			return array(
-				"name" => $search,
-				"value" => $this->quotedSearches[$search],
-			);
+			return $this->quotedSearches[$search];
 		}
 		else if (!empty($this->searches))
 		{
@@ -224,10 +221,7 @@ class CSecurityXSSDetect
 			$search = $this->findInArray($bodyWithoutQuotes, $this->searches);
 			if ($search !== null)
 			{
-				return array(
-					"name" => $search,
-					"value" => $this->searches[$search],
-				);
+				return $this->searches[$search];
 			}
 		}
 

@@ -788,14 +788,10 @@ if($lAdmin->EditAction())
 									"QUANTITY_FROM" => $CATALOG_QUANTITY_FROM[$elID][$arCatalogGroup["ID"]],
 									"QUANTITY_TO" => $CATALOG_QUANTITY_TO[$elID][$arCatalogGroup["ID"]],
 								);
+								if (is_string($arFields['PRICE']))
+									$arFields['PRICE'] = str_replace(',', '.', $arFields['PRICE']);
 								if($arFields["PRICE"] < 0 || trim($arFields["PRICE"]) === '')
-								{
 									CPrice::Delete($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]]);
-								}
-								elseif((int)($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]])>0)
-								{
-									CPrice::Update((int)($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]]), $arFields);
-								}
 								elseif((int)$CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]] > 0)
 									CPrice::Update($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]], $arFields);
 								elseif($arFields["PRICE"] >= 0)
@@ -842,6 +838,8 @@ if($lAdmin->EditAction())
 									"QUANTITY_FROM" => $CATALOG_QUANTITY_FROM[$elID][$arCatalogGroup["ID"]],
 									"QUANTITY_TO" => $CATALOG_QUANTITY_TO[$elID][$arCatalogGroup["ID"]]
 								);
+								if (is_string($arFields['PRICE']))
+									$arFields['PRICE'] = str_replace(',', '.', $arFields['PRICE']);
 								if ($arFields["PRICE"] < 0 || trim($arFields["PRICE"]) === '')
 									CPrice::Delete($CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]]);
 								elseif ((int)$CATALOG_PRICE_ID[$elID][$arCatalogGroup["ID"]] > 0)
@@ -2339,15 +2337,12 @@ if ($bCatalog && !empty($arRows))
 	$arRowKeys = array_keys($arRows);
 	if ($strUseStoreControl == "Y" && in_array("CATALOG_BAR_CODE", $arSelectedFields))
 	{
-		$rsProducts = CCatalogProduct::GetList(
-			array(),
-			array('@ID' => $arRowKeys),
-			false,
-			false,
-			array('ID', 'BARCODE_MULTI')
-		);
 		$productsWithBarCode = array();
-		while ($product = $rsProducts->Fetch())
+		$rsProducts = Catalog\ProductTable::getList(array(
+			'select' => array('ID', 'BARCODE_MULTI'),
+			'filter' => array('@ID' => $arRowKeys)
+		));
+		while ($product = $rsProducts->fetch())
 		{
 			if (isset($arRows[$product["ID"]]))
 			{

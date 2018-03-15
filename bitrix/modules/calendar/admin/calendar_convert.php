@@ -1159,7 +1159,7 @@ if (CModule::IncludeModule("intranet") && CModule::IncludeModule("calendar"))
 						<select name="rm_iblock_type" onchange="changeIblockList(this.value, [BX('cal_rm_iblock_id'), BX('cal_vr_iblock_id')])">
 							<option value=""><?= GetMessage('CAL_NOT_SET')?></option>
 						<?foreach ($IB['types'] as $ibtype_id => $ibtype_name):?>
-							<option value="<?= $ibtype_id?>" <?if($ibtype_id == $SET['rm_iblock_type']){echo ' selected="selected"';}?>><?= $ibtype_name?></option>
+							<option value="<?= $ibtype_id?>" <?if($ibtype_id == $SET['rm_iblock_type']){echo ' selected="selected"';}?>><?= htmlspecialcharsbx($ibtype_name)?></option>
 						<?endforeach;?>
 						</select>
 					</td>

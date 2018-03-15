@@ -27,11 +27,11 @@ if($arResult["REVERSED_PAGES"] === true):
 	if ($arResult["CURRENT_PAGE"] < $arResult["PAGE_COUNT"]):
 		if ($arResult["START_PAGE"] < $arResult["PAGE_COUNT"]):
 ?>
-			<a class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($arResult["URL"])?>">1</a>
+			<a data-slider-ignore-autobinding="true" class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($arResult["URL"])?>">1</a>
 <?
 			if ($arResult["START_PAGE"] < ($arResult["PAGE_COUNT"] - 1)):
 ?>
-				<a class="main-ui-pagination-page main-ui-pagination-dots" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["START_PAGE"] + ($arResult["PAGE_COUNT"] - $arResult["START_PAGE"]) / 2))?>">...</a>
+				<a data-slider-ignore-autobinding="true" class="main-ui-pagination-page main-ui-pagination-dots" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["START_PAGE"] + ($arResult["PAGE_COUNT"] - $arResult["START_PAGE"]) / 2))?>">...</a>
 <?
 			endif;
 		endif;
@@ -48,11 +48,11 @@ if($arResult["REVERSED_PAGES"] === true):
 <?
 		elseif($page == $arResult["PAGE_COUNT"]):
 ?>
-			<a class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=$pageNumber?></a>
+			<a data-slider-ignore-autobinding="true" class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=$pageNumber?></a>
 <?
 		else:
 ?>
-			<a class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($page))?>"><?=$pageNumber?></a>
+			<a data-slider-ignore-autobinding="true" class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($page))?>"><?=$pageNumber?></a>
 <?
 		endif;
 		
@@ -64,11 +64,11 @@ if($arResult["REVERSED_PAGES"] === true):
 		if ($arResult["END_PAGE"] > 1):
 			if ($arResult["END_PAGE"] > 2):
 ?>
-				<a class="main-ui-pagination-page main-ui-pagination-dots" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate(round($arResult["END_PAGE"] / 2)))?>">...</a>
+				<a data-slider-ignore-autobinding="true" class="main-ui-pagination-page main-ui-pagination-dots" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate(round($arResult["END_PAGE"] / 2)))?>">...</a>
 <?
 			endif;
 ?>
-			<a class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate(1))?>"><?=$arResult["PAGE_COUNT"]?></a>
+			<a data-slider-ignore-autobinding="true" class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate(1))?>"><?=$arResult["PAGE_COUNT"]?></a>
 <?
 		endif;
 	endif;
@@ -81,11 +81,11 @@ if($arResult["REVERSED_PAGES"] === true):
 	if ($arResult["CURRENT_PAGE"] < $arResult["PAGE_COUNT"]):
 		if (($arResult["CURRENT_PAGE"]+1) == $arResult["PAGE_COUNT"]):
 ?>
-			<a class="main-ui-pagination-arrow main-ui-pagination-prev" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=GetMessage("grid_nav_prev")?></a>
+			<a data-slider-ignore-autobinding="true" class="main-ui-pagination-arrow main-ui-pagination-prev" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=GetMessage("grid_nav_prev")?></a>
 <?
 		else:
 ?>
-			<a class="main-ui-pagination-arrow main-ui-pagination-prev" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["CURRENT_PAGE"]+1))?>"><?=GetMessage("grid_nav_prev")?></a>
+			<a data-slider-ignore-autobinding="true" class="main-ui-pagination-arrow main-ui-pagination-prev" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["CURRENT_PAGE"]+1))?>"><?=GetMessage("grid_nav_prev")?></a>
 <?
 		endif;
 	else:
@@ -97,18 +97,18 @@ if($arResult["REVERSED_PAGES"] === true):
 	if ($arResult["SHOW_ALL"]):
 		if ($arResult["ALL_RECORDS"]):
 ?>
-		<a class="main-ui-pagination-arrow" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=GetMessage("grid_nav_paged")?></a>
+		<a data-slider-ignore-autobinding="true" class="main-ui-pagination-arrow" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=GetMessage("grid_nav_paged")?></a>
 <?
 		else:
 ?>
-		<a class="main-ui-pagination-arrow" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate("all"))?>"><?=GetMessage("grid_nav_all")?></a>
+		<a data-slider-ignore-autobinding="true" class="main-ui-pagination-arrow" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate("all"))?>"><?=GetMessage("grid_nav_all")?></a>
 <?
 		endif;
 	endif;
 
 	if ($arResult["CURRENT_PAGE"] > 1):
 ?>
-		<a class="main-ui-pagination-arrow main-ui-pagination-next" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["CURRENT_PAGE"]-1))?>"><?=GetMessage("grid_nav_next")?></a>
+		<a data-slider-ignore-autobinding="true" class="main-ui-pagination-arrow main-ui-pagination-next" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["CURRENT_PAGE"]-1))?>"><?=GetMessage("grid_nav_next")?></a>
 <?
 	else:
 ?>
@@ -128,11 +128,11 @@ else:
 	if ($arResult["CURRENT_PAGE"] > 1):
 		if ($arResult["START_PAGE"] > 1):
 ?>
-			<a class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($arResult["URL"])?>">1</a>
+			<a data-slider-ignore-autobinding="true" class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($arResult["URL"])?>">1</a>
 <?
 			if ($arResult["START_PAGE"] > 2):
 ?>
-				<a class="main-ui-pagination-page main-ui-pagination-dots" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate(round($arResult["START_PAGE"] / 2)))?>">...</a>
+				<a data-slider-ignore-autobinding="true" class="main-ui-pagination-page main-ui-pagination-dots" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate(round($arResult["START_PAGE"] / 2)))?>">...</a>
 <?
 			endif;
 		endif;
@@ -147,11 +147,11 @@ else:
 <?
 		elseif($page == 1):
 ?>
-			<a class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($arResult["URL"])?>">1</a>
+			<a data-slider-ignore-autobinding="true" class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($arResult["URL"])?>">1</a>
 <?
 		else:
 ?>
-			<a class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($page))?>"><?=$page?></a>
+			<a data-slider-ignore-autobinding="true" class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($page))?>"><?=$page?></a>
 <?
 		endif;
 
@@ -163,11 +163,11 @@ else:
 		if ($arResult["END_PAGE"] < $arResult["PAGE_COUNT"]):
 			if ($arResult["END_PAGE"] < ($arResult["PAGE_COUNT"] - 1)):
 ?>
-				<a class="main-ui-pagination-page main-ui-pagination-dots" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate(round($arResult["END_PAGE"] + ($arResult["PAGE_COUNT"] - $arResult["END_PAGE"]) / 2)))?>">...</a>
+				<a data-slider-ignore-autobinding="true" class="main-ui-pagination-page main-ui-pagination-dots" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate(round($arResult["END_PAGE"] + ($arResult["PAGE_COUNT"] - $arResult["END_PAGE"]) / 2)))?>">...</a>
 <?
 			endif;
 ?>
-			<a class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["PAGE_COUNT"]))?>"><?=$arResult["PAGE_COUNT"]?></a>
+			<a data-slider-ignore-autobinding="true" class="main-ui-pagination-page" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["PAGE_COUNT"]))?>"><?=$arResult["PAGE_COUNT"]?></a>
 <?
 		endif;
 	endif;
@@ -180,11 +180,11 @@ else:
 	if ($arResult["CURRENT_PAGE"] > 1):
 		if ($arResult["CURRENT_PAGE"] > 2):
 ?>
-			<a class="main-ui-pagination-arrow main-ui-pagination-prev" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["CURRENT_PAGE"]-1))?>"><?=GetMessage("grid_nav_prev")?></a>
+			<a data-slider-ignore-autobinding="true" class="main-ui-pagination-arrow main-ui-pagination-prev" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["CURRENT_PAGE"]-1))?>"><?=GetMessage("grid_nav_prev")?></a>
 <?
 		else:
 ?>
-			<a class="main-ui-pagination-arrow main-ui-pagination-prev" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=GetMessage("grid_nav_prev")?></a>
+			<a data-slider-ignore-autobinding="true" class="main-ui-pagination-arrow main-ui-pagination-prev" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=GetMessage("grid_nav_prev")?></a>
 <?
 		endif;
 	else:
@@ -196,18 +196,18 @@ else:
 	if ($arResult["SHOW_ALL"]):
 		if ($arResult["ALL_RECORDS"]):
 ?>
-		<a class="main-ui-pagination-arrow" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=GetMessage("grid_nav_paged")?></a>
+		<a data-slider-ignore-autobinding="true" class="main-ui-pagination-arrow" href="<?=htmlspecialcharsbx($arResult["URL"])?>"><?=GetMessage("grid_nav_paged")?></a>
 <?
 		else:
 ?>
-		<a class="main-ui-pagination-arrow" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate("all"))?>"><?=GetMessage("grid_nav_all")?></a>
+		<a data-slider-ignore-autobinding="true" class="main-ui-pagination-arrow" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate("all"))?>"><?=GetMessage("grid_nav_all")?></a>
 <?
 		endif;
 	endif;
 
 	if($arResult["CURRENT_PAGE"] < $arResult["PAGE_COUNT"]):
 ?>
-		<a class="main-ui-pagination-arrow main-ui-pagination-next" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["CURRENT_PAGE"]+1))?>"><?=GetMessage("grid_nav_next")?></a>
+		<a data-slider-ignore-autobinding="true" class="main-ui-pagination-arrow main-ui-pagination-next" href="<?=htmlspecialcharsbx($component->replaceUrlTemplate($arResult["CURRENT_PAGE"]+1))?>"><?=GetMessage("grid_nav_next")?></a>
 <?
 	else:
 ?>

@@ -23,4 +23,5 @@ $MESS["SPOD_ALLOW_INNER"] = "Enable payment using internal account";
 $MESS["SPOD_ONLY_INNER_FULL"] = "Allow only the full amount of order to be paid using internal account";
 $MESS["SPOD_RESTRICT_CHANGE_PAYSYSTEM"] = "Orders in these statuses cannot change status";
 $MESS["SPOD_NOT_CHOSEN"] = "(not selected)";
+$MESS["SPOD_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"] = "Recalculate order when payment system status changes";
 ?>

@@ -4,17 +4,17 @@
 
 	if (!window.BX)
 	{
-		if (typeof(console) == 'object') console.log('PULL notice: bitrix core not loaded');
+		if (typeof(console) == 'object') console.error('PULL notice: bitrix core not loaded');
 		return;
 	}
 	if (window.BX.PULL)
 	{
-		if (typeof(console) == 'object') console.log('PULL notice: script is already loaded');
+		if (typeof(console) == 'object') console.error('PULL notice: script is already loaded');
 		return;
 	}
 
 	var BX = window.BX,
-	_revision = 14, // api revision - check include.php
+	_revision = 17, // api revision - check include.php
 	_updateStateVeryFastCount = 0,
 	_updateStateFastCount = 0,
 	_updateStateStep = 60,
@@ -122,7 +122,7 @@
 			});
 		}
 
-		if (_wsSupport && !BX.PULL.supportWebSocket())
+		if (!BX.PULL.supportWebSocket())
 			_wsSupport = false;
 
 		if (params.PATH_COMMAND)
@@ -133,7 +133,7 @@
 		if (params.CHANNEL_ID)
 		{
 			_channelID = params.CHANNEL_ID;
-			_pullPath = BX.PULL.getModernPath(params);
+			_pullPath = params.PATH;
 			_wsPath = params.PATH_WS;
 			_pullMethod = params.METHOD;
 
@@ -195,18 +195,6 @@
 			currentDate = (new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0));
 
 		return Math.round((+currentDate/1000))+parseInt(BX.message("USER_TZ_OFFSET"));
-	};
-
-	BX.PULL.getDateDiff = function (timestamp)
-	{
-		var userTzOffset = BX.message("USER_TZ_OFFSET");
-		if (userTzOffset === "")
-			return 0;
-
-		var localTimestamp = BX.PULL.getNowDate()+parseInt(BX.message("SERVER_TZ_OFFSET"));
-		var incomingTimestamp = parseInt(timestamp)+parseInt(BX.message("SERVER_TZ_OFFSET"));
-
-		return localTimestamp - incomingTimestamp;
 	};
 
 	BX.PULL.setTryAfterBxLink = function(result)
@@ -292,7 +280,7 @@
 						return false;
 
 					_channelID = data.CHANNEL_ID;
-					_pullPath = BX.PULL.getModernPath(data);
+					_pullPath = data.PATH;
 					_wsPath = data.PATH_WS;
 					_pullMethod = data.METHOD;
 
@@ -346,7 +334,7 @@
 									"\n"+
 									"Data array: "+JSON.stringify(data)+"\n"+
 									"================================\n\n";
-						console.log(text);
+						console.warn(text);
 					}
 				}
 			}, this),
@@ -378,7 +366,7 @@
 									"\n"+
 									"Data array: "+JSON.stringify(data)+"\n"+
 									"================================\n\n";
-						console.log(text);
+						console.warn(text);
 					}
 					clearTimeout(_updateStateTimeout);
 					_updateStateTimeout = setTimeout(function(){BX.PULL.updateState('14', true)}, BX.PULL.tryConnectTimeout());
@@ -393,7 +381,10 @@
 			return false;
 
 		code = typeof(code) == 'undefined'? '': code;
-		if (_channelID == null || _pullPath == null || _wsSupport && _wsPath === null)
+
+		var supportWebsocket = _wsSupport && !BX.localStorage.get('pbws');
+
+		if (_channelID == null || _pullPath == null || supportWebsocket && _wsPath === null)
 		{
 			clearTimeout(_updateStateTimeout);
 			_updateStateTimeout = setTimeout(function(){
@@ -405,7 +396,7 @@
 		}
 		else
 		{
-			if (_wsSupport && _wsPath && _wsPath.length > 1 && _pullMethod != 'PULL')
+			if (supportWebsocket && _wsPath && _wsPath.length > 1 && _pullMethod != 'PULL')
 				BX.PULL.connectWebSocket();
 			else
 				BX.PULL.connectPull(force);
@@ -414,9 +405,6 @@
 
 	BX.PULL.connectWebSocket = function()
 	{
-		if (!_wsSupport)
-			return false;
-
 		_updateStateSend = true;
 
 		var wsPath = _wsPath.replace('#DOMAIN#', location.hostname);
@@ -428,17 +416,40 @@
 		}
 		catch(e)
 		{
+			if (typeof(console) == 'object')
+			{
+				var text = "\n========= PULL ERROR ===========\n"+
+							"Error type: websocket connect\n"+
+							"Error: "+(e.code? 'code: '+e.code: '')+" "+(e.name? 'name: '+e.name: '')+"\n"+
+							"Desc: "+e+"\n"+
+							"\n"+
+							"Connect CHANNEL_ID: "+_channelID+"\n"+
+							"================================\n\n";
+				console.warn(text);
+				console.error(e);
+			}
 			_wsPath = null;
 			_updateStateSend = false;
+
+			BX.onCustomEvent(window, 'onPullError', ['RECONNECT', 1006]);
+			if (_wsError1006Count >= 5)
+			{
+				BX.localStorage.set('pbws', true, 300);
+				_wsError1006Count = 0;
+			}
+			_wsError1006Count++;
+
 			clearTimeout(_updateStateTimeout);
 			_updateStateTimeout = setTimeout(function(){
 				BX.PULL.updateState('33');
 			}, BX.PULL.tryConnectTimeout());
+
 			return false;
 		}
 
 		_WS.onopen = function() {
 			_wsConnected = true;
+			_wsError1006Count = 0;
 			clearTimeout(_updateStateStatusTimeout);
 			BX.onCustomEvent(window, 'onPullStatus', ['online']);
 		};
@@ -483,7 +494,6 @@
 					if (code == 1006 || code == 1008)
 					{
 						BX.localStorage.set('pbws', true, 600);
-						_wsSupport = false;
 					}
 					clearTimeout(_updateStateTimeout);
 					_updateStateTimeout = setTimeout(function(){
@@ -495,7 +505,7 @@
 					if (_wsError1006Count >= 5)
 					{
 						BX.localStorage.set('pbws', true, 300);
-						_wsSupport = false;
+						_wsError1006Count = 0;
 					}
 					_wsError1006Count++;
 				}
@@ -513,7 +523,6 @@
 					if (_sendAjaxTry >= 5)
 					{
 						BX.localStorage.set('pbws', true, 86400);
-						_wsSupport = false;
 					}
 
 					clearTimeout(_updateStateTimeout);
@@ -551,7 +560,7 @@
 								"\n"+
 								"Data array: "+JSON.stringify(data)+"\n"+
 								"================================\n\n";
-					console.log(text);
+					console.warn(text);
 				}
 			}
 		};
@@ -570,54 +579,42 @@
 						continue;
 
 					var message = BX.parseJSON(dataArray[i]);
-					var data = null;
-					if (message && message.text)
-						data = message.text;
-					if (data !== null && typeof (data) == "object")
+
+					if (message.id)
 					{
-						if (data && data.ERROR == "")
+						message.id = parseInt(message.id);
+						message.channel = message.channel? message.channel: (message.text.channel? message.text.channel: message.time);
+						if (!_channelStack[''+message.channel+message.id])
 						{
-							if (message.id)
+							_channelStack[''+message.channel+message.id] = message.id;
+
+							if (_channelLastID < message.id)
 							{
-								message.id = parseInt(message.id);
-								message.channel = message.channel? message.channel: (data.CHANNEL_ID? data.CHANNEL_ID: message.time);
-								if (!_channelStack[''+message.channel+message.id])
-								{
-									_channelStack[''+message.channel+message.id] = message.id;
-
-									if (_channelLastID < message.id)
-										_channelLastID = message.id;
-
-									BX.PULL.executeMessages(data.MESSAGE, {'SERVER_TIME': message.time, 'SERVER_TIME_WEB': data.SERVER_TIME_WEB});
-								}
+								_channelLastID = message.id;
 							}
+
+							BX.PULL.executeMessages([message.text]);
 						}
 						else
 						{
-							BX.onCustomEvent(window, 'onPullStatus', ['offline']);
 							if (typeof(console) == 'object')
 							{
-								var text = "\n========= PULL ERROR ===========\n"+
-											"Error type: updateState fetch\n"+
-											"Error: "+(data && data.ERROR? data.ERROR: 'unknown')+"\n"+
-											"\n"+
-											"Connect CHANNEL_ID: "+_channelID+"\n"+
-											"Connect WS_PATH: "+_wsPath+"\n"+
-											"\n"+
-											"Data array: "+JSON.stringify(data)+"\n"+
-											"================================\n\n";
-								console.log(text);
+								console.warn('PULL: message #'+message.id+' in channel '+message.channel+' is already received');
 							}
-							_channelClearReason = 4;
-							_channelID = null;
 						}
 					}
 					if (message.tag)
+					{
 						_pullTag = message.tag;
+					}
 					if (message.time)
+					{
 						_pullTime = message.time;
+					}
 					if (message.mid)
+					{
 						_pullMid = message.mid;
+					}
 					messageCount++;
 				}
 			}
@@ -690,7 +687,7 @@
 							BX.onCustomEvent(window, 'onPullStatus', ['online']);
 
 							_sendAjaxTry = 0;
-							BX.PULL.executeMessages(data.MESSAGE, {'SERVER_TIME': (new Date()).toUTCString(), 'SERVER_TIME_WEB': Math.round((+new Date())/1000)});
+							BX.PULL.executeMessages(data.MESSAGE);
 							if (_lsSupport)
 								BX.localStorage.set('pus', {'MESSAGE':data.MESSAGE}, 5);
 						}
@@ -723,7 +720,7 @@
 											"\n"+
 											"Data array: "+JSON.stringify(data)+"\n"+
 											"================================\n\n";
-								console.log(text);
+								console.warn(text);
 							}
 							_channelClearReason = 5;
 							_channelID = null;
@@ -750,47 +747,27 @@
 										continue;
 
 									var message = BX.parseJSON(dataArray[i]);
-									var data = null;
-									if (message && message.text)
-										data = message.text;
-									if (data !== null && typeof (data) == "object")
+
+									if (message.id)
 									{
-										if (data && data.ERROR == "")
+										message.id = parseInt(message.id);
+										message.channel = message.channel? message.channel: (message.text.channel? message.text.channel: message.time);
+										if (!_channelStack[''+message.channel+message.id])
 										{
-											if (message.id)
+											_channelStack[''+message.channel+message.id] = message.id;
+
+											if (_channelLastID < message.id)
 											{
-												message.id = parseInt(message.id);
-												message.channel = message.channel? message.channel: (data.CHANNEL_ID? data.CHANNEL_ID: message.time);
-												if (!_channelStack[''+message.channel+message.id])
-												{
-													_channelStack[''+message.channel+message.id] = message.id;
-
-													if (_channelLastID < message.id)
-														_channelLastID = message.id;
-
-													BX.PULL.executeMessages(data.MESSAGE, {'SERVER_TIME': message.time, 'SERVER_TIME_WEB': data.SERVER_TIME_WEB});
-												}
+												_channelLastID = message.id;
 											}
+											BX.PULL.executeMessages([message.text]);
 										}
 										else
 										{
 											if (typeof(console) == 'object')
 											{
-												var text = "\n========= PULL ERROR ===========\n"+
-															"Error type: updateState fetch\n"+
-															"Error: "+(data && data.ERROR? data.ERROR: 'unknown')+"\n"+
-															"\n"+
-															"Connect CHANNEL_ID: "+_channelID+"\n"+
-															"Connect PULL_PATH: "+_pullPath+"\n"+
-															"\n"+
-															"Data array: "+JSON.stringify(data)+"\n"+
-															"================================\n\n";
-												console.log(text);
+												console.warn('PULL: message #'+message.id+' in channel '+message.channel+' is already received');
 											}
-											_channelClearReason = 6;
-											_channelID = null;
-											clearTimeout(_updateStateStatusTimeout);
-											BX.onCustomEvent(window, 'onPullStatus', ['offline']);
 										}
 									}
 									else
@@ -805,7 +782,7 @@
 														"\n"+
 														"Data string: "+dataArray[i]+"\n"+
 														"================================\n\n";
-											console.log(text);
+											console.warn(text);
 										}
 										_channelClearReason = 7;
 										_channelID = null;
@@ -813,11 +790,17 @@
 										BX.onCustomEvent(window, 'onPullStatus', ['offline']);
 									}
 									if (message.tag)
+									{
 										_pullTag = message.tag;
+									}
 									if (message.time)
+									{
 										_pullTime = message.time;
+									}
 									if (message.mid)
+									{
 										_pullMid = message.mid;
+									}
 									messageCount++;
 								}
 							}
@@ -833,7 +816,7 @@
 												"\n"+
 												"Data string: "+data+"\n"+
 												"================================\n\n";
-									console.log(text);
+									console.warn(text);
 								}
 								_channelClearReason = 8;
 								_channelID = null;
@@ -970,7 +953,7 @@
 										"\n"+
 										"Data array: "+JSON.stringify(data)+"\n"+
 										"================================\n\n";
-							console.log(text);
+							console.warn(text);
 						}
 						clearTimeout(_updateStateTimeout);
 						if (_pullMethod=='PULL')
@@ -1048,50 +1031,42 @@
 		}, force? 5000: 1740000);
 	};
 
-	BX.PULL.executeMessages = function(message, time, pull)
+	BX.PULL.executeMessages = function(message, pull)
 	{
-		time = time === null? {'SERVER_TIME': (new Date()).toUTCString(), 'SERVER_TIME_WEB': Math.round((+new Date())/1000)}: time;
 		pull = pull !== false;
 		for (var i = 0; i < message.length; i++)
 		{
-			message[i].module_id = message[i].module_id.toLowerCase();
+			if (message[i].extra.revision && !BX.PULL.checkRevision(message[i].extra.revision))
+				return false;
 
-			if (message[i].id)
-			{
-				message[i].id = parseInt(message[i].id);
-				if (_channelStack[''+_channelID+message[i].id])
-					continue;
-				else
-					_channelStack[''+_channelID+message[i].id] = message[i].id;
-
-				if (_channelLastID < message[i].id)
-					_channelLastID = message[i].id;
-			}
-			message[i].params['SERVER_TIME_WEB'] = parseInt(time.SERVER_TIME_WEB);
-			message[i].params['SERVER_TIME'] = time.SERVER_TIME;
+			message[i].extra.server_time_ago = (((new Date()).getTime()-(message[i].extra.server_time_unix*1000))/1000);
 
 			if (message[i].module_id == 'pull')
 			{
 				if (pull)
 				{
-					if (message[i].command == 'channel_die' && typeof(message[i].params.replace) == 'object')
+					if (message[i].command == 'channel_expire' || message[i].command == 'config_expire')
 					{
-						BX.PULL.updateChannelID({
-							'METHOD': _pullMethod,
-							'LAST_ID': _channelLastID,
-							'CHANNEL_ID': _channelID,
-							'CHANNEL_DT': _pullTimeConfig+'/'+message[i].params.replace.CHANNEL_DIE,
-							'PATH': _pullPath.replace(message[i].params.replace.PREV_CHANNEL_ID, message[i].params.replace.CHANNEL_ID),
-							'PATH_WS': _wsPath? _wsPath.replace(message[i].params.replace.PREV_CHANNEL_ID, message[i].params.replace.CHANNEL_ID): _wsPath
-						});
-					}
-					else if (message[i].command == 'channel_die' || message[i].command == 'config_die')
-					{
-						_channelClearReason = 14;
-						_channelID = null;
-						_pullPath = null;
-						if (_wsPath) _wsPath = null;
-						if (_WS) _WS.close(1000, "config_die");
+						if (message[i].command == 'channel_expire' && message[i].params.action == 'reconnect')
+						{
+							_pullTimeConfigShared = new Date(message[i].params.new_channel.end).valueOf()/1000;
+							BX.PULL.updateChannelID({
+								'METHOD': _pullMethod,
+								'LAST_ID': _channelLastID,
+								'CHANNEL_ID': _channelID,
+								'CHANNEL_DT': _pullTimeConfig+'/'+_pullTimeConfigShared,
+								'PATH': _pullPath.replace(message[i].params.channel.id, message[i].params.new_channel.id),
+								'PATH_WS': _wsPath? _wsPath.replace(message[i].params.channel.id, message[i].params.new_channel.id): _wsPath
+							});
+						}
+						else
+						{
+							_channelClearReason = 14;
+							_channelID = null;
+							_pullPath = null;
+							if (_wsPath) _wsPath = null;
+							if (_WS) _WS.close(1000, message[i].command);
+						}
 					}
 					else if (message[i].command == 'server_restart')
 					{
@@ -1111,23 +1086,22 @@
 
 				try
 				{
-					message[i].params['PULL_TIME_AGO'] = BX.PULL.getDateDiff(message[i].params['SERVER_TIME_WEB']+parseInt(BX.message('USER_TZ_OFFSET')));
 					if (message[i].module_id == 'online')
 					{
-						if (message[i].params['PULL_TIME_AGO'] < 120)
-							BX.onCustomEvent(window, 'onPullOnlineEvent', [message[i].command, message[i].params], true);
+						if (message[i].extra.server_time_ago < 240)
+							BX.onCustomEvent(window, 'onPullOnlineEvent', [message[i].command, message[i].params, message[i].extra], true);
 					}
 					else
 					{
-						BX.onCustomEvent(window, 'onPullEvent-'+message[i].module_id, [message[i].command, message[i].params], true);
-						BX.onCustomEvent(window, 'onPullEvent', [message[i].module_id, message[i].command, message[i].params], true);
+						BX.onCustomEvent(window, 'onPullEvent-'+message[i].module_id, [message[i].command, message[i].params, message[i].extra], true);
+						BX.onCustomEvent(window, 'onPullEvent', [message[i].module_id, message[i].command, message[i].params, message[i].extra], true);
 					}
 				}
 				catch(e)
 				{
 					if (typeof(console) == 'object')
 					{
-						console.log(
+						console.warn(
 							"\n========= PULL ERROR ===========\n"+
 							"Error type: onPullEvent onfailure\n"+
 							"Error event: ", e, "\n"+
@@ -1175,7 +1149,7 @@
 	{
 		if (params.key == 'pus')
 		{
-			BX.PULL.executeMessages(params.value.MESSAGE, null, false);
+			BX.PULL.executeMessages(params.value.MESSAGE, false);
 		}
 		else if (params.key == 'pgc')
 		{
@@ -1230,7 +1204,7 @@
 		var method = params.METHOD;
 		var channelID = params.CHANNEL_ID;
 
-		var pullPath = BX.PULL.getModernPath(params);
+		var pullPath = params.PATH;
 		var lastId = params.LAST_ID;
 		var wsPath = params.PATH_WS;
 
@@ -1257,7 +1231,7 @@
 		if (_lsSupport)
 			BX.localStorage.set('pset', {'CHANNEL_ID': _channelID, 'LAST_ID': _channelLastID, 'PATH': _pullPath, 'PATH_WS': _wsPath, 'TAG': _pullTag,'MID': _pullMid, 'TIME': _pullTime, 'TIME_LAST_GET': _pullTimeConfig, 'TIME_LAST_GET_SHARED': _pullTimeConfigShared, 'METHOD': _pullMethod}, 600);
 
-		if (_WS) _WS.close(1000, "channel_die");
+		if (_WS) _WS.close(1000, "channel_update");
 
 		return true;
 	}
@@ -1303,20 +1277,21 @@
 		{
 			_pullCapturePullEvent = true;
 			_pullCapturePullEventStatus = true;
-			BX.addCustomEvent("onPullOnlineEvent", function(command,params) {
+			BX.addCustomEvent("onPullOnlineEvent", function(command, params, extra) {
 				if (_pullCapturePullEventStatus)
 				{
-					console.log('onPullOnlineEvent',command,params);
+					console.info('onPullOnlineEvent',command, params, extra);
 				}
 			});
-			BX.addCustomEvent("onPullEvent", function(module_id,command,params) {
+			BX.addCustomEvent("onPullEvent", function(module_id, command, params, extra) {
 				if (_pullCapturePullEventStatus)
 				{
-					console.log('onPullEvent',module_id,command,params);
+					console.info('onPullEvent',module_id, command, params, extra);
 				}
 				if (_pullGetPullEventFunctionStatus)
 				{
-					console.log('BX.onCustomEvent(window, "onPullEvent-'+module_id+'", ["'+command+'", '+JSON.stringify(params)+']);');
+					console.info('BX.onCustomEvent(window, "onPullEvent-'+module_id+'", ["'+command+'", '+JSON.stringify(params)+', '+JSON.stringify(extra)+']);');
+					console.info('BX.onCustomEvent(window, "onPullEvent", ["'+module_id+'", "'+command+'", '+JSON.stringify(params)+', '+JSON.stringify(extra)+']);');
 				}
 			});
 			return 'Capture "Pull Event" started.';
@@ -1327,28 +1302,28 @@
 			return 'Capture "Pull Event" is '+(status? 'ON': 'OFF');
 		}
 	}
-	
-	BX.PULL.getPullEventFunction = function(status)
+
+	BX.PULL.capturePullEventFunction = function(status)
 	{
 		_pullGetPullEventFunctionStatus = typeof(status) == 'boolean'? status: true;
 		BX.PULL.capturePullEvent(_pullGetPullEventFunctionStatus);
-		
+
 		return 'Get "Pull Event" function is '+(_pullGetPullEventFunctionStatus? 'ON': 'OFF');
 	}
 
 
 	BX.PULL.getDebugInfo = function()
 	{
-		if (!console || !console.log || !JSON || !JSON.stringify)
+		if (!console || !console.info || !JSON || !JSON.stringify)
 			return false;
 
 		var textWT = JSON.stringify(_watchTag);
 		var text = "\n========= PULL DEBUG ===========\n"+
 					"UserId: "+_userId+" "+(_userId>0?'': '(guest)')+"\n"+
 					"Connect: "+(_updateStateSend? 'Y': 'N')+"\n"+
+					"WebSocket support: "+(_wsSupport && _wsPath.length > 0? 'Y': 'N')+(BX.localStorage.get('pbws')? ' (now blocked)':'')+"\n"+
 					"WebSocket connect: "+(_wsConnected? 'Y': 'N')+"\n"+
 					"LocalStorage status: "+(_lsSupport? 'Y': 'N')+"\n"+
-					"WebSocket support: "+(_wsSupport && _wsPath.length > 0? 'Y': 'N')+"\n"+
 					"Queue Server: "+(_pullMethod == 'PULL'? 'N': 'Y')+"\n"+
 					"Try connect: "+(_pullTryConnect? 'Y': 'N')+"\n"+
 					"Try number: "+(_sendAjaxTry)+"\n"+
@@ -1365,7 +1340,7 @@
 					"Watch tags: "+(textWT == '{}'? '-': textWT)+"\n"+
 					"================================\n";
 
-		return console.log(text);
+		return console.info(text);
 	}
 
 	BX.PULL.clearChannelId = function(send)
@@ -1394,7 +1369,7 @@
 	BX.PULL.supportWebSocket = function()
 	{
 		var result = false;
-		if (typeof(WebSocket) != 'undefined' && !BX.localStorage.get('pbws'))
+		if (typeof(WebSocket) != 'undefined')
 		{
 			if (BX.browser.IsFirefox() || BX.browser.IsChrome() || BX.browser.IsOpera() || BX.browser.IsSafari())
 			{
@@ -1414,30 +1389,6 @@
 		return result;
 	}
 
-	BX.PULL.getModernPath = function(params)
-	{
-		if (typeof(params) != 'object')
-			return '';
-
-		var result = '';
-		if (typeof(params.PATH) != 'undefined' && typeof(params.PATH_MOD) != 'undefined' && params.PATH_MOD != '')
-		{
-			if (BX.browser.IsIE() || BX.browser.IsOpera())
-			{
-				result = params.PATH;
-			}
-			else
-			{
-				result = params.PATH_MOD;
-			}
-		}
-		else if (typeof(params.PATH) != 'undefined')
-		{
-			return params.PATH;
-		}
-		return result;
-	}
-
 	BX.PULL.getRevision = function()
 	{
 		return _revision;
@@ -1448,7 +1399,9 @@
 		return {
 			connected: _updateStateSend,
 			websocket: _wsConnected,
-			path: _pullPath
+			websocketBlocked: BX.localStorage.get('pbws')? true: false,
+			path: _pullPath,
+			pathWebsocket: _wsPath
 		};
 	};
 
@@ -1462,7 +1415,7 @@
 			_pullTryConnect = false;
 			if (_WS) _WS.close(1000, "check_revision");
 
-			BX.onCustomEvent(window, 'onPullRevisionUp', [revision, this.revision]);
+			BX.onCustomEvent(window, 'onPullRevisionUp', [revision, _revision]);
 
 			return false;
 		}
@@ -1488,7 +1441,7 @@
 		if (typeof(buttons) == "undefined" || typeof(buttons) == "object" && buttons.length <= 0)
 		{
 			buttons = [new BX.PopupWindowButton({
-				text : BX.message('IM_NOTIFY_CONFIRM_CLOSE'),
+				text : BX.message('JS_CORE_WINDOW_CLOSE'),
 				className : "popup-window-button-decline",
 				events : { click : function(e) { this.popupWindow.close(); BX.PreventDefault(e) } }
 			})];

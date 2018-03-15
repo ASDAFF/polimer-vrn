@@ -1830,6 +1830,7 @@ a.adm-nav-page:hover,
 .adm-list-table-row.adm-table-row-active:hover .adm-list-table-cell, .adm-list-table-row.adm-list-row-active:hover .adm-list-table-cell {background-color:#d7dcc2;}
 
 .adm-list-table-cell a {color:#1c53a2; text-decoration:none;}
+.adm-list-table-cell a:hover { text-decoration: underline; }
 .adm-list-table-cell a:visited {color: #895c96;}
 /*.adm-list-table-row:hover .adm-list-table-cell a,
 .adm-list-table-row.adm-list-row-active .adm-list-table-cell a {color:#fff;}*/

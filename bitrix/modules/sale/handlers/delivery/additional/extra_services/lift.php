@@ -86,7 +86,7 @@ class Lift extends Base
 		return "BX.onCustomEvent('onDeliveryExtraServiceValueChange', [{'id' : '".$id."', 'value': this.value, 'price': '0'}]);";
 	}
 
-	public static function prepareParamsToSave($params)
+	public static function prepareParamsToSave(array $params)
 	{
 		if(!isset($params["PARAMS"]["PRICES"]) || !is_array($params["PARAMS"]["PRICES"]))
 			return $params;

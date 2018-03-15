@@ -187,14 +187,14 @@ if ($message)
 			<? $defSite = $str_LID; ?>
 			<? $result = Bitrix\Main\SiteTable::getList(array('filter' => array('LID' => $str_LID), 'order' => array('SORT' => 'ASC'))); ?>
 			<? $site = $result->fetch(); ?>
-			[<?=$str_LID; ?>] <?=$site['NAME']; ?>
+			[<?=$str_LID; ?>] <?=htmlspecialcharsbx($site['NAME']); ?>
 			<? } else { ?>
 			<select id="mailbox_site_id" name="LID"<? if ($mailbox_type == 'user') { ?> onchange="changeServicesList();"<? } ?>>
 			<? $result = Bitrix\Main\SiteTable::getList(array('order' => array('SORT' => 'ASC'))); ?>
 			<? while (($site = $result->fetch()) !== false) { ?>
 				<? $defSite = $defSite ?: ($mailbox_type != 'user' || !empty($mailServices[$site['LID']]) ? $site['LID'] : false); ?>
 				<option value="<?=$site['LID']; ?>"<? if ($mailbox_type == 'user' && empty($mailServices[$site['LID']])) { ?> disabled="disabled"<? } ?>>
-					<?=$site['NAME']; ?><? if ($mailbox_type == 'user' && empty($mailServices[$site['LID']])) { ?> *<? } ?>
+					<?=htmlspecialcharsbx($site['NAME']); ?><? if ($mailbox_type == 'user' && empty($mailServices[$site['LID']])) { ?> *<? } ?>
 				</option>
 			<? } ?>
 			</select>

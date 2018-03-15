@@ -4,13 +4,16 @@ $cmpId = RandString();
 $jsCallback = <<<SCRIPT
 	function()
 	{
+		var wrapperNode = BX('{$cmpId}_wf_livefeed').parentNode;
+		BX.addClass(wrapperNode, 'bp-livefeed-wrapper-loading');
 		BX.ajax({
 			'method': 'POST',
 			'dataType': 'html',
 			'url': '/bitrix/components/bitrix/bizproc.workflow.livefeed/ajax.php',
-			'data':  {WORKFLOW_ID: '{$arParams[WORKFLOW_ID]}'},
+			'data':  {WORKFLOW_ID: '{$arParams['WORKFLOW_ID']}'},
 			'onsuccess': function(html){
-				BX('{$cmpId}_wf_livefeed').parentNode.innerHTML = html;
+				wrapperNode.innerHTML = html;
+				BX.removeClass(wrapperNode, 'bp-livefeed-wrapper-loading');
 			}
 		});
 	}

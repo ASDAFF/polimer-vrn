@@ -60,4 +60,16 @@ $MESS["COLUMNS_LIST_TIP"] = "Wählen Sie Felder, die als Spaltenüberschriften i
 $MESS["PRICE_VAT_INCLUDE_TIP"] = "Wenn diese Option aktiv ist, werden die Preise inklusive der MwSt. angezeigt.";
 $MESS["SET_TITLE_TIP"] = "Wenn diese Option aktiviert ist, erscheint \"Mein Warenkorb\" als Überschrift";
 $MESS["HIDE_COUPON_TIP"] = "Wenn Sie \"Ja\" auswählen, wird das Feld für die Eingabe des Gutscheincodes auf der Warenkorbseite nicht angezeigt.";
+$MESS["SBB_PREVIEW_PICTURE"] = "Bild";
+$MESS["SBB_DETAIL_PICTURE"] = "Detailliertes Bild";
+$MESS["SBB_PREVIEW_TEXT"] = "Kurzbeschreibung";
+$MESS["SBB_COMPATIBLE_MODE"] = "Kompatibilit?tsmodus aktivieren";
+$MESS["SBB_IMAGE_SETTINGS"] = "Bildeinstellungen";
+$MESS["SBB_ADDITIONAL_IMAGE"] = "Zus?tzliches Bild";
+$MESS["SBB_BASKET_IMAGES_SCALING"] = "Modus der Ansicht der Produktbilder";
+$MESS["SBB_ADAPTIVE"] = "Adaptiv";
+$MESS["SBB_STANDARD"] = "Standard";
+$MESS["SBB_NO_SCALE"] = "Gr??e nicht anpassen";
+$MESS["SBB_DEFAULT"] = "Standard";
+$MESS["SBB_ANALYTICS_SETTINGS"] = "Statistikeinstellungen";
 ?>

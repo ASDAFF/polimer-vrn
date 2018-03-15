@@ -35,6 +35,7 @@ class Helper
 
 		if(\CModule::IncludeModule('catalog'))
 		{
+			//TODO: change to new provider
 			if ($productProvider = \CSaleBasket::GetProductProvider(array(
 				"MODULE" => "catalog",
 				"PRODUCT_PROVIDER_CLASS" => "CCatalogProductProvider"))

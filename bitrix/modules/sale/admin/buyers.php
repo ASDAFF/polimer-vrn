@@ -66,26 +66,12 @@ $lAdmin->InitFilter($arFilterFields);
 /* COLLECTION FILTER */
 $arFilter = array();
 
-if (!isset($filter_currency) || $filter_currency == "")
-{
-	if (CModule::IncludeModule("currency"))
-	{
-		$arFilter['=CURRENCY'] = \Bitrix\Currency\CurrencyManager::getBaseCurrency();
-	}
-}
-else
+if (isset($filter_currency))
 {
 	$arFilter['=CURRENCY'] = $filter_currency;
 }
 
-if (!isset($filter_lid) || $filter_lid == "")
-{
-	$rsSites = CSite::GetList($by2="SORT", $order2="ASC", array("ACTIVE" => "Y"));
-	$arSite = $rsSites->Fetch();
-	$arFilter["=LID"] = $arSite["ID"];
-	$filter_lid = $arFilter["LID"];
-}
-else
+if (isset($filter_lid))
 {
 	$arFilter["=LID"] = $filter_lid;
 }

@@ -693,6 +693,7 @@ class CListsLiveFeed
 			CListsLiveFeed::notifyComment(
 				array(
 					"LOG_ID" => $comment["LOG_ID"],
+					"MESSAGE_ID" => $comment["SOURCE_ID"],
 					"TO_USER_ID" => $log["USER_ID"],
 					"FROM_USER_ID" => $comment["USER_ID"],
 					"URL" => $log["URL"],
@@ -731,6 +732,7 @@ class CListsLiveFeed
 			CListsLiveFeed::notifyComment(
 				array(
 					"LOG_ID" => $log["ID"],
+					"MESSAGE_ID" => $comment["MESSAGE_ID"],
 					"TO_USER_ID" => $log["USER_ID"],
 					"FROM_USER_ID" => $comment["USER_ID"],
 					"URL" => $log["URL"],
@@ -779,6 +781,7 @@ class CListsLiveFeed
 			"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 			"NOTIFY_MODULE" => "lists",
 			"NOTIFY_TAG" => "SONET|EVENT|".$comment["LOG_ID"],
+			"NOTIFY_SUB_TAG" => "FORUM|COMMENT|".$comment["MESSAGE_ID"]."|".$comment["TO_USER_ID"],
 			"NOTIFY_EVENT" => "event_lists_comment_add",
 			"NOTIFY_MESSAGE" => $messageAddComment
 		);
@@ -840,5 +843,27 @@ class CListsLiveFeed
 		{
 			return false;
 		}
+	}
+
+	public static function OnSocNetGroupDelete($groupId)
+	{
+		$iblockIdList = array();
+		$res = \CIBlock::getList(array(), array("SOCNET_GROUP_ID" => $groupId));
+		while($iblock = $res->fetch())
+		{
+			$iblockIdList[] = $iblock["ID"];
+		}
+
+		if (empty($iblockIdList))
+		{
+			return true;
+		}
+
+		foreach($iblockIdList as $iblockId)
+		{
+			CIBlock::Delete($iblockId);
+		}
+
+		return true;
 	}
 }

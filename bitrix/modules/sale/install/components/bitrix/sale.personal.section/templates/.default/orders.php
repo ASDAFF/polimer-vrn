@@ -37,6 +37,7 @@ $APPLICATION->IncludeComponent(
 		"CACHE_GROUPS" => $arParams["CACHE_GROUPS"],
 		"DEFAULT_SORT" => $arParams["ORDER_DEFAULT_SORT"],
 		"RESTRICT_CHANGE_PAYSYSTEM" => $arParams["ORDER_RESTRICT_CHANGE_PAYSYSTEM"],
+		"REFRESH_PRICES" => $arParams["ORDER_REFRESH_PRICES"],
 	),
 	$component
 );

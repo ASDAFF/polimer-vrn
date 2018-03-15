@@ -12,7 +12,7 @@ if(strlen($arResult["FatalError"])>0)
 }
 else
 {
-	CUtil::InitJSCore(array("tooltip", "popup"));
+	CUtil::InitJSCore(array("tooltip", "popup", "sidepanel"));
 
 	if(strlen($arResult["ErrorMessage"])>0)
 	{
@@ -40,14 +40,13 @@ else
 
 		BX.message({
 			GUEAddToUsersTitle: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_ACTION_ADDTOUSERS"))?>',
-			GUEAddToModeratorsTitle: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_ACTION_ADDTOMODERATORS"))?>',
-			GUEExcludeFromGroupTitle: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_ACTION_EXCLUDEFROMGROUP"))?>',
-			GUEBanFromGroupTitle: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_ACTION_BANFROMGROUP"))?>',
-			GUEExcludeFromModeratorsTitle: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_ACTION_EXCLUDEFROMMODERATORS"))?>',
-			GUEExcludeFromGroupConfirmTitle: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_ACTION_EXCLUDEFROMGROUP_CONFIRM"))?>',
+			GUEAddToModeratorsTitle: '<?=CUtil::JSEscape(GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_ACTION_ADDTOMODERATORS_PROJECT" : "SONET_GUE_T_ACTION_ADDTOMODERATORS"))?>',
+			GUEExcludeFromGroupTitle: '<?=CUtil::JSEscape(GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_ACTION_EXCLUDEFROMGROUP_PROJECT" : "SONET_GUE_T_ACTION_EXCLUDEFROMGROUP"))?>',
+			GUEExcludeFromModeratorsTitle: '<?=CUtil::JSEscape(GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_ACTION_EXCLUDEFROMMODERATORS_PROJECT" : "SONET_GUE_T_ACTION_EXCLUDEFROMMODERATORS"))?>',
+			GUEExcludeFromGroupConfirmTitle: '<?=CUtil::JSEscape(GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_ACTION_EXCLUDEFROMGROUP_CONFIRM_PROJECT" : "SONET_GUE_T_ACTION_EXCLUDEFROMGROUP_CONFIRM"))?>',
 			GUEUnBanFromGroupTitle: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_ACTION_UNBANFROMGROUP"))?>',
-			GUESetGroupOwnerTitle: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_ACTION_SETGROUPOWNER"))?>',
-			GUESetGroupOwnerConfirmTitle: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_ACTION_SETGROUPOWNER_CONFIRM"))?>',
+			GUESetGroupOwnerTitle: '<?=CUtil::JSEscape(GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_ACTION_SETGROUPOWNER_PROJECT" : "SONET_GUE_T_ACTION_SETGROUPOWNER"))?>',
+			GUESetGroupOwnerConfirmTitle: '<?=CUtil::JSEscape(GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_ACTION_SETGROUPOWNER_CONFIRM_PROJECT" : "SONET_GUE_T_ACTION_SETGROUPOWNER_CONFIRM"))?>',
 			GUESetGroupUnconnectDeptTitle: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_ACTION_UNCONNECT_DEPT"))?>',
 			GUEErrorUserIDNotDefined: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_USER_ID_NOT_DEFINED"))?>',
 			GUEErrorDepartmentIDNotDefined: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_DEPARTMENT_ID_NOT_DEFINED"))?>',
@@ -55,13 +54,12 @@ else
 			GUEErrorGroupIDNotDefined: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_GROUP_ID_NOT_DEFINED"))?>',
 			GUEErrorCurrentUserNotAuthorized: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_NOT_ATHORIZED"))?>',
 			GUEErrorModuleNotInstalled: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_MODULE_NOT_INSTALLED"))?>',
-			GUEErrorOwnerCantExcludeHimself: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_OWNER_CANT_EXCLUDE_HIMSELF"))?>',
-			GUEErrorCantExcludeAutoMember: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_CANT_EXCLUDE_AUTO_MEMBER"))?>',
-			GUEErrorNoPerms: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_NO_PERMS"))?>',
+			GUEErrorOwnerCantExcludeHimself: '<?=CUtil::JSEscape(GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_OWNER_CANT_EXCLUDE_HIMSELF_PROJECT" : "SONET_GUE_T_OWNER_CANT_EXCLUDE_HIMSELF"))?>',
+			GUEErrorCantExcludeAutoMember: '<?=CUtil::JSEscape(GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_CANT_EXCLUDE_AUTO_MEMBER_PROJECT" : "SONET_GUE_T_CANT_EXCLUDE_AUTO_MEMBER"))?>',
+			GUEErrorNoPerms: '<?=CUtil::JSEscape(GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_NO_PERMS_PROJECT" : "SONET_GUE_T_NO_PERMS"))?>',
 			GUEErrorSessionWrong: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_SESSION_WRONG"))?>',
 			GUEErrorActionFailedPattern: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_ACTION_FAILED"))?>',
-			GUEErrorSameOwner: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_SAME_OWNER"))?>',
-			GUESiteId: '<?=CUtil::JSEscape(SITE_ID)?>',
+			GUEErrorSameOwner: '<?=CUtil::JSEscape(GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_SAME_OWNER_PROJECT" : "SONET_GUE_T_SAME_OWNER"))?>',
 			GUEGroupId: <?=intval($arParams["GROUP_ID"])?>,
 			GUEGroupName: '<?=CUtil::JSEscape($arResult["Group"]["NAME"])?>',
 			GUEUseBan: '<?=CUtil::JSEscape($arParams["GROUP_USE_BAN"])?>',
@@ -71,7 +69,8 @@ else
 			GUEUserCanModerateGroup: <?=($arResult["CurrentUserPerms"]["UserCanModerateGroup"] ? "true" : "false")?>,
 			GUEUserCanModifyGroup: <?=($arResult["CurrentUserPerms"]["UserCanModifyGroup"] ? "true" : "false")?>,
 			GUEUserCanInitiate: <?=($arResult["CurrentUserPerms"]["UserCanInitiate"] ? "true" : "false")?>,
-			GUEWaitTitle: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_WAIT"))?>'
+			GUEWaitTitle: '<?=CUtil::JSEscape(GetMessage("SONET_GUE_T_WAIT"))?>',
+			GUEPathToGroupInvite: '<?=htmlspecialcharsback($arResult["Urls"]["GroupEdit"]).(strpos($arResult["Urls"]["GroupEdit"], "?") === false ? "?" : "&")."tab=invite"?>'
 		});
 
 		var actionUsers = false;
@@ -79,8 +78,18 @@ else
 		var oldOwnerID = <?=intval($arResult["Group"]["OWNER_ID"])?>;
 
 		BX.ready(
-			function()	
+			function()
 			{
+				BX.SidePanel.Instance.bindAnchors({
+					rules: [
+						{
+							condition: [
+								"<?=$arResult["Urls"]["GroupEdit"]?>"
+							]
+						}
+					]
+				});
+
 				var userBlockArr = BX.findChildren(document, { className: 'sonet-members-member-block' }, true);
 				if (userBlockArr)
 				{
@@ -112,8 +121,6 @@ else
 
 	if ($arResult["CurrentUserPerms"]["UserCanInitiate"])
 	{
-
-		?><?
 		$APPLICATION->IncludeComponent(
 			"bitrix:socialnetwork.group.iframe.popup",
 			".default",
@@ -129,30 +136,20 @@ else
 			null,
 			array("HIDE_ICONS" => "Y")
 		);
-		?><?
-		$popupName = randString(6);
-		$APPLICATION->IncludeComponent(
-			"bitrix:socialnetwork.group_create.popup",
-			".default",
-			array(
-				"NAME" => $popupName,
-				"PATH_TO_GROUP_EDIT" => (strlen($arResult["Urls"]["GroupEdit"]) > 0
-					? htmlspecialcharsback($arResult["Urls"]["GroupEdit"])
-					: ""
-				),
-				"GROUP_NAME" => $arResult["Group"]["NAME"]
-			),
-			null,
-			array("HIDE_ICONS" => "Y")
-		);
 	}
 
-	if (is_array($arResult["Moderators"]) && is_array($arResult["Moderators"]["List"]))
+	if (
+		is_array($arResult["Moderators"])
+		&& is_array($arResult["Moderators"]["List"])
+	)
 	{
 		?><div class="sonet-members-item"><?
-			?><span class="sonet-members-item-name"><?=GetMessage("SONET_GUE_T_MODS_SUBTITLE")?></span><?
+			?><span class="sonet-members-item-name"><?=GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_MODS_SUBTITLE_PROJECT" : "SONET_GUE_T_MODS_SUBTITLE")?></span><?
 			?><div class="sonet-members-separator"></div><?
-			if ($arResult["CurrentUserPerms"] && $arResult["CurrentUserPerms"]["UserCanModifyGroup"])
+			if (
+				$arResult["CurrentUserPerms"]
+				&& $arResult["CurrentUserPerms"]["UserCanModifyGroup"]
+			)
 			{
 				?><div class="sonet-members-item-menu"><?
 					?><span class="sonet-members-item-menu-title" onclick="BX.BXGUE.showMenu(this, 'moderators');"><?
@@ -211,7 +208,7 @@ else
 							}
 							if ($arMember["IS_OWNER"])
 							{
-								?><span class="sonet-members-caption"><?=GetMessage("SONET_GUE_T_OWNER")?></span><?
+								?><span class="sonet-members-caption"><?=GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_OWNER_PROJECT" : "SONET_GUE_T_OWNER")?></span><?
 								?><script type="text/javascript">
 									oldOwnerID = <?=intval($arMember["USER_ID"])?>;
 								</script><?
@@ -357,9 +354,16 @@ else
 	if (is_array($arResult["Users"]) && is_array($arResult["Users"]["List"]))
 	{
 		?><div class="sonet-members-item"><?
-			?><span class="sonet-members-item-name"><?=GetMessage("SONET_GUE_T_USERS_SUBTITLE")?></span><?
+			?><span class="sonet-members-item-name"><?=GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_T_USERS_SUBTITLE_PROJECT" : "SONET_GUE_T_USERS_SUBTITLE")?></span><?
 			?><div class="sonet-members-separator"></div><?
-			if ($arResult["CurrentUserPerms"] && $arResult["CurrentUserPerms"]["UserCanModerateGroup"])
+
+			if (
+				$arResult["CurrentUserPerms"]
+				&& (
+					$arResult["CurrentUserPerms"]["UserCanInitiate"]
+					|| $arResult["CurrentUserPerms"]["UserCanModifyGroup"]
+				)
+			)
 			{
 				?><div class="sonet-members-item-menu"><?
 					?><span class="sonet-members-item-menu-title" onclick="BX.BXGUE.showMenu(this, 'users', '<?=$popupName?>');"><?
@@ -436,7 +440,14 @@ else
 		?><div class="sonet-members-item"><?
 			?><span class="sonet-members-item-name"><?=GetMessage("SONET_GUE_T_USERS_AUTO_SUBTITLE")?></span><?
 			?><div class="sonet-members-separator"></div><?
-			if ($arResult["CurrentUserPerms"] && $arResult["CurrentUserPerms"]["UserCanModerateGroup"])
+
+			if (
+				$arResult["CurrentUserPerms"]
+				&& (
+					$arResult["CurrentUserPerms"]["UserCanInitiate"]
+					|| $arResult["CurrentUserPerms"]["UserCanModifyGroup"]
+				)
+			)
 			{
 				?><div class="sonet-members-item-menu"><?
 					?><span class="sonet-members-item-menu-title" onclick="BX.BXGUE.showMenu(this, 'users_auto', '<?=$popupName?>');"><?
@@ -445,6 +456,7 @@ else
 					?></span>
 				</div><?
 			}
+
 			?><div class="sonet-members-member-block-shift"><?
 				foreach ($arResult["UsersAuto"]["List"] as $arMember)
 				{

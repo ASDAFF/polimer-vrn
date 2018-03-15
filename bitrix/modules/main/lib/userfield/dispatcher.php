@@ -194,8 +194,6 @@ class Dispatcher
 
 	public function validateField($fieldInfo)
 	{
-		global $APPLICATION, $USER_FIELD_MANAGER;
-
 		$userFieldInfo = $this->getUserFieldInfo($fieldInfo['ENTITY_ID'], $fieldInfo['FIELD']);
 
 		if(!$userFieldInfo)
@@ -635,6 +633,11 @@ class Dispatcher
 			unset($userFieldInfo['VALUE']);
 		}
 
+		if(isset($fieldInfo['CONTEXT']))
+		{
+			$userFieldInfo['CONTEXT'] = $fieldInfo['CONTEXT'];
+		}
+
 		$this->getView()->setField($userFieldInfo);
 
 		if(array_key_exists('ADDITIONAL', $fieldInfo) && is_array($fieldInfo['ADDITIONAL']))
@@ -779,26 +782,28 @@ class Dispatcher
 		if(!array_key_exists($entityId, $this->userFieldList))
 		{
 			$this->userFieldList[$entityId] = $USER_FIELD_MANAGER->GetUserFields($entityId, 0, $this->languageId);
+		}
 
-			if(
-				isset($this->userFieldList[$entityId][$field])
-				&& $this->userFieldList[$entityId][$field]['USER_TYPE_ID'] === \CUserTypeEnum::USER_TYPE_ID
-			)
+		if(
+			isset($this->userFieldList[$entityId][$field])
+			&& $this->userFieldList[$entityId][$field]['USER_TYPE_ID'] === \CUserTypeEnum::USER_TYPE_ID
+			&& !isset($this->userFieldList[$entityId][$field]['ENUM'])
+		)
+		{
+			$this->userFieldList[$entityId][$field]['ENUM'] = array();
+
+			$enumValuesManager = new \CUserFieldEnum();
+			$dbRes = $enumValuesManager->GetList(array(), array('USER_FIELD_ID' => $this->userFieldList[$entityId][$field]['ID']));
+
+			while($enumValue = $dbRes->fetch())
 			{
-				$this->userFieldList[$entityId][$field]['ENUM'] = array();
-
-				$enumValuesManager = new \CUserFieldEnum();
-				$dbRes = $enumValuesManager->GetList(array(), array('USER_FIELD_ID' => $this->userFieldList[$entityId][$field]));
-				while($enumValue = $dbRes->fetch())
-				{
-					$this->userFieldList[$entityId][$field]['ENUM'][] = array(
-						'ID' => $enumValue['ID'],
-						'VALUE' => $enumValue['VALUE'],
-						'DEF' => $enumValue['DEF'],
-						'SORT' => $enumValue['SORT'],
-						'XML_ID' => $enumValue['XML_ID'],
-					);
-				}
+				$this->userFieldList[$entityId][$field]['ENUM'][] = array(
+					'ID' => $enumValue['ID'],
+					'VALUE' => $enumValue['VALUE'],
+					'DEF' => $enumValue['DEF'],
+					'SORT' => $enumValue['SORT'],
+					'XML_ID' => $enumValue['XML_ID'],
+				);
 			}
 		}
 

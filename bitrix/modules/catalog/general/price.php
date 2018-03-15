@@ -33,11 +33,6 @@ class CAllPrice
 			if (!isset($arFields['PRICE']))
 				$arFields['PRICE'] = 0;
 
-			if (!isset($arFields['CURRENCY']))
-			{
-				$APPLICATION->ThrowException(Loc::getMessage("KGP_EMPTY_CURRENCY"), "EMPTY_CURRENCY");
-				return false;
-			}
 			if (!isset($arFields['QUANTITY_FROM']))
 				$arFields['QUANTITY_FROM'] = false;
 			if (!isset($arFields['QUANTITY_TO']))

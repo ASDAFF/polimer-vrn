@@ -633,7 +633,7 @@ final class LocationHelper extends NameHelper
 	public static function getZipByLocation($locationCode, $parameters = array())
 	{
 		if(strlen($locationCode) <= 0)
-			return '';
+			return new \Bitrix\Main\DB\ArrayResult(array());
 
 		if(!is_array($parameters))
 			$parameters = array();

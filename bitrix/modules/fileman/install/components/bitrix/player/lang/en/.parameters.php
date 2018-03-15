@@ -105,4 +105,7 @@ $MESS["PC_PAR_SIZES_AUTO"] = "Use video dimensions";
 $MESS["PC_PAR_PLAYLIST_HIDE"] = "Hide playlist";
 $MESS["PC_PAR_START_TIME"] = "Playback start time (sec.)";
 $MESS["PC_PAR_PLAYBACK_RATE"] = "Playback speed";
+$MESS["PC_PAR_AUTOSTART_ON_SCROLL"] = "Autoplay media when player becomes visible";
+$MESS["PC_PAR_FILE_TYPE"] = "File MIME type";
+$MESS["PC_PAR_USE_PLAYLIST_AS_SOURCES"] = "Use playlist as alternative file source";
 ?>

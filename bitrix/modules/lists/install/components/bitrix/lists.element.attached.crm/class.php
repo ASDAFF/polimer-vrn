@@ -35,6 +35,7 @@ class ListsElementAttachedCrmComponent extends CBitrixComponent
 	protected $listGridOptions = array();
 	protected $navigationGrid = array();
 	protected $headerGrids = array();
+
 	protected $rowGrids = array();
 	protected $groupActionsGrids = array();
 
@@ -449,6 +450,13 @@ class ListsElementAttachedCrmComponent extends CBitrixComponent
 
 			$this->listIblockElementTemplateUrl[$iblockId] = $this->listObject[$iblockId]->getUrlByIblockId($iblockId);
 
+			$this->headerGrids[$iblockId][] = array(
+				'id' => 'ID',
+				'name' => 'ID',
+				'default' => false,
+				'sort' => 'ID'
+			);
+
 			$visibleColumns = $this->listGridOptions[$iblockId]['visibleColumns'];
 			$this->selectedFields[$iblockId] = array('ID', 'IBLOCK_ID');
 			foreach($this->listFields[$iblockId] as $fieldId => $field)
@@ -523,12 +531,20 @@ class ListsElementAttachedCrmComponent extends CBitrixComponent
 		if(empty($this->listFields))
 			return;
 
-		$columns = array();
+		$columns = array(
+			'ID' => intval($elementId)
+		);
+
+		$downloadFileUrl = '/bitrix/components/bitrix/lists.element.attached.crm/lazyload.ajax.php?&site='.SITE_ID.'&'.
+			bitrix_sessid_get().'&list_id=#list_id#&element_id=#element_id#&field_id=#field_id#&file_id=#file_id#';
 
 		foreach($this->listFields[$iblockId] as $fieldId => $field)
 		{
 			$valueKey = (substr($fieldId, 0, 9) == "PROPERTY_") ? $fieldId : "~".$fieldId;
+			$field["ELEMENT_ID"] = $elementId;
+			$field["FIELD_ID"] = $fieldId;
 			$field['VALUE'] = $this->listFieldsValue[$elementId][$valueKey];
+			$field["DOWNLOAD_FILE_URL"] = $downloadFileUrl;
 			$columns[$fieldId] = Field::renderField($field);
 		}
 
@@ -578,6 +594,8 @@ class ListsElementAttachedCrmComponent extends CBitrixComponent
 		$this->arResult['LIST_ELEMENT_TEMPLATE_URL'] = $this->listIblockElementTemplateUrl;
 		$this->arResult['IBLOCK_PERMISSION'] = $this->listIblockPermission;
 
+		$this->arResult['BUTTON_NAME_ELEMENT_ADD'] = CIBlock::getArrayByID($this->iblockId, 'ELEMENT_ADD');
+
 		$this->arResult['RAND_STRING'] = $this->arParams['RAND_STRING'];
 		$this->arResult['JS_OBJECT'] = $this->arParams['JS_OBJECT'];
 
@@ -611,7 +629,7 @@ class ListsElementAttachedCrmComponent extends CBitrixComponent
 	{
 		$this->headerGrids[$iblockId][] = array(
 			'id' => $fieldId,
-			'name' => htmlspecialcharsEx($field['NAME']),
+			'name' => $field['NAME'],
 			'default' => true,
 			'sort' => ($field['MULTIPLE'] == 'Y') ? '' : $fieldId,
 		);

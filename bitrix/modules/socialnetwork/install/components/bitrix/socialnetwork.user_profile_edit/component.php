@@ -95,14 +95,15 @@ if (
 	|| !$CurrentUserPerms["Operations"]["modifyuser_main"]
 )
 {
-	$arParams['ID'] = $USER->GetID();
-	$dbUser = CUser::GetByID($arParams["ID"]);
-	$arResult["User"] = $dbUser->GetNext();
+	$arResult["FATAL_ERROR"] = GetMessage("SONET_P_PU_NO_RIGHTS");
 }
 
 $arResult["bEdit"] = (
-	$USER->CanDoOperation('edit_own_profile')
-	|| $USER->IsAdmin()
+	!isset($arResult["FATAL_ERROR"])
+	&& (
+		$USER->CanDoOperation('edit_own_profile')
+		|| $USER->IsAdmin()
+	)
 		? "Y"
 		: "N"
 );
@@ -138,7 +139,9 @@ elseif (in_array('PASSWORD', $arParams['EDITABLE_FIELDS']))
 }
 
 if(!is_array($arResult["User"]))
+{
 	$arResult["FATAL_ERROR"] = GetMessage("SONET_P_USER_NO_USER");
+}
 else
 {
 	$arResult["GROUPS_CAN_EDIT"] = array();
@@ -311,6 +314,8 @@ else
 			'LOGIN', 'PASSWORD', 'CONFIRM_PASSWORD',
 		);
 
+		$removeAdminRights = false;
+
 		$arFieldsValue = array();
 		foreach ($arFields as $key)
 		{
@@ -326,16 +331,21 @@ else
 			}
 			elseif ('GROUP_ID' == $key)
 			{
+				//moving admin rights to another user
 				if (
 					\Bitrix\Main\Loader::includeModule("bitrix24")
 					&& in_array(1, $_POST[$key])
-					&& CBitrix24::isMoreAdminAvailable()
-					|| !\Bitrix\Main\ModuleManager::isModuleInstalled("bitrix24")
-					|| !in_array(1, $_POST[$key])
+					&& $USER->GetID() != $arResult["User"]['ID']
+					&& $arResult["User"]['ACTIVE'] == "Y"
+					&& !CBitrix24::isMoreAdminAvailable()
 				)
 				{
-					if (is_array($arGroupsCanEditID) && is_array($_POST[$key]))
-						$arFieldsValue[$key] = array_intersect($_POST[$key], $arGroupsCanEditID);
+					$removeAdminRights = true;
+				}
+
+				if (is_array($arGroupsCanEditID) && is_array($_POST[$key]))
+				{
+					$arFieldsValue[$key] = array_intersect($_POST[$key], $arGroupsCanEditID);
 				}
 			}
 			elseif ($_POST[$key] !== $arResult['User'][$key])
@@ -372,6 +382,20 @@ else
 			$strErrorMessage = $USER->LAST_ERROR;
 		else
 		{
+			if ($removeAdminRights)
+			{
+				$curAdminGroups = CUser::GetUserGroup($USER->GetID());
+				foreach ($curAdminGroups as $groupKey => $group)
+				{
+					if ($group == 1 || $group == 12)
+					{
+						unset($curAdminGroups[$groupKey]);
+					}
+				}
+				$curAdminGroups[] = "11";
+				CUser::SetUserGroup($USER->GetID(), $curAdminGroups);
+			}
+
 			if ($arParams['IS_FORUM'] == 'Y')
 			{
 				$arForumFields = array(

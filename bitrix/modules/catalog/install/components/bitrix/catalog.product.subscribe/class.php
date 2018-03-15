@@ -2,6 +2,8 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Loader;
+use Bitrix\Catalog\SubscribeTable;
+use Bitrix\Catalog\Product\SubscribeManager;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
@@ -40,6 +42,7 @@ class ProductSubscribe extends \CBitrixComponent
 		$params['BUTTON_ID'] = isset($params['BUTTON_ID']) ? (string)$params['BUTTON_ID'] : '';
 		$params['BUTTON_CLASS'] = isset($params['BUTTON_CLASS']) ? (string)$params['BUTTON_CLASS'] : '';
 		$params['DEFAULT_DISPLAY'] = isset($params['DEFAULT_DISPLAY']) ? (bool)$params['DEFAULT_DISPLAY'] : true;
+		$params['MESS_BTN_SUBSCRIBE'] = isset($params['MESS_BTN_SUBSCRIBE']) ? (string)$params['MESS_BTN_SUBSCRIBE'] : '';
 
 		if(!$params['PRODUCT_ID'])
 			$this->errors[] = Loc::getMessage('CPS_REQUIRED_PARAMETER', array('#PARAM#' => 'PRODUCT_ID'));
@@ -84,12 +87,79 @@ class ProductSubscribe extends \CBitrixComponent
 		}
 
 		$this->arResult['ALREADY_SUBSCRIBED'] = false;
-		if(!empty($_SESSION['SUBSCRIBE_PRODUCT']['LIST_PRODUCT_ID']))
+		if (!empty($_SESSION['SUBSCRIBE_PRODUCT']['LIST_PRODUCT_ID']))
 		{
-			if(array_key_exists($this->arParams['PRODUCT_ID'], $_SESSION['SUBSCRIBE_PRODUCT']['LIST_PRODUCT_ID']))
+			if (array_key_exists($this->arParams['PRODUCT_ID'], $_SESSION['SUBSCRIBE_PRODUCT']['LIST_PRODUCT_ID']))
 			{
 				$this->arResult['ALREADY_SUBSCRIBED'] = true;
 			}
+			else
+			{
+				$this->arResult['ALREADY_SUBSCRIBED'] = $this->getStatusSubscribe();
+			}
+		}
+		else
+		{
+			$this->arResult['ALREADY_SUBSCRIBED'] = $this->getStatusSubscribe();
+		}
+	}
+
+	protected function getStatusSubscribe()
+	{
+		global $USER, $DB;
+		$userId = false;
+		if (is_object($USER) && $USER->isAuthorized())
+			$userId = $USER->getId();
+
+		$listItemId = array();
+		$offers = CCatalogSKU::getOffersList($this->arParams['PRODUCT_ID']);
+		if (is_array($offers) && !empty($offers[$this->arParams['PRODUCT_ID']]))
+			$listItemId = array_keys($offers[$this->arParams['PRODUCT_ID']]);
+		$listItemId[] = $this->arParams['PRODUCT_ID'];
+
+		$filter = array(
+			'ITEM_ID' => $listItemId,
+			'=SITE_ID' => SITE_ID,
+			array(
+				'LOGIC' => 'OR',
+				array('=DATE_TO' => false),
+				array('>DATE_TO' => date($DB->dateFormatToPHP(\CLang::getDateFormat('FULL')), time()))
+			)
+		);
+		if ($userId)
+		{
+			$filter['USER_ID'] = $userId;
+		}
+		else
+		{
+			if (!empty($_SESSION['SUBSCRIBE_PRODUCT']['TOKEN']) &&
+				!empty($_SESSION['SUBSCRIBE_PRODUCT']['USER_CONTACT']))
+			{
+				$filter['=Bitrix\Catalog\SubscribeAccessTable:SUBSCRIBE.TOKEN'] =
+					$_SESSION['SUBSCRIBE_PRODUCT']['TOKEN'];
+				$filter['=Bitrix\Catalog\SubscribeAccessTable:SUBSCRIBE.USER_CONTACT'] =
+					$_SESSION['SUBSCRIBE_PRODUCT']['USER_CONTACT'];
+			}
+			else
+			{
+				return false;
+			}
+		}
+		$queryObject = SubscribeTable::getList(array('select' => array('ITEM_ID'), 'filter' => $filter));
+		$subscribeManager = new SubscribeManager;
+		$listRealItemId = array();
+		while ($subscribe = $queryObject->fetch())
+		{
+			$subscribeManager->setSessionOfSibscribedProducts($subscribe['ITEM_ID']);
+			$listRealItemId[] = $subscribe['ITEM_ID'];
+		}
+		if (in_array($this->arParams['PRODUCT_ID'], $listRealItemId))
+		{
+			return true;
+		}
+		else
+		{
+			return false;
 		}
 	}
 

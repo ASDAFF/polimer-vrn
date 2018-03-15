@@ -41,7 +41,10 @@ if($_REQUEST['action'] === 'attachUrlPreview')
 		if(!\Bitrix\Main\Application::isUtfMode())
 			$url = \Bitrix\Main\Text\Encoding::convertEncoding($url, 'UTF-8', \Bitrix\Main\Context::getCurrent()->getCulture()->getCharset());
 
-		$urlMetadata = UrlPreview::getMetadataByUrl($url, true, false);
+		if(UrlPreview::isEnabled())
+		{
+			$urlMetadata = UrlPreview::getMetadataByUrl($url, true, false);
+		}
 	}
 	else if(isset($_REQUEST['id']))
 	{
@@ -55,9 +58,14 @@ if($_REQUEST['action'] === 'attachUrlPreview')
 			die();
 		}
 
-		$metadata = UrlPreview::getMetadataAndHtmlByIds(array($id), true);
-		if(isset($metadata[$id]))
-			$urlMetadata = $metadata[$id];
+		if(UrlPreview::isEnabled())
+		{
+			$metadata = UrlPreview::getMetadataAndHtmlByIds(array($id), true);
+			if(isset($metadata[$id]))
+			{
+				$urlMetadata = $metadata[$id];
+			}
+		}
 	}
 
 	if(!isset($urlMetadata['ID']))

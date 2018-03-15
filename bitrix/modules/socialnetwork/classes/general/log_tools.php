@@ -1473,7 +1473,8 @@ class CSocNetLogTools
 						"NL2BR" => "Y", "VIDEO" => "Y",
 						"LOG_VIDEO" => "N", "SHORT_ANCHOR" => "Y",
 						"USERFIELDS" => $arFields["UF"],
-						"USER" => "Y"
+						"USER" => "Y",
+						"TAG" => "Y"
 					),
 					"html",
 					$arResult["EVENT_FORMATTED"]["FILES"]
@@ -1494,7 +1495,8 @@ class CSocNetLogTools
 						"LIST" => "Y", "SMILES" => "Y",
 						"NL2BR" => "Y", "VIDEO" => "Y",
 						"LOG_VIDEO" => "N", "SHORT_ANCHOR" => "Y",
-						"USERFIELDS" => $arFields["UF"]
+						"USERFIELDS" => $arFields["UF"],
+						"TAG" => "Y"
 					)
 				));
 			}
@@ -4959,7 +4961,7 @@ class CSocNetLogTools
 				break;
 			case "FORUM_POST":
 				$log_type = "comment";
-				$log_event_id = array("forum", "photo_comment", "files_comment", "commondocs_comment", "tasks_comment", "wiki_comment", "news_comment", "lists_new_element_comment");
+				$log_event_id = array("forum", "photo_comment", "files_comment", "commondocs_comment", "tasks_comment", "wiki_comment", "news_comment", "lists_new_element_comment", "calendar_comment");
 				break;
 			case "IBLOCK_ELEMENT":
 				$log_type = "log";
@@ -6129,7 +6131,6 @@ class CSocNetLogComponent
 				\Bitrix\Main\ModuleManager::isModuleInstalled('lists')
 				&& \Bitrix\Main\ModuleManager::isModuleInstalled('bizproc')
 				&& \Bitrix\Main\ModuleManager::isModuleInstalled('intranet')
-				&& \Bitrix\Main\Config\Option::get("lists", "turnProcessesOn", "Y") == 'Y'
 			);
 			$isTimemanAvailable = (
 				\Bitrix\Main\ModuleManager::isModuleInstalled('timeman')
@@ -6783,6 +6784,11 @@ class CSocNetLogComponent
 				? $arParams["TIME_FORMAT"]
 				: preg_replace('/[\/.,\s]+$/', '', preg_replace('/^[\/.,\s]+/', '', preg_replace('/[dDjlFmMnYyo]/', '', $arParams["DATE_TIME_FORMAT"])))
 		);
+		$arParams["DATE_FORMAT"] = (
+			isset($arParams["DATE_FORMAT"])
+				? $arParams["DATE_FORMAT"]
+				: preg_replace('/[\/.,:\s]+$/', '', preg_replace('/^[\/.,\s]+/', '', preg_replace('/[aABgGhHisuveIOPTZ]/', '', $arParams["DATE_TIME_FORMAT"])))
+		);
 	}
 
 	public static function getDateTimeFormatted($timestamp, $arFormatParams)
@@ -6894,16 +6900,8 @@ class CSocNetLogComponent
 					}
 					elseif ($USER->IsAuthorized())
 					{
-						$arResult["COMMENT_RIGHTS_EDIT"] = (
-							$bHasEditCallback
-								? (IsModuleInstalled("intranet") ? "OWN" : "OWNLAST")
-								: "N"
-						);
-						$arResult["COMMENT_RIGHTS_DELETE"] = (
-							$bHasDeleteCallback
-								? (IsModuleInstalled("intranet") ? "OWN" : "OWNLAST")
-								: "N"
-						);
+						$arResult["COMMENT_RIGHTS_EDIT"] = ($bHasEditCallback ? "OWN" : "N");
+						$arResult["COMMENT_RIGHTS_DELETE"] = ($bHasDeleteCallback ? "OWN" : "N");
 					}
 				}
 			}
@@ -6914,16 +6912,8 @@ class CSocNetLogComponent
 			}
 			elseif ($USER->IsAuthorized())
 			{
-				$arResult["COMMENT_RIGHTS_EDIT"] = (
-					$bHasEditCallback
-						? (IsModuleInstalled("intranet") ? "OWN" : "OWNLAST")
-						: "N"
-				);
-				$arResult["COMMENT_RIGHTS_DELETE"] = (
-					$bHasDeleteCallback
-						? (IsModuleInstalled("intranet") ? "OWN" : "OWNLAST")
-						: "N"
-				);
+				$arResult["COMMENT_RIGHTS_EDIT"] = ($bHasEditCallback ? "OWN" : "N");
+				$arResult["COMMENT_RIGHTS_DELETE"] = ($bHasDeleteCallback ? "OWN" : "N");
 			}
 		}
 
@@ -6971,34 +6961,6 @@ class CSocNetLogComponent
 		$key = ($arParams["ACTION"] == "EDIT" ? "COMMENT_RIGHTS_EDIT" : "COMMENT_RIGHTS_DELETE");
 
 		if (
-			$rights[$key] == "OWNLAST"
-			&& !empty($arParams["LOG_ID"])
-			&& intval($arParams["LOG_ID"]) > 0
-			&& !empty($arParams["COMMENT_ID"])
-			&& intval($arParams["COMMENT_ID"]) > 0
-		)
-		{
-			$rsResCheck = CSocNetLogComments::GetList(
-				array("ID" => "DESC"),
-				array(
-					"LOG_ID" => intval($arParams["LOG_ID"])
-				),
-				false,
-				false,
-				array("ID")
-			);
-			if (
-				($arResCheck = $rsResCheck->Fetch())
-				&& ($arResCheck["ID"] == intval($arParams["COMMENT_ID"]))
-				&& !empty($arParams["COMMENT_USER_ID"])
-				&& intval($arParams["COMMENT_USER_ID"]) > 0
-				&& intval($arParams["COMMENT_USER_ID"]) == intval($arParams["USER_ID"])
-			)
-			{
-				$res = true;
-			}
-		}
-		elseif (
 			$rights[$key] == "ALL"
 			|| (
 				$rights[$key] == "OWN"

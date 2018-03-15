@@ -623,7 +623,13 @@ class ProductSearchComponent extends \CBitrixComponent
 				$arItemsResult,
 				$this->getIblockId(),
 				$arPropFilter,
-				array('ID' => $this->getVisibleProperties())
+				array('ID' => $this->getVisibleProperties()),
+				array(
+					'PROPERTY_FIELDS' => array(
+						'ID', 'NAME', 'SORT', 'PROPERTY_TYPE',
+						'MULTIPLE', 'LINK_IBLOCK_ID', 'USER_TYPE', 'USER_TYPE_SETTINGS'
+					)
+				)
 			);
 
 			$listImageSize = Main\Config\Option::get('iblock', 'list_image_size');
@@ -731,11 +737,12 @@ class ProductSearchComponent extends \CBitrixComponent
 			}
 			unset($item);
 
-			$dbCatalogProduct = \CCatalogProduct::GetList(array(), array('@ID' => $arProductIds));
-			while ($arCatalogProduct = $dbCatalogProduct->fetch())
-			{
-				$arItemsResult[$arCatalogProduct['ID']]['PRODUCT'] = $arCatalogProduct;
-			}
+			$iterator = Catalog\ProductTable::getList(array(
+				'select' => array('ID', 'TYPE', 'QUANTITY', 'AVAILABLE', 'MEASURE'),
+				'filter' => array('@ID' => $arProductIds)
+			));
+			while ($row = $iterator->fetch())
+				$arItemsResult[$row['ID']]['PRODUCT'] = $row;
 
 			$offersExistsIds = \CCatalogSku::getExistOffers($arProductIds, $this->getIblockId());
 			$noOffersIds = array();
@@ -1211,6 +1218,9 @@ class ProductSearchComponent extends \CBitrixComponent
 			"WF_PARENT_ELEMENT_ID" => false,
 			"SHOW_NEW" => "Y"
 		);
+		//TODO: remove this hack for store docs after refactoring
+		if ($this->getCaller() == 'storeDocs')
+			$arFilter['!CATALOG_TYPE'] = Catalog\ProductTable::TYPE_SET;
 
 		if ($arFilter['ACTIVE'] == '*')
 			unset($arFilter['ACTIVE']);

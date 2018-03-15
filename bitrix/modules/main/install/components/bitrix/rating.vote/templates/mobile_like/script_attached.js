@@ -54,6 +54,8 @@ RatingLike.Init = function(likeId)
 		BX.unbindAll(BXRL[likeId].button);
 		BX.bind(BXRL[likeId].button, 'click', function(e)
 		{
+			app.exec("callVibration");
+
 			clearTimeout(BXRL[likeId].likeTimeout);
 			var newValue = null;
 			var action = null;

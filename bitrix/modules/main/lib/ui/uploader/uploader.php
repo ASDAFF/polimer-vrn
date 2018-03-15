@@ -229,6 +229,11 @@ class Uploader
 		return $this;
 	}
 
+	public function setControlId($controlId)
+	{
+		$this->controlId = $controlId;
+	}
+
 	public function setHandler($name, $callback)
 	{
 		AddEventHandler(self::EVENT_NAME, $name, $callback);

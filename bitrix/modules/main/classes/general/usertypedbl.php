@@ -153,6 +153,16 @@ class CUserTypeDouble extends \Bitrix\Main\UserField\TypeBase
 			'>';
 	}
 
+	function GetFilterData($arUserField, $arHtmlControl)
+	{
+		return array(
+			"id" => $arHtmlControl["ID"],
+			"name" => $arHtmlControl["NAME"],
+			"type" => "number",
+			"filterable" => ""
+		);
+	}
+
 	function GetAdminListViewHTML($arUserField, $arHtmlControl)
 	{
 		if(strlen($arHtmlControl["VALUE"])>0)
@@ -286,6 +296,7 @@ class CUserTypeDouble extends \Bitrix\Main\UserField\TypeBase
 			$attrList['name'] = $fieldName;
 
 			$attrList['type'] = 'text';
+			$attrList['tabindex'] = '0';
 			$attrList['value'] = $res;
 
 			$html .= static::getHelper()->wrapSingleField('<input '.static::buildTagAttributes($attrList).'/>');

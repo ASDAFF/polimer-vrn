@@ -22,10 +22,16 @@ elseif (strlen($arResult["FatalError"])>0)
 	return;
 }
 
-CUtil::InitJSCore(array("ajax", "window", "tooltip", "popup", "fx", "viewer", "content_view"));
+CUtil::InitJSCore(array("ajax", "window", "tooltip", "popup", "fx", "viewer", "content_view", "clipboard"));
 
 $APPLICATION->SetUniqueJS('live_feed_v2'.($arParams["IS_CRM"] != "Y" ? "" : "_crm"));
 $APPLICATION->SetUniqueCSS('live_feed_v2'.($arParams["IS_CRM"] != "Y" ? "" : "_crm"));
+
+if (SITE_TEMPLATE_ID == "bitrix24")
+{
+	$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
+	$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."workarea-transparent");
+}
 
 if ($arParams["IS_CRM"] !== "Y")
 {
@@ -37,7 +43,7 @@ if ($arParams["IS_CRM"] !== "Y")
 		&& (
 			(
 				ModuleManager::isModuleInstalled('bitrix24')
-				&& \CBitrix24::isPortalAdmin($USER->getId())
+				&& \CBitrix24::isPortalAdmin($arResult["currentUserId"])
 			)
 			|| (
 				!ModuleManager::isModuleInstalled('bitrix24')
@@ -54,7 +60,6 @@ $log_content_id = "sonet_log_content_".RandString(8);
 $event_cnt = 0;
 
 $stub = '
-<div class="bx-placeholder-wrap">
 	<div class="bx-placeholder">
 		<table class="bx-feed-curtain">
 			<tr class="bx-curtain-row-0"><td class="bx-curtain-cell-1"></td><td class="bx-curtain-cell-2 transparent"></td><td class="bx-curtain-cell-3"></td><td class="bx-curtain-cell-4"></td><td class="bx-curtain-cell-5"></td><td class="bx-curtain-cell-6"></td><td class="bx-curtain-cell-7"></td></tr><tr class="bx-curtain-row-1 2"><td class="bx-curtain-cell-1"></td><td class="bx-curtain-cell-2 transparent"></td><td class="bx-curtain-cell-3"></td><td class="bx-curtain-cell-4 transparent"></td><td class="bx-curtain-cell-5" colspan="3"></td></tr><tr class="bx-curtain-row-2 3"><td class="bx-curtain-cell-1"></td><td class="bx-curtain-cell-2 transparent"><div class="bx-bx-curtain-avatar"></div></td><td class="bx-curtain-cell-3" colspan="5"></td></tr>
@@ -67,7 +72,9 @@ $stub = '
 			<tr class="bx-curtain-row-1"><td class="bx-curtain-cell-1" colspan="3"></td><td class="bx-curtain-cell-4 transparent" colspan="2"></td><td class="bx-curtain-cell-6" colspan="2"></td></tr><tr class="bx-curtain-row-last"><td class="bx-curtain-cell-1" colspan="7"></td></tr>
 		</table>
 	</div>
-</div>';
+';
+
+$stub = '<div class="bx-placeholder-wrap">'.str_repeat($stub, 4).'</div>';
 
 if (!$arResult["AJAX_CALL"])
 {
@@ -144,7 +151,7 @@ if (!$arResult["AJAX_CALL"])
 			"PATH_TO_SMILE" => $arParams["PATH_TO_BLOG_SMILE"],
 			"SET_TITLE" => "N",
 			"GROUP_ID" => $arParams["BLOG_GROUP_ID"],
-			"USER_ID" => $USER->GetID(),
+			"USER_ID" => $arResult["currentUserId"],
 			"SET_NAV_CHAIN" => "N",
 			"USE_SOCNET" => "Y",
 			"MICROBLOG" => "Y",
@@ -159,7 +166,10 @@ if (!$arResult["AJAX_CALL"])
 		{
 			$arBlogComponentParams["SOCNET_GROUP_ID"] = $arParams["GROUP_ID"];
 		}
-		elseif ($arParams["ENTITY_TYPE"] != SONET_ENTITY_GROUP && $USER->GetID() != $arParams["CURRENT_USER_ID"])
+		elseif (
+			$arParams["ENTITY_TYPE"] != SONET_ENTITY_GROUP
+			&& $arResult["currentUserId"] != $arParams["CURRENT_USER_ID"]
+		)
 		{
 			$arBlogComponentParams["SOCNET_USER_ID"] = $arParams["CURRENT_USER_ID"];
 		}
@@ -267,7 +277,7 @@ if (!$arResult["AJAX_CALL"])
 	{
 		$dynamicArea = new \Bitrix\Main\Page\FrameStatic("live-feed");
 		$dynamicArea->startDynamicArea();
-		$dynamicArea->setStub($stub.$stub);
+		$dynamicArea->setStub($stub);
 	}
 
 	if ($arParams["PUBLIC_MODE"] != "Y")
@@ -306,11 +316,11 @@ if (!$arResult["AJAX_CALL"])
 	}
 
 	?><div id="log_internal_container"><?
-	?><div class="feed-loader-container" id="feed-loader-container"><?
-		?><svg class="feed-loader-circular" viewBox="25 25 50 50"><?
-			?><circle class="feed-loader-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/><?
-		?></svg><?
-	?></div><?
+		?><div class="feed-loader-container" id="feed-loader-container"><?
+			?><svg class="feed-loader-circular" viewBox="25 25 50 50"><?
+				?><circle class="feed-loader-path" cx="50" cy="50" r="20" fill="none" stroke-miterlimit="10"/><?
+			?></svg><?
+		?></div><?
 }
 elseif (
 	!$arResult["Events"]
@@ -329,6 +339,10 @@ elseif (
 			),
 		));
 	}
+
+	if(CModule::IncludeModule("compression"))
+		CCompress::DisableCompression();
+	CMain::FinalActions();
 	die();
 }
 else // AJAX_CALL
@@ -399,7 +413,11 @@ if (!$arResult["AJAX_CALL"])
 	{
 		?>
 		BX.ready(function(){
-			oLF.initOnce();
+			oLF.initOnce({
+				crmEntityTypeName: '<?=(!empty($arResult['CRM_ENTITY_TYPE_NAME']) ? CUtil::JSEscape($arResult['CRM_ENTITY_TYPE_NAME']) : '')?>',
+				crmEntityId: <?=(!empty($arResult['CRM_ENTITY_ID']) ? intval($arResult['CRM_ENTITY_ID']) : 0)?>,
+				filterId: '<?=(!empty($arResult['FILTER_ID']) ? CUtil::JSEscape($arResult["FILTER_ID"]) : '')?>'
+			});
 		});
 		<?
 	}
@@ -631,7 +649,7 @@ if (
 			$is_unread = (
 				$arParams["SHOW_UNREAD"] == "Y"
 				&& ($arResult["COUNTER_TYPE"] == "**" || $arResult["COUNTER_TYPE"] == "CRM_**" || $arResult["COUNTER_TYPE"] == "blog_post")
-				&& $arEvent["USER_ID"] != $USER->getID()
+				&& $arEvent["USER_ID"] != $arResult["currentUserId"]
 				&& intval($arResult["LAST_LOG_TS"]) > 0
 				&& $event_date_log_ts > $arResult["LAST_LOG_TS"]
 			);
@@ -723,7 +741,7 @@ if (
 					"CHECK_COMMENTS_PERMS" => (isset($arParams["CHECK_COMMENTS_PERMS"]) && $arParams["CHECK_COMMENTS_PERMS"] == "Y" ? "Y" : "N"),
 					"GROUP_READ_ONLY" => (isset($arResult["Group"]) && isset($arResult["Group"]["READ_ONLY"]) && $arResult["Group"]["READ_ONLY"] == "Y" ? "Y" : "N"),
 					"BLOG_NO_URL_IN_COMMENTS" => $arParams["BLOG_NO_URL_IN_COMMENTS"],
-					"BLOG_NO_URL_IN_COMMENTS_AUTHORITY" => $arParams["BLOG_NO_URL_IN_COMMENTS_AUTHORITY"]
+					"BLOG_NO_URL_IN_COMMENTS_AUTHORITY" => $arParams["BLOG_NO_URL_IN_COMMENTS_AUTHORITY"],
 				);
 
 				if ($arParams["USE_FOLLOW"] == "Y")
@@ -994,11 +1012,9 @@ else
 		echo $additional_data;
 	}
 
-	if (CModule::IncludeModule("pull"))
-	{
-		CPullWatch::DeferredSql();
-	}
-
+	if(CModule::IncludeModule("compression"))
+		CCompress::DisableCompression();
+	CMain::FinalActions();
 	die();
 }
 

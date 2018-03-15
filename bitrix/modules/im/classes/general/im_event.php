@@ -7,6 +7,11 @@ class CIMEvent
 {
 	public static function OnFileDelete($params)
 	{
+		if (!in_array($params['MODULE_ID'], Array('im', 'imopenlines')))
+		{
+			return true;
+		}
+
 		$result = IM\Model\ChatTable::getList(Array(
 			'select' => Array('ID', 'AUTHOR_ID'),
 			'filter' => Array('=AVATAR' => $params['ID'])
@@ -861,8 +866,17 @@ class CIMEvent
 		if ($arParams['ACTIVE'] == 'N')
 			return false;
 
-		if (!CIMContactList::IsExtranet($arParams))
+		if (IsModuleInstalled('intranet') && !CIMContactList::IsExtranet($arParams))
 		{
+			if (
+				!\Bitrix\Im\User::getInstance($arParams["ID"])->isBot()
+				&& !\Bitrix\Im\User::getInstance($arParams["ID"])->isConnector()
+				&& !\Bitrix\Im\User::getInstance($arParams["ID"])->isNetwork()
+			)
+			{
+				\CIMContactList::SetRecentForNewUser($arParams["ID"]);
+			}
+
 			$commonChatId = CIMChat::GetGeneralChatId();
 			if ($commonChatId <= 0)
 				return true;
@@ -902,7 +916,7 @@ class CIMEvent
 				{
 					if (\Bitrix\Im\User::getInstance($arParams["ID"])->isBot())
 						return true;
-					
+
 					if (!\Bitrix\Im\User::getInstance($arParams["ID"])->isActive())
 						return true;
 
@@ -1001,10 +1015,13 @@ class DesktopApplication extends Bitrix\Main\Authentication\Application
 {
 	protected $validUrls = array(
 		"/desktop_app/",
+		"/rest/",
 		"/online/",
 		"/bitrix/tools/disk/",
 		"/disk/downloadFile/",
-		"/bitrix/services/disk/index.php"
+		"/bitrix/services/disk/index.php",
+		"/bitrix/services/rest/index.php",
+		"/bitrix/components/bitrix/imopenlines.iframe.quick/ajax.php",
 	);
 
 	public static function OnApplicationsBuildList()

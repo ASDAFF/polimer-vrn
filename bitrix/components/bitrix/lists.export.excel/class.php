@@ -344,7 +344,8 @@ class ListExportExcelComponent extends CBitrixComponent
 		}
 
 		$arFilter["IBLOCK_ID"] = $this->arIBlock["ID"];
-		$arFilter["SHOW_NEW"] = "Y";
+		if($this->arParams["CAN_EDIT"])
+			$arFilter["SHOW_NEW"] = "Y";
 		$arFilter["CHECK_PERMISSIONS"] = $this->listsPerm >= CListPermissions::CAN_READ ? "N" : "Y";
 		if(!$this->arResult["ANY_SECTION"])
 		{
@@ -441,6 +442,8 @@ class ListExportExcelComponent extends CBitrixComponent
 			if($comments)
 				$countComments = $this->getCommentsProcess($data["ID"]);
 
+			if (empty($gridColumns))
+				$gridColumns = array_keys($arListFields);
 			foreach ($gridColumns as $position => $id)
 			{
 				if($id == "COMMENTS")
@@ -489,9 +492,24 @@ class ListExportExcelComponent extends CBitrixComponent
 			if ($data["~CREATED_BY"] == $currentUserId)
 				$userGroups[] = "Author";
 
+			$arUserGroupsForBP = CUser::GetUserGroup($currentUserId);
+
 			$ii = 0;
 			foreach ($arDocumentStates as $workflowId => $workflowState)
 			{
+				$canViewWorkflow = BizprocDocument::canUserOperateDocument(
+					CBPCanUserOperateOperation::ViewWorkflow,
+					$currentUserId,
+					$data["ID"],
+					array(
+						"IBlockPermission" => $this->listsPerm,
+						"AllUserGroups" => $arUserGroupsForBP,
+						"DocumentStates" => $arDocumentStates,
+						"WorkflowId" => $workflowId,
+					)
+				);
+				if (!$canViewWorkflow)
+					continue;
 				if (strlen($workflowState["TEMPLATE_NAME"]) > 0)
 					$html .= "".$workflowState["TEMPLATE_NAME"].":\r\n";
 				else

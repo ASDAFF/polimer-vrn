@@ -30,7 +30,8 @@ $MESS["IM_MENU_MESS_LIKE"] = "Like";
 $MESS["IM_MENU_MESS_DISLIKE"] = "Dislike";
 $MESS["IM_MENU_MESS_REPLY"] = "Reply";
 $MESS["IM_MENU_MESS_QUOTE"] = "Quote";
-$MESS["IM_MENU_MESS_LIKE_LIST"] = "Likes";
+$MESS["IM_MENU_MESS_LIKE_LIST"] = "Who read";
+$MESS["IM_MENU_LIST"] = "Users";
 $MESS["IM_MENU_MESS_EDIT"] = "Edit";
 $MESS["IM_MENU_MESS_DEL"] = "Delete";
 $MESS["IM_MENU_MESS_DEL_CONFIRM"] = "Are You Sure You Want to Delete This Message?";
@@ -54,4 +55,7 @@ $MESS["IM_CHOOSE_PHOTO"] = "Select from gallery";
 $MESS["IM_CAMERA_ROLL"] = "Take a photo";
 $MESS["IM_CHOOSE_FILE_TITLE"] = "Files";
 $MESS["IM_FUNCTION_FOR_BROWSER"] = "Unfortunately this function is only available in the browser.";
+$MESS["IM_LS_M_M"] = "Last seen #LAST_SEEN#";
+$MESS["IM_LS_M_F"] = "Last seen #LAST_SEEN#";
+$MESS["IM_MENU_MESS_VIEW_LIST"] = "Viewed by";
 ?>

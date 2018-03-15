@@ -387,6 +387,8 @@ class Manager
 				"ITEM_ID" => 'createObject()',
 				"DESCRIPTION" => $errorMsg." Fields: ".serialize($srvParams),
 			));
+
+			return null;
 		}
 
 		return $service;
@@ -1147,6 +1149,28 @@ class Manager
 				$result[] = $id;
 
 		return $result;
+	}
+
+	/**
+	 * Check if given class is valid delivery service class
+	 * inheritance of Bitrix\Sale\Delivery\Services\Base.
+	 * @param string $class Checking class.
+	 * @return bool
+	 */
+	public static function isDeliveryServiceClassValid($class)
+	{
+		if(strlen($class) <= 0)
+			return false;
+
+		self::initHandlers();
+
+		if(!class_exists($class))
+			return false;
+
+		if(!is_subclass_of($class, 'Bitrix\Sale\Delivery\Services\Base'))
+			return false;
+
+		return true;
 	}
 
 	/*

@@ -397,6 +397,7 @@
 				this.handler = handler;
 				this.id = BX.util.getRandomString(8);
 				this.params = {
+					placeholder : BX.message("MPFPlaceholder"),
 					onEvent : BX.delegate(this.handleAppCallback, this),
 					onSend: BX.delegate(this.handleAppData, this)
 				};

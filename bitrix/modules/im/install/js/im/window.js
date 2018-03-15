@@ -29,7 +29,7 @@
 		this.currentTabTarget = '';
 		this.lastTab = '';
 		this.lastTabTarget = '';
-		
+
 		this.tabItems = {};
 		this.tabRedrawTimeout = null;
 		this.userInfo = {id: 0, name: '', gender: 'M', avatar: '', profile: ''};
@@ -64,15 +64,15 @@
 			{
 				this.contentBodyWindow = true;
 			}
-			
-			
-			
+
+
+
 			this.popup = BX('im-workarea-popup');
 			this.popupBackground = this.popup;
 			this.content = BX('im-workarea-content');
 			this.apps = BX('im-workarea-apps');
 			this.backgroundSelector = BX('im-workarea-backgound-selector');
-			
+
 			if (!this.content)
 			{
 				this.popup = BX('workarea-popup');
@@ -83,19 +83,19 @@
 				BX.addClass(this.popup, 'bx-im-fullscreen-closed');
 				BX.bind(this.popup, 'click', BX.delegate(this.closePopup, this));
 			}
-			else 
+			else
 			{
 				this.popupBackground = BX('im-workarea-popup-bg');
 			}
-			
-			
+
+
 			if (this.context == 'PAGE')
 			{
 				var scrollSize = window.innerWidth - document.documentElement.clientWidth;
 				BX.onCustomEvent(window, 'onMessengerWindowBodyOverflow', [this, scrollSize]);
 				BX.addClass(document.body, 'bx-im-fullscreen-block-scroll');
 			}
-			
+
 			if (this.backgroundSelector)
 			{
 				BX.bind(this.backgroundSelector.parentNode, 'click', BX.delegate(BX.PreventDefault, this));
@@ -121,7 +121,7 @@
 			{
 				BX.bind(this.apps, 'click', BX.delegate(BX.MessengerCommon.preventDefault, this));
 			}
-			
+
 			BX.bind(this.content, 'click', BX.delegate(BX.MessengerCommon.preventDefault, this));
 			if (!BX.hasClass(this.content, 'bx-desktop'))
 			{
@@ -155,7 +155,7 @@
 
 			return false;
 		}
-		
+
 		if (BX.browser.SupportLocalStorage())
 		{
 			BX.addCustomEvent(window, "onLocalStorageSet", BX.delegate(this.storageSet, this));
@@ -189,12 +189,12 @@
 		{
 			location.href = url;
 		}
-		else 
+		else
 		{
 			window.open(url,'_blank');
 		}
 	};
-	
+
 	MessengerWindow.prototype.getCurrentUrl = function ()
 	{
 		return document.location.protocol+'//'+document.location.hostname+(document.location.port == ''?'':':'+document.location.port)
@@ -220,7 +220,7 @@
 
 		return true;
 	}
-		
+
 	MessengerWindow.prototype.adjustSize = function (width, height)
 	{
 		if (this.context == 'POPUP-FULLSCREEN' && BX.hasClass(this.popup, 'bx-im-fullscreen-closed'))
@@ -229,7 +229,7 @@
 		}
 		var innerWidth = 0;
 		var innerHeight = 0;
-		
+
 		var setFirstHeight = false;
 		if (this.contentBodyWindow)
 		{
@@ -239,7 +239,7 @@
 				this.popupFullscreenSizeTop = popupPos.top;
 				this.popupFullscreenSizeBottom = window.innerHeight-popupPos.top-popupPos.height;
 			}
-			innerHeight = Math.max(window.innerHeight-this.popupFullscreenSizeTop-this.popupFullscreenSizeBottom-10, this.initHeight);
+			innerHeight = Math.max(window.innerHeight-this.popupFullscreenSizeTop-this.popupFullscreenSizeBottom, this.initHeight);
 			innerWidth = BX.MessengerWindow.content.offsetWidth;
 		}
 		else if (this.contentFullWindow)
@@ -261,21 +261,19 @@
 			innerWidth = Math.max(this.content.offsetWidth, this.minWidth);
 			innerHeight = Math.max(this.content.offsetHeight, this.minHeight);
 		}
-		
+
 		if (BX.desktop && BX.desktop.apiReady && (!width || !height) && (innerHeight < this.minHeight || innerWidth < this.minWidth))
 		{
 			BXDesktopWindow.SetProperty("clientSize", { Width: this.width, Height: this.height});
 			return false;
 		}
 
-		
-		
 		if (this.context == 'POPUP-FULLSCREEN' && BX.browser.IsMobile())
 		{
 			this.height = this.initHeight;
 			this.width = this.initWidth;
 		}
-		else 
+		else
 		{
 			BX.addClass(this.content, 'bx-im-fullscreen-adaptive');
 			this.width = width? width: innerWidth;
@@ -285,7 +283,7 @@
 		BX.style(this.contentMenu, 'height', this.height+'px');
 		BX.style(this.contentTabContent, 'height', this.height+'px');
 		BX.style(this.content, 'max-width', window.innerWidth+'px');
-		
+
 		return true;
 	}
 
@@ -322,7 +320,7 @@
 
 		return true;
 	};
-	
+
 	MessengerWindow.prototype.addSeparator = function (params)
 	{
 		params.type = 'separator';
@@ -375,7 +373,7 @@
 
 		this.drawTabs();
 	}
-	
+
 	MessengerWindow.prototype.hideTab = function (id)
 	{
 		if (!id || !this.tabItems[id])
@@ -385,7 +383,7 @@
 
 		this.drawTabs();
 	}
-	
+
 	MessengerWindow.prototype.showTab = function (id)
 	{
 		if (!id || !this.tabItems[id])
@@ -395,7 +393,7 @@
 
 		this.drawTabs();
 	}
-	
+
 	MessengerWindow.prototype.existsTab = function (id)
 	{
 		return this.tabItems[id];
@@ -497,7 +495,7 @@
 			BX.PreventDefault(event);
 		}, this));
 		this.adjustSize();
-		
+
 		BX.onCustomEvent(window, 'onMessengerWindowInit', [this, this.BXIM]);
 
 		return true;
@@ -515,10 +513,10 @@
 			}
 			tabId = BX.proxy_context.getAttribute('data-id');
 		}
-		
+
 		if (!this.tabItems[tabId])
 			return false;
-		
+
 		if (this.tabItems[tabId].target)
 		{
 			var fireEvent = false;
@@ -662,7 +660,7 @@
 	{
 		return this.currentTabTarget;
 	}
-	
+
 	MessengerWindow.prototype.setUserInfo = function (params)
 	{
 		if (!this.userInfo)
@@ -690,13 +688,10 @@
 
 		var events = {};
 
-		if (this.userInfo.onclick)
-		{
-			events.click = function(e){
-				BX.MessengerWindow.userInfo.onclick();
-				return BX.PreventDefault(e);
-			}
-		}
+		events.click = function(e){
+			BXIM.openMessenger(BXIM.userId);
+			return BX.PreventDefault(e);
+		};
 
 		this.contentAvatar.innerHTML = '';
 		this.contentAvatar.appendChild(
@@ -721,17 +716,17 @@
 	{
 		return this.userInfo;
 	}
-	
+
 	MessengerWindow.prototype.isPopupShow = function()
 	{
 		if (this.context == 'DESKTOP')
 			return true;
 		else if (this.context == 'POPUP-FULLSCREEN' && !BX.hasClass(this.popup, 'bx-im-fullscreen-closed'))
 			return true;
-		
+
 		return false;
 	}
-	
+
 	MessengerWindow.prototype.backgroundChange = function()
 	{
 		var backgroundImage = this.backgroundSelector.value;
@@ -749,33 +744,33 @@
 			BX.style(this.popupBackground, 'background', 'url(/bitrix/js/im/images/bg-image-'+backgroundImage+'.jpg) #ccc');
 			BX.style(this.popupBackground, 'backgroundSize', 'cover');
 		}
-		else 
+		else
 		{
 			BX.removeClass(this.popupBackground, 'bx-im-fullscreen-popup-transparent');
 			BX.addClass(this.popupBackground, 'bx-im-fullscreen-popup-bitrix24');
 			BX.style(this.popupBackground, 'background', '');
 			BX.style(this.popupBackground, 'backgroundSize', '');
-		}	
+		}
 	}
-	
+
 	MessengerWindow.prototype.showPopup = function(dialogId)
 	{
 		if (this.isPopupShow())
 			return false;
-		
+
 		this.popupTimestart = +new Date();
 		clearTimeout(this.popupTimeout);
-		
+
 		var scrollSize = window.innerWidth - document.documentElement.clientWidth;
 		BX.onCustomEvent(window, 'onMessengerWindowBodyOverflow', [this, scrollSize]);
 		BX.addClass(document.body, 'bx-im-fullscreen-block-scroll');
-		
+
 		BX.addClass(this.popup, 'bx-im-fullscreen-opening');
 		BX.removeClass(this.popup, 'bx-im-fullscreen-closing');
 		BX.removeClass(this.popup, 'bx-im-fullscreen-closed');
 		this.adjustSize();
 		this.BXIM.desktop.initHeight = BX.MessengerWindow.content.offsetHeight;
-		
+
 		this.popupTimeout = setTimeout(BX.delegate(function(){
 			BX.removeClass(this.popup, 'bx-im-fullscreen-opening');
 			BX.addClass(this.popup, 'bx-im-fullscreen-open');
@@ -784,24 +779,24 @@
 				BX.style(this.BXIM.webrtc.callOverlay, 'height', (this.BXIM.messenger.popupMessengerFullHeight-1)+'px');
 			}
 		}, this), 400);
-		
+
 		BX.onCustomEvent(this, 'OnMessengerWindowShowPopup', [dialogId]);
 		return true;
 	}
-	
+
 	MessengerWindow.prototype.closePopup = function()
 	{
 		if (!this.isPopupShow() || this.BXIM.webrtc.callInit)
 			return false;
-		
+
 		if (this.popupTimestart+400 > (+new Date()))
 			return false;
-		
+
 		clearTimeout(this.popupTimeout);
 		BX.removeClass(document.body, 'bx-im-fullscreen-block-scroll');
 		BX.onCustomEvent(this, 'OnMessengerWindowClosePopup', []);
 		BX.onCustomEvent(window, 'onMessengerWindowBodyOverflow', [this, 0]);
-		
+
 		BX.addClass(this.popup, 'bx-im-fullscreen-open');
 		BX.addClass(this.popup, 'bx-im-fullscreen-closing');
 		BX.removeClass(this.popup, 'bx-im-fullscreen-opening');
@@ -809,12 +804,12 @@
 			BX.removeClass(this.popup, 'bx-im-fullscreen-closing');
 			BX.removeClass(this.popup, 'bx-im-fullscreen-open');
 			BX.addClass(this.popup, 'bx-im-fullscreen-closed');
-			
+
 		}, this), 400);
-		
+
 		return true;
 	}
-	
+
 	MessengerWindow.prototype.storageSet = function(params)
 	{
 		if (params.key == 'imFullscreenBackground')

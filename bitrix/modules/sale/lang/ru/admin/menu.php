@@ -74,6 +74,8 @@ $MESS["sale_menu_uf_properties"] = "Пользовательские свойс�
 $MESS["sale_menu_uf_properties_title"] = "Управление пользовательскими свойствами заказа";
 $MESS["MAIN_MENU_1C_INTEGRATION"] = "Интеграция с 1С";
 $MESS["MAIN_MENU_1C_INTEGRATION_TITLE"] = "Настройка параметров интеграции с \"1С:Предприятие\"";
+$MESS["MAIN_MENU_1C_INTEGRATION_LOG"] = "Журнал обмена";
+$MESS["MAIN_MENU_1C_INTEGRATION_LOG_TITLE"] = "Журнал документов участующих в обмене";
 $MESS["SALE_LOCATION_IMPORT"] = "Импорт местоположений";
 $MESS["SALE_LOCATION_IMPORT_DESCR"] = "Загрузка базы местоположений из внешних источников";
 $MESS["MAIN_MENU_REPORT_EDIT"] = "Печатные формы";
@@ -193,4 +195,5 @@ $MESS["SALE_MENU_YM_LOG_TITLE"] = "Журнал событий Покупки н
 $MESS["SALE_MENU_MARKETPLACE_READY_SHOPS"] = "Установить готовый магазин из Маркетплейс";
 $MESS["SALE_MENU_MARKETING_MARKETPLACE_ADD"] = "Установить из Маркетплейс";
 $MESS["SALE_MENU_TRADING_PLATFORMS_MARKETPLACE_ADD"] = "Установить из Маркетплейс";
+$MESS["SALE_MENU_DELIVERY_REQUESTS"] = "Транспортные заявки";
 ?>

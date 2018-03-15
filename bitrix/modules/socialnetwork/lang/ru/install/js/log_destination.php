@@ -2,6 +2,7 @@
 $MESS["LM_POPUP_TITLE"] = "Заголовок";
 $MESS["LM_POPUP_TAB_LAST"] = "Последние";
 $MESS["LM_POPUP_TAB_SG"] = "Мои группы";
+$MESS["LM_POPUP_TAB_SG_PROJECT"] = "Мои проекты";
 $MESS["LM_POPUP_TAB_STRUCTURE"] = "Сотрудники и отделы";
 $MESS["LM_POPUP_TAB_EMAIL"] = "Почтовые пользователи";
 $MESS["LM_POPUP_TAB_CRMEMAIL"] = "Почтовые пользователи CRM";
@@ -13,6 +14,7 @@ $MESS["LM_POPUP_TAB_LAST_COMPANIES"] = "Компании";
 $MESS["LM_POPUP_TAB_LAST_LEADS"] = "Лиды";
 $MESS["LM_POPUP_TAB_LAST_DEALS"] = "Сделки";
 $MESS["LM_POPUP_TAB_LAST_SG"] = "Группы";
+$MESS["LM_POPUP_TAB_LAST_SG_PROJECT"] = "Проекты";
 $MESS["LM_POPUP_TAB_LAST_STRUCTURE"] = "Отделы";
 $MESS["LM_POPUP_TAB_SEARCH"] = "Поиск";
 $MESS["LM_POPUP_CHECK_STRUCTURE"] = "Все сотрудники отдела с подотделами";

@@ -7,6 +7,27 @@ use Bitrix\Sale\Exchange\ImportBase;
 
 abstract class UserImportBase extends ImportBase
 {
+	const EXTERNAL_AUTH_ID = 'sale';
+
+	/** @var  ImportBase */
+	protected $entity;
+
+	/**
+	 * @param ImportBase $entity
+	 */
+	public function setEntity(ImportBase $entity)
+	{
+		$this->entity = $entity;
+	}
+
+	/**
+	 * @return ImportBase
+	 */
+	public function getEntity()
+	{
+		return $this->entity;
+	}
+
 	/**
 	 * @param $personalTypeId
 	 * @param $profile
@@ -113,6 +134,15 @@ abstract class UserImportBase extends ImportBase
 	}
 
 	/**
+	 * @return bool
+	 */
+	public function isFiz()
+	{
+		$fields = $this->getFieldValues();
+		return ($fields["TRAITS"]["TYPE"] == "FIZ");
+	}
+
+	/**
 	 * @param $fields
 	 * @return int|null|string
 	 */
@@ -124,8 +154,8 @@ abstract class UserImportBase extends ImportBase
 		{
 			foreach($config as $id => $value)
 			{
-				if((($value["IS_FIZ"] == "Y" && $fields["TYPE"] == "FIZ") ||
-					($value["IS_FIZ"] == "N" && $fields["TYPE"] != "FIZ")))
+				if(($value["IS_FIZ"] == "Y" && $this->isFiz()) ||
+					($value["IS_FIZ"] == "N" && !$this->isFiz()))
 				{
 					return $id;
 				}
@@ -179,6 +209,8 @@ abstract class UserImportBase extends ImportBase
 		if (strlen($userFields["NAME"]) <= 0)
 			$userFields["NAME"] = $fields["CONTACT"]["CONTACT_PERSON"];
 
+		$userFields["NAME"] = ($this->isFiz() ? $userFields["NAME"]:array("NAME"=>$userFields["NAME"]));
+
 		$emServer = $_SERVER["SERVER_NAME"];
 		if(strpos($_SERVER["SERVER_NAME"], ".") === false)
 			$emServer .= ".bx";
@@ -186,7 +218,7 @@ abstract class UserImportBase extends ImportBase
 		if (strlen($userFields["EMAIL"]) <= 0)
 			$userFields["EMAIL"] = "buyer" . time() . GetRandomCode(2) . "@" . $emServer;
 
-		$id = \CSaleUser::DoAutoRegisterUser($userFields["EMAIL"], $userFields["NAME"], $this->settings->getSiteId(), $arErrors, array("XML_ID"=>$fields["XML_ID"]));
+		$id = \CSaleUser::DoAutoRegisterUser($userFields["EMAIL"], $userFields["NAME"], $this->settings->getSiteId(), $arErrors, array("XML_ID"=>$fields["XML_ID"], "EXTERNAL_AUTH_ID"=>self::EXTERNAL_AUTH_ID));
 
 		$obUser = new \CUser;
 		if(strlen($fields["CONTACT"]["PHONE"])>0)

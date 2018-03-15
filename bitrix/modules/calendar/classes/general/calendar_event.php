@@ -1,9 +1,10 @@
 <?
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/calendar/classes/general/calendar.php");
 
-use Bitrix\Main\Loader;
-use Bitrix\Disk\Uf\FileUserType;
-use Bitrix\Disk\AttachedObject;
+use \Bitrix\Main\Loader;
+use \Bitrix\Disk\Uf\FileUserType;
+use \Bitrix\Disk\AttachedObject;
+use \Bitrix\Main\Localization\Loc;
 
 class CCalendarEvent
 {
@@ -125,6 +126,10 @@ class CCalendarEvent
 				$arFields['PARENT_ID'] = $currentEvent['PARENT_ID'];
 		}
 
+		if ($arFields['IS_MEETING'] && !isset($arFields['ATTENDEES']) && isset($arFields['ATTENDEES_CODES']))
+		{
+			$arFields['ATTENDEES'] = \CCalendar::getDestinationUsers($arFields['ATTENDEES_CODES']);
+		}
 
 		if ($userId > 0 && self::CheckFields($arFields, $currentEvent, $userId))
 		{
@@ -158,6 +163,7 @@ class CCalendarEvent
 						// UTC timestamp + date('Z', $timestamp) /*offset of the server*/
 						'dateFrom' => CCalendar::Date($fromTs, $arFields['DT_SKIP_TIME'] !== "Y"),
 						'dateTo' => CCalendar::Date($toTs, $arFields['DT_SKIP_TIME'] !== "Y"),
+						'parentParams' => $params,
 						'name' => $arFields['NAME'],
 						'persons' => count($attendees),
 						'attendees' => $attendees,
@@ -259,7 +265,7 @@ class CCalendarEvent
 			// *** Check and update section links ***
 			$sectionId = (is_array($arFields['SECTIONS']) && $arFields['SECTIONS'][0]) ? intVal($arFields['SECTIONS'][0]) : false;
 
-			if ($sectionId && CCalendarSect::GetById($sectionId, false))
+			if ($sectionId)
 			{
 				if (!$bNew)
 				{
@@ -342,7 +348,7 @@ class CCalendarEvent
 					if ($arFields['PARENT_ID'] && $arFields['PARENT_ID'] !== $arFields['ID'])
 						$curUserId = $arFields['OWNER_ID'];
 
-					CPullStack::AddByUser($curUserId, Array(
+					\Bitrix\Pull\Event::add($curUserId, Array(
 						'module_id' => 'calendar',
 						'command' => 'event_update',
 						'params' => array(
@@ -371,7 +377,10 @@ class CCalendarEvent
 				);
 			}
 
-			// Send invitations and notivications
+			// Update search index
+			self::updateSearchIndex($eventId);
+
+			// Send invitations and notifications
 			if ($arFields['IS_MEETING'])
 			{
 				if ($params['saveAttendeesStatus'] && $sendEditNotification)
@@ -569,6 +578,10 @@ class CCalendarEvent
 							$arSqlSearch[] = "CE.ID=".intVal($val);
 						}
 					}
+					elseif($n == '>ID' && intVal($val) > 0)
+					{
+						$arSqlSearch[] = "CE.ID > ".intVal($val);
+					}
 					elseif($n == 'OWNER_ID')
 					{
 						if(is_array($val))
@@ -579,6 +592,18 @@ class CCalendarEvent
 						else if (intVal($val) > 0)
 						{
 							$arSqlSearch[] = "CE.OWNER_ID=".intVal($val);
+						}
+					}
+					elseif($n == 'MEETING_HOST')
+					{
+						if(is_array($val))
+						{
+							$val = array_map(intval, $val);
+							$arSqlSearch[] = 'CE.MEETING_HOST IN (\''.implode('\',\'', $val).'\')';
+						}
+						else if (intVal($val) > 0)
+						{
+							$arSqlSearch[] = "CE.MEETING_HOST=".intVal($val);
 						}
 					}
 					elseif($n == 'NAME')
@@ -631,6 +656,16 @@ class CCalendarEvent
 					{
 						$arSqlSearch[] = "CE.DAV_XML_ID='".CDatabase::ForSql($val)."'";
 					}
+					elseif($n == '*SEARCHABLE_CONTENT') // Full text index match
+					{
+						$sqlWhere = new CSQLWhere();
+						$arSqlSearch[] = $sqlWhere->match('SEARCHABLE_CONTENT', $val, true);
+					}
+					elseif($n == '*%SEARCHABLE_CONTENT') // partial full text match based on LIKE
+					{
+						$sqlWhere = new CSQLWhere();
+						$arSqlSearch[] = $sqlWhere->matchLike('SEARCHABLE_CONTENT', $val);
+					}
 					elseif(isset($arFields[$n]))
 					{
 						$arSqlSearch[] = GetFilterQuery($arFields[$n]["FIELD_NAME"], $val, 'N');
@@ -669,6 +704,12 @@ class CCalendarEvent
 				$strOrderBy = "ORDER BY ".rtrim($strOrderBy, ",");
 			}
 
+			$strLimit = '';
+			if (isset($params['limit']) && intVal($params['limit']) > 0)
+			{
+				$strLimit = 'LIMIT '.intVal($params['limit']);
+			}
+
 			$strSql = "
 				SELECT ".
 					$selectList.
@@ -681,7 +722,8 @@ class CCalendarEvent
 				".($getUF ? $obUserFieldsSql->GetJoin("CE.ID") : '')."
 				WHERE
 					$strSqlSearch
-				$strOrderBy";
+				$strOrderBy
+				$strLimit";
 
 			$res = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			if ($getUF)
@@ -716,7 +758,9 @@ class CCalendarEvent
 
 				$arEvents[] = $event;
 				if ($bIntranet && $event['IS_MEETING'])
-					$arMeetingIds[] = $event['ID'];
+				{
+					$arMeetingIds[] = $event['PARENT_ID'];
+				}
 			}
 
 			if ($params['fetchAttendees'] && count($arMeetingIds) > 0)
@@ -746,9 +790,9 @@ class CCalendarEvent
 						$event['REMIND'] = array();
 				}
 
-				if ($bIntranet && $event['IS_MEETING'] && isset($attendees[$event['ID']]) && count($attendees[$event['ID']]) > 0)
+				if ($bIntranet && $event['IS_MEETING'] && isset($attendees[$event['PARENT_ID']]) && count($attendees[$event['PARENT_ID']]) > 0)
 				{
-					$event['~ATTENDEES'] = $attendees[$event['ID']];
+					$event['~ATTENDEES'] = $attendees[$event['PARENT_ID']];
 				}
 				$checkPermissionsForEvent = $userId != $event['CREATED_BY']; // It's creator
 
@@ -783,6 +827,7 @@ class CCalendarEvent
 					self::ParseRecursion($result, $event, array(
 						'fromLimit' => $arFilter["FROM_LIMIT"],
 						'toLimit' => $arFilter["TO_LIMIT"],
+						'loadLimit' => $params["limit"],
 						'instanceCount' => isset($params['maxInstanceCount']) ? $params['maxInstanceCount'] : false,
 						'preciseLimits' => isset($params['preciseLimits']) ? $params['preciseLimits'] : false
 					));
@@ -804,7 +849,6 @@ class CCalendarEvent
 		}
 
 		CTimeZone::Enable();
-
 
 		if (!is_array(self::$lastAttendeesList))
 		{
@@ -947,7 +991,8 @@ class CCalendarEvent
 				"CAL_DAV_LABEL" => Array("FIELD_NAME" => "CE.CAL_DAV_LABEL", "FIELD_TYPE" => "string"), // CalDAV sync label
 				"VERSION" => Array("FIELD_NAME" => "CE.VERSION", "FIELD_TYPE" => "string"), // Version used for outlook sync
 				"RECURRENCE_ID" => Array("FIELD_NAME" => "CE.RECURRENCE_ID", "FIELD_TYPE" => "int"),
-				"RELATIONS" => Array("FIELD_NAME" => "CE.RELATIONS", "FIELD_TYPE" => "int")
+				"RELATIONS" => Array("FIELD_NAME" => "CE.RELATIONS", "FIELD_TYPE" => "int"),
+				"SEARCHABLE_CONTENT" => Array("FIELD_NAME" => "CE.SEARCHABLE_CONTENT", "FIELD_TYPE" => "string")
 			);
 			CTimeZone::Enable();
 		}
@@ -997,7 +1042,7 @@ class CCalendarEvent
 				$strSql = "
 				SELECT
 					CE.OWNER_ID AS USER_ID,
-					CE.ID, CE.PARENT_ID, CE.MEETING_STATUS,
+					CE.ID, CE.PARENT_ID, CE.MEETING_STATUS, CE.MEETING_HOST,
 					U.LOGIN, U.NAME, U.LAST_NAME, U.SECOND_NAME, U.EMAIL, U.PERSONAL_PHOTO, U.WORK_POSITION,
 					BUF.UF_DEPARTMENT
 				FROM
@@ -1019,6 +1064,10 @@ class CCalendarEvent
 					if(!isset($arAttendees[$parentId]))
 						$arAttendees[$parentId] = array();
 					$entry["STATUS"] = trim($entry["MEETING_STATUS"]);
+					if ($parentId == $entry['ID'] || $entry['USER_ID'] == $entry['MEETING_HOST'])
+					{
+						$entry["STATUS"] = "H";
+					}
 
 					CCalendar::SetUserDepartment($attendeeId, (empty($entry['UF_DEPARTMENT']) ? array() : unserialize($entry['UF_DEPARTMENT'])));
 					$entry['DISPLAY_NAME'] = CCalendar::GetUserName($entry);
@@ -1125,6 +1174,7 @@ class CCalendarEvent
 
 		if (self::CheckRecurcion($item))
 		{
+			$item['~RRULE_DESCRIPTION'] = CCalendarEvent::GetRRULEDescription($item, false);
 			$tsFrom = CCalendar::Timestamp($item['DATE_FROM']);
 			$tsTo = CCalendar::Timestamp($item['DATE_TO']);
 			if (($tsTo - $tsFrom) > $item['DT_LENGTH'] + CCalendar::DAY_LENGTH)
@@ -1160,18 +1210,23 @@ class CCalendarEvent
 			$item['IMPORTANCE'] = 'normal';
 		$item['PRIVATE_EVENT'] = trim($item['PRIVATE_EVENT']);
 
-		if ($item['PARENT_ID'])
+		$curUserId = CCalendar::GetCurUserId();
+		if ($curUserId)
 		{
-			$item['~DESCRIPTION'] = self::ParseText($item['DESCRIPTION'], $item['PARENT_ID'], $item['UF_WEBDAV_CAL_EVENT']);
-		}
-		else
-		{
-			$item['~DESCRIPTION'] = self::ParseText($item['DESCRIPTION'], $item['ID'], $item['UF_WEBDAV_CAL_EVENT']);
+			if($item['PARENT_ID'])
+			{
+				$item['~DESCRIPTION'] = self::ParseText($item['DESCRIPTION'], $item['PARENT_ID'], $item['UF_WEBDAV_CAL_EVENT']);
+			}
+			else
+			{
+				$item['~DESCRIPTION'] = self::ParseText($item['DESCRIPTION'], $item['ID'], $item['UF_WEBDAV_CAL_EVENT']);
+			}
 		}
 
 		if (isset($item['UF_CRM_CAL_EVENT']) && is_array($item['UF_CRM_CAL_EVENT']) && count($item['UF_CRM_CAL_EVENT']) == 0)
 			$item['UF_CRM_CAL_EVENT'] = '';
 
+		unset($item['SEARCHABLE_CONTENT']);
 		return $item;
 	}
 
@@ -1245,6 +1300,8 @@ class CCalendarEvent
 
 		$h24 = CCalendar::GetDayLen();
 		$instanceCount = ($params['instanceCount'] && $params['instanceCount'] > 0) ? $params['instanceCount'] : false;
+		$loadLimit = ($params['loadLimit'] && $params['loadLimit'] > 0) ? $params['loadLimit'] : false;
+
 		$preciseLimits = $params['preciseLimits'];
 
 		if ($length < 0) // Protection from infinite recursion
@@ -1253,13 +1310,17 @@ class CCalendarEvent
 		// Time boundaries
 		if (isset($params['fromLimitTs']))
 			$limitFromTS = intVal($params['fromLimitTs']);
-		else
+		else if ($params['fromLimit'])
 			$limitFromTS = CCalendar::Timestamp($params['fromLimit']);
+		else
+			$limitFromTS = CCalendar::Timestamp(CCalendar::GetMinDate());
 
 		if (isset($params['toLimitTs']))
 			$limitToTS = intVal($params['toLimitTs']);
-		else
+		else if ($params['toLimit'])
 			$limitToTS = CCalendar::Timestamp($params['toLimit']);
+		else
+			$limitToTS = CCalendar::Timestamp(CCalendar::GetMaxDate());
 
 		$evFromTS = CCalendar::Timestamp($event['DATE_FROM']);
 
@@ -1307,10 +1368,11 @@ class CCalendarEvent
 			$toTS = mktime($hour, $min, $sec + $length, $m, $d, $y);
 
 			if (
-				(!$fromTS || $fromTS < $evFromTS - CCalendar::GetDayLen()) || // Emergensy exit (mantis: 56981)
-				($rrule['COUNT'] > 0 && $realCount >= $rrule['COUNT']) ||
-				(!$rrule['COUNT'] && $fromTS >= $limitToTS) ||
-				($instanceCount && $dispCount >= $instanceCount)
+				(!$fromTS || $fromTS < $evFromTS - CCalendar::GetDayLen()) // Emergensy exit (mantis: 56981)
+				|| ($rrule['COUNT'] > 0 && $realCount >= $rrule['COUNT'])
+				|| (!$rrule['COUNT'] && $fromTS >= $limitToTS)
+				|| ($instanceCount && $dispCount >= $instanceCount)
+				|| ($loadLimit && $dispCount >= $loadLimit)
 			)
 			{
 				break;
@@ -1364,6 +1426,7 @@ class CCalendarEvent
 				{
 					$toTS -= CCalendar::GetDayLen();
 				}
+
 				if (($preciseLimits && $toTS >= $limitFromTSReal) ||
 					(!$preciseLimits && $toTS > $limitFromTS - $h24))
 				{
@@ -1762,6 +1825,8 @@ class CCalendarEvent
 
 		// Private
 		$arFields['PRIVATE_EVENT'] = isset($arFields['PRIVATE_EVENT']) && $arFields['PRIVATE_EVENT'];
+
+		//$arFields['SEARCHABLE_CONTENT'] = self::formatSearchIndexContent($arFields);
 
 		return true;
 	}
@@ -2183,8 +2248,10 @@ class CCalendarEvent
 					if ($event['LOCATION'] != "")
 					{
 						$loc = CCalendar::ParseLocation($event['LOCATION']);
-						if ($loc['mrid'] !== false && $loc['mrevid'] !== false) // Release MR
+						if ($loc['mrevid'] || $loc['room_event_id'])
+						{
 							CCalendar::ReleaseLocation($loc);
+						}
 					}
 
 					if ($event['CAL_TYPE'] == 'user')
@@ -2569,7 +2636,6 @@ class CCalendarEvent
 					}
 				}
 			}
-
 
 			CCalendar::UpdateCounter($userId);
 
@@ -3210,6 +3276,34 @@ class CCalendarEvent
 		}
 	}
 
+	public static function GetTextReminders($valueList = array())
+	{
+		if (is_array($valueList))
+		{
+			foreach($valueList as $i => $value)
+			{
+				$text = '';
+				if($value['type'] == 'min')
+				{
+					$value['text'] = Loc::getMessage('EC_REMIND_VIEW_'.$value['count']);
+					if(!$value['text'])
+					{
+						$value['text'] = Loc::getMessage('EC_REMIND_VIEW_MIN_COUNT', array('#COUNT#' => intval($value['count'])));
+					}
+				}
+				elseif($value['type'] == 'hour')
+				{
+					$value['text'] = Loc::getMessage('EC_REMIND_VIEW_HOUR_COUNT', array('#COUNT#' => intval($value['count'])));
+				}
+				elseif($value['type'] == 'day')
+				{
+					$value['text'] = Loc::getMessage('EC_REMIND_VIEW_DAY_COUNT', array('#COUNT#' => intval($value['count'])));
+				}
+				$valueList[$i] = $value;
+			}
+		}
+		return $valueList;
+	}
 
 	public static function getDiskUFFileNameList($valueList = array())
 	{
@@ -3303,35 +3397,74 @@ class CCalendarEvent
 		return $res;
 	}
 
+	public static function updateSearchIndex($eventIdList = array(), $params = array())
+	{
+		global $DB;
+
+		if (isset($params['events']))
+		{
+			$events = $params['events'];
+		}
+		else
+		{
+			if (!is_array($eventIdList))
+				$eventIdList = array($eventIdList);
+
+			$events = \CCalendarEvent::getList(
+				array(
+					'arFilter' => array(
+						"ID" => $eventIdList,
+						"DELETED" => false
+					),
+					'parseRecursion' => false,
+					'fetchAttendees' => true,
+					'checkPermissions' => false,
+					'setDefaultLimit' => false
+				)
+			);
+		}
+
+		if (is_array($events))
+		{
+			foreach($events as $event)
+			{
+				$content = self::formatSearchIndexContent($event);
+				$strSql = "UPDATE b_calendar_event SET ".
+					$DB->PrepareUpdate("b_calendar_event", array('SEARCHABLE_CONTENT' => $content)).
+					" WHERE ID=".IntVal($event['ID']);
+				$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			}
+		}
+	}
+
 	public static function formatSearchIndexContent($entry = array())
 	{
 		$content = '';
 		if (!empty($entry))
 		{
-			if (isset($entry['SEARCHABLE_CONTENT']) && !empty($entry['SEARCHABLE_CONTENT']))
-			{
-				$content = $entry['SEARCHABLE_CONTENT'];
-			}
-			else
-			{
-				$content = $entry['NAME'].' '.$entry['DESCRIPTION'];
+			$content = static::prepareToken($entry['NAME'].' '.$entry['DESCRIPTION']);
 
-				if ($entry['IS_MEETING'])
+			if ($entry['IS_MEETING'])
+			{
+				if(!empty($entry['~ATTENDEES']))
 				{
-					if(!empty($entry['~ATTENDEES']))
+					foreach($entry['~ATTENDEES'] as $user)
 					{
-						foreach($entry['~ATTENDEES'] as $user)
-						{
-							$content .= ' '.$user['DISPLAY_NAME'];
-						}
-					}
-
-					if(!empty($entry['ATTENDEES_CODES']))
-					{
-						$content .= ' '.join(' ', Bitrix\Socialnetwork\Item\LogIndex::getEntitiesName($entry['ATTENDEES_CODES']));
+						$content .= ' '.static::prepareToken($user['DISPLAY_NAME']);
 					}
 				}
 
+				if(!empty($entry['ATTENDEES_CODES']))
+				{
+					$content .= ' '.static::prepareToken(join(' ', Bitrix\Socialnetwork\Item\LogIndex::getEntitiesName($entry['ATTENDEES_CODES'])));
+				}
+			}
+			else
+			{
+				$content .= ' '.static::prepareToken(CCalendar::GetUserName($entry['CREATED_BY']));
+			}
+
+			try {
 				if (!empty($entry['UF_WEBDAV_CAL_EVENT'])
 					&& \Bitrix\Main\Config\Option::get('disk', 'successfully_converted', false)
 				)
@@ -3339,12 +3472,71 @@ class CCalendarEvent
 					$fileNameList = self::getDiskUFFileNameList($entry['UF_WEBDAV_CAL_EVENT']);
 					if (!empty($fileNameList))
 					{
-						$content .= ' '.join(' ', $fileNameList);
+						$content .= ' '.static::prepareToken(join(' ', $fileNameList));
 					}
 				}
 			}
+			catch (RuntimeException $e) {
+			}
+
+			try {
+				if (!empty($entry['UF_CRM_CAL_EVENT']) && Loader::includeModule('crm'))
+				{
+					$uf = $entry['UF_CRM_CAL_EVENT'];
+					foreach ($uf as $item)
+					{
+						$crmElement = explode('_', $item);
+						$type = $crmElement[ 0 ];
+						$typeId = \CCrmOwnerType::ResolveID(\CCrmOwnerTypeAbbr::ResolveName($type));
+						$title = \CCrmOwnerType::GetCaption($typeId, $crmElement[ 1 ]);
+						$index[] = $title;
+						$content .= ' '.static::prepareToken($title);
+					}
+				}
+			}
+			catch (RuntimeException $e) {
+			}
 		}
+
 		return $content;
+	}
+
+	public static function GetCount()
+	{
+		global $DB;
+		$count = 0;
+		$res = $DB->Query('select count(*) as c  from b_calendar_event', false, "File: ".__FILE__."<br>Line: ".__LINE__);
+
+		if($res = $res->Fetch())
+		{
+			$count = $res['c'];
+		}
+
+		return $count;
+	}
+
+	public static function updateColor($eventId, $color = '')
+	{
+		global $DB;
+		$strSql = "UPDATE b_calendar_event SET ".
+			$DB->PrepareUpdate("b_calendar_event", array('COLOR' => $color)).
+			" WHERE ID=".IntVal($eventId);
+		$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+	}
+
+	/**
+	 * Applies ROT13 transform to search token, in order to bypass default mysql search blacklist.
+	 * @param string $token Search token.
+	 * @return string
+	 */
+	public static function prepareToken($token)
+	{
+		return str_rot13($token);
+	}
+
+	public static function isFullTextIndexEnabled()
+	{
+		return COption::GetOptionString("calendar", "~ft_b_calendar_event", false);
 	}
 }
 ?>

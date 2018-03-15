@@ -27,11 +27,11 @@ class EntityMarker
 	protected static $pool = array();
 
 	/**
-	 * @param Order $order
+	 * @param OrderBase $order
 	 * @param Internals\Entity $entity
 	 * @param Result $result
 	 */
-	public static function addMarker(Order $order, Internals\Entity $entity, Result $result)
+	public static function addMarker(OrderBase $order, Internals\Entity $entity, Result $result)
 	{
 		$fields = array(
 			'ENTITY' => $entity,
@@ -99,13 +99,13 @@ class EntityMarker
 	}
 
 	/**
-	 * @param Order $order
+	 * @param OrderBase $order
 	 * @param $entityType
 	 * @param array $values
 	 *
 	 * @return bool
 	 */
-	protected static function addItem(Order $order, $entityType, array $values)
+	protected static function addItem(OrderBase $order, $entityType, array $values)
 	{
 		$orderCode = $order->getInternalId();
 
@@ -615,7 +615,7 @@ class EntityMarker
 		}
 		else
 		{
-			unset(static::$pool);
+			static::$pool = array();
 		}
 	}
 	/**

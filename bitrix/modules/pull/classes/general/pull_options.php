@@ -5,7 +5,7 @@ class CPullOptions
 {
 	static $optionDefaultConfig = null;
 	static $optionDefaultModule = null;
-	
+
 	public static function CheckNeedRun($bGetSectionStatus = true)
 	{
 		$arExcludeSites = CPullOptions::GetExcludeSites();
@@ -117,7 +117,7 @@ class CPullOptions
 
 		if ($flag=='Y')
 		{
-			CAgent::AddAgent("CPullChannel::CheckOnlineChannel();", "pull", "N", 100, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+100, "FULL"));
+			CAgent::AddAgent("CPullChannel::CheckOnlineChannel();", "pull", "N", 240, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+240, "FULL"));
 			CAgent::RemoveAgent("CPullStack::CheckExpireAgent();", "pull");
 		}
 		else
@@ -140,6 +140,7 @@ class CPullOptions
 		$result = COption::GetOptionString("pull", "push", self::GetDefaultOption("push"));
 		return $result == 'N'? false: true;
 	}
+
 	public static function SetPushStatus($flag = "N")
 	{
 		COption::SetOptionString("pull", "push", $flag=='Y'?'Y':'N');
@@ -150,7 +151,7 @@ class CPullOptions
 
 		return true;
 	}
-	
+
 	public static function GetPushMessagePerHit()
 	{
 		return intval(COption::GetOptionInt("pull", "push_message_per_hit", self::GetDefaultOption("push_message_per_hit")));
@@ -167,7 +168,7 @@ class CPullOptions
 	{
 		return COption::GetOptionString("pull", "guest", self::GetDefaultOption("guest")) == 'Y' && IsModuleInstalled('statistic');
 	}
-	
+
 	public static function SetGuestStatus($flag = "N")
 	{
 		COption::SetOptionString("pull", "guest", IsModuleInstalled('statistic') && $flag=='Y'?'Y':'N');
@@ -180,20 +181,20 @@ class CPullOptions
 		$url = COption::GetOptionString("pull", "path_to_publish", self::GetDefaultOption("path_to_publish")).(strlen($channelId)>0?'?CHANNEL_ID='.$channelId:'');
 		return $url;
 	}
-	
+
 	public static function SetSignatureKey($signature)
 	{
 		COption::SetOptionString("pull", "signature_key", $signature);
-		
+
 		return true;
 	}
-	
+
 	public static function GetSignatureKey()
 	{
 		$url = COption::GetOptionString("pull", "signature_key", self::GetDefaultOption("signature_key"));
 		return $url;
 	}
-	
+
 	public static function GetSignatureAlgorithm()
 	{
 		$url = COption::GetOptionString("pull", "signature_algo", self::GetDefaultOption("signature_algo"));
@@ -204,93 +205,57 @@ class CPullOptions
 	{
 		if (strlen($path)<=0)
 		{
-			include($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/pull/default_option.php');
-			$path = $pull_default_option["path_to_publish"];
+			$path = self::GetDefaultOption('path_to_publish');
 		}
-
 		COption::SetOptionString("pull", "path_to_publish", $path);
 		return true;
 	}
 
-	public static function GetListenUrl($channelId = "", $mobile = false, $modern = false)
+	public static function GetListenUrl($channelId = "")
 	{
 		if (!is_array($channelId) && strlen($channelId) > 0)
 			$channelId = Array($channelId);
 		else if (!is_array($channelId))
 			$channelId = Array();
 
-		$optionName = "path_to_".($modern? 'modern_': ($mobile? 'mobile_':''))."listener";
+		$optionName = "path_to_modern_listener";
 		$url = COption::GetOptionString("pull", $optionName, self::GetDefaultOption($optionName)).(count($channelId)>0?'?CHANNEL_ID='.implode('/', $channelId):'');
 		$url = str_replace('#PORT#', self::GetQueueServerVersion()>1? '': ':8893', $url);
 
 		return $url;
 	}
 
-	public static function SetListenUrl($path = "", $mobile = false, $modern = false)
+	public static function SetListenUrl($path = "")
 	{
-		$pathValue = $path;
-
-		if ($modern)
-		{
-			$pathName = "path_to_modern_listener";
-		}
-		else if ($mobile)
-		{
-			$pathName = "path_to_mobile_listener";
-		}
-		else
-		{
-			$pathName = "path_to_listener";
-		}
-
 		if (strlen($path)<=0)
 		{
-			include($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/pull/default_option.php');
-			$pathValue = $pull_default_option[$pathName];
+			$path = self::GetDefaultOption('path_to_modern_listener');
 		}
-
-		COption::SetOptionString("pull", $pathName, $pathValue);
+		COption::SetOptionString("pull", 'path_to_modern_listener', $path);
 		return true;
 	}
 
-	public static function GetListenSecureUrl($channelId = "", $mobile = false, $modern = false)
+	public static function GetListenSecureUrl($channelId = "")
 	{
 		if (!is_array($channelId) && strlen($channelId) > 0)
 			$channelId = Array($channelId);
 		else if (!is_array($channelId))
 			$channelId = Array();
 
-		$optionName = "path_to_".($modern? 'modern_': ($mobile? 'mobile_':''))."listener_secure";
+		$optionName = "path_to_modern_listener_secure";
 		$url = COption::GetOptionString("pull", $optionName, self::GetDefaultOption($optionName)).(count($channelId)>0?'?CHANNEL_ID='.implode('/', $channelId):'');
 		$url = str_replace('#PORT#', self::GetQueueServerVersion()>1? '': ':8894', $url);
 
 		return $url;
 	}
 
-	public static function SetListenSecureUrl($path = "", $mobile = false, $modern = false)
+	public static function SetListenSecureUrl($path = "")
 	{
-		$pathValue = $path;
-
-		if ($modern)
-		{
-			$pathName = "path_to_modern_listener_secure";
-		}
-		else if ($mobile)
-		{
-			$pathName = "path_to_mobile_listener_secure";
-		}
-		else
-		{
-			$pathName = "path_to_listener_secure";
-		}
-
 		if (strlen($path)<=0)
 		{
-			include($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/pull/default_option.php');
-			$pathValue = $pull_default_option[$pathName];
+			$path = self::GetDefaultOption('path_to_modern_listener_secure');
 		}
-
-		COption::SetOptionString("pull", $pathName, $pathValue);
+		COption::SetOptionString("pull", 'path_to_modern_listener_secure', $path);
 		return true;
 	}
 
@@ -298,7 +263,8 @@ class CPullOptions
 	 * Get version of QueueServer
 	 * 1 version - nginx-push-stream-module 0.3.4
 	 * 2 version - nginx-push-stream-module 0.4.0
-	 * 3 version - Bitrix Push & Pull server
+	 * 3 version - Bitrix Push & Pull server 1.0
+	 * 4 version - Bitrix Push & Pull server 2.0 (reserved)
 	 */
 	public static function GetQueueServerVersion()
 	{
@@ -331,7 +297,17 @@ class CPullOptions
 
 	public static function GetWebSocket()
 	{
-		return COption::GetOptionString("pull", "websocket", self::GetDefaultOption("websocket")) == 'Y'? true: false;
+		$result = false;
+
+		if (
+			CPullOptions::GetQueueServerVersion() == 3
+			|| COption::GetOptionString("pull", "websocket", self::GetDefaultOption("websocket")) == 'Y'
+		)
+		{
+			$result = true;
+		}
+
+		return $result;
 	}
 
 	public static function SetWebSocket($flag = "N")
@@ -355,14 +331,13 @@ class CPullOptions
 	{
 		if (strlen($path)<=0)
 		{
-			include($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/pull/default_option.php');
-			$path = $pull_default_option["path_to_websocket"];
+			$path = self::GetDefaultOption('path_to_websocket');
 		}
 
 		COption::SetOptionString("pull", "path_to_websocket", $path);
 		return true;
 	}
-	
+
 	public static function GetWebSocketSecureUrl($channelId = "")
 	{
 		if (!is_array($channelId) && strlen($channelId) > 0)
@@ -378,8 +353,7 @@ class CPullOptions
 	{
 		if (strlen($path)<=0)
 		{
-			include($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/pull/default_option.php');
-			$path = $pull_default_option["path_to_websocket_secure"];
+			$path = self::GetDefaultOption('path_to_websocket_secure');
 		}
 
 		COption::SetOptionString("pull", "path_to_websocket_secure", $path);
@@ -392,12 +366,12 @@ class CPullOptions
 	{
 		$arMessage = Array(
 			'module_id' => 'pull',
-			'command' => 'config_die',
-			'params' => ''
+			'command' => 'config_expire',
+			'params' => Array()
 		);
 		CPullStack::AddBroadcast($arMessage);
 	}
-	
+
 	public static function GetDefaultOption($optionName)
 	{
 		if (is_null(self::$optionDefaultConfig))
@@ -405,17 +379,18 @@ class CPullOptions
 			$config = \Bitrix\Main\Config\Configuration::getValue('pull');
 			self::$optionDefaultConfig = is_null($config) ? Array() : $config;
 		}
+
 		if (is_null(self::$optionDefaultModule))
 		{
 			include($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/pull/default_option.php');
 			self::$optionDefaultModule = $pull_default_option;
 		}
-		
+
 		if (array_key_exists($optionName, self::$optionDefaultConfig))
 		{
 			return self::$optionDefaultConfig[$optionName];
 		}
-		
+
 		return array_key_exists($optionName, self::$optionDefaultModule)? self::$optionDefaultModule[$optionName]: null;
 	}
 
@@ -436,7 +411,7 @@ class CPullOptions
 
 		if (self::ModuleEnable())
 		{
-			CAgent::AddAgent("CPullChannel::CheckOnlineChannel();", "pull", "N", 100, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+100, "FULL"));
+			CAgent::AddAgent("CPullChannel::CheckOnlineChannel();", "pull", "N", 240, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset()+100, "FULL"));
 			CAgent::AddAgent("CPullChannel::CheckExpireAgent();", "pull", "N", 43200, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset() + 43200, "FULL"));
 			CAgent::AddAgent("CPullStack::CheckExpireAgent();", "pull", "N", 86400, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset() + 86400, "FULL"));
 			CAgent::AddAgent("CPullWatch::CheckExpireAgent();", "pull", "N", 600, "", "Y", ConvertTimeStamp(time()+CTimeZone::GetOffset() + 600, "FULL"));
@@ -458,7 +433,7 @@ class CPullOptions
 		{
 			$userId = PULL_USER_ID;
 		}
-		else if ($GLOBALS['USER'] && intval($GLOBALS['USER']->GetID()) > 0)
+		else if (is_object($GLOBALS['USER']) && intval($GLOBALS['USER']->GetID()) > 0)
 		{
 			$userId = intval($GLOBALS['USER']->GetID());
 		}

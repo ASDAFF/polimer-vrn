@@ -378,20 +378,23 @@ $arTabs = array(
 		// A - NO ACCESS, E - READ, I - ANSWER
 		// M - NEW TOPIC
 		// Q - MODERATE, U - EDIT, Y - FULL_ACCESS
-		$APPLICATION->IncludeComponent("bitrix:forum.comments", "bitrix24", array(
-				"FORUM_ID" => $set['forum_id'],
-				"ENTITY_TYPE" => "EV", //
-				"ENTITY_ID" => $eventCommentId, //Event id
-				"ENTITY_XML_ID" => CCalendarEvent::GetEventCommentXmlId($event), //
-				"PERMISSION" => $permission, //
-				"URL_TEMPLATES_PROFILE_VIEW" => $set['path_to_user'],
-				"SHOW_RATING" => "Y",
-				"SHOW_LINK_TO_MESSAGE" => "N",
-				"BIND_VIEWER" => "Y"
-			),
-			false,
-			array('HIDE_ICONS' => 'Y')
-		);
+		if ($eventCommentId > 0)
+		{
+			$APPLICATION->IncludeComponent("bitrix:forum.comments", "bitrix24", array(
+					"FORUM_ID" => $set['forum_id'],
+					"ENTITY_TYPE" => "EV", //
+					"ENTITY_ID" => $eventCommentId, //Event id
+					"ENTITY_XML_ID" => CCalendarEvent::GetEventCommentXmlId($event), //
+					"PERMISSION" => $permission, //
+					"URL_TEMPLATES_PROFILE_VIEW" => $set['path_to_user'],
+					"SHOW_RATING" => "Y",
+					"SHOW_LINK_TO_MESSAGE" => "N",
+					"BIND_VIEWER" => "Y"
+				),
+				false,
+				array('HIDE_ICONS' => 'Y')
+			);
+		}
 		?>
 	</div>
 <?endif;?>

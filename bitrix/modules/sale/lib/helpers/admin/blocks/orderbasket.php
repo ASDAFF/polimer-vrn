@@ -59,7 +59,11 @@ class OrderBasket
 		$this->createProductBasement = $createProductBasement;
 		$this->mode = $mode;
 		$this->weightUnit = htmlspecialcharsbx(Option::get('sale', 'weight_unit', "", $this->order->getSiteId()));
-		$this->weightKoef = htmlspecialcharsbx(Option::get('sale', 'weight_koef', 1, $this->order->getSiteId()));
+		$this->weightKoef = floatval(Option::get('sale', 'weight_koef', 1, $this->order->getSiteId()));
+
+		if($this->weightKoef <= 0)
+			$this->weightKoef = 1;
+
 		$this->isShowXmlId = Option::get("sale", "show_order_product_xml_id", "N") == "Y";
 
 		if(strlen($jsObjName)>0 && strlen($idPrefix)>0)
@@ -546,8 +550,12 @@ class OrderBasket
 		$result = array();
 
 		foreach($products as $product)
+		{
 			if($product['PRODUCT_ID'] == $productId && intval($product['OFFER_ID']) > 0)
+			{
 				$result[] = $product['OFFER_ID'];
+			}
+		}
 
 		return $result;
 	}
@@ -581,18 +589,26 @@ class OrderBasket
 
 				$productIds[] = $params['PRODUCT_ID'];
 
-				if($this->mode == self::VIEW_MODE)
-					$skuFilter['ID'] = array_merge($skuFilter['ID'], $this->getOffersIds($params["PRODUCT_ID"], $productsParams["ITEMS"]));
+				if ($this->mode == self::VIEW_MODE)
+				{
+					if ((int)$params['OFFER_ID'] > 0)
+					{
+						$skuFilter['ID'][] = $params['OFFER_ID'];
+					}
+				}
 
-				if(!in_array($params["IBLOCK_ID"], $ibs))
+				if (!isset($ibs[$params["IBLOCK_ID"]]))
 				{
 					$props = static::getSkuProps(true, $params["IBLOCK_ID"]);
-
-					if($props)
+					if (!empty($props))
+					{
 						foreach($props as $prop)
+						{
 							$propFilter['ID'][] = $prop['ID'];
+						}
+					}
 
-					$ibs[] = $params["IBLOCK_ID"];
+					$ibs[$params["IBLOCK_ID"]] = true;
 				}
 
 				if($params["PRODUCT_ID"] != $params["OFFER_ID"])
@@ -849,16 +865,20 @@ class OrderBasket
 		return $result;
 	}
 
+	/**
+	 * @param int[] $productsIds
+	 * @param string $siteId
+	 * @param array $fields
+	 * @param int $userId
+	 * @return array
+	 * @throws Main\ArgumentNullException
+	 */
 	public static function getProductsData(array $productsIds, $siteId, array $fields = array(), $userId = 0)
 	{
 		if(empty($productsIds))
 			return array();
 
-		global $USER;
 		$result = array();
-
-		if($userId <= 0)
-			$userId = $USER->GetID();
 
 		foreach($productsIds as  $id)
 		{
@@ -1650,17 +1670,16 @@ class OrderBasket
 			$arBuyerGroups = $buyersGroups[$userId];
 
 			// price
-			$currentVatMode = \CCatalogProduct::getPriceVatIncludeMode();
-			$currentUseDiscount = \CCatalogProduct::getUseDiscount();
-			\CCatalogProduct::setUseDiscount(!$isSetItem);
-			\CCatalogProduct::setPriceVatIncludeMode(true);
-			\CCatalogProduct::setUsedCurrency(Sale\Internals\SiteCurrencyTable::getSiteCurrency($LID));
+			Catalog\Product\Price\Calculation::pushConfig();
+			Catalog\Product\Price\Calculation::setConfig(array(
+				'CURRENCY' => Sale\Internals\SiteCurrencyTable::getSiteCurrency($LID),
+				'PRECISION' => (int)Main\Config\Option::get('sale', 'value_precision'),
+				'USE_DISCOUNTS' => !$isSetItem,
+				'RESULT_WITH_VAT' => true
+			));
 			$arPrice = \CCatalogProduct::getOptimalPrice($arElementInfo["ID"], 1, $arBuyerGroups, "N", array(), $LID);
-			\CCatalogProduct::clearUsedCurrency();
-			\CCatalogProduct::setPriceVatIncludeMode($currentVatMode);
-			\CCatalogProduct::setUseDiscount($currentUseDiscount);
+			Catalog\Product\Price\Calculation::popConfig();
 			$priceType = GetCatalogGroup($arPrice["PRICE"]["CATALOG_GROUP_ID"]);
-			unset($currentUseDiscount, $currentVatMode);
 
 			$currentPrice = $arPrice['RESULT_PRICE']['DISCOUNT_PRICE'];
 			$arElementInfo['PRICE'] = $currentPrice;
@@ -1966,6 +1985,8 @@ class OrderBasket
 					$catalogProductIds[] = $item->getProductId();
 
 			$catalogPreparedData = static::getProductsData($catalogProductIds, $this->order->getSiteId(), $this->visibleColumns, $this->order->getUserId());
+
+
 			$providerData = Provider::getProductData($basket, array("PRICE"));
 
 			/** @var \Bitrix\Sale\BasketItem $item */
@@ -2023,28 +2044,27 @@ class OrderBasket
 					{
 						$result["ADDED_PRODUCTS"][] = $basketCode;
 					}
+				}
 
-					//Let's cache provider product data into form field
-					if(!Provider::isExistsTrustData($this->order->getSiteId(), 'sale', $item->getProductId()))
+				//Let's cache provider product data into form field
+				if(!Provider::isExistsTrustData($this->order->getSiteId(), 'sale', $item->getProductId()))
+				{
+					$basketItem = $basket->getItemByBasketCode($basketCode);
+					if($basketItem)
 					{
-						if(isset($providerData[$basketCode]))
-							$data = $providerData[$basketCode];
-						else
-							$data = Provider::getProductData($basket, array("PRICE"), $item);
-
-						if(is_array($data[$basketCode]) && !empty($data[$basketCode]))
+						if (!empty($providerData[$basketCode]))
 						{
-							\Bitrix\Sale\Helpers\Admin\OrderEdit::setProviderTrustData($item, $this->order, $data[$basketCode]);
-							$params["PROVIDER_DATA"] = serialize($data[$basketCode]);
+							\Bitrix\Sale\Helpers\Admin\OrderEdit::setProviderTrustData($item, $this->order, $providerData[$basketCode]);
+							$params["PROVIDER_DATA"] = serialize($providerData[$basketCode]);
 						}
 					}
-					else
-					{
-						$providerData = Provider::getTrustData($this->order->getSiteId(), 'sale', $item->getProductId());
+				}
+				else
+				{
+					$providerData = Provider::getTrustData($this->order->getSiteId(), 'sale', $item->getProductId());
 
-						if(is_array($providerData) && !empty($providerData))
-							$params["PROVIDER_DATA"] = serialize($providerData);
-					}
+					if(is_array($providerData) && !empty($providerData))
+						$params["PROVIDER_DATA"] = serialize($providerData);
 				}
 
 				if(is_array($params["SET_ITEMS"]) && !empty($params["SET_ITEMS"]))
@@ -2130,22 +2150,16 @@ class OrderBasket
 
 			if($basket)
 			{
-				$items = $basket->getBasketItems();
-
 				if (!$discounts)
 					$discounts = OrderEdit::getDiscountsApplyResult($this->order, true);
 
-				/** @var \Bitrix\Sale\BasketItem $item */
-				foreach($items as $item)
-				{
-					$basketPriceBase += $item->getField('BASE_PRICE') * $item->getQuantity();
-					$basketPrice += $item->getField('PRICE') * $item->getQuantity();
-				}
+				$basketPriceBase = $basket->getBasePrice();
+				$basketPrice = $basket->getPrice();
 			}
 
 			$result = array(
-				"BASKET_PRICE_BASE" => $basketPriceBase, $this->order->getCurrency(),
-				"BASKET_PRICE" => $basketPrice, $this->order->getCurrency()
+				"BASKET_PRICE_BASE" => $basketPriceBase,
+				"BASKET_PRICE" => $basketPrice,
 			);
 
 			$result["DISCOUNT_VALUE"] = $result["BASKET_PRICE_BASE"] - $result["BASKET_PRICE"];

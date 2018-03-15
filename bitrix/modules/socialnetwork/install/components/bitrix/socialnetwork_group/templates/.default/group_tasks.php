@@ -20,9 +20,9 @@ if (CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $arResult["VARIABLES"][
 			case 'VIEW_MODE_KANBAN':
 				$componentName = 'bitrix:tasks.kanban';
 				break;
-			case 'VIEW_MODE_TIMELINE':
-				$componentName = 'bitrix:tasks.timeline';
-				break;
+//			case 'VIEW_MODE_TIMELINE':
+//				$componentName = 'bitrix:tasks.timeline';
+//				break;
 			default:
 				$componentName = 'bitrix:tasks.task.list';
 				break;
@@ -39,6 +39,7 @@ if (CSocNetFeatures::IsActiveFeature(SONET_ENTITY_GROUP, $arResult["VARIABLES"][
 		Array(
 			"INCLUDE_INTERFACE_HEADER" => "Y",
 			"PERSONAL" => $state["VIEW_SELECTED"]["CODENAME"] == "VIEW_MODE_PLAN" ? "Y" : "N",
+			"KANBAN_SHOW_VIEW_MODE"=>'Y',
 			"GROUP_ID" => $arResult["VARIABLES"]["group_id"],
 			"ITEMS_COUNT" => "50",
 			"PAGE_VAR" => $arResult["ALIASES"]["page"],

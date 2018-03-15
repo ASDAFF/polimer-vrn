@@ -13,11 +13,6 @@
 
 		ajaxUrl: "/bitrix/admin/sale_cashbox_ajax.php",
 
-		init: function ()
-		{
-			this.toggleKkmList();
-		},
-
 		getRestrictionParamsHtml: function (params)
 		{
 			if (!params.class)
@@ -339,33 +334,15 @@
 			});
 		},
 
-		toggleKkmList: function()
-		{
-			var handler = BX('HANDLER').value;
-			var tr = BX('KKM_ID').parentNode.parentNode;
-			if (tr)
-			{
-				if (handler === '\\Bitrix\\Sale\\Cashbox\\CashboxBitrix')
-				{
-					tr.style.display = 'table-row';
-					BX('KKM_ID').disabled = false;
-				}
-				else
-				{
-					tr.style.display = 'none';
-					BX('KKM_ID').disabled = true;
-				}
-			}
-		},
-
 		reloadSettings: function()
 		{
-			this.toggleKkmList();
-
+			var kkmId = BX('KKM_ID');
+			kkmId = (kkmId) ? kkmId.value : '';
+			
 			BX.ajax({
 				data: {
 					'action': 'reload_settings',
-					'kkmId': BX('KKM_ID').value || 0,
+					'kkmId': kkmId,
 					'handler': BX('HANDLER').value || '',
 					'sessid': BX.bitrix_sessid()
 				},
@@ -377,12 +354,56 @@
 						BX.closeWait();
 						if (result && result.hasOwnProperty('HTML'))
 							BX('sale-cashbox-settings-container').innerHTML = result.HTML;
+
+						if (result && result.hasOwnProperty('MODEL_HTML'))
+						{
+							BX('sale-cashbox-models-container').innerHTML = result.MODEL_HTML;
+						}
+						else
+						{
+							BX('sale-cashbox-models-container').innerHTML = '';
+						}
+
+						if (result.hasOwnProperty('GENERAL_REQUIRED_FIELDS'))
+						{
+							var generalBlock = BX('edit1_edit_table');
+							var tr = BX.findChildren(generalBlock, {tag : 'tr'}, true);
+							for (var i in tr)
+							{
+								if (tr.hasOwnProperty(i))
+								{
+									var span = BX.findChild(tr[i], {tag : 'span'} ,true);
+									if (span)
+									{
+										var className = span.className;
+										if (className && className.indexOf('adm-required-field') > -1)
+											span.className = '';
+									}
+									
+									var id = tr[i].getAttribute('id');
+									if (id)
+										id = id.slice(3);
+
+									if (result.GENERAL_REQUIRED_FIELDS.hasOwnProperty(id))
+									{
+										if (span)
+										{
+											span.className = 'adm-required-field';
+										}
+										else
+										{
+											tr[i].firstElementChild.innerHTML = '<span class="adm-required-field">'+tr[i].firstElementChild .innerHTML+'</span>';
+										}
+									}
+								}
+							}
+						}
 					}, this
 				),
 				onfailure: function() {BX.debug('onfailure: reloadSettings');}
 			});
 		},
-
+		
 		reloadOfdSettings: function()
 		{
 			BX.ajax({
@@ -405,145 +426,65 @@
 			});
 		},
 
-		showCreateCheckWindow: function(type)
+
+		showCreateCheckWindow: function()
 		{
-			var data = {
-				action: 'addCheckOrder',
-				type: type || null,
-				returnHtml: true,
-				sessid: BX.bitrix_sessid()
-			};
+			var form = BX.create('form', { props : {name : 'check_form_add', id : 'check_form_add'}});
+			var div = BX.create('div', {attrs : {className : 'adm-info-message'},  text : BX.message('CASHBOX_ADD_CHECK_TITLE')});
+			form.appendChild(div);
 
-			BX.ajax(
-			{
-				method: 'post',
-				dataType: 'json',
-				url: '/bitrix/admin/sale_order_ajax.php',
-				data: data,
-				onsuccess: function(result)
-				{
-					if (result.ERROR && result.ERROR.length > 0)
-					{
-						alert(result.ERROR);
-					}
-					else
-					{
-						var dlg = new BX.CAdminDialog({
-							'title': BX.message('CASHBOX_CREATE_WINDOW_TITLE'),
-							'content': result.HTML,
-							'resizable': false,
-							'draggable': true,
-							'height': '300',
-							'width': '516',
-							'buttons': [
-								{
-									title: BX.message('JS_CORE_WINDOW_SAVE'),
-									id: 'saveCheckBtn',
-									name: 'savebtn',
-									className: top.BX.browser.IsIE() && top.BX.browser.IsDoctype() && !top.BX.browser.IsIE10() ? '' : 'adm-btn-save'
-								},
-								{
-									title: top.BX.message('JS_CORE_WINDOW_CANCEL'),
-									id: 'cancelCheckBtn',
-									name: 'cancel'
-								}
-							]
-						});
-						var orderInput = BX('checkInputOrder');
-						var paymentSelect = BX('checkSelectPayment');
-						var shipmentSelect = BX('checkSelectShipment');
-						var typeSelect = BX('checkSelectType');
-						dlg.Show();
-						BX.bind(BX("checkInputOrder"), 'input', BX.delegate(
-							function()
-							{
-								var sendData = {
-									sessid : BX.bitrix_sessid(),
-									orderId: orderInput.value,
-									paymentId: paymentSelect.value,
-									shipmentId: shipmentSelect.value,
-									typeId: typeSelect.value,
-									action: 'addCheckOrder'
-								};
-
-								BX.ajax(
-									{
-										method: 'post',
-										dataType: 'json',
-										url: '/bitrix/admin/sale_order_ajax.php',
-										data: sendData,
-										onsuccess: function (result)
-										{
-											var htmlSelectData ='';
-											if (result.ERROR && result.ERROR.length > 0)
-											{
-												alert(result.ERROR);
-											}
-											else
-											{
-												htmlSelectData = "<option selected='selected' value=''>"+ BX.message('CASHBOX_CREATE_WINDOW_NOT_SELECT') +"</option>";
-												if (result.ORDER_DATA.PAYMENT && result.ORDER_DATA.PAYMENT.length > 0)
-												{
-													paymentSelect.removeAttribute('disabled');
-													for (var i in result.ORDER_DATA.PAYMENT)
-													{
-														htmlSelectData = htmlSelectData + '<option value="'+ result.ORDER_DATA.PAYMENT[i].ID+'">'+result.ORDER_DATA.PAYMENT[i].NAME+'</option>';
-													}
-												}
-												else
-												{
-													paymentSelect.setAttribute('disabled', 'disabled');
-												}
-
-												paymentSelect.innerHTML = htmlSelectData;
-
-												htmlSelectData = "<option selected='selected' value=''>"+ BX.message('CASHBOX_CREATE_WINDOW_NOT_SELECT') +"</option>";
-												if (result.ORDER_DATA.SHIPMENT && result.ORDER_DATA.SHIPMENT.length > 0)
-												{
-													shipmentSelect.removeAttribute('disabled');
-													for (i in result.ORDER_DATA.SHIPMENT)
-													{
-														htmlSelectData = htmlSelectData + '<option value="'+ result.ORDER_DATA.SHIPMENT[i].ID+'">'+ result.ORDER_DATA.SHIPMENT[i].NAME+'</option>';
-													}
-												}
-												else
-												{
-													shipmentSelect.setAttribute('disabled', 'disabled');
-												}
-
-												shipmentSelect.innerHTML = htmlSelectData;
-											}
-										},
-										onfailure: function() {BX.debug('Select params error');}
+			var table = BX.create(
+				'table', {
+					props : {id : 'check_add_control_table'},
+					children : [
+						BX.create('tr', {children: [
+							BX.create('td', {text : BX.message('CASHBOX_ADD_CHECK_INPUT_ORDER')+':'}),
+							BX.create('td', {children : [
+								BX.create('input', {
+									props : {
+										name : 'ORDER_ID',
+										onchange : BX.delegate(function () { this.onChangeInputOrderId(); }, this)
+									},
+									attrs : {
+										className : 'sale-discount-bus-select',
+										value : '',
+										type : 'text'
 									}
-								);
-							}
-						),this);
+								})
+							]})
+						]}),
+						BX.create('tr', {props : {id : 'check_entities_body'}}),
+						BX.create('tbody', {props : {id : 'check_info_block'}})
+					]
+				}
+			);
+			form.appendChild(table);
 
-						BX.bind(BX("cancelCheckBtn"), 'click', BX.delegate(
+			var dlg = new BX.CAdminDialog({
+				'title': BX.message('CASHBOX_CREATE_WINDOW_TITLE'),
+				'content': form,
+				'resizable': false,
+				'draggable': true,
+				'height': '300',
+				'width': '516',
+				'buttons': [
+					{
+						title: BX.message('JS_CORE_WINDOW_SAVE'),
+						className: top.BX.browser.IsIE() && top.BX.browser.IsDoctype() && !top.BX.browser.IsIE10() ? '' : 'adm-btn-save',
+						action : BX.delegate(
 							function()
 							{
-								dlg.Close();
-								dlg.DIV.parentNode.removeChild(dlg.DIV);
-							}
-						),this );
-
-						BX.bind(BX("saveCheckBtn"), 'click', BX.delegate(
-							function()
-							{
+								var form = BX('check_form_add');
 								var sendData = {
 									sessid : BX.bitrix_sessid(),
-									orderId: orderInput.value,
-									paymentId: paymentSelect.value,
-									shipmentId: shipmentSelect.value,
-									typeId: typeSelect.value,
-									action: 'saveCheck'
+									formData : BX.ajax.prepareForm(form),
+									action: 'add_check'
 								};
 								BX.ajax(
 									{
 										method: 'post',
 										dataType: 'json',
-										url: '/bitrix/admin/sale_order_ajax.php',
+										url: '/bitrix/admin/sale_cashbox_ajax.php',
 										data: sendData,
 										onsuccess: function (result)
 										{
@@ -560,13 +501,413 @@
 										onfailure: function() {BX.debug('Select params error');}
 									}
 								);
+			
+							},
+							this
+						)
+					},
+					{
+						title: top.BX.message('JS_CORE_WINDOW_CANCEL'),
+						id: 'cancelCheckBtn',
+						name: 'cancel'
+					}
+				]
+			});
 
+			BX.bind(BX("cancelCheckBtn"), 'click', BX.delegate(
+				function()
+				{
+					dlg.Close();
+					dlg.DIV.parentNode.removeChild(dlg.DIV);
+				}
+			),this );
+
+			dlg.Show();
+		},
+
+
+		onChangeInputOrderId : function ()
+		{
+			var form = BX('check_form_add');
+			var sendData = {
+				sessid : BX.bitrix_sessid(),
+				formData: BX.ajax.prepareForm(form),
+				action: 'get_order_entities'
+			};
+
+			BX.ajax({
+				method: 'post',
+				dataType: 'json',
+				url: '/bitrix/admin/sale_cashbox_ajax.php',
+				data: sendData,
+				onsuccess: BX.delegate(function (result)
+				{
+					if (result.ERROR && result.ERROR.length > 0)
+					{
+						alert(result.ERROR);
+					}
+					else
+					{
+						var group, option, i;
+
+						var select = BX.create('select', {
+							props : {
+								id : 'ENTITY_CODE',
+								name : 'ENTITY_CODE',
+								onchange : BX.delegate(function() {
+									var form = BX('check_form_add');
+									
+									var sendData = {
+										sessid : BX.bitrix_sessid(),
+										formData: BX.ajax.prepareForm(form),
+										action: 'get_data_for_check'
+									};
+
+									BX.ajax({
+										method: 'post',
+										dataType: 'json',
+										url: '/bitrix/admin/sale_cashbox_ajax.php',
+										data: sendData,
+										onsuccess: BX.delegate(function (result)
+										{
+											if (result.ERROR && result.ERROR.length > 0)
+											{
+												alert(result.ERROR);
+											}
+											else
+											{
+												var tbody = BX('check_info_block');
+												tbody.innerHTML = '';
+
+												var elements = this.constructCheckInfoBlock(result);
+												for (i in elements)
+												{
+													if (elements.hasOwnProperty(i))
+														tbody.appendChild(elements[i]);
+												}
+											}
+										}, this),
+										onfailure: function() {BX.debug('Select params error');}
+									});
+								},this)
 							}
-						),this);
+						});
+						if (result.PAYMENTS)
+						{
+							group = BX.create('optgroup', {
+								attrs : {
+									label : BX.message('CASHBOX_ADD_CHECK_OPTGROUP_PAYMENTS')
+								}
+							});
+							for (i in result.PAYMENTS)
+							{
+								if (result.PAYMENTS.hasOwnProperty(i))
+								{
+									option = BX.create('option', {
+										text : BX.message('CASHBOX_ADD_CHECK_PAYMENT')+' '+result.PAYMENTS[i].ID,
+										attrs : { value : result.PAYMENTS[i].CODE }
+									});
+
+									group.appendChild(option);
+								}
+							}
+
+							select.appendChild(group);
+						}
+
+						if (result.SHIPMENTS)
+						{
+							group = BX.create('optgroup', {
+								attrs : {
+									label : BX.message('CASHBOX_ADD_CHECK_OPTGROUP_SHIPMENTS')
+								}
+							});
+							for (i in result.SHIPMENTS)
+							{
+								if (result.SHIPMENTS.hasOwnProperty(i))
+								{
+									option = BX.create('option', {
+										text : BX.message('CASHBOX_ADD_CHECK_SHIPMENT')+' '+result.SHIPMENTS[i].ID,
+										attrs : { value : result.SHIPMENTS[i].CODE }
+									});
+									group.appendChild(option);
+								}
+							}
+							select.appendChild(group);
+						}
+						
+						var tr = BX('check_info_block');
+						tr.innerHTML = '';
+						
+						tr = BX('check_entities_body');
+						tr.innerHTML = '';
+
+						var td = BX.create('td', { text: BX.message('CASHBOX_ADD_CHECK_ENTITIES')+': '});
+						tr.appendChild(td);
+						td = BX.create('td', {children : [select]});
+						tr.appendChild(td);
+						
+						select.onchange();
+					}
+				},this),
+				onfailure: function() {BX.debug('Select params error');}
+			});
+		},
+		
+		constructCheckInfoBlock : function (data)
+		{
+			var i, element;
+			
+			var result = [];
+			
+			select = BX.create('select', {
+				attrs : {id : 'CHECK_TYPE'},
+				props : {
+					name : 'CHECK_TYPE',
+					onchange : BX.delegate(function ()
+					{
+						var td = BX('related_entity_list');
+						td.innerHTML = '';
+						BX.hide(td.parentNode);
+
+						var entityCode = BX('ENTITY_CODE').value;
+						var sendData = {
+							sessid : BX.bitrix_sessid(),
+							entityCode: entityCode,
+							checkType: BX('CHECK_TYPE').value,
+							action: 'get_related_entities'
+						};
+
+						BX.ajax({
+							method: 'post',
+							dataType: 'json',
+							url: '/bitrix/admin/sale_cashbox_ajax.php',
+							data: sendData,
+							onsuccess: BX.delegate(function (result)
+							{
+								if (result.ERROR && result.ERROR.length > 0)
+								{
+									alert(result.ERROR);
+								}
+								else
+								{
+									var td = BX('related_entity_list');
+
+									if (result.PAYMENTS)
+									{
+										for (i in result.PAYMENTS)
+										{
+											if (!result.PAYMENTS.hasOwnProperty(i))
+												continue;
+						
+											element = this.createSinglePayment(result.PAYMENTS[i]);
+											td.appendChild(element);
+										}
+									}
+
+									if (result.SHIPMENTS)
+									{
+										for (i in result.SHIPMENTS)
+										{
+											if (!result.SHIPMENTS.hasOwnProperty(i))
+												continue;
+						
+											element = this.createSingleShipment(result.SHIPMENTS[i], result.FFD_105_ENABLED);
+											td.appendChild(element);
+										}
+									}
+									
+									var tdTitle = td.parentNode;
+									if (!result.PAYMENTS && !result.SHIPMENTS)
+									{
+										BX.hide(tdTitle);
+									}
+									else
+									{
+										BX.show(tdTitle, 'table-row');
+									}
+								}
+							}, this),
+							onfailure: function() {BX.debug('Select params error');}
+						});
+					}, this)
+				}
+			});
+			for (i in data.CHECK_TYPES)
+			{
+				if (!data.CHECK_TYPES.hasOwnProperty(i))
+					continue;
+				
+				option = BX.create('option', {
+					text : data.CHECK_TYPES[i].NAME,
+					attrs : {
+						value : data.CHECK_TYPES[i].ID
+					}
+				});
+
+				select.appendChild(option);
+			}
+			
+			var tr = BX.create('tr', {
+				children : [
+					BX.create('td', {text : BX.message('CASHBOX_ADD_CHECK_TYPE_CHECKS')+': '}),
+					BX.create('td', {children : [select]})
+				]
+			});
+
+			result.push(tr);
+
+			var td = BX.create('td', {attrs : {id : 'related_entity_list'}});
+			if (data.PAYMENTS)
+			{
+				for (i in data.PAYMENTS)
+				{
+					if (!data.PAYMENTS.hasOwnProperty(i))
+						continue;
+
+					element = this.createSinglePayment(data.PAYMENTS[i]);
+					td.appendChild(element);
+				}
+			}
+			if (data.SHIPMENTS)
+			{
+				for (i in data.SHIPMENTS)
+				{
+					if (!data.SHIPMENTS.hasOwnProperty(i))
+						continue;
+
+					element = this.createSingleShipment(data.SHIPMENTS[i], data.FFD_105_ENABLED);
+					td.appendChild(element);
+				}
+			}
+			
+			tr = BX.create('tr', {
+				children : [
+					BX.create('td', {text : BX.message('CASHBOX_ADD_CHECK_ADDITIONAL_ENTITIES')+': '}),
+					td
+				]
+			});
+
+			result.push(tr);
+			
+			return result;
+		},
+
+		createSinglePayment : function (payment)
+		{
+			var checkbox = BX.create('input', {
+				props : {
+					id : 'payment_'+payment.ID,
+					name : 'PAYMENTS['+payment.ID+'][ID]',
+					onclick : function ()
+					{
+						var label = this.nextElementSibling;
+						if (this.checked)
+							label.style.color = '';
+						else
+							label.style.color = '#D2D1D1';
+						
+						var select = label.nextElementSibling;
+						if (select)
+							select.disabled = !this.checked;
 					}
 				},
-				onfailure: function() {BX.debug('Create window error');}
+				attrs : {
+					type : 'checkbox',
+					value : payment.ID
+				}
 			});
+
+			var div = BX.create('div', {children : [
+				checkbox,
+				BX.create('label', {
+					text : BX.message('CASHBOX_ADD_CHECK_PAYMENT')+' '+payment.ID+': '+payment.NAME+' ',
+					attrs : {
+						style : 'color: #D2D1D1',
+						for : 'payment_'+payment.ID
+					}
+				})
+			]});
+
+			if (payment.PAYMENT_TYPES)
+			{
+				var select = BX.create('select', {
+					props: {
+						name: 'PAYMENTS[' + payment.ID + '][TYPE]',
+						id: 'payment_' + payment.ID
+					},
+					attrs: {disabled: 'disabled'}
+				});
+
+				for (j in payment.PAYMENT_TYPES)
+				{
+					if (!payment.PAYMENT_TYPES.hasOwnProperty(j))
+						continue;
+					
+					var option = BX.create('option', {
+						text: payment.PAYMENT_TYPES[j].NAME,
+						attrs: {
+							value: payment.PAYMENT_TYPES[j].CODE
+						}
+					});
+					select.appendChild(option);
+				}
+
+				div.appendChild(select);
+			}
+			
+			return div;
+		},
+		
+		createSingleShipment: function(shipment, isFfd105Enable)
+		{
+			var checkbox = BX.create('input', {
+				props : {
+					id : 'shipment_'+shipment.ID,
+					name : 'SHIPMENTS['+shipment.ID+'][ID]',
+					onclick : function ()
+					{
+						var label = this.nextElementSibling;
+						if (this.checked)
+							label.style.color = '';
+						else
+							label.style.color = '#D2D1D1';
+			
+						if (!isFfd105Enable)
+						{
+							var td = this.parentNode.parentNode;
+							var inputs = BX.findChildren(td, {tag: 'input'}, true);
+							for (var i in inputs)
+							{
+								if (inputs.hasOwnProperty(i))
+								{
+									if (inputs[i].id === this.id)
+										continue;
+									
+									inputs[i].disabled = this.checked;
+								}
+							}
+						}
+					}
+				},
+				attrs : {
+					type : 'checkbox',
+					value : shipment.ID
+				}
+			});
+
+			var div = BX.create('div', {children : [
+				checkbox,
+				BX.create('label', {
+					text : BX.message('CASHBOX_ADD_CHECK_SHIPMENT')+' '+shipment.ID+': '+shipment.NAME,
+					attrs : {
+						style : 'color: #D2D1D1',
+						for : 'shipment_'+shipment.ID
+					}
+				})
+			]});
+			
+			return div;
 		}
 	}
 })(window);

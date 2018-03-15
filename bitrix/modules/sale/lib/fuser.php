@@ -24,7 +24,7 @@ class Fuser
 	 * Return fuserId.
 	 *
 	 * @param bool $skipCreate		Create, if not exist.
-	 * @return int
+	 * @return int|null
 	 */
 	public static function getId($skipCreate = false)
 	{
@@ -32,12 +32,20 @@ class Fuser
 
 		$id = null;
 
-		if (($USER && $USER instanceof \CUser) && $USER->IsAuthorized() && $USER->GetID() > 0)
+		static $fuserList = array();
+
+		if ((isset($USER) && $USER instanceof \CUser) && $USER->IsAuthorized())
 		{
-			$id = static::getIdByUserId($USER->GetID());
+			$currentUserId = (int)$USER->GetID();
+			if (!isset($fuserList[$currentUserId]))
+			{
+				$fuserList[$currentUserId] = static::getIdByUserId($currentUserId);
+			}
+			$id = $fuserList[$currentUserId];
+			unset($currentUserId);
 		}
 
-		if (intval($id) <= 0)
+		if ((int)$id <= 0)
 		{
 			$id = \CSaleUser::getID($skipCreate);
 		}
@@ -91,7 +99,7 @@ class Fuser
 		));
 		if ($fuserData = $res->fetch())
 		{
-			return intval($fuserData['ID']);
+			return (int)$fuserData['ID'];
 		}
 		else
 		{

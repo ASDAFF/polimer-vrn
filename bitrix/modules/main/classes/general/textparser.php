@@ -43,7 +43,8 @@ class CTextParser
 		"ALIGN" => "Y",
 		"USERFIELDS" => "N",
 		"USER" => "Y",
-		"P" => "Y"
+		"P" => "Y",
+		"TAG" => "N"
 	);
 	public $smiles = null;
 	protected $wordSeparator = "\\s.,;:!?\\#\\-\\*\\|\\[\\]\\(\\)\\{\\}";
@@ -56,6 +57,7 @@ class CTextParser
 	protected $userField;
 	public $bMobile = false;
 	public $LAZYLOAD = "N";
+	protected $tagPattern = "/([\s]+|^)#([^\s,\.\[\]<>]+)/is";
 
 	/* @deprecated */
 	public $allowImgExt = "gif|jpg|jpeg|png";
@@ -286,11 +288,13 @@ class CTextParser
 					array(
 						"/\\<ul((\\s[^>]*)|(\\s*))\\>(.+?)<\\/ul([^>]*)\\>/is".BX_UTF_PCRE_MODIFIER,
 						"/\\<ol((\\s[^>]*)|(\\s*))\\>(.+?)<\\/ol([^>]*)\\>/is".BX_UTF_PCRE_MODIFIER,
+						"/\\<li((\\s[^>]*)|(\\s*))\\>(.+?)<\\/li([^>]*)\\>/is".BX_UTF_PCRE_MODIFIER,
 						"/\\<li((\\s[^>]*)|(\\s*))\\>/is".BX_UTF_PCRE_MODIFIER,
 					),
 					array(
 						"[list]\\4[/list]",
 						"[list=1]\\4[/list]",
+						"[*]\\4",
 						"[*]",
 					),
 					$text
@@ -717,13 +721,21 @@ class CTextParser
 			);
 		}
 
+		if ($this->allow["TAG"] == "Y")
+		{
+			$text = preg_replace_callback(
+				$this->getTagPattern(),
+				array($this, "convert_tag"),
+				$text
+			);
+		}
+
 		foreach(GetModuleEvents("main", "TextParserAfterTags", true) as $arEvent)
 			ExecuteModuleEventEx($arEvent, array(&$text, &$this));
 
 		if ($this->allow["HTML"] != "Y" || $this->allow['NL2BR'] == 'Y')
 		{
-			$text = str_replace("\n", "<br />", $text);
-
+			$text = str_replace(array("\r\n", "\n"), "<br />", $text);
 			$text = preg_replace(array(
 				"/\\<br \\/\\>(\\<\\/table[^>]*\\>)/is".BX_UTF_PCRE_MODIFIER,
 				"/\\<br \\/\\>(\\<thead[^>]*\\>)/is".BX_UTF_PCRE_MODIFIER,
@@ -785,6 +797,11 @@ class CTextParser
 		switch ($tag)
 		{
 			case "replace":
+				if (($k = array_search($text, $this->preg['replace'])) !== false)
+				{
+					$text = "<\017#".$k.">";
+					break;
+				}
 				$this->preg["pattern"][] = "<\017#".$this->preg["counter"].">";
 				$this->preg["replace"][] = $text;
 				$text = "<\017#".$this->preg["counter"].">";
@@ -811,10 +828,16 @@ class CTextParser
 		$arPattern[] = "/\\<WBR[\\s\\/]?\\>/is".BX_UTF_PCRE_MODIFIER;
 		$arReplace[] = "";
 
+		$arPattern[] = "/\\[\\*\\]/is".BX_UTF_PCRE_MODIFIER;
+		$arReplace[] = "- ";
+
 		$arPattern[] = "/^(\r|\n)+?(.*)$/";
 		$arReplace[] = "\\2";
 
 		$arPattern[] = "/\\[b\\](.+?)\\[\\/b\\]/is".BX_UTF_PCRE_MODIFIER;
+		$arReplace[] = "\\1";
+
+		$arPattern[] = "/\\[p\\](.*?)\\[\\/p\\]/is".BX_UTF_PCRE_MODIFIER;
 		$arReplace[] = "\\1";
 
 		$arPattern[] = "/\\[i\\](.+?)\\[\\/i\\]/is".BX_UTF_PCRE_MODIFIER;
@@ -897,6 +920,7 @@ class CTextParser
 		$height = "";
 		$preview = "";
 		$provider = "";
+		$type = "";
 		preg_match("/width\\=([0-9]+)/is".BX_UTF_PCRE_MODIFIER, $params, $width);
 		preg_match("/height\\=([0-9]+)/is".BX_UTF_PCRE_MODIFIER, $params, $height);
 
@@ -904,7 +928,9 @@ class CTextParser
 		if (empty($preview))
 			preg_match("/preview\\=\"([^\"]+)\"/is".BX_UTF_PCRE_MODIFIER, $params, $preview);
 
-		preg_match("/type\\=(YOUTUBE|RUTUBE|VIMEO)/is".BX_UTF_PCRE_MODIFIER, $params, $provider);
+		preg_match("/type\\=(YOUTUBE|RUTUBE|VIMEO|VK|FACEBOOK|INSTAGRAM)/is".BX_UTF_PCRE_MODIFIER, $params, $provider);
+		preg_match("/mimetype\\='([^']+)'/is".BX_UTF_PCRE_MODIFIER, $params, $type);
+
 
 		$width = intval($width[1]);
 		$width = ($width > 0 ? $width : 400);
@@ -913,6 +939,7 @@ class CTextParser
 		$preview = trim($preview[1]);
 		$preview = (strlen($preview) > 0 ? $preview : "");
 		$provider = isset($provider[1]) ? strtoupper(trim($provider[1])) : '';
+		$type = trim($type[1]);
 
 		$arFields = array(
 			"PATH" => $path,
@@ -920,6 +947,7 @@ class CTextParser
 			"HEIGHT" => $height,
 			"PREVIEW" => $preview,
 			"TYPE" => $provider,
+			"MIME_TYPE" => $type,
 			"PARSER_OBJECT" => $this
 		);
 
@@ -942,6 +970,14 @@ class CTextParser
 		{
 			return false;
 		}
+		$trustedProviders = array(
+			'YOUTUBE',
+			'RUTUBE',
+			'VIMEO',
+			'VK',
+			'FACEBOOK',
+			'INSTAGRAM',
+		);
 
 		ob_start();
 
@@ -951,9 +987,10 @@ class CTextParser
 
 			?><a href="<?=$pathEncoded?>"><?=$pathEncoded?></a><?
 		}
-		elseif ($arParams["TYPE"] == 'YOUTUBE' || $arParams["TYPE"] == 'RUTUBE' || $arParams["TYPE"] == 'VIMEO')
+		elseif (in_array($arParams["TYPE"], $trustedProviders))
 		{
-			if(preg_match("/^(https?:)?\\/\\/(www\\.)?(youtube\\.com|youtu\\.be|rutube\\.ru|vimeo\\.com|player\\.vimeo\\.com)\\//i", $arParams["PATH"]))
+			$uri = new \Bitrix\Main\Web\Uri('http:'.$arParams["PATH"]);
+			if(\Bitrix\Main\UrlPreview\UrlPreview::isHostTrusted($uri) || $uri->getHost() == \Bitrix\Main\Application::getInstance()->getContext()->getServer()->getServerName())
 			{
 				// Replace http://someurl, https://someurl by //someurl
 				$arParams["PATH"] = preg_replace("/https?:\\/\\//is", '//', $arParams["PATH"]);
@@ -1009,7 +1046,8 @@ class CTextParser
 					"ADVANCED_MODE_SETTINGS" => "N",
 					"BUFFER_LENGTH" => "10",
 					"DOWNLOAD_LINK" => "",
-					"DOWNLOAD_LINK_TARGET" => "_self"
+					"DOWNLOAD_LINK_TARGET" => "_self",
+					"TYPE" => $arParams['MIME_TYPE'],
 				),
 				null,
 				array(
@@ -1361,6 +1399,66 @@ class CTextParser
 		);
 
 		return $res;
+	}
+
+	public function getTagPattern()
+	{
+		return $this->tagPattern.BX_UTF_PCRE_MODIFIER;
+	}
+
+	function cleanTag($tag)
+	{
+		return trim(html_entity_decode(str_replace("&nbsp;", " ", $tag), (ENT_COMPAT | ENT_HTML401), SITE_CHARSET));
+	}
+
+	function detectTags($text)
+	{
+		$result = array();
+
+		$text = str_replace("\xC2\xA0", ' ', $text);
+		$text = str_replace("\xA0", " ", $text);
+
+		if (preg_match_all($this->getTagPattern(), ' '.$text, $matches))
+		{
+			$result = array_unique($matches[2]);
+		}
+
+		$result = array_map(
+			function($tag) { return CTextParser::cleanTag($tag); },
+			$result
+		);
+
+		$result = array_filter(
+			$result,
+			function($tag) { return strlen($tag) > 0; }
+		);
+
+		return $result;
+	}
+
+	function convert_tag($tag = array())
+	{
+		$res = '';
+
+		if (
+			!is_array($tag)
+			|| strlen($tag[2]) <= 0
+		)
+		{
+			return $res;
+		}
+
+		$tagText = self::cleanTag($tag[2]);
+
+		if (strlen($tagText) <= 0)
+		{
+			return $tag[0];
+		}
+
+		$res = htmlentities($tagText, (ENT_COMPAT | ENT_HTML401), SITE_CHARSET);
+		$res = '<span class="bx-inline-tag" bx-tag-value="'.$res.'">#'.$res.'</span>';
+
+		return $tag[1].$this->defended_tags($res, "replace");
 	}
 
 	// Only for public using

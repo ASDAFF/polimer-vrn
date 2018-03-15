@@ -158,9 +158,9 @@ class ApiHelper
 			case 'PRODUCT_PHOTOS':
 				$uploadServerMethod = 'photos.getMarketUploadServer';
 				$saveMethod = 'photos.saveMarketPhoto';
-				$keyReference = 'PHOTOS_BX_ID';
-				$keyPhotoVk = 'PHOTOS_VK_ID';
-				$keyPhotoBx = 'PHOTOS_BX_ID';
+				$keyReference = 'PHOTO_BX_ID';
+				$keyPhotoVk = 'PHOTO_VK_ID';
+				$keyPhotoBx = 'PHOTO_BX_ID';
 				break;
 			
 			case 'ALBUM_PHOTO':
@@ -202,15 +202,22 @@ class ApiHelper
 
 //			UPLOAD photo by http
 			if(isset($logger) && $richLog)
+//				different array for albums and products
 				$logger->addLog("Upload photo HTTP", array(
-					"PRODUCT" => $item["BX_ID"].': '.$item["NAME"],
-					"PHOTO_MAIN_BX_ID" => $item["PHOTO_MAIN_BX_ID"],
-					"PHOTO_MAIN_URL" => $item["PHOTO_MAIN_URL"],
-					"PHOTOS" => $item["PHOTOS"]
+					"UPLOAD_TYPE" => $uploadType,
+					"ITEM" => array_key_exists("BX_ID", $item) ?
+						$item["BX_ID"].': '.$item["NAME"] :
+						$item["SECTION_ID"].': '.$item["TITLE"],
+					"PHOTO_BX_ID" => array_key_exists("PHOTO_MAIN_BX_ID", $item) ? $item["PHOTO_MAIN_BX_ID"] : $item["PHOTO_BX_ID"],
+					"PHOTO_URL" => array_key_exists("PHOTO_MAIN_URL", $item) ? $item["PHOTO_MAIN_URL"] : $item["PHOTO_URL"],
+					"PHOTOS" => $item["PHOTOS"]	//only for products
 				));
 			$responseHttp = ApiHelper::uploadPhotoHttp($item, $uploadServer, $uploadType, $timer);
 			$responseHttp = Json::decode($responseHttp);
-
+			
+			if(isset($logger) && $richLog)
+				$logger->addLog("Upload photo HTTP response", $responseHttp);
+			
 //			SAVE upload result
 			$photoSaveParams = array(
 				"group_id" => str_replace('-', '', $vkGroupId),
@@ -218,6 +225,7 @@ class ApiHelper
 				"server" => $responseHttp["server"],
 				"hash" => $responseHttp["hash"],
 			);
+			
 			// for product photo we need more params
 			if ($saveMethod == "photos.saveMarketPhoto")
 			{
@@ -227,8 +235,6 @@ class ApiHelper
 					$photoSaveParams["crop_data"] = $responseHttp["crop_data"];
 			}
 			
-			if(isset($logger) && $richLog)
-				$logger->addLog("Save photo", $photoSaveParams);
 			$responsePhotoSave = $this->api->run($saveMethod, $photoSaveParams);
 			
 //			RESULT
@@ -266,7 +272,6 @@ class ApiHelper
 					"param_name" => 'file',
 					"timer" => $timer,
 				);
-//				$result["album_vk_id"] = $data["album_vk_id"];
 				break;
 			
 			case 'PRODUCT_MAIN_PHOTO':
@@ -276,13 +281,12 @@ class ApiHelper
 					"param_name" => 'photo',
 					"timer" => $timer,
 				);
-//				$result["BX_ID"] = $data["BX_ID"];
 				break;
 			
 			case 'PRODUCT_PHOTOS':
 				$postParams = array(
-					"url" => $data["PHOTOS_URL"],
-					"filename" => IO\Path::getName($data["PHOTOS_URL"]),
+					"url" => $data["PHOTO_URL"],
+					"filename" => IO\Path::getName($data["PHOTO_URL"]),
 					"param_name" => 'photo',
 					"timer" => $timer,
 				);
@@ -358,7 +362,16 @@ class ApiHelper
 					'<option' . $selected . ' value="' . $group['id'] . '">' . $group['name'] . '</option>';
 			}
 			
-			$groupsSelector = '<select ' . $id . $name . '>' . $groupsSelector . '</select>';
+			$groupsSelector =
+				'<select id="vk_export_groupselector" onchange="BX.Sale.VkAdmin.changeVkGroupLink();"' . $id . $name . '>' .
+				$groupsSelector .
+				'</select>';
+			$groupsSelector.=
+				'<span style="padding-left:10px">
+					<a href="https://vk.com/club'. $selectedValue .'" id="vk_export_groupselector__link">
+						<img src="/bitrix/images/sale/vk/vk_icon.png">
+					</a>
+				</span>';
 		}
 		
 		return $groupsSelector;
@@ -450,10 +463,12 @@ class ApiHelper
 				break;
 			}
 		}
-		$productsFromVk = self::extractItemsFromArray($productsFromVk, array('id'));
-		$productsFromVk = self::changeArrayMainKey($productsFromVk, 'id', 'vk_id');
 		
-		return $productsFromVk;
+		$result = array();
+		foreach($productsFromVk as $productFromVk)
+			$result[$productFromVk] = array("VK_ID" => $productFromVk);
+		
+		return $result;
 	}
 	
 	
@@ -475,8 +490,8 @@ class ApiHelper
 				$photosIds = array();
 				foreach ($item["PHOTOS"] as $photo)
 				{
-					if (is_numeric($photo["PHOTOS_VK_ID"]))
-						$photosIds[] = $photo["PHOTOS_VK_ID"];
+					if (is_numeric($photo["PHOTO_VK_ID"]))
+						$photosIds[] = $photo["PHOTO_VK_ID"];
 				}
 				
 				if (!empty($photosIds))
@@ -486,8 +501,8 @@ class ApiHelper
 			}
 			
 //			check VK_CATEGORY
-			if (!(isset($item["category_vk_id"]) && is_int($item["category_vk_id"])))
-				$item["category_vk_id"] = Vk::VERY_DEFAULT_VK_CATEGORY;    // we need some category
+			if (!(isset($item["CATEGORY_VK"]) && is_int($item["CATEGORY_VK"])))
+				$item["CATEGORY_VK"] = Vk::VERY_DEFAULT_VK_CATEGORY;    // we need some category
 			
 			$result[] = $item;
 		}
@@ -537,7 +552,7 @@ class ApiHelper
 	 */
 	public function getVkCategories($count = Vk::MAX_VK_CATEGORIES, $offset = 0)
 	{
-		$vkCats = $this->api->run('market.getCategories ', array("count" => $count, "offset" => $offset));
+		$vkCats = $this->api->run('market.getCategories', array("count" => $count, "offset" => $offset));
 		
 		if (!empty($vkCats))
 			return $vkCats["items"];

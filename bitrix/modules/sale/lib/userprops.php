@@ -170,7 +170,7 @@ class OrderUserProperties
 
 			$resultData[$propValue['PERSON_TYPE_ID']][$propValue['USER_PROPS_ID']]['NAME'] = $propValue['PROFILE_NAME'];
 
-			if ($propValue['TYPE'] === 'ENUM')
+			if ($propValue['TYPE'] === 'ENUM' && $propValue['MULTIPLE'] === 'Y')
 			{
 				$propValue['VALUE'] = explode(',', $propValue['VALUE']);
 			}

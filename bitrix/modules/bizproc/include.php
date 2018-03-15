@@ -1,6 +1,4 @@
 <?
-global $DB;
-$db_type = strtolower($DB->type);
 $arClasses = array(
 	"CBPActivity" => "classes/general/activity.php",
 	"CBPActivityCondition" => "classes/general/activitycondition.php",
@@ -25,7 +23,7 @@ $arClasses = array(
 	"CBPNotSupportedException" => "classes/general/exception.php",
 	"CBPHelper" => "classes/general/helper.php",
 	"CBPAllHistoryService" => "classes/general/historyservice.php",
-	"CBPHistoryService" => "classes/".$db_type."/historyservice.php",
+	"CBPHistoryService" => "classes/general/historyservice.php",
 	"CBPHistoryResult" => "classes/general/historyservice.php",
 	"CBPRuntime" => "classes/general/runtime.php",
 	"CBPRuntimeService" => "classes/general/runtimeservice.php",
@@ -33,17 +31,17 @@ $arClasses = array(
 	"CBPAllStateService" => "classes/general/stateservice.php",
 	"CBPStateService" => "classes/general/stateservice.php",
 	"CBPAllTaskService" => "classes/general/taskservice.php",
-	"CBPTaskService" => "classes/".$db_type."/taskservice.php",
+	"CBPTaskService" => "classes/general/taskservice.php",
 	"CBPTaskResult" => "classes/general/taskservice.php",
 	"CBPAllTrackingService" => "classes/general/trackingservice.php",
-	"CBPTrackingService" => "classes/".$db_type."/trackingservice.php",
+	"CBPTrackingService" => "classes/general/trackingservice.php",
 	"CBPTrackingType" => "classes/general/trackingservice.php",
 	"CBPVirtualDocument" => "classes/general/virtualdocument.php",
 	"CBPWorkflow" => "classes/general/workflow.php",
 	"CBPAllWorkflowPersister" => "classes/general/workflowpersister.php",
 	"CBPWorkflowPersister" => "classes/general/workflowpersister.php",
 	"CAllBPWorkflowTemplateLoader" => "classes/general/workflowtemplateloader.php",
-	"CBPWorkflowTemplateLoader" => "classes/".$db_type."/workflowtemplateloader.php",
+	"CBPWorkflowTemplateLoader" => "classes/general/workflowtemplateloader.php",
 	"CBPWorkflowTemplateResult" => "classes/general/workflowtemplateloader.php",
 	"CBPWorkflowTemplateUser" => "classes/general/workflowtemplateloader.php",
 	"CBPWorkflowTemplateValidationException" => "classes/general/workflowtemplateloader.php",
@@ -80,4 +78,18 @@ CJSCore::RegisterExt('bp_selector', array(
 	'css' => '/bitrix/js/bizproc/css/bp_selector.css',
 	'lang' => '/bitrix/modules/bizproc/lang/'.LANGUAGE_ID.'/install/js/bp_selector.php',
 	'rel' => array('core', 'popup', 'translit'),
+));
+
+CJSCore::RegisterExt('bp_starter', array(
+	'js' => '/bitrix/js/bizproc/starter.js',
+	//'css' => '/bitrix/js/bizproc/css/starter.css',
+	'lang' => '/bitrix/modules/bizproc/lang/'.LANGUAGE_ID.'/install/js/starter.php',
+	'rel' => array('core', 'popup'),
+));
+
+CJSCore::RegisterExt('bp_user_selector', array(
+	'js' => '/bitrix/js/bizproc/user_selector.js',
+	//'css' => '/bitrix/js/bizproc/css/starter.css',
+	//'lang' => '/bitrix/modules/bizproc/lang/'.LANGUAGE_ID.'/install/js/starter.php',
+	'rel' => array('core', 'popup'),
 ));

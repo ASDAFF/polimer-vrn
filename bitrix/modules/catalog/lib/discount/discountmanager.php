@@ -35,7 +35,8 @@ class DiscountManager
 				'prepareData' => array(__CLASS__, 'prepareData'),
 				'getEditUrl' => array(__CLASS__, 'getEditUrl'),
 				'calculateApplyCoupons' => array(__CLASS__, 'calculateApplyCoupons'),
-				'roundPrice' => array(__CLASS__, 'roundPrice')
+				'roundPrice' => array(__CLASS__, 'roundPrice'),
+				'roundBasket' => array(__CLASS__, 'roundBasket')
 			),
 			'catalog'
 		);
@@ -335,18 +336,109 @@ class DiscountManager
 		}
 		if (empty($roundData))
 			return array();
-		$result = array(
-			'ROUND_RULE' => $roundData
-		);
-		$result['PRICE'] = Catalog\Product\Price::roundValue($basketItem['PRICE'], $roundData['ROUND_PRECISION'], $roundData['ROUND_TYPE']);
+		return self::getRoundResult($basketItem, $roundData);
+	}
 
-		if (isset($basketItem['BASE_PRICE']))
-			$result['DISCOUNT_PRICE'] = $basketItem['BASE_PRICE'] - $result['PRICE'];
-		else
-			$result['DISCOUNT_PRICE'] += ($basketItem['PRICE'] - $result['PRICE']);
+	/**
+	 * Round basket prices.
+	 *
+	 * @param array $basket             Basket.
+	 * @param array $basketRoundData    Round rules.
+	 * @param array $orderData          Order (without basket, can be absent).
+	 * @return array
+	 */
+	public static function roundBasket(
+		array $basket,
+		array $basketRoundData = array(),
+		/** @noinspection PhpUnusedParameterInspection */array $orderData
+	)
+	{
+		if (empty($basket))
+			return array();
 
-		if ($result['DISCOUNT_PRICE'] < 0)
-			$result['DISCOUNT_PRICE'] = 0;
+		$result = array();
+		$basket = array_filter($basket, '\Bitrix\Catalog\Discount\DiscountManager::basketFilter');
+		if (!empty($basket))
+		{
+			$priceTypes = array();
+			$loadPriceId = array();
+			$loadBasketCodes = array();
+			foreach ($basket as $basketCode => $basketItem)
+			{
+				if (!empty($basketRoundData[$basketCode]))
+					continue;
+				$priceTypeId = 0;
+				if (isset($basketItem['PRICE_TYPE_ID']))
+					$priceTypeId = (int)$basketItem['PRICE_TYPE_ID'];
+				if ($priceTypeId <= 0 && isset($basketItem['CATALOG_GROUP_ID']))
+					$priceTypeId = (int)$basketItem['CATALOG_GROUP_ID'];
+				if ($priceTypeId <= 0 && isset($basketItem['PRODUCT_PRICE_ID']))
+				{
+					$priceId = (int)$basketItem['PRODUCT_PRICE_ID'];
+					if ($priceId > 0)
+					{
+						$cachedPrice = self::getPriceDataByPriceId($priceId);
+						if (!empty($cachedPrice))
+							$priceTypeId = (int)$cachedPrice['CATALOG_GROUP_ID'];
+						if ($priceTypeId <= 0)
+						{
+							$loadPriceId[] = $priceId;
+							$loadBasketCodes[$priceId] = $basketCode;
+						}
+					}
+				}
+
+				$basket[$basketCode]['PRICE_TYPE_ID'] = $priceTypeId;
+				if ($priceTypeId > 0)
+					$priceTypes[$priceTypeId] = $priceTypeId;
+
+			}
+			unset($priceId, $priceTypeId, $basketCode, $basketItem);
+
+			if (!empty($loadPriceId))
+			{
+				sort($loadPriceId);
+				foreach (array_chunk($loadPriceId, 500) as $pageIds)
+				{
+					$iterator = Catalog\PriceTable::getList(array(
+						'select' => array('ID', 'CATALOG_GROUP_ID'),
+						'filter' => array('@ID' => $pageIds)
+					));
+					while ($row = $iterator->fetch())
+					{
+						$id = (int)$row['ID'];
+						$priceTypeId = (int)$row['CATALOG_GROUP_ID'];
+						if (!isset($loadBasketCodes[$id]))
+							continue;
+						$basket[$loadBasketCodes[$id]]['PRICE_TYPE_ID'] = $priceTypeId;
+						$priceTypes[$priceTypeId] = $priceTypeId;
+					}
+					unset($priceTypeId, $id, $row, $iterator);
+				}
+			}
+			unset($loadBasketCodes, $loadPriceId);
+
+			if (!empty($priceTypes))
+				Catalog\Product\Price::loadRoundRules($priceTypes);
+			unset($priceTypes);
+
+			foreach ($basket as $basketCode => $basketItem)
+			{
+				if (!empty($basketRoundData[$basketCode]))
+					$roundData = $basketRoundData[$basketCode];
+				else
+					$roundData = Catalog\Product\Price::searchRoundRule(
+						$basketItem['PRICE_TYPE_ID'],
+						$basketItem['PRICE'],
+						$basketItem['CURRENCY']
+					);
+				if (empty($roundData))
+					continue;
+				$result[$basketCode] = self::getRoundResult($basketItem, $roundData);
+			}
+			unset($roundData, $basketCode, $basketItem, $basketRoundData);
+		}
+		unset($basket);
 
 		return $result;
 	}
@@ -1433,7 +1525,7 @@ class DiscountManager
 						$propData = self::getCachedProductProperty($productId, $prop);
 						if (!empty($propData))
 						{
-							$propertyValues[$productId][$propData['CODE']] = $propData;
+							$propertyValues[$productId][$propData['ID']] = $propData;
 						}
 						else
 						{
@@ -1465,7 +1557,16 @@ class DiscountManager
 				);
 
 				\CTimeZone::Disable();
-				\CIBlockElement::GetPropertyValuesArray($iblockPropertyValues, $iblock, $filter, array('ID' => $propertyList));
+				\CIBlockElement::GetPropertyValuesArray(
+					$iblockPropertyValues,
+					$iblock,
+					$filter,
+					array('ID' => $propertyList),
+					array(
+						'USE_PROPERTY_ID' => 'Y',
+						'PROPERTY_FIELDS' => array('ID', 'PROPERTY_TYPE', 'MULTIPLE', 'USER_TYPE')
+					)
+				);
 				\CTimeZone::Enable();
 
 				foreach ($iblockPropertyValues as $productId => $data)
@@ -1657,6 +1758,39 @@ class DiscountManager
 			return Sale\Discount\Actions::roundValue($value, $currency);
 		else
 			return roundEx($value, CATALOG_VALUE_PRECISION);
+	}
+
+	/**
+	 * Returns data after price rounding.
+	 * @internal
+	 *
+	 * @param array $basketItem     Basket row data.
+	 * @param array $roundData      Round rule.
+	 * @return array
+	 */
+	private static function getRoundResult(array $basketItem, array $roundData)
+	{
+		$result = array(
+			'ROUND_RULE' => $roundData
+		);
+		$result['PRICE'] = Catalog\Product\Price::roundValue(
+			$basketItem['PRICE'],
+			$roundData['ROUND_PRECISION'],
+			$roundData['ROUND_TYPE']
+		);
+
+		if (isset($basketItem['BASE_PRICE']))
+		{
+			$result['DISCOUNT_PRICE'] = $basketItem['BASE_PRICE'] - $result['PRICE'];
+		}
+		else
+		{
+			if (!isset($result['DISCOUNT_PRICE']))
+				$result['DISCOUNT_PRICE'] = 0;
+			$result['DISCOUNT_PRICE'] += ($basketItem['PRICE'] - $result['PRICE']);
+		}
+
+		return $result;
 	}
 
 	private static function getPriceDataByPriceId($priceId)

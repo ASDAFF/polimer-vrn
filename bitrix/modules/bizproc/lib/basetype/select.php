@@ -143,8 +143,8 @@ class Select extends Base
 		if (empty($typeValue))
 			$typeValue[] = null;
 
-
 		$renderResult = '<select id="'.htmlspecialcharsbx(static::generateControlId($field))
+			.'" class="'.htmlspecialcharsbx(static::generateControlClassName($fieldType, $field))
 			.'" name="'.htmlspecialcharsbx(static::generateControlName($field))
 			.($fieldType->isMultiple() ? '[]' : '').'"'.($fieldType->isMultiple() ? ' size="5" multiple' : '').'>';
 

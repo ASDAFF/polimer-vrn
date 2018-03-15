@@ -121,6 +121,10 @@ class CBPStartWorkflowActivity
 			$documentId[2] = current($documentId[2]);
 		}
 
+		/** @var CBPDocumentService $documentService */
+		$documentService = CBPRuntime::GetRuntime()->GetService('DocumentService');
+		$documentId = $documentService->normalizeDocumentId($documentId);
+
 		$parameters = $this->TemplateParameters;
 		if (!is_array($parameters))
 			$parameters = array();

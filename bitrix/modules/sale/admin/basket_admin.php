@@ -189,7 +189,7 @@ if (is_array($filter_group_id) && count($filter_group_id) > 0)
 	}
 }
 
-if(!empty($arAccessibleSites) && count($arAccessibleSites) != count($siteName))
+if(!$USER->IsAdmin() && !empty($arAccessibleSites) && count($arAccessibleSites) != count($siteName))
 {
 	if(empty($arFilter["LID"]))
 		$arFilter["LID"] = $arAccessibleSites;
@@ -272,7 +272,6 @@ $lAdmin->AddHeaders(array(
 	array("id" => "BASKET_NAME", "content" => GetMessage("SB_BASKET_NAME"), "sort" => "", "default" => false),
 	array("id" => "BASKET_QUANTITY", "content" => GetMessage("SB_BASKET_QUANTITY"),  "sort" => "", "default" => false, "align" => "right"),
 	array("id" => "BASKET_PRICE", "content" => GetMessage("SB_BASKET_PRICE"), "sort" => "", "default" => false, "align" => "right"),
-	array("id" => "BASKET_AVAIBLE", "content" => GetMessage("BASKET_AVAIBLE"), "sort" => "", "default" => false),
 	array("id" => "DATE_INSERT_MIN", "content" => GetMessage("SB_DATE_INSERT"), "sort" => "DATE_INSERT_MIN", "default" => true),
 	array("id" => "FUSER_ID", "content" => GetMessage("SB_FUSER_ID"), "sort" => "FUSER_ID", "default" => false),
 ));
@@ -322,13 +321,14 @@ while ($arBasket = $dbResultList->Fetch())
 		$arFilterBasket,
 		false,
 		false,
-		array("ID", "PRODUCT_ID", "NAME", "QUANTITY", "PRICE", "CURRENCY", "DETAIL_PAGE_URL", "LID", "CAN_BUY", "SUBSCRIBE", "DELAY", "SET_PARENT_ID", "TYPE")
+		array("ID", "PRODUCT_ID", "NAME", "QUANTITY", "PRICE", "CURRENCY", "DETAIL_PAGE_URL", "LID", "SET_PARENT_ID", "TYPE")
 	);
 	while($arB = $dbB->Fetch())
+	{
 		$arBasketItems[] = $arB;
+	}
 
 	$arBasketItems = getMeasures($arBasketItems);
-
 	foreach ($arBasketItems as $arB)
 	{
 		if (CSaleBasketHelper::isSetItem($arB))
@@ -361,7 +361,7 @@ while ($arBasket = $dbResultList->Fetch())
 			$basket .= "</a></nobr>";
 		}
 
-		$measure = (isset($arB["MEASURE_TEXT"])) ? $arB["MEASURE_TEXT"] : GetMessage("SB_SHT");
+		$measure = (isset($arB["MEASURE_TEXT"])) ? htmlspecialcharsbx($arB["MEASURE_TEXT"]) : GetMessage("SB_SHT");
 
 		$basket .= " (".$arB["QUANTITY"]." ".$measure.") - "."<nobr>".SaleFormatCurrency($arB["PRICE"], $arB["CURRENCY"])."</nobr><br>";
 		$dbProp = CSaleBasket::GetPropsList(Array("SORT" => "ASC", "ID" => "ASC"), Array("BASKET_ID" => $arB["ID"], "!CODE" => array("CATALOG.XML_ID", "PRODUCT.XML_ID")));
@@ -373,21 +373,11 @@ while ($arBasket = $dbResultList->Fetch())
 		$basketPrice .= "<nobr>".SaleFormatCurrency($arB["PRICE"], $arB["CURRENCY"])."</nobr>";
 		$basketQuantity .= $arB["QUANTITY"];
 
-		if($arB["SUBCRIBE"] == "Y")
-			$basketAvaible .= GetMessage("SB_TYPE_SUB");
-		elseif($arB["DELAY"] == "Y")
-			$basketAvaible .= GetMessage("SB_TYPE_DEL");
-		elseif($arB["CAN_BUY"] == "Y")
-			$basketAvaible .= GetMessage("SB_TYPE_AV");
-		else
-			$basketAvaible .= GetMessage("SB_TYPE_NA");
-
 	}
 	$row->AddField("BASKET", $basket);
 	$row->AddField("BASKET_NAME", $basketName);
 	$row->AddField("BASKET_PRICE", $basketPrice);
 	$row->AddField("BASKET_QUANTITY", $basketQuantity);
-	$row->AddField("BASKET_AVAIBLE", $basketAvaible);
 
 	$arActions = Array();
 	$arActions[] = array("ICON"=>"", "TEXT"=>GetMessage("SB_CREATE_ORDER"), "ACTION"=>$lAdmin->ActionRedirect("sale_basket.php?FUSER_ID=".$arBasket["FUSER_ID"]."&SITE_ID=".$arBasket["LID"]."&USER_ID=".$arBasket["USER_ID"]."&action=order_basket&lang=".LANG), "DEFAULT" => true);

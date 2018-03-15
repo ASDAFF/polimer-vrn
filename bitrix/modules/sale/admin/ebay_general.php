@@ -309,7 +309,7 @@ elseif($ebay->isActive())
 	<tr>
 		<td width="40%"><span><?=Loc::getMessage("SALE_EBAY_API_AUTH_TOKEN_EXP")?>:</span></td>
 		<td width="60%">
-			<input id="SALE_EBAY_SETTINGS_API_TOKEN_EXP" type="text" name="EBAY_SETTINGS[API][AUTH_TOKEN_EXP]" size="20" value="<?=isset($siteSettings["API"]["AUTH_TOKEN_EXP"]) ? htmlspecialcharsbx($siteSettings["API"]["AUTH_TOKEN_EXP"]) : ""?>" disabled>
+			<input id="SALE_EBAY_SETTINGS_API_TOKEN_EXP" type="text" name="EBAY_SETTINGS[API][AUTH_TOKEN_EXP]" size="20" value="<?=isset($siteSettings["API"]["AUTH_TOKEN_EXP"]) ? htmlspecialcharsbx($siteSettings["API"]["AUTH_TOKEN_EXP"]) : ""?>" readonly>
 			<input type="hidden" name="EBAY_SETTINGS[API][SITE_ID]" value="215">
 		</td>
 	</tr>
@@ -347,7 +347,7 @@ elseif($ebay->isActive())
 	</tr>
 	<tr>
 		<td width="40%"><span class="adm-required-field"><?=Loc::getMessage("SALE_EBAY_SFTP_PASS_EXP")?>:</span></td>
-		<td width="60%"><input id="SALE_EBAY_SETTINGS_SFTP_TOKEN_EXP" name="EBAY_SETTINGS[SFTP_TOKEN_EXP]" value="<?=isset($siteSettings["SFTP_TOKEN_EXP"]) ? htmlspecialcharsbx($siteSettings["SFTP_TOKEN_EXP"]) : ""?>" disabled size="30"></td>
+		<td width="60%"><input id="SALE_EBAY_SETTINGS_SFTP_TOKEN_EXP" name="EBAY_SETTINGS[SFTP_TOKEN_EXP]" value="<?=isset($siteSettings["SFTP_TOKEN_EXP"]) ? htmlspecialcharsbx($siteSettings["SFTP_TOKEN_EXP"]) : ""?>" readonly size="30"></td>
 	</tr>
 	<tr>
 		<td width="40%"><span>&nbsp;</span></td>
@@ -432,10 +432,10 @@ elseif($ebay->isActive())
 					href="/bitrix/admin/cat_section_edit.php?IBLOCK_ID=<?=$map["IBLOCK_ID"]?>&type=catalog&ID=<?=$map["VALUE_INTERNAL"]?>&lang=<?=LANGUAGE_ID?>&find_section_section=0&form_section_2_active_tab=SALE_TRADING_PLATFORM_edit_trading_platforms"
 					title="<?=Loc::getMessage("SALE_EBAY_CAT_SETT_EDIT")?>"
 				>
-					<?=$map["CATEGORY_BITRIX_NAME"]?></a> [<?=$map["VALUE_INTERNAL"]?>]
+					<?=htmlspecialcharsbx($map["CATEGORY_BITRIX_NAME"])?></a> [<?=htmlspecialcharsbx($map["VALUE_INTERNAL"])?>]
 			</td>
 			<td>
-				<?=$map["CATEGORY_EBAY_NAME"]?> [<?=$map["VALUE_EXTERNAL"]?>]
+				<?=htmlspecialcharsbx($map["CATEGORY_EBAY_NAME"])?> [<?=htmlspecialcharsbx($map["VALUE_EXTERNAL"])?>]
 			</td>
 			</tr><?
 		}

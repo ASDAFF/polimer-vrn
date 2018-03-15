@@ -4,9 +4,14 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 <?
 if (strlen($arCurrentValues["mail_charset"]) <= 0)
-	$arCurrentValues["mail_charset"] = "windows-1251";
+	$arCurrentValues["mail_charset"] = SITE_CHARSET;
 if (strlen($arCurrentValues["mail_message_type"]) <= 0)
 	$arCurrentValues["mail_message_type"] = "plain";
+
+if ($arCurrentValues["mail_message_encoded"])
+{
+	$arCurrentValues["mail_text"] = htmlspecialcharsback($arCurrentValues["mail_text"]);
+}
 ?>
 <tr>
 	<td align="right" width="40%"><span class="adm-required-field"><?= GetMessage("BPMA_PD_FROM") ?>:</span></td>

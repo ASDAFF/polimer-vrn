@@ -98,6 +98,26 @@ abstract class TypeBase
 						}
 
 					break;
+					case \CUserTypeEnum::USER_TYPE_ID:
+
+						$value = $arUserField['MULTIPLE'] === 'Y' ? array() : null;
+						foreach($arUserField['ENUM'] as $enum)
+						{
+							if($enum['DEF'] === 'Y')
+							{
+								if($arUserField['MULTIPLE'] === 'Y')
+								{
+									$value[] = $enum['ID'];
+								}
+								else
+								{
+									$value = $enum['ID'];
+									break;
+								}
+							}
+						}
+
+					break;
 					default:
 						$value = $arUserField["SETTINGS"]["DEFAULT_VALUE"];
 

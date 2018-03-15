@@ -1465,19 +1465,7 @@ class CMainUIGrid extends CBitrixComponent
 	 */
 	protected function prepareAlign($headerItem)
 	{
-		switch ($headerItem["type"])
-		{
-			case Grid\Types::GRID_CHECKBOX:
-				$align = "center";
-				break;
-			case Grid\Types::GRID_INT:
-				$align = "left";
-				break;
-			default:
-				$align = "left";
-		}
-
-		return $align;
+		return "left";
 	}
 
 
@@ -1649,7 +1637,7 @@ class CMainUIGrid extends CBitrixComponent
 				{
 					$typeName = Grid\Editor\Types::TEXT;
 				}
-				elseif($columnTypeName === "int")
+				elseif($columnTypeName === "int" || $columnTypeName === "double" || $columnTypeName === "number")
 				{
 					$typeName = Grid\Editor\Types::NUMBER;
 				}
@@ -1856,17 +1844,6 @@ class CMainUIGrid extends CBitrixComponent
 		$options = $this->getCurrentOptions();
 		$gridOptions = $this->getGridOptions();
 		$isNeedSave = false;
-
-		if (!isset($options["columns"]) ||
-			empty($options["columns"]) ||
-			!is_string($options["columns"]))
-		{
-			$columns = $this->prepareColumns();
-			$columnsIds = array_keys($columns);
-			$columnsString = implode(",", $columnsIds);
-			$gridOptions->SetColumns($columnsString);
-			$isNeedSave = true;
-		}
 
 		if (!isset($options["columns_sizes"]) ||
 			empty($options["columns_sizes"]) ||

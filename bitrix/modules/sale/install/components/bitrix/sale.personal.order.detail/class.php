@@ -252,6 +252,10 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 
 		$this->tryParseBoolean($arParams['AUTH_FORM_IN_TEMPLATE']);
 
+		if (empty($arParams['REFRESH_PRICES']))
+		{
+			$arParams['REFRESH_PRICES'] = "N";
+		}
 
 		if (empty($arParams['ALLOW_INNER']))
 		{
@@ -346,7 +350,7 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 		global $APPLICATION;
 
 		if ($this->arParams["SET_TITLE"] == 'Y')
-			$APPLICATION->SetTitle(str_replace("#ID#", $this->dbResult["ACCOUNT_NUMBER"], Localization\Loc::getMessage("SPOD_TITLE")));
+			$APPLICATION->SetPageProperty('title',Localization\Loc::getMessage("SPOD_TITLE", array("#ID#" => $this->dbResult["ACCOUNT_NUMBER"])));
 	}
 
 	/**
@@ -490,6 +494,7 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 		if (empty($this->dbResult["ID"]))
 			return;
 
+		$basket = array();
 		$basketN = $this->order->getBasket();
 
 		$basketItemsList = $basketN->getBasketItems();
@@ -949,6 +954,7 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 							// search for sku property that matches current one
 							// establishing match based on codes even if the code may not set
 							$code = $prop['CODE'];
+							$arItem["PROPERTY_{$code}_VALUE"] = $prop['VALUE'];
 
 							if(self::isNonemptyArray($arItem['SKU_DATA']))
 							{
@@ -1050,7 +1056,13 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 							$fileList = "";
 							foreach ($propertyList["VALUE"] as $fileElement)
 							{
-								$fileList = $fileList.CFile::ShowFile($fileElement['ID'], 0, 90, 90, true)."<br/>";
+								if (is_array($fileElement))
+									$fileId = $fileElement['ID'];
+								else
+									$fileId = $fileElement;
+
+								if ((int)($fileId) > 0)
+									$fileList .= CFile::ShowFile((int)$fileId, 0, 90, 90, true)."<br/>";
 							}
 							$propertyList["VALUE"] = $fileList;
 						}
@@ -1189,18 +1201,21 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 			$shipmentItems = $shipment->getShipmentItemCollection();
 
 			$shipmentFields = $shipment->getFieldValues();
-
+			$shipmentFields['ITEMS'] = array();
 			/** @var \Bitrix\Sale\ShipmentItem $item */
 			foreach ($shipmentItems as $item)
 			{
 				$basketItem = $item->getBasketItem();
-				$quantity = Sale\BasketItem::formatQuantity($item->getQuantity());
-				$basketId =  $basketItem->getId();
+				if ($basketItem instanceof Sale\BasketItem)
+				{
+					$quantity = Sale\BasketItem::formatQuantity($item->getQuantity());
+					$basketId =  $basketItem->getId();
 
-				$shipmentFields['ITEMS'][$basketId] = array(
-					'BASKET_ID' => $basketId,
-					'QUANTITY' => $quantity
-				);
+					$shipmentFields['ITEMS'][$basketId] = array(
+						'BASKET_ID' => $basketId,
+						'QUANTITY' => $quantity
+					);
+				}
 			}
 
 			if ($shipmentFields["DELIVERY_ID"] > 0 && strlen($shipmentFields["TRACKING_NUMBER"]))
@@ -1710,6 +1725,12 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 
 			$shipment['STORE_ID'] = Sale\Delivery\ExtraServices\Manager::getStoreIdForShipment($shipment['ID'], $shipment["DELIVERY_ID"]);
 
+			// backward compatibility
+			if ((int)$shipment['STORE_ID'] > 0)
+			{
+				$arResult['STORE_ID'] = $shipment['STORE_ID'];
+			}
+
 			$shipment['STATUS_NAME'] = $deliveryStatusList[$shipment['STATUS_ID']];
 		}
 		unset($shipment);
@@ -1742,8 +1763,8 @@ class CBitrixPersonalOrderDetailComponent extends CBitrixComponent
 
 				if (doubleval($arBasket["DISCOUNT_PRICE"]))
 				{
-					$arBasket["DISCOUNT_PRICE_PERCENT"] = $arBasket["DISCOUNT_PRICE"]*100 / ($arBasket["DISCOUNT_PRICE"] + $arBasket["PRICE"]);
-					$arBasket["DISCOUNT_PRICE_PERCENT_FORMATED"] = roundEx($arBasket["DISCOUNT_PRICE_PERCENT"], SALE_VALUE_PRECISION)."%";
+					$arBasket["DISCOUNT_PRICE_PERCENT"] = Sale\PriceMaths::roundPrecision($arBasket["DISCOUNT_PRICE"]*100 / ($arBasket["DISCOUNT_PRICE"] + $arBasket["PRICE"]));
+					$arBasket["DISCOUNT_PRICE_PERCENT_FORMATED"] = Sale\BasketItem::formatQuantity($arBasket["DISCOUNT_PRICE_PERCENT"])."%";
 					$arResult['SHOW_DISCOUNT_TAB'] = 'Y';
 				}
 

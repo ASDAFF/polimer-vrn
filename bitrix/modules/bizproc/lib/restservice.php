@@ -27,6 +27,12 @@ class RestService extends \IRestService
 	const ERROR_WRONG_WORKFLOW_ID = 'ERROR_WRONG_WORKFLOW_ID';
 	const ERROR_WRONG_ACTIVITY_NAME = 'ERROR_WRONG_ACTIVITY_NAME';
 
+	const ERROR_TASK_VALIDATION = 'ERROR_TASK_VALIDATION';
+	const ERROR_TASK_NOT_FOUND = 'ERROR_TASK_NOT_FOUND';
+	const ERROR_TASK_TYPE = 'ERROR_TASK_TYPE';
+	const ERROR_TASK_COMPLETED = 'ERROR_TASK_COMPLETED';
+	const ERROR_TASK_EXECUTION = 'ERROR_TASK_EXECUTION';
+
 	public static function onRestServiceBuildDescription()
 	{
 		$map = array();
@@ -41,6 +47,7 @@ class RestService extends \IRestService
 				'bizproc.event.send' => array(__CLASS__, 'sendEvent'),
 
 				'bizproc.task.list' =>  array(__CLASS__, 'getTaskList'),
+				'bizproc.task.complete' =>  array(__CLASS__, 'completeTask'),
 
 				'bizproc.workflow.instances' => array(__CLASS__, 'getWorkflowInstances'),
 
@@ -147,9 +154,17 @@ class RestService extends \IRestService
 		return self::addActivityInternal($params, $server, true);
 	}
 
+	/**
+	 * @param array $params
+	 * @param  \CRestServer $server
+	 * @param bool $isRobot
+	 * @return bool
+	 * @throws AccessException
+	 * @throws RestException
+	 */
 	private static function addActivityInternal($params, $server, $isRobot = false)
 	{
-		if(!$server->getAppId())
+		if(!$server->getClientId())
 		{
 			throw new AccessException("Application context required");
 		}
@@ -162,7 +177,7 @@ class RestService extends \IRestService
 		else
 			self::validateActivity($params, $server);
 
-		$params['APP_ID'] = $server->getAppId();
+		$params['APP_ID'] = $server->getClientId();
 		$params['INTERNAL_CODE'] = self::generateInternalCode($params);
 		$params['APP_NAME'] = self::getAppName($params['APP_ID']);
 
@@ -214,9 +229,17 @@ class RestService extends \IRestService
 		return self::deleteActivityInternal($params, $server, true);
 	}
 
+	/**
+	 * @param array $params
+	 * @param \CRestServer $server
+	 * @param bool $isRobot
+	 * @return bool
+	 * @throws AccessException
+	 * @throws RestException
+	 */
 	private static function deleteActivityInternal($params, $server, $isRobot = false)
 	{
-		if(!$server->getAppId())
+		if(!$server->getClientId())
 		{
 			throw new AccessException("Application context required");
 		}
@@ -224,7 +247,7 @@ class RestService extends \IRestService
 		$params = array_change_key_case($params, CASE_UPPER);
 		self::checkAdminPermissions();
 		self::validateActivityCode($params['CODE']);
-		$params['APP_ID'] = $server->getAppId();
+		$params['APP_ID'] = $server->getClientId();
 		$internalCode = self::generateInternalCode($params);
 
 		$iterator = RestActivityTable::getList(array(
@@ -327,9 +350,16 @@ class RestService extends \IRestService
 		return self::getActivityListInternal($params, $server, true);
 	}
 
+	/**
+	 * @param array $params
+	 * @param \CRestServer $server
+	 * @param bool $isRobot
+	 * @return array
+	 * @throws AccessException
+	 */
 	private static function getActivityListInternal($params, $server, $isRobot = false)
 	{
-		if(!$server->getAppId())
+		if(!$server->getClientId())
 		{
 			throw new AccessException("Application context required");
 		}
@@ -338,7 +368,7 @@ class RestService extends \IRestService
 		$iterator = RestActivityTable::getList(array(
 			'select' => array('CODE'),
 			'filter' => array(
-				'=APP_ID' => $server->getAppId(),
+				'=APP_ID' => $server->getClientId(),
 				'=IS_ROBOT' => $isRobot ? 'Y' : 'N'
 			)
 		));
@@ -411,11 +441,11 @@ class RestService extends \IRestService
 	public static function getTaskList($params, $n, $server)
 	{
 		global $USER;
-		self::checkAdminPermissions();
 		$params = array_change_key_case($params, CASE_UPPER);
 
 		$fields = array(
 			'ID' => 'ID',
+			'ACTIVITY' => 'ACTIVITY',
 			'WORKFLOW_ID' => 'WORKFLOW_ID',
 			'DOCUMENT_NAME' => 'DOCUMENT_NAME',
 			'DESCRIPTION' => 'DESCRIPTION',
@@ -433,6 +463,7 @@ class RestService extends \IRestService
 			'MODULE_ID' => 'MODULE_ID',
 			'ENTITY' => 'ENTITY',
 			'DOCUMENT_ID' => 'DOCUMENT_ID',
+			'PARAMETERS' => 'PARAMETERS',
 		);
 
 		$select = static::getSelect($params['SELECT'], $fields, array('ID', 'WORKFLOW_ID', 'DOCUMENT_NAME', 'NAME'));
@@ -440,9 +471,15 @@ class RestService extends \IRestService
 		$filter = static::getFilter($params['FILTER'], $fields, array('MODIFIED', 'WORKFLOW_STARTED', 'OVERDUE_DATE'));
 		$order = static::getOrder($params['ORDER'], $fields, array('ID' => 'DESC'));
 
-		$currentUserId = (int) $USER->getId();
-		$targetUserId = isset($filter['USER_ID'])? (int)$filter['USER_ID'] : 0;
+		$currentUserId = (int)$USER->getId();
+		$isAdmin = static::isAdmin();
 
+		if (!$isAdmin && !isset($filter['USER_ID']))
+		{
+			$filter['USER_ID'] = $currentUserId;
+		}
+
+		$targetUserId = isset($filter['USER_ID'])? (int)$filter['USER_ID'] : 0;
 		if ($targetUserId !== $currentUserId && !\CBPHelper::checkUserSubordination($currentUserId, $targetUserId))
 		{
 			self::checkAdminPermissions();
@@ -469,10 +506,123 @@ class RestService extends \IRestService
 				$row['MODULE_ID'], $row['ENTITY'], $row['DOCUMENT_ID']
 			));
 
+			if (isset($row['PARAMETERS']))
+			{
+				$row['PARAMETERS'] = static::filterTaskParameters($row['PARAMETERS']);
+			}
+
 			$result[] = $row;
 		}
 
 		return $result;
+	}
+
+	private static function filterTaskParameters(array $parameters)
+	{
+		$whiteList = array(
+			array('CommentLabelMessage', 'CommentLabel'),
+			'CommentRequired', 'ShowComment',
+			array('TaskButtonMessage', 'StatusOkLabel'),
+			array('TaskButton1Message', 'StatusYesLabel'),
+			array('TaskButton2Message', 'StatusNoLabel'),
+			array('TaskButtonCancelMessage', 'StatusCancelLabel'),
+		);
+
+		$filtered = array();
+
+		foreach ($whiteList as $whiteKey)
+		{
+			$filterKey = $whiteKey;
+			if (is_array($whiteKey))
+			{
+				$filterKey = $whiteKey[1];
+				$whiteKey = $whiteKey[0];
+			}
+			if (isset($parameters[$whiteKey]))
+			{
+				$filtered[$filterKey] = $parameters[$whiteKey];
+			}
+		}
+
+		return $filtered;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool
+	 * @throws RestException
+	 */
+	public static function completeTask($params, $n, $server)
+	{
+		global $USER;
+		$params = array_change_key_case($params, CASE_UPPER);
+		self::validateTaskParameters($params);
+
+		$userId = (int)$USER->getId();
+		$task = static::getTask($params['TASK_ID'], $userId);
+
+		if ($task['ACTIVITY'] !== 'ReviewActivity' && $task['ACTIVITY'] !== 'ApproveActivity')
+		{
+			throw new RestException('Incorrect task type', self::ERROR_TASK_TYPE);
+		}
+
+		$errors = array();
+		$request = array(
+			'INLINE_USER_STATUS' => \CBPTaskUserStatus::resolveStatus($params['STATUS']),
+			'task_comment' => !empty($params['COMMENT']) && is_string($params['COMMENT']) ? $params['COMMENT'] : null
+		);
+
+		if (!\CBPDocument::postTaskForm($task, $userId, $request, $errors))
+		{
+			throw new RestException($errors[0]["message"], self::ERROR_TASK_EXECUTION);
+		}
+
+		return true;
+	}
+
+	private static function validateTaskParameters(array $params)
+	{
+		if (empty($params['TASK_ID']))
+		{
+			throw new RestException('empty TASK_ID', self::ERROR_TASK_VALIDATION);
+		}
+		if (empty($params['STATUS']) || \CBPTaskUserStatus::resolveStatus($params['STATUS']) === null)
+		{
+			throw new RestException('incorrect STATUS', self::ERROR_TASK_VALIDATION);
+		}
+	}
+
+	private static function getTask($id, $userId)
+	{
+		$dbTask = \CBPTaskService::getList(
+			array(),
+			array("ID" => (int)$id, "USER_ID" => $userId),
+			false,
+			false,
+			array("ID", "WORKFLOW_ID", "ACTIVITY", "ACTIVITY_NAME", "MODIFIED", "OVERDUE_DATE", "NAME", "DESCRIPTION", "PARAMETERS", "USER_STATUS")
+		);
+		$task = $dbTask->fetch();
+
+		if (!$task)
+		{
+			throw new RestException('Task not found', self::ERROR_TASK_NOT_FOUND);
+		}
+		elseif ((int)$task['USER_STATUS'] !== \CBPTaskUserStatus::Waiting)
+		{
+			throw new RestException('Task already completed', self::ERROR_TASK_COMPLETED);
+		}
+
+		if ($task)
+		{
+			$task["PARAMETERS"]["DOCUMENT_ID"] = \CBPStateService::getStateDocumentId($task['WORKFLOW_ID']);
+			$task["MODULE_ID"] = $task["PARAMETERS"]["DOCUMENT_ID"][0];
+			$task["ENTITY"] = $task["PARAMETERS"]["DOCUMENT_ID"][1];
+			$task["DOCUMENT_ID"] = $task["PARAMETERS"]["DOCUMENT_ID"][2];
+		}
+
+		return $task;
 	}
 
 	/**
@@ -661,14 +811,23 @@ class RestService extends \IRestService
 
 	private static function checkAdminPermissions()
 	{
-		global $USER;
-		if (!isset($USER)
-			|| !is_object($USER)
-			|| (!$USER->isAdmin() && !(Loader::includeModule('bitrix24') && \CBitrix24::isPortalAdmin($USER->getID())))
-		)
+		if (!static::isAdmin())
 		{
 			throw new AccessException();
 		}
+	}
+
+	private static function isAdmin()
+	{
+		global $USER;
+		return (
+			isset($USER)
+			&& is_object($USER)
+			&& (
+				$USER->isAdmin()
+				|| Loader::includeModule('bitrix24') && \CBitrix24::isPortalAdmin($USER->getID())
+			)
+		);
 	}
 
 	private static function generateInternalCode($data)
@@ -911,7 +1070,7 @@ class RestService extends \IRestService
 				$result = AppTable::getList(
 					array(
 						'filter' => array(
-							'=CLIENT_ID' => $server->getAppId()
+							'=CLIENT_ID' => $server->getClientId()
 						)
 					)
 				);

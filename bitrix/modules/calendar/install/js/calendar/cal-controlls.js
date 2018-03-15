@@ -1575,7 +1575,7 @@ window.BxEditEventGridSearch = function(event)
 				return;
 			}
 
-			// Check Meeting and Video Meeting rooms accessibility
+			// Check Meeting rooms accessibility
 			if (this.Loc.NEW.substr(0, 5) == 'ECMR_' && !params.bLocationChecked)
 			{
 				if (toDate && this.pFullDay.checked)
@@ -1956,7 +1956,6 @@ window.BxEditEventGridSearch = function(event)
 
 				if (this.plannerLoadedTimezone !== this.pFromTz.value || this.plannerLoadedlocation !== location)
 				{
-
 					this.CheckPlannerState();
 				}
 				else
@@ -2012,6 +2011,7 @@ window.BxEditEventGridSearch = function(event)
 
 			this.plannerLoadedTimezone = params.tzFrom || this.pFromTz.value;
 			this.plannerLoadedlocation = params.location || '';
+			console.info(this.plannerLoadedlocation);
 
 			var
 				_this = this,
@@ -2260,52 +2260,6 @@ window.BxEditEventGridSearch = function(event)
 				}
 			}).animate();
 		},
-
-		//DisplayAttendees: function(users, accessibility)
-		//{
-		//	BX.cleanNode(this.pAttContY);
-		//	BX.cleanNode(this.pAttContN);
-		//	BX.cleanNode(this.pAttContQ);
-		//	this.pAttContY.style.display = this.pAttContN.style.display = this.pAttContQ.style.display = 'none';
-		//
-		//	var dis = {Y: false, N: false, Q: false};
-		//	for(var i in users)
-		//	{
-		//		if (this.attendeeIndex[users[i].USER_ID])
-		//			users[i].STATUS = this.attendeeIndex[users[i].USER_ID] || 'Q';
-		//		else
-		//			users[i].STATUS = this.attendeeIndex[users[i].USER_ID] = users[i].STATUS || 'Q';
-		//
-		//		if (users[i].STATUS == 'Q')
-		//		{
-		//			this.AddAttendee(users[i], this.pAttContQ);
-		//			if (!dis.Q)
-		//				dis.Q = !(this.pAttContQ.style.display = '');
-		//		}
-		//		else if (users[i].STATUS == 'Y')
-		//		{
-		//			this.AddAttendee(users[i], this.pAttContY);
-		//			if (!dis.Y)
-		//				dis.Y = !(this.pAttContY.style.display = '');
-		//		}
-		//		else
-		//		{
-		//			this.AddAttendee(users[i], this.pAttContN);
-		//			if (!dis.N)
-		//				dis.N = !(this.pAttContN.style.display = '');
-		//		}
-		//	}
-		//},
-
-		//AddAttendee: function(user, cont)
-		//{
-		//	var row = cont.appendChild(BX.create("DIV", {props: {}, children: [
-		//		BX.create("A", {props: {href: user.URL, title: user.DISPLAY_NAME, className: 'bxcal-user bxcal-user-link-name', target: "_blank"}, html: '<span class="bxcal-user-status"></span><span class="bxcal-user-avatar-outer"><span class="bxcal-user-avatar"><img src="' + user.AVATAR + '" width="21" height="21" /></span></span><span class="bxcal-user-name">' + BX.util.htmlspecialchars(user.DISPLAY_NAME) + '</span>'})
-		//	]}));
-		//
-		//	if (user.ACC == 'busy' || user.ACC == 'absent')
-		//		row.appendChild(BX.create("SPAN", {props: {className: 'bxcal-user-acc'}, text: '(' + EC_MESS['acc_status_' + user.ACC] + ')'}));
-		//},
 
 		InitDateTimeControls: function()
 		{

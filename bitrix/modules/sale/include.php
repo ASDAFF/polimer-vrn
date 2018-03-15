@@ -128,6 +128,7 @@ CModule::AddAutoloadClasses(
 		"CSaleAffiliateTier" => $DBType."/affiliate_tier.php",
 		"CSaleAffiliateTransact" => $DBType."/affiliate_transact.php",
 		"CSaleExport" => "general/export.php", //"CSaleExport" => $DBType."/export.php",
+		"ExportOneCCRM" => "general/export.php",
 		"CSaleOrderLoader" => "general/order_loader.php",
 
 		"CSaleMeasure" => "general/measurement.php",
@@ -282,7 +283,9 @@ CModule::AddAutoloadClasses(
 
 		"\\Bitrix\\Sale\\OrderUserProperties" => "lib/userprops.php",
 
+		"\\Bitrix\\Sale\\BasketPropertiesCollectionBase" => "lib/basketpropertiesbase.php",
 		"\\Bitrix\\Sale\\BasketPropertiesCollection" => "lib/basketproperties.php",
+		"\\Bitrix\\Sale\\BasketPropertyItemBase" => "lib/basketpropertiesitembase.php",
 		"\\Bitrix\\Sale\\BasketPropertyItem" => "lib/basketpropertiesitem.php",
 
 		"\\Bitrix\\Sale\\Tax" => "lib/tax.php",
@@ -291,7 +294,6 @@ CModule::AddAutoloadClasses(
 		"\\Bitrix\\Sale\\OrderTable" => "lib/internals/order_old.php",
 
 		"\\Bitrix\\Sale\\Internals\\BasketTable" => "lib/internals/basket.php",
-		"\\Bitrix\\Sale\\BasketTable" => "lib/internals/basket_old.php",
 
 		"\\Bitrix\\Sale\\Internals\\ShipmentTable" => "lib/internals/shipment.php",
 		"\\Bitrix\\Sale\\Internals\\ShipmentItemTable" => "lib/internals/shipmentitem.php",
@@ -312,10 +314,21 @@ CModule::AddAutoloadClasses(
 
 		"\\Bitrix\\Sale\\Provider" => "lib/provider.php",
 		"\\Bitrix\\Sale\\ProviderBase" => "lib/providerbase.php",
+
+		'\Bitrix\Sale\Internals\Catalog\Provider' => "lib/internals/catalog/provider.php",
+		'\Bitrix\Sale\SaleProviderBase' => "lib/saleproviderbase.php",
+		'Bitrix\Sale\SaleProviderBase' => "lib/saleproviderbase.php",
+		'\Bitrix\Sale\Internals\TransferDataProvider' => "lib/internals/transferdataprovider.php",
+		'\Bitrix\Sale\Internals\PoolQuantity' => "lib/internals/poolquantity.php",
+
+		'\Bitrix\Sale\Internals\ProviderCreator' => "lib/internals/providercreator.php",
+		'\Bitrix\Sale\Internals\ProviderBuilderBase' => "lib/internals/providerbuilderbase.php",
+		'\Bitrix\Sale\Internals\ProviderBuilder' => "lib/internals/providerbuilder.php",
+		'\Bitrix\Sale\Internals\ProviderBuilderCompatibility' => "lib/internals/providerbuildercompatibility.php",
+
+
 		"\\Bitrix\\Sale\\OrderHistory" => "lib/orderhistory.php",
 
-		"\\Bitrix\\Sale\\Internals\\ProviderBasketCollection" => "lib/providerbasketcollection.php",
-		"\\Bitrix\\Sale\\Internals\\ProviderBasketItem" => "lib/providerbasketitem.php",
 		"\\Bitrix\\Sale\\Internals\\BasketPropertyTable" => "lib/internals/basketproperties.php",
 		"\\Bitrix\\Sale\\Internals\\CompanyTable" => "lib/internals/company.php",
 		"\\Bitrix\\Sale\\Internals\\CompanyGroupTable" => "lib/internals/companygroup.php",
@@ -341,6 +354,8 @@ CModule::AddAutoloadClasses(
 		//archive
 		"\\Bitrix\\Sale\\Internals\\OrderArchiveTable" => "lib/internals/orderarchive.php",
 		"\\Bitrix\\Sale\\Internals\\BasketArchiveTable" => "lib/internals/basketarchive.php",
+		"\\Bitrix\\Sale\\Internals\\OrderArchivePackedTable" => "lib/internals/orderarchivepacked.php",
+		"\\Bitrix\\Sale\\Internals\\BasketArchivePackedTable" => "lib/internals/basketarchivepacked.php",
 		"\\Bitrix\\Sale\\Archive\\Manager" => "lib/archive/manager.php",
 		"\\Bitrix\\Sale\\Archive\\Recovery\\Base" => "lib/archive/recovery/base.php",
 		"\\Bitrix\\Sale\\Archive\\Recovery\\Scheme" => "lib/archive/recovery/scheme.php",
@@ -410,6 +425,7 @@ CModule::AddAutoloadClasses(
 		// exceptions
 		"\\Bitrix\\Sale\\Location\\Tree\\NodeNotFoundException" => "lib/location/tree/exception.php",
 		"\\Bitrix\\Sale\\Location\\Tree\\NodeIncorrectException" => "lib/location/tree/exception.php",
+		"\\Bitrix\\Sale\\Location\\Exception" => "lib/location/exception.php",
 
 		// old
 		"CSaleProxyAdminResult" => "general/proxyadminresult.php", // for admin
@@ -431,7 +447,7 @@ CModule::AddAutoloadClasses(
 		"CSaleCondCtrlGroup" => "general/sale_cond.php",
 		"CSaleCondCtrlBasketGroup" => "general/sale_cond.php",
 		"CSaleCondCtrlBasketFields" => "general/sale_cond.php",
-		"CSaleCondCtrlBasketProps" => "general/sale_cond.php",
+		"CSaleCondCtrlBasketProperties" => "general/sale_cond.php",
 		"CSaleCondCtrlOrderFields" => "general/sale_cond.php",
 		"CSaleCondCtrlCommon" => "general/sale_cond.php",
 		"CSaleCondTree" => "general/sale_cond.php",
@@ -524,8 +540,11 @@ CModule::AddAutoloadClasses(
 		'\Bitrix\Sale\DiscountCouponsManager' => 'lib/discountcoupon.php',
 		'\Bitrix\Sale\OrderDiscountManager' => 'lib/orderdiscount.php',
 
+		'\Bitrix\Sale\PaySystem\RestService' => 'lib/paysystem/restservice.php',
+		'\Bitrix\Sale\PaySystem\RestHandler' => 'lib/paysystem/resthandler.php',
 		'\Bitrix\Sale\Services\Base\RestClient' => 'lib/services/base/restclient.php',
 		'\Bitrix\Sale\PaySystem\Service' => 'lib/paysystem/service.php',
+		'\Bitrix\Sale\Internals\PaySystemRestHandlersTable' => 'lib/internals/paysystemresthandlers.php',
 		'\Bitrix\Sale\PaySystem\Manager' => 'lib/paysystem/manager.php',
 		'\Bitrix\Sale\PaySystem\BaseServiceHandler' => 'lib/paysystem/baseservicehandler.php',
 		'\Bitrix\Sale\PaySystem\ServiceHandler' => 'lib/paysystem/servicehandler.php',
@@ -545,6 +564,7 @@ CModule::AddAutoloadClasses(
 		'\Bitrix\sale\Internals\YandexSettingsTable' => 'lib/internals/yandexsettings.php',
 
 		'\Bitrix\Sale\Services\Company\Manager' => 'lib/services/company/manager.php',
+		'\Bitrix\Sale\Internals\CollectionFilterIterator' => 'lib/internals/collectionfilteriterator.php',
 
 		'\Bitrix\Sale\Cashbox\Internals\Pool' => 'lib/cashbox/internals/pool.php',
 		'\Bitrix\Sale\Cashbox\Internals\CashboxTable' => 'lib/cashbox/internals/cashbox.php',
@@ -617,7 +637,17 @@ CModule::AddAutoloadClasses(
 		'\Bitrix\Sale\Exchange\ImportPattern'=> '/lib/exchange/importpattern.php',
 		'\Bitrix\Sale\Exchange\ImportOneCPackage'=> '/lib/exchange/importonecpackage.php',
 
-		'\Bitrix\Sale\Location\GeoIp' => '/lib/location/geoip.php'
+		'\Bitrix\Sale\Location\GeoIp' => '/lib/location/geoip.php',
+
+		'\Bitrix\Sale\Delivery\Requests\Manager' => '/lib/delivery/requests/manager.php',
+		'\Bitrix\Sale\Delivery\Requests\Helper' => '/lib/delivery/requests/helper.php',
+		'\Bitrix\Sale\Delivery\Requests\HandlerBase' => '/lib/delivery/requests/handlerbase.php',
+		'\Bitrix\Sale\Delivery\Requests\RequestTable' => '/lib/delivery/requests/request.php',
+		'\Bitrix\Sale\Delivery\Requests\ShipmentTable' => '/lib/delivery/requests/shipment.php',
+		'\Bitrix\Sale\Delivery\Requests\Result' => '/lib/delivery/requests/result.php',
+		'\Bitrix\Sale\Delivery\Requests\ResultFile' => '/lib/delivery/requests/resultfile.php',
+		
+		'\Bitrix\Sale\Delivery\Packing\Packer' => '/lib/delivery/packing/packer.php'
 	)
 );
 
@@ -969,6 +999,13 @@ function getRatio($arBasketItems)
 	if (Loader::includeModule('catalog'))
 	{
 		static $cacheRatio = array();
+
+		$helperCacheRatio = \Bitrix\Sale\BasketComponentHelper::getRatioDataCache();
+		if (is_array($helperCacheRatio) && !empty($helperCacheRatio))
+		{
+			$cacheRatio = array_merge($cacheRatio, $helperCacheRatio);
+		}
+
 		$map = array();
 		$arElementId = array();
 		foreach ($arBasketItems as $key => $arItem)
@@ -983,9 +1020,17 @@ function getRatio($arBasketItems)
 
 			if (isset($cacheRatio[$hash]))
 			{
-				$arBasketItems[$key]["MEASURE_RATIO"] = $cacheRatio[$hash]['RATIO']; // old key
-				$arBasketItems[$key]["MEASURE_RATIO_ID"] = $cacheRatio[$hash]["ID"];
-				$arBasketItems[$key]["MEASURE_RATIO_VALUE"] = $cacheRatio[$hash]["RATIO"];
+				if (isset($cacheRatio[$hash]['RATIO']))
+				{
+					$arBasketItems[$key]["MEASURE_RATIO"] = $cacheRatio[$hash]['RATIO']; // old key
+					$arBasketItems[$key]["MEASURE_RATIO_VALUE"] = $cacheRatio[$hash]["RATIO"];
+				}
+
+				if (isset($cacheRatio[$hash]['ID']))
+				{
+					$arBasketItems[$key]["MEASURE_RATIO_ID"] = $cacheRatio[$hash]["ID"];
+				}
+
 			}
 			else
 			{

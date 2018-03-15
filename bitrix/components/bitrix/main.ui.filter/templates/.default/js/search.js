@@ -95,7 +95,8 @@
 
 		isSquaresSelected: function()
 		{
-			return this.getSquares().every(this.isSquareSelected, this);
+			var squares = this.getSquares();
+			return squares.length && squares.every(this.isSquareSelected, this);
 		},
 
 		isSquareSelected: function(square)
@@ -116,7 +117,7 @@
 			var selectionStart = searchInput.selectionStart;
 			var selectionEnd = searchInput.selectionEnd;
 
-			return selectionStart === 0 && selectionEnd === searchStringLength;
+			return selectionStart === 0 && selectionEnd !== 0 && selectionEnd === searchStringLength;
 		},
 
 		isSelectionStart: function()
@@ -195,23 +196,40 @@
 			var currentPresetId = Preset.getCurrentPresetId();
 			var isResetToDefaultMode = Filter.getParam('RESET_TO_DEFAULT_MODE');
 			var isPinned = Preset.isPinned(currentPresetId);
+			var squares = this.getSquares();
 
-			if ((isResetToDefaultMode && isPinned) || !isResetToDefaultMode)
+			if (squares.length === 1)
 			{
-				var resetWithoutSearch = true;
-				this.lastPromise = Filter.resetFilter(resetWithoutSearch);
-				Filter.closePopup();
+				if ((isResetToDefaultMode && isPinned) || !isResetToDefaultMode)
+				{
+					var resetWithoutSearch = true;
+					this.lastPromise = Filter.resetFilter(resetWithoutSearch);
+					Filter.closePopup();
+				}
+
+				if (isResetToDefaultMode && !isPinned)
+				{
+					this.lastPromise = Filter.getPreset().applyPinnedPreset();
+				}
 			}
 
-			if (isResetToDefaultMode && !isPinned)
+			if (squares.length > 1)
 			{
-				this.lastPromise = Filter.getPreset().applyPinnedPreset();
+				var currentPreset = Preset.getPreset(Preset.getCurrentPresetId());
+				var tmpPreset = Preset.getPreset('tmp_filter');
+
+				tmpPreset.FIELDS = BX.clone(currentPreset.ADDITIONAL);
+				currentPreset.ADDITIONAL = [];
+				Preset.deactivateAllPresets();
+				Preset.applyPreset('tmp_filter');
+				Filter.applyFilter();
 			}
 		},
 
 		onControlSquareRemove: function(square)
 		{
 			var Filter = this.parent;
+			var Preset = Filter.getPreset();
 			var isResetToDefaultMode = Filter.getParam('RESET_TO_DEFAULT_MODE');
 
 			if (isResetToDefaultMode && this.getSquares().length === 1)
@@ -223,6 +241,19 @@
 				var squareData = this.getSquareData(square);
 				Filter.clearControls(squareData);
 				Filter.closePopup();
+
+				if (BX.type.isArray(squareData))
+				{
+					squareData.forEach(function(square) {
+						Preset.removeAdditionalField(square.name);
+					});
+				}
+
+				if (BX.type.isPlainObject(squareData))
+				{
+					Preset.removeAdditionalField(squareData.name);
+				}
+
 				this.apply();
 			}
 		},
@@ -970,7 +1001,12 @@
 								});
 							}
 
-							if (label.length)
+							if (!BX.type.isArray(label))
+							{
+								label = [ label ];
+							}
+
+							if (label.length > 0)
 							{
 								value = current.LABEL + ': ';
 								value += label.join(', ');

@@ -21,6 +21,7 @@ class CGoogleMessage extends CPushMessage
 			"data" => array(
 				'contentTitle' => $this->title,
 				"contentText" => $this->text,
+				"badge"=>$this->badge,
 				"messageParams" => $this->customProperties,
 				"category" => $this->getCategory(),
 				"sound"=>$this->getSound(),

@@ -137,4 +137,5 @@ $MESS["CAT_YANDEX_FILTER_AVAILABLE"] = "Выгружать только дост
 $MESS["CAT_YANDEX_DISABLE_REFERERS"] = "Не добавлять к ссылкам на товары реферер:";
 $MESS["CAT_MAX_EXECUTION_TIME"] = "Время выполнения шага:";
 $MESS["CAT_MAX_EXECUTION_TIME_NOTE"] = "0 - выгрузить все сразу<br> положительное значение - число секунд на выполнение одного шага";
+$MESS["CAT_YANDEX_CHECK_PERMISSIONS"] = "Включить проверку прав доступа для группы 2 (все пользователи):";
 ?>

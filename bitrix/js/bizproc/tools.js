@@ -14,20 +14,29 @@ if (typeof BX.Bizproc.doInlineTask === 'undefined')
 		if (!parameters || !parameters['TASK_ID'])
 			return false;
 		parameters['sessid'] = BX.bitrix_sessid();
-		BX.ajax.post(
-			'/bitrix/tools/bizproc_do_task_ajax.php',
-			parameters,
-			function()
+		BX.ajax({
+			method:'POST',
+			dataType: 'json',
+			url:'/bitrix/tools/bizproc_do_task_ajax.php',
+			data: parameters,
+			onsuccess: function(response)
 			{
+				if (response.ERROR)
+				{
+					window.alert(response.ERROR);
+				}
+
 				if (scope)
 				{
 					scope.__waiting = false;
 					BX.removeClass(scope, 'bp-button-wait');
 				}
-				if (callback)
+				if (response.SUCCESS && callback)
+				{
 					callback(arguments);
+				}
 			}
-		);
+		});
 
 		return false;
 	};
@@ -194,7 +203,7 @@ if (typeof BX.Bizproc.doInlineTask === 'undefined')
 			data: parameters,
 			onsuccess: function(response)
 			{
-				alert(response.message);
+				window.alert(response.message);
 				if (response.success)
 				{
 					if (!!BX.Bizproc.taskPopupInstance)
@@ -252,6 +261,51 @@ if (typeof BX.Bizproc.doInlineTask === 'undefined')
 					});
 					popup.show();
 				});
+			}
+		});
+
+		return false;
+	};
+
+	BX.Bizproc.showWorkflowLogPopup = function (workflowId, params)
+	{
+		if (!BX.type.isPlainObject(params))
+		{
+			params = {};
+		}
+
+		BX.ajax({
+			method: 'GET',
+			dataType: 'html',
+			url: '/bitrix/components/bitrix/bizproc.log/popup.php?site_id='+BX.message('SITE_ID')+'&WORKFLOW_ID=' + workflowId,
+			onsuccess: function (HTML)
+			{
+				var wrapper = BX.create('div', {
+					style: {width: '800px'}
+				});
+				wrapper.innerHTML = HTML;
+
+				var popup = new BX.PopupWindow("bp-wfi-popup-" + workflowId + Math.round(Math.random() * 100000), null, {
+					content: wrapper,
+					closeIcon: true,
+					titleBar: params.title || '',
+					contentColor: 'white',
+					contentNoPaddings : true,
+					zIndex: -100,
+					offsetLeft: 0,
+					offsetTop: 0,
+					closeByEsc: true,
+					draggable: {restrict: false},
+					overlay: {backgroundColor: 'black', opacity: 30},
+					events: {
+						onPopupClose: function (popup)
+						{
+							popup.destroy();
+						}
+					}
+
+				});
+				popup.show();
 			}
 		});
 
@@ -320,7 +374,7 @@ if (typeof BX.Bizproc.doInlineTask === 'undefined')
 			}
 			response = BX.parseJSON(response);
 			if (response && response.ERROR)
-				alert(response.ERROR);
+				window.alert(response.ERROR);
 			else
 			{
 				if (!!BX.Bizproc.taskPopupInstance)

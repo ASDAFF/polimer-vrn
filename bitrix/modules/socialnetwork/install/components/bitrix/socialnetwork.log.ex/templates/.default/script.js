@@ -941,9 +941,13 @@ BitrixLF = function ()
 	this.nextPageFirst = null;
 	this.firstPageLastTS = 0;
 	this.firstPageLastId = 0;
+	this.filterId = null;
+	this.filterApi = null;
+	this.tagEntryIdList = [];
+	this.inlineTagNodeList = [];
 };
 
-BitrixLF.prototype.initOnce = function()
+BitrixLF.prototype.initOnce = function(params)
 {
 	var loaderContainer = BX('feed-loader-container');
 
@@ -983,7 +987,53 @@ BitrixLF.prototype.initOnce = function()
 		}
 	}, this));
 
+	if (
+		typeof params != 'undefined'
+		&& typeof params.crmEntityTypeName != 'undefined'
+		&& params.crmEntityTypeName.length > 0
+		&& typeof params.crmEntityId != 'undefined'
+		&& parseInt(params.crmEntityId) > 0
+	)
+	{
+		BX.addCustomEvent("onAfterActivitySave", BX.delegate(function() {
+			this.refresh({
+				sessid: BX.bitrix_sessid(),
+				PARAMS: {
+					ENTITY_TYPE_NAME: params.crmEntityTypeName,
+					ENTITY_ID: parseInt(params.crmEntityId)
+				}
+			});
+		}, this));
+	}
+
+	if (
+		typeof params != 'undefined'
+		&& typeof params.filterId != 'undefined'
+		&& typeof BX.Main != 'undefined'
+		&& typeof BX.Main.filterManager != 'undefined'
+	)
+	{
+		var filterManager = BX.Main.filterManager.getById(params.filterId);
+		this.filterId = params.filterId;
+
+		if(filterManager)
+		{
+			this.filterApi = filterManager.getApi();
+		}
+	}
+
 	BX.UserContentView.init();
+
+	BX('log_internal_container').addEventListener('click', BX.delegate(function(e) {
+		var tagValue = BX.getEventTarget(e).getAttribute('bx-tag-value');
+		if (BX.type.isNotEmptyString(tagValue))
+		{
+			if (this.clickTag(tagValue))
+			{
+				e.preventDefault();
+			}
+		}
+	}, this), true);
 };
 
 BitrixLF.prototype.init = function(params)
@@ -1035,22 +1085,29 @@ BitrixLF.prototype.onFeedScroll = function()
 
 	//Live Feed New Message Block
 	var counterWrap = BX("sonet_log_counter_2_wrap", true);
-	if (counterWrap)
+	var counterCont = BX("sonet_log_counter_2_container");
+
+	if (
+		counterWrap
+		&& counterCont
+	)
 	{
 		var top = counterWrap.parentNode.getBoundingClientRect().top;
+		var counterRect = counterCont.getBoundingClientRect();
+
 		if (top <= 0)
 		{
-			BX.addClass(counterWrap, "feed-new-message-informer-fixed");
-			setTimeout(function() {
-				if (BX.hasClass(counterWrap, "feed-new-message-informer-fixed"))
-				{
-					BX.addClass(counterWrap, "feed-new-message-informer-fix-anim");
-				}
-			}, 100);
+			if (!BX.hasClass(counterWrap, "feed-new-message-informer-fixed"))
+			{
+				counterCont.style.left = (counterRect.left + counterRect.width/2) + 'px';
+			}
+
+			BX.addClass(counterWrap, "feed-new-message-informer-fixed feed-new-message-informer-fix-anim");
 		}
 		else
 		{
 			BX.removeClass(counterWrap, "feed-new-message-informer-fixed feed-new-message-informer-fix-anim");
+			counterCont.style.left = 'auto';
 		}
 	}
 };
@@ -1462,7 +1519,10 @@ BitrixLF.prototype.recalcMoreButton = function()
 					arPosOuter = BX.pos(obOuter);
 					if (arPosOuter.width < arPos.width)
 					{
-						obInner = BX.findChild(obOuter, {'tag':'div', 'className': 'feed-post-text-block-inner'}, false);
+						obInner = BX.findChild(obOuter, {
+							tag: 'div',
+							className: 'feed-post-text-block-inner'
+						}, false);
 						obInner.style.overflowX = 'scroll'
 					}
 				}
@@ -1955,11 +2015,63 @@ BitrixLF.prototype.registerViewAreaList = function()
 					className: 'feed-post-text-block-inner-inner'
 				});
 				BX.UserContentView.registerViewArea(viewAreaList[i].id, (fullContentArea ? fullContentArea : null));
-
 			}
 		}
 	}
 };
+
+BitrixLF.prototype.clickTag = function(tagValue)
+{
+	var result = false;
+
+	if (
+		BX.type.isNotEmptyString(tagValue)
+		&& this.filterApi
+	)
+	{
+		this.filterApi.setFields({
+			TAG: tagValue
+		});
+		this.filterApi.apply();
+
+		if (
+			this.filterId
+			&& typeof BX.Main != 'undefined'
+			&& typeof BX.Main.filterManager != 'undefined'
+			&& BX.Main.filterManager.getById(this.filterId)
+			&& (
+				BX.Main.filterManager.getById(this.filterId).getSearch().getSquares().length > 0
+				|| BX.Main.filterManager.getById(this.filterId).getSearch().getSearchString().length > 0
+			)
+		)
+		{
+			var pagetitleContainer = BX.findParent(BX(this.filterId + '_filter_container'), { className: 'pagetitle-wrap'});
+			if (pagetitleContainer)
+			{
+				BX.addClass(pagetitleContainer, "pagetitle-wrap-filter-opened");
+			}
+		}
+
+		var windowScroll = BX.GetWindowScrollPos();
+
+		(new BX.easing({
+			duration : 500,
+			start : { scroll : windowScroll.scrollTop },
+			finish : { scroll : 0 },
+			transition : BX.easing.makeEaseOut(BX.easing.transitions.quart),
+			step : function(state){
+				window.scrollTo(0, state.scroll);
+			},
+			complete: function() {
+			}
+		})).animate();
+
+		result = true;
+	}
+
+	return result;
+};
+
 
 if (typeof oLF == 'undefined')
 {

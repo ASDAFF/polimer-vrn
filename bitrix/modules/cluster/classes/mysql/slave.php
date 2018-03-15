@@ -451,7 +451,17 @@ class CClusterSlave
 		$total_weight = 0;
 		foreach($arSlaves as $i=>$slave)
 		{
-			if(defined("BX_CLUSTER_GROUP") && BX_CLUSTER_GROUP != $slave["GROUP_ID"])
+			$bOtherGroup = defined("BX_CLUSTER_GROUP") && ($slave["GROUP_ID"] != BX_CLUSTER_GROUP);
+			if (
+				defined("BX_CLUSTER_SLAVE_USE_ANY_GROUP")
+				&& BX_CLUSTER_SLAVE_USE_ANY_GROUP === true
+				&& $slave["ROLE_ID"] == "SLAVE"
+			)
+			{
+				$bOtherGroup = false;
+			}
+
+			if($bOtherGroup)
 			{
 				unset($arSlaves[$i]);
 			}
@@ -481,7 +491,7 @@ class CClusterSlave
 		}
 
 		$found = false;
-		$rand = mt_rand(0, $total_weight);
+		$rand = ($total_weight > 0? mt_rand(0, $total_weight - 1): 0);
 		foreach($arSlaves as $slave)
 		{
 			if($rand < $slave["PIE_WEIGHT"])

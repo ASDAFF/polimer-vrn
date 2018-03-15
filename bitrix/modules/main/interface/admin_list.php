@@ -1199,15 +1199,15 @@ class CAdminListRow
 				{
 					if($action["DEFAULT"] == true)
 					{
-						$sDefAction = $action["ACTION"]
-							? htmlspecialcharsbx($action["ACTION"])
-							: "BX.adminPanel.Redirect([], '".CUtil::JSEscape($action["LINK"])."', event)"
-						;
-						$sDefTitle = (!empty($action["TITLE"])? $action["TITLE"]:$action["TEXT"]);
+						$sDefAction = ($action["ACTION"]? $action["ACTION"] : "BX.adminPanel.Redirect([], '".CUtil::JSEscape($action["LINK"])."', event)");
+						$sDefTitle = (!empty($action["TITLE"])? $action["TITLE"] : $action["TEXT"]);
 						break;
 					}
 				}
 			}
+
+			$sDefAction = htmlspecialcharsbx($sDefAction, ENT_COMPAT, false);
+			$sDefTitle = htmlspecialcharsbx($sDefTitle, ENT_COMPAT, false);
 		}
 
 		$sMenuItems = "";

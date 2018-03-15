@@ -1,7 +1,9 @@
 <?
 namespace Bitrix\Sale\TradingPlatform\YMarket;
 
+use Bitrix\Catalog;
 use Bitrix\Main\ArgumentNullException;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\PaySystem;
@@ -80,18 +82,51 @@ class Order
 		//Hello from discounts
 		//todo: sortByColumn($products, array("BASE_PRICE" => SORT_DESC, "PRICE" => SORT_DESC), '', null, true);
 
+		Loader::includeModule('catalog');
+
 		$itemsMap = array();
 
 		foreach ($params['CART_ITEMS'] as $itemKey => $item)
 		{
-			$basketItem = $basket->createItem('catalog', $item['offerId']);
-			$itemsMap[$basketItem->getBasketCode()] = $itemKey;
-			$basketItem->setField("PRODUCT_PROVIDER_CLASS", 'CCatalogProductProvider');
-			$basketItem->setField("CURRENCY", $order->getCurrency());
-			$res = $basketItem->setField("QUANTITY", $item['count']);
+			$basketItemFields = array(
+				'PRODUCT_ID' => $item['offerId'],
+				'QUANTITY' => $item['count'],
+				'PRODUCT_PROVIDER_CLASS' => '\Bitrix\Catalog\Product\CatalogProvider'
+			);
+
+			$context = array(
+				'SITE_ID' => $params['SITE_ID'],
+				'CURRENCY' => $params['CURRENCY'],
+			);
+
+			if ($order->getUserId() > 0)
+			{
+				$context['USER_ID'] = $order->getUserId();
+			}
+
+			$basketItem = null;
+
+			$res = Catalog\Product\Basket::addProductToBasket($basket, $basketItemFields, $context);
+			$resultData = $res->getData();
+
+			if (!empty($resultData['BASKET_ITEM']))
+			{
+				/** @var \Bitrix\Sale\BasketItemBase $item */
+				$basketItem = $resultData['BASKET_ITEM'];
+			}
 
 			if (!$res->isSuccess())
-				$basketItem->setField("QUANTITY", 0);
+			{
+				if ($basketItem)
+				{
+					$basketItem->setField("QUANTITY", 0);
+				}
+			}
+
+			if ($basketItem)
+			{
+				$itemsMap[$basketItem->getBasketCode()] = $itemKey;
+			}
 		}
 
 		/*
@@ -106,39 +141,22 @@ class Order
 			}
 		 */
 
-		$providerData = \Bitrix\Sale\Provider::getProductData($basket, array("PRICE", "AVAILABLE_QUANTITY"));
-		$availFields = array_flip(BasketItem::getAvailableFields());
+		$r = $basket->refreshData();
+		if (!$r->isSuccess())
+		{
+			return $r;
+		}
 
 		/** @var BasketItem $basketItem */
-		foreach($basket->getBasketItems() as $basketItem)
+		foreach($basket as $basketItem)
 		{
 			$basketCode = $basketItem->getBasketCode();
 			$item = $params['CART_ITEMS'][$itemsMap[$basketCode]];
 
-			if(empty($providerData[$basketCode]))
-			{
-				unset($itemsMap[$basketItem->getBasketCode()]);
-				$basketItem->delete();
-				continue;
-			}
-
-			$res = $basketItem->setFields(
-				array_intersect_key(
-					$providerData[$basketCode],
-					$availFields
-				)
-			);
-
-			if (!$res->isSuccess())
-			{
-				$result->addErrors($res->getErrors());
-				return $result;
-			}
-
 			$basketItem->setField("NAME", $item['offerName']);
-
-			if ($discount instanceof \Bitrix\Sale\Discount)
-				$discount->setBasketItemData($basketCode, $providerData[$basketCode]);
+//
+//			if ($discount instanceof \Bitrix\Sale\Discount)
+//				$discount->setBasketItemData($basketCode, $providerData[$basketCode]);
 		}
 
 		if($basket->count() == 0)

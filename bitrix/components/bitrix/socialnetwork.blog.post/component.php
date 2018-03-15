@@ -975,7 +975,22 @@ if(
 					$arParserParams["pathToUserEntityId"] = intval($arParams["LOG_ID"]);
 				}
 
-				$arAllow = array("HTML" => "N", "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "Y", "CODE" => "Y", "FONT" => "Y", "LIST" => "Y", "SMILES" => "Y", "NL2BR" => "N", "VIDEO" => "Y", "USER" => "Y", "TAG" => "Y", "SHORT_ANCHOR" => "Y");
+				$arAllow = array(
+					"HTML" => "N",
+					"ANCHOR" => "Y",
+					"BIU" => "Y",
+					"IMG" => "Y",
+					"QUOTE" => "Y",
+					"CODE" => "Y",
+					"FONT" => "Y",
+					"LIST" => "Y",
+					"SMILES" => "Y",
+					"NL2BR" => "N",
+					"VIDEO" => "Y",
+					"USER" => "Y",
+					"TAG" => "Y",
+					"SHORT_ANCHOR" => "Y"
+				);
 				if(COption::GetOptionString("blog","allow_video", "Y") != "Y")
 				{
 					$arAllow["VIDEO"] = "N";
@@ -1272,6 +1287,13 @@ if(
 						"ID" => ""
 					);
 				}
+
+				$arResult["Post"]["LIMITED_VIEW"] = \Bitrix\Socialnetwork\ComponentHelper::getBlogPostLimitedViewStatus(array(
+					'logId' => intval($arParams["LOG_ID"]),
+					'postId' => intval($arResult["Post"]["ID"]),
+					'authorId' => $arResult["Post"]["AUTHOR_ID"],
+					'blogPostPerms' => $arResult["Post"]["SPERM"]
+				));
 
 				$arResult["Post"]["ONLY_CLOSED_GROUPS"] = (!empty($SGClosedList) && !in_array('N', $SGClosedList));
 

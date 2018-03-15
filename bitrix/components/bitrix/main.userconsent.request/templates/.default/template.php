@@ -22,7 +22,7 @@ $config = \Bitrix\Main\Web\Json::encode($arResult['CONFIG']);
 				</div>
 				<div data-bx-content="" class="main-user-consent-request-popup-content">
 					<div class="main-user-consent-request-popup-textarea-block">
-						<textarea data-bx-textarea="" class="main-user-consent-request-popup-text"></textarea>
+						<textarea data-bx-textarea="" class="main-user-consent-request-popup-text" disabled></textarea>
 					</div>
 					<div class="main-user-consent-request-popup-buttons">
 						<span data-bx-btn-accept="" class="main-user-consent-request-popup-button main-user-consent-request-popup-button-acc">Y</span>

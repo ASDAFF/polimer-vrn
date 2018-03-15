@@ -243,7 +243,7 @@ class CAllSocNetFeatures
 
 	public static function SetFeature($type, $id, $feature, $active, $featureName = false)
 	{
-		global $arSocNetAllowedEntityTypes, $APPLICATION, $DB;
+		global $arSocNetAllowedEntityTypes, $APPLICATION, $DB, $CACHE_MANAGER;
 
 		$type = Trim($type);
 		if ((StrLen($type) <= 0) || !in_array($type, $arSocNetAllowedEntityTypes))
@@ -300,6 +300,10 @@ class CAllSocNetFeatures
 					"=DATE_UPDATE" => $DB->CurrentTimeFunction()
 				)
 			);
+			if ($r)
+			{
+				$CACHE_MANAGER->clearByTag("sonet_feature_all_".$type."_".$feature);
+			}
 		}
 		else
 		{
@@ -314,18 +318,32 @@ class CAllSocNetFeatures
 			));
 		}
 
-		if (
-			$feature == 'chat'
-			&& $active == 'Y'
-		)
+		if ($feature == 'chat')
 		{
 			$chatData = Integration\Im\Chat\Workgroup::getChatData(Array(
 				'group_id' => $id,
 				'skipAvailabilityCheck' => true
 			));
-			if (empty($chatData[$id]) || intval($chatData[$id]) <= 0)
+
+			if (
+				$active == 'Y'
+				&& (
+					empty($chatData[$id])
+					|| intval($chatData[$id]) <= 0
+				)
+			)
 			{
 				Integration\Im\Chat\Workgroup::createChat(Array(
+					'group_id' => $id
+				));
+			}
+			elseif (
+				$active == 'N'
+				&& !empty($chatData[$id])
+				&& intval($chatData[$id]) > 0
+			)
+			{
+				Bitrix\Socialnetwork\Integration\Im\Chat\Workgroup::unlinkChat(array(
 					'group_id' => $id
 				));
 			}

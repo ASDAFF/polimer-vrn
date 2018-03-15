@@ -1,6 +1,7 @@
 <?
 /** @global CMain $APPLICATION */
 define('STOP_STATISTICS', true);
+define('PUBLIC_AJAX_MODE', true);
 
 use Bitrix\Main,
 	Bitrix\Catalog;
@@ -8,13 +9,14 @@ use Bitrix\Main,
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 if (isset($_POST['AJAX']) && $_POST['AJAX'] == 'Y')
 {
-	if (Main\Loader::includeModule('statictic') && isset($_SESSION['SESS_SEARCHER_ID']) && (int)$_SESSION['SESS_SEARCHER_ID'] > 0)
+	if (Main\Loader::includeModule('catalog') && !Catalog\Product\Basket::isNotCrawler())
 	{
 		$APPLICATION->RestartBuffer();
 		header('Content-Type: application/json');
 		echo Main\Web\Json::encode(array("STATUS" => "ERROR", "TEXT" => "SEARCHER"));
 		die();
 	}
+
 	if (isset($_POST['PRODUCT_ID']) && isset($_POST['SITE_ID']))
 	{
 		$productID = (int)$_POST['PRODUCT_ID'];

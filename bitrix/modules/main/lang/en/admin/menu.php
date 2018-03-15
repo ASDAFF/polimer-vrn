@@ -128,4 +128,9 @@ $MESS["MAIN_MENU_HTTPS"] = "HTTPS Configuration";
 $MESS["MAIN_MENU_HTTPS_ALT"] = "Website HTTPS Configuration";
 $MESS["MAIN_MENU_GEOIP_HANDLERS"] = "Geolocation";
 $MESS["MAIN_MENU_USER_CONSENT"] = "Consents";
+$MESS["MAIN_MENU_COMPOSITE_SETTINGS"] = "Settings";
+$MESS["MAIN_MENU_COMPOSITE_PAGES"] = "Pages";
+$MESS["MAIN_MENU_COMPOSITE_PAGES_ALT"] = "Composite pages";
+$MESS["MAIN_MENU_COMPOSITE_LOG"] = "Debug Log";
+$MESS["MAIN_MENU_COMPOSITE_LOG_ALT"] = "View debug messages";
 ?>

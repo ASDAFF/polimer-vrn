@@ -236,6 +236,7 @@ class DBTypeStep extends CWizardStep
 		}
 
 		$wizard->SetDefaultVar("dbType", $defaultDbType);
+		$wizard->SetDefaultVar("utf8", (BXInstallServices::IsUTF8Support()? "Y" : "N"));
 	}
 
 	function OnPostForm()
@@ -460,7 +461,7 @@ class RequirementStep extends CWizardStep
 	var $memoryRecommend = 256;
 	var $diskSizeMin = 500;
 
-	var $phpMinVersion = "5.3.0";
+	var $phpMinVersion = "5.6.0";
 	var $apacheMinVersion = "1.3";
 	var $iisMinVersion = "5.0.0";
 
@@ -481,7 +482,7 @@ class RequirementStep extends CWizardStep
 		$wizard =& $this->GetWizard();
 
 		if ($wizard->IsPrevButtonClick())
-			return;
+			return null;
 
 		$dbType = $wizard->GetVar("dbType");
 		$utf8 = $wizard->GetVar("utf8");
@@ -489,16 +490,23 @@ class RequirementStep extends CWizardStep
 		if ($utf8 == "Y" && !BXInstallServices::IsUTF8Support())
 		{
 			$this->SetError(InstallGetMessage("INST_UTF8_RECOMENDATION"));
-			return;
+			return false;
 		}
-		elseif ($utf8 != "Y" && extension_loaded("mbstring") && strtoupper(ini_get("mbstring.internal_encoding")) == "UTF-8" && intval(ini_get("mbstring.func_overload")) > 0)
+		if ($utf8 != "Y" && extension_loaded("mbstring") && strtoupper(ini_get("default_charset")) == "UTF-8" && intval(ini_get("mbstring.func_overload")) > 0)
 		{
 			$this->SetError(InstallGetMessage("ERR_MBSTRING_EXISTS"));
-			return;
+			return false;
 		}
-		elseif ($dbType == "oracle" && $utf8 == "Y" && strtoupper(substr(PHP_OS,0,3)) != "WIN" && strtolower(substr(getenv("NLS_LANG"), -5)) != ".utf8")
+		if ($dbType == "oracle" && $utf8 == "Y" && strtoupper(substr(PHP_OS,0,3)) != "WIN" && strtolower(substr(getenv("NLS_LANG"), -5)) != ".utf8")
 		{
 			$this->SetError(InstallGetMessage("INST_ORACLE_NLS_LANG_ERROR"));
+			return false;
+		}
+
+		$mbEncoding = ini_get("mbstring.internal_encoding");
+		if($mbEncoding <> '' && strtoupper($mbEncoding) <> strtoupper(ini_get("default_charset")))
+		{
+			$this->SetError(InstallGetMessage("INST_UTF8_DEFAULT_ENCODING"));
 			return false;
 		}
 
@@ -509,7 +517,10 @@ class RequirementStep extends CWizardStep
 		}
 
 		if (!$this->CheckRequirements($dbType))
-			return;
+		{
+			return false;
+		}
+		return null;
 	}
 
 	function CheckRequirements($dbType)
@@ -968,7 +979,7 @@ RewriteRule ^.+\.php$ /bitrix/httest/404.php
 					<td valign="top">'.$funcOverload.'</td>
 				</tr>';
 
-			$encoding = strtoupper(ini_get("mbstring.internal_encoding"));
+			$encoding = strtoupper(ini_get("default_charset"));
 			if ($encoding == "")
 				$encoding = $this->ShowResult(InstallGetMessage("SC_NOT_SETTED"), "ERROR");
 			else
@@ -976,18 +987,18 @@ RewriteRule ^.+\.php$ /bitrix/httest/404.php
 
 			$this->content .= '
 				<tr>
-					<td valign="top">mbstring.internal_encoding</td>
+					<td valign="top">default_charset</td>
 					<td valign="top">UTF-8</td>
 					<td valign="top">'.$encoding.'</td>
 				</tr>';
 		}
-		elseif (!$utf8 && extension_loaded("mbstring") && intval(ini_get("mbstring.func_overload")) > 0 && strtoupper(ini_get("mbstring.internal_encoding")) == "UTF-8")
+		elseif (!$utf8 && extension_loaded("mbstring") && intval(ini_get("mbstring.func_overload")) > 0 && strtoupper(ini_get("default_charset")) == "UTF-8")
 		{
 			$this->content .= '
 				<tr>
 					<td valign="top">mbstring.func_overload</td>
 					<td valign="top">0</td>
-					<td valign="top">'.$this->ShowResult(ini_get("mbstring.func_overload")." (".ini_get("mbstring.internal_encoding").")", "ERROR").'</td>
+					<td valign="top">'.$this->ShowResult(ini_get("mbstring.func_overload")." (".ini_get("default_charset").")", "ERROR").'</td>
 				</tr>';
 		}
 
@@ -1254,8 +1265,8 @@ class CreateDBStep extends CWizardStep
 		$wizard =& $this->GetWizard();
 
 		$wizard->SetDefaultVars(Array(
-			"folder_access_perms" => sprintf("0%o", 0755),
-			"file_access_perms" => sprintf("0%o", 0644),
+			"folder_access_perms" => "0755",
+			"file_access_perms" => "0644",
 			"create_user" => "N",
 			"create_database" => "N",
 		));
@@ -1294,12 +1305,12 @@ class CreateDBStep extends CWizardStep
 		$this->rootPassword = $wizard->GetVar("root_password");
 
 		if(preg_match("/(0[0-7]{3})/", $wizard->GetVar("file_access_perms"), $match))
-			$this->filePermission = intval($match[1]);
+			$this->filePermission = $match[1];
 		else
 			$this->filePermission = $wizard->GetDefaultVar("file_access_perms");
 
 		if(preg_match("/(0[0-7]{3})/", $wizard->GetVar("folder_access_perms"), $match))
-			$this->folderPermission = intval($match[1]);
+			$this->folderPermission = $match[1];
 		else
 			$this->folderPermission = $wizard->GetDefaultVar("folder_access_perms");
 
@@ -1941,13 +1952,22 @@ class CreateDBStep extends CWizardStep
 			"\n".
 			($this->utf8 ? "define(\"BX_UTF\", true);\n" : "");
 
+		$umask = array();
 		if ($this->filePermission > 0)
-			$fileContent .= "define(\"BX_FILE_PERMISSIONS\", 0".$this->filePermission.");\n";
+		{
+			$fileContent .= "define(\"BX_FILE_PERMISSIONS\", ".$this->filePermission.");\n";
+			$umask[] = "BX_FILE_PERMISSIONS";
+		}
 
 		if ($this->folderPermission > 0)
 		{
-			$fileContent .= "define(\"BX_DIR_PERMISSIONS\", 0".$this->folderPermission.");\n";
-			$fileContent .= "@umask(~BX_DIR_PERMISSIONS);\n";
+			$fileContent .= "define(\"BX_DIR_PERMISSIONS\", ".$this->folderPermission.");\n";
+			$umask[] = "BX_DIR_PERMISSIONS";
+		}
+
+		if($umask)
+		{
+			$fileContent .= "@umask(~(".implode("|", $umask).")&0777);\n";
 		}
 
 		$memoryLimit = WelcomeStep::unformat(ini_get('memory_limit'));

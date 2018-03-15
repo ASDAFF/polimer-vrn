@@ -31,7 +31,7 @@ namespace Bitrix\Sale\Delivery\AdminPage\DeliveryExtraServiceEdit
 
 	if(isset($_REQUEST["action"]) && $_REQUEST["action"] == "delete_extra_service" && isset($_REQUEST["ES_ID"]) && $saleModulePermissions == "W" && check_bitrix_sessid())
 	{
-		if(intval($_REQUEST["ES_ID"] > 0))
+		if(intval($_REQUEST["ES_ID"]) > 0)
 		{
 			$res = ExtraServices\Table::delete(intval($_REQUEST["ES_ID"]));
 

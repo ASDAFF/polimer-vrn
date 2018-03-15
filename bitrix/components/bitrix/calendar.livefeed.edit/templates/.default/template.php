@@ -74,6 +74,9 @@ $APPLICATION->IncludeComponent(
 ?>
 
 <!-- Event From/To, Reminder, Location-->
+<input name="TIME_FROM" type="hidden" id="<?=$id?>_time_from_real" value="">
+<input name="TIME_TO" type="hidden" id="<?=$id?>_time_to_real" value="">
+
 <div class="feed-event-grey-cont">
 	<div class="feed-event-from-to-reminder" id="feed-cal-from-to-cont<?=$id?>">
 		<span class="feed-event-from-to-reminder-inner">
@@ -82,14 +85,14 @@ $APPLICATION->IncludeComponent(
 				<label class="feed-event-date-label-full-day" for="<?=$id?>edev-from"><?=GetMessage('EC_EDEV_DATE_FROM')?></label>
 				<input id="feed-cal-event-from<?=$id?>" name="DATE_FROM" type="text" class="calendar-inp calendar-inp-cal"/>
 			</span>
-			<span class="feed-event-time<?=$addWidthStyle?>"><?CClock::Show(array('inputId' => 'feed_cal_event_from_time'.$id, 'inputName' => 'TIME_FROM', 'inputTitle' => GetMessage('ECLF_TIME_FROM'), 'showIcon' => false));?></span>
+			<span class="feed-event-time<?=$addWidthStyle?>"><?CClock::Show(array('inputId' => 'feed_cal_event_from_time'.$id, 'inputName' => 'TIME_FROM_', 'inputTitle' => GetMessage('ECLF_TIME_FROM'), 'showIcon' => false));?></span>
 			<span class="feed-event-mdash">&mdash;</span>
 			<span class="feed-event-date">
 				<label class="feed-event-date-label" for="<?=$id?>edev-from"><?=GetMessage('ECLF_EVENT_TO_DATE_TIME')?></label>
 				<label class="feed-event-date-label-full-day" for="<?=$id?>edev-from"><?=GetMessage('EC_EDEV_DATE_TO')?></label>
 				<input id="feed-cal-event-to<?=$id?>" name="DATE_TO" type="text" class="calendar-inp calendar-inp-cal"/>
 			</span>
-			<span class="feed-event-time<?=$addWidthStyle?>"><?CClock::Show(array('inputId' => 'feed_cal_event_to_time'.$id, 'inputName' => 'TIME_TO', 'inputTitle' => GetMessage('ECLF_TIME_TO'), 'showIcon' => false));?></span>
+			<span class="feed-event-time<?=$addWidthStyle?>"><?CClock::Show(array('inputId' => 'feed_cal_event_to_time'.$id, 'inputName' => 'TIME_TO_', 'inputTitle' => GetMessage('ECLF_TIME_TO'), 'showIcon' => false));?></span>
 		</span>
 		<span class="feed-event-full-day">
 			<input type="checkbox" id="event-full-day<?=$id?>" value="Y" name="EVENT_FULL_DAY"/>

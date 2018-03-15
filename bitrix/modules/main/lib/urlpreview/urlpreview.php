@@ -19,6 +19,13 @@ class UrlPreview
 	/** @var int Maximum allowed length of the description. */
 	const MAX_DESCRIPTION = 500;
 
+	const IFRAME_MAX_WIDTH = 640;
+	const IFRAME_MAX_HEIGHT = 340;
+
+	protected static $trustedHosts = array(
+		'youtube.com', 'youtu.be', 'vimeo.com', 'rutube.ru', 'facebook.com', 'vk.com', 'instagram.com',
+	);
+
 	/**
 	 * Returns associated metadata for the specified URL
 	 *
@@ -537,8 +544,15 @@ class UrlPreview
 			return false;
 
 		$htmlContentType = strtolower($httpClient->getHeaders()->getContentType());
+		$peerIpAddress = $httpClient->getPeerAddress();
 		if($htmlContentType !== 'text/html')
-			return static::getFileMetadata($httpClient->getEffectiveUrl(), $httpClient->getHeaders());
+		{
+
+			$metadata = static::getFileMetadata($httpClient->getEffectiveUrl(), $httpClient->getHeaders());
+			$metadata['EXTRA']['PEER_IP_ADDRESS'] = $peerIpAddress;
+			$metadata['EXTRA']['PEER_IP_PRIVATE'] = static::isIpAddressPrivate($peerIpAddress);
+			return $metadata;
+		}
 
 		$html = $httpClient->getResult();
 		$htmlDocument = new HtmlDocument($html, $uri);
@@ -562,6 +576,15 @@ class UrlPreview
 						static::MAX_DESCRIPTION
 				);
 			}
+
+			if(!is_array($metadata['EXTRA']))
+			{
+				$metadata['EXTRA'] = array();
+			}
+			$metadata['EXTRA'] = array_merge($metadata['EXTRA'], array(
+				'PEER_IP_ADDRESS' => $peerIpAddress,
+				'PEER_IP_PRIVATE' => static::isIpAddressPrivate($peerIpAddress)
+			));
 
 			return $metadata;
 		}
@@ -710,6 +733,102 @@ class UrlPreview
 					)
 			);
 		}
+		return $result;
+	}
+
+	/**
+	 * @param string $ipAddress
+	 * @return bool
+	 */
+	public static function isIpAddressPrivate($ipAddress)
+	{
+		return filter_var($ipAddress, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_IPV6 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false;
+	}
+
+	/**
+	 * Returns true if host of $uri is in $trustedHosts list.
+	 *
+	 * @param Uri $uri
+	 * @return bool
+	 */
+	public static function isHostTrusted(Uri $uri)
+	{
+		$result = false;
+		$domainNameParts = explode('.', $uri->getHost());
+		if(is_array($domainNameParts) && ($partsCount = count($domainNameParts)) >= 2)
+		{
+			$domainName = $domainNameParts[$partsCount-2] . '.' . $domainNameParts[$partsCount-1];
+			$result = in_array($domainName, static::$trustedHosts);
+		}
+		return $result;
+	}
+
+	/**
+	 * Returns video metaData for $url if its host is trusted.
+	 *
+	 * @param string $url
+	 * @return array|false
+	 */
+	public static function fetchVideoMetaData($url)
+	{
+		$uri = new Uri($url);
+		if(static::isHostTrusted($uri) || static::isEnabled())
+		{
+			$url = static::normalizeUrl($url);
+			$metadataId = static::reserveIdForUrl($url);
+			$metadata = static::fetchUrlMetadata($url);
+			if(is_array($metadata) && count($metadata) > 0)
+			{
+				$result = UrlMetadataTable::update($metadataId, $metadata);
+				$metadata['ID'] = $result->getId();
+			}
+			else
+			{
+				return false;
+			}
+			if(isset($metadata['EMBED']) && !empty($metadata['EMBED']) && strpos($metadata['EMBED'], '<iframe') === false)
+			{
+				$url = static::getInnerFrameUrl($metadata['ID'], $metadata['EXTRA']['PROVIDER_NAME']);
+				if(intval($metadata['EXTRA']['VIDEO_WIDTH']) <= 0)
+				{
+					$metadata['EXTRA']['VIDEO_WIDTH'] = self::IFRAME_MAX_WIDTH;
+				}
+				if(intval($metadata['EXTRA']['VIDEO_HEIGHT']) <= 0)
+				{
+					$metadata['EXTRA']['VIDEO_HEIGHT'] = self::IFRAME_MAX_HEIGHT;
+				}
+				$metadata['EMBED'] = '<iframe src="'.$url.'" allowfullscreen="" width="'.$metadata['EXTRA']['VIDEO_WIDTH'].'" height="'.$metadata['EXTRA']['VIDEO_HEIGHT'].'" frameborder="0"></iframe>';
+			}
+
+			if($metadata['EMBED'] || $metadata['EXTRA']['VIDEO'])
+			{
+				return $metadata;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Returns inner frame url to embed third parties html video players.
+	 *
+	 * @param int $id
+	 * @param string $provider
+	 * @return bool|string
+	 */
+	public static function getInnerFrameUrl($id, $provider = '')
+	{
+		$result = false;
+
+		$componentPath = \CComponentEngine::makeComponentPath('bitrix:main.urlpreview');
+		if(!empty($componentPath))
+		{
+			$componentPath = getLocalPath('components'.$componentPath.'/frame.php');
+			$uri = new Uri($componentPath);
+			$uri->addParams(array('id' => $id, 'provider' => $provider));
+			$result = static::normalizeUrl($uri->getLocator());
+		}
+
 		return $result;
 	}
 }

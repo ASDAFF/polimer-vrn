@@ -509,9 +509,17 @@ class Options
 	{
 		$filterFields = array();
 
-		if (is_array($filterSettings) && is_array($filterSettings["fields"]))
+		if (is_array($filterSettings))
 		{
-			$filterFields = $filterSettings["fields"];
+			if (is_array($filterSettings["fields"]))
+			{
+				$filterFields = $filterSettings["fields"];
+			}
+
+			if (is_array($filterSettings["additional"]))
+			{
+				$filterFields = array_merge($filterFields, $filterSettings["additional"]);
+			}
 		}
 
 		return $filterFields;
@@ -524,7 +532,7 @@ class Options
 	 */
 	public static function isDateField($key = "")
 	{
-		return is_string($key) && stripos($key, "_datesel") !== false;
+		return is_string($key) && substr($key, -8) === "_datesel";
 	}
 
 
@@ -590,7 +598,7 @@ class Options
 
 	public static function isNumberField($key = "")
 	{
-		return is_string($key) && stripos($key, "_numsel") !== false;
+		return is_string($key) && substr($key, -7) === "_numsel";
 	}
 
 
@@ -601,7 +609,7 @@ class Options
 
 		foreach ($filterFields as $key => $field)
 		{
-			if ($field !== "" && stripos($key, "_label") === false)
+			if ($field !== "" && strpos($key, -6) !== "_label")
 			{
 				if (self::isDateField($key))
 				{
@@ -615,7 +623,7 @@ class Options
 					$resultFields = array_merge($resultFields, $number);
 				}
 
-				elseif (!stripos($key, "_from") && !stripos($key, "_to"))
+				elseif (substr($key, -5) !== "_from" && substr($key, -3) !== "_to")
 				{
 					$resultFields[$key] = $field;
 				}
@@ -926,6 +934,8 @@ class Options
 				else
 				{
 					$this->options["filters"][$presetId]["fields"] = $settings["fields"];
+					$this->options["filters"][$presetId]["additional"] = is_array($settings["additional"]) ?
+						$settings["additional"] : array();
 				}
 			}
 
@@ -1278,7 +1288,7 @@ class Options
 
 				if (!empty($sourceDate))
 				{
-					$date = Date::createFromTimestamp(MakeTimeStamp($sourceDate));
+					$date = new Date($sourceDate);
 					$dateTime = new Filter\DateTime(MakeTimeStamp($sourceDate));
 
 					$result[$fieldId."_datesel"] = DateType::EXACT;
@@ -1367,5 +1377,27 @@ class Options
 	public function reset()
 	{
 		$_SESSION["main.ui.filter"][$this->id] = null;
+	}
+
+
+	/**
+	 * Destroys this filter options
+	 */
+	public function destroy()
+	{
+		static::destroyById($this->getId());
+	}
+
+
+	/**
+	 * Destroys filter options by filter id
+	 * @param $filterId
+	 */
+	public static function destroyById($filterId)
+	{
+		\CUserOptions::deleteOption("main.ui.filter", $filterId);
+		\CUserOptions::deleteOption("main.ui.filter.presets", $filterId);
+		unset($_SESSION["main.ui.filter"][$filterId]);
+		unset($_SESSION["main.ui.filter.presets"][$filterId]);
 	}
 }

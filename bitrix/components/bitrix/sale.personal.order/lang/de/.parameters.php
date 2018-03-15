@@ -26,4 +26,9 @@ $MESS["SPO_ORDER_LIST_SORT_PRICE"] = "Gesamtbetrag der Bestellung";
 $MESS["SPO_ORDER_LIST_DEFAULT_SORT"] = "Sortierung der Bestellung";
 $MESS["SPO_RESTRICT_CHANGE_PAYSYSTEM"] = "Status der Bestellungen in folgendem Status können nicht geändert werden";
 $MESS["SPO_NOT_CHOSEN"] = "(nicht ausgewählt)";
+$MESS["SPO_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"] = "Bestellung neu kalkulieren, wenn der Status des Zahlungssystems geändert wurde";
+$MESS["SPO_USER_INFO_LOGIN"] = "Login";
+$MESS["SPO_USER_INFO_EMAIL"] = "E-Mail-Adresse";
+$MESS["SPO_USER_INFO_PERSON_TYPE_NAME"] = "Kundengruppe";
+$MESS["SPO_ORDER_HIDE_USER_INFO"] = "Im Bereich mit Informationen zum Kunden nicht anzeigen";
 ?>

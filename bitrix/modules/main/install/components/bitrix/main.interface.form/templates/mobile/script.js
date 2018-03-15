@@ -191,6 +191,7 @@
 						{
 							d.setHours(m[1]);
 							d.setMinutes(m[2]);
+							d.setSeconds(0);
 						}
 					}
 

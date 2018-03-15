@@ -13,11 +13,14 @@ JCEC.prototype.BuildWeekDaysTable = function()
 		c = pMoreEvR.insertCell(i + 1);
 		c.innerHTML = '<div class="bxec-wdv-more-ev">&nbsp;</div>';
 	}
+
+	//console.info(pGridR);
 	pGridR.cells[0].colSpan = "9";
-	oTab.pTimelineCont = pGridR.cells[0].firstChild;
+
+	oTab.pTimelineCont = BX(this.id + '-week-timeline-wrap');
 
 	this.ResizeTabTitle(oTab);
-}
+};
 
 JCEC.prototype.ResizeTabTitle = function(oTab)
 {

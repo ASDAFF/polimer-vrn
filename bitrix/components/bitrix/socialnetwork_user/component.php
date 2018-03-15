@@ -119,16 +119,21 @@ $arDefaultUrlTemplates404 = array(
 	"user_blog_post" => "user/#user_id#/blog/#post_id#/",
 
 	"user_tasks" => "user/#user_id#/tasks/",
+	"user_tasks_board" => "user/#user_id#/tasks/board/",
 	"user_tasks_task" => "user/#user_id#/tasks/task/#action#/#task_id#/",
 	"user_tasks_view" => "user/#user_id#/tasks/view/#action#/#view_id#/",
 	"user_tasks_departments_overview" => "user/#user_id#/tasks/departments/",
 	"user_tasks_employee_plan" => "user/#user_id#/tasks/employee/plan/",
 	"user_tasks_projects_overview" => "user/#user_id#/tasks/projects/",
+	"user_tasks_effective" => "user/#user_id#/tasks/effective/",
+	"user_tasks_effective_detail" => "user/#user_id#/tasks/effective/show/",
 	"user_tasks_report" => "user/#user_id#/tasks/report/",
 	"user_tasks_report_construct" => "user/#user_id#/tasks/report/construct/#report_id#/#action#/",
 	"user_tasks_report_view" => "user/#user_id#/tasks/report/view/#report_id#/",
 	"user_tasks_templates" => "user/#user_id#/tasks/templates/",
 	"user_templates_template" => "user/#user_id#/tasks/templates/template/#action#/#template_id#/",
+
+	//"user_tasks_import" => "user/#user_id#/tasks/import/",
 
 	"user_forum" => "user/#user_id#/forum/",
 	"user_forum_topic" => "user/#user_id#/forum/#topic_id#/",
@@ -170,6 +175,7 @@ if($diskEnabled)
 	$arDefaultUrlTemplates404["user_trashcan_file_view"] = "user/#user_id#/disk/trash/file/#TRASH_FILE_PATH#";
 	$arDefaultUrlTemplates404["user_external_link_list"] = "user/#user_id#/disk/external";
 	$arDefaultUrlTemplates404["user_disk_help"] = "user/#user_id#/disk/help";
+	$arDefaultUrlTemplates404["user_disk_volume"] = "user/#user_id#/disk/volume/#ACTION#";
 }
 
 if ($bExtranetEnabled)
@@ -284,11 +290,14 @@ $arDefaultUrlTemplatesN404 = array(
 	"user_blog_post" => "page=user_blog_post&user_id=#user_id#&post_id=#post_id#",
 
 	"user_tasks" => "page=user_tasks&user_id=#user_id#",
+	"user_tasks_board" => "page=user_tasks_board&user_id=#user_id#",
 	"user_tasks_task" => "page=user_tasks_task&user_id=#user_id#&action=#action#&task_id=#task_id#",
 	"user_tasks_view" => "page=user_tasks_view&user_id=#user_id#&action=#action#&view_id=#view_id#",
 	"user_tasks_report" => "page=user_tasks_report&user_id=#user_id#",
 	"user_tasks_report_construct" => "page=user_tasks_report_construct&user_id=#user_id#&action=#action#&report_id=#report_id#",
 	"user_tasks_report_view" => "page=user_tasks_report_view&user_id=#user_id#&report_id=#report_id#",
+	"user_tasks_effective" => "page=user_tasks_effective&user_id=#user_id#",
+	"user_tasks_effective_detail" => "page=user_tasks_effective_detail&user_id=#user_id#",
 	"user_tasks_templates" => "page=user_tasks_templates&user_id=#user_id#",
 	"user_tasks_employee_plan" => "page=user_tasks_employee_plan&user_id=#user_id#",
 	"user_templates_template" => "page=user_templates_template&user_id=#user_id#&action=#action#&template_id=#template_id#",
@@ -497,6 +506,7 @@ if ($arParams["SEF_MODE"] == "Y")
 		$engine->addGreedyPart("#FILE_PATH#");
 		$engine->addGreedyPart("#TRASH_PATH#");
 		$engine->addGreedyPart("#TRASH_FILE_PATH#");
+		$engine->addGreedyPart("#ACTION#");
 		$engine->setResolveCallback(array(\Bitrix\Disk\Driver::getInstance()->getUrlManager(), "resolveSocNetPathComponentEngine"));
 	}
 
@@ -848,6 +858,7 @@ if(check_bitrix_sessid() || $_SERVER['REQUEST_METHOD'] == "PUT")
 if(
 	$componentPage === 'user_disk' ||
 	$componentPage === 'user_disk_file' ||
+	$componentPage === 'user_disk_volume' ||
 	$componentPage === 'user_trashcan_list' ||
 	$componentPage === 'user_trashcan_file_view' ||
 	$componentPage === 'user_external_link_list'

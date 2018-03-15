@@ -8,7 +8,6 @@ $MESS["SONET_GUE_T_ACTION_ADDTOUSERS"] = "Запросити користува�
 $MESS["SONET_GUE_T_ACTION_ADDTOMODERATORS"] = "Призначити модератором";
 $MESS["SONET_GUE_T_ACTION_EXCLUDEFROMGROUP"] = "Виключити з групи";
 $MESS["SONET_GUE_T_ACTION_EXCLUDEFROMGROUP_CONFIRM"] = "Ви дійсно хочете виключити цих користувачів із групи?";
-$MESS["SONET_GUE_T_ACTION_BANFROMGROUP"] = "Заблокувати";
 $MESS["SONET_GUE_T_ACTION_EXCLUDEFROMMODERATORS"] = "Виключити з модераторів";
 $MESS["SONET_GUE_T_ACTION_UNBANFROMGROUP"] = "Розблокувати";
 $MESS["SONET_GUE_T_ACTION_SETGROUPOWNER"] = "Змінити власника";

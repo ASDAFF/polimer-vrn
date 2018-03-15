@@ -636,8 +636,8 @@ class BXInstallServices
 		$databaseStep->DB =& $DB;
 		$databaseStep->dbType = $DBType;
 		$databaseStep->dbName = $DBName;
-		$databaseStep->filePermission = (defined("BX_FILE_PERMISSIONS") ? BX_FILE_PERMISSIONS : 0);
-		$databaseStep->folderPermission = (defined("BX_DIR_PERMISSIONS") ? BX_DIR_PERMISSIONS : 0);
+		$databaseStep->filePermission = (defined("BX_FILE_PERMISSIONS")? sprintf("%04o", BX_FILE_PERMISSIONS) : 0);
+		$databaseStep->folderPermission = (defined("BX_DIR_PERMISSIONS")? sprintf("%04o", BX_DIR_PERMISSIONS) : 0);
 		$databaseStep->createDBType = (defined("MYSQL_TABLE_TYPE") ? MYSQL_TABLE_TYPE : "");
 		$databaseStep->utf8 = defined("BX_UTF");
 		$databaseStep->createCharset = null;
@@ -762,7 +762,7 @@ class BXInstallServices
 		return (
 			extension_loaded("mbstring")
 			&& ini_get("mbstring.func_overload") == 2
-			&& strtoupper(ini_get("mbstring.internal_encoding")) == "UTF-8"
+			&& strtoupper(ini_get("default_charset")) == "UTF-8"
 		);
 	}
 

@@ -18,7 +18,7 @@ IncludeModuleLangFile(__FILE__);
 
 if (!CModule::IncludeModule("im"))
 {
-	echo CUtil::PhpToJsObject(Array('ERROR' => GetMessage('IM_MODULE_NOT_INSTALLED')));
+	echo \Bitrix\Im\Common::objectEncode(Array('ERROR' => GetMessage('IM_MODULE_NOT_INSTALLED')));
 	CMain::FinalActions();
 	die();
 }
@@ -34,8 +34,8 @@ if (intval($USER->GetID()) <= 0)
 	//header("HTTP/1.0 401 Not Authorized");
 	//header("Content-Type: application/x-javascript");
 	//header("BX-Authorize: ".bitrix_sessid());
-	
-	echo CUtil::PhpToJsObject(Array(
+
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => 'AUTHORIZE_ERROR',
 		'BITRIX_SESSID' => bitrix_sessid()
 	));
@@ -46,14 +46,14 @@ if (!$USER->IsJustAuthorized() && !check_bitrix_sessid())
 {
 	if (\Bitrix\Im\User::getInstance($USER->GetID())->isConnector())
 	{
-		echo CUtil::PhpToJsObject(Array(
+		echo \Bitrix\Im\Common::objectEncode(Array(
 			'ERROR' => '',
 			'REAL_ERROR' => 'SESSION_ERROR',
 		));
 	}
 	else
 	{
-		echo CUtil::PhpToJsObject(Array(
+		echo \Bitrix\Im\Common::objectEncode(Array(
 			'ERROR' => 'SESSION_ERROR',
 			'BITRIX_SESSID' => bitrix_sessid(),
 		));
@@ -86,7 +86,7 @@ if (\Bitrix\Im\User::getInstance($USER->GetID())->isConnector())
 		$_POST['IM_OPEN_LINES_CLIENT'] == 'Y'
 	))
 	{
-		echo CUtil::PhpToJsObject(Array(
+		echo \Bitrix\Im\Common::objectEncode(Array(
 			'ERROR' => 'SCOPE_ERROR'
 		));
 		CMain::FinalActions();
@@ -94,9 +94,16 @@ if (\Bitrix\Im\User::getInstance($USER->GetID())->isConnector())
 	}
 }
 
+CIMContactList::SetOnline();
+
 if (isset($_REQUEST["mobile_action"]) && $_POST['FOCUS'] == 'Y' && CModule::IncludeModule('mobile'))
 {
 	Bitrix\Mobile\User::setOnline();
+}
+
+if (isset($_POST['desktop_action']) && $_POST['desktop_action'] == 'Y')
+{
+	CIMMessenger::SetDesktopStatusOnline();
 }
 
 if ($_POST['IM_AVATAR_UPDATE'] == 'Y')
@@ -105,7 +112,7 @@ if ($_POST['IM_AVATAR_UPDATE'] == 'Y')
 	$chatId = intval($_POST['CHAT_ID']);
 	if (CIMChat::CheckRestriction($chatId, 'AVATAR'))
 	{
-		echo CUtil::PhpToJsObject(Array(
+		echo \Bitrix\Im\Common::objectEncode(Array(
 			'ERROR' => 'UPLOAD_ERROR'
 		));
 	}
@@ -117,7 +124,7 @@ if ($_POST['IM_AVATAR_UPDATE'] == 'Y')
 		));
 		if (!$CFileUploader->checkPost())
 		{
-			echo CUtil::PhpToJsObject(Array(
+			echo \Bitrix\Im\Common::objectEncode(Array(
 				'ERROR' => 'UPLOAD_ERROR'
 			));
 		}
@@ -134,7 +141,7 @@ else if ($_POST['IM_FILE_UPLOAD'] == 'Y')
 	));
 	if (!$CFileUploader->checkPost())
 	{
-		echo CUtil::PhpToJsObject(Array(
+		echo \Bitrix\Im\Common::objectEncode(Array(
 			'ERROR' => 'UPLOAD_ERROR'
 		));
 	}
@@ -150,7 +157,7 @@ else if ($_POST['IM_FILE_REGISTER'] == 'Y')
 	{
 		$errorMessage = 'ERROR';
 	}
-	
+
 	if ($_POST['TEXT'])
 	{
 		$ar['MESSAGE'] = trim(str_replace(Array('[BR]', '[br]'), "\n", $_POST['TEXT']));
@@ -162,7 +169,7 @@ else if ($_POST['IM_FILE_REGISTER'] == 'Y')
 		$ar['MESSAGE'] = '';
 	}
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'FILE_ID' => $result['FILE_ID'],
 		'CHAT_ID' => $_POST['CHAT_ID'],
 		'RECIPIENT_ID' => $_POST['RECIPIENT_ID'],
@@ -179,7 +186,7 @@ else if ($_POST['IM_FILE_UNREGISTER'] == 'Y')
 
 	$result = CIMDisk::UploadFileUnRegister($_POST['CHAT_ID'], $_POST['FILES'], $_POST['MESSAGES']);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => !$result? 'ERROR': ''
 	));
 }
@@ -187,7 +194,7 @@ else if ($_POST['IM_FILE_DELETE'] == 'Y')
 {
 	$result = CIMDisk::DeleteFile($_POST['CHAT_ID'], $_POST['FILE_ID']);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => $_POST['CHAT_ID'],
 		'FILE_ID' => $_POST['FILE_ID'],
 		'ERROR' => !$result? 'ERROR': ''
@@ -197,7 +204,7 @@ else if ($_POST['IM_FILE_SAVE_TO_DISK'] == 'Y')
 {
 	$result = CIMDisk::SaveToLocalDisk($_POST['FILE_ID']);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => $_POST['CHAT_ID'],
 		'FILE_ID' => $_POST['FILE_ID'],
 		'NEW_FILE_ID' => $result? $result->getId(): 0,
@@ -207,7 +214,7 @@ else if ($_POST['IM_FILE_SAVE_TO_DISK'] == 'Y')
 else if ($_POST['IM_FILE_UPLOAD_FROM_DISK'] == 'Y')
 {
 	$errorMessage = '';
-	
+
 	CUtil::decodeURIComponent($_POST);
 	$_POST['FILES'] = CUtil::JsObjectToPhp($_POST['FILES']);
 
@@ -217,7 +224,7 @@ else if ($_POST['IM_FILE_UPLOAD_FROM_DISK'] == 'Y')
 		$errorMessage = 'ERROR';
 	}
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'FILES' => $result['FILES'],
 		'CHAT_ID' => $_POST['CHAT_ID'],
 		'RECIPIENT_ID' => $_POST['RECIPIENT_ID'],
@@ -234,7 +241,7 @@ else if ($_POST['IM_HISTORY_FILES_LOAD'] == 'Y')
 
 	$arFiles = CIMDisk::GetHistoryFiles($chatId, $historyPage);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => $chatId,
 		'FILES' => $arFiles,
 		'ERROR' => ''
@@ -247,7 +254,7 @@ else if ($_POST['IM_HISTORY_FILES_SEARCH'] == 'Y')
 	$chatId = intval($_POST['CHAT_ID']);
 	$arFiles = CIMDisk::GetHistoryFilesByName($chatId, $_POST['SEARCH']);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => $chatId,
 		'FILES' => $arFiles,
 		'ERROR' => ''
@@ -255,13 +262,8 @@ else if ($_POST['IM_HISTORY_FILES_SEARCH'] == 'Y')
 }
 elseif ($_POST['IM_UPDATE_STATE'] == 'Y')
 {
-	if (isset($_POST['DESKTOP']) && $_POST['DESKTOP'] == 'Y')
-		CIMMessenger::SetDesktopStatusOnline();
-
-	CIMContactList::SetOnline();
-
 	$arResult["REVISION"] = IM_REVISION;
-	$arResult["MOBILE_REVISION"] = IM_MOBILE_REVISION;
+	$arResult["MOBILE_REVISION"] = IM_REVISION_MOBILE;
 	$arResult["DISK_REVISION"] = COption::GetOptionString("disk", "disk_revision_api", -1);
 
 	$arResult['SERVER_TIME'] = time();
@@ -327,8 +329,6 @@ elseif ($_POST['IM_UPDATE_STATE'] == 'Y')
 			$arSend['PULL_CONFIG'] = $arPullConfig;
 		}
 	}
-	if ($bOpenMessenger && $_POST['TAB'] != 0)
-		CIMMessenger::SetCurrentTab($_POST['TAB']);
 
 	$CIMMessage = new CIMMessage();
 	$arMessage = $CIMMessage->GetUnreadMessage(Array(
@@ -345,7 +345,6 @@ elseif ($_POST['IM_UPDATE_STATE'] == 'Y')
 		$arSend['FILES'] = $arMessage['files'];
 		$arSend['USERS'] = $arMessage['users'];
 		$arSend['USER_IN_GROUP'] = $arMessage['userInGroup'];
-		$arSend['WO_USER_IN_GROUP'] = $arMessage['woUserInGroup'];
 		$arSend['ERROR'] = '';
 	}
 
@@ -382,9 +381,6 @@ elseif ($_POST['IM_UPDATE_STATE'] == 'Y')
 		foreach ($arMessage['userInGroup'] as $key => $value)
 			$arSend['USER_IN_GROUP'][$key] = $value;
 
-		foreach ($arMessage['woUserInGroup'] as $key => $value)
-			$arSend['WO_USER_IN_GROUP'][$key] = $value;
-
 		$arSend['CHAT'] = $arMessage['chat'];
 		$arSend['USER_BLOCK_CHAT'] = $arMessage['userChatBlockStatus'];
 		$arSend['USER_IN_CHAT'] = $arMessage['userInChat'];
@@ -404,23 +400,18 @@ elseif ($_POST['IM_UPDATE_STATE'] == 'Y')
 	}
 	$arSend['XMPP_STATUS'] = CIMMessenger::CheckXmppStatusOnline()? 'Y':'N';
 	$arSend['DESKTOP_STATUS'] = CIMMessenger::CheckDesktopStatusOnline()? 'Y':'N';
-	
+
 	$arSend['TEXTAREA_ICON'] = \Bitrix\Im\App::getListForJs();
 	$arSend['COMMAND'] = \Bitrix\Im\Command::getListForJs();
 
-	echo CUtil::PhpToJsObject($arSend);
+	echo \Bitrix\Im\Common::objectEncode($arSend);
 }
 else if ($_POST['IM_UPDATE_STATE_LIGHT'] == 'Y')
 {
 	$errorMessage = "";
 
-	if ($_POST['ONLINE'] == 'Y')
-	{
-		CIMContactList::SetOnline();
-	}
-
 	$arResult["REVISION"] = IM_REVISION;
-	$arResult["MOBILE_REVISION"] = IM_MOBILE_REVISION;
+	$arResult["MOBILE_REVISION"] = IM_REVISION_MOBILE;
 	$arResult["DISK_REVISION"] = COption::GetOptionString("disk", "disk_revision_api", -1);
 
 	$arResult['SERVER_TIME'] = time();
@@ -501,7 +492,7 @@ else if ($_POST['IM_UPDATE_STATE_LIGHT'] == 'Y')
 	}
 	else
 	{
-		echo CUtil::PhpToJsObject($arResult);
+		echo \Bitrix\Im\Common::objectEncode($arResult);
 	}
 }
 else if ($_POST['IM_NOTIFY_LOAD'] == 'Y')
@@ -515,10 +506,13 @@ else if ($_POST['IM_NOTIFY_LOAD'] == 'Y')
 		$arSend['FLASH_NOTIFY'] = CIMNotify::GetFlashNotify($arNotify['unreadNotify']);
 		$arSend['ERROR'] = '';
 
-		if ($arNotify['maxNotify'] > 0 && (!isset($_POST['IM_AUTO_READ']) || $_POST['IM_AUTO_READ'] == 'Y'))
-			$CIMNotify->MarkNotifyRead($arNotify['maxNotify'], true);
+		$minNotify = min(array_keys($arNotify['notify']));
+		if ($minNotify > 0 && (!isset($_POST['IM_AUTO_READ']) || $_POST['IM_AUTO_READ'] == 'Y'))
+		{
+			$CIMNotify->MarkNotifyRead($minNotify, true);
+		}
 	}
-	echo CUtil::PhpToJsObject($arSend);
+	echo \Bitrix\Im\Common::objectEncode($arSend);
 }
 else if ($_POST['IM_NOTIFY_HISTORY_LOAD_MORE'] == 'Y')
 {
@@ -527,7 +521,7 @@ else if ($_POST['IM_NOTIFY_HISTORY_LOAD_MORE'] == 'Y')
 	$CIMNotify = new CIMNotify();
 	$arNotify = $CIMNotify->GetNotifyList(Array('PAGE' => $_POST['PAGE'], 'USE_TIME_ZONE' => 'N'));
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'NOTIFY' => $arNotify,
 		'ERROR' => $errorMessage
 	));
@@ -584,18 +578,18 @@ else if ($_POST['IM_SEND_MESSAGE'] == 'Y')
 
 	$message = CIMMessenger::GetById($insertID, Array('WITH_FILES' => 'Y'));
 	$arMessages[$insertID]['params'] = $message['PARAMS'];
-	
+
 	$arMessages = CIMMessageLink::prepareShow($arMessages, Array($insertID => $message['PARAMS']));
-	
+
 	$ar['MESSAGE'] = trim(str_replace(Array('[BR]', '[br]'), "\n", $_POST['MESSAGE']));
 	$ar['MESSAGE'] = preg_replace("/\[DISK\=([0-9]+)\]/i", "", $ar['MESSAGE']);
-	
+
 	$userTzOffset = isset($_POST['USER_TZ_OFFSET'])? intval($_POST['USER_TZ_OFFSET']): CTimeZone::GetOffset();
 	$arResult = Array(
 		'TMP_ID' => $tmpID,
 		'ID' => $insertID,
 		'CHAT_ID' => $message['CHAT_ID'],
-		'SEND_DATE' => time()+$userTzOffset,
+		'SEND_DATE' => new \Bitrix\Main\Type\DateTime(),
 		'SEND_MESSAGE' => \Bitrix\Im\Text::parse($ar['MESSAGE']),
 		'SEND_MESSAGE_PARAMS' => $arMessages[$insertID]['params'],
 		'SEND_MESSAGE_FILES' => $message['FILES'],
@@ -612,10 +606,7 @@ else if ($_POST['IM_SEND_MESSAGE'] == 'Y')
 		);
 		$arResult['SEND_DATE_FORMAT'] = FormatDate($arFormat, time()+$userTzOffset);
 	}
-	echo CUtil::PhpToJsObject($arResult);
-
-	CIMContactList::SetOnline();
-	CIMMessenger::SetCurrentTab($_POST['TAB']);
+	echo \Bitrix\Im\Common::objectEncode($arResult);
 }
 else if ($_POST['IM_BOT_COMMAND'] == 'Y')
 {
@@ -662,7 +653,7 @@ else if ($_POST['IM_BOT_COMMAND'] == 'Y')
 		}
 	}
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => $errorMessage
 	));
 }
@@ -683,12 +674,12 @@ else if ($_POST['IM_EDIT_MESSAGE'] == 'Y')
 		$arResult = Array(
 			'ID' => $insertID,
 			'MESSAGE' => \Bitrix\Im\Text::parse($_POST['MESSAGE']),
-			'DATE' => time()+$userTzOffset,
+			'DATE' => new \Bitrix\Main\Type\DateTime(),
 			'ERROR' => ''
 		);
 	}
 
-	echo CUtil::PhpToJsObject($arResult);
+	echo \Bitrix\Im\Common::objectEncode($arResult);
 }
 else if ($_POST['IM_DELETE_MESSAGE'] == 'Y')
 {
@@ -701,7 +692,7 @@ else if ($_POST['IM_DELETE_MESSAGE'] == 'Y')
 	$arResult = Array(
 		'ERROR' => $errorMessage
 	);
-	echo CUtil::PhpToJsObject($arResult);
+	echo \Bitrix\Im\Common::objectEncode($arResult);
 }
 else if ($_POST['IM_SHARE_MESSAGE'] == 'Y')
 {
@@ -714,27 +705,27 @@ else if ($_POST['IM_SHARE_MESSAGE'] == 'Y')
 	$arResult = Array(
 		'ERROR' => $errorMessage
 	);
-	echo CUtil::PhpToJsObject($arResult);
+	echo \Bitrix\Im\Common::objectEncode($arResult);
 }
 else if ($_POST['IM_URL_ATTACH_DELETE'] == 'Y')
 {
 	$errorMessage = '';
-	
+
 	$result = CIMMessenger::UrlAttachDelete($_POST['ID'], $_POST['ATTACH_ID']);
 
 	$arResult = Array(
 		'ERROR' => $errorMessage
 	);
-	echo CUtil::PhpToJsObject($arResult);
+	echo \Bitrix\Im\Common::objectEncode($arResult);
 }
 else if ($_POST['IM_LINES_VOTE_SEND'] == 'Y')
 {
 	CIMMessenger::LinesSessionVote($_POST['DIALOG_ID'], $_POST['MESSAGE_ID'], $_POST['RATING']);
-	
+
 	$arResult = Array(
 		'ERROR' => ''
 	);
-	echo CUtil::PhpToJsObject($arResult);
+	echo \Bitrix\Im\Common::objectEncode($arResult);
 }
 else if ($_POST['IM_LIKE_MESSAGE'] == 'Y')
 {
@@ -747,7 +738,7 @@ else if ($_POST['IM_LIKE_MESSAGE'] == 'Y')
 		'LIKE' => $result,
 		'ERROR' => $errorMessage
 	);
-	echo CUtil::PhpToJsObject($arResult);
+	echo \Bitrix\Im\Common::objectEncode($arResult);
 }
 else if ($_POST['IM_READ_MESSAGE'] == 'Y')
 {
@@ -763,11 +754,8 @@ else if ($_POST['IM_READ_MESSAGE'] == 'Y')
 		$CIMMessage = new CIMMessage();
 		$CIMMessage->SetReadMessage($_POST['USER_ID'], (isset($_POST['LAST_ID']) && intval($_POST['LAST_ID'])>0 ? $_POST['LAST_ID']: null));
 	}
-	CIMMessenger::SetCurrentTab($_POST['TAB']);
 
-	CIMContactList::SetOnline();
-
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'USER_ID' => htmlspecialcharsbx($_POST['USER_ID']),
 		'ERROR' => $errorMessage
 	));
@@ -785,7 +773,7 @@ else if ($_POST['IM_UNREAD_MESSAGE'] == 'Y')
 		$CIMMessage = new CIMMessage();
 		$CIMMessage->SetUnReadMessage($_POST['USER_ID'], (isset($_POST['LAST_ID']) && intval($_POST['LAST_ID'])>0 ? $_POST['LAST_ID']: null));
 	}
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'USER_ID' => htmlspecialcharsbx($_POST['USER_ID']),
 		'ERROR' => $errorMessage
 	));
@@ -807,7 +795,7 @@ else if ($_POST['IM_LOAD_LAST_MESSAGE'] == 'Y')
 		{
 			$chatId = intval(substr($_POST['USER_ID'], 4));
 		}
-		
+
 		if ($chatId > 0)
 		{
 			$CIMChat = new CIMChat();
@@ -817,8 +805,8 @@ else if ($_POST['IM_LOAD_LAST_MESSAGE'] == 'Y')
 		{
 			$arMessage = false;
 		}
-		
-		if (!$arMessage || $_POST['USER_LOAD'] == 'Y' && empty($arMessage['chat']) || isset($arMessage['chat'][$chatId]) && !in_array($arMessage['chat'][$chatId]['messageType'], Array(IM_MESSAGE_OPEN, IM_MESSAGE_CHAT)))
+
+		if (!$arMessage || $_POST['USER_LOAD'] == 'Y' && empty($arMessage['chat']) || isset($arMessage['chat'][$chatId]) && !in_array($arMessage['chat'][$chatId]['message_type'], Array(IM_MESSAGE_OPEN, IM_MESSAGE_CHAT, IM_MESSAGE_OPEN_LINE)))
 		{
 			$arMessage = Array();
 			$error = 'ACCESS_DENIED';
@@ -832,7 +820,7 @@ else if ($_POST['IM_LOAD_LAST_MESSAGE'] == 'Y')
 			unset($arMessage['usersMessage'][$chatId]);
 			if (isset($_POST['READ']) && $_POST['READ'] == 'Y')
 				$CIMChat->SetReadMessage($chatId);
-			
+
 			$orm = \Bitrix\Im\Model\ChatTable::getById($chatId);
 			$chatData = $orm->fetch();
 			$entityType = $chatData['ENTITY_TYPE'];
@@ -890,10 +878,11 @@ else if ($_POST['IM_LOAD_LAST_MESSAGE'] == 'Y')
 			$error = 'ACCESS_DENIED';
 		}
 	}
+
 	if ($error == '')
 	{
-		CIMMessenger::SetCurrentTab($_POST['TAB']);
-		
+		$relation = \CIMChat::GetRelationById($chatId);
+
 		$dialogId = $_POST['USER_ID'];
 		$userId = $USER->GetId();
 		foreach(GetModuleEvents("im", "OnLoadLastMessage", true) as $arEvent)
@@ -901,18 +890,17 @@ else if ($_POST['IM_LOAD_LAST_MESSAGE'] == 'Y')
 			ExecuteModuleEventEx($arEvent, array($chatId, $dialogId, $entityType, $entityId, $userId));
 		}
 	}
-	
 
-	echo CUtil::PhpToJsObject(Array(
+
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'REVISION' => IM_REVISION,
-		'MOBILE_REVISION' => IM_MOBILE_REVISION,
+		'MOBILE_REVISION' => IM_REVISION_MOBILE,
 		'CHAT_ID' => $chatId,
 		'USER_ID' => $_POST['CHAT'] == 'Y'? htmlspecialcharsbx($_POST['USER_ID']): intval($_POST['USER_ID']),
 		'MESSAGE' => isset($arMessage['message'])? $arMessage['message']: Array(),
 		'USERS_MESSAGE' => isset($arMessage['usersMessage'])? $arMessage['usersMessage']: Array(),
 		'USERS' => isset($arMessage['users'])? $arMessage['users']: Array(),
 		'USER_IN_GROUP' => isset($arMessage['userInGroup'])? $arMessage['userInGroup']: Array(),
-		'WO_USER_IN_GROUP' => isset($arMessage['woUserInGroup'])? $arMessage['woUserInGroup']: Array(),
 		'CHAT' => isset($arMessage['chat'])? $arMessage['chat']: Array(),
 		'USER_BLOCK_CHAT' => isset($arMessage['userChatBlockStatus'])? $arMessage['userChatBlockStatus']: Array(),
 		'USER_IN_CHAT' => isset($arMessage['userInChat'])? $arMessage['userInChat']: Array(),
@@ -920,6 +908,7 @@ else if ($_POST['IM_LOAD_LAST_MESSAGE'] == 'Y')
 		'READED_LIST' => isset($arMessage['readedList'])? $arMessage['readedList']: Array(),
 		'PHONES' => isset($arMessage['phones'])? $arMessage['phones']: Array(),
 		'FILES' => isset($arMessage['files'])? $arMessage['files']: Array(),
+		'LINES' => isset($arMessage['lines'])? $arMessage['lines']: Array(),
 		'OPENLINES' => isset($arMessage['openlines'])? $arMessage['openlines']: Array(),
 		'NETWORK_ID' => $networkUserId? $networkUserId: '',
 		'ERROR' => $error
@@ -941,7 +930,6 @@ else if ($_POST['IM_USER_DATA_LOAD'] == 'Y')
 		);
 		$arMessage['users'] = $ar['users'];
 		$arMessage['userInGroup']  = $ar['userInGroup'];
-		$arMessage['woUserInGroup']  = $ar['woUserInGroup'];
 		$arMessage['phones']  = $ar['phones'];
 		$chatId = CIMMessage::GetChatId($USER->GetId(), $_POST['USER_ID']);
 	}
@@ -949,15 +937,12 @@ else if ($_POST['IM_USER_DATA_LOAD'] == 'Y')
 	{
 		$error = 'ACCESS_DENIED';
 	}
-	if ($error == '')
-		CIMMessenger::SetCurrentTab($_POST['TAB']);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => $chatId,
 		'USER_ID' => intval($_POST['USER_ID']),
 		'USERS' => isset($arMessage['users'])? $arMessage['users']: Array(),
 		'USER_IN_GROUP' => isset($arMessage['userInGroup'])? $arMessage['userInGroup']: Array(),
-		'WO_USER_IN_GROUP' => isset($arMessage['woUserInGroup'])? $arMessage['woUserInGroup']: Array(),
 		'PHONES' => isset($arMessage['phones'])? $arMessage['phones']: Array(),
 		'ERROR' => $error
 	));
@@ -997,14 +982,13 @@ else if ($_POST['IM_HISTORY_LOAD'] == 'Y')
 			}
 		}
 	}
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => $chatId,
 		'USER_ID' => $dialogId,
 		'MESSAGE' => isset($arMessage['message'])? $arMessage['message']: Array(),
 		'USERS_MESSAGE' => isset($arMessage['message'])? $arMessage['usersMessage']: Array(),
 		'USERS' => isset($arMessage['users'])? $arMessage['users']: Array(),
 		'USER_IN_GROUP' => isset($arMessage['userInGroup'])? $arMessage['userInGroup']: Array(),
-		'WO_USER_IN_GROUP' => isset($arMessage['woUserInGroup'])? $arMessage['woUserInGroup']: Array(),
 		'CHAT' => isset($arMessage['chat'])? $arMessage['chat']: Array(),
 		'USER_BLOCK_CHAT' => isset($arMessage['userChatBlockStatus'])? $arMessage['userChatBlockStatus']: Array(),
 		'USER_IN_CHAT' => isset($arMessage['userInChat'])? $arMessage['userInChat']: Array(),
@@ -1016,37 +1000,31 @@ else if ($_POST['IM_HISTORY_LOAD_MORE'] == 'Y')
 {
 	$arMessage = Array();
 
+	$CIMHistory = new CIMHistory(false, Array());
 	if (substr($_POST['USER_ID'], 0, 4) == 'chat')
 	{
-		$allowToSend = Array('TO_CHAT_ID' => substr($_POST['USER_ID'], 4));
+		$chatId = substr($_POST['USER_ID'],4);
+		$arMessage = $CIMHistory->GetMoreChatMessage(intval($_POST['PAGE_ID']), $chatId, false);
+		if (!empty($arMessage['message']))
+		{
+			foreach ($arMessage['message'] as $id => $ar)
+				$arMessage['message'][$id]['recipientId'] = 'chat'.$ar['recipientId'];
+
+			$arMessage['usersMessage']['chat'.$chatId] = $arMessage['usersMessage'][$chatId];
+			unset($arMessage['usersMessage'][$chatId]);
+		}
 	}
 	else
 	{
 		$allowToSend = Array('TO_USER_ID' => $_POST['USER_ID']);
-	}
 
-	if (CIMContactList::AllowToSend($allowToSend))
-	{
-		$CIMHistory = new CIMHistory(false, Array());
-		if (substr($_POST['USER_ID'], 0, 4) == 'chat')
-		{
-			$chatId = substr($_POST['USER_ID'],4);
-			$arMessage = $CIMHistory->GetMoreChatMessage(intval($_POST['PAGE_ID']), $chatId, false);
-			if (!empty($arMessage['message']))
-			{
-				foreach ($arMessage['message'] as $id => $ar)
-					$arMessage['message'][$id]['recipientId'] = 'chat'.$ar['recipientId'];
-
-				$arMessage['usersMessage']['chat'.$chatId] = $arMessage['usersMessage'][$chatId];
-				unset($arMessage['usersMessage'][$chatId]);
-			}
-		}
-		else
+		if (CIMContactList::AllowToSend($allowToSend))
 		{
 			$arMessage = $CIMHistory->GetMoreMessage(intval($_POST['PAGE_ID']), intval($_POST['USER_ID']), false, false);
 		}
 	}
-	echo CUtil::PhpToJsObject(Array(
+
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => isset($arMessage['chatId'])? $arMessage['chatId']: 0,
 		'MESSAGE' => isset($arMessage['message'])? $arMessage['message']: Array(),
 		'USERS_MESSAGE' => isset($arMessage['usersMessage'])? $arMessage['usersMessage']: Array(),
@@ -1058,8 +1036,8 @@ else if ($_POST['IM_LOAD_MESSAGE_BY_DATE'] == 'Y')
 {
 	$history = new \CIMHistory();
 	$arMessage = $history->GetMessagesByDate($_POST['CHAT_ID'], $_POST['LAST_LOAD'], $_POST['FIRST_MESSAGE_ID'], false);
-	
-	echo CUtil::PhpToJsObject(Array(
+
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => isset($arMessage['chatId'])? $arMessage['chatId']: 0,
 		'DIALOG_ID' => isset($arMessage['dialogId'])? $arMessage['dialogId']: 0,
 		'MESSAGE' => isset($arMessage['message'])? $arMessage['message']: Array(),
@@ -1068,8 +1046,7 @@ else if ($_POST['IM_LOAD_MESSAGE_BY_DATE'] == 'Y')
 		'DELETE_MESSAGE' => isset($arMessage['messageDelete'])? $arMessage['messageDelete']: Array(),
 		'FILES' => isset($arMessage['files'])? $arMessage['files']: Array(),
 		'USERS' => isset($arMessage['users'])? $arMessage['users']: Array(),
-		'USER_IN_GROUP' => isset($arMessage['woUserInGroup'])? $arMessage['woUserInGroup']: Array(),
-		'WO_USER_IN_GROUP' => isset($arMessage['woUserInGroup'])? $arMessage['woUserInGroup']: Array(),
+		'USER_IN_GROUP' => isset($arMessage['userInGroup'])? $arMessage['userInGroup']: Array(),
 		'PHONES' => isset($arMessage['phones'])? $arMessage['phones']: Array(),
 		'CHAT' => $arChat['chat'],
 		'USER_IN_CHAT' => $arChat['userInChat'],
@@ -1094,19 +1071,18 @@ else if ($_POST['IM_LOAD_CONTEXT_MESSAGE'] == 'Y')
 		$previous = 10;
 		$next = 10;
 	}
-	
+
 	$CIMHistory = new CIMHistory();
 	$arMessage = $CIMHistory->GetRelatedMessages(intval($_POST['MESSAGE_ID']), $previous, $next, false);
-	
-	echo CUtil::PhpToJsObject(Array(
+
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => isset($arMessage['chatId'])? $arMessage['chatId']: 0,
 		'DIALOG_ID' => isset($arMessage['dialogId'])? $arMessage['dialogId']: 0,
 		'MESSAGE' => isset($arMessage['message'])? $arMessage['message']: Array(),
 		'USERS_MESSAGE' => isset($arMessage['usersMessage'])? $arMessage['usersMessage']: Array(),
 		'FILES' => isset($arMessage['files'])? $arMessage['files']: Array(),
 		'USERS' => isset($arMessage['users'])? $arMessage['users']: Array(),
-		'USER_IN_GROUP' => isset($arMessage['woUserInGroup'])? $arMessage['woUserInGroup']: Array(),
-		'WO_USER_IN_GROUP' => isset($arMessage['woUserInGroup'])? $arMessage['woUserInGroup']: Array(),
+		'USER_IN_GROUP' => isset($arMessage['userInGroup'])? $arMessage['userInGroup']: Array(),
 		'PHONES' => isset($arMessage['phones'])? $arMessage['phones']: Array(),
 		'ERROR' => ''
 	));
@@ -1121,7 +1097,7 @@ else if ($_POST['IM_HISTORY_REMOVE_ALL'] == 'Y')
 	else
 		$CIMHistory->RemoveAllMessage($_POST['USER_ID']);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'USER_ID' => htmlspecialcharsbx($_POST['USER_ID']),
 		'ERROR' => $errorMessage
 	));
@@ -1133,7 +1109,7 @@ else if ($_POST['IM_HISTORY_REMOVE_MESSAGE'] == 'Y')
 	$CIMHistory = new CIMHistory();
 	$CIMHistory->RemoveMessage($_POST['MESSAGE_ID']);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'MESSAGE_ID' => intval($_POST['MESSAGE_ID']),
 		'ERROR' => $errorMessage
 	));
@@ -1161,7 +1137,7 @@ else if ($_POST['IM_HISTORY_SEARCH'] == 'Y')
 		$arMessage = $CIMHistory->SearchMessage($_POST['SEARCH'], intval($_POST['USER_ID']), false, false);
 	}
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => $arMessage['chatId'],
 		'MESSAGE' => $arMessage['message'],
 		'FILES' => $arMessage['files'],
@@ -1191,7 +1167,7 @@ else if ($_POST['IM_HISTORY_DATE_SEARCH'] == 'Y')
 		$arMessage = $CIMHistory->SearchDateMessage($_POST['DATE'], intval($_POST['USER_ID']), false, false);
 	}
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => $arMessage['chatId'],
 		'MESSAGE' => $arMessage['message'],
 		'FILES' => $arMessage['files'],
@@ -1229,7 +1205,7 @@ else if ($_POST['IM_CONTACT_LIST_SEARCH'] == 'Y')
 		$CIMContactList = new CIMContactList();
 		$arContactList = $CIMContactList->SearchUsers($_POST['SEARCH']);
 
-		echo CUtil::PhpToJsObject(Array(
+		echo \Bitrix\Im\Common::objectEncode(Array(
 			'USERS' => $arContactList['users'],
 			'USER_ID' => htmlspecialcharsbx($_POST['USER_ID']),
 			'ERROR' => ''
@@ -1237,26 +1213,21 @@ else if ($_POST['IM_CONTACT_LIST_SEARCH'] == 'Y')
 	}
 	else
 	{
-		echo CUtil::PhpToJsObject(Array('ERROR' => 'DISABLED_FUNCTION'));
+		echo \Bitrix\Im\Common::objectEncode(Array('ERROR' => 'DISABLED_FUNCTION'));
 	}
 }
 else if ($_POST['IM_CONTACT_LIST'] == 'Y')
 {
-	if (isset($_POST['DESKTOP']) && $_POST['DESKTOP'] == 'Y')
-		CIMMessenger::SetDesktopStatusOnline();
-
 	$CIMContactList = new CIMContactList();
 	$arContactList = $CIMContactList->GetList();
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'USER_ID' => $USER->GetId(),
 		'USERS' => $arContactList['users'],
 		'GROUPS' => $arContactList['groups'],
 		'CHATS' => $arContactList['chats'],
 		'PHONES' => $arContactList['phones'],
 		'USER_IN_GROUP' => $arContactList['userInGroup'],
-		'WO_GROUPS' => $arContactList['woGroups'],
-		'WO_USER_IN_GROUP' => $arContactList['woUserInGroup'],
 		'ERROR' => ''
 	));
 }
@@ -1271,7 +1242,7 @@ else if ($_POST['IM_RECENT_LIST'] == 'Y')
 	$arChat = Array();
 	foreach ($ar as $userId => $value)
 	{
-		if ($value['TYPE'] == IM_MESSAGE_CHAT || $value['TYPE'] == IM_MESSAGE_OPEN)
+		if ($value['TYPE'] == IM_MESSAGE_CHAT || $value['TYPE'] == IM_MESSAGE_OPEN || $value['TYPE'] == IM_MESSAGE_OPEN_LINE)
 		{
 			$arChat[$value['CHAT']['id']] = $value['CHAT'];
 			$value['MESSAGE']['userId'] = $userId;
@@ -1293,7 +1264,7 @@ else if ($_POST['IM_RECENT_LIST'] == 'Y')
 
 	$arResult['NOTIFY_BLOCKED'] = CIMSettings::GetSimpleNotifyBlocked();
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'USER_ID' => $USER->GetId(),
 		'RECENT' => $arRecent,
 		'USERS' => $arUsers,
@@ -1305,14 +1276,14 @@ else if ($_POST['IM_RECENT_LIST'] == 'Y')
 	));
 
 }
-else if ($_POST['IM_NOTIFY_VIEWED'] == 'Y')
+else if ($_POST['IM_NOTIFY_READ'] == 'Y')
 {
 	$errorMessage = "";
 
 	$CIMNotify = new CIMNotify();
-	$CIMNotify->MarkNotifyRead($_POST['MAX_ID'], true);
+	$CIMNotify->MarkNotifyRead($_POST['ID'], true);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => $errorMessage
 	));
 }
@@ -1330,7 +1301,7 @@ else if ($_POST['IM_NOTIFY_VIEW'] == 'Y')
 		$CIMNotify->MarkNotifyRead($_POST['ID']);
 	}
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => $errorMessage
 	));
 }
@@ -1341,7 +1312,7 @@ else if ($_POST['IM_NOTIFY_CONFIRM'] == 'Y')
 	$CIMNotify = new CIMNotify();
 	$result = $CIMNotify->Confirm($_POST['NOTIFY_ID'], $_POST['NOTIFY_VALUE']);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'NOTIFY_ID' => intval($_POST['NOTIFY_ID']),
 		'NOTIFY_VALUE' => $_POST['NOTIFY_VALUE'],
 		'MESSAGES' => $result,
@@ -1357,7 +1328,7 @@ else if ($_POST['IM_NOTIFY_ANSWER'] == 'Y')
 	$CIMNotify = new CIMNotify();
 	$result = $CIMNotify->Answer($_POST['NOTIFY_ID'], $_POST['NOTIFY_ANSWER']);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'MESSAGES' => $result,
 		'ERROR' => $errorMessage
 	));
@@ -1373,7 +1344,7 @@ else if ($_POST['IM_NOTIFY_BLOCK_TYPE'] == 'Y')
 	);
 	CIMSettings::SetSetting(CIMSettings::NOTIFY, $arSettings);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => $errorMessage
 	));
 }
@@ -1384,7 +1355,7 @@ else if ($_POST['IM_NOTIFY_REMOVE'] == 'Y')
 	$CIMNotify = new CIMNotify();
 	$CIMNotify->DeleteWithCheck($_POST['NOTIFY_ID']);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'NOTIFY_ID' => intval($_POST['NOTIFY_ID']),
 		'ERROR' => $errorMessage
 	));
@@ -1397,33 +1368,17 @@ else if ($_POST['IM_NOTIFY_GROUP_REMOVE'] == 'Y')
 	if ($arNotify = $CIMNotify->GetNotify($_POST['NOTIFY_ID']))
 		CIMNotify::DeleteByTag($arNotify['NOTIFY_TAG']);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'NOTIFY_ID' => intval($_POST['NOTIFY_ID']),
 		'ERROR' => $errorMessage
 	));
 }
 else if ($_POST['IM_RECENT_HIDE'] == 'Y')
 {
-	if (substr($_POST['USER_ID'], 0, 4) == 'chat')
-	{
-		$userId = $USER->GetId();
-		$chatId = substr($_POST['USER_ID'], 4);
-		$relation  = CIMChat::GetRelationById($chatId);
+	\CIMContactList::DialogHide($_POST['DIALOG_ID']);
 
-		if (!isset($relation[$userId]) && CModule::IncludeModule('pull'))
-		{
-			CPullWatch::Delete($userId, 'IM_PUBLIC_'.$chatId);
-		}
-
-		CIMContactList::DeleteRecent($chatId, true);
-	}
-	else
-	{
-		CIMContactList::DeleteRecent($_POST['USER_ID']);
-	}
-
-	echo CUtil::PhpToJsObject(Array(
-		'USER_ID' => htmlspecialcharsbx($_POST['USER_ID']),
+	echo \Bitrix\Im\Common::objectEncode(Array(
+		'USER_ID' => $_POST['DIALOG_ID'],
 		'ERROR' => ''
 	));
 }
@@ -1456,7 +1411,7 @@ else if ($_POST['IM_CHAT_ADD'] == 'Y')
 		}
 	}
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => intval($chatId),
 		'ERROR' => $errorMessage
 	));
@@ -1482,7 +1437,7 @@ else if ($_POST['IM_CHAT_EXTEND'] == 'Y')
 				$errorMessage = $e->GetString();
 		}
 	}
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => $errorMessage
 	));
 }
@@ -1490,6 +1445,11 @@ else if ($_POST['IM_CHAT_JOIN'] == 'Y')
 {
 	$CIMChat = new CIMChat();
 	$result = $CIMChat->Join($_POST['CHAT_ID']);
+}
+else if ($_POST['IM_PARENT_CHAT_JOIN'] == 'Y')
+{
+	$CIMChat = new CIMChat();
+	$result = $CIMChat->JoinParent($_POST['CHAT_ID'], $_POST['MESSAGE_ID']);
 }
 else if ($_POST['IM_CHAT_LEAVE'] == 'Y')
 {
@@ -1505,7 +1465,7 @@ else if ($_POST['IM_CHAT_LEAVE'] == 'Y')
 		$result = $CIMChat->DeleteUser($chatId, intval($_POST['USER_ID']) > 0? intval($_POST['USER_ID']): $USER->GetID());
 	}
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => intval($_POST['CHAT_ID']),
 		'USER_ID' => intval($_POST['USER_ID']),
 		'ERROR' => $result? '': 'ACCESS_ERROR'
@@ -1515,7 +1475,7 @@ else if ($_POST['IM_CHAT_MUTE'] == 'Y')
 {
 	$CIMChat = new CIMChat();
 	$result = $CIMChat->MuteNotify($_POST['CHAT_ID'], $_POST['MUTE'] == 'Y');
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => intval($_POST['CHAT_ID']),
 		'ERROR' => $result? '': 'ACCESS_ERROR'
 	));
@@ -1537,7 +1497,7 @@ else if ($_POST['IM_CHAT_RENAME'] == 'Y')
 		$CIMChat->Rename($chatId, $_POST['CHAT_TITLE']);
 	}
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT_ID' => intval($_POST['CHAT_ID']),
 		'CHAT_TITLE' => $_POST['CHAT_TITLE'],
 		'ERROR' => $error
@@ -1568,7 +1528,7 @@ else if ($_POST['IM_CRM_SELECTOR'] == 'Y')
 		$arResult['ERROR'] = 'ACCESS_DENIED';
 	}
 
-	echo CUtil::PhpToJsObject($arResult);
+	echo \Bitrix\Im\Common::objectEncode($arResult);
 
 }
 else if ($_POST['IM_CHAT_DATA_LOAD'] == 'Y')
@@ -1589,20 +1549,20 @@ else if ($_POST['IM_CHAT_DATA_LOAD'] == 'Y')
 
 	if (!in_array($USER->GetId(), $arChat['userInChat'][$chatId]))
 	{
-		if ($arChat['chat'][$chatId]['messageType'] == IM_MESSAGE_OPEN && CModule::IncludeModule("pull"))
+		if (($arChat['chat'][$chatId]['message_type'] == IM_MESSAGE_OPEN || $arChat['chat'][$chatId]['messageType'] == IM_MESSAGE_OPEN_LINE) && CModule::IncludeModule("pull"))
 		{
 			CPullWatch::Add($USER->GetId(), 'IM_PUBLIC_'.$chatId, true);
 		}
 	}
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'CHAT' => $arChat['chat'],
 		'CHAT_ID' => $_POST['CHAT_ID'],
+		'LINES' => $arChat['lines'],
 		'USER_IN_CHAT' => $arChat['userInChat'],
 		'USER_BLOCK_CHAT' => $arChat['userChatBlockStatus'],
 		'USERS' => isset($arUser['users'])? $arUser['users']: Array(),
 		'USER_IN_GROUP' => isset($arUser['userInGroup'])? $arUser['userInGroup']: Array(),
-		'WO_USER_IN_GROUP' => isset($arUser['woUserInGroup'])? $arUser['woUserInGroup']: Array(),
 		'ERROR' => ''
 	));
 }
@@ -1629,7 +1589,6 @@ else if ($_POST['IM_GET_EXTERNAL_DATA'] == 'Y')
 			));
 			$arResult['USERS'] = isset($ar['users'])? $ar['users']: Array();
 			$arResult['USER_IN_GROUP'] = isset($ar['userInGroup'])? $ar['userInGroup']: Array();
-			$arResult['WO_USER_IN_GROUP'] = isset($ar['woUserInGroup'])? $ar['woUserInGroup']: Array();
 			$arResult['PHONES'] = isset($ar['phones'])? $ar['phones']: Array();
 		}
 		else
@@ -1651,6 +1610,7 @@ else if ($_POST['IM_GET_EXTERNAL_DATA'] == 'Y')
 		{
 			$arResult['CHAT_ID'] = $chatId;
 			$arResult['CHAT'] = $arChat['chat'];
+			$arResult['LINES'] = $arChat['lines'];
 			$arResult['USER_IN_CHAT'] = $arChat['userInChat'];
 			$arResult['USER_BLOCK_CHAT'] = $arChat['userChatBlockStatus'];
 		}
@@ -1739,19 +1699,19 @@ else if ($_POST['IM_GET_EXTERNAL_DATA'] == 'Y')
 		}
 	}
 
-	echo CUtil::PhpToJsObject($arResult);
+	echo \Bitrix\Im\Common::objectEncode($arResult);
 }
 else if ($_POST['IM_CALL'] == 'Y')
 {
-	$chatId = intval($_POST['CHAT_ID']);
 	$userId = intval($USER->GetId());
+	$chatId = intval($_POST['CHAT_ID']) ?: CIMMessage::GetChatId($userId, intval($_POST['USER_ID']));
 
 	$errorMessage = "";
 	if ($_POST['COMMAND'] == 'inviteExperimental')
 	{
 		if ($_POST['CHAT'] != 'Y')
 			$chatId = CIMMessage::GetChatId($userId, intval($_POST['CHAT_ID']));
-		
+
 		$arCallData = CIMCall::InviteExperimental(Array(
 			'CHAT_ID' => $chatId,
 			'USER_ID' => $userId,
@@ -1777,13 +1737,13 @@ else if ($_POST['IM_CALL'] == 'Y')
 			if ($e = $GLOBALS["APPLICATION"]->GetException())
 				$errorMessage = $e->GetString();
 
-			echo CUtil::PhpToJsObject(Array(
+			echo \Bitrix\Im\Common::objectEncode(Array(
 				'ERROR' => $errorMessage
 			));
 		}
 		else
 		{
-			echo CUtil::PhpToJsObject(Array(
+			echo \Bitrix\Im\Common::objectEncode(Array(
 				'CHAT_ID' => $arCallData['CHAT_ID'],
 				'USERS' => $arCallData['USER_DATA']['USERS'],
 				'USERS_CONNECT' => isset($arCallData['USERS_CONNECT'])? $arCallData['USERS_CONNECT']: array(),
@@ -1858,7 +1818,7 @@ else if ($_POST['IM_CALL'] == 'Y')
 
 		if (strlen($errorMessage) <= 0)
 		{
-			echo CUtil::PhpToJsObject(Array(
+			echo \Bitrix\Im\Common::objectEncode(Array(
 				'CHAT_ID' => $arCallData['CHAT_ID'],
 				'USERS' => $arCallData['USER_DATA']['USERS'],
 				'HR_PHOTO' => $arCallData['USER_DATA']['HR_PHOTO'],
@@ -1867,7 +1827,7 @@ else if ($_POST['IM_CALL'] == 'Y')
 		}
 		else
 		{
-			echo CUtil::PhpToJsObject(Array(
+			echo \Bitrix\Im\Common::objectEncode(Array(
 				'CHAT_ID' => $arCallData['CHAT_ID'],
 				'ERROR' => $e->GetString()
 			));
@@ -1883,7 +1843,7 @@ else if ($_POST['IM_CALL'] == 'Y')
 	}
 	if ($_POST['COMMAND'] != 'invite' && $_POST['COMMAND'] != 'invite_user')
 	{
-		echo CUtil::PhpToJsObject(Array(
+		echo \Bitrix\Im\Common::objectEncode(Array(
 			'CHAT_ID' => $chatId,
 			'ERROR' => $errorMessage
 		));
@@ -1896,7 +1856,7 @@ else if ($_POST['IM_SHARING'] == 'Y' && intval($_POST['USER_ID']) > 0)
 
 	if ($_POST['COMMAND'] == 'signaling')
 	{
-		CPullStack::AddByUser(intval($_POST['USER_ID']), Array(
+		\Bitrix\Pull\Event::add(intval($_POST['USER_ID']), Array(
 			'module_id' => 'im',
 			'command' => 'screenSharing',
 			'expiry' => 3600,
@@ -1905,17 +1865,29 @@ else if ($_POST['IM_SHARING'] == 'Y' && intval($_POST['USER_ID']) > 0)
 				'command' => 'signaling',
 				'peer' => $_POST['PEER'],
 			),
+			'extra' => Array(
+				'call_revision' => IM_CALL_REVISION,
+				'call_revision_mobile' => IM_CALL_REVISION_MOBILE,
+				'im_revision' => IM_REVISION,
+				'im_revision_mobile' => IM_REVISION_MOBILE,
+			),
 		));
 	}
 	else
 	{
-		CPullStack::AddByUser(intval($_POST['USER_ID']), Array(
+		\Bitrix\Pull\Event::add(intval($_POST['USER_ID']), Array(
 			'module_id' => 'im',
 			'command' => 'screenSharing',
 			'expiry' => 3600,
 			'params' => Array(
 				'senderId' => $USER->GetID(),
 				'command' => $_POST['COMMAND']
+			),
+			'extra' => Array(
+				'call_revision' => IM_CALL_REVISION,
+				'call_revision_mobile' => IM_CALL_REVISION_MOBILE,
+				'im_revision' => IM_REVISION,
+				'im_revision_mobile' => IM_REVISION_MOBILE,
 			),
 		));
 	}
@@ -1928,7 +1900,7 @@ else if (($_POST['IM_OPEN_LINES'] == 'Y' || $_POST['IM_OPEN_LINES_CLIENT'] == 'Y
 {
 	$_POST['IM_OPEN_LINES_CLIENT'] = $_POST['IM_OPEN_LINES'] == 'Y'? 'N': 'Y';
 	$_POST['IM_OPEN_LINES'] = $_POST['IM_OPEN_LINES_CLIENT'] == 'Y'? 'N': 'Y';
-	
+
 	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/handlers/ajax.php");
 }
 else if ($_POST['IM_IDLE'] == 'Y')
@@ -1936,29 +1908,29 @@ else if ($_POST['IM_IDLE'] == 'Y')
 	$errorMessage = "";
 	CIMStatus::SetIdle($USER->GetId(), $_POST['IDLE'] == 'Y', $_POST['MANUAL'] == 'Y'? 1: 10);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => $errorMessage
 	));
 }
 else if ($_POST['IM_OPEN_REST_TOKEN'] == 'Y')
 {
 	$errorMessage = "";
-	
+
 	\Bitrix\Im\App::addToken(Array(
-		'BOT_ID' => intval($_POST['BOT_ID']), 
+		'BOT_ID' => intval($_POST['BOT_ID']),
 		'DIALOG_ID' => $_POST['DIALOG_ID'],
 		'USER_ID' => $USER->GetId(),
 	));
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => $errorMessage
 	));
 }
 else if ($_POST['IM_GET_TEXTAREA_ICONS'] == 'Y')
 {
 	$errorMessage = "";
-	
-	echo CUtil::PhpToJsObject(Array(
+
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'TEXTAREA_ICON' => \Bitrix\Im\App::getListForJs(),
 		'ERROR' => ''
 	));
@@ -1968,7 +1940,7 @@ else if ($_POST['IM_START_WRITING'] == 'Y')
 	$errorMessage = "";
 	CIMMessenger::StartWriting($_POST['DIALOG_ID'], false, "", false, $_POST['OL_SILENT'] == 'Y');
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => $errorMessage
 	));
 }
@@ -1979,7 +1951,7 @@ else if ($_POST['IM_DESKTOP_LOGOUT'] == 'Y')
 	CIMMessenger::SetDesktopStatusOffline();
 	CIMContactList::SetOffline();
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => $errorMessage
 	));
 }
@@ -2007,7 +1979,7 @@ else if ($_POST['IM_SET_COLOR'] == 'Y')
 		CIMStatus::SetColor($USER->GetId(), $_POST['COLOR']);
 	}
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'COLOR' => $_POST['COLOR'],
 		'CHAT_ID' => $_POST['CHAT_ID'],
 		'ERROR' => $errorMessage
@@ -2034,7 +2006,7 @@ else if ($_POST['IM_GET_MOBILE_CHAT_AVATAR'] == 'Y')
 		}
 	}
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'AVATAR' => $avatar,
 		'ERROR' => $errorMessage
 	));
@@ -2047,7 +2019,7 @@ else if ($_POST['IM_SETTING_SAVE'] == 'Y')
 
 	CIMSettings::SetSetting(CIMSettings::SETTINGS, $arSettings);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => $errorMessage
 	));
 }
@@ -2077,7 +2049,7 @@ else if ($_POST['IM_SETTINGS_SAVE'] == 'Y')
 	}
 	CIMSettings::Set(CIMSettings::SETTINGS, $arSettings);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'ERROR' => $errorMessage
 	));
 }
@@ -2088,7 +2060,7 @@ else if ($_POST['IM_SETTINGS_NOTIFY_LOAD'] == 'Y')
 	$arSettings = CIMSettings::Get();
 	$arNotifyNames = CIMSettings::GetNotifyNames();
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'NAMES' => $arNotifyNames,
 		'VALUES' => $arSettings['notify'],
 		'ERROR' => $errorMessage
@@ -2101,7 +2073,7 @@ else if ($_POST['IM_SETTINGS_SIMPLE_NOTIFY_LOAD'] == 'Y')
 	$arNotifyNames = CIMSettings::GetNotifyNames();
 	$arNotifyValues = CIMSettings::GetSimpleNotifyBlocked(true);
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'NAMES' => $arNotifyNames,
 		'VALUES' => $arNotifyValues,
 		'ERROR' => $errorMessage
@@ -2111,7 +2083,7 @@ else if ($_POST['IM_DISK_ACTIVATE_PUBLIC_LINK'] == 'Y')
 {
 	CIMDisk::SetEnabledExternalLink($_POST['STATUS'] == 'Y');
 
-	echo CUtil::PhpToJsObject(Array(
+	echo \Bitrix\Im\Common::objectEncode(Array(
 		'NAMES' => $arNotifyNames,
 		'VALUES' => $arNotifyValues,
 		'ERROR' => $errorMessage
@@ -2119,7 +2091,7 @@ else if ($_POST['IM_DISK_ACTIVATE_PUBLIC_LINK'] == 'Y')
 }
 else
 {
-	echo CUtil::PhpToJsObject(Array('ERROR' => GetMessage('IM_UNKNOWN_ERROR')));
+	echo \Bitrix\Im\Common::objectEncode(Array('ERROR' => GetMessage('IM_UNKNOWN_ERROR')));
 }
 
 CMain::FinalActions();

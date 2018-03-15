@@ -85,7 +85,7 @@ namespace Bitrix\Sale\Delivery\AdminPage\DeliveryRestrictions
 			"',deliveryId: ".$ID.
 			",title: '".$className.
 			"',restrictionId: ".$record["ID"].
-			",params: ".\CUtil::PhpToJSObject($record["PARAMS"]).
+			",params: ".htmlspecialcharsbx(\CUtil::PhpToJSObject($record["PARAMS"])).
 			",sort: ".$record["SORT"].
 			",lang: '".LANGUAGE_ID."'".
 		"});";

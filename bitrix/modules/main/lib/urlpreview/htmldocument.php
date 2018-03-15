@@ -37,10 +37,6 @@ class HtmlDocument
 	/** @var array */
 	protected $linkElements = array();
 
-	protected  $hostsAllowedToEmbed = array(
-		'youtube.com', 'youtu.be', 'vimeo.com', 'rutube.ru'
-	);
-
 	/**
 	 * HtmlDocument constructor.
 	 *
@@ -392,14 +388,10 @@ class HtmlDocument
 	 */
 	protected function filterString($str)
 	{
-		$sanitizer = new \CBXSanitizer();
-		$sanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_HIGH);
-		$sanitizer->ApplyHtmlSpecChars(false);
-
 		$str = html_entity_decode($str, ENT_QUOTES, $this->getEncoding());
 		$str = Encoding::convertEncoding($str, $this->getEncoding(), Context::getCurrent()->getCulture()->getCharset());
 		$str = trim($str);
-		$str = $sanitizer->SanitizeHtml($str);
+		$str = strip_tags($str);
 
 		return $str;
 	}
@@ -498,13 +490,6 @@ class HtmlDocument
 	 */
 	protected function isEmbeddingAllowed()
 	{
-		$result = false;
-		$domainNameParts = explode('.', $this->uri->getHost());
-		if(is_array($domainNameParts) && ($partsCount = count($domainNameParts)) >= 2)
-		{
-			$domainName = $domainNameParts[$partsCount-2] . '.' . $domainNameParts[$partsCount-1];
-			$result = in_array($domainName, $this->hostsAllowedToEmbed);
-		}
-		return $result;
+		return UrlPreview::isHostTrusted($this->uri);
 	}
 }

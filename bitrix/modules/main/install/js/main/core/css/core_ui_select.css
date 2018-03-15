@@ -22,6 +22,7 @@
 
 .main-ui-control.main-ui-select .main-ui-square-search,
 .main-ui-control.main-ui-select .main-ui-square-search-item {
+	position: absolute;
 	opacity: 0;
 	width: 1px;
 	height: 1px;

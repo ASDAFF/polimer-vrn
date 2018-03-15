@@ -692,7 +692,11 @@ class CCatalogViewedProductsComponent extends CBitrixComponent
 		if (!Main\Loader::includeModule('sale'))
 			return array();
 
-		$basketUserId = (int)CSaleBasket::GetBasketUserID(false);
+		$skipUserInit = false;
+		if (!Catalog\Product\Basket::isNotCrawler())
+			$skipUserInit = true;
+
+		$basketUserId = (int)CSaleBasket::GetBasketUserID($skipUserInit);
 		if ($basketUserId <= 0)
 			return array();
 

@@ -58,7 +58,7 @@
 			type="text"
 			tabindex="1"<?
 			if($arParams["CONFIG"]["AUTOFOCUS"]):?>autofocus=""<?endif;
-			?>value="<?=$arResult["CURRENT_PRESET"]["FIND"]?>"
+			?>value="<?=\Bitrix\Main\Text\HtmlFilter::encode(htmlspecialcharsback($arResult["CURRENT_PRESET"]["FIND"]))?>"
 			name="FIND"
 			placeholder="<?=Loc::getMessage($placeholder)?>"
 			class="main-ui-filter-search-filter"

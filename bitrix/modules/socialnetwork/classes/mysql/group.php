@@ -113,6 +113,10 @@ class CSocNetGroup extends CAllSocNetGroup
 				$USER_FIELD_MANAGER->Update("SONET_GROUP", $ID, $arFields);
 				CSocNetGroup::SearchIndex($ID, $arSiteID);
 
+				Workgroup::setIndex(array(
+					'fields' => $arFields
+				));
+
 				$groupItem = Workgroup::getById($ID, false);
 				$groupItem->syncDeptConnection();
 			}
@@ -260,6 +264,10 @@ class CSocNetGroup extends CAllSocNetGroup
 			}
 			CSocNetGroup::SearchIndex($ID, false, $arGroupOld, $bAutoSubscribe);
 
+			Workgroup::setIndex(array(
+				'fields' => array_merge($arFields, array('ID' => $ID))
+			));
+
 			$arGroupNew = CSocNetGroup::GetByID($ID);
 			if (
 				$arGroupNew["OPENED"] == "Y"
@@ -291,7 +299,17 @@ class CSocNetGroup extends CAllSocNetGroup
 
 					if(!empty($arFields["NAME"]))
 					{
-						$chat->rename($chatId, Integration\Im\Chat\Workgroup::buildChatName($arFields["NAME"]), false, false);
+						$chat->rename(
+							$chatId,
+							Integration\Im\Chat\Workgroup::buildChatName(
+								$arFields["NAME"],
+								array(
+									'project' => ($arGroupNew["PROJECT"] == 'Y')
+								)
+							),
+							false,
+							false
+						);
 					}
 
 					if(!empty($arFields["IMAGE_ID"]))
@@ -368,7 +386,10 @@ class CSocNetGroup extends CAllSocNetGroup
 			"OWNER_LAST_NAME" => Array("FIELD" => "U.LAST_NAME", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (G.OWNER_ID = U.ID)"),
 			"OWNER_LOGIN" => Array("FIELD" => "U.LOGIN", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (G.OWNER_ID = U.ID)"),
 			"OWNER_EMAIL" => Array("FIELD" => "U.EMAIL", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (G.OWNER_ID = U.ID)"),
-			"OWNER_USER" => array("FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID", "WHERE_ONLY" => "Y", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (G.OWNER_ID = U.ID)")
+			"OWNER_USER" => array("FIELD" => "U.LOGIN,U.NAME,U.LAST_NAME,U.EMAIL,U.ID", "WHERE_ONLY" => "Y", "TYPE" => "string", "FROM" => "INNER JOIN b_user U ON (G.OWNER_ID = U.ID)"),
+			"PROJECT" => Array("FIELD" => "G.PROJECT", "TYPE" => "string"),
+			"PROJECT_DATE_START" => Array("FIELD" => "G.PROJECT_DATE_START", "TYPE" => "datetime"),
+			"PROJECT_DATE_FINISH" => Array("FIELD" => "G.PROJECT_DATE_FINISH", "TYPE" => "datetime"),
 		);
 
 		if (array_key_exists("SITE_ID", $arFilter))

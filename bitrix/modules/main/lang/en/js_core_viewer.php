@@ -64,4 +64,5 @@ $MESS["JS_CORE_VIEWER_TRANSFORMATION_IN_PROCESS"] = "The document has been saved
 $MESS["JS_CORE_VIEWER_IFRAME_ERROR_TITLE"] = "Cannot open document";
 $MESS["JS_CORE_VIEWER_DOWNLOAD_B24_DESKTOP_FULL"] = "Download Application";
 $MESS["JS_CORE_VIEWER_DOWNLOAD_DOCUMENT"] = "Download Document";
+$MESS["JS_CORE_VIEWER_IFRAME_ERROR_COULD_NOT_VIEW"] = "Cannot open document view.";
 ?>

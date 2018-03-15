@@ -25,6 +25,9 @@ class Vk extends Platform
 	
 	const OAUTH_URL = "https://oauth.vk.com/authorize";
 	const TOKEN_URL = "https://oauth.vk.com/access_token";
+	const VK_URL = 'https://vk.com/';
+	const VK_URL__MARKET_PREFIX = 'market-';
+	const VK_URL__ALBUM_PREFIX = '?section=album_';
 	
 	const GROUP_GET_STEP = 1000;
 	const MAX_EXECUTION_ITEMS = 25;
@@ -40,11 +43,15 @@ class Vk extends Platform
 	const MIN_ALBUM_PHOTO_HEIGHT = 720;
 	const MAX_ALBUM_PHOTO_SIZES_SUM = 14000;        //sum height and width
 	const MAX_ALBUM_PHOTO_SIZE = 52428800;    //Bites
+	const MAX_ALBUM_RATIO_V = 0.25;	// width / height
+	const MAX_ALBUM_RATIO_H = 3;
 	
 	const MIN_PRODUCT_PHOTO_WIDTH = 400;
 	const MIN_PRODUCT_PHOTO_HEIGHT = 400;
 	const MAX_PRODUCT_PHOTO_SIZES_SUM = 14000;        //sum height and width
 	const MAX_PRODUCT_PHOTO_SIZE = 52428800;    //Bites
+	const MAX_PRODUCT_RATIO_V = 0.1;	// width / height
+	const MAX_PRODUCT_RATIO_H = 10;
 	
 	const DEFAULT_TIMELIMIT = 40;    //seconds
 	const DEFAULT_EXECUTION_ITEMS = 6;

@@ -41,7 +41,7 @@ $arVisibleColumns = $lAdmin->GetVisibleHeaderColumns();
 
 while ($arCCard = $dbRes->NavNext(true, "f_"))
 {
-	$row =& $lAdmin->AddRow($f_EXTERNAL_ID, $arCCard, "sale_ps_handler_refund_edit.php?ID=".$f_EXTERNAL_ID."&handler=".ToLower($f_HANDLER)."&lang=".LANG);
+	$row =& $lAdmin->AddRow($f_EXTERNAL_ID, $arCCard, "sale_ps_handler_refund_edit.php?".$f_LINK_PARAMS."&handler=".ToLower($f_HANDLER)."&lang=".LANG);
 
 	$row->AddField("EXTERNAL_ID", "<a href=\"sale_ps_handler_refund_edit.php?".$f_LINK_PARAMS.'&handler='.ToLower($f_HANDLER)."&lang=".LANG."\">".$f_EXTERNAL_ID."</a>");
 	$row->AddField("NAME", htmlspecialcharsbx($f_NAME));

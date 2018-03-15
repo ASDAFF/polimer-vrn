@@ -5,7 +5,7 @@ class CIMShare
 {
 	const TYPE_POST = 'POST';
 	const TYPE_TASK = 'TASK';
-	
+
 	function __construct($user_id = null)
 	{
 		if (is_null($user_id))
@@ -17,6 +17,85 @@ class CIMShare
 		{
 			$this->user_id = intval($user_id);
 		}
+	}
+
+	public function Chat($messageId)
+	{
+		$CIMMessage = new CIMMessage($this->user_id);
+		$message = $CIMMessage->GetMessage($messageId, true);
+		if (!$message)
+			return false;
+
+		$parentChatId = $message['CHAT_ID'];
+
+		$joinUsers = Array($this->user_id);
+		if (!\Bitrix\Im\User::getInstance($message['AUTHOR_ID'])->isExtranet())
+		{
+			$joinUsers[] = (int)$message['AUTHOR_ID'];
+		}
+
+		$chat = new CIMChat($this->user_id);
+		$chatId = $chat->Add(Array(
+			'USERS' => $joinUsers,
+			'SKIP_ADD_MESSAGE' => 'Y',
+		));
+
+		$parentMessageId = $this->SendMessage('', GetMessage('IM_SHARE_CHAT_CHAT'), $message, array(
+			'CHAT_ID' => $chatId,
+			'CHAT_MESSAGE' => 1,
+			'CHAT_LAST_DATE' => new \Bitrix\Main\Type\DateTime(),
+			'CHAT_USER' => array_unique($joinUsers),
+		));
+
+		$sendMessage = '';
+		if ($message['MESSAGE'])
+		{
+			$sendMessage .= $message['MESSAGE']."\n";
+		}
+
+		$files = CIMMessageParam::Get($messageId, 'FILE_ID');
+		if (!empty($files))
+		{
+			foreach ($files as $fileId)
+			{
+				$sendMessage .= " [DISK={$fileId}]";
+			}
+		}
+
+		if ($message['MESSAGE_TYPE'] == IM_MESSAGE_PRIVATE)
+		{
+			$dialogId = $this->user_id;
+			$relations = \Bitrix\Im\Chat::getRelation($parentChatId);
+			foreach ($relations as $relation)
+			{
+				if ($relation['USER_ID'] != $this->user_id)
+				{
+					$dialogId = $relation['USER_ID'];
+				}
+			}
+			$chatLink = '[USER='.$dialogId.']'.Bitrix\Im\User::getInstance($dialogId)->getFullName(false)."[/USER]";
+		}
+		else
+		{
+			$chatLink = '[CHAT='.$parentChatId.']'.$message['CHAT_TITLE']."[/CHAT]";
+		}
+
+		$message['MESSAGE'] = trim($sendMessage);
+		$message['MESSAGE_TYPE'] = IM_MESSAGE_CHAT;
+		$message['CHAT_ID'] = $chatId;
+
+		$noticeMessage = GetMessage('IM_SHARE_CHAT_CHAT_WELCOME', Array(
+			'#CHAT#' => $chatLink
+		));
+		$pinMessageId = $this->SendMessage('', $noticeMessage, $message);
+
+		\Bitrix\Im\Model\ChatTable::update($chatId, Array(
+			'PARENT_ID' => $parentChatId,
+			'PARENT_MID' => $parentMessageId,
+			'PIN_MESSAGE_ID' => $pinMessageId,
+		));
+
+		return true;
 	}
 
 	public function Task($messageId, $date = '')
@@ -41,8 +120,8 @@ class CIMShare
 		$task->description = $this->PrepareText($message)."\n";
 		$task['RESPONSIBLE_ID'] = $this->user_id;
 		if (
-			$message['AUTHOR_ID'] > 0 && $message['AUTHOR_ID'] != $this->user_id 
-			&& !\Bitrix\Im\User::getInstance($message['AUTHOR_ID'])->isExtranet() 
+			$message['AUTHOR_ID'] > 0 && $message['AUTHOR_ID'] != $this->user_id
+			&& !\Bitrix\Im\User::getInstance($message['AUTHOR_ID'])->isExtranet()
 			&& !\Bitrix\Im\User::getInstance($message['AUTHOR_ID'])->isBot()
 		)
 		{
@@ -59,7 +138,7 @@ class CIMShare
 		$messageParams = Array();
 		if ($message['MESSAGE_TYPE'] == IM_MESSAGE_PRIVATE)
 		{
-			$messageParams = Array('LINK_ACTIVE' => Array($this->user_id, $message['AUTHOR_ID']));
+			$messageParams = Array('LINK_ACTIVE' => Array((string)$this->user_id, (string)$message['AUTHOR_ID']));
 		}
 		else
 		{
@@ -71,7 +150,7 @@ class CIMShare
 				{
 					$crmType = \CCrmOwnerTypeAbbr::ResolveByTypeID(\CCrmOwnerType::ResolveID($fieldData[1]));
 					$task['UF_CRM_TASK'] = array($crmType.'_'.$fieldData[2]);
-					
+
 				}
 			}
 			if ($chat['ENTITY_TYPE'] == 'SONET_GROUP')
@@ -80,10 +159,10 @@ class CIMShare
 			}
 			else if ($chat['ENTITY_TYPE'] != 'SONET_GROUP')
 			{
-				$messageParams = Array('LINK_ACTIVE' => Array($this->user_id, $message['AUTHOR_ID']));
+				$messageParams = Array('LINK_ACTIVE' => Array((string)$this->user_id, (string)$message['AUTHOR_ID']));
 			}
 		}
-		
+
 		$date = intval($date);
 		if ($date > 0)
 		{
@@ -107,7 +186,7 @@ class CIMShare
 
 		$link = CTaskNotifications::getNotificationPath(array('ID' => $this->user_id), $task->getId());
 
-		$this->SendMessage($message, GetMessage('IM_SHARE_CHAT_TASK', Array('#LINK#' => $link)), $messageParams);
+		$this->SendMessage('', GetMessage('IM_SHARE_CHAT_TASK', Array('#LINK#' => $link)), $message, $messageParams);
 
 		return true;
 	}
@@ -125,7 +204,7 @@ class CIMShare
 
 		$dateFrom = new Bitrix\Main\Type\DateTime();
 		$dateFrom->add('1 DAY');
-		
+
 		$date = intval($date);
 		if ($date > 0)
 		{
@@ -141,12 +220,13 @@ class CIMShare
 		}
 		$dateTo = clone $dateFrom;
 		$dateTo->add('30 MINUTES');
-		
+
 		$eventId = CCalendar::SaveEvent(array(
 			'arFields' => array(
 				'CAL_TYPE' => 'user',
 				'OWNER_ID' => $this->user_id,
 				'NAME' => CTextParser::clearAllTags($message['MESSAGE']),
+				'DESCRIPTION' => $this->PrepareText($message),
 				'SKIP_TIME' => false,
 				'DATE_FROM' => $dateFrom,
 				'DATE_TO' => $dateTo,
@@ -155,17 +235,17 @@ class CIMShare
 			'autoDetectSection' => true,
 			'autoCreateSection' => true
 		));
-		
+
 		if (!$eventId)
 		{
 			return false;
 		}
 
 		$link = CHTTP::urlAddParams(CCalendar::GetPathForCalendarEx($this->user_id), array('EVENT_ID' => $eventId));
-		
-		$messageParams = Array('LINK_ACTIVE' => Array($this->user_id));
-		
-		$this->SendMessage($message, GetMessage('IM_SHARE_CHAT_CALEND', Array('#LINK#' => $link)), $messageParams);
+
+		$messageParams = Array('LINK_ACTIVE' => Array((string)$this->user_id));
+
+		$this->SendMessage('', GetMessage('IM_SHARE_CHAT_CALEND', Array('#LINK#' => $link)), $message, $messageParams);
 
 		return true;
 	}
@@ -260,7 +340,7 @@ class CIMShare
 		$link = str_replace(array("#post_id#", "#user_id#"), Array($postFields["ID"], $this->user_id), $pathToPost);
 		$processed = CSocNetLogTools::ProcessPath(array("BLOG" => $link), $this->user_id, SITE_ID);
 
-		$this->SendMessage($message, GetMessage('IM_SHARE_CHAT_POST', Array('#LINK#' => $processed["URLS"]["BLOG"])));
+		$this->SendMessage('', GetMessage('IM_SHARE_CHAT_POST', Array('#LINK#' => $processed["URLS"]["BLOG"])), $message);
 
 		return true;
 	}
@@ -371,26 +451,28 @@ class CIMShare
 		return $result;
 	}
 
-	private function SendMessage($quoteMessage, $messageText, $messageParams = Array())
+	private function SendMessage($startText, $endText, $quoteMessage, $messageParams = Array())
 	{
 		$userName = \Bitrix\Im\User::getInstance($quoteMessage['AUTHOR_ID'])->getFullName(false);
 		$messageDate = FormatDate('X', $quoteMessage['DATE_CREATE'], time() + CTimeZone::GetOffset());
 
-		$sendMessage = "------------------------------------------------------\n";
+
+		$sendMessage = $startText;
+		$sendMessage .= "------------------------------------------------------\n";
 		$sendMessage .= $userName." [".$messageDate."]\n";
-		if ($quoteMessage['MESSAGE'])
+		if (trim($quoteMessage['MESSAGE']))
 		{
 			$sendMessage .= $quoteMessage['MESSAGE']."\n";
 		}
 		if (!empty($quoteMessage['FILES']))
 		{
-			foreach ($quoteMessage['FILES'] as $file)
+			foreach ($quoteMessage['FILES'] as $fileId =>  $file)
 			{
 				$sendMessage .= "[".GetMessage("IM_SHARE_FILE").": ".$file['name']."]\n";
 			}
 		}
 		$sendMessage .= "------------------------------------------------------\n";
-		$sendMessage .= $messageText;
+		$sendMessage .= $endText;
 
 		$messageParams['CLASS'] = "bx-messenger-content-item-system";
 
@@ -411,11 +493,12 @@ class CIMShare
 				}
 			}
 
-			CIMMessage::Add(Array(
+			$messageId = CIMMessage::Add(Array(
 				'FROM_USER_ID' => $this->user_id,
 				'TO_USER_ID' => $quoteMessage['AUTHOR_ID'],
 				'MESSAGE' => $sendMessage,
 				'PARAMS' => $messageParams,
+				'SYSTEM' => 'Y',
 				'URL_PREVIEW' => 'N',
 				'SKIP_CONNECTOR' => 'Y',
 				'SKIP_COMMAND' => 'Y',
@@ -424,17 +507,19 @@ class CIMShare
 		}
 		else
 		{
-			CIMChat::AddMessage(Array(
+			$messageId = CIMChat::AddMessage(Array(
 				'TO_CHAT_ID' => $quoteMessage['CHAT_ID'],
-				'FROM_USER_ID' => $this->user_id,
 				'MESSAGE' => $sendMessage,
 				'PARAMS' => $messageParams,
+				'SYSTEM' => 'Y',
 				'URL_PREVIEW' => 'N',
 				'SKIP_CONNECTOR' => 'Y',
 				'SKIP_COMMAND' => 'Y',
 				'SILENT_CONNECTOR' => 'Y',
 			));
 		}
+
+		return $messageId;
 	}
 }
 ?>

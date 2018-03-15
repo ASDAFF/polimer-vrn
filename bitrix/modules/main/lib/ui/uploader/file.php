@@ -876,7 +876,7 @@ class File
 			header("Pragma: public");
 
 			// Download from front-end
-			if($fastDownload)
+			if($fastDownload && ($fromClouds || strpos($fileData["tmp_name"], Application::getInstance()->getContext()->getServer()->getDocumentRoot()) === 0))
 			{
 				if($fromClouds)
 				{

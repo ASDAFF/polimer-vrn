@@ -52,7 +52,7 @@ BX.Kanban.DropZoneArea.prototype =
 
 		var dropZoneType = this.getDropZoneType(options.type);
 		var dropZone = new dropZoneType(options);
-		if (! dropZone instanceof BX.Kanban.DropZone)
+		if (!(dropZone instanceof BX.Kanban.DropZone))
 		{
 			throw new Error("DropZone type must be an instance of BX.Kanban.DropZone");
 		}
@@ -69,6 +69,11 @@ BX.Kanban.DropZoneArea.prototype =
 		else
 		{
 			this.dropZonesOrder.push(dropZone);
+		}
+
+		if (this.getGrid().isRendered())
+		{
+			this.render();
 		}
 
 		return dropZone;
@@ -95,7 +100,7 @@ BX.Kanban.DropZoneArea.prototype =
 	 */
 	removeDropZone: function(dropZoneId)
 	{
-		var dropZone = this.getDropZone(itemId);
+		var dropZone = this.getDropZone(dropZoneId);
 		if (dropZone)
 		{
 			this.dropZonesOrder = this.dropZonesOrder.filter(function(element) {
@@ -103,11 +108,28 @@ BX.Kanban.DropZoneArea.prototype =
 			});
 
 			delete this.dropZones[dropZone.getId()];
+
+			if (this.getGrid().isRendered())
+			{
+				this.render();
+			}
 		}
 
 		return dropZone;
 	},
 
+	render: function()
+	{
+		var dropZoneItems = document.createDocumentFragment();
+		var dropZones = this.getDropZones();
+		for (var i = 0; i < dropZones.length; i++)
+		{
+			dropZoneItems.appendChild(dropZones[i].render());
+		}
+
+		BX.cleanNode(this.getContainer());
+		this.getContainer().appendChild(dropZoneItems);
+	},
 
 	/**
 	 *

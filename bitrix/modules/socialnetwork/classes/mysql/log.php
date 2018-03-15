@@ -3,6 +3,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/classes/ge
 
 use Bitrix\Socialnetwork\Item\LogIndex;
 use Bitrix\Socialnetwork\LogIndexTable;
+use Bitrix\Socialnetwork\LogTagTable;
 
 class CSocNetLog extends CAllSocNetLog
 {
@@ -107,8 +108,9 @@ class CSocNetLog extends CAllSocNetLog
 
 				if (isset($arFields["TAG"]))
 				{
-					\Bitrix\Socialnetwork\LogTagTable::set(array(
-						'logId' => $ID,
+					LogTagTable::set(array(
+						'itemType' => LogTagTable::ITEM_TYPE_LOG,
+						'itemId' => $ID,
 						'tags' => $arFields["TAG"]
 					));
 				}
@@ -196,8 +198,9 @@ class CSocNetLog extends CAllSocNetLog
 
 			if (isset($arFields["TAG"]))
 			{
-				\Bitrix\Socialnetwork\LogTagTable::set(array(
-					'logId' => $ID,
+				LogTagTable::set(array(
+					'itemType' => LogTagTable::ITEM_TYPE_LOG,
+					'itemId' => $ID,
 					'tags' => $arFields["TAG"]
 				));
 			}
@@ -315,6 +318,8 @@ class CSocNetLog extends CAllSocNetLog
 			"ENABLE_COMMENTS" => Array("FIELD" => "L.ENABLE_COMMENTS", "TYPE" => "string"),
 			"SOURCE_TYPE" => Array("FIELD" => "L.SOURCE_TYPE", "TYPE" => "string"),
 			"CONTENT" => Array("FIELD" => "LI.CONTENT", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_log_index LI ON (LI.LOG_ID = L.ID)"),
+			"CONTENT_LOG_UPDATE" => Array("FIELD" => "LI.LOG_UPDATE", "TYPE" => "datetime", "FROM" => "INNER JOIN b_sonet_log_index LI ON (LI.LOG_ID = L.ID)"),
+			"CONTENT_DATE_CREATE" => Array("FIELD" => "LI.DATE_CREATE", "TYPE" => "datetime", "FROM" => "INNER JOIN b_sonet_log_index LI ON (LI.LOG_ID = L.ID)"),
 			"GROUP_NAME" => Array("FIELD" => "G.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sonet_group G ON (L.ENTITY_TYPE = 'G' AND L.ENTITY_ID = G.ID)"),
 			"GROUP_OWNER_ID" => Array("FIELD" => "G.OWNER_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_sonet_group G ON (L.ENTITY_TYPE = 'G' AND L.ENTITY_ID = G.ID)"),
 			"GROUP_INITIATE_PERMS" => Array("FIELD" => "G.INITIATE_PERMS", "TYPE" => "string", "FROM" => "LEFT JOIN b_sonet_group G ON (L.ENTITY_TYPE = 'G' AND L.ENTITY_ID = G.ID)"),
@@ -539,7 +544,7 @@ class CSocNetLog extends CAllSocNetLog
 			|| array_key_exists("@TAG", $arFilter)
 		)
 		{
-			$arFields["TAG"] = Array(
+			$arFields["TAG"] = array(
 				"FIELD" => "SLT.NAME",
 				"TYPE" => "string",
 				"FROM" => "INNER JOIN b_sonet_log_tag SLT ON L.ID = SLT.LOG_ID"

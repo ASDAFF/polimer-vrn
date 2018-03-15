@@ -10,7 +10,7 @@ use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
 /**
- * Class MaxMind
+ * Class SypexGeo
  * @package Bitrix\Main\Service\GeoIp
  * @link http://sypexgeo.net
  */

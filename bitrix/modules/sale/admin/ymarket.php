@@ -174,36 +174,28 @@ if(CSaleYMHandler::isActive())
 		</table>
 	<?
 
-	$activeList = \Bitrix\Sale\Delivery\Services\Manager::getActiveList();
+	$activeListNames = array();
 
-	foreach($activeList as $id => $fields)
+	foreach(\Bitrix\Sale\Delivery\Services\Manager::getActiveList() as $id => $fields)
 	{
-		if(is_callable($fields["CLASS_NAME"]."::canHasProfiles") && $fields["CLASS_NAME"]::canHasProfiles())
-		{
-			unset($activeList[$id]);
-			continue;
-		}
-
-		if(is_callable($fields["CLASS_NAME"]."::canHasChildren") && $fields["CLASS_NAME"]::canHasChildren())
-		{
-			unset($activeList[$id]);
-			continue;
-		}
-
-		$delivery = \Bitrix\Sale\Delivery\Services\Manager::createObject($fields);
-		$activeList[$id] = $delivery->getNameWithParent();
+		if(!$fields["CLASS_NAME"]::canHasProfiles())
+			if(!$fields["CLASS_NAME"]::canHasChildren())
+				if($delivery = \Bitrix\Sale\Delivery\Services\Manager::createObject($fields))
+					$activeListNames[$id] = $delivery->getNameWithParent();
 	}
 
 	$siteSetts = CSaleYMHandler::getSettingsBySiteId($SITE_ID, false);
 
 	$dlvFilteredIds = \Bitrix\Sale\Delivery\Services\Manager::checkServiceRestriction(
-		array_keys($activeList),
+		array_keys($activeListNames),
 		$SITE_ID,
 		'\Bitrix\Sale\Delivery\Restrictions\BySite'
 	);
 
-	$arDeliveryList = array_intersect_key($activeList, array_flip($dlvFilteredIds));
+	if(!is_array($dlvFilteredIds))
+		$dlvFilteredIds = array();
 
+	$arDeliveryList = array_intersect_key($activeListNames, array_flip($dlvFilteredIds));
 
 	$dbResultList = CSalePersonType::GetList(
 		"NAME",

@@ -72,4 +72,23 @@ foreach ($arDocumentFields as $fieldKey => $fieldValue)
 	<?
 }
 ?>
+<tr>
+	<td align="right" width="40%" valign="top"><?= GetMessage("BPCWG_SITE") ?>:</td>
+	<td width="60%">
+		<select name="group_site">
+			<option value="">(<?= GetMessage("BPCWG_SITE_OTHER") ?>)</option>
+			<?
+			$b = $o = "";
+			$expression = CBPDocument::IsExpression($arCurrentValues["group_site"]) ? htmlspecialcharsbx($arCurrentValues["group_site"]) : '';
+			$dbSites = CSite::GetList($b, $o, Array("ACTIVE" => "Y"));
+			while ($site = $dbSites->GetNext())
+			{
+				?><option value="<?= $site["LID"] ?>"<?= ($site["LID"] == $arCurrentValues["group_site"]) ? " selected" : ""?>>[<?= $site["LID"] ?>] <?= $site["NAME"] ?></option><?
+			}
+			?>
+		</select><br>
+		<input type="text" name="group_site_x" id="id_group_site_x" size="30" value="<?= $expression ?>" />
+		<input type="button" value="..." onclick="BPAShowSelector('id_group_site_x', 'string');">
+	</td>
+</tr>
 <? echo $APPLICATION->GetCSS();?>

@@ -147,8 +147,14 @@ if(CModule::IncludeModule("sale"))
 		"PARENT" => "ADDITIONAL_SETTINGS",
 		"SIZE" => 5,
 	);
-	
-	
+
+	$arComponentParameters['PARAMETERS']['REFRESH_PRICES'] = array(
+		"NAME" => GetMessage("SPOD_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"),
+		"TYPE" => "CHECKBOX",
+		"DEFAULT" => "N",
+		"PARENT" => "ADDITIONAL_SETTINGS",
+	);
+
 	if (CBXFeatures::IsFeatureEnabled('SaleAccounts'))
 	{
 		$arComponentParameters['PARAMETERS']['ALLOW_INNER'] = array(

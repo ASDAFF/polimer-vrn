@@ -52,7 +52,6 @@ $MESS["YANDEX_PROP_date"] = "Date And Time";
 $MESS["YANDEX_PROP_is_premiere"] = "Premiere";
 $MESS["YANDEX_PROP_is_kids"] = "Kids?";
 $MESS["YANDEX_PROP_typePrefix"] = "Group of goods\\category";
-$MESS["YANDEX_PROP_sales_notes"] = "Delivery\\payment info";
 $MESS["YANDEX_PROP_adult"] = "Adult content warning. This item is designed for use in sexual/adult activity.";
 $MESS["YANDEX_PROP_age"] = "Appropriate age category for item.";
 $MESS["YANDEX_TYPE"] = "Description type";
@@ -123,4 +122,5 @@ $MESS["YANDEX_BASE_VAT"] = "Base tax rate for conventional items";
 $MESS["YANDEX_BASE_VAT_ABSENT"] = "not set";
 $MESS["YANDEX_BASE_VAT_EMPTY"] = "Tax exempt";
 $MESS["YANDEX_VAT_ERR_BASE_VAT_ABSENT"] = "Tax rate not specified";
+$MESS["YANDEX_PROP_sales_notes"] = "Minimum order value, minimum quantity, advance payment and payment options";
 ?>

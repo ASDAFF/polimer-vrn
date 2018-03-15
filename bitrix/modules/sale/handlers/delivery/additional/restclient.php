@@ -15,6 +15,7 @@ use Bitrix\Sale\ResultSerializable;
 use Bitrix\Sale\Shipment;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Delivery\CalculationResult;
+use Sale\Handlers\Delivery\AdditionalHandler;
 
 Loc::loadMessages(__FILE__);
 
@@ -98,7 +99,7 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 			'profileType' => $profileType,
 			'serviceParams' => $serviceParams,
 			'profileParams' => $profileParams,
-			'shipmentParams' => self::getShipmentParams($shipment, $serviceType)
+			'shipmentParams' => AdditionalHandler::getShipmentParams($shipment, $serviceType)
 		);
 
 		$hash = md5(serialize($params));
@@ -138,154 +139,6 @@ class RestClient extends \Bitrix\Sale\Services\Base\RestClient
 		{
 			$result = new CalculationResult();
 			$result->addErrors($answer->getErrors());
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @param $locationCode
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 */
-	protected static function getLocationForRequest($locationCode)
-	{
-		if(strlen($locationCode) <= 0)
-			return array();
-
-		static $result = array();
-
-		if(!isset($result[$locationCode]))
-		{
-			$externalId = Location::getExternalId($locationCode);
-			$name = '';
-
-			if(strlen($externalId) > 0)
-			{
-				$dbRes = ExternalTable::getList(array(
-					'filter' => array(
-						'XML_ID' => $externalId,
-						'SERVICE_ID' => Location::getExternalServiceId(),
-						'LOCATION.NAME.LANGUAGE_ID' => 'ru'
-					),
-					'select' => array('NAME' => 'LOCATION.NAME.NAME')
-				));
-
-				if($rec = $dbRes->fetch())
-					$name = $rec['NAME'];
-			}
-
-			$result[$locationCode] = array(
-				'EXTERNAL_ID' => $externalId,
-				'NAME' => $name
-			);
-		}
-
-		return $result[$locationCode];
-	}
-
-	/**
-	 * @param Shipment $shipment
-	 * @return array
-	 */
-	protected static function getShipmentParams(Shipment $shipment, $serviceType)
-	{
-		/** @var \Bitrix\Sale\ShipmentCollection $shipmentCollection */
-		$shipmentCollection = $shipment->getCollection();
-		/** @var \Bitrix\Sale\Order $newOrder */
-		$order = $shipmentCollection->getOrder();
-		$props = $order->getPropertyCollection();
-		$loc = $props->getDeliveryLocation();
-		$locToInternalCode = !!$loc ? $loc->getValue() : "";
-		$zipTo = $props->getDeliveryLocationZip();
-		$zipTo = !!$zipTo ? $zipTo->getValue() : "";
-		$locFromRequest = array();
-		$locToRequest = array();
-
-		if(!empty($locToInternalCode))
-			$locToRequest = self::getLocationForRequest($locToInternalCode);
-
-		$shopLocation = \CSaleHelper::getShopLocation();
-		$zipFrom = \CSaleHelper::getShopLocationZIP();
-
-		if(!empty($shopLocation['CODE']))
-			$locFromRequest = self::getLocationForRequest($shopLocation['CODE']);
-
-		$result = array(
-			"ITEMS" => array(),
-			"LOCATION_FROM" => $locFromRequest['EXTERNAL_ID'],
-			"LOCATION_FROM_NAME" => $locFromRequest['NAME'],
-			"LOCATION_TO" => $locToRequest['EXTERNAL_ID'],
-			"LOCATION_TO_NAME" => $locToRequest['NAME']
-		);
-
-		if($serviceType == "RUSPOST" )
-		{
-			if(strlen($zipFrom) > 0)
-			{
-				$result["ZIP_FROM"] = $zipFrom;
-			}
-			elseif(!empty($shopLocation['CODE']))
-			{
-				$extLoc = LocationHelper::getZipByLocation($shopLocation['CODE'], array('limit' => 1))->fetch();
-
-				if(!empty($extLoc['XML_ID']))
-					$result["ZIP_FROM"] = $extLoc['XML_ID'];
-			}
-
-			if(strlen($zipTo) > 0)
-			{
-				$result["ZIP_TO"] = $zipTo;
-			}
-			elseif(!empty($locToInternalCode))
-			{
-				$extLoc = LocationHelper::getZipByLocation($locToInternalCode, array('limit' => 1))->fetch();
-
-				if(!empty($extLoc['XML_ID']))
-					$result["ZIP_TO"] = $extLoc['XML_ID'];
-			}
-		}
-
-		/** @var \Bitrix\Sale\ShipmentItem $shipmentItem */
-		foreach($shipment->getShipmentItemCollection() as $shipmentItem)
-		{
-			$basketItem = $shipmentItem->getBasketItem();
-
-			if(!$basketItem)
-				continue;
-
-			if($basketItem->isBundleChild())
-				continue;
-
-			//$itemFieldValues = $basketItem->getFieldValues();
-			$itemFieldValues = array(
-				"PRICE" => $basketItem->getPrice(),
-				"WEIGHT" => $basketItem->getWeight(),
-				"CURRENCY" => $basketItem->getCurrency(),
-				"QUANTITY" => $basketItem->getQuantity(),
-				"DIMENSIONS" => $basketItem->getField("DIMENSIONS")
-			);
-
-			if(!empty($itemFieldValues["DIMENSIONS"]) && is_string($itemFieldValues["DIMENSIONS"]))
-				$itemFieldValues["DIMENSIONS"] = unserialize($itemFieldValues["DIMENSIONS"]);
-
-			$result["ITEMS"][] = $itemFieldValues;
-		}
-
-		//Extra services
-		$esList = Manager::getExtraServicesList($shipment->getDeliveryId(), false);
-
-		if(!empty($esList))
-		{
-			$result['EXTRA_SERVICES'] = array();
-
-			foreach($shipment->getExtraServices() as $esId => $esVal)
-			{
-				if(empty($esList[$esId]['CODE']))
-					continue;
-
-				$result['EXTRA_SERVICES'][$esList[$esId]['CODE']] = $esVal;
-			}
 		}
 
 		return $result;

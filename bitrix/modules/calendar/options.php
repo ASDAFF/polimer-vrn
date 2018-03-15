@@ -106,6 +106,7 @@ if($REQUEST_METHOD=="POST" && strlen($Update.$Apply.$RestoreDefaults)>0 && check
 			'week_holidays' => implode('|',$_REQUEST['week_holidays']),
 			//'week_start' => $_REQUEST['week_start'],
 			'user_name_template' => $_REQUEST['user_name_template'],
+			'sync_by_push' => isset($_REQUEST['sync_by_push']),
 			'user_show_login' => isset($_REQUEST['user_show_login']),
 			'path_to_user' => $_REQUEST['path_to_user'],
 			'path_to_user_calendar' => $_REQUEST['path_to_user_calendar'],
@@ -255,6 +256,12 @@ $tabControl->BeginNextTab();
 			<input name="user_name_template" type="text" value="<?= htmlspecialcharsbx($SET['user_name_template'])?>" id="cal_user_name_template" size="60" />
 		</td>
 	</tr>
+    <tr>
+        <td><input name="sync_by_push" type="checkbox" value="Y" id="cal_sync_by_push" <?if($SET['sync_by_push']){echo'checked';}?>/></td>
+        <td>
+            <label for="cal_sync_by_push"><?= GetMessage("CAL_SYNC_BY_PUSH")?></label>
+        </td>
+    </tr>
 	<tr>
 		<td><input name="user_show_login" type="checkbox" value="Y" id="cal_user_show_login" <?if($SET['user_show_login']){echo'checked';}?>/></td>
 		<td>
@@ -393,7 +400,7 @@ BX.ready(function(){
 			<select name="rm_iblock_type" onchange="changeIblockList(this.value)">
 				<option value=""><?= GetMessage('CAL_NOT_SET')?></option>
 				<?foreach ($arIBTypes as $ibtype_id => $ibtype_name):?>
-					<option value="<?= $ibtype_id?>" <?if($ibtype_id == $SET['rm_iblock_type']){echo ' selected="selected"';}?>><?= $ibtype_name?></option>
+					<option value="<?= $ibtype_id?>" <?if($ibtype_id == $SET['rm_iblock_type']){echo ' selected="selected"';}?>><?= htmlspecialcharsbx($ibtype_name)?></option>
 				<?endforeach;?>
 			</select>
 		</td>

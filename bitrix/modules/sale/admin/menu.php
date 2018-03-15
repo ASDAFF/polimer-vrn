@@ -43,7 +43,7 @@ if ($APPLICATION->GetGroupRight("sale")!="D")
 {
 
 	/* Converter Begin */
-	if (Bitrix\Main\Config\Option::get("main", "~sale_converted_15", 'N') != 'Y')
+	if (Bitrix\Main\Config\Option::get("main", "~sale_converted_15", 'Y') == 'N')
 	{
 
 		$aMenu[] = array(
@@ -110,6 +110,17 @@ if ($APPLICATION->GetGroupRight("sale")!="D")
 						"url" => "sale_order_shipment.php?lang=".LANGUAGE_ID,
 						"more_url" => array(
 							"sale_order_shipment_edit.php"
+						)
+					),
+					array(
+						"text" => GetMessage("SALE_MENU_DELIVERY_REQUESTS"),
+						"title" => GetMessage("SALE_MENU_DELIVERY_REQUESTS"),
+						"url" => "sale_delivery_request_list.php?lang=".LANGUAGE_ID,
+						"page_icon" => "sale_page_icon",
+						"more_url" => array(
+							"sale_delivery_request.php",
+							"sale_delivery_request_list.php",
+							"sale_delivery_request_view.php"
 						)
 					),
 					array(
@@ -478,7 +489,7 @@ if ($APPLICATION->GetGroupRight("sale") == "W" ||
 
 	if ($APPLICATION->GetGroupRight("sale") == "W")
 	{
-		if (Bitrix\Main\Config\Option::get("main", "~sale_converted_15", 'N') == 'Y')
+		if (Bitrix\Main\Config\Option::get("main", "~sale_converted_15", 'Y') != 'N')
 		{
 			if (CModule::IncludeModule("sale"))
 			{
@@ -584,7 +595,7 @@ if ($APPLICATION->GetGroupRight("sale") == "W" ||
 			"more_url" => array("sale_status_edit.php"),
 		);
 
-		if (Bitrix\Main\Config\Option::get("main", "~sale_converted_15", 'N') == 'Y')
+		if (Bitrix\Main\Config\Option::get("main", "~sale_converted_15", 'Y') != 'N')
 		{
 			$arMenu["items"][] = array(
 				"text" => GetMessage("SALE_BUSINESS_VALUE"),
@@ -737,6 +748,13 @@ if ($APPLICATION->GetGroupRight("sale") == "W" ||
 			"title" => GetMessage("MAIN_MENU_1C_INTEGRATION_TITLE"),
 			"url" => "1c_admin.php?lang=".LANGUAGE_ID,
 			"more_url" => array("1c_admin.php"),
+			"items" => array(
+				array(
+					"text" => GetMessage("MAIN_MENU_1C_INTEGRATION_LOG"),
+					"title" => GetMessage("MAIN_MENU_1C_INTEGRATION_LOG_TITLE"),
+					"url" => "sale_exchange_log.php?lang=".LANGUAGE_ID,
+				)
+			),
 		);
 		$arMenu["items"][] = array(
 			"text" => GetMessage("MAIN_MENU_REPORT_EDIT"),

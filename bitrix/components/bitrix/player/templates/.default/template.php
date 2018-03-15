@@ -87,11 +87,8 @@
 	{
 		echo " muted";
 	}
-	/*if ($arParams["SHOW_CONTROLS"] != "N")
-		echo " controls";*/
 	?>>
-
-	<?if($arParams["USE_PLAYLIST"] != 'Y' && !$arResult['YOUTUBE'])
+	<?if($arParams["USE_PLAYLIST"] != 'Y' && !$arResult['YOUTUBE'] && !$arResult['LAZYLOAD'])
 	{?>
 		<source src="<?=$arResult['PATH'];?>" type="<?=$arResult['FILE_TYPE'];?>">
 	<?}?>
@@ -102,80 +99,12 @@
 			<?='BX.message('.\CUtil::PhpToJSObject(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__)).');'?>
 			var init_player_<?=$arResult["ID"];?> = function()
 			{
-				// delete previous object to allow reinitializing
-				if(videojs.players['<?=$arResult["ID"];?>'])
+				var player = new BX.Fileman.Player('<?=$arResult['ID'];?>', <?=\CUtil::PhpToJSObject($arResult["VIDEOJS_PARAMS"]);?>);
+				if(!player.lazyload)
 				{
-					delete videojs.players['<?=$arResult["ID"];?>'];
+					player.init();
 				}
-				player_<?=$arResult["ID"];?> = videojs("<?=$arResult["ID"];?>", <?=\CUtil::PhpToJSObject($arResult["VIDEOJS_PARAMS"]);?>);
-				<?if($arResult['FLASH'])
-				{?>
-					player_<?=$arResult["ID"];?>.setTimeout(function()
-					{
-						if(!this.hasStarted())
-						{
-							this.error(BX.message('PLAYER_FLASH_REQUIRED'));
-						}
-					}, 10000);
-				<?}?>
-				player_<?=$arResult["ID"];?>.ready(BX.proxy(function()
-				{
-					this.volume(<?=floatval($arResult["VOLUME"]);?>);
-					<?if($arParams['MUTE'] === 'Y')
-					{?>
-					this.muted(true);
-					<?}?>
-					var volume_set = false;
-					this.one('play', BX.proxy(function()
-					{
-						<?if($arParams['PLAYBACK_RATE'] != 1)
-						{?>
-						this.playbackRate(<?=$arParams['PLAYBACK_RATE'];?>);
-						<?}?>
-						<?if(isset($arResult["VOLUME"]))
-						{?>
-						if(!volume_set)
-						{
-							this.volume(<?=floatval($arResult["VOLUME"]);?>);
-							<?if($arParams['MUTE'] === 'Y')
-							{?>
-							this.muted(true);
-							<?}?>
-							volume_set = true;
-						}
-						<?}?>
-					}, player_<?=$arResult["ID"];?>));
-					<?if($arParams["USE_PLAYLIST"] == 'Y' && count($arResult['TRACKS']) > 1)
-					{?>
-						this.playlist(<?=\CUtil::PhpToJSObject($arResult["VIDEOJS_PLAYLIST_PARAMS"]);?>);
-					<?}
-					else
-					{
-					if($arParams['START_TIME'] > 0)
-					{?>
-						this.on('loadedmetadata', function()
-						{
-							this.currentTime(<?=intval($arParams['START_TIME']);?>);
-							var spinner = BX.findChild(BX("<?=$arResult["ID"];?>"),
-								{
-									"class" : "vjs-loading-spinner"
-								},
-								false
-							);
-							if(spinner != undefined)
-							{
-								spinner.remove();
-							}
-						});
-					<?}
-					}
-					if($arResult['WMV'])
-					{?>
-						this.wmvConfig = <?=\CUtil::PhpToJSObject($arResult["WMV_CONFIG"]);?>;
-					<?}
-					?>
-				}, player_<?=$arResult["ID"];?>));
-			}
+			};
 			if(typeof videojs == 'undefined')
 			{
 				window.videojs_player_timout = true;
@@ -189,7 +118,7 @@
 				{
 					setTimeout(function()
 					{
-						init_player_<?=$arResult["ID"];?>()
+						init_player_<?=$arResult["ID"];?>();
 					}, 100);
 				});
 				<?}?>

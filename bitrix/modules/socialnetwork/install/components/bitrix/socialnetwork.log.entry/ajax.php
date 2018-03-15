@@ -331,7 +331,6 @@ if(CModule::IncludeModule("socialnetwork"))
 						{
 							$arFields = array(
 								"EVENT_ID" => $arCommentEvent["EVENT_ID"],
-//								"MESSAGE" => $parser->convert($comment_text, array(), $arAllow),
 								"MESSAGE" => $comment_text,
 								"TEXT_MESSAGE" => $comment_text,
 								"BLOG_ALLOW_POST_CODE" => $arParams["BLOG_ALLOW_POST_CODE"]
@@ -344,7 +343,6 @@ if(CModule::IncludeModule("socialnetwork"))
 								"ENTITY_ID" => $arLog["ENTITY_ID"],
 								"EVENT_ID" => $arCommentEvent["EVENT_ID"],
 								"=LOG_DATE" => $GLOBALS["DB"]->CurrentTimeFunction(),
-//								"MESSAGE" => $parser->convert($comment_text, array(), $arAllow),
 								"MESSAGE" => $comment_text,
 								"TEXT_MESSAGE" => $comment_text,
 								"MODULE_ID" => false,
@@ -391,6 +389,13 @@ if(CModule::IncludeModule("socialnetwork"))
 									unset($arFields["UF_SONET_COM_FILE"]);
 								}
 							}
+						}
+
+						$inlineTagList = \Bitrix\Socialnetwork\Util::detectTags($arFields, array("MESSAGE"));
+
+						if (!empty($inlineTagList))
+						{
+							$arFields["TAG"] = $inlineTagList;
 						}
 
 						if ($editCommentSourceID > 0)
@@ -945,14 +950,20 @@ if(CModule::IncludeModule("socialnetwork"))
 							"commentID" => isset($_REQUEST["commentID"]) ? $_REQUEST["commentID"] : 0,
 							"commentTS" => isset($_REQUEST["commentTS"]) ? $_REQUEST["commentTS"] : 0,
 							"lastLogTs" => isset($_REQUEST["lastLogTs"]) ? $_REQUEST["lastLogTs"] : 0,
+							"et" => isset($_REQUEST["et"]) ? $_REQUEST["et"] : '',
 							"exmlid" => $entity_xml_id,
 							"p_user" => $_REQUEST["p_user"],
 							"p_le" => $_REQUEST["p_le"],
+							"p_group" => isset($_REQUEST["p_group"]) ? $_REQUEST["p_group"] : '',
+							"p_dep" => isset($_REQUEST["p_dep"]) ? $_REQUEST["p_dep"] : '',
 							"nt" => $_REQUEST["nt"],
 							"sl" => $_REQUEST["sl"],
-							"as" => $_REQUEST["as"],
 							"dtf" => $_REQUEST["dtf"],
 							"tf" => $_REQUEST["tf"],
+							"as" => $_REQUEST["as"],
+							"lang" => LANGUAGE_ID,
+							"site" => SITE_ID,
+							"follow" => $follow,
 							"ct" => $_REQUEST["ct"]
 						)),
 					"NAV_RESULT" => $db_res,

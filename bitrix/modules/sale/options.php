@@ -8,6 +8,7 @@ use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\SiteTable;
 use Bitrix\Main\Config\Option;
+use Bitrix\Sale\Cashbox;
 use Bitrix\Sale\SalesZone;
 use Bitrix\Sale;
 use Bitrix\Main\Localization\Loc;
@@ -558,6 +559,31 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && $SALE_RIGHT =
 
 		$p2p_del_exp_old = COption::GetOptionString("sale", "p2p_del_exp", 10);
 
+		$agentData = CAgent::GetList(array("ID"=>"DESC"), array(
+			"MODULE_ID" => "sale",
+			"NAME" => "\\Bitrix\\Sale\\Product2ProductTable::addProductsByAgent(%",
+		));
+
+		$agent = $agentData->Fetch();
+
+		if ($SALE_P2P_ALLOW_COLLECT_DATA == "Y")
+		{
+			if (!$agent)
+			{
+				$limit = (int)Option::get("sale", "p2p_limit_collecting_per_hit", 100);
+				CAgent::AddAgent("Bitrix\\Sale\\Product2ProductTable::addProductsByAgent($limit);", "sale", "N", 60, "", "Y");
+			}
+		}
+		else
+		{
+			$SALE_P2P_ALLOW_COLLECT_DATA = "N";
+			if ($agent['ID'] > 0)
+			{
+				CAgent::Delete($agent['ID']);
+			}
+		}
+
+		COption::SetOptionString("sale", "p2p_allow_collect_data", $SALE_P2P_ALLOW_COLLECT_DATA);
 		COption::SetOptionString("sale", "p2p_status_list", serialize($SALE_P2P_STATUS_LIST));
 		if(intval($p2p_del_period) <= 0)
 			$p2p_del_period = 10;
@@ -809,6 +835,8 @@ if ($_SERVER['REQUEST_METHOD'] == "POST" && strlen($Update) > 0 && $SALE_RIGHT =
 			);
 		}
 
+		COption::SetOptionString("sale", "use_advance_check_by_default", $ADVANCE_CHECK_BY_DEFAULT ?: 'N');
+		COption::SetOptionInt("sale", "basket_refresh_gap", $BASKET_REFRESH_GAP);
 		COption::SetOptionString("sale", "allow_pay_status", $ALLOW_PAY_STATUS);
 		COption::SetOptionString("sale", "allow_guest_order_view", $ALLOW_GUEST_ORDER_VIEW);
 		$ALLOW_GUEST_ORDER_VIEW_PATH = is_array($ALLOW_GUEST_ORDER_VIEW_PATH) ? $ALLOW_GUEST_ORDER_VIEW_PATH : array();
@@ -1153,6 +1181,34 @@ $tabControl->BeginNextTab();
 			</select>
 		</td>
 	</tr>
+	<!-- start of check default type -->
+	<? if (Cashbox\Manager::isSupportedFFD105()) :?>
+		<tr class="heading" id="check_default_type_block">
+			<td colspan="2"><?=Main\Localization\Loc::getMessage('SALE_BLOCK_CHECK_TITLE')?></td>
+		</tr>
+		<tr>
+			<td><?=Main\Localization\Loc::getMessage("SALE_USE_ADVANCE_CHECK_BY_DEFAULT")?>:</td>
+			<td>
+				<?
+				$val = Main\Config\Option::get("sale", "use_advance_check_by_default", "N");
+				?>
+				<input type="checkbox" value="Y" name="ADVANCE_CHECK_BY_DEFAULT" <?=($val === 'Y') ? 'checked' : '';?>>
+			</td>
+		</tr>
+	<?endif;?>
+	<!-- start of basket behavior in public -->
+	<tr class="heading" id="basket_public_behavior_block">
+		<td colspan="2"><?=Main\Localization\Loc::getMessage('SALE_BASKET_PUBLIC_BEHAVIOR_TITLE')?></td>
+	</tr>
+	<tr>
+		<td><?=Main\Localization\Loc::getMessage("SALE_BASKET_REFRESH_GAP")?>:</td>
+		<td>
+			<?
+			$val = (int)Main\Config\Option::get("sale", "basket_refresh_gap", 0);
+			?>
+			<input type="text" size="10" value="<?=$val?>" name="BASKET_REFRESH_GAP">
+		</td>
+	</tr>
 	<!-- start of order guest view -->
 	<tr class="heading" id="guest_order_view_block">
 		<td colspan="2"><a name="section_guest_order_view"></a><?=GetMessage('SALE_ALLOW_GUEST_ORDER_VIEW_TITLE')?></td>
@@ -1289,6 +1345,14 @@ $tabControl->BeginNextTab();
 	<!-- Recommended products -->
 	<tr class="heading">
 		<td colspan="2"><?=GetMessage("SALE_P2P")?></td>
+	</tr>
+	<tr>
+		<td align="right" width="40%">
+			<label for="p2p_allow_collect_data"><?=GetMessage("SALE_P2P_COLLECT_DATA")?></label>
+		</td>
+		<td width="60%">
+			<input type="checkbox" name="SALE_P2P_ALLOW_COLLECT_DATA" value="Y" id="p2p_allow_collect_data"<? echo (Option::get("sale", "p2p_allow_collect_data", "N") == 'Y' ? ' checked' : ''); ?>>
+		</td>
 	</tr>
 	<tr>
 		<td valign="top">

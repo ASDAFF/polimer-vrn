@@ -139,7 +139,17 @@ if($arUserField["USER_TYPE"])
 
 	$arResult["RANDOM"] = ($arParams["RANDOM"] <> ''? $arParams["RANDOM"] : $this->randString());
 
-	$APPLICATION->AddHeadScript($this->getPath()."/script.js");
+	if($this->initComponentTemplate() || $arParams['skip_manager'])
+	{
+		$APPLICATION->AddHeadScript($this->getPath()."/script.js");
 
-	$this->IncludeComponentTemplate();
+		$this->IncludeComponentTemplate();
+	}
+	else
+	{
+		$arParams['skip_manager'] = true;
+
+		global $USER_FIELD_MANAGER;
+		echo $USER_FIELD_MANAGER->GetPublicEdit($arUserField, $arParams);
+	}
 }

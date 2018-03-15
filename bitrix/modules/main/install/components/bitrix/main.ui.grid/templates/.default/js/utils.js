@@ -163,7 +163,7 @@
 
 		/**
 		 * Sets style properties and values for each item in collection
-		 * @param {array|HTMLCollection} collection
+		 * @param {HTMLElement[]|HTMLCollection} collection
 		 * @param {object} properties
 		 */
 		styleForEach: function(collection, properties)

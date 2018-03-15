@@ -235,6 +235,16 @@ class Client
 				$additionalParams
 		);
 
+		if($result === false)
+		{
+			$httpErrors = $http->getError();
+			foreach ($httpErrors as $errorCode => $errorText)
+			{
+				$this->errorCollection->add(array(new Error($errorText, $errorCode)));
+			}
+			return false;
+		}
+
 		$answer = $this->prepareAnswer($result);
 
 		if(!is_array($answer) || count($answer) == 0)
@@ -255,7 +265,7 @@ class Client
 				return $this->call($methodName, $additionalParams, true, true);
 			}
 
-			$this->errorCollection->add(array(new Error($answer['error'].". ".$answer['error_description'])));
+			$this->errorCollection->add(array(new Error($answer['error_description'], $answer['error'])));
 			return false;
 		}
 

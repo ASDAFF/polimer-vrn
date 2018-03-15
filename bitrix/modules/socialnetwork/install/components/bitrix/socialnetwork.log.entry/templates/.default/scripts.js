@@ -609,3 +609,4 @@ window.__logEditComment = function(entityXmlId, key, postId)
 		}
 	};
 })();
+

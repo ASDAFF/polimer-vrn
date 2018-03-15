@@ -18,7 +18,7 @@ while (i < count) {
 
 
     if(FLAG_EDIT == true) {
-        params.album_id = data[i].album_vk_id;
+        params.album_id = data[i].ALBUM_VK_ID;
         var res_edit = API.market.editAlbum(params);
         if(res_edit) {
             res_curr.flag_album_edit_result = true;
@@ -29,7 +29,7 @@ while (i < count) {
     else {
         var res_add= API.market.addAlbum(params);
         if(res_add) {
-            res_curr.album_vk_id = res_add.market_album_id;
+            res_curr.ALBUM_VK_ID = res_add.market_album_id;
             res_curr.flag_album_add_result = true;
         } else {
             res_curr.flag_album_add_result = false;
