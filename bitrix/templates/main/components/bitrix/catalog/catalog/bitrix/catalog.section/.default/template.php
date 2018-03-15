@@ -20,6 +20,14 @@ if (!empty($arResult['ITEMS']))
 		<div class="h1"><?=$arResult['NAME']?></div>
 
 		<div class="products_roll">
+			<? if($arResult['ORIGINAL_PARAMETERS']['SECTION_CODE'] == "garazhnye_vorota_doorhan"): ?>
+			<div class="cl">
+				<a href="/doorhan-calculator/">
+					<img src="<?=SITE_TEMPLATE_PATH?>/img/doorhan.jpg" style="max-width: 100%">
+				</a>
+			</div>
+			<? endif; ?>
+
 			<div class="pr_header cl">
 				<div class="sort">
 				<?
