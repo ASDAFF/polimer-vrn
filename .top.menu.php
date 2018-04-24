@@ -48,6 +48,13 @@ $aMenuLinks = Array(
 		Array(), 
 		Array(), 
 		"" 
+	),
+	Array(
+		"Кредит онлайн", 
+		"/kredit.php", 
+		Array(), 
+		Array(), 
+		"" 
 	)
 );
 ?>

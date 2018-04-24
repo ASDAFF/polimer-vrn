@@ -3,14 +3,15 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("Корзина");
 ?>
 
-<?$APPLICATION->IncludeComponent("bitrix:sale.basket.basket", "basket-new", Array(
-	"COUNT_DISCOUNT_4_ALL_QUANTITY" => "N",	// Рассчитывать скидку для каждой позиции (на все количество товара)
-		"COLUMNS_LIST" => array(	// Выводимые колонки
+<?$APPLICATION->IncludeComponent(
+	"bitrix:sale.basket.basket", 
+	"basket-new", 
+	array(
+		"COUNT_DISCOUNT_4_ALL_QUANTITY" => "N",
+		"COLUMNS_LIST" => array(
 			0 => "NAME",
 			1 => "PRICE",
-			//2 => "PROPS",
 			2 => "DISCOUNT",
-		//	3 => "DELAY",
 			4 => "QUANTITY",
 			5 => "SUM",
 			6 => "DELETE",
@@ -19,34 +20,43 @@ $APPLICATION->SetTitle("Корзина");
 		"AJAX_OPTION_JUMP" => "N",
 		"AJAX_OPTION_STYLE" => "Y",
 		"AJAX_OPTION_HISTORY" => "N",
-		"PATH_TO_ORDER" => "/personal/order/make/",	// Страница оформления заказа
-		"HIDE_COUPON" => "N",	// Спрятать поле ввода купона
-		"QUANTITY_FLOAT" => "N",	// Использовать дробное значение количества
-		"PRICE_VAT_SHOW_VALUE" => "Y",	// Отображать значение НДС
-		"TEMPLATE_THEME" => "blue",	// Цветовая тема
-		"SET_TITLE" => "Y",	// Устанавливать заголовок страницы
+		"PATH_TO_ORDER" => "/personal/order/make/",
+		"HIDE_COUPON" => "N",
+		"QUANTITY_FLOAT" => "N",
+		"PRICE_VAT_SHOW_VALUE" => "Y",
+		"TEMPLATE_THEME" => "blue",
+		"SET_TITLE" => "Y",
 		"AJAX_OPTION_ADDITIONAL" => "",
-		"OFFERS_PROPS" => "",	// Свойства, влияющие на пересчет корзины
-		"COMPONENT_TEMPLATE" => "basket",
-		"USE_PREPAYMENT" => "N",	// Использовать предавторизацию для оформления заказа (PayPal Express Checkout)
-		"AUTO_CALCULATION" => "Y",	// Автопересчет корзины
-		"ACTION_VARIABLE" => "basketAction",	// Название переменной действия
-		"USE_GIFTS" => "Y",	// Показывать блок "Подарки"
-		"GIFTS_PLACE" => "BOTTOM",	// Вывод блока "Подарки"
-		"GIFTS_BLOCK_TITLE" => "Выберите один из подарков",	// Текст заголовка "Подарки"
-		"GIFTS_HIDE_BLOCK_TITLE" => "N",	// Скрыть заголовок "Подарки"
-		"GIFTS_TEXT_LABEL_GIFT" => "Подарок",	// Текст метки "Подарка"
-		"GIFTS_PRODUCT_QUANTITY_VARIABLE" => "undefined",	// Название переменной, в которой передается количество товара
-		"GIFTS_PRODUCT_PROPS_VARIABLE" => "prop",	// Название переменной, в которой передаются характеристики товара
-		"GIFTS_SHOW_OLD_PRICE" => "N",	// Показывать старую цену
-		"GIFTS_SHOW_DISCOUNT_PERCENT" => "Y",	// Показывать процент скидки
-		"GIFTS_SHOW_NAME" => "Y",	// Показывать название
-		"GIFTS_SHOW_IMAGE" => "Y",	// Показывать изображение
-		"GIFTS_MESS_BTN_BUY" => "Выбрать",	// Текст кнопки "Выбрать"
-		"GIFTS_MESS_BTN_DETAIL" => "Подробнее",	// Текст кнопки "Подробнее"
-		"GIFTS_PAGE_ELEMENT_COUNT" => "4",	// Количество элементов в строке
-		"GIFTS_CONVERT_CURRENCY" => "N",	// Показывать цены в одной валюте
-		"GIFTS_HIDE_NOT_AVAILABLE" => "N",	// Не отображать товары, которых нет на складах
+		"OFFERS_PROPS" => array(
+		),
+		"COMPONENT_TEMPLATE" => "basket-new",
+		"USE_PREPAYMENT" => "N",
+		"AUTO_CALCULATION" => "Y",
+		"ACTION_VARIABLE" => "basketAction",
+		"USE_GIFTS" => "Y",
+		"GIFTS_PLACE" => "BOTTOM",
+		"GIFTS_BLOCK_TITLE" => "Выберите один из подарков",
+		"GIFTS_HIDE_BLOCK_TITLE" => "N",
+		"GIFTS_TEXT_LABEL_GIFT" => "Подарок",
+		"GIFTS_PRODUCT_QUANTITY_VARIABLE" => "quantity",
+		"GIFTS_PRODUCT_PROPS_VARIABLE" => "prop",
+		"GIFTS_SHOW_OLD_PRICE" => "N",
+		"GIFTS_SHOW_DISCOUNT_PERCENT" => "Y",
+		"GIFTS_SHOW_NAME" => "Y",
+		"GIFTS_SHOW_IMAGE" => "Y",
+		"GIFTS_MESS_BTN_BUY" => "Выбрать",
+		"GIFTS_MESS_BTN_DETAIL" => "Подробнее",
+		"GIFTS_PAGE_ELEMENT_COUNT" => "4",
+		"GIFTS_CONVERT_CURRENCY" => "N",
+		"GIFTS_HIDE_NOT_AVAILABLE" => "N",
+		"COLUMNS_LIST_EXT" => array(
+			0 => "PREVIEW_TEXT",
+		),
+		"CORRECT_RATIO" => "Y",
+		"COMPATIBLE_MODE" => "Y",
+		"ADDITIONAL_PICT_PROP_21" => "-",
+		"ADDITIONAL_PICT_PROP_22" => "-",
+		"BASKET_IMAGES_SCALING" => "adaptive"
 	),
 	false
 );?>
