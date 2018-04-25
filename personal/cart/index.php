@@ -51,6 +51,7 @@ $APPLICATION->SetTitle("Корзина");
 		"GIFTS_HIDE_NOT_AVAILABLE" => "N",
 		"COLUMNS_LIST_EXT" => array(
 			0 => "PREVIEW_TEXT",
+			1 => "DELETE",
 		),
 		"CORRECT_RATIO" => "Y",
 		"COMPATIBLE_MODE" => "Y",
