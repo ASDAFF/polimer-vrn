@@ -36,7 +36,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 <?}?>
 
 
-<div class="popup" id="order-product" style="left: 33%;min-width: 500px;">
+<div class="popup" id="order-product">
 	<a href="#" class="close">&nbsp;</a>
 	<div class="title">Товар под заказ</div>
 	<div class="subtitle">Укажите ваши данные и наши менеджеры свяжуться с вами для оформления заказа</div>
