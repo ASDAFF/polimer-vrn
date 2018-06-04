@@ -51,7 +51,7 @@ $aMenuLinks = Array(
 	),
 	Array(
 		"Кредит онлайн", 
-		"/kredit.php", 
+		"/kredit/",
 		Array(), 
 		Array(), 
 		"" 
