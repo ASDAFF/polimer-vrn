@@ -55,6 +55,13 @@ $aMenuLinks = Array(
 		Array(), 
 		Array(), 
 		"" 
+	),
+	Array(
+		"Группа ВК", 
+		"https://vk.com/polimer36", 
+		Array(), 
+		Array(), 
+		"" 
 	)
 );
 ?>
