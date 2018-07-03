@@ -220,37 +220,38 @@
 					$img = CFile::GetPath($arResult['DETAIL_PICTURE']);
 				}
 				$APPLICATION->IncludeComponent(
-					"nbrains:main.feedback",
-					"buy-one-click",
-					array(
-						"EMAIL_TO" => "sale@polimer-vrn",
-						"EVENT_MESSAGE_ID" => array(
-							0 => "90",
-						),
-						"IBLOCK_ID" => "15",
-						"IBLOCK_TYPE" => "feedback",
-						"OK_TEXT" => "Спасибо, ваше сообщение принято.",
-						"PROPERTY_CODE" => array(
-							0 => "FIO",
-							1 => "PHONE",
-							2 => "EMAIL",
-							3 => "RULE",
-							4 => "PRODUCT",
-							5 => "LINK_PRODUCT",
-							6 => "IMG_PRODUCT",
-							7 => "PRICE",
-						),
-						"USE_CAPTCHA" => "Y",
-						"COMPONENT_TEMPLATE" => "buy-one-click",
-						"PRODUCT" => array(
-							"NAME" => $arResult['NAME'],
-							"LINK" => $arResult['DETAIL_PAGE_URL'],
-							"IMG" => $img,
-							"PRICE" => priceDiscount($arResult['ID']),
-						)
-					),
-					false
-				);?>
+	"nbrains:main.feedback", 
+	"buy-one-click", 
+	array(
+		"EMAIL_TO" => "sale@polimer-vrn",
+		"EVENT_MESSAGE_ID" => array(
+			0 => "90",
+		),
+		"IBLOCK_ID" => "15",
+		"IBLOCK_TYPE" => "feedback",
+		"OK_TEXT" => "Спасибо, ваше сообщение принято.",
+		"PROPERTY_CODE" => array(
+			0 => "FIO",
+			1 => "PHONE",
+			2 => "EMAIL",
+			3 => "IMG_PRODUCT",
+			4 => "PRICE",
+			5 => "STORE",
+			6 => "RULE",
+			7 => "PRODUCT",
+			8 => "LINK_PRODUCT",
+		),
+		"USE_CAPTCHA" => "Y",
+		"COMPONENT_TEMPLATE" => "buy-one-click",
+		"PRODUCT" => array(
+			"NAME" => $arResult["NAME"],
+			"LINK" => $arResult["DETAIL_PAGE_URL"],
+			"IMG" => $img,
+			"PRICE" => priceDiscount($arResult["ID"]),
+		)
+	),
+	false
+);?>
 
 				<?$APPLICATION->IncludeComponent(
 	"nbrains:main.feedback", 
@@ -267,8 +268,9 @@
 			0 => "FIO",
 			1 => "EMAIL",
 			2 => "PHONE",
-			3 => "RULE",
-			4 => "PRODUCT_CART",
+			3 => "STORE",
+			4 => "RULE",
+			5 => "PRODUCT_CART",
 		),
 		"USE_CAPTCHA" => "Y",
 		"COMPONENT_TEMPLATE" => "buy-one-click-cart"

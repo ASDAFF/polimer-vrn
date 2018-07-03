@@ -62,22 +62,47 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 
 				<?if($field['PROPERTY_TYPE'] == "S"):?>
 
-					<span class="line cl">
-     					<span class="label"><?=$field['NAME']?></span>
-     					<span class="value"><input type="text" placeholder="<?if($field['CODE'] == "PHONE"){print "+7 (473) 234-03-01";}else{print $field['NAME'];}?>" class="<?if($field['CODE'] == "PHONE"){print "phone";}elseif($field['CODE'] == "FIO"){print "name";}?>" name="<?=$field['CODE']?>" value="<?=$arResult[$field['CODE']]?>"/></span>
-     				</span>
+						<?if($field['CODE'] != "STORE"):?>
+							<span class="line cl">
+								<span class="label"><?=$field['NAME']?></span>
+								<span class="value"><input type="text" placeholder="<?if($field['CODE'] == "PHONE"){print "+7 (473) 234-03-01";}else{print $field['NAME'];}?>" class="<?if($field['CODE'] == "PHONE"){print "phone";}elseif($field['CODE'] == "FIO"){print "name";}?>" name="<?=$field['CODE']?>" value="<?=$arResult[$field['CODE']]?>"/></span>
+							</span>
+						<?else:?>
+							<span class="line cl">
+							<span class="label">Точка самовывоза</span>
+							<span class="value">
+								<select name="<?=$field['CODE']?>">
+									<option value="Не выбрано">Не выбрано</option>
+									<?
+									$storeResult = CCatalogStore::GetList(
+										array('ID' => 'ASC'),
+										array('ACTIVE' => 'Y'),
+										false,
+										false,
+										array("*")
+									);
+									while ($arProp = $storeResult->GetNext()){
+										?>
+										<option value="<?=$arProp['TITLE'].' '.$arProp['ADDRESS']?>"><?=$arProp['TITLE'].' '.$arProp['ADDRESS']?></option>
+										<?
+									}
+									?>
+								</select>
+							</span>
+						</span>
+						<? endif;?>
 
-				<? elseif($field['PROPERTY_TYPE'] == "L"):?>
+				<? elseif($field['PROPERTY_TYPE'] == "L"): ?>
 					<div class="rule">
 						<input type="checkbox" class="fio" name="<?=$field['CODE']?>" value="Y" checked>
-				<span>
-					Нажимая на эту кнопку, я даю свое согласие на <a href="/upload/compliance.pdf" target="_blank">обработку персональных данных</a> и соглашаюсь с условиями <a href="/upload/politics.pdf" target="_blank">политики конфиденциальности</a>.
-<!--					Я прочитал правила-->
-<!--					<a href="#" class="show-popup" data-id="--><?//=$arParams["IBLOCK_TYPE"].$arParams["IBLOCK_ID"]?><!--">Правила</a>-->
-<!--					и даю свое согласие на обработку персональных данных-->
-				</span>
+						<span>
+							Нажимая на эту кнопку, я даю свое согласие на <a href="/upload/compliance.pdf" target="_blank">обработку персональных данных</a> и соглашаюсь с условиями <a href="/upload/politics.pdf" target="_blank">политики конфиденциальности</a>.
+		<!--					Я прочитал правила-->
+		<!--					<a href="#" class="show-popup" data-id="--><?//=$arParams["IBLOCK_TYPE"].$arParams["IBLOCK_ID"]?><!--">Правила</a>-->
+		<!--					и даю свое согласие на обработку персональных данных-->
+						</span>
 					</div>
-				<? endif; ?>
+				<? endif;?>
 			<? endif; ?>
 
 			<? endforeach; ?>
