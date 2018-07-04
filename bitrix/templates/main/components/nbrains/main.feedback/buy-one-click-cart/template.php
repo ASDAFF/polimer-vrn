@@ -139,8 +139,11 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 									<option value="Не выбрано">Не выбрано</option>
 									<?
 									$storeResult = CCatalogStore::GetList(
-										array('ID' => 'ASC'),
-										array('ACTIVE' => 'Y'),
+										array('SORT' => 'ASC'),
+										array(
+											'ACTIVE' => 'Y',
+											'ID' => array(8,10,12,9,4,7)
+										),
 										false,
 										false,
 										array("*")
