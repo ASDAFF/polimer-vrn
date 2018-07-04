@@ -150,7 +150,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 									);
 									while ($arProp = $storeResult->GetNext()){
 										?>
-										<option value="<?=$arProp['TITLE'].' '.$arProp['ADDRESS']?>"><?=$arProp['TITLE'].' '.$arProp['ADDRESS']?></option>
+										<option value="<?=$arProp['ADDRESS']?>"><?=$arProp['ADDRESS']?></option>
 										<?
 									}
 									?>
