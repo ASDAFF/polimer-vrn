@@ -83,7 +83,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["submit"] <> '' && (!isset($_P
 				"IBLOCK_ID"      => $arParams['IBLOCK_ID'],
 				"PROPERTY_VALUES"=> $PROP,
 				"NAME"           => trim(strip_tags($_POST[$arPropertyField[0]['CODE']])),
-				"ACTIVE"         => "Y"
+				"ACTIVE"         => "N"
 			);
 			$PRODUCT_ID = $el->Add($arLoadProductArray);
 		}
