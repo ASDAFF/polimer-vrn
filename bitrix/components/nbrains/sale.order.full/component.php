@@ -989,7 +989,7 @@ else
 					?>
 					<tr style="font-size: 13px;">
 						<td style="padding: 20px 10px;" width="" height="">
-							<img src="http://<?=$link_img;?>" style="max-width: 80px">
+							<img src="http://<?=$link_img;?>" style="max-height: 150px">
 						</td>
 						<td style="padding: 20px 10px;" width="" height="">
 							<a href="<?=$link_prod;?>" style="text-decoration: none;color: #0464bb"><?=$arBasketItems["NAME"];?></a>
