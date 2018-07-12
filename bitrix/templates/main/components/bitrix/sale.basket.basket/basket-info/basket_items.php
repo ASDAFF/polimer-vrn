@@ -1,8 +1,8 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
-
 if ($normalCount > 0)
-{?>
+{
+	?>
 
 	<div class="basket-info">
 		<div class="list-info">
@@ -13,24 +13,20 @@ if ($normalCount > 0)
 						<li>
 							<div>Сумма:</div>
 							<div></div>
-							<div><span class="info-weight"><?=str_replace('руб.','',$arResult['PRICE_WITHOUT_DISCOUNT'])?></span> &#8381;</div>
+							<div><span class="info-weight"><?=$arResult['PRICE_WITHOUT_DISCOUNT'];?></span> </div>
 						</li>
 						<li>
 							<div>Товаров:</div>
 							<div></div>
 							<div><span class="info-weight"><?=count($arResult["GRID"]["ROWS"]);?></span> шт.</div>
 						</li>
-						<?
-						$arProcent = array();
-						foreach($arResult["ITEMS"]["AnDelCanBuy"] as $v){$arProcent[] = $v['DISCOUNT_PRICE_PERCENT'];}
-						?>
-						<?if(count(array_unique($arProcent)) < 2):?>
+
 						<li>
 							<div>Скидка:</div>
 							<div></div>
-							<div><?=$arResult["ITEMS"]["AnDelCanBuy"][0]['DISCOUNT_PRICE_PERCENT']?> %</div>
+							<div><?=$_SESSION['DISCOUNT_PRICE_PERCENT_FORMATED']?></div>
 						</li>
-						<? endif; ?>
+
 
 <!--						<li>-->
 <!--							<div>Доставка:</div>-->
@@ -48,7 +44,7 @@ if ($normalCount > 0)
 						<li>
 							<div><span class="info-weight">Итого:</span></div>
 							<div></div>
-							<div><span class="info-weight itog"><?=$arResult["allSum"]?></span> &#8381;</div>
+							<div><span class="info-weight itog"><?=$_SESSION['DISCOUNT_PRICE_ALL_FORMATED']?></span> &#8381;</div>
 						</li>
 
 					</ol>

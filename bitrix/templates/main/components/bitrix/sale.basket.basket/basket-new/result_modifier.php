@@ -7,3 +7,9 @@ $arUrls = array(
     "add" => $curPage."add&id=#ID#",
 );
 unset($curPage);
+
+$_SESSION['DISCOUNT_PRICE_ALL_FORMATED'] = $arResult["allSum"];
+foreach($arResult["GRID"]["ROWS"] as $row){
+    $precent[] = $row['DISCOUNT_PRICE_PERCENT_FORMATED'];
+}
+$_SESSION['DISCOUNT_PRICE_PERCENT_FORMATED'] = implode(',',$precent);
