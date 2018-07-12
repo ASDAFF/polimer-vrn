@@ -188,7 +188,7 @@
 	false
 );?>
 
-			<?$APPLICATION->IncludeComponent(
+<?$APPLICATION->IncludeComponent(
 	"nbrains:main.feedback", 
 	"write-mail", 
 	array(
@@ -211,6 +211,30 @@
 	),
 	false
 );?>
+
+				<?$APPLICATION->IncludeComponent(
+					"nbrains:main.feedback",
+					"reviews",
+					array(
+						"EMAIL_TO" => "sale@polimer-vrn",
+						"EVENT_MESSAGE_ID" => array(
+							0 => "92",
+						),
+						"IBLOCK_ID" => "26",
+						"IBLOCK_TYPE" => "feedback",
+						"OK_TEXT" => "Спасибо, ваше сообщение принято.",
+						"PROPERTY_CODE" => array(
+							0 => "FIO",
+							1 => "SITY",
+							2 => "MESSAGE",
+							3 => "RULE"
+						),
+						"USE_CAPTCHA" => "Y",
+						"COMPONENT_TEMPLATE" => "reviews"
+					),
+					false
+				);?>
+
 
 				<?
 				$arResult = getUrlProd($APPLICATION->GetCurPage(false));
