@@ -47,7 +47,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 
 	<? foreach($arResult['USER_FIELD'] as $field): ?>
 
-		<?if($field['PROPERTY_TYPE'] == "S" AND $field['CODE'] != "DESC"):?>
+		<?if($field['PROPERTY_TYPE'] == "S" AND $field['CODE'] != "MESSAGE"):?>
 			<span class="line cl">
      			<span class="label"><?=$field['NAME']?></span>
      			<span class="value">
@@ -63,7 +63,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 <!--					и даю свое согласие на обработку персональных данных-->
 				</span>
 			</div>
-		<? elseif($field['CODE'] == "DESC"):?>
+		<? elseif($field['CODE'] == "MESSAGE"):?>
 			<span class="line cl wide">
      			<span class="label"><?=$field['NAME']?></span>
      			<span class="value">
