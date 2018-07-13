@@ -980,6 +980,9 @@ else
 					$res = CIBlockElement::GetByID($arBasketItems["PRODUCT_ID"]);
 					$ar_res = $res->GetNext();
 					$img = CFile::GetPath($ar_res['PREVIEW_PICTURE']);
+					if(!$img){
+						$img = SITE_TEMPLATE_PATH.'/img/no_photo.png';
+					}
 					$link_img = $_SERVER['SERVER_NAME'].$img;
 					$link_prod = 'http://'.$_SERVER['SERVER_NAME'].$ar_res['DETAIL_PAGE_URL'];
 					$ar_res = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N');
@@ -989,7 +992,7 @@ else
 					?>
 					<tr style="font-size: 13px;">
 						<td style="padding: 20px 10px;" width="" height="">
-							<img src="http://<?=$link_img;?>" style="max-height: 150px">
+							<img src="http://<?=$link_img;?>" style="max-height: 150px;max-width: 150px;">
 						</td>
 						<td style="padding: 20px 10px;" width="" height="">
 							<a href="<?=$link_prod;?>" style="text-decoration: none;color: #0464bb"><?=$arBasketItems["NAME"];?></a>
@@ -1002,7 +1005,6 @@ else
 					</tr>
 					<?
 				}
-
 				?>
 					<!-- Spacing -->
 					</tbody>

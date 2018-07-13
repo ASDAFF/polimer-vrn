@@ -624,6 +624,13 @@ if($arResult['DETAIL_PAGE_URL'] != $APPLICATION->GetCurPage()){
 	LocalRedirect($arResult['DETAIL_PAGE_URL'],false,301);
 }
 
+foreach($arResult['PROPERTIES']['MORE_PHOTO']['VALUE'] as $photo){
+	if($photo){
+		$arResult['GALLERY'][] = CFile::GetPath($photo);
+	}else{
+		$arResult['GALLERY'][] = $arResult['DEFAULT_PICTURE']['SRC'];
+	}
+}
 ?>
 
 

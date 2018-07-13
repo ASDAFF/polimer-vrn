@@ -41,16 +41,16 @@ $this->setFrameMode(true);
       <div class="cl">
          <div class="pc__prod-gallery cl">
             <div class="pg-thumbnails">
-               <? foreach($arResult['PROPERTIES']['MORE_PHOTO']['VALUE'] as $key => $img):?>
+               <? foreach($arResult['GALLERY'] as $key => $img):?>
                <div class="item <? if($key < 1): ?>active<? endif; ?>"><a href="#"><span>
-                           <img src="<?=CFile::GetPath($img)?>" alt="<?=$arResult['NAME']?>"></span></a></div>
+                           <img src="<?=$img?>" alt="<?=$arResult['NAME']?>"></span></a></div>
                <? endforeach; ?>
 
             </div>
             <div class="pg-current">
-               <? foreach($arResult['PROPERTIES']['MORE_PHOTO']['VALUE'] as $key => $img):?>
-               <a href="<?=CFile::GetPath($img)?>" class="<? if($key < 1): ?>active<? endif; ?>" data-fancybox="gallery<?=$arResult['ID']?>">
-                   <img src="<?=CFile::GetPath($img)?>" alt="<?=$arResult['NAME']?>"></a>
+               <? foreach($arResult['GALLERY'] as $key => $img):?>
+               <a href="<?=$img?>" class="<? if($key < 1): ?>active<? endif; ?>" data-fancybox="gallery<?=$arResult['ID']?>">
+                   <img src="<?=$img?>" alt="<?=$arResult['NAME']?>"></a>
                <? endforeach; ?>
             </div>
          </div>
