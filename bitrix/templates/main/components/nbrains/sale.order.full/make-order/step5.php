@@ -44,10 +44,35 @@
 			}else{
 				$prod = 'товара';
 			}
-			//var_dump($arResult);
 			?>
+
 			<div class="line">
 				<div class="name">Ваш заказ:</div>
+				<table border="1" cellpadding="10" cellspacing="0" align="center">
+					<tr>
+						<th>Наименование</th>
+						<th>Цена</th>
+						<th>Скидка</th>
+						<th>Кол-во</th>
+						<th>Стоимость</th>
+					</tr>
+					<? foreach($arResult["BASKET_ITEMS"] as $item):?>
+					<tr>
+						<td><a href="<?=$item['DETAIL_PAGE_URL'];?>" target="_blank"><?=$item['NAME']?></a></td>
+						<td style="white-space: nowrap;"><?=$item['PRICE_FORMATED']?></td>
+						<td><?=ceil($item['DISCOUNT_PRICE'])?> %</td>
+						<td><?=$item['QUANTITY']?> <?=$item['MEASURE_NAME']?></td>
+						<?
+						$end_price = $item['PRICE']-($item['PRICE']/100*$item['DISCOUNT_PRICE']);
+						?>
+						<td style="white-space: nowrap;"><?=CurrencyFormat($end_price*$item['QUANTITY'], "RUB");?></td>
+					</tr>
+					<?endforeach;?>
+				</table>
+			</div>
+
+			<div class="line">
+				<div class="name">Итого:</div>
 				<div class="val"><span><?=count($arResult["BASKET_ITEMS"])?> <?=$prod?> на сумму <?=$arResult["ORDER_TOTAL_PRICE_FORMATED"]?></span></div>
 			</div>
 			<?
