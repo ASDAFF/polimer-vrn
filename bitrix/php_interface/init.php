@@ -63,3 +63,32 @@ function Redirect404() {
         include($_SERVER["DOCUMENT_ROOT"].SITE_TEMPLATE_PATH."/footer.php");
     }
 }
+
+
+\Bitrix\Main\EventManager::getInstance()->addEventHandler(
+    'sale',
+    'OnSaleStatusOrderChange',
+    'StatusOrderChange'
+);
+
+function StatusOrderChange(\Bitrix\Main\Event $event)
+{
+    $status = $event->getParameter("ENTITY");
+
+    if($status->getField('STATUS_ID') == "F"){
+        $user_id = $status->getField('USER_ID');
+        $rsUser = CUser::GetByID($user_id);
+        if($arUser = $rsUser->Fetch()){
+        $user_name = $arUser['NAME'].' '.$arUser['LAST_NAME'];
+        $user_email = $arUser['EMAIL'];
+        }
+        $order_id = $status->getField('ID');
+
+        $arFields = array(
+            "USER_NAME" => $user_name,
+            "USER_EMAIL" => $user_email,
+            "ORDER_ID" => $order_id
+        );
+        CEvent::Send("ORDER_COMPLETED", "s1", $arFields);
+    }
+}
