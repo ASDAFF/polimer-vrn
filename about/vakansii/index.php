@@ -11,7 +11,7 @@ $APPLICATION->SetTitle("Вакансии");
 </div>
  <br>
 <div>
-	<b>Направление работы:</b> <br>
+ <b>Направление работы:</b> <br>
 	<ul>
 		<li>Газовое и котельное оборудование, инженерная сантехника</li>
 	</ul>
@@ -38,6 +38,14 @@ $APPLICATION->SetTitle("Вакансии");
 	</ul>
 </div>
  <br>
+ <br>
+ Если Вы не нашли подходящую для Вас вакансию, заполните анкету на нашем сайте и отправьте ее нам.&nbsp; <br>
+ Мы с Вами обязательно свяжемся при появлении интересующей Вас вакансии.<br>
+ <br>
+ <br>
+ Скачать:&nbsp;<a href="/personal/anketa_kandidata.xls">Анкета кандидата</a> <br>
+ <br>
+ <br>
 <div>
  <span style="font-size: 14pt;"><b>Контактная информация</b></span>
 </div>
@@ -48,6 +56,6 @@ $APPLICATION->SetTitle("Вакансии");
 	 +7&nbsp;(473)&nbsp;237-35-55
 </p>
 <div>
-	<a href="mailto:srv@metplus-vrn.ru">rsg@polimer-vrn.ru</a>
+ <a href="mailto:srv@metplus-vrn.ru">rsg@polimer-vrn.ru</a>
 </div>
  <br><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
