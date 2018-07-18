@@ -35,7 +35,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 	</div>
 <?}?>
 
-<div class="popup" id="reviews">
+<div class="popup" id="reviews" <?if($_REQUEST['popup'] == "show"):?>style="display: block; opacity: 1;"<?endif;?>>
 	<a href="#" class="close">&nbsp;</a>
 	<div class="title">Заполните форму отзыва</div>
 <form action="<?=POST_FORM_ACTION_URI?>" method="POST" enctype="multipart/form-data">
@@ -51,7 +51,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 			<span class="line cl">
      			<span class="label"><?=$field['NAME']?></span>
      			<span class="value">
-					<input type="text" placeholder="" class="<?if($field['CODE'] == "PHONE"){print "phone";}elseif($field['CODE'] == "FIO"){print "name";}?>" name="<?=$field['CODE']?>" value="<?=$arResult[$field['CODE']]?>" /></span>
+					<input type="text" placeholder="" class="<?if($field['CODE'] == "PHONE"){print "phone";}elseif($field['CODE'] == "FIO"){print "name";}?>" name="<?=$field['CODE']?>" value="<?=(empty($arResult[$field['CODE']])) ? $_REQUEST[$field['CODE']] : $arResult[$field['CODE']]?>" /></span>
      		</span>
 		<? elseif($field['PROPERTY_TYPE'] == "L" AND $field['CODE'] != "DESC"):?>
 			<div class="rule">

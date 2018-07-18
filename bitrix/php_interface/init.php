@@ -84,10 +84,16 @@ function StatusOrderChange(\Bitrix\Main\Event $event)
         }
         $order_id = $status->getField('ID');
 
+        if ($arOrder = CSaleOrder::GetByID($order_id))
+        {
+            $date_status = $arOrder['DATE_STATUS'];
+        }
+
         $arFields = array(
             "USER_NAME" => $user_name,
             "USER_EMAIL" => $user_email,
-            "ORDER_ID" => $order_id
+            "ORDER_ID" => $order_id,
+            "ORDER_DATE" => $date_status
         );
         CEvent::Send("ORDER_COMPLETED", "s1", $arFields);
     }
