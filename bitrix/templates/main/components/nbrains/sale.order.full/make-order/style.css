@@ -88,6 +88,10 @@ textarea{
 	margin: 10px 0px;
 }
 
+.order-confirm{
+	width: 100%;
+}
+
 .order-confirm tr:first-child{
 	border: 1px solid;
 	background: #f4f6f8;
