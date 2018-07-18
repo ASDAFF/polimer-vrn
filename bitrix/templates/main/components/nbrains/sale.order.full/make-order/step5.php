@@ -48,16 +48,32 @@
 
 			<div class="line">
 				<div class="name">Ваш заказ:</div>
-				<table border="1" cellpadding="10" cellspacing="0" align="center">
+				<div class="val">&nbsp;</div>
+			</div>
+
+			<div class="line">
+				<div class="name"></div>
+				<div class="val"></div>
+			</div>
+
+			<table cellpadding="10" cellspacing="0" class="order-confirm">
+				<tr>
+					<th></th>
+					<th></th>
+					<th>Наименование</th>
+					<th>Цена</th>
+					<th>Скидка</th>
+					<th>Кол-во</th>
+					<th>Стоимость</th>
+					<th></th>
+				</tr>
+				<? foreach($arResult["BASKET_ITEMS"] as $item):
+					$arImg = CIBlockElement::GetByID($item['PRODUCT_ID']);
+					$img = ($id_image = $arImg->GetNext()['PREVIEW_PICTURE']) ? CFile::GetPath($id_image) : $this->GetFolder().'/images/no_photo.png';
+					?>
 					<tr>
-						<th>Наименование</th>
-						<th>Цена</th>
-						<th>Скидка</th>
-						<th>Кол-во</th>
-						<th>Стоимость</th>
-					</tr>
-					<? foreach($arResult["BASKET_ITEMS"] as $item):?>
-					<tr>
+						<td></td>
+						<td><a href="<?=$item['DETAIL_PAGE_URL'];?>" target="_blank"><img src="<?=$img;?>" style="max-height: 60px;max-width: 60px"></a></td>
 						<td><a href="<?=$item['DETAIL_PAGE_URL'];?>" target="_blank"><?=$item['NAME']?></a></td>
 						<td style="white-space: nowrap;"><?=$item['PRICE_FORMATED']?></td>
 						<td><?=ceil($item['DISCOUNT_PRICE'])?> %</td>
@@ -66,10 +82,10 @@
 						$end_price = $item['PRICE']-($item['PRICE']/100*$item['DISCOUNT_PRICE']);
 						?>
 						<td style="white-space: nowrap;"><?=CurrencyFormat($end_price*$item['QUANTITY'], "RUB");?></td>
+						<td></td>
 					</tr>
-					<?endforeach;?>
-				</table>
-			</div>
+				<?endforeach;?>
+			</table>
 
 			<div class="line">
 				<div class="name">Итого:</div>
