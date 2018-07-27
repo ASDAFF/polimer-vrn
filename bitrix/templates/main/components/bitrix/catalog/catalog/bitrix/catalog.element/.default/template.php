@@ -129,7 +129,7 @@ $this->setFrameMode(true);
                         if(
                             strlen($property['VALUE']) > 1 AND
                             $property['MULTIPLE'] == "N" AND
-                            $property['CODE'] != "CML2_BASE_UNIT" AND
+                            $property['CODE'] != "CML2_BASE_UNIT" OR
                             $property['CODE'] != "MORE_PHOTO" AND
                             ($property['PROPERTY_TYPE'] == "S" OR
                             $property['PROPERTY_TYPE'] == "L")
