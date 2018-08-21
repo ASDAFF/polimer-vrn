@@ -1955,6 +1955,7 @@ if ($USER->IsAuthorized())
 			}
 		}
 		$arResult["PAY_SYSTEM"] = Array();
+
 		$arFilter = array(
 							"ACTIVE" => "Y",
 							"PERSON_TYPE_ID" => $arResult["PERSON_TYPE"],
@@ -1988,6 +1989,7 @@ if ($USER->IsAuthorized())
 		}
 
 
+
 		$dbPaySystem = CSalePaySystem::GetList(
 					array("SORT" => "ASC", "PSA_NAME" => "ASC"),
 					$arFilter
@@ -1995,6 +1997,9 @@ if ($USER->IsAuthorized())
 		$bFirst = True;
 		while ($arPaySystem = $dbPaySystem->Fetch())
 		{
+			if($arPaySystem["ID"] == "1" AND $deliv == "2")
+			continue;
+
 			if (!$bShowDefault || in_array($arPaySystem["ID"], $arD2P))
 			{
 				if ($arPaySystem["PSA_LOGOTIP"] > 0)
