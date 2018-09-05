@@ -136,7 +136,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 							<span class="label">Точка самовывоза</span>
 							<span class="value">
 								<select name="<?=$field['CODE']?>">
-									<option value="Не выбрано">Не выбрано</option>
+									<option value="">Не выбрано</option>
 									<?
 									$storeResult = CCatalogStore::GetList(
 										array('SORT' => 'ASC'),
