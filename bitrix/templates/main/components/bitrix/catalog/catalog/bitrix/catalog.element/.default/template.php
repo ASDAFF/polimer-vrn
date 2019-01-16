@@ -223,21 +223,13 @@ $this->setFrameMode(true);
 		"SHOW_EMPTY_STORE" => "N",
 		"SHOW_GENERAL_STORE_INFORMATION" => "N",
 		"STORES" => array(
-			0 => "3",
-			1 => "4",
+			0 => "8",
+			1 => "6",
 			2 => "5",
-			3 => "6",
-			4 => "7",
-			5 => "8",
-			6 => "9",
-			7 => "10",
-			8 => "12",
-			9 => "14",
-			10 => "15",
-			11 => "17",
-			12 => "11",
-			13 => "13",
-			14 => "",
+			3 => "3",
+			4 => "17",
+			5 => "4",
+			6 => "7",
 		),
 		"STORE_PATH" => "",
 		"USER_FIELDS" => array(
@@ -247,7 +239,8 @@ $this->setFrameMode(true);
 		"USE_MIN_AMOUNT" => "N",
 		"COMPONENT_TEMPLATE" => "store",
 		"COMPOSITE_FRAME_MODE" => "A",
-		"COMPOSITE_FRAME_TYPE" => "AUTO"
+		"COMPOSITE_FRAME_TYPE" => "AUTO",
+		"CATALOG_QUANTITY" => $arResult['CATALOG_QUANTITY']
 	),
 	false
 );?>

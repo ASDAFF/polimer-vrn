@@ -67,6 +67,27 @@ $this->setFrameMode(true);
 		</div>
 		<div class="tab-cell"><div class="mtn">Режим работы</div><?=$arProperty["SCHEDULE"]?></div>
 	</div>
+	<?else:?>
+
+		<?if(!$arParams['CATALOG_QUANTITY']):?>
+		<div class="tab-row cl">
+			<div class="tab-cell">
+				<?=$arProperty["TITLE"]?><span><?=$arProperty["PHONE"]?></span><?if($arProperty["EMAIL"]):?>email:<a href="#"><?=$arProperty["EMAIL"]?></a><? endif; ?></div>
+			<div class="tab-cell">
+				<div class="mtn">Наличие</div>
+
+				<div class="q">Под заказ</div>
+
+			</div>
+			<div class="tab-cell">
+				<div class="mtn">Забрать</div>
+				<div class="when">Уточнит менеджер после заказа</div>
+				<div class="time"></div>
+			</div>
+			<div class="tab-cell"><div class="mtn">Режим работы</div><?=$arProperty["SCHEDULE"]?></div>
+		</div>
+		<?endif;?>
+
 	<? endif; ?>
 <?endforeach;?>
 
