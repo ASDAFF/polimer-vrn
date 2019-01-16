@@ -81,7 +81,7 @@ $this->setFrameMode(true);
 			</div>
 			<div class="tab-cell">
 				<div class="mtn">Забрать</div>
-				<div class="when">Уточнит менеджер после заказа</div>
+				<div class="when">Уточнит менеджер<br>после заказа</div>
 				<div class="time"></div>
 			</div>
 			<div class="tab-cell"><div class="mtn">Режим работы</div><?=$arProperty["SCHEDULE"]?></div>
