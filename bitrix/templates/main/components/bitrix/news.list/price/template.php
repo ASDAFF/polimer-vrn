@@ -21,7 +21,7 @@ $this->setFrameMode(true);
 
 
 			<?foreach($arResult["ITEMS"] as $arItem):?>
-			<div class="col">
+			<div class="col ym-goal-price-dw">
 				<div class="title cl">
 					<div class="name"><?=str_replace(' ','<br>',$arItem['NAME'])?></div>
 
@@ -47,7 +47,7 @@ $this->setFrameMode(true);
 		</div>
 	</div>
 
-	<form method="post" action="http://cp.unisender.com/ru/subscribe?hash=5dpcmpjehbb5zcruq3gwuf91zyopeqzsgfrt91jy&amp;list_ids=2799919" TARGET="_blank">
+	<form class="ym-goal-subscribe-price" method="post" action="http://cp.unisender.com/ru/subscribe?hash=5dpcmpjehbb5zcruq3gwuf91zyopeqzsgfrt91jy&amp;list_ids=2799919" TARGET="_blank">
 	<div class="pl__subscribe">
 		<div class="form">
 			<div class="name">Получайте новые <br>обновления прайс-листов <br>на Вашу почту</div>

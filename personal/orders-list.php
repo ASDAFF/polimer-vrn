@@ -25,8 +25,14 @@ if ($USER->IsAuthorized()) {?>
 		"CACHE_TIME" => "3600",
 		"CACHE_GROUPS" => "Y",
 		"HISTORIC_STATUSES" => array(
-			0 => "F",
-			1 => "N",
+			0 => "DB",
+			1 => "DC",
+			2 => "DM",
+			3 => "DV",
+			4 => "F",
+			5 => "N",
+			6 => "OB",
+			7 => "P",
 		),
 		"COMPONENT_TEMPLATE" => "personal-order-history",
 		"PATH_TO_PAYMENT" => "payment.php",
@@ -40,7 +46,8 @@ if ($USER->IsAuthorized()) {?>
 		"STATUS_COLOR_F" => "gray",
 		"STATUS_COLOR_N" => "green",
 		"STATUS_COLOR_P" => "yellow",
-		"STATUS_COLOR_PSEUDO_CANCELLED" => "red"
+		"STATUS_COLOR_PSEUDO_CANCELLED" => "red",
+		"REFRESH_PRICES" => "N"
 	),
 	false
 );?>

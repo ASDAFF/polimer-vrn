@@ -10,7 +10,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
  * @global CUser $USER
  */
 ?>
-<form action="<?=POST_FORM_ACTION_URI?>" method="POST" enctype="multipart/form-data">
+<form class="ym-goal-calc" action="<?=POST_FORM_ACTION_URI?>" method="POST" enctype="multipart/form-data">
 <?=bitrix_sessid_post()?>
 
 <div class="row cl">

@@ -3,8 +3,8 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 $APPLICATION->SetTitle("1");
 ?>
 <? $APPLICATION->IncludeComponent(
-	"nbrains:sale.order.full",
-	"make-order",
+	"nbrains:sale.order.full", 
+	"make-order", 
 	array(
 		"ALLOW_PAY_FROM_ACCOUNT" => "Y",
 		"CITY_OUT_LOCATION" => "Y",
@@ -19,8 +19,14 @@ $APPLICATION->SetTitle("1");
 		"PRICE_VAT_INCLUDE" => "N",
 		"PRICE_VAT_SHOW_VALUE" => "N",
 		"PROP_1" => array(
+			0 => "30",
+			1 => "31",
+			2 => "34",
 		),
 		"PROP_2" => array(
+			0 => "32",
+			1 => "33",
+			2 => "35",
 		),
 		"SEND_NEW_USER_NOTIFY" => "Y",
 		"SET_TITLE" => "Y",

@@ -68,7 +68,7 @@ $this->setFrameMode(true);
                <div class="price">
                   <? foreach($arResult['ITEM_PRICES'] as $name => $price):?>
                   <div class="price-old"><span><?=$price['BASE_PRICE']?></span> &#8381;/<?=$arResult['PROPERTIES']['CML2_BASE_UNIT']['VALUE'];?></div>
-                  <div class="price-new"><span><?=$price['UNROUND_PRICE']?></span>  &#8381;/<?=$arResult['PROPERTIES']['CML2_BASE_UNIT']['VALUE'];?></div>
+                  <div class="price-new"><span><?=str_replace("&#8381;","",$price['PRINT_PRICE'])?></span>  &#8381;/<?=$arResult['PROPERTIES']['CML2_BASE_UNIT']['VALUE'];?></div>
                   <? endforeach; ?>
                </div>
 <!--               <a href="#" class="cheaper">Нашли дешевле ?</a>-->
@@ -231,12 +231,13 @@ $this->setFrameMode(true);
 			5 => "8",
 			6 => "9",
 			7 => "10",
-			8 => "11",
-			9 => "12",
-			10 => "13",
-			11 => "14",
-			12 => "15",
-			13 => "",
+			8 => "12",
+			9 => "14",
+			10 => "15",
+			11 => "17",
+			12 => "11",
+			13 => "13",
+			14 => "",
 		),
 		"STORE_PATH" => "",
 		"USER_FIELDS" => array(

@@ -165,7 +165,7 @@
 	"nbrains:main.feedback", 
 	"order-product", 
 	array(
-		"EMAIL_TO" => "sale@polimer-vrn",
+		"EMAIL_TO" => "sale@polimer-vrn.ru, sv6@list.ru",
 		"EVENT_MESSAGE_ID" => array(
 			0 => "103",
 		),
@@ -192,7 +192,7 @@
 	"nbrains:main.feedback", 
 	"write-mail", 
 	array(
-		"EMAIL_TO" => "sale@polimer-vrn",
+		"EMAIL_TO" => "sale@polimer-vrn.ru",
 		"EVENT_MESSAGE_ID" => array(
 			0 => "92",
 		),
@@ -213,27 +213,27 @@
 );?>
 
 				<?$APPLICATION->IncludeComponent(
-					"nbrains:main.feedback",
-					"reviews",
-					array(
-						"EMAIL_TO" => "sale@polimer-vrn",
-						"EVENT_MESSAGE_ID" => array(
-							0 => "92",
-						),
-						"IBLOCK_ID" => "26",
-						"IBLOCK_TYPE" => "feedback",
-						"OK_TEXT" => "Спасибо, ваше сообщение принято.",
-						"PROPERTY_CODE" => array(
-							0 => "FIO",
-							1 => "SITY",
-							2 => "MESSAGE",
-							3 => "RULE"
-						),
-						"USE_CAPTCHA" => "Y",
-						"COMPONENT_TEMPLATE" => "reviews"
-					),
-					false
-				);?>
+	"nbrains:main.feedback", 
+	"reviews", 
+	array(
+		"EMAIL_TO" => "sale@polimer-vrn.ru",
+		"EVENT_MESSAGE_ID" => array(
+			0 => "92",
+		),
+		"IBLOCK_ID" => "26",
+		"IBLOCK_TYPE" => "feedback",
+		"OK_TEXT" => "Спасибо, ваше сообщение принято.",
+		"PROPERTY_CODE" => array(
+			0 => "FIO",
+			1 => "SITY",
+			2 => "MESSAGE",
+			3 => "RULE",
+		),
+		"USE_CAPTCHA" => "Y",
+		"COMPONENT_TEMPLATE" => "reviews"
+	),
+	false
+);?>
 
 
 				<?
@@ -247,7 +247,7 @@
 	"nbrains:main.feedback", 
 	"buy-one-click", 
 	array(
-		"EMAIL_TO" => "sale@polimer-vrn",
+		"EMAIL_TO" => "sale@polimer-vrn.ru",
 		"EVENT_MESSAGE_ID" => array(
 			0 => "90",
 		),
@@ -255,12 +255,12 @@
 		"IBLOCK_TYPE" => "feedback",
 		"OK_TEXT" => "Спасибо, ваше сообщение принято.",
 		"PROPERTY_CODE" => array(
-			0 => "FIO",
-			1 => "PHONE",
-			2 => "EMAIL",
-			3 => "IMG_PRODUCT",
-			4 => "PRICE",
-			5 => "STORE",
+			0 => "IMG_PRODUCT",
+			1 => "PRICE",
+			2 => "STORE",
+			3 => "FIO",
+			4 => "PHONE",
+			5 => "EMAIL",
 			6 => "RULE",
 			7 => "PRODUCT",
 			8 => "LINK_PRODUCT",
@@ -281,7 +281,7 @@
 	"nbrains:main.feedback", 
 	"buy-one-click-cart", 
 	array(
-		"EMAIL_TO" => "sale@polimer-vrn",
+		"EMAIL_TO" => "sale@polimer-vrn.ru",
 		"EVENT_MESSAGE_ID" => array(
 			0 => "104",
 		),
@@ -292,8 +292,8 @@
 			0 => "FIO",
 			1 => "EMAIL",
 			2 => "PHONE",
-			3 => "STORE",
-			4 => "RULE",
+			3 => "RULE",
+			4 => "STORE",
 			5 => "PRODUCT_CART",
 		),
 		"USE_CAPTCHA" => "Y",
@@ -306,7 +306,7 @@
 	"nbrains:main.feedback", 
 	"free-consultant", 
 	array(
-		"EMAIL_TO" => "sale@polimer-vrn",
+		"EMAIL_TO" => "sale@polimer-vrn.ru",
 		"EVENT_MESSAGE_ID" => array(
 			0 => "91",
 		),

@@ -40,7 +40,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 	<div class="title">Написать письмо</div>
 	<div class="subtitle">Если у Вас возник вопрос или Вы хотите оставить комментарий, воспользуйтесь формой обратной связи. Наши специалисты свяжутся с Вами в ближайшее время.</div>
 
-<form action="<?=POST_FORM_ACTION_URI?>" method="POST" enctype="multipart/form-data">
+<form class="ym-goal-write-email" action="<?=POST_FORM_ACTION_URI?>" method="POST" enctype="multipart/form-data">
 
 <?=bitrix_sessid_post()?>
 
