@@ -22,7 +22,7 @@ $this->setFrameMode(true);
 
 
 <? foreach($arResult["STORES"] as $pid => $arProperty):?>
-	<? if($arProperty["AMOUNT"]): ?>
+	<? if($arProperty["AMOUNT"] && $arParams['CATALOG_QUANTITY']): ?>
 	<div class="tab-row cl">
 		<div class="tab-cell">
 			 <?=$arProperty["TITLE"]?><span><?=$arProperty["PHONE"]?></span><?if($arProperty["EMAIL"]):?>email:<a href="#"><?=$arProperty["EMAIL"]?></a><? endif; ?></div>
