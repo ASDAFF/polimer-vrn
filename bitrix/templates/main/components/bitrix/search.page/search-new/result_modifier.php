@@ -36,6 +36,8 @@ foreach($arResult['SEARCH'] as &$arItem)
 {
     //var_dump(price($arItem['ITEM_ID']));
 
+    $arItem['TITLE_FORMATED'] = preg_replace('#(~(.*?)~)#is', '', $arItem['TITLE_FORMATED']);
+
     if (substr_count($arItem['ITEM_ID'],'S'))
     {
         $sectId = str_replace('S','',$arItem['ITEM_ID']);
