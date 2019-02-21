@@ -131,6 +131,7 @@ $this->setFrameMode(true);
                             $property['MULTIPLE'] == "N" AND
                             $property['CODE'] != "CML2_BASE_UNIT" AND
                             $property['CODE'] != "MORE_PHOTO" AND
+                            $property['CODE'] != "YANDEKS_MARKET_PREDOPLATA" AND
                             ($property['PROPERTY_TYPE'] == "S" OR
                             $property['PROPERTY_TYPE'] == "L")
                         ){
