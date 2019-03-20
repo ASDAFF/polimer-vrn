@@ -49,6 +49,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["submit"] <> '' && (!isset($_P
 			}
 		}
 
+		if(isset($_POST['FIO']) && !preg_match('/[А-Яа-я\s]/',$_POST['FIO'])){
+			$arResult["ERROR_MESSAGE"][] = "Поле: ФИО только на кириллице";
+		}
+
 		if($arParams["USE_CAPTCHA"] == "Y")
 		{
 			$captcha_code = $_POST["g-recaptcha-response"];
