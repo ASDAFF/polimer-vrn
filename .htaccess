@@ -27,8 +27,6 @@ ErrorDocument 404 /404.php
   Redirect 301 /catalog/inzhenernaya_santekhnika_otoplenie_vodoprovod_kanalizatsiya/ /catalog/inzhenernaya_santekhnika/
   Redirect 301 /catalog/stroitelnye_materialy/ /catalog/stroitelno_otdelochnye_materialy/
   Redirect 301 /catalog/polipropilenovye_truby_i_fitingi_/ /catalog/polipropelenovye_truby_i_fitingi_fusitek/
-  Redirect 301 /catalog/peletkotly/ /catalog/tverdotoplivnye_kotly/
-  Redirect 301 /articles/tverdotoplivnyj-kotel/ /catalog/tverdotoplivnye_kotly/
   Redirect 301 /articles/centrobezhnyj-nasos/ /articles/tsentrobezhnye-nasosy-dlya-vody/
   Redirect 301 /catalog/vikhrevye_nasosy/ /catalog/tsentrobezhnye_nasosy/   
   Redirect 301 /catalog/kotly_nastennye/ /catalog/dvukhkonturnye_nastennye_gazovye_kotly/                                 

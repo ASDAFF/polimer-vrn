@@ -126,10 +126,17 @@ $APPLICATION->SetTitle("Сервисный центр производителе
  <strong>14) Насосы Unipamp</strong>
 		</p>
 		<ul>
-			<li><strong>ООО «Теплосервис»</strong><br>
+			<li><strong>ООО Теплосервис</strong><br>
 			 Адрес: г. Воронеж, ул. Моисеева, 61Б<br>
 			 Телефон: +7(473)233-31-00 </li>
 		</ul>
+ <strong>15) Электрический водонагреватель Haier</strong>
+		</p>
+		<ul>
+			<li><strong> ООО Беркут</strong><br>
+			 Адрес: г. Воронеж, ул. Ворошилова д.2,<br>
+			 Телефон: +7(473)270-16-70 </li>
+		</ul>
 	</div>
 </div>
-<br><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+ <br><?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
