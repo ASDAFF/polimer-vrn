@@ -32,7 +32,7 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 
 		<div class="line">
 			<span>ФИО</span>
-			<input type="text" class="fio name" placeholder="ФИО" name="FIO" value="<?=$_POST['FIO']?>">
+			<input type="text" class="fio name" placeholder="Пример: Иванов Иван (на кириллице)" name="FIO" value="<?=$_POST['FIO']?>">
 		</div>
 
 		<div class="line pl">

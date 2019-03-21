@@ -61,7 +61,10 @@ if(!defined("B_PROLOG_INCLUDED")||B_PROLOG_INCLUDED!==true)die();
 
 					<span class="line cl">
      					<span class="label"><?=$field['NAME']?></span>
-     					<span class="value"><input type="text" placeholder="<?if($field['CODE'] == "PHONE"){print "+7 (473) 234-03-01";}else{print $field['NAME'];}?>" class="<?if($field['CODE'] == "PHONE"){print "phone";}elseif($field['CODE'] == "FIO"){print "name";}?>" name="<?=$field['CODE']?>" value="<?=$arResult[$field['CODE']]?>"/></span>
+     					<span class="value"><input type="text" placeholder="<?
+							if($field['CODE'] == "PHONE"){print "+7 (473) 234-03-01";}
+							elseif($field['CODE'] == "FIO"){print "Пример: Иванов Иван (на кириллице)";}
+							else{print $field['NAME'];}?>" class="<?if($field['CODE'] == "PHONE"){print "phone";}elseif($field['CODE'] == "FIO"){print "name";}?>" name="<?=$field['CODE']?>" value="<?=$arResult[$field['CODE']]?>"/></span>
      				</span>
 
 
