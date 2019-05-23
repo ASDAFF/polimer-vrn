@@ -3911,7 +3911,7 @@ class CUpdatesXMLNode
 	var $children;			// Subnodes
 	var $attributes;		// Attributes
 
-	function CUpdatesXMLNode()
+	public function __construct()
 	{
 	}
 
@@ -4021,7 +4021,7 @@ class CUpdatesXMLDocument
 	var $children;
 	var $root;
 
-	function CUpdatesXMLDocument()
+	public function __construct()
 	{
 	}
 
@@ -4069,7 +4069,7 @@ class CUpdatesXML
 	var $tree;
 	var $TrimWhiteSpace;
 
-	function CUpdatesXML($TrimWhiteSpace = True)
+	public function __construct($TrimWhiteSpace = True)
 	{
 		$this->TrimWhiteSpace = ($TrimWhiteSpace ? True : False);
 		$this->tree = False;
@@ -4669,6 +4669,9 @@ class CUpdater
 		$fromDirFull = $_SERVER["DOCUMENT_ROOT"].$fromDir;
 		$toDirFull = $_SERVER["DOCUMENT_ROOT"].$toDir;
 
+		if (!file_exists($fromDirFull))
+			return true;
+
 		$result = CUpdateSystem::CopyDirFiles($fromDirFull, $toDirFull, $errorMessage);
 
 		if (!$result)
@@ -4690,6 +4693,9 @@ class CUpdater
 
 		$fromDirFull = $_SERVER["DOCUMENT_ROOT"].$fromDir;
 		$toDirFull = $_SERVER["DOCUMENT_ROOT"].$toDir;
+
+		if (!file_exists($fromDirFull))
+			return true;
 
 		$result = CUpdateSystem::CopyDirFiles($fromDirFull, $toDirFull, $errorMessage);
 
