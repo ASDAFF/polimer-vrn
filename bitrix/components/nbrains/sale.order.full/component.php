@@ -389,6 +389,8 @@ else
 		while ($arBasketItems = $dbBasketItems->GetNext())
 		{
 			$arBasketItems["DISCOUNT_PRICE"] = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N')['DISCOUNT']['VALUE'];
+			
+			
 			if ($arBasketItems["DELAY"] == "N" && $arBasketItems["CAN_BUY"] == "Y")
 			{
 				$arBasketItems["PRICE"] = roundEx($arBasketItems["PRICE"], SALE_VALUE_PRECISION);
@@ -2211,7 +2213,8 @@ if ($USER->IsAuthorized())
 		$arDiscount = array();
 		while ($arBasketItems = $dbBasketItems->Fetch())
 		{
-			$arBasketItems["DISCOUNT_PRICE"] = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N')['RESULT_PRICE']['PERCENT'];
+			$arBasketItems["DISCOUNT_PRICE"] = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N')['DISCOUNT']['VALUE'];
+			
 			$arDiscount[] = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N')['RESULT_PRICE']['DISCOUNT']*$arBasketItems["QUANTITY"];
 			if ($arBasketItems["DELAY"] == "N" && $arBasketItems["CAN_BUY"] == "Y")
 			{
@@ -2225,6 +2228,8 @@ if ($USER->IsAuthorized())
 				{
 					if(DoubleVal($arBasketItems["VAT_RATE"]) > 0)
 						$arBasketItems["VAT_VALUE"] = DoubleVal(($arBasketItems["PRICE"] / ($arBasketItems["VAT_RATE"] +1)) * $arBasketItems["VAT_RATE"]);
+					
+					
 
 					$arBasketItems["DISCOUNT_PRICE_PERCENT"] = $arBasketItems["DISCOUNT_PRICE"]*100 / ($arBasketItems["DISCOUNT_PRICE"] + $arBasketItems["PRICE"]);
 					$arBasketItems["DISCOUNT_PRICE_PERCENT_FORMATED"] = roundEx($arBasketItems["DISCOUNT_PRICE_PERCENT"], 0)."%";
@@ -2267,8 +2272,14 @@ if ($USER->IsAuthorized())
 
 		if(IntVal($arResult["DELIVERY_PRICE"])>0)
 			$arResult["DELIVERY_PRICE_FORMATED"] = SaleFormatCurrency($arResult["DELIVERY_PRICE"], $arResult["BASE_LANG_CURRENCY"]);
+		
 		$orderTotalSum = $arResult["ORDER_PRICE"] + $arResult["DELIVERY_PRICE"] + $arResult["TAX_PRICE"] - $arResult["DISCOUNT_PRICE"];
-		$arResult["ORDER_TOTAL_PRICE_FORMATED"] = SaleFormatCurrency($orderTotalSum, $arResult["BASE_LANG_CURRENCY"]);
+		
+		
+		
+		$arResult["ORDER_TOTAL_PRICE_FORMATED"] = sprintf('%01.2f', $orderTotalSum);//SaleFormatCurrency($orderTotalSum, $arResult["BASE_LANG_CURRENCY"]);
+		
+		
 		if ($arResult["PAY_CURRENT_ACCOUNT"] == "Y")
 		{
 			$dbUserAccount = CSaleUserAccount::GetList(
@@ -2422,6 +2433,11 @@ if ($USER->IsAuthorized())
 						$_SESSION["ORDER_EVENTS"][] = $e;
 				}
 			}
+			
+			\Bitrix\Main\Loader::includeModule('sale');
+            $order = \Bitrix\Sale\Order::load($arOrder["ID"]);
+            $order->refreshData();
+            $order->save();
 
 			foreach(GetModuleEvents("sale", "OnSaleComponentOrderComplete", true) as $arEvent)
 				ExecuteModuleEventEx($arEvent, Array($arOrder["ID"], $arOrder));

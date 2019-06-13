@@ -47,7 +47,7 @@ $this->setFrameMode(true);
 		</div>
 	</div>
 
-	<form class="ym-goal-subscribe-price" method="post" action="http://cp.unisender.com/ru/subscribe?hash=5dpcmpjehbb5zcruq3gwuf91zyopeqzsgfrt91jy&amp;list_ids=2799919" TARGET="_blank">
+	<form class="ym-goal-subscribe-price" method="post" action="/ajax/price.php">
 	<div class="pl__subscribe">
 		<div class="form">
 			<div class="name">Получайте новые <br>обновления прайс-листов <br>на Вашу почту</div>

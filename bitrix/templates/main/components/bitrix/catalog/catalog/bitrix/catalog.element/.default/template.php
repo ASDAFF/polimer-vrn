@@ -76,7 +76,9 @@ $this->setFrameMode(true);
 
             <div class="bb_col right">
                <div class="sale">
-                  <? foreach($arResult['ITEM_PRICES'] as $name => $price):?>
+                  <?
+					//var_dump($arResult);
+				  foreach($arResult['ITEM_PRICES'] as $name => $price):?>
                   <span>СКИДКА <?=$price['PERCENT']?>%</span>
                   <? endforeach; ?>
                   <span>при заказе<br>с сайта</span>

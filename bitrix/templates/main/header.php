@@ -555,7 +555,7 @@ $noh1    = $pages[1] == 'personal' || $pages[1] == 'price' || ($pages[1] == 'cat
          		<?if(!$is_main && $pages[1] !== 'basket' && !($pages[1] == 'catalog' && $pages[3])){?>
 	            <div class="page_content">
 	            	<?if(!$noh1){?>
-	               	<h1><?//$APPLICATION->ShowTitle(false)?></h1>
+	               	
 	               	<?$APPLICATION->IncludeComponent("bitrix:menu", "section", Array(
 						"ALLOW_MULTI_SELECT" => "N",	// Разрешить несколько активных пунктов одновременно
 							"CHILD_MENU_TYPE" => "top",	// Тип меню для остальных уровней

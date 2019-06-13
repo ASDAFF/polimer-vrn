@@ -21,16 +21,12 @@ $this->setFrameMode(true);
 
 		<?
 		if($arResult['PROPERTIES']['ADD_PROD']['VALUE']):
-
 			?>
 			<div class="slider_product articles" id="mp__product__action" style="max-width: 840px;margin-bottom: 10px;border: 0px">
 				<?
-				$arSelect = Array("ID", "NAME","PREVIEW_PICTURE","DETAIL_PAGE_URL");
-				foreach($arResult['PROPERTIES']['ADD_PROD']['VALUE'] as $id){
-					$arFilter = Array("IBLOCK_ID"=> 21,"ID" => $id);
-					$res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
-					if($ob = $res->GetNextElement())
-					{$arFields = $ob->GetFields();
+				   $items = GetIBlockElementList(21, $arResult['PROPERTIES']['ADD_PROD']['VALUE'], Array("SORT"=>"ASC"), 50);
+				   while($arFields = $items->GetNext())
+				   {
 						?>
 						<div>
 							<div class="product" style="border-left: 0px;">
@@ -42,7 +38,6 @@ $this->setFrameMode(true);
 						</div>
 						<?
 					}
-				}
 				?>
 			</div><!-- end::slider_product -->
 
@@ -94,7 +89,7 @@ $this->setFrameMode(true);
 		"CHECK_DATES" => "Y",	// Показывать только активные на данный момент элементы
 		"DETAIL_URL" => "",	// URL страницы детального просмотра (по умолчанию - из настроек инфоблока)
 		"DISPLAY_BOTTOM_PAGER" => "Y",	// Выводить под списком
-		"DISPLAY_DATE" => "Y",	// Выводить дату элемента
+		"DISPLAY_DATE" => "N",	// Выводить дату элемента
 		"DISPLAY_NAME" => "Y",	// Выводить название элемента
 		"DISPLAY_PICTURE" => "Y",	// Выводить изображение для анонса
 		"DISPLAY_PREVIEW_TEXT" => "Y",	// Выводить текст анонса

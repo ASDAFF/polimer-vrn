@@ -179,6 +179,21 @@ $(function(){
     });
 
 
+	  $('.ym-goal-subscribe-price').submit(function(e) {
+        var $form = $(this);
+        $.ajax({
+          type: $form.attr('method'),
+          url: $form.attr('action'),
+          data: $form.serialize()
+        }).done(function(data) {
+          alertify.success("Подписка оформлена!");
+		  $form[0].reset();
+        }).fail(function() {
+          alertify.error("Произошла ошибка. Попробуйте повторить запрос позже");
+        });
+        //отмена действия по умолчанию для кнопки submit
+        e.preventDefault(); 
+      });
 
 });
 

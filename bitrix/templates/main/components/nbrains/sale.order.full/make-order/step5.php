@@ -76,12 +76,13 @@
 						<td><a href="<?=$item['DETAIL_PAGE_URL'];?>" target="_blank"><img src="<?=$img;?>" style="max-height: 60px;max-width: 60px"></a></td>
 						<td><a href="<?=$item['DETAIL_PAGE_URL'];?>" target="_blank"><?=$item['NAME']?></a></td>
 						<td style="white-space: nowrap;"><?=$item['PRICE_FORMATED']?></td>
-						<td><?=ceil($item['DISCOUNT_PRICE'])?> %</td>
+						<td><?=round($item['DISCOUNT_PRICE'])?> %</td>
 						<td><?=$item['QUANTITY']?> <?=$item['MEASURE_NAME']?></td>
 						<?
 						$end_price = $item['PRICE']-($item['PRICE']/100*$item['DISCOUNT_PRICE']);
+					
 						?>
-						<td style="white-space: nowrap;"><?=CurrencyFormat($end_price*$item['QUANTITY'], "RUB");?></td>
+						<td style="white-space: nowrap;"><?=sprintf('%01.2f',$end_price*$item['QUANTITY']);?> ₽</td>
 						<td></td>
 					</tr>
 				<?endforeach;?>
@@ -89,7 +90,7 @@
 
 			<div class="line">
 				<div class="name">Итого:</div>
-				<div class="val"><span><?=count($arResult["BASKET_ITEMS"])?> <?=$prod?> на сумму <?=$arResult["ORDER_TOTAL_PRICE_FORMATED"]?></span></div>
+				<div class="val"><span><?=count($arResult["BASKET_ITEMS"])?> <?=$prod?> на сумму <?=$arResult["ORDER_TOTAL_PRICE_FORMATED"]?> ₽</span></div>
 			</div>
 			<?
 			//echo "<pre>"; print_r($arResult); echo "</pre>";$arBasketItems["DISCOUNT_PRICE"] = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N')['RESULT_PRICE']['PERCENT'];

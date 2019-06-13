@@ -4,7 +4,7 @@
 //**    MODIFICATION OF THIS FILE WILL ENTAIL SITE FAILURE            **/
 //**********************************************************************/
 if (!defined("UPDATE_SYSTEM_VERSION"))
-	define("UPDATE_SYSTEM_VERSION", "18.5.100");
+	define("UPDATE_SYSTEM_VERSION", "18.5.200");
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
 define("HELP_FILE", "marketplace/sysupdate.php");
@@ -202,7 +202,16 @@ elseif (IntVal($arCurPhpVer[0]) < 7
 	|| IntVal($arCurPhpVer[0]) == 7 && IntVal($arCurPhpVer[1]) < 1
 	|| IntVal($arCurPhpVer[0]) == 7 && IntVal($arCurPhpVer[1]) == 1 && IntVal($arCurPhpVer[2]) < 0)
 {
-	$systemMessage .= "<br>".GetMessage("SUP_PHP_L710", array("#VERS#" => $curPhpVer));
+//	$systemMessage .= "<br>".GetMessage("SUP_PHP_L710", array("#VERS#" => $curPhpVer));
+
+	echo CAdminMessage::ShowMessage(
+		Array(
+			"DETAILS" => GetMessage("SUP_PHP_L710", array("#VERS#" => $curPhpVer)),
+			"TYPE" => "ERROR",
+			"MESSAGE" => GetMessage("SUP_ERROR"),
+			"HTML" => true
+		)
+	);
 }
 
 if (array_key_exists("HTTP_BX_MASTER", $_SERVER) && ($_SERVER["HTTP_BX_MASTER"] != "Y"))
@@ -646,7 +655,7 @@ $tabControl->BeginNextTab();
 						}
 
 						updRand++;
-						CHttpRequest.Send('/bitrix/admin/update_system_act.php?query_type=key&<?= bitrix_sessid_get() ?>&NEW_LICENSE_KEY=' + escape(document.licence_key_form.NEW_LICENSE_KEY.value) + "&updRand=" + updRand);
+						CHttpRequest.Send('/bitrix/admin/update_system_act.php?query_type=key&<?= bitrix_sessid_get() ?>&NEW_LICENSE_KEY=' + encodeURIComponent(document.licence_key_form.NEW_LICENSE_KEY.value) + "&updRand=" + updRand);
 					}
 					//-->
 					</SCRIPT>
@@ -824,20 +833,20 @@ $tabControl->BeginNextTab();
 							}
 							else
 							{
-								var param = "NAME=" + escape(document.activate_form.NAME.value)
-									+ "&EMAIL=" + escape(document.activate_form.EMAIL.value)
-									+ "&CONTACT_INFO=" + escape(document.activate_form.CONTACT_INFO.value)
-									+ "&PHONE=" + escape(document.activate_form.PHONE.value)
-									+ "&CONTACT_PERSON=" + escape(document.activate_form.CONTACT_PERSON.value)
-									+ "&CONTACT_EMAIL=" + escape(document.activate_form.CONTACT_EMAIL.value)
-									+ "&CONTACT_PHONE=" + escape(document.activate_form.CONTACT_PHONE.value)
-									+ "&SITE_URL=" + escape(document.activate_form.SITE_URL.value)
-									+ "&GENERATE_USER=" + escape(generateUser)
-									+ "&USER_NAME=" + escape(document.activate_form.USER_NAME.value)
-									+ "&USER_LAST_NAME=" + escape(document.activate_form.USER_LAST_NAME.value)
-									+ "&USER_LOGIN=" + escape(UserLogin)
-									+ "&USER_PASSWORD=" + escape(document.activate_form.USER_PASSWORD.value)
-									+ "&USER_PASSWORD_CONFIRM=" + escape(document.activate_form.USER_PASSWORD_CONFIRM.value);
+								var param = "NAME=" + encodeURIComponent(document.activate_form.NAME.value)
+									+ "&EMAIL=" + encodeURIComponent(document.activate_form.EMAIL.value)
+									+ "&CONTACT_INFO=" + encodeURIComponent(document.activate_form.CONTACT_INFO.value)
+									+ "&PHONE=" + encodeURIComponent(document.activate_form.PHONE.value)
+									+ "&CONTACT_PERSON=" + encodeURIComponent(document.activate_form.CONTACT_PERSON.value)
+									+ "&CONTACT_EMAIL=" + encodeURIComponent(document.activate_form.CONTACT_EMAIL.value)
+									+ "&CONTACT_PHONE=" + encodeURIComponent(document.activate_form.CONTACT_PHONE.value)
+									+ "&SITE_URL=" + encodeURIComponent(document.activate_form.SITE_URL.value)
+									+ "&GENERATE_USER=" + encodeURIComponent(generateUser)
+									+ "&USER_NAME=" + encodeURIComponent(document.activate_form.USER_NAME.value)
+									+ "&USER_LAST_NAME=" + encodeURIComponent(document.activate_form.USER_LAST_NAME.value)
+									+ "&USER_LOGIN=" + encodeURIComponent(UserLogin)
+									+ "&USER_PASSWORD=" + encodeURIComponent(document.activate_form.USER_PASSWORD.value)
+									+ "&USER_PASSWORD_CONFIRM=" + encodeURIComponent(document.activate_form.USER_PASSWORD_CONFIRM.value);
 
 								CHttpRequest.Action = function(result)
 								{
@@ -1393,7 +1402,7 @@ $tabControl->BeginNextTab();
 
 
 				<?
-				if ($arUpdateList !== false && (isset($_REQUEST["BX_SUPPORT_MODE"]) && ($_REQUEST["BX_SUPPORT_MODE"] == "Y")) && isset($arUpdateList["CLIENT"]) && !isset($arUpdateList["UPDATE_SYSTEM"]))
+				if ($arUpdateList !== false && (isset($_REQUEST["BX_SUPPORT_MODEX"]) && ($_REQUEST["BX_SUPPORT_MODEX"] == "Y")) && isset($arUpdateList["CLIENT"]) && !isset($arUpdateList["UPDATE_SYSTEM"]))
 				{
 					?>
 					<div id="upd_support_div">
@@ -2580,7 +2589,7 @@ $tabControl->BeginNextTab();
 					if (param.length > 0)
 					{
 						updRand++;
-						CHttpRequest.Send('/bitrix/admin/update_system_act.php?query_type=coupon&<?= bitrix_sessid_get() ?>&COUPON=' + escape(param) + "&updRand=" + updRand);
+						CHttpRequest.Send('/bitrix/admin/update_system_act.php?query_type=coupon&<?= bitrix_sessid_get() ?>&COUPON=' + encodeURIComponent(param) + "&updRand=" + updRand);
 					}
 					else
 					{
@@ -2699,7 +2708,7 @@ $tabControl->BeginNextTab();
 					}
 
 					updRand++;
-					CHttpRequest.Send('/bitrix/admin/update_system_act.php?query_type=stability&<?= bitrix_sessid_get() ?>&STABILITY=' + escape(sel.options[sel.selectedIndex].value) + "&updRand=" + updRand);
+					CHttpRequest.Send('/bitrix/admin/update_system_act.php?query_type=stability&<?= bitrix_sessid_get() ?>&STABILITY=' + encodeURIComponent(sel.options[sel.selectedIndex].value) + "&updRand=" + updRand);
 				}
 				//-->
 				</SCRIPT>
@@ -2757,7 +2766,7 @@ $tabControl->BeginNextTab();
 					if (param.length > 0)
 					{
 						updRand++;
-						CHttpRequest.Send('/bitrix/admin/update_system_act.php?query_type=mail&<?= bitrix_sessid_get() ?>&EMAIL=' + escape(param) + "&updRand=" + updRand);
+						CHttpRequest.Send('/bitrix/admin/update_system_act.php?query_type=mail&<?= bitrix_sessid_get() ?>&EMAIL=' + encodeURIComponent(param) + "&updRand=" + updRand);
 					}
 					else
 					{
