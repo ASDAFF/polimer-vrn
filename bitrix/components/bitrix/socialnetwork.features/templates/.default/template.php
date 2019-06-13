@@ -1,255 +1,259 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
-<?
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+/** @var CBitrixComponentTemplate $this */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CDatabase $DB */
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Main\UI;
+
+UI\Extension::load("ui.buttons");
+UI\Extension::load("ui.alerts");
+UI\Extension::load("socialnetwork.common");
+
 if ($arResult["NEED_AUTH"] == "Y")
+{
 	$APPLICATION->AuthForm("");
+}
 elseif (strlen($arResult["FatalError"]) > 0)
 {
 	?><span class='errortext'><?=$arResult["FatalError"]?></span><br /><br /><?
 }
 else
 {
-	if(strlen($arResult["ErrorMessage"])>0)
+	if (
+		strlen($arResult["ErrorMessage"]) > 0
+		&& $arResult["ShowForm"] != "Input"
+	)
 	{
 		?><span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br /><?
 	}
 
 	if ($arResult["ShowForm"] == "Input")
 	{
-		?>
-		<form method="post" name="form1" id="sonet-features-form" action="<?=POST_FORM_ACTION_URI?>" enctype="multipart/form-data">
-				<div class="settings-group-main-wrap">
-					<table class="settings-group" cellspacing="0">
-						<tr>
+		?><script>
+			BX.ready(function() {
+				BX.BXSF.init({
+					iframe: <?=$arResult["IS_IFRAME"] ? 'true' : 'false'?>,
+					errorBlockName: 'sonet_features_error_block'
+				});
+			});
+			BX.message({
+				SONET_C4_T_ERROR: '<?=GetMessageJS('SONET_C4_T_ERROR')?>'
+			});
+		</script>
 
-							<td id="settings-items" class="settings-left-column">
-								<?
-								$hasActiveFeatures = false;
-								$firstRun = true;
-								foreach ($arResult["Features"] as $feature => $arFeature): 
-									if ($arFeature["Active"] || $arResult["ENTITY_TYPE"] == "U"):
-									?>
-									<a href="#" class="settings-item-block <?=($firstRun) ? 'settings-item-active' : ''?>">
-										<?=array_key_exists("title", $arResult["arSocNetFeaturesSettings"][$feature]) && strlen($arResult["arSocNetFeaturesSettings"][$feature]["title"]) > 0 ? $arResult["arSocNetFeaturesSettings"][$feature]["title"] : GetMessage("SONET_FEATURES_".$feature)?>
-										<span class="settings-item-left"></span>
-										<span class="settings-item-right"></span>
-									</a>
-									<?
-									$hasActiveFeatures = true;
-									$firstRun = false;
-									endif;
-								endforeach;
-								?>
-							</td>
+		<div id="sonet_features_error_block" class="ui-alert ui-alert-xs ui-alert-danger ui-alert-icon-danger<?=(strlen($arResult["ErrorMessage"]) > 0 ? "" : " sonet-ui-form-error-block-invisible")?>"><?=$arResult["ErrorMessage"]?></div><?
 
-							<td id="settings-blocks" class="settings-right-column">
-								<?
-								$firstRun = true;
-								foreach ($arResult["Features"] as $feature => $arFeature):
+		$uri = new Bitrix\Main\Web\Uri(POST_FORM_ACTION_URI);
+		if (!empty($arResult["groupTypeCode"]))
+		{
+			$uri->deleteParams(array("b24statAction", "b24statType"));
+			$uri->addParams(array(
+				"b24statType" => $arResult["groupTypeCode"]
+			));
+		}
+		$actionUrl = $uri->getUri();
+		?><form method="post" name="sonet-features-form" id="sonet-features-form" action="<?=$actionUrl?>" enctype="multipart/form-data">
+			<div class="sn-features-wrap"><?
 
-									if ($arFeature["Active"] || $arResult["ENTITY_TYPE"] == "U"):
-									?>
-										<div class="settings-blocks-enable-wrap" id="<?= $feature ?>_checkbox" style="<?=($firstRun) ? '' : 'display:none'?>">
-											<?
-											if ($arResult["ENTITY_TYPE"] == "U" && !($feature == "blog" && $arParams["PAGE_ID"] != "group_features")):
-											?>
-												<script type="text/javascript">
-													<!--
-													BX.message({
-														sonetF_<?=$feature?>_on: '<?=CUtil::JSEscape(str_replace("#NAME#", (array_key_exists("title", $arResult["arSocNetFeaturesSettings"][$feature]) && strlen($arResult["arSocNetFeaturesSettings"][$feature]["title"]) > 0 ? $arResult["arSocNetFeaturesSettings"][$feature]["title"] : GetMessage("SONET_FEATURES_".$feature)) , GetMessage("SONET_C4_FUNC_TITLE_ON")))?>',
-														sonetF_<?=$feature?>_off: '<?=CUtil::JSEscape(str_replace("#NAME#", (array_key_exists("title", $arResult["arSocNetFeaturesSettings"][$feature]) && strlen($arResult["arSocNetFeaturesSettings"][$feature]["title"]) > 0 ? $arResult["arSocNetFeaturesSettings"][$feature]["title"] : GetMessage("SONET_FEATURES_".$feature)) , GetMessage("SONET_C4_FUNC_TITLE_OFF")))?>'
-													});	
-													//-->
-												</script>
-												<div class="settings-block-enable">
-													<div class="settings-right-enable-label-wrap">
-														<label for="<?= $feature ?>_active_id" style="width:100%" id="<?= $feature ?>_lbl"><?= str_replace("#NAME#", (array_key_exists("title", $arResult["arSocNetFeaturesSettings"][$feature]) && strlen($arResult["arSocNetFeaturesSettings"][$feature]["title"]) > 0 ? $arResult["arSocNetFeaturesSettings"][$feature]["title"] : GetMessage("SONET_FEATURES_".$feature)) , GetMessage("SONET_C4_FUNC_TITLE_".($arFeature["Active"] ? "ON" : "OFF"))) ?></label>:
-													</div>
-													<div class="settings-block-enable-checkbox-wrap">
-														<input type="checkbox" id="<?= $feature ?>_active_id" name="<?= $feature ?>_active" value="Y"<?= ($arFeature["Active"] ? " checked" : "") ?> onclick="toggleInternalBlock(this.checked, '<?= $feature ?>')">
-													</div>
-												</div>
-											<?
-											else:
-											?>
-												<input type="hidden" name="<?= $feature ?>_active" value="Y" />
-											<?
-											endif;
-											?>
-										</div>
+				$hasActiveFeatures = false;
 
-										<div id="<?= $feature ?>_block" class="settings-blocks-wrap" style="<?=($firstRun && $arFeature["Active"]) ? '' : 'display:none'?>">
-											<?
-											if ($firstRun && $arFeature["Active"])
-											{
-												$firstRun = false;
-											}
+				if (
+					$arResult["ENTITY_TYPE"] == "G"
+					&& !empty($arResult["Group"])
+					&& $arResult["Group"]["CLOSED"] != "Y"
+				)
+				{
+					?><div class="sn-features-row">
+						<h4 class="sn-features-title"><?=Loc::getMessage($arResult["Group"]["PROJECT"] == 'Y' ? 'SONET_C4_INVITE_TITLE_PROJECT' : 'SONET_C4_INVITE_TITLE')?></h4>
+						<div class="sn-features-input-box">
+							<div class="sn-features-caption"><?=Loc::getMessage($arResult["Group"]["PROJECT"] == 'Y' ? 'SONET_C4_INVITE_OPERATION_PROJECT' : 'SONET_C4_INVITE_OPERATION')?></div>
+							<select name="GROUP_INITIATE_PERMS" id="GROUP_INITIATE_PERMS" class="sn-features-select"><?
+								foreach ($arResult["InitiatePermsList"] as $key => $value)
+								{
+									?><option id="GROUP_INITIATE_PERMS_OPTION_<?=$key?>" value="<?=$key?>"<?=($key == $arResult["Group"]["INITIATE_PERMS"]) ? " selected" : "" ?>><?=$value?></option><?
+								}
+							?></select>
+						</div>
+					</div><?
+				}
 
-											if (
-												$feature != "search" 
-												|| SITE_TEMPLATE_ID != "bitrix24"
+				foreach ($arResult["Features"] as $feature => $arFeature)
+				{
+					if (
+						$arResult["ENTITY_TYPE"] == "G"
+						&& !isset($arFeature["note"])
+						&& (
+							empty($arFeature["Operations"])
+							|| (
+								isset($arResult["arSocNetFeaturesSettings"][$feature]["hide_operations_settings"])
+								&& $arResult["arSocNetFeaturesSettings"][$feature]["hide_operations_settings"]
+							)
+						)
+					)
+					{
+						?><input type="hidden" name="<?=$feature?>_active" value="<?=($arFeature["Active"] ? "Y" : "") ?>" /><?
+					}
+					elseif (
+						$arFeature["Active"]
+						|| $arResult["ENTITY_TYPE"] == "U"
+					)
+					{
+						$hasActiveFeatures = true;
+
+						$featureName = (
+								array_key_exists("title", $arResult["arSocNetFeaturesSettings"][$feature])
+								&& strlen($arResult["arSocNetFeaturesSettings"][$feature]["title"]) > 0
+									? $arResult["arSocNetFeaturesSettings"][$feature]["title"]
+									: Loc::getMessage("SONET_FEATURES_".$feature)
+						);
+
+						?><div class="sn-features-row">
+							<h4 class="sn-features-title"><?=$featureName?></h4><?
+
+							if (
+								$arResult["ENTITY_TYPE"] == "U"
+								&& !(
+									$feature == "blog"
+									&& $arParams["PAGE_ID"] != "group_features"
+								)
+							)
+							{
+								?><script>
+
+									BX.message({
+										sonetF_<?=$feature?>_on: '<?=CUtil::JSEscape(str_replace(
+												"#NAME#",
+												$featureName,
+												Loc::getMessage("SONET_C4_FUNC_TITLE_ON")
+										))?>',
+										sonetF_<?=$feature?>_off: '<?=CUtil::JSEscape(str_replace(
+												"#NAME#",
+												$featureName,
+												Loc::getMessage("SONET_C4_FUNC_TITLE_OFF")))?>'
+									});
+
+								</script>
+								<div class="sn-features-input-box">
+									<div class="settings-right-enable-label-wrap">
+										<label for="<?=$feature?>_active_id" style="width:100%" id="<?=$feature?>_lbl"><?=str_replace(
+											"#NAME#",
+											$featureName,
+											Loc::getMessage("SONET_C4_FUNC_TITLE_".($arFeature["Active"] ? "ON" : "OFF"))
+										)?></label>:
+									</div>
+									<div class="settings-block-enable-checkbox-wrap">
+										<input class="settings-right-enable-checkbox" bx-feature="<?=$feature?>" type="checkbox" id="<?=$feature?>_active_id" name="<?=$feature?>_active" value="Y"<?=($arFeature["Active"] ? " checked" : "") ?>>
+									</div>
+								</div><?
+							}
+							else
+							{
+								?><input type="hidden" name="<?=$feature?>_active" value="Y" /><?
+							}
+
+							$displayValue = ($arFeature["Active"] ? 'block' : 'none');
+
+							?><div id="<?=$feature?>_body" style="display: <?=$displayValue?>"><?
+								if (isset($arFeature["note"]))
+								{
+									?><div class="settings-blocks-note"><?=htmlspecialcharsbx($arFeature['note'])?></div><?
+								}
+
+								if (
+									!array_key_exists("hide_operations_settings", $arResult["arSocNetFeaturesSettings"][$feature])
+									|| !$arResult["arSocNetFeaturesSettings"][$feature]["hide_operations_settings"]
+								)
+								{
+									foreach ($arFeature["Operations"] as $operation => $perm)
+									{
+										if (
+											$feature == "tasks"
+											&& (
+												$operation == "modify_folders"
+												|| $operation === 'modify_common_views'
 											)
-											{
-												?><div class="settings-right-block">
-													<div class="settings-right-block-text"><?=GetMessage("SONET_FEATURES_NAME")?>:</div>
-													<input type="text" name="<?= $feature ?>_name" value="<?= $arFeature["FeatureName"] ?>">
-												</div><?
-											}
-											else
-											{
-												?><input type="hidden" name="<?= $feature ?>_name" value="<?= $arFeature["FeatureName"] ?>"><?
-											}
-											?>
+											&& ModuleManager::isModuleInstalled('tasks')
+										)
+										{
+											?><input type="hidden" name="<?= $feature ?>_<?= $operation ?>_perm" value="<?=$perm?>"><?
+										}
+										else
+										{
+											$title = (
+												array_key_exists("operation_titles", $arResult["arSocNetFeaturesSettings"][$feature])
+												&& array_key_exists($operation, $arResult["arSocNetFeaturesSettings"][$feature]["operation_titles"])
+												&& strlen($arResult["arSocNetFeaturesSettings"][$feature]["operation_titles"][$operation]) > 0
+													? $arResult["arSocNetFeaturesSettings"][$feature]["operation_titles"][$operation]
+													: Loc::getMessage("SONET_FEATURES_".$feature."_".$operation)
+											);
 
-											<? if (isset($arFeature["note"])): ?>
-												<div class="settings-blocks-note">
-													<?=htmlspecialcharsbx($arFeature['note'])?>
-												</div>
-											<? endif;
+											?><div class="sn-features-input-box">
+												<div class="sn-features-caption"><?=$title?></div>
+												<select name="<?=$feature?>_<?=$operation?>_perm" class="sn-features-select"><?
 
-											if (!array_key_exists("hide_operations_settings", $arResult["arSocNetFeaturesSettings"][$feature])
-												|| !$arResult["arSocNetFeaturesSettings"][$feature]["hide_operations_settings"])
-											{
-												foreach ($arFeature["Operations"] as $operation => $perm):
-												?>
-													<div class="settings-right-block">
-														<?
+													foreach ($arResult["PermsVar"] as $key => $value)
+													{
 														if (
-															$feature == "tasks"
-															&& (
-																$operation == "modify_folders"
-																|| $operation === 'modify_common_views'
-															)
-															&& IsModuleInstalled('tasks')
+															!array_key_exists("restricted", $arResult["arSocNetFeaturesSettings"][$feature]["operations"][$operation])
+															|| !in_array($key, $arResult["arSocNetFeaturesSettings"][$feature]["operations"][$operation]["restricted"][$arResult["ENTITY_TYPE"]])
 														)
 														{
-															?><input type="hidden" name="<?= $feature ?>_<?= $operation ?>_perm" value="<?=$perm?>"><?
+															?><option value="<?=$key?>"<?=($key == $perm) ? " selected" : "" ?>><?=$value?></option><?
 														}
-														else
-														{
-															$title = (array_key_exists("operation_titles", $arResult["arSocNetFeaturesSettings"][$feature]) && array_key_exists($operation, $arResult["arSocNetFeaturesSettings"][$feature]["operation_titles"]) && strlen($arResult["arSocNetFeaturesSettings"][$feature]["operation_titles"][$operation]) > 0 ? $arResult["arSocNetFeaturesSettings"][$feature]["operation_titles"][$operation] : GetMessage("SONET_FEATURES_".$feature."_".$operation));
-															?><div class="settings-right-block-text"><?=$title?>:</div>
-															<select name="<?= $feature ?>_<?= $operation ?>_perm">
-																<?foreach ($arResult["PermsVar"] as $key => $value):
-																	if (
-																		!array_key_exists("restricted", $arResult["arSocNetFeaturesSettings"][$feature]["operations"][$operation])
-																		|| !in_array($key, $arResult["arSocNetFeaturesSettings"][$feature]["operations"][$operation]["restricted"][$arResult["ENTITY_TYPE"]])
-																	)
-																	{
-																		?><option value="<?= $key ?>"<?= ($key == $perm) ? " selected" : "" ?>><?= $value ?></option><?
-																	}
-																endforeach;
-															?></select>
-															<?
-                                                        }
-														?>
-													</div>
-												<?
-												endforeach;
-											}
-											?>
-										</div>
-									<?
-									endif;
-								endforeach;
-								?>
-							</td>
-						</tr>
+													}
 
-						<? if ($hasActiveFeatures): ?>
-						<tr>
-							<td colspan="2" class="settings-footer-buttons">
-								<div class="settings-footer-buttons-block">
-									<a id="sonet_group_features_form_button_submit" class="webform-small-button webform-small-button-accept" href="">
-										<span class="webform-small-button-left"></span><span class="webform-small-button-text"><?= GetMessage("SONET_C4_SUBMIT") ?></span><span class="webform-small-button-right"></span>
-									</a>
-								</div>
-							</td>
-						</tr>
-						<? else: ?>
-							<?=GetMessage("SONET_C4_NO_FEATURES")?>
-						<? endif; ?>
-					</table>
+												?></select>
+											</div><?
+										}
+									}
+								}
 
-				</div>
-				<br><br>
-			<input type="hidden" name="SONET_USER_ID" value="<?= $arParams["USER_ID"] ?>">
-			<input type="hidden" name="SONET_GROUP_ID" value="<?= $arParams["GROUP_ID"] ?>">
-			<?=bitrix_sessid_post()?>
-		</form>
-		<script type="text/javascript">
-		<!--
-			var items_length = BX.findChildren(BX('settings-items'), {className:'settings-item-block'}, true);
+							?></div><?
 
-			if (items_length){
-
-				for(var i=0; i<items_length.length; i++){
-					BX.bind(items_length[i], 'click', toggleSettingsBlock)
-				}
-
-				BX.bind(BX("sonet_group_features_form_button_submit"), "click", BXSFSubmitForm);
-			}
-
-			function toggleSettingsBlock(){
-
-				var  blocks = BX.findChildren(BX('settings-blocks'), {className:'settings-blocks-wrap'}, true);
-				var  checkboxes = BX.findChildren(BX('settings-blocks'), {className:'settings-blocks-enable-wrap'}, true);
-
-				for(var i=0; i < items_length.length; i++)
-				{
-					BX.hide(blocks[i]);
-					BX.hide(checkboxes[i]);
-
-					if (items_length[i] == this)
-					{
-						BX.show(checkboxes[i]);
-
-						var featureId = checkboxes[i].id.split("_")[0];
-						var cb = BX(featureId + '_active_id');
-
-						if ((cb && cb.checked) || cb == null)
-							BX.show(blocks[i]);
+						?></div><?
 					}
-
-					BX.removeClass(items_length[i], 'settings-item-active');
 				}
+			?></div><?
 
-				BX.addClass(this, 'settings-item-active');
+			if ($hasActiveFeatures)
+			{
+				?><div class="sonet-slider-footer-fixed">
+					<input type="hidden" name="ajax_request" value="Y">
+					<input type="hidden" name="save" value="Y">
+					<input type="hidden" name="SONET_USER_ID" value="<?=$arParams["USER_ID"]?>">
+					<input type="hidden" name="SONET_GROUP_ID" value="<?=$arParams["GROUP_ID"]?>">
+					<?=bitrix_sessid_post()?>
+					<span class="sonet-ui-btn-cont sonet-ui-btn-cont-center"><?
+						?><button class="ui-btn ui-btn-success" id="sonet_group_features_form_button_submit"><?=Loc::getMessage("SONET_C4_SUBMIT") ?></button><?
+						?><button class="ui-btn ui-btn-light-border" id="sonet_group_features_form_button_cancel"><?=Loc::getMessage("SONET_C4_T_CANCEL") ?></button><?
+					?></span><? // class="sonet-ui-btn-cont"
+				?></div><? // sonet-slider-footer-fixed
 			}
-
-			function toggleInternalBlock(chk, type){
-
-				var el = BX(type + "_body");
-				if (el)
-					BX.toggle(el);
-
-				var controlsBlock = BX(type + '_block');
-				if (controlsBlock)
-					BX.toggle(controlsBlock);
-				
-				var el = BX(type + "_lbl");
-
-				if (el){
-					if (chk)
-						el.innerHTML = BX.message('sonetF_' + type + '_on');
-					else
-						el.innerHTML = BX.message('sonetF_' + type + '_off');
-				}
+			else
+			{
+				?><div class="settings-group-main-wrap"><?=GetMessage("SONET_C4_NO_FEATURES");?></div><?
 			}
-		//-->
-		</script>
-		<?
+		?></form><?
 	}
 	else
 	{
-		if ($arParams["PAGE_ID"] == "group_features"):?>
-			<?= GetMessage("SONET_C4_GR_SUCCESS") ?>
-			<br><br>
+		if ($arParams["PAGE_ID"] == "group_features")
+		{
+			echo GetMessage("SONET_C4_GR_SUCCESS");
+			?><br><br>
 			<a href="<?= $arResult["Urls"]["Group"] ?>"><?= $arResult["Group"]["NAME"]; ?></a><?
-		else:
-			?><?= GetMessage("SONET_C4_US_SUCCESS") ?>
-			<br><br>
+		}
+		else
+		{
+			echo GetMessage("SONET_C4_US_SUCCESS");
+			?><br><br>
 			<a href="<?= $arResult["Urls"]["User"] ?>"><?= $arResult["User"]["NAME_FORMATTED"]; ?></a><?
-		endif;
+		}
 	}
 }
 ?>

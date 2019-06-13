@@ -155,7 +155,7 @@ class CSocNetLogFollow
 
 		$strSQL = "INSERT INTO b_sonet_log_follow 
 			(USER_ID, CODE, REF_ID, TYPE, FOLLOW_DATE, BY_WF)
-			VALUES(".$user_id.", '".$code."', ".$ref_id.", '".$type."', ".($follow_date ? $DB->CharToDateFunction($follow_date) : $DB->CurrentTimeFunction()).", ".($bByWF ? "'Y'" : "null").")";
+			VALUES(".intval($user_id).", '".$DB->forSql($code)."', ".$ref_id.", '".$DB->forSql($type)."', ".($follow_date ? $DB->CharToDateFunction($follow_date) : $DB->CurrentTimeFunction()).", ".($bByWF ? "'Y'" : "null").")";
 
 		if ($DB->Query($strSQL, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__))
 		{
@@ -184,7 +184,7 @@ class CSocNetLogFollow
 		if ($type != "Y")
 			$type = "N";
 
-		$strSQL = "UPDATE b_sonet_log_follow SET TYPE = '".$type."', FOLLOW_DATE = ".($follow_date ? $DB->CharToDateFunction($follow_date) : $DB->CurrentTimeFunction()).", BY_WF = ".($bByWF ? "'Y'" : "null")." WHERE USER_ID = ".$user_id." AND CODE = '".$code."'";
+		$strSQL = "UPDATE b_sonet_log_follow SET TYPE = '".$DB->forSql($type)."', FOLLOW_DATE = ".($follow_date ? $DB->CharToDateFunction($follow_date) : $DB->CurrentTimeFunction()).", BY_WF = ".($bByWF ? "'Y'" : "null")." WHERE USER_ID = ".intval($user_id)." AND CODE = '".$DB->forSql($code)."'";
 		if ($DB->Query($strSQL, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__))
 		{
 			if (
@@ -204,7 +204,7 @@ class CSocNetLogFollow
 		}
 	}
 
-	function Delete($user_id, $code, $type = false)
+	public static function Delete($user_id, $code, $type = false)
 	{
 		global $DB, $CACHE_MANAGER;
 
@@ -540,12 +540,15 @@ class CSocNetLogFollow
 			&& intval($arMessageFields["LOG_ID"]) > 0
 		)
 		{
-			$res = CSocNetLogFollow::Set(
-				intval($arMessageFields["TO_USER_ID"]), 
-				"L".intval($arMessageFields["LOG_ID"]), 
-				"Y", 
-				ConvertTimeStamp(time() + CTimeZone::GetOffset(), "FULL", SITE_ID)
-			);
+			$res = \Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(array(
+				'logId' => $arMessageFields["LOG_ID"],
+				'userId' => $arMessageFields["TO_USER_ID"],
+				'typeList' => array(
+					'FOLLOW',
+					'COUNTER_COMMENT_PUSH'
+				),
+				'followDate' => 'CURRENT'
+			));
 		}
 
 		return $res;

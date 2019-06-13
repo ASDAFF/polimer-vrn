@@ -31,6 +31,8 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/lib/loader.php");
 	)
 );
 
+require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/compatibility.php");
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/wizard.php"); //Wizard API
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/version.php"); //Sitemanager version
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/install/wizard/template.php"); //Wizard template
@@ -585,6 +587,12 @@ class RequirementStep extends CWizardStep
 			return false;
 		}
 
+		if (!function_exists("openssl_encrypt"))
+		{
+			$this->SetError(InstallGetMessage("SC_NO_OPENSSL_LIB_ER"));
+			return false;
+		}
+
 		if (!$this->CheckFileAccess())
 		{
 			$files = "";
@@ -933,6 +941,16 @@ RewriteRule ^.+\.php$ /bitrix/httest/404.php
 					'.(function_exists("json_encode") ? $this->ShowResult(InstallGetMessage("SC_SETTED"), "OK") : $this->ShowResult(InstallGetMessage("SC_NOT_SETTED"), "ERROR")).'
 			</td>
 		</tr>';
+		$this->content .= '
+		<tr>
+			<td valign="top">
+				<a href="http://php.net/manual/en/book.openssl.php" target="_blank">OpenSSL</a>
+			</td>
+			<td valign="top">'.InstallGetMessage("SC_SETTED").'</td>
+			<td valign="top">
+					'.(function_exists("openssl_encrypt") ? $this->ShowResult(InstallGetMessage("SC_SETTED"), "OK") : $this->ShowResult(InstallGetMessage("SC_NOT_SETTED"), "ERROR")).'
+			</td>
+		</tr>';
 
 		if (!BXInstallServices::CheckSession())
 		{
@@ -1183,15 +1201,6 @@ RewriteRule ^.+\.php$ /bitrix/httest/404.php
 		$this->content .= '
 		<tr>
 			<td colspan="3"><b>'.InstallGetMessage("SC_RECOM_PHP_MODULES").'</b></td>
-		</tr>
-		<tr>
-			<td valign="top">
-				<a href="http://php.net/manual/en/book.openssl.php" target="_blank">OpenSSL</a>
-			</td>
-			<td valign="top">'.InstallGetMessage("SC_SETTED").'</td>
-			<td valign="top">
-					'.(function_exists("openssl_encrypt") ? $this->ShowResult(InstallGetMessage("SC_SETTED"), "OK") : $this->ShowResult(InstallGetMessage("SC_NOT_SETTED"), "ERROR")).'
-			</td>
 		</tr>
 		<tr>
 			<td valign="top">
@@ -1887,6 +1896,8 @@ class CreateDBStep extends CWizardStep
 		);
 
 		$ar['connections']['readonly'] = true;
+
+		$ar["crypto"] = array("value" => array("crypto_key" => md5("some".uniqid("", true))), "readonly" => true);
 
 		if (!$fp = @fopen($filePath, "wb"))
 		{

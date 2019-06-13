@@ -2277,7 +2277,7 @@ if ($USER->IsAuthorized())
 		
 		
 		
-		$arResult["ORDER_TOTAL_PRICE_FORMATED"] = sprintf('%01.2f', $orderTotalSum);//SaleFormatCurrency($orderTotalSum, $arResult["BASE_LANG_CURRENCY"]);
+		$arResult["ORDER_TOTAL_PRICE_FORMATED"] = SaleFormatCurrency($orderTotalSum, $arResult["BASE_LANG_CURRENCY"]);
 		
 		
 		if ($arResult["PAY_CURRENT_ACCOUNT"] == "Y")

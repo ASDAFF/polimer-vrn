@@ -274,7 +274,7 @@ array(
 											echo htmlspecialcharsbx($ar_tax_list["TAX_NAME"]);
 											if ($ar_tax_list["IS_PERCENT"]=="Y")
 											{
-												echo " (".$ar_tax_list["VALUE"]."%)";
+												echo " (".(int)$ar_tax_list["VALUE"]."%)";
 											}
 											?>:
 
@@ -304,12 +304,17 @@ array(
 								<?if ($arOrder["DELIVERY_ID"]):?>
 									<tr>
 										<td align="right" class="smallText">
-											Delivery 
-											([<?echo $arOrder["DELIVERY_ID"];?>]
-											<?
-											$arDeliv = CSaleDelivery::GetByID($arOrder["DELIVERY_ID"]);
-											echo $arDeliv["NAME"];
-											?>):
+											Delivery <?
+											$deliveryId = \CSaleDelivery::getIdByCode($arOrder['DELIVERY_ID']);
+
+											if($deliveryId > 0)
+											{
+												if($delivery = \Bitrix\Sale\Delivery\Services\Manager::getObjectById($deliveryId))
+												{
+													echo "[".htmlspecialcharsbx($delivery->getNameWithParent())."]";
+												}
+											}
+											?>:
 										</td>
 										<td align="right" class="smallText">
 											<?echo SaleFormatCurrency($arOrder["PRICE_DELIVERY"], $arOrder["CURRENCY"]) ?>

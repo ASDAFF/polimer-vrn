@@ -70,7 +70,9 @@ class CCalendarLocation
 	public static function getRoomAccessibility($roomId, $from, $to, $params = array())
 	{
 		if (!isset($params['checkPermissions']))
+		{
 			$params['checkPermissions'] = true;
+		}
 
 		$accessibility = array();
 
@@ -91,10 +93,6 @@ class CCalendarLocation
 
 		foreach($roomEntries as $roomEntry)
 		{
-//			if ($curEventId && ($roomEntry["ID"] == $curEventId || $roomEntry["PARENT_ID"] == $curEventId))
-//				continue;
-//			if ($roomEntry["IS_MEETING"] && ($roomEntry["MEETING_STATUS"] == "N" || $roomEntry["MEETING_STATUS"] == "Q"))
-//				continue;
 			$accessibility[] = array(
 				"ID" => $roomEntry["ID"],
 				"NAME" => $roomEntry["NAME"],
@@ -127,11 +125,7 @@ class CCalendarLocation
 
 	public static function releaseRoom($params = array())
 	{
-		$res = CCalendar::DeleteEvent(intVal($params['room_event_id']),
-			false
-			//array('recursionMode' => self::$request['rec_mode'])
-		);
-		return true;
+		return CCalendar::DeleteEvent(intVal($params['room_event_id']), false);
 	}
 
 	public static function reserveRoom($params = array())
@@ -141,17 +135,86 @@ class CCalendarLocation
 				'ID' => $params['room_event_id'],
 				'CAL_TYPE' => self::$type,
 				'SECTIONS' => $params['room_id'],
-				'DATE_FROM' => $params['dateFrom'],
-				'DATE_TO' => $params['dateTo'],
+				'DATE_FROM' => $params['parentParams']['arFields']['DATE_FROM'],
+				'DATE_TO' => $params['parentParams']['arFields']['DATE_TO'],
 				'TZ_FROM' => $params['parentParams']['arFields']['TZ_FROM'],
 				'TZ_TO' => $params['parentParams']['arFields']['TZ_TO'],
 				'SKIP_TIME' => $params['parentParams']['arFields']['SKIP_TIME'],
 				'NAME' => Loc::getMessage('EC_EDEV_EVENT').': '.$params['parentParams']['arFields']['NAME'],
-				'RRULE' => $params['parentParams']['arFields']['RRULE']
+				'RRULE' => $params['parentParams']['arFields']['RRULE'],
+				'EXDATE' => $params['parentParams']['arFields']['EXDATE']
 			)
 		));
-
 		return $roomEventId;
+	}
+
+	public static function checkAccessibility($location = '', $params = array())
+	{
+		$location = CCalendar::ParseLocation($location);
+		$res = true;
+		if ($location['room_id'] || $location['mrid'])
+		{
+			$fromTs = CCalendar::Timestamp($params['fields']["DATE_FROM"]);
+			$toTs = CCalendar::Timestamp($params['fields']["DATE_TO"]);
+			$from = CCalendar::Date($fromTs, false);
+			$to = CCalendar::Date($fromTs, false);
+
+			$curUserId = CCalendar::GetCurUserId();
+			$deltaOffset = isset($params['timezone']) ? (CCalendar::GetTimezoneOffset($params['timezone']) - CCalendar::GetCurrentOffsetUTC($curUserId)) : 0;
+
+			if($location['mrid'])
+			{
+				$meetingRoomRes = CCalendar::GetAccessibilityForMeetingRoom(array(
+					'allowReserveMeeting' => true,
+					'id' => $location['mrid'],
+					'from' => CCalendar::Date($fromTs - CCalendar::DAY_LENGTH, false),
+					'to' => CCalendar::Date($toTs + CCalendar::DAY_LENGTH, false),
+					'curEventId' => $location['mrevid']
+				));
+
+				foreach($meetingRoomRes as $entry)
+				{
+					if ($entry['ID'] != $location['mrevid'])
+					{
+						$entryfromTs = CCalendar::Timestamp($entry['DT_FROM']);
+						$entrytoTs = CCalendar::Timestamp($entry['DT_TO']);
+
+						if ($entryfromTs < $toTs && $entrytoTs > $fromTs)
+						{
+							$res = false;
+							break;
+						}
+					}
+				}
+			}
+			elseif ($location['room_id'])
+			{
+				$entries = CCalendarLocation::getRoomAccessibility($location['room_id'], $from, $to);
+				foreach($entries as $entry)
+				{
+					if ($entry['ID'] != $location['room_event_id'])
+					{
+						$entryfromTs = CCalendar::Timestamp($entry['DATE_FROM']);
+						$entrytoTs = CCalendar::Timestamp($entry['DATE_TO']);
+						if($entry['DT_SKIP_TIME'] !== "Y")
+						{
+							$entryfromTs -= $entry['~USER_OFFSET_FROM'];
+							$entrytoTs -= $entry['~USER_OFFSET_TO'];
+							$entryfromTs += $deltaOffset;
+							$entrytoTs += $deltaOffset;
+						}
+
+						if ($entryfromTs < $toTs && $entrytoTs > $fromTs)
+						{
+							$res = false;
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		return $res;
 	}
 }
 ?>

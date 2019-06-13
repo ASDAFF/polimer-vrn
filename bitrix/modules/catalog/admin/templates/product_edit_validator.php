@@ -2,7 +2,8 @@
 /** @global CUser $USER */
 /** @global int $ID */
 use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+	Bitrix\Main\Localization\Loc,
+	Bitrix\Catalog;
 
 if ($USER->CanDoOperation('catalog_price'))
 {
@@ -17,6 +18,7 @@ if ($USER->CanDoOperation('catalog_price'))
 		? CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $PRODUCT_ID, "element_edit_price")
 		: CIBlockSectionRights::UserHasRightTo($IBLOCK_ID, $MENU_SECTION_ID, "element_edit_price")
 	);
+	$enableQuantityRanges = Catalog\Config\Feature::isPriceQuantityRangesEnabled();
 
 	if ($boolPriceRights)
 	{
@@ -36,14 +38,17 @@ if ($USER->CanDoOperation('catalog_price'))
 		$CAT_VAT_ID = intval($CAT_VAT_ID);
 		$CAT_VAT_INCLUDED = !isset($CAT_VAT_INCLUDED) || $CAT_VAT_INCLUDED == 'N' ? 'N' : 'Y';
 
-		$bUseExtForm = (isset($_POST['price_useextform']) && $_POST['price_useextform'] == 'Y');
+		if ($enableQuantityRanges)
+			$bUseExtForm = (isset($_POST['price_useextform']) && $_POST['price_useextform'] == 'Y');
+		else
+			$bUseExtForm = false;
 
 		if (!$bUseExtForm)
 			$CAT_ROW_COUNTER = 0;
 
 		for ($i = 0; $i <= $CAT_ROW_COUNTER; $i++)
 		{
-			${"CAT_BASE_PRICE_".$i} = str_replace(",", ".", ${"CAT_BASE_PRICE_".$i});
+			${"CAT_BASE_PRICE_".$i} = str_replace([' ', ','], ['', '.'], ${"CAT_BASE_PRICE_".$i});
 
 			if (intval(${"CAT_BASE_QUANTITY_FROM_".$i}) > 0
 				|| intval(${"CAT_BASE_QUANTITY_TO_".$i}) > 0

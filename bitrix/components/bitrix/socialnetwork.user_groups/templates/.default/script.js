@@ -57,6 +57,20 @@ BitrixSUG.prototype.init = function(params)
 		}
 
 	}, this));
+
+	BX.addCustomEvent('SidePanel.Slider:onMessage', BX.delegate(function(event){
+		if (event.getEventId() == 'sonetGroupEvent')
+		{
+			var eventData = event.getData();
+			if (
+				BX.type.isNotEmptyString(eventData.code)
+				&& eventData.code == 'afterEdit'
+			)
+			{
+				BX.SocialnetworkUICommon.reload();
+			}
+		}
+	}, this));
 };
 
 BitrixSUG.prototype.sendRequest = function(params)
@@ -80,13 +94,17 @@ BitrixSUG.prototype.sendRequest = function(params)
 
 	var requestParams = {};
 
+	var actionUrl = '/bitrix/components/bitrix/socialnetwork.user_groups/ajax.php';
 	if (params.action == 'FAVORITES')
 	{
 		requestParams.value = (typeof params.value != 'undefined' ? params.value : 'Y');
+		actionUrl = BX.util.add_url_param(actionUrl, {
+			b24statAction: (requestParams.value == 'N' ? 'removeFavSonetGroup' : 'addFavSonetGroup')
+		});
 	}
 
 	BX.ajax({
-		url: '/bitrix/components/bitrix/socialnetwork.user_groups/ajax.php',
+		url: actionUrl,
 		method: 'POST',
 		dataType: 'json',
 		data: {
@@ -118,12 +136,12 @@ BitrixSUG.prototype.sendRequest = function(params)
 
 BitrixSUG.prototype.showRequestWait = function(target)
 {
-	BX.addClass(target, 'popup-window-button-wait');
+	BX.addClass(target, 'ui-btn-wait');
 };
 
 BitrixSUG.prototype.closeRequestWait = function(target)
 {
-	BX.removeClass(target, 'popup-window-button-wait');
+	BX.removeClass(target, 'ui-btn-wait');
 };
 
 BitrixSUG.prototype.setFavorites = function(node, active)
@@ -638,7 +656,7 @@ BitrixSUG.prototype.processNavigation = function()
 	for (var i = 0; i < anchorsList.length; i++)
 	{
 		BX.bind(anchorsList[i], 'click', BX.delegate(function(e) {
-			var link = e.target.href;
+			var link = e.currentTarget.href;
 
 			if (
 				link

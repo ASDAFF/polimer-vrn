@@ -243,6 +243,11 @@ class CCloudStorageUpload
 
 			if ($bSuccess)
 			{
+				if ($obBucket->getQueueFlag())
+				{
+					CCloudFailover::queueCopy($obBucket, $this->_filePath);
+				}
+
 				foreach(GetModuleEvents("clouds", "OnAfterCompleteMultipartUpload", true) as $arEvent)
 				{
 					ExecuteModuleEventEx($arEvent, array($obBucket, array("size" => $ar["FILE_SIZE"]), $this->_filePath));

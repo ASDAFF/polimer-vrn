@@ -29,4 +29,5 @@ $MESS["SONET_GCE_TITLE_EDIT"] = "Edit workgroup";
 $MESS["SONET_GCE_TITLE_EDIT_PROJECT"] = "Edit project";
 $MESS["SONET_GCE_TITLE_INVITE"] = "Invite to workgroup";
 $MESS["SONET_GCE_TITLE_INVITE_PROJECT"] = "Invite to project";
+$MESS["SONET_GCE_INVITE_MESSAGE_TEXT"] = "Please join me in our new intranet. This is a place where everyone can collaborate on projects, coordinate tasks and schedules, and build our knowledge base, but it's easy to use, too.";
 ?>

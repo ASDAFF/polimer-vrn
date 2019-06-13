@@ -53,7 +53,7 @@ else
 	$arFilter["ID"] = $find_id;
 
 $arFilter[">=TIMESTAMP_X"] = $find_date1;
-$arFilter["<=TIMESTAMP_X"] = $find_date2;
+$arFilter["<=TIMESTAMP_X"] = $find_date2 && search_isShortDate($find_date2)? ConvertTimeStamp(AddTime(MakeTimeStamp($find_date2), 1, "D"), "FULL"): $find_date2;
 $arFilter["=SITE_ID"] = $find_site_id;
 
 if($_REQUEST["find_phrase_exact_match"] == "Y")

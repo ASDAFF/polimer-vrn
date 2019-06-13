@@ -10,4 +10,8 @@ $MESS["SONET_GRE_NAV"] = "Nutzer";
 $MESS["SONET_GRE_NAME_TEMPLATE_DEFAULT"] = "#NOBR##NAME# #LAST_NAME##/NOBR#";
 $MESS["SONET_GRE_CANT_DELETE_INVITATION"] = "Die Einladung für den Nutzer ID=#RELATION_ID# konnte nicht gelöscht werden";
 $MESS["SONET_GRE_TITLE_PROJECT"] = "Einladungen und Anfragen wegen Projektbeitritt";
+$MESS["SONET_GRE_TITLE_IN"] = "Anfragen zum Gruppenbeitritt";
+$MESS["SONET_GRE_TITLE_IN_PROJECT"] = "Anfragen zum Projektbeitritt";
+$MESS["SONET_GRE_TITLE_OUT"] = "Einladungen in die Gruppe";
+$MESS["SONET_GRE_TITLE_OUT_PROJECT"] = "Einladungen zum Projekt";
 ?>

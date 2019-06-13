@@ -4,7 +4,12 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html;charset=<?=SITE_CHARSET?>"/>
 <link href="<?=CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH."/template_styles.css")?>" type="text/css" rel="stylesheet" />
-<?CJSCore::Init();?>
+<?
+\Bitrix\Main\UI\Extension::load([
+	'sidepanel',
+	'intranet.sidepanel.external'
+]);
+?>
 <?$APPLICATION->ShowCSS(true, true);?>
 <?$APPLICATION->ShowHeadStrings();?>
 <?$APPLICATION->ShowHeadScripts();?>

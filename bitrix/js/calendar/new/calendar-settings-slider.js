@@ -4,7 +4,6 @@
 		this.calendar = params.calendar;
 		this.id = this.calendar.id + '_settings_slider';
 		this.uid = this.id + '_' + Math.round(Math.random() * 1000000);
-		this.button = params.button;
 		this.zIndex = params.zIndex || 3100;
 		this.sliderId = "calendar:settings-slider";
 
@@ -14,7 +13,6 @@
 
 		this.SLIDER_WIDTH = 500;
 		this.SLIDER_DURATION = 80;
-		BX.bind(this.button, 'click', BX.delegate(this.show, this));
 	}
 
 	SettingsSlider.prototype = {
@@ -23,12 +21,14 @@
 			BX.SidePanel.Instance.open(this.sliderId, {
 				contentCallback: BX.delegate(this.create, this),
 				width: this.SLIDER_WIDTH,
-				animationDuration: this.SLIDER_DURATION
+				animationDuration: this.SLIDER_DURATION,
+				events: {
+					onClose: BX.proxy(this.hide, this),
+					onCloseComplete: BX.proxy(this.destroy, this)
+				}
 			});
 
-			BX.addCustomEvent("SidePanel.Slider:onClose", BX.proxy(this.hide, this));
-			BX.addCustomEvent("SidePanel.Slider:onCloseComplete", BX.proxy(this.destroy, this));
-			this.calendar.keyHandlerEnabled = false;
+			this.calendar.disableKeyHandler();
 		},
 
 		close: function ()
@@ -57,7 +57,7 @@
 			{
 				BX.removeCustomEvent("SidePanel.Slider:onCloseComplete", BX.proxy(this.destroy, this));
 				BX.SidePanel.Instance.destroy(this.sliderId);
-				this.calendar.keyHandlerEnabled = true;
+				this.calendar.enableKeyHandler();
 			}
 		},
 
@@ -177,11 +177,11 @@
 			}
 			if(this.DOM.showTasks)
 			{
-				this.DOM.showTasks.checked = this.calendar.util.getUserOption('showTasks') == 'Y';
+				this.DOM.showTasks.checked = this.calendar.util.getUserOption('showTasks') === 'Y';
 			}
 			if(this.DOM.showCompletedTasks)
 			{
-				this.DOM.showCompletedTasks.checked = this.calendar.util.getUserOption('showCompletedTasks') == 'Y';
+				this.DOM.showCompletedTasks.checked = this.calendar.util.getUserOption('showCompletedTasks') === 'Y';
 			}
 			if (this.DOM.denyBusyInvitation)
 			{
@@ -421,10 +421,11 @@
 					attrs: {'data-bx-calendar-access-selector': code}
 				}),
 				selectNode = valueCell.appendChild(BX.create('SPAN', {
-					props: {className: 'calendar-section-slider-access-value'}
+					props: {className: 'calendar-section-slider-access-container'}
 				})),
 				valueNode = selectNode.appendChild(BX.create('SPAN', {
-					text: this.accessTasks[value] ? this.accessTasks[value].title : ''
+					text: this.accessTasks[value] ? this.accessTasks[value].title : '',
+					props: {className: 'calendar-section-slider-access-value'}
 				})),
 				removeIcon = selectNode.appendChild(BX.create('SPAN', {
 					props: {className: 'calendar-section-slider-access-remove'},
@@ -491,9 +492,9 @@
 			BX.addCustomEvent(this.accessPopupMenu.popupWindow, 'onPopupClose', function()
 			{
 				BX.PopupMenu.destroy(menuId);
+				_this.accessPopupMenu = null;
 			});
 		}
-
 	};
 
 	if (window.BXEventCalendar)

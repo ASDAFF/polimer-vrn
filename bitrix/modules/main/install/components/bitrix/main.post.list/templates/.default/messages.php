@@ -46,13 +46,17 @@ if (BX.CommentAux)
 	BX.CommentAux.init({
 		currentUserSonetGroupIdList: <?=CUtil::PhpToJSObject(\Bitrix\Socialnetwork\ComponentHelper::getUserSonetGroupIdList($USER->GetID(), SITE_ID))?>,
 		mobile: false,
-		publicSection: <?=(isset($arParams["bPublicPage"]) && $arParams["bPublicPage"] ? 'true' : 'false')?>
+		publicSection: <?=(isset($arParams["bPublicPage"]) && $arParams["bPublicPage"] ? 'true' : 'false')?>,
+		currentExtranetUser: <?=($arResult["currentExtranetUser"] ? 'true' : 'false')?>,
+		availableUsersList: <?=CUtil::PhpToJSObject($arResult["availableUsersList"])?>,
 	});
 }
 <? endif ?>
 
 BX.message({
 	MPL_HAVE_WRITTEN : ' <?=GetMessageJS("MPL_HAVE_WRITTEN")?>', // space here is important
+	MPL_HAVE_WRITTEN_M : ' <?=GetMessageJS("MPL_HAVE_WRITTEN_M")?>',
+	MPL_HAVE_WRITTEN_F : ' <?=GetMessageJS("MPL_HAVE_WRITTEN_F")?>',
 	B_B_MS_LINK : '<?=GetMessageJS("B_B_MS_LINK2")?>',
 	MPL_MES_HREF : '<?=GetMessageJS("MPL_MES_HREF")?>',
 	BPC_MES_EDIT : '<?=GetMessageJS("BPC_MES_EDIT")?>',
@@ -61,7 +65,6 @@ BX.message({
 	BPC_MES_DELETE : '<?=GetMessageJS("BPC_MES_DELETE")?>',
 	BPC_MES_DELETE_POST_CONFIRM : '<?=GetMessageJS("BPC_MES_DELETE_POST_CONFIRM")?>',
 	BPC_MES_CREATE_TASK : '<?=GetMessageJS("BPC_MES_CREATE_TASK")?>',
-	BPC_MES_CREATE_TASK_CONFIRM : '<?=GetMessageJS("BPC_MES_CREATE_TASK_CONFIRM")?>',
 	MPL_RECORD_TEMPLATE : '<?=CUtil::JSEscape($template)?>',
 	JERROR_NO_MESSAGE : '<?=GetMessageJS("JERROR_NO_MESSAGE")?>',
 	BLOG_C_HIDE : '<?=GetMessageJS("BLOG_C_HIDE")?>',

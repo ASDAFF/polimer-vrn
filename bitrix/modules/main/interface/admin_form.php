@@ -40,11 +40,16 @@ class CAdminForm extends CAdminTabControl
 
 		//Parse customized labels
 		$this->arCustomLabels = array();
-		foreach (CAdminFormSettings::getTabsArray($this->name) as $arTab)
+
+		$arDisabled = CUserOptions::GetOption("form", $this->name."_disabled", "N");
+		if(!is_array($arDisabled) || $arDisabled["disabled"] !== "Y")
 		{
-			foreach ($arTab["FIELDS"] as $customID => $customName)
+			foreach (CAdminFormSettings::getTabsArray($this->name) as $arTab)
 			{
-				$this->arCustomLabels[$customID] = $customName;
+				foreach ($arTab["FIELDS"] as $customID => $customName)
+				{
+					$this->arCustomLabels[$customID] = $customName;
+				}
 			}
 		}
 		ob_start();
@@ -162,7 +167,7 @@ class CAdminForm extends CAdminTabControl
 				$aAdditionalMenu[] = array(
 					"TEXT"=>GetMessage("admin_lib_menu_settings"),
 					"TITLE"=>GetMessage("admin_lib_context_sett_title"),
-					"ONCLICK"=>$this->name.".ShowSettings('".htmlspecialcharsex(CUtil::JSEscape($link))."')",
+					"ONCLICK"=>$this->name.".ShowSettings('".htmlspecialcharsbx(CUtil::JSEscape($link))."')",
 					"GLOBAL_ICON"=>"adm-menu-setting"
 				);
 
@@ -199,7 +204,6 @@ class CAdminForm extends CAdminTabControl
 				else
 				{
 					$s .= '<a class="adm-detail-settings" href="javascript:void(0)" onclick="'.$aAdditionalMenu[0]['ONCLICK'].'"></a>';
-
 				}
 			}
 		}

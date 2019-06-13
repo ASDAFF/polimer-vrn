@@ -35,12 +35,9 @@ class Address extends \Bitrix\Main\UserField\TypeBase
 	public static function getApiKey()
 	{
 		$apiKey = Option::get('fileman', 'google_map_api_key', '');
-		if(Loader::includeModule('bitrix24'))
+		if(Loader::includeModule('bitrix24') && \CBitrix24::isCustomDomain())
 		{
-			if(\CBitrix24::isCustomDomain())
-			{
-				$apiKey = '';
-			}
+			$apiKey = '';
 
 			$key = Option::get('bitrix24', 'google_map_api_key', '');
 			$keyHost = Option::get('bitrix24', 'google_map_api_key_host', '');
@@ -232,7 +229,7 @@ class Address extends \Bitrix\Main\UserField\TypeBase
 	protected static function getEdit($arUserField, $arHtmlControl)
 	{
 		$html = '';
-		\CJSCore::Init('userfield_address', 'google_map');
+		\CJSCore::Init(array('userfield_address', 'google_map'));
 
 		if(static::canUseMap())
 		{
@@ -376,15 +373,45 @@ class Address extends \Bitrix\Main\UserField\TypeBase
 		return static::getHelper()->wrapDisplayResult($html);
 	}
 
+	public static function getPublicText($userField)
+	{
+		$value = static::normalizeFieldValue($userField['VALUE']);
+
+		$text = '';
+		$first = true;
+		foreach ($value as $res)
+		{
+			if ($res == '')
+				continue;
+
+			list($descr, $coords) = static::parseValue($res);
+
+			if ($descr == '')
+				continue;
+
+			if (!$first)
+				$text .= ', ';
+			$first = false;
+
+			$text .= $coords != '' ? sprintf('%s (%s)', $descr, join(', ', $coords)) : $descr;
+		}
+
+		return $text;
+	}
+
 	protected static function parseValue($value)
 	{
 		$coords = '';
-		if(strpos($value, '|') >= 0)
+		if(strpos($value, '|') !== false)
 		{
 			list($value, $coords) = explode('|', $value);
-			if(strlen($coords) > 0)
+			if(strlen($coords) > 0 && strpos($coords, ';') !== false)
 			{
 				$coords = explode(';', $coords);
+			}
+			else
+			{
+				$coords = '';
 			}
 		}
 

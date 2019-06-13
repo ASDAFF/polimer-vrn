@@ -90,7 +90,6 @@ $MESS["SONET_GCE_T_DEST_EXTRANET_ADD_NAME_TITLE"] = "Имя";
 $MESS["SONET_GCE_T_DEST_EXTRANET_ADD_LAST_NAME_TITLE"] = "Фамилия";
 $MESS["SONET_GCE_T_DEST_EXTRANET_ADD_SEND_PASSWORD_TITLE"] = "Отправить данные для входа на указанный e-mail";
 $MESS["SONET_GCE_T_EMAILS_DESCR"] = "Введите адреса через запятую";
-$MESS["SONET_GCE_T_INVITE_MESSAGE_TEXT"] = "Приглашаю вас на корпоративный портал нашей компании. Здесь мы сможем вместе работать над проектами и задачами, управлять документами, планировать встречи и собрания, общаться в блогах и многое другое.";
 $MESS["SONET_GCE_T_AJAX_ERROR"] = "Произошла ошибка при обработке данных формы. Пожалуйста, попробуйте еще раз.";
 $MESS["SONET_GCE_T_BUTTON_TITLE_FURTHER"] = "дальше";
 $MESS["SONET_GCE_T_PARAMS_PROJECT"] = "Проект";
@@ -113,4 +112,6 @@ $MESS["SONET_GCE_T_TITLE_CREATE"] = "Создать группу";
 $MESS["SONET_GCE_T_TITLE_CREATE_PROJECT"] = "Создать проект";
 $MESS["SONET_GCE_T_TITLE_EDIT"] = "Редактировать группу";
 $MESS["SONET_GCE_T_TITLE_EDIT_PROJECT"] = "Редактировать проект";
+$MESS["SONET_GCE_T_ADD_DEPT_HINT"] = "При выборе отдела все сотрудники сразу станут участниками группы без подтверждения.";
+$MESS["SONET_GCE_T_ADD_DEPT_HINT_PROJECT"] = "При выборе отдела все сотрудники сразу станут участниками проекта без подтверждения.";
 ?>

@@ -141,7 +141,7 @@
 				BX.util.htmlspecialchars(this.entry.data['~RRULE_DESCRIPTION']) + '</div></div></div>'});
 			}
 
-			if (this.entry.isMeeting() && this.entry.getAttendees().length > 0)
+			if (this.calendar.util.isMeetingsEnabled() && this.entry.isMeeting() && this.entry.getAttendees().length > 0)
 			{
 				row = this.DOM.tableWrap.insertRow(-1);
 				BX.adjust(row.insertCell(-1), {props: {className: 'calendar-field-table-cell-name'}, html: BX.message('EC_HOST') + ':'});
@@ -151,13 +151,12 @@
 					.appendChild(BX.create('DIV', {props: {className: 'calendar-field-block'}}))
 					.appendChild(BX.create('DIV', {props: {className: 'calendar-add-popup-selected-members'}}));
 
-
 				var host = false;
 				this.showAttendees(this.DOM.hostWrap, this.entry.getAttendees().filter(function(user)
 				{
 					if (host)
 						return false;
-					host = user.STATUS == 'H' || (user.USER_ID == this.entry.getMeetingHost());
+					host = user.STATUS == 'H' || (user.ID == this.entry.getMeetingHost());
 					return host;
 				}, this));
 
@@ -174,23 +173,6 @@
 				}), this.entry.getAttendees().length);
 			}
 
-			//var reminders = this.entry.getReminders();
-			//if (reminders && reminders.length > 0)
-			//{
-			//	var i, html = '', str;
-			//	for (i = 0; i < reminders.length; i++)
-			//	{
-			//		str = this.calendar.util.getTextReminder(reminders[i]);
-			//		if (str)
-			//		{
-			//			html += '<span class="calendar-text-link">' + str + '</span>';
-			//		}
-			//	}
-			//	row = this.DOM.tableWrap.insertRow(-1);
-			//	BX.adjust(row.insertCell(-1), {html: BX.message('EC_REMIND') + ':'});
-			//	BX.adjust(row.insertCell(-1), {html: '<div class="calendar-field-block"><div class="calendar-text">' + html + '</div></div>'});
-			//}
-
 			var location = this.calendar.util.getTextLocation(this.entry.location);
 			if (location)
 			{
@@ -198,6 +180,18 @@
 				BX.adjust(row.insertCell(-1), {props: {className: 'calendar-field-table-cell-name'}, html: BX.message('EC_LOCATION') + ':'});
 				BX.adjust(row.insertCell(-1), {props: {className: 'calendar-field-table-cell-value'}, html: '<div class="calendar-field-container calendar-field-container-text"><div class="calendar-field-block"><div class="calendar-text">' +
 				BX.util.htmlspecialchars(location) + '</div></div></div>'});
+			}
+
+			if (this.calendar.util.showEventDescriptionInSimplePopup())
+			{
+				this.entry.getDescription(BX.proxy(function(descriptionHTML)
+				{
+					if (BX.isNodeInDom(this.DOM.tableWrap) && descriptionHTML)
+					{
+						row = this.DOM.tableWrap.insertRow(-1);
+						BX.adjust(row.insertCell(-1), {attrs: {colSpan: 2, className: 'calendar-field-table-cell-value'}, html: '<div class="calendar-field-container calendar-field-container-text calendar-container-short-description"><div class="calendar-field-block"><div class="calendar-text calendar-description-field">' + descriptionHTML + '</div></div></div>'});
+					}
+				}, this));
 			}
 
 			this.showButtons();
@@ -208,23 +202,26 @@
 		showButtons: function()
 		{
 			// Buttons
-			this.DOM.buttonsWrap.appendChild(BX.create('SPAN', {
-				props: {className: 'calendar-right-block-event-info-btn'},
-				text: BX.message('EC_VIEW'),
-				events: {click: BX.proxy(function(){
-					if (this.entry.isTask())
-					{
-						BX.SidePanel.Instance.open(this.calendar.util.getViewTaskPath(this.entry.id), {loader: "task-new-loader"});
-					}
-					else
-					{
-						this.calendar.getView().showViewSlider({entry: this.entry});
-					}
-					this.close({deselectEntry: true});
-				}, this)}
-			}));
+			if (this.calendar.util.useViewSlider())
+			{
+				this.DOM.buttonsWrap.appendChild(BX.create('SPAN', {
+					props: {className: 'calendar-right-block-event-info-btn'},
+					text: BX.message('EC_VIEW'),
+					events: {click: BX.proxy(function(){
+						if (this.entry.isTask())
+						{
+							BX.SidePanel.Instance.open(this.calendar.util.getViewTaskPath(this.entry.id), {loader: "task-new-loader"});
+						}
+						else
+						{
+							this.calendar.getView().showViewSlider({entry: this.entry});
+						}
+						this.close({deselectEntry: true});
+					}, this)}
+				}));
+			}
 
-			if (this.entry && this.entry.getCurrentStatus())
+			if (this.calendar.util.isMeetingsEnabled() && this.entry && this.entry.getCurrentStatus())
 			{
 				var status = this.entry.getCurrentStatus();
 
@@ -317,17 +314,16 @@
 				for (i = 0; i < userLength; i++)
 				{
 					user = attendees[i] || {};
-
 					wrap.appendChild(BX.create("IMG", {
 						attrs: {
 							id: 'simple_view_popup_' + user.ID,
-							src: user.AVATAR || ''
+							src: user.AVATAR || '',
+							'bx-tooltip-user-id': user.ID
 						},
 						props: {
 							title: user.DISPLAY_NAME,
 							className: 'calendar-member'
 						}}));
-					(function (userId){setTimeout(function(){BX.tooltip(userId, "simple_view_popup_" + userId);}, 100)})(user.ID);
 				}
 
 				if (userLength < attendees.length)
@@ -394,7 +390,7 @@
 					closeByEsc: true,
 					offsetTop: 0,
 					offsetLeft: 0,
-					width: 200,
+					width: 220,
 					resizable: false,
 					lightShadow: true,
 					content: this.DOM.userListPopupWrap,

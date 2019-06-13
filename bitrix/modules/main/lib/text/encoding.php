@@ -19,6 +19,28 @@ class Encoding
 		$this->errors = new ErrorCollection();
 	}
 
+	public static function resolveAlias($alias)
+	{
+		static $map = array(
+			'csksc56011987' => 'euc-kr',
+			'ks_c_5601-1987' => 'euc-kr',
+			'ks_c_5601-1989' => 'euc-kr',
+			'ksc5601' => 'euc-kr',
+			'ksc_5601' => 'euc-kr',
+		);
+
+		if(is_string($alias))
+		{
+			$alias = strtolower(trim($alias));
+			if(isset($map[$alias]))
+			{
+				return $map[$alias];
+			}
+		}
+
+		return $alias;
+	}
+
 	/**
 	 * Converts data from a source encoding to a target encoding.
 	 *
@@ -30,6 +52,9 @@ class Encoding
 	 */
 	public static function convertEncoding($data, $charsetFrom, $charsetTo, &$errorMessage = "")
 	{
+		$charsetFrom = static::resolveAlias($charsetFrom);
+		$charsetTo = static::resolveAlias($charsetTo);
+
 		if(strcasecmp($charsetFrom, $charsetTo) == 0)
 		{
 			//no need to convert
@@ -99,6 +124,8 @@ class Encoding
 	/**
 	 * @param string $string
 	 * @return bool|string
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function convertEncodingToCurrent($string)
 	{
@@ -159,10 +186,10 @@ class Encoding
 	{
 		//http://mail.nl.linux.org/linux-utf8/1999-09/msg00110.html
 
-		if(preg_match_all("/(?:%)([0-9A-F]{2})/i", $string, $match))
+		$string = preg_replace_callback("/(%)([0-9A-F]{2})/i", function ($match)
 		{
-			$string = pack("H*", strtr(implode('', $match[1]), 'abcdef', 'ABCDEF'));
-		}
+			return chr(hexdec($match[2]));
+		}, $string);
 
 		//valid UTF-8 octet sequences
 		//0xxxxxxx
@@ -253,7 +280,7 @@ class Encoding
 					$res = iconv($charsetFrom, $charsetTo."//IGNORE", $data);
 				}
 
-				if (!$res)
+				if ($res === false)
 				{
 					$this->errors[] = new Error("Iconv reported failure while converting string to requested character encoding.");
 				}
@@ -269,7 +296,7 @@ class Encoding
 					$res = libiconv($charsetFrom, $charsetTo, $data);
 				}
 
-				if (!$res)
+				if ($res === false)
 				{
 					$this->errors[] = new Error("Libiconv reported failure while converting string to requested character encoding.");
 				}

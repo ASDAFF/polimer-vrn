@@ -24,6 +24,8 @@ if (!CModule::IncludeModule("socialnetwork"))
 	return;
 }
 
+$arResult["IS_IFRAME"] = ($_REQUEST["IFRAME"] == "Y");
+
 $arParams["GROUP_ID"] = IntVal($arParams["GROUP_ID"]);
 $arParams["USER_ID"] = IntVal($arParams["USER_ID"]);
 if ($arParams["USER_ID"] <= 0)
@@ -63,19 +65,43 @@ if (!$USER->IsAuthorized())
 }
 else
 {
-	if ($arParams["PAGE_ID"] == "user_features" && $arParams["USER_ID"] <= 0)
+	if (
+		$arParams["PAGE_ID"] == "user_features"
+		&& $arParams["USER_ID"] <= 0
+	)
+	{
 		$arResult["FatalError"] = GetMessage("SONET_C3_NO_USER_ID").".";
-	elseif ($arParams["PAGE_ID"] == "group_features" && $arParams["GROUP_ID"] <= 0)
+	}
+	elseif (
+		$arParams["PAGE_ID"] == "group_features"
+		&& $arParams["GROUP_ID"] <= 0
+	)
+	{
 		$arResult["FatalError"] = GetMessage("SONET_C3_NO_GROUP_ID").".";
+	}
 
 	if (StrLen($arResult["FatalError"]) <= 0)
 	{
 		if ($arParams["PAGE_ID"] == "group_features")
 		{
 			$arGroup = CSocNetGroup::GetByID($arParams["GROUP_ID"]);
-			if ($arGroup && ($arGroup["OWNER_ID"] == $USER->GetID() || CSocNetUser::IsCurrentUserModuleAdmin()))
+
+			if (!\Bitrix\Socialnetwork\Item\Workgroup::getEditFeaturesAvailability())
+			{
+				$arResult["FatalError"] = GetMessage("SONET_C3_PERMS").".";
+			}
+			elseif (
+				$arGroup
+				&& (
+					$arGroup["OWNER_ID"] == $USER->GetID()
+					|| CSocNetUser::IsCurrentUserModuleAdmin()
+				)
+			)
 			{
 				$arResult["CurrentUserPerms"] = CSocNetUserToGroup::InitUserPerms($USER->GetID(), $arGroup, CSocNetUser::IsCurrentUserModuleAdmin());
+				$arResult["InitiatePermsList"] = \Bitrix\Socialnetwork\Item\Workgroup::getInitiatePermOptionsList(array(
+					'project' => ($arGroup["PROJECT"] == 'Y')
+				));
 
 				if ($arResult["CurrentUserPerms"]["UserCanModifyGroup"])
 				{
@@ -109,10 +135,10 @@ else
 						);
 
 						if (
-							$feature == 'calendar' 
+							$feature == 'calendar'
 							&& (
 								!IsModuleInstalled("intranet")
-								|| COption::GetOptionString("intranet", "calendar_2", "N") == "Y" 
+								|| COption::GetOptionString("intranet", "calendar_2", "N") == "Y"
 							)
 							&& CModule::IncludeModule("calendar")
 						)
@@ -264,7 +290,15 @@ else
 
 		if ($arParams["SET_TITLE"] == "Y")
 		{
-			$APPLICATION->SetTitle($strTitleFormatted.": ".$pageTitle);
+			if ($arResult['IS_IFRAME'])
+			{
+				$APPLICATION->SetTitle($pageTitle);
+				$APPLICATION->SetPageProperty("PageSubtitle", $strTitleFormatted);
+			}
+			else
+			{
+				$APPLICATION->SetTitle($strTitleFormatted.": ".$pageTitle);
+			}
 		}
 
 		if ($arParams["SET_NAV_CHAIN"] != "N")
@@ -275,21 +309,47 @@ else
 
 		$arResult["ShowForm"] = "Input";
 
-		if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["save"]) > 0 && check_bitrix_sessid())
+		if (
+			$_SERVER["REQUEST_METHOD"] == "POST"
+			&& strlen($_POST["save"]) > 0
+			&& check_bitrix_sessid()
+		)
 		{
+			if ($_POST["ajax_request"] == "Y")
+			{
+				CUtil::JSPostUnescape();
+			}
+
 			$errorMessage = "";
+
+			if (
+				$arParams["PAGE_ID"] == "group_features"
+				&& strlen($_POST["GROUP_INITIATE_PERMS"]) > 0
+				&& in_array($_POST["GROUP_INITIATE_PERMS"], UserToGroupTable::getRolesMember())
+			)
+			{
+				CSocNetGroup::update($arResult["Group"]["ID"], array(
+					'INITIATE_PERMS' => $_POST["GROUP_INITIATE_PERMS"],
+					'=DATE_UPDATE' => $DB->currentTimeFunction()
+				));
+			}
 
 			foreach ($arResult["Features"] as $feature => $arFeature)
 			{
-				if($feature == "blog" && $arParams["PAGE_ID"] != "group_features")
+				if (
+					$feature == "blog"
+					&& $arParams["PAGE_ID"] != "group_features"
+				)
+				{
 					$_REQUEST["blog_active"] = "Y";
+				}
 
-				$idTmp = CSocNetFeatures::SetFeature(
-					($arParams["PAGE_ID"] == "group_features") ? SONET_ENTITY_GROUP : SONET_ENTITY_USER,
-					($arParams["PAGE_ID"] == "group_features") ? $arResult["Group"]["ID"] : $arResult["User"]["ID"],
+				$idTmp = CSocNetFeatures::setFeature(
+					($arParams["PAGE_ID"] == "group_features" ? SONET_ENTITY_GROUP : SONET_ENTITY_USER),
+					($arParams["PAGE_ID"] == "group_features" ? $arResult["Group"]["ID"] : $arResult["User"]["ID"]),
 					$feature,
-					($_REQUEST[$feature."_active"] == "Y") ? true : false,
-					(StrLen($_REQUEST[$feature."_name"]) > 0) ? $_REQUEST[$feature."_name"] : false
+					($_REQUEST[$feature."_active"] == "Y"),
+					(strlen($_REQUEST[$feature."_name"]) > 0 ? $_REQUEST[$feature."_name"] : false)
 				);
 
 				if (
@@ -324,25 +384,39 @@ else
 				}
 			}
 
-			if (strlen($errorMessage) > 0)
+			if ($_REQUEST["ajax_request"] == "Y")
 			{
-				$arResult["ErrorMessage"] = $errorMessage;
+				$APPLICATION->RestartBuffer();
+				echo CUtil::PhpToJsObject(array(
+					'MESSAGE' => (strlen($errorMessage) > 0 ? 'ERROR' : 'SUCCESS'),
+					'ERROR_MESSAGE' => (strlen($errorMessage) > 0 ? $errorMessage : ''),
+					'URL' => (strlen($errorMessage) > 0 ? '' : $arResult["Urls"]["Group"])
+				));
+				require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
+				die();
 			}
 			else
 			{
-				if ($_REQUEST['backurl'])
+				if (strlen($errorMessage) > 0)
 				{
-					LocalRedirect($_REQUEST['backurl']);
+					$arResult["ErrorMessage"] = $errorMessage;
 				}
 				else
 				{
-					if ($arParams["PAGE_ID"] == "group_features")
+					if ($_REQUEST['backurl'])
 					{
-						LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP"], array("group_id" => $arParams["GROUP_ID"])));
+						LocalRedirect($_REQUEST['backurl']);
 					}
 					else
 					{
-						LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER"], array("user_id" => $arParams["USER_ID"])));
+						if ($arParams["PAGE_ID"] == "group_features")
+						{
+							LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP"], array("group_id" => $arParams["GROUP_ID"])));
+						}
+						else
+						{
+							LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER"], array("user_id" => $arParams["USER_ID"])));
+						}
 					}
 				}
 			}

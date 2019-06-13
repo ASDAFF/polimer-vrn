@@ -12,8 +12,8 @@ $arActivityDescription = array(
 	),
 	'FILTER' => array(
 		'EXCLUDE' => array(
-			array('disk'),
+			['disk'],
+			['crm']
 		)
 	)
 );
-?>

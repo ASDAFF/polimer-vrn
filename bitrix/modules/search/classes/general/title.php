@@ -37,8 +37,6 @@ class CAllSearchTitle extends CDBResult
 						,sc.PARAM1
 						,sc.PARAM2
 						,sc.DATE_CHANGE
-						,L.DIR
-						,L.SERVER_NAME
 						,sc.URL as URL
 						,scsite.URL as SITE_URL
 						,scsite.SITE_ID
@@ -46,7 +44,6 @@ class CAllSearchTitle extends CDBResult
 					FROM
 						b_search_content sc
 						INNER JOIN b_search_content_site scsite ON sc.ID = scsite.SEARCH_CONTENT_ID
-						INNER JOIN b_lang L ON scsite.SITE_ID = L.LID
 					WHERE
 						sc.ID in (".implode(",", $arId).")
 						and scsite.SITE_ID = '".SITE_ID."'
@@ -78,10 +75,23 @@ class CAllSearchTitle extends CDBResult
 
 	function Fetch()
 	{
+		static $arSite = array();
+
 		$r = parent::Fetch();
 
 		if ($r)
 		{
+			$site_id = $r["SITE_ID"];
+			if (!isset($arSite[$site_id]))
+			{
+				$b = "sort";
+				$o = "asc";
+				$rsSite = CSite::GetList($b, $o, array("ID" => $site_id));
+				$arSite[$site_id] = $rsSite->Fetch();
+			}
+			$r["DIR"] = $arSite[$site_id]["DIR"];
+			$r["SERVER_NAME"] = $arSite[$site_id]["SERVER_NAME"];
+
 			if (strlen($r["SITE_URL"]) > 0)
 				$r["URL"] = $r["SITE_URL"];
 

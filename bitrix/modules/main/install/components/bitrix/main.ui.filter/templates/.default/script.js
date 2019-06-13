@@ -12,8 +12,10 @@
 	 * @param types.STRING
 	 * @param types.SELECT
 	 * @param types.DATE
+	 * @param types.CUSTOM_DATE
 	 * @param types.MULTI_SELECT
 	 * @param types.NUMBER
+	 * @param types.DEST_SELECTOR
 	 * @param types.CUSTOM_ENTITY
 	 * @param types.CHECKBOX
 	 * @param types.CUSTOM
@@ -43,7 +45,7 @@
 	 * @param dateTypes.NEXT_WEEK
 	 * @param {object} numberTypes Number field types from Bitrix\Main\UI\Filter\NumberType
 	 */
-	BX.Main.Filter = function(params, options, types, dateTypes, numberTypes)
+	BX.Main.Filter = function(params, options, types, dateTypes, numberTypes, additionalDateTypes)
 	{
 		this.params = params;
 		this.search = null;
@@ -52,6 +54,7 @@
 		this.fields = null;
 		this.types = types;
 		this.dateTypes = dateTypes;
+		this.additionalDateTypes = additionalDateTypes;
 		this.numberTypes = numberTypes;
 		this.settings = new BX.Filter.Settings(options, this);
 		this.filter = null;
@@ -60,6 +63,25 @@
 		this.firstInit = true;
 		this.init();
 	};
+
+	/**
+	 * Converts string to camel case
+	 * @param {string} string
+	 * @return {*}
+	 */
+	function toCamelCase(string)
+	{
+		if (BX.type.isString(string))
+		{
+			string = string.toLowerCase();
+			string = string.replace(/[\-_\s]+(.)?/g, function(match, chr) {
+				return chr ? chr.toUpperCase() : '';
+			});
+			return string.substr(0, 1).toLowerCase() + string.substr(1);
+		}
+
+		return string;
+	}
 
 	//noinspection JSUnusedGlobalSymbols
 	BX.Main.Filter.prototype = {
@@ -71,7 +93,6 @@
 			BX.addCustomEvent('Grid::ready', BX.delegate(this._onGridReady, this));
 
 			this.getSearch().updatePreset(this.getParam('CURRENT_PRESET'));
-			this.clearGet();
 		},
 
 
@@ -123,6 +144,14 @@
 					if (this.getParam('VALUE_REQUIRED_MODE'))
 					{
 						this.restoreRemovedPreset();
+					}
+
+					if (this.getParam('VALUE_REQUIRED'))
+					{
+						if (!this.getSearch().getSquares().length)
+						{
+							this.getPreset().applyPinnedPreset();
+						}
 					}
 				}
 			}
@@ -199,7 +228,11 @@
 					presetsSettings[presetId] = {
 						sort: index,
 						name: presetData.TITLE,
-						fields: this.preparePresetSettingsFields(presetData.FIELDS)
+						fields: this.preparePresetSettingsFields(presetData.FIELDS),
+						for_all: (
+							(forAll && !BX.type.isBoolean(presetData.FOR_ALL)) ||
+							(forAll && presetData.FOR_ALL === true)
+						)
 					}
 				}
 			}, this);
@@ -212,10 +245,13 @@
 		 * Checks is for all
 		 * @return {boolean}
 		 */
-		isForAll: function()
+		isForAll: function(forAll)
 		{
 			var checkbox = this.getForAllCheckbox();
-			return (checkbox && checkbox.checked);
+			return (
+				(BX.type.isBoolean(forAll) && forAll) ||
+				(!!checkbox && !!checkbox.checked)
+			);
 		},
 
 
@@ -299,6 +335,15 @@
 							valuesKeys.forEach(function(curr) {
 								result[current.NAME + curr] = current.VALUES[curr];
 							}, this);
+						}
+						break;
+					}
+
+					case this.types.DEST_SELECTOR : {
+						if (BX.type.isPlainObject(current.VALUES))
+						{
+							result[current.NAME] = current.VALUES._value;
+							result[current.NAME + '_label'] = current.VALUES._label;
 						}
 						break;
 					}
@@ -557,7 +602,9 @@
 				rows = BX.type.isNotEmptyString(rows) ? rows.split(',') : [];
 				fieldKeys = rows.length ? rows : Object.keys(dataFields);
 				fieldKeys.forEach(function(current) {
-					current = current.replace('_datesel', '').replace('_numsel', '');
+					current = current
+						.replace('_datesel', '')
+						.replace('_numsel', '');
 					field = BX.clone(this.getFieldByName(current));
 
 					if (BX.type.isPlainObject(field))
@@ -587,7 +634,23 @@
 								'_days': dataFields[current + '_days'],
 								'_month': dataFields[current + '_month'],
 								'_quarter': dataFields[current + '_quarter'],
-								'_year': dataFields[current + '_year']
+								'_year': dataFields[current + '_year'],
+								'_allow_year': dataFields[current + '_allow_year']
+							};
+						}
+
+						if (field.TYPE === this.types.CUSTOM_DATE)
+						{
+							field.VALUE = {
+								'days': Object.keys(dataFields[current + '_days'] || {}).map(function(index) {
+									return dataFields[current + '_days'][index];
+								}),
+								'months': Object.keys(dataFields[current + '_months'] || {}).map(function(index) {
+									return dataFields[current + '_months'][index];
+								}),
+								'years': Object.keys(dataFields[current + '_years'] || {}).map(function(index) {
+									return dataFields[current + '_years'][index];
+								})
 							};
 						}
 
@@ -598,6 +661,19 @@
 								'_from': dataFields[current + '_from'],
 								'_to': dataFields[current + '_to']
 							};
+						}
+
+						if (field.TYPE === this.types.DEST_SELECTOR)
+						{
+							if (typeof dataFields[current + '_label'] !== 'undefined')
+							{
+								field.VALUES._label = dataFields[current + '_label'];
+							}
+
+							if (typeof dataFields[current] !== 'undefined')
+							{
+								field.VALUES._value = dataFields[current];
+							}
 						}
 
 						if (field.TYPE === this.types.CUSTOM_ENTITY)
@@ -694,60 +770,89 @@
 
 
 		/**
-		 * Save options
-		 * @param {?object} postData
-		 * @param {?object} [getData]
-		 * @param {function} [callback]
-		 * @param {boolean} [forAll = false]
+		 * @private
+		 * @return {Promise}
 		 */
-		saveOptions: function(postData, getData, callback, forAll)
+		confirmSaveForAll: function()
 		{
-			if (this.isUseCommonPresets())
-			{
-				if (BX.type.isPlainObject(getData))
-				{
-					getData.common_presets_id = this.getParam('COMMON_PRESETS_ID');
-				}
-			}
-
-			var url = BX.util.add_url_param(this.getParam('SETTINGS_URL'), getData || {});
-
-			forAll = BX.type.isBoolean(forAll) ? forAll : !!this.getSaveForAllCheckbox() && this.getSaveForAllCheckbox().checked;
-
-			if (forAll && ('action' in getData && getData.action === 'SET_FILTER_ARRAY'))
-			{
+			return new Promise(function(resolve) {
 				var action = {
 					CONFIRM: true,
 					CONFIRM_MESSAGE: this.getParam('MAIN_UI_FILTER__CONFIRM_MESSAGE_FOR_ALL'),
 					CONFIRM_APPLY_BUTTON: this.getParam('MAIN_UI_FILTER__CONFIRM_APPLY_FOR_ALL'),
 					CONFIRM_CANCEL_BUTTON: this.getParam('CONFIRM_CANCEL')
 				};
+				this.confirmDialog(action, resolve);
+			}.bind(this));
+		},
 
-				this.confirmDialog(
-					action,
-					BX.delegate(function() {
-						url = BX.util.add_url_param(url, {'for_all': 'true'});
+
+		/**
+		 * Save options
+		 * @param {object} data
+		 * @param {object} [params]
+		 * @param {function} [callback]
+		 * @param {boolean} [forAll = false]
+		 */
+		saveOptions: function(data, params, callback, forAll)
+		{
+			params.action = toCamelCase(params.action);
+			params.forAll = this.isForAll(forAll);
+			params.commonPresetsId = this.getParam('COMMON_PRESETS_ID');
+			params.apply_filter = data.apply_filter || "N";
+			params.clear_filter = data.clear_filter || "N";
+			params.with_preset = data.with_preset || "N";
+			params.save = data.save || "N";
+
+			var requestData = {
+				params: params,
+				data: data
+			};
+
+			delete data.apply_filter;
+			delete data.save;
+			delete data.clear_filter;
+			delete data.with_preset;
+
+			if (params.forAll && params.action === 'setFilterArray')
+			{
+				return this.confirmSaveForAll()
+					.then(function() {
+						return this.backend(params.action, requestData);
+					}.bind(this))
+					.then(function() {
 						this.disableEdit();
 						this.disableAddPreset();
-						save(url, this, true);
-					}, this),
-					BX.delegate(function() {
-
-					}, this)
-				);
-			}
-			else
-			{
-				save(url, this);
+					}.bind(this))
 			}
 
-			function save(url, ctx)
-			{
-				BX.ajax.post(url, postData, BX.delegate(function() {
+			return this.backend(params.action, requestData)
+				.then(function() {
 					BX.removeClass(this.getFindButton(), this.settings.classWaitButtonClass);
 					BX.type.isFunction(callback) && callback();
-				}, ctx));
-			}
+				}.bind(this));
+		},
+
+
+		/**
+		 *
+		 * @param {string} action
+		 * @param data
+		 */
+		backend: function(action, data)
+		{
+			return BX.ajax.runComponentAction(
+				'bitrix:main.ui.filter',
+				action,
+				{
+					mode: 'ajax',
+					data: data,
+					analyticsLabel: {
+						FILTER_ID: this.getParam('FILTER_ID'),
+						GRID_ID: this.getParam('GRID_ID')
+					}
+				}
+			);
 		},
 
 
@@ -851,6 +956,14 @@
 					{
 						this.restoreRemovedPreset();
 					}
+
+					if (this.getParam('VALUE_REQUIRED'))
+					{
+						if (!this.getSearch().getSquares().length)
+						{
+							this.getPreset().applyPinnedPreset();
+						}
+					}
 				}
 
 				BX.onCustomEvent(window, 'BX.Main.Filter:blur', [this]);
@@ -877,9 +990,18 @@
 
 		/**
 		 * Synchronizes field list in popup and filter field list
+		 * @param {?{cache: boolean}} [options]
 		 */
-		syncFields: function()
+		syncFields: function(options)
 		{
+			if (BX.type.isPlainObject(options))
+			{
+				if (options.cache === false)
+				{
+					this.fieldsPopupItems = null;
+				}
+			}
+
 			var fields = this.getPreset().getFields();
 			var items = this.getFieldsPopupItems();
 			var currentId, isNeedCheck;
@@ -968,20 +1090,74 @@
 
 
 		/**
-		 * Gets fields popup content
-		 * @returns {HTMLElement} - Fields container with fields
+		 * Gets lazy load field list
+		 * @return {BX.Promise}
+		 */
+		getLazyLoadFields: function()
+		{
+			var p = new BX.Promise();
+
+			BX.ajax({
+				method: 'GET',
+				url: this.getParam("LAZY_LOAD")["GET_LIST"],
+				dataType: 'json',
+				onsuccess: function(response) {
+					p.fulfill(response);
+				}
+			});
+
+			return p;
+		},
+
+
+		/**
+		 * Gets fields list popup content
+		 * @return {BX.Promise}
 		 */
 		getFieldsListPopupContent: function()
 		{
+			var p = new BX.Promise();
 			var fields = this.getParam('FIELDS');
 			var fieldsCount = BX.type.isArray(fields) ? fields.length : 0;
+
+			if (this.getParam('LAZY_LOAD'))
+			{
+				this.getLazyLoadFields().then(function(response) {
+					var containerDecl = {
+						block: this.settings.classPopupFieldList,
+						mix: this.getFieldListContainerClassName(response.length),
+						content: this.prepareFieldsDecl(response)
+					};
+
+					p.fulfill(BX.decl(containerDecl));
+				}.bind(this));
+
+				return p;
+			}
+
 			var containerDecl = {
 				block: this.settings.classPopupFieldList,
 				mix: this.getFieldListContainerClassName(fieldsCount),
 				content: this.prepareFieldsDecl(fields)
 			};
 
-			return BX.decl(containerDecl);
+			p.fulfill(BX.decl(containerDecl));
+			return p;
+		},
+
+
+		/**
+		 * Gets field loader
+		 * @return {BX.Loader}
+		 */
+		getFieldLoader: function()
+		{
+			if (!this.fieldLoader)
+			{
+				this.fieldLoader = new BX.Loader({mode: "custom", size: 18, offset: {left: "5px", top: "5px"}});
+			}
+
+			return this.fieldLoader;
 		},
 
 		_clickOnFieldListItem: function(event)
@@ -991,7 +1167,7 @@
 
 			if (!BX.hasClass(target, this.settings.classFieldListItem))
 			{
-				target = BX.findParent(target, {class: this.settings.classFieldListItem}, true, false);
+				target = BX.findParent(target, {className: this.settings.classFieldListItem}, true, false);
 			}
 
 			if (BX.type.isDomNode(target))
@@ -1000,22 +1176,93 @@
 					data = JSON.parse(BX.data(target, 'item'));
 				} catch (err) {}
 
-				if (BX.hasClass(target, this.settings.classMenuItemChecked))
+				var p = new BX.Promise();
+
+				if (this.getParam("LAZY_LOAD"))
 				{
-					BX.removeClass(target, this.settings.classMenuItemChecked);
-					this.getPreset().removeField(data);
+					this.getFieldLoader().show(target);
+					var label = target.querySelector(".main-ui-select-inner-label");
+
+					if (label)
+					{
+						label.classList.add("main-ui-no-before");
+					}
+
+					this.getLazyLoadField(data.NAME).then(function(response) {
+						p.fulfill(response);
+						this.getFieldLoader().hide();
+						if (label)
+						{
+							label.classList.remove("main-ui-no-before");
+						}
+					}.bind(this));
 				}
 				else
 				{
-					if (BX.type.isPlainObject(data))
-					{
-						this.getPreset().addField(data);
-						BX.addClass(target, this.settings.classMenuItemChecked);
-					}
+					p.fulfill(data);
 				}
 
-				this.syncFields();
+				p.then(function(response) {
+					this.params.FIELDS.push(response);
+
+					if (BX.hasClass(target, this.settings.classMenuItemChecked))
+					{
+						BX.removeClass(target, this.settings.classMenuItemChecked);
+						this.getPreset().removeField(response);
+					}
+					else
+					{
+						if (BX.type.isPlainObject(response))
+						{
+							this.getPreset().addField(response);
+							BX.addClass(target, this.settings.classMenuItemChecked);
+
+							if (BX.type.isString(response.HTML))
+							{
+								var wrap = BX.create("div");
+								this.getHiddenElement().appendChild(wrap);
+								BX.html(wrap, response.HTML);
+							}
+						}
+					}
+
+					this.syncFields();
+				}.bind(this));
 			}
+		},
+
+
+		getHiddenElement: function()
+		{
+			if (!this.hiddenElement)
+			{
+				this.hiddenElement = BX.create("div");
+				document.body.appendChild(this.hiddenElement);
+			}
+
+			return this.hiddenElement;
+		},
+
+
+		/**
+		 * Gets lazy load fields
+		 * @param id
+		 * @return {BX.Promise}
+		 */
+		getLazyLoadField: function(id)
+		{
+			var p = new BX.Promise();
+
+			BX.ajax({
+				method: 'get',
+				url: BX.util.add_url_param(this.getParam("LAZY_LOAD")["GET_FIELD"], {id: id}),
+				dataType: 'json',
+				onsuccess: function(response) {
+					p.fulfill(response);
+				}
+			});
+
+			return p;
 		},
 
 
@@ -1077,7 +1324,16 @@
 					}
 				);
 
-				this.fieldsPopup.setContent(this.getFieldsListPopupContent());
+				this.fieldsPopupLoader = new BX.Loader({target: this.fieldsPopup.contentContainer});
+				this.fieldsPopupLoader.show();
+				this.fieldsPopup.contentContainer.style.width = "630px";
+				this.fieldsPopup.contentContainer.style.height = "330px";
+				this.getFieldsListPopupContent().then(function(res) {
+					this.fieldsPopup.contentContainer.removeAttribute("style");
+					this.fieldsPopupLoader.hide();
+					this.fieldsPopup.setContent(res);
+					this.syncFields({cache: false});
+				}.bind(this));
 			}
 
 			return this.fieldsPopup;
@@ -1111,21 +1367,70 @@
 		_onSaveButtonClick: function()
 		{
 			var forAll = !!this.getSaveForAllCheckbox() && this.getSaveForAllCheckbox().checked;
+			var input = this.getPreset().getAddPresetFieldInput();
+			var mask = input.parentNode.querySelector(".main-ui-filter-edit-mask");
+			var presetName;
+
+			function onAnimationEnd(event)
+			{
+				if (event.animationName === "fieldError")
+				{
+					event.currentTarget.removeEventListener("animationend", onAnimationEnd);
+					event.currentTarget.removeEventListener("oAnimationEnd", onAnimationEnd);
+					event.currentTarget.removeEventListener("webkitAnimationEnd", onAnimationEnd);
+					event.currentTarget.classList.remove("main-ui-filter-error");
+				}
+			}
+
+			function showLengthError(mask)
+			{
+				mask.addEventListener("animationend", onAnimationEnd);
+				mask.addEventListener("oAnimationEnd", onAnimationEnd);
+				mask.addEventListener("webkitAnimationEnd", onAnimationEnd);
+				mask.classList.add("main-ui-filter-error");
+				var promise = new BX.Promise();
+				promise.fulfill(true);
+				return promise;
+			}
 
 			this.enableWaitSate(this.getFindButton());
 
 			if (this.isAddPresetEnabled() && !forAll)
 			{
-				this.savePreset();
-				this.disableAddPreset();
+				presetName = input.value;
+
+				if (presetName.length)
+				{
+					this.savePreset();
+					this.disableAddPreset();
+				}
+				else
+				{
+					showLengthError(mask).then(function() {
+						input.focus();
+					});
+				}
 			}
 
 			if (this.isEditEnabled())
 			{
 				var preset = this.getPreset();
-				preset.updateEditablePreset(preset.getCurrentPresetId());
-				this.saveUserSettings(forAll);
-				!forAll && this.disableEdit();
+				var presetNode = preset.getPresetNodeById(preset.getCurrentPresetId());
+				var presetNameInput = preset.getPresetInput(presetNode);
+
+				if (presetNameInput.value.length)
+				{
+					preset.updateEditablePreset(preset.getCurrentPresetId());
+					this.saveUserSettings(forAll);
+					!forAll && this.disableEdit();
+				}
+				else
+				{
+					var presetMask = presetNode.querySelector(".main-ui-filter-edit-mask");
+					showLengthError(presetMask).then(function() {
+						presetNameInput.focus();
+					});
+				}
 			}
 		},
 
@@ -1384,6 +1689,11 @@
 							break;
 						}
 
+						case this.types.CUSTOM_DATE : {
+							this.prepareControlCustomDateValue(values, name, current);
+							break;
+						}
+
 						case this.types.SELECT : {
 							this.prepareControlSelectValue(values, name, current);
 							break;
@@ -1391,6 +1701,11 @@
 
 						case this.types.MULTI_SELECT : {
 							this.prepareControlMultiselectValue(values, name, current);
+							break;
+						}
+
+						case this.types.DEST_SELECTOR : {
+							this.prepareControlCustomEntityValue(values, name, current);
 							break;
 						}
 
@@ -1518,9 +1833,46 @@
 			values[name] = value.VALUE;
 		},
 
+		prepareControlCustomDateValue: function(values, name, field)
+		{
+			var daysControl = field.querySelector("[data-name=\""+name + '_days'+"\"]");
+
+			if (daysControl)
+			{
+				var daysValue = JSON.parse(daysControl.dataset.value);
+
+				values[name + '_days'] = daysValue.map(function(item) {
+					return item.VALUE;
+				});
+			}
+
+			var monthsControl = field.querySelector("[data-name=\""+name + '_months'+"\"]");
+
+			if (monthsControl)
+			{
+				var monthsValue = JSON.parse(monthsControl.dataset.value);
+
+				values[name + '_months'] = monthsValue.map(function(item) {
+					return item.VALUE;
+				});
+			}
+
+			var yearsControl = field.querySelector("[data-name=\""+name + '_years'+"\"]");
+
+			if (yearsControl)
+			{
+				var yearsValue = JSON.parse(yearsControl.dataset.value);
+
+				values[name + '_years'] = yearsValue.map(function(item) {
+					return item.VALUE;
+				});
+			}
+		},
+
 		prepareControlDateValue: function(values, name, field)
 		{
 			var select = BX.Filter.Utils.getByClass(field, this.settings.classSelect);
+			var yearsSwitcher = field.querySelector(".main-ui-select[data-name*=\"_allow_year\"]");
 			var selectName = name + this.settings.datePostfix;
 			var fromName = name + this.settings.fromPostfix;
 			var toName = name + this.settings.toPostfix;
@@ -1528,7 +1880,8 @@
 			var monthName = name + this.settings.monthPostfix;
 			var quarterName = name + this.settings.quarterPostfix;
 			var yearName = name + this.settings.yearPostfix;
-			var selectValue, stringFields, controls, controlName;
+			var yearsSwitcherName = name + "_allow_year";
+			var selectValue, stringFields, controls, controlName, yearsSwitcherValue;
 
 			values[selectName] = '';
 			values[fromName] = '';
@@ -1538,9 +1891,21 @@
 			values[quarterName] = '';
 			values[yearName] = '';
 
-			selectValue = JSON.parse(BX.data(select, 'value'));
+			var input = field.querySelector(".main-ui-date-input");
 
+			if (input && input.dataset.isValid === "false")
+			{
+				return;
+			}
+
+			selectValue = JSON.parse(BX.data(select, 'value'));
 			values[selectName] = selectValue.VALUE;
+
+			if (yearsSwitcher)
+			{
+				yearsSwitcherValue = JSON.parse(BX.data(yearsSwitcher, 'value'));
+				values[yearsSwitcherName] = yearsSwitcherValue.VALUE;
+			}
 
 			switch (selectValue.VALUE) {
 				case this.dateTypes.EXACT : {
@@ -1611,6 +1976,10 @@
 					break;
 				}
 
+				case this.additionalDateTypes.PREV_DAY :
+				case this.additionalDateTypes.NEXT_DAY :
+				case this.additionalDateTypes.MORE_THAN_DAYS_AGO :
+				case this.additionalDateTypes.AFTER_DAYS :
 				case this.dateTypes.NEXT_DAYS :
 				case this.dateTypes.PREV_DAYS : {
 					var control = BX.Filter.Utils.getByClass(field, this.settings.classNumberInput);
@@ -1635,6 +2004,15 @@
 							values[toName] = current.value;
 						}
 					}, this);
+					break;
+				}
+
+				case "CUSTOM_DATE" : {
+					var customValues = {};
+					this.prepareControlCustomDateValue(customValues, name, field);
+					values[name + '_days'] = customValues[name + '_days'];
+					values[monthName] = customValues[name + '_months'];
+					values[yearName] = customValues[name + '_years'];
 					break;
 				}
 
@@ -1741,17 +2119,29 @@
 			var applyParams = {autoResolve: !this.grid};
 			var self = this;
 
+			this.clearGet();
 			this.showGridAnimation();
-			BX.onCustomEvent(window, 'BX.Main.Filter:beforeApply', [filterId, {}, this, promise]);
+
+			var action = clear ? "clear" : "apply";
+
+			BX.onCustomEvent(window, 'BX.Main.Filter:beforeApply', [filterId, {action: action}, this, promise]);
 
 			this.updatePreset(presetId, null, clear, null).then(function() {
 				Search.updatePreset(Preset.getPreset(presetId));
+
+				if (self.getParam('VALUE_REQUIRED'))
+				{
+					if (!Search.getSquares().length)
+					{
+						self.lastPromise = Preset.applyPinnedPreset();
+					}
+				}
 			}).then(function() {
 				var params = {apply_filter: 'Y', clear_nav: 'Y'};
 				var fulfill = BX.delegate(promise.fulfill, promise);
 				var reject = BX.delegate(promise.reject, promise);
 				self.grid && self.grid.reloadTable('POST', params, fulfill, reject);
-				BX.onCustomEvent(window, 'BX.Main.Filter:apply', [filterId, {}, self, promise, applyParams]);
+				BX.onCustomEvent(window, 'BX.Main.Filter:apply', [filterId, {action: action}, self, promise, applyParams]);
 				applyParams.autoResolve && promise.fulfill();
 			});
 
@@ -1839,11 +2229,28 @@
 						break;
 					}
 
+					case this.types.CUSTOM_DATE : {
+						controlData.VALUES = {
+							'days': [],
+							'months': [],
+							'years': []
+						};
+						break;
+					}
+
 					case this.types.NUMBER : {
 						controlData.SUB_TYPE = controlData.SUB_TYPES[0];
 						controlData.VALUES = {
 							'_from': '',
 							'_to': ''
+						};
+						break;
+					}
+
+					case this.types.DEST_SELECTOR : {
+						controlData.VALUES = {
+							'_label': '',
+							'_value': ''
 						};
 						break;
 					}
@@ -1983,6 +2390,7 @@
 						popupContainer = popup.popupContainer;
 						BX.removeClass(popupContainer, this.settings.classAnimationClose);
 						BX.addClass(popupContainer, this.settings.classAnimationShow);
+						BX.onCustomEvent(window, "BX.Main.Filter:show", [this]);
 					}
 				}, this), showDelay);
 			}
@@ -2245,7 +2653,8 @@
 						sort: current.SORT,
 						preset_id: current.ID,
 						fields:  this.prepareFields(current.FIELDS),
-						rows: rows
+						rows: rows,
+						for_all: current.FOR_ALL
 					};
 				}, this);
 
@@ -2304,6 +2713,12 @@
 						}
 					}
 
+					if (current.TYPE === this.types.DEST_SELECTOR)
+					{
+						result[current.NAME + '_label'] = current.VALUES._label;
+						result[current.NAME + '_value'] = current.VALUES._value;
+					}
+
 					if (current.TYPE === this.types.CUSTOM_ENTITY)
 					{
 						result[current.NAME + '_label'] = current.VALUES._label;
@@ -2350,6 +2765,7 @@
 		{
 			var Preset = this.getPreset();
 			var currentPresetId = Preset.getCurrentPresetId();
+			var promise;
 
 			if (currentPresetId !== 'tmp_filter' &&
 				currentPresetId !== 'default_filter' &&
@@ -2364,30 +2780,46 @@
 				}, this);
 
 				Preset.applyPreset(currentPresetId);
-				this.applyFilter(false, currentPresetId);
+				promise = this.applyFilter(false, currentPresetId);
 				this.closePopup();
 			}
 			else
 			{
 				Preset.deactivateAllPresets();
-				this.applyFilter();
+				promise = this.applyFilter();
 				this.closePopup();
 			}
+
+			return promise;
 		},
 
 		_onResetButtonClick: function()
 		{
-			if (this.getParam('RESET_TO_DEFAULT_MODE'))
+			if (this.getParam('VALUE_REQUIRED'))
 			{
-				this.getSearch().clearInput();
-				this.getPreset().applyPinnedPreset();
+				var preset = this.getPreset().getCurrentPresetData();
+
+				if (preset.ADDITIONAL.length)
+				{
+					this.closePopup();
+				}
+
+				BX.fireEvent(this.getSearch().getClearButton(), 'click');
 			}
 			else
 			{
-				this.resetFilter();
-			}
+				if (this.getParam('RESET_TO_DEFAULT_MODE'))
+				{
+					this.getSearch().clearInput();
+					this.getPreset().applyPinnedPreset();
+				}
+				else
+				{
+					this.resetFilter();
+				}
 
-			this.closePopup();
+				this.closePopup();
+			}
 		},
 
 

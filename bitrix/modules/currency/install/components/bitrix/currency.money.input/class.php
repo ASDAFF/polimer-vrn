@@ -66,7 +66,7 @@ class CCurrencyMoneyInputComponent extends \CBitrixComponent
 		$defaultCurrency = '';
 		foreach($this->currencyList as $currency => $currencyInfo)
 		{
-			if($defaultCurrency === '')
+			if($defaultCurrency === '' || $currencyInfo['BASE'] == 'Y')
 			{
 				$defaultCurrency = $currency;
 			}
@@ -82,6 +82,9 @@ class CCurrencyMoneyInputComponent extends \CBitrixComponent
 			list($this->arResult['VALUE_NUMBER'], $this->arResult['VALUE_CURRENCY']) = explode('|', $this->arParams['VALUE']);
 
 			$this->arResult['VALUE_NUMBER'] = $this->formatNumber($this->arResult['VALUE_NUMBER'], $this->arResult['VALUE_CURRENCY']);
+
+			if ($this->arResult['VALUE_CURRENCY'] !== '' && !isset($this->arResult['CURRENCY_LIST'][$this->arResult['VALUE_CURRENCY']]))
+				$this->arResult['CURRENCY_LIST'][$this->arResult['VALUE_CURRENCY']] = $this->arResult['VALUE_CURRENCY'];
 		}
 		else
 		{
@@ -93,12 +96,17 @@ class CCurrencyMoneyInputComponent extends \CBitrixComponent
 	{
 		if($currentValue !== '')
 		{
-			if(array_key_exists($currentCurrency, $this->currencyList))
+			$format = \CCurrencyLang::GetFormatDescription($currentCurrency);
+			//TODO: in the future - remove this hack
+			if ($format['THOUSANDS_VARIANT'] == \CCurrencyLang::SEP_NBSPACE)
 			{
-				$format = \CCurrencyLang::GetFormatDescription($currentCurrency);
-
-				$currentValue = number_format((float)$currentValue, $format['DECIMALS'], $format['DEC_POINT'], $format['THOUSANDS_SEP']);
+				$format['THOUSANDS_VARIANT'] = \CCurrencyLang::SEP_SPACE;
+				$separators = \CCurrencyLang::GetSeparators();
+				$format['THOUSANDS_SEP'] = $separators[\CCurrencyLang::SEP_SPACE];
+				unset($separators);
 			}
+			$currentValue = \CCurrencyLang::formatValue($currentValue, $format, false);
+			unset($format);
 		}
 
 		return $currentValue;

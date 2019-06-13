@@ -107,7 +107,10 @@ class CBPSocnetBlogPostActivity
 			);
 			CBlogPost::Notify($postFields, $blog, $arParamsNotify);
 
-			BXClearCache(true, "/".$siteId."/blog/last_messages_list/");
+			BXClearCache(true, \Bitrix\Socialnetwork\ComponentHelper::getBlogPostCacheDir(array(
+				'TYPE' => 'posts_last',
+				'SITE_ID' => $siteId
+			)));
 
 			$arFieldsIM = Array(
 				"TYPE" => "POST",
@@ -297,7 +300,9 @@ class CBPSocnetBlogPostActivity
 				'FieldName' => 'users_to',
 				'Type' => 'user',
 				'Required' => true,
-				'Default' => 'author'
+				'Multiple' => true,
+				'Default' => method_exists(\Bitrix\Bizproc\Automation\Helper::class, 'getResponsibleUserExpression')
+					? \Bitrix\Bizproc\Automation\Helper::getResponsibleUserExpression($documentType) : 'author'
 			),
 			'PostTitle' => array(
 				'Name' => GetMessage("SNBPA_POST_TITLE"),

@@ -1,4 +1,8 @@
 <?
+$MESS["SONET_C30_F_VIDEO_TRANSFORM_POPUP_BUTTON_PUBLISH_TITLE"] = "Veröffentlichen, auch wenn noch nicht konvertiert";
+$MESS["SONET_C30_F_VIDEO_TRANSFORM_POPUP_TITLE"] = "Video konvertieren";
+$MESS["SONET_C30_F_VIDEO_TRANSFORM_POPUP_TEXT1"] = "Videodatei, die Sie an Ihre Nachricht angehängt haben, wartet jetzt auf Konvertierung.";
+$MESS["SONET_C30_F_VIDEO_TRANSFORM_POPUP_TEXT2"] = "Die #A_START#Nachricht#A_END# ist jetzt nur für Sie sichtbar. Sie wird für die Empfänger verfügbar sein, nachdem die Konvertierung abgeschlossen wird.";
 $MESS["SONET_C30_T_FILTER_TITLE"] = "Filter";
 $MESS["SONET_C30_T_FILTER_CREATED_BY"] = "Autor";
 $MESS["SONET_C30_T_FILTER_GROUP"] = "Gruppe";

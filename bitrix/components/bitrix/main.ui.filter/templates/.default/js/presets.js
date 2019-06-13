@@ -127,7 +127,7 @@
 				preset = this.getPresetNodeById(preset);
 			}
 
-			if (!BX.hasClass(preset, this.parent.settings.classPresetCurrent))
+			if (preset && !BX.hasClass(preset, this.parent.settings.classPresetCurrent))
 			{
 				BX.addClass(preset, this.parent.settings.classPresetCurrent);
 			}
@@ -346,23 +346,35 @@
 			var isPinned = this.isPinned(this.getCurrentPresetId());
 			var promise;
 
-			if (!isPinned)
+			if (this.parent.getParam('VALUE_REQUIRED') &&
+				this.getPinnedPresetId() === 'default_filter')
 			{
-				var pinnedPresetId = this.getPinnedPresetId();
-				var pinnedPresetNode = this.getPinnedPresetNode();
-				var clear = false;
-				var applyPreset = true;
-
+				this.applyPreset('default_filter');
 				this.deactivateAllPresets();
-				this.activatePreset(pinnedPresetNode);
-				this.applyPreset(pinnedPresetId);
-				promise = Filter.applyFilter(clear, applyPreset);
-				Filter.closePopup();
+				promise = this.parent.applyFilter();
 			}
 			else
 			{
-				promise = Filter.resetFilter();
+				if (!isPinned)
+				{
+					var pinnedPresetId = this.getPinnedPresetId();
+					var pinnedPresetNode = this.getPinnedPresetNode();
+					var clear = false;
+					var applyPreset = true;
+
+					this.deactivateAllPresets();
+					this.activatePreset(pinnedPresetNode);
+					this.applyPreset(pinnedPresetId);
+					promise = Filter.applyFilter(clear, applyPreset);
+					Filter.closePopup();
+				}
+				else
+				{
+					promise = Filter.resetFilter();
+				}
 			}
+
+
 
 			return promise;
 		},
@@ -611,7 +623,22 @@
 				}
 			}
 
-			if (field.TYPE === this.parent.types.CUSTOM_ENTITY)
+			if (field.TYPE === this.parent.types.CUSTOM_DATE)
+			{
+				if (
+					(BX.type.isArray(field.VALUE.days) && field.VALUE.days.length) ||
+					(BX.type.isArray(field.VALUE.months) && field.VALUE.months.length) ||
+					(BX.type.isArray(field.VALUE.years) && field.VALUE.years.length)
+				)
+				{
+					result = false;
+				}
+			}
+
+			if (
+				field.TYPE === this.parent.types.CUSTOM_ENTITY
+				|| field.TYPE === this.parent.types.DEST_SELECTOR
+			)
 			{
 				if (BX.type.isPlainObject(field.VALUES))
 				{
@@ -635,6 +662,20 @@
 					{
 						result = false;
 					}
+
+					if (
+						(
+							(BX.type.isArray(field.VALUES._label) && field.VALUES._label.length) ||
+							(BX.type.isPlainObject(field.VALUES._label) && Object.keys(field.VALUES._label).length)
+						) &&
+						(
+							(BX.type.isArray(field.VALUES._value) && field.VALUES._value.length) ||
+							(BX.type.isPlainObject(field.VALUES._value) && Object.keys(field.VALUES._value).length)
+						)
+					)
+					{
+						result = false;
+					}
 				}
 			}
 
@@ -643,12 +684,13 @@
 				var datesel = '_datesel' in field.VALUES ? field.VALUES._datesel : field.SUB_TYPE.VALUE;
 
 				if (BX.type.isPlainObject(field.VALUES) &&
-					(field.VALUES._from ||
-					field.VALUES._to ||
-					field.VALUES._month ||
-					field.VALUES._quarter ||
-					field.VALUES._year ||
-					field.VALUES._days) ||
+					(field.VALUES._from || field.VALUES._to || field.VALUES._quarter ||
+					(field.VALUES._month && !BX.type.isArray(field.VALUES._month)) ||
+					(field.VALUES._year && !BX.type.isArray(field.VALUES._year)) ||
+					(field.VALUES._days) && !BX.type.isArray(field.VALUES._days)) ||
+					(BX.type.isArray(field.VALUES._days) && field.VALUES._days.length) ||
+					(BX.type.isArray(field.VALUES._month) && field.VALUES._month.length) ||
+					(BX.type.isArray(field.VALUES._year) && field.VALUES._year.length) ||
 					(
 						datesel === this.parent.dateTypes.CURRENT_DAY ||
 						datesel === this.parent.dateTypes.CURRENT_WEEK ||
@@ -750,10 +792,12 @@
 		/**
 		 * Removes field element by field object
 		 * @param {object} field
+		 * @param {boolean} disableSaveFieldsSort
 		 */
-		removeField: function(field)
+		removeField: function(field, disableSaveFieldsSort)
 		{
 			var index, fieldName;
+			disableSaveFieldsSort = disableSaveFieldsSort || false;
 
 			if (BX.type.isPlainObject(field))
 			{
@@ -790,9 +834,24 @@
 				}
 			}
 
-			this.parent.saveFieldsSort();
+			if (!disableSaveFieldsSort)
+			{
+				this.parent.saveFieldsSort();
+			}
 		},
 
+		/**
+		 * Removes field elements by field objects.
+		 * @param {object[]} fields
+		 */
+		removeFields: function(fields)
+		{
+			fields.forEach(function (field) {
+				this.removeField(field, true);
+			}, this);
+
+			this.parent.saveFieldsSort();
+		},
 
 		/**
 		 * Adds field into filter field list by field object
@@ -895,6 +954,16 @@
 					break;
 				}
 
+				case this.parent.types.CUSTOM_DATE : {
+					control = this.parent.getFields().createCustomDate(fieldData);
+					break;
+				}
+
+				case this.parent.types.DEST_SELECTOR : {
+					control = this.parent.getFields().createDestSelector(fieldData);
+					break;
+				}
+
 				case this.parent.types.CUSTOM : {
 					control = this.parent.getFields().createCustom(fieldData);
 					break;
@@ -930,6 +999,7 @@
 			if (BX.type.isPlainObject(fields))
 			{
 				var dateType = this.parent.dateTypes;
+				var additionalDateTypes = this.parent.additionalDateTypes;
 
 				if ('FIND' in fields)
 				{
@@ -950,22 +1020,29 @@
 
 							if (datesel === dateType.EXACT ||
 								datesel === dateType.RANGE ||
+								datesel === additionalDateTypes.PREV_DAY ||
+								datesel === additionalDateTypes.NEXT_DAY ||
+								datesel === additionalDateTypes.MORE_THAN_DAYS_AGO ||
+								datesel === additionalDateTypes.AFTER_DAYS ||
 								datesel === dateType.PREV_DAYS ||
 								datesel === dateType.NEXT_DAYS ||
 								datesel === dateType.YEAR ||
 								datesel === dateType.MONTH ||
 								datesel === dateType.QUARTER ||
-								datesel === dateType.NONE)
+								datesel === dateType.NONE ||
+								datesel === dateType.CUSTOM_DATE)
 							{
 								delete fields[key];
 							}
 						}
 
-						if (fields[key] === '')
+						var field = this.parent.getFieldByName(key);
+
+						if (fields[key] === '' && (!field || !field["STRICT"]))
 						{
 							delete fields[key];
 						}
-					});
+					}, this);
 				}
 			}
 		},
@@ -1117,6 +1194,15 @@
 								break;
 							}
 
+							case this.parent.types.CUSTOM_DATE : {
+								fieldData.VALUE = {
+									'days': [],
+									'months': [],
+									'years': []
+								};
+								break;
+							}
+
 							case this.parent.types.NUMBER : {
 								fieldData.SUB_TYPE = fieldData.SUB_TYPES[0];
 								fieldData.VALUES = {
@@ -1177,6 +1263,13 @@
 							}
 
 							BX.append(current, fieldListContainer);
+
+							if (BX.type.isString(fields[index].HTML))
+							{
+								var wrap = BX.create("div");
+								this.parent.getHiddenElement().appendChild(wrap);
+								BX.html(wrap, fields[index].HTML);
+							}
 						}
 					}, this);
 

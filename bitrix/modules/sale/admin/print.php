@@ -95,10 +95,13 @@ if (CModule::IncludeModule("sale"))
 
 		if ($shipmentData = $shipmentRes->fetch())
 		{
+			$shipmentId = $shipmentData['ID'];
+			unset($shipmentData['ID']);
+
 			$arOrder = array_merge($arOrder, $shipmentData);
 			$shipmentCollection = $order->getShipmentCollection();
 			/** @var \Bitrix\Sale\Shipment $shipment */
-			$shipment = $shipmentCollection->getItemById($shipmentData['ID']);
+			$shipment = $shipmentCollection->getItemById($shipmentId);
 			$arOrder['DELIVERY_VAT_SUM'] = $shipment->getVatSum();
 			$arOrder['DELIVERY_VAT_RATE'] = $shipment->getVatRate();
 		}
@@ -219,7 +222,9 @@ if (CModule::IncludeModule("sale"))
 			}
 		}
 
+		CCurrencyLang::disableUseHideZero();
 		include($rep_file_name);
+		CCurrencyLang::enableUseHideZero();
 	}
 }
 else

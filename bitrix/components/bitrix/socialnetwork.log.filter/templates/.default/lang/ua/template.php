@@ -1,4 +1,8 @@
 <?
+$MESS["SONET_C30_F_VIDEO_TRANSFORM_POPUP_BUTTON_PUBLISH_TITLE"] = "Опублікувати, не чекаючи конвертації";
+$MESS["SONET_C30_F_VIDEO_TRANSFORM_POPUP_TITLE"] = "Конвертація відео";
+$MESS["SONET_C30_F_VIDEO_TRANSFORM_POPUP_TEXT1"] = "Відео, прикріплене до опублікованого вами повідомлення, направлено на конвертацію.";
+$MESS["SONET_C30_F_VIDEO_TRANSFORM_POPUP_TEXT2"] = "До закінчення конвертації #A_START#повідомлення#A_END# буде доступно тільки вам, а по закінченню конвертації стане доступним адресатам, яких ви вказали.";
 $MESS["SONET_C30_T_FILTER_TITLE"] = "Фільтр";
 $MESS["SONET_C30_T_FILTER_CREATED_BY"] = "Автор";
 $MESS["SONET_C30_T_FILTER_GROUP"] = "Група";

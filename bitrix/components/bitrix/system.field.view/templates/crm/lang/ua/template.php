@@ -1,4 +1,5 @@
 <?
+$MESS["CRM_ENTITY_TYPE_ORDER"] = "Замовлення";
 $MESS["CRM_ENTITY_TYPE_LEAD"] = "Лід";
 $MESS["CRM_ENTITY_TYPE_CONTACT"] = "Контакт";
 $MESS["CRM_ENTITY_TYPE_COMPANY"] = "Компанія";

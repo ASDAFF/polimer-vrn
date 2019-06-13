@@ -1,12 +1,19 @@
 <?
+$MESS["SONET_GUE_T_OWNER_SUBTITLE"] = "Владелец";
+$MESS["SONET_GUE_T_OWNER_SUBTITLE_PROJECT"] = "Руководитель";
 $MESS["SONET_GUE_T_MODS_SUBTITLE"] = "Модераторы";
 $MESS["SONET_GUE_T_MODS_SUBTITLE_PROJECT"] = "Руководитель и помощники";
 $MESS["SONET_GUE_T_USERS_SUBTITLE"] = "Кто в группе";
 $MESS["SONET_GUE_T_USERS_SUBTITLE_PROJECT"] = "Кто в проекте";
 $MESS["SONET_GUE_T_USERS_AUTO_SUBTITLE"] = "Подключенные пользователи";
+$MESS["SONET_GUE_T_USERS_AUTO_SUBTITLE_HINT"] = "Сотрудники привязанных к группе подразделений. Они добавляются автоматически и смогут покинуть группу, только если их отдел будет удален из нее.";
+$MESS["SONET_GUE_T_USERS_AUTO_SUBTITLE_HINT_PROJECT"] = "Сотрудники привязанных к проекту подразделений. Они добавляются автоматически и смогут покинуть проект, только если их отдел будет удален из него.";
 $MESS["SONET_GUE_T_BAN_SUBTITLE"] = "Заблокированные пользователи";
 $MESS["SONET_GUE_T_DEPARTMENTS_SUBTITLE"] = "Подразделения";
 $MESS["SONET_GUE_T_ACTIONS_TITLE"] = "Действия";
+$MESS["SONET_GUE_T_ACTIONLINK_CHANGE"] = "Сменить";
+$MESS["SONET_GUE_T_ACTIONLINK_ADD"] = "Добавить";
+$MESS["SONET_GUE_T_ACTIONLINK_INVITE"] = "Пригласить";
 $MESS["SONET_GUE_T_OWNER"] = "владелец";
 $MESS["SONET_GUE_T_OWNER_PROJECT"] = "руководитель";
 $MESS["SONET_GUE_T_ACTION_ADDTOUSERS"] = "Пригласить пользователей";
@@ -38,10 +45,16 @@ $MESS["SONET_GUE_T_NO_PERMS"] = "У вас нет прав на управлен
 $MESS["SONET_GUE_T_NO_PERMS_PROJECT"] = "У вас нет прав на управление этим проектом.";
 $MESS["SONET_GUE_T_SESSION_WRONG"] = "Ваша сессия истекла, пожалуйста, повторите действие.";
 $MESS["SONET_GUE_T_ACTION_FAILED"] = "Действие вернуло некорректный признак завершения: #ERROR#";
-$MESS["SONET_GUE_T_WAIT"] = "Пожалуйста, подождите&hellip;";
 $MESS["SONET_GUE_T_SAME_OWNER"] = "Указанный пользователь уже является владельцем группы";
 $MESS["SONET_GUE_T_SAME_OWNER_PROJECT"] = "Указанный пользователь уже является руководителем проекта";
-$MESS["SONET_GUE_T_FIRED"] = "уволен(а)";
-$MESS["SONET_GUE_T_FIRED_M"] = "уволен";
-$MESS["SONET_GUE_T_FIRED_F"] = "уволена";
+$MESS["SONET_GUE_T_FIRED2"] = "уволен(а)";
+$MESS["SONET_GUE_T_FIRED2_M"] = "уволен";
+$MESS["SONET_GUE_T_FIRED2_F"] = "уволена";
+$MESS["SONET_GUE_T_BUTTON_EXCLUDE"] = "исключить";
+$MESS["SONET_GUE_T_BUTTON_REMOVEMOD"] = "исключить";
+$MESS["SONET_GUE_T_BUTTON_UNBAN"] = "разблокировать";
+$MESS["SONET_GUE_T_BUTTON_UNCONNECT"] = "удалить";
+$MESS["SONET_GRE_T_ERROR"] = "Произошла ошибка обработки запроса";
+$MESS["SONET_GUE_T_STEPPER_TITLE"] = "Синхронизация участников";
+
 ?>

@@ -145,15 +145,22 @@ class CSaleTfpdf extends tFPDF
 		$lastColumn = key($cols);
 		$cols[$lastColumn]['IS_DIGIT'] = true;
 
+		$digitColumns = [];
 		$digitWidth = 0;
 		foreach ($cols as $columnId => $column)
 		{
-			$max = $this->GetStringWidth($column['NAME']);
+			$max = $this->GetStringWidth($this->getMaximumWord($column['NAME']) . " ");
 			foreach ($cells as $i => $cell)
 			{
+				$maxLengthWord = $cell[$columnId];
+				if ($cols[$columnId]['IS_DIGIT'] !== true)
+				{
+					$maxLengthWord = $this->getMaximumWord($cell[$columnId]) . " ";
+				}
+
 				if ($i <= $countItems || $lastColumn === $columnId)
 				{
-					$max = max($max, $this->GetStringWidth($cell[$columnId]));
+					$max = max($max, $this->GetStringWidth($maxLengthWord));
 				}
 			}
 
@@ -161,12 +168,15 @@ class CSaleTfpdf extends tFPDF
 			$arRowsContentWidth[$columnId] = $max;
 
 			if ($cols[$columnId]['IS_DIGIT'] === true)
+			{
 				$digitWidth += $arRowsWidth[$columnId];
+				$digitColumns[] = $columnId;
+			}
 		}
 
 		$noDigitWidth = array_sum($arRowsWidth) - $digitWidth;
-
 		$requiredWidth = $docWidth - $digitWidth;
+
 		if ($noDigitWidth - $requiredWidth > $eps)
 		{
 			$colNameTitle = $this->GetStringWidth($cols['NAME']['NAME']);
@@ -179,22 +189,16 @@ class CSaleTfpdf extends tFPDF
 			$noDigitWidth = array_sum($arRowsWidth) - $digitWidth;
 			if ($noDigitWidth - $requiredWidth > $eps)
 			{
-				$tmp = array('PRICE', 'SUM', 'VAT_RATE', 'VAT_SUM', 'TOTAL');
-				if (!in_array($lastColumn, $tmp))
-					$tmp[] = $lastColumn;
+				if (!in_array($lastColumn, $digitColumns))
+					$digitColumns[] = $lastColumn;
 
-				foreach ($tmp as $columnId)
-				{
-					if (isset($cols[$columnId]))
-						$digitWidth -= $arRowsWidth[$columnId];
-				}
-
-				foreach ($tmp as $columnId)
+				$digitWidth = 0;
+				foreach ($digitColumns as $columnId)
 				{
 					if (!isset($cols[$columnId]))
 						continue;
 
-					$max = 0;
+					$max = $this->GetStringWidth($this->getMaximumWord($cols[$columnId]['NAME']) . " ");
 					foreach ($cells as $i => $cell)
 					{
 						if ($i <= $countItems || $lastColumn === $columnId)
@@ -228,6 +232,25 @@ class CSaleTfpdf extends tFPDF
 		);
 	}
 
+	/**
+	 * @param $str
+	 * @return mixed
+	 */
+	protected function getMaximumWord($str)
+	{
+		$wordList = explode(" ", $str);
+		$maxWord = "";
+
+		foreach ($wordList as $word)
+		{
+			if (mb_strlen($word, 'UTF-8') > mb_strlen($maxWord, 'UTF-8'))
+			{
+				$maxWord = $word;
+			}
+		}
+
+		return $maxWord;
+	}
 }
 
 class CSalePdf
@@ -277,7 +300,7 @@ class CSalePdf
 
 			return array(
 				$string,
-				mb_substr($text, $p, mb_strlen($text, 'UTF-8'), 'UTF-8')
+				trim(mb_substr($text, $p, mb_strlen($text, 'UTF-8'), 'UTF-8'))
 			);
 		}
 	}
@@ -320,8 +343,8 @@ class CSalePdf
 
 			if ($arFile)
 			{
-				$height = $arFile[0] * 0.75;
-				$width  = $arFile[1] * 0.75;
+				$height = $arFile[1] * 0.75;
+				$width  = $arFile[0] * 0.75;
 			}
 		}
 

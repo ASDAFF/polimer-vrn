@@ -3,18 +3,6 @@ IncludeModuleLangFile(__FILE__);
 
 class CCloudStorageService_OpenStackStorage extends CCloudStorageService
 {
-	protected $status = 0;
-	protected $errno = 0;
-	protected $errstr = '';
-	protected $result = '';
-	protected $verb = '';
-	protected $url = '';
-
-	function GetLastRequestStatus()
-	{
-		return $this->status;
-	}
-
 	function GetObject()
 	{
 		return new CCloudStorageService_OpenStackStorage();
@@ -203,15 +191,19 @@ class CCloudStorageService_OpenStackStorage extends CCloudStorageService
 		}
 
 		@$obRequest->Query(
-			$this->verb = $verb,
+			$verb,
 			$arToken["X-Storage-Host"],
-			$arToken["X-Storage-Port"],
-			$this->url = $arToken["X-Storage-Urn"]."/".$bucket.$RequestURI.$params,
+			$this->port = $arToken["X-Storage-Port"],
+			rtrim($arToken["X-Storage-Urn"], "/")."/".$bucket.$RequestURI.$params,
 			$content,
 			$arToken["X-Storage-Proto"],
 			$ContentType
 		);
 		$this->status = $obRequest->status;
+		$this->host = $arToken["X-Storage-Host"];
+		$this->verb = $verb;
+		$this->url =  rtrim($arToken["X-Storage-Urn"], "/")."/".$bucket.$RequestURI.$params;
+		$this->headers = $obRequest->headers;
 		$this->errno = $obRequest->errno;
 		$this->errstr = $obRequest->errstr;
 		$this->result = $obRequest->result;
@@ -397,6 +389,7 @@ class CCloudStorageService_OpenStackStorage extends CCloudStorageService
 			if(substr($filePath, 0, strlen($arBucket["PREFIX"])+2) != "/".$arBucket["PREFIX"]."/")
 				$filePath = "/".$arBucket["PREFIX"]."/".ltrim($filePath, "/");
 		}
+		$fileSource = CCloudUtil::URLEncode("/".$arBucket["BUCKET"]."/".($arBucket["PREFIX"]? $arBucket["PREFIX"]."/": "").($arFile["SUBDIR"]? $arFile["SUBDIR"]."/": "").$arFile["FILE_NAME"], "UTF-8");
 
 		$obRequest = $this->SendRequest(
 			$arBucket["SETTINGS"],
@@ -406,7 +399,7 @@ class CCloudStorageService_OpenStackStorage extends CCloudStorageService
 			'',
 			false,
 			array(
-				"X-Copy-From" => CCloudUtil::URLEncode("/".$arBucket["BUCKET"]."/".($arBucket["PREFIX"]? $arBucket["PREFIX"]."/": "").($arFile["SUBDIR"]? $arFile["SUBDIR"]."/": "").$arFile["FILE_NAME"], "UTF-8"),
+				"X-Copy-From" => $fileSource,
 			)
 		);
 
@@ -442,7 +435,28 @@ class CCloudStorageService_OpenStackStorage extends CCloudStorageService
 			$filePath
 		);
 
-		return ($obRequest->status == 204 || $obRequest->status == 404);
+		//Try to fix space in the path
+		if ($this->status == 404 && strpos($filePath, '+') !== false)
+		{
+			$filePath = str_replace('+', '%20', $filePath);
+			$obRequest = $this->SendRequest(
+				$arBucket["SETTINGS"],
+				"DELETE",
+				$arBucket["BUCKET"],
+				$filePath
+			);
+		}
+
+		if($this->status == 204 || $this->status == 404)
+		{
+			$APPLICATION->ResetException();
+			return true;
+		}
+		else
+		{
+			$APPLICATION->ResetException();
+			return false;
+		}
 	}
 
 	function SaveFile($arBucket, $filePath, $arFile)

@@ -81,4 +81,6 @@ $MESS["BC_SEO_N"] = "nicht benutzen";
 $MESS["BC_SEO_Y"] = "Extra Felder für Beschreibung";
 $MESS["BC_SEO_D"] = "Standardfelder";
 $MESS["BPC_IMAGE_MAX_SIZES_TEXT"] = "standardmäßig";
+$MESS["BC_COMMENTS_LIST_VIEW"] = "Flache Ansicht der Kommentare";
+$MESS["BPC_AJAX_PAGINATION"] = "AJAX-basierte Seitennavigation in Kommentaren nutzen";
 ?>

@@ -1,8 +1,9 @@
 <?
+$MESS["BPCRU_PD_SKIP_RESERVE"] = "Застосувати до резервних";
 $MESS["BPCRU_PD_TYPE"] = "Тип";
 $MESS["BPCRU_PD_USER_RANDOM"] = "З користувачів";
 $MESS["BPCRU_PD_USER_BOSS"] = "Для користувача";
-$MESS["BPCRU_PD_USER1"] = "Резервні користувачі";
+$MESS["BPCRU_PD_USER2"] = "Резервні користувачі";
 $MESS["BPCRU_PD_MAX_LEVEL"] = "Рівень начальника (чим більше, тим вище рівень)";
 $MESS["BPCRU_PD_TYPE_RANDOM"] = "випадковий";
 $MESS["BPCRU_PD_TYPE_BOSS"] = "начальник";

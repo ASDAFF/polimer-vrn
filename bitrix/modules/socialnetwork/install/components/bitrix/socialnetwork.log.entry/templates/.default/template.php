@@ -6,6 +6,18 @@
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Main\UI;
+use Bitrix\Main\Localization\Loc;
+
+UI\Extension::load("ui.animations");
+UI\Extension::load("ui.tooltip");
+UI\Extension::load("main.rating");
+
+if ($arResult["bTasksAvailable"])
+{
+	CJSCore::Init(array('tasks_util_query'));
+}
+
 if (strlen($arResult["FatalError"]) > 0)
 {
 	?><span class='errortext'><?=$arResult["FatalError"]?></span><br /><br /><?
@@ -133,7 +145,10 @@ else
 
 		$className = "feed-post-block";
 
-		if ($is_unread)
+		if (
+//			true || $is_unread
+			$is_unread
+		)
 		{
 			$className .= " feed-post-block-new";
 		}
@@ -165,6 +180,28 @@ else
 			$className .= " feed-post-block-files";
 		}
 
+		$EVENT_ID = $arEvent["EVENT"]["EVENT_ID"];
+
+		if (
+			$arParams["FROM_LOG"] != 'Y'
+			|| in_array($EVENT_ID, array("files", "commondocs", "tasks"))
+			|| strlen($arEvent["EVENT_FORMATTED"]["MESSAGE"]) <= 0
+		)
+		{
+			$className .= " feed-post-block-short";
+		}
+
+		if (
+			(
+				array_key_exists("EVENT_FORMATTED", $arEvent)
+				&& array_key_exists("IS_IMPORTANT", $arEvent["EVENT_FORMATTED"])
+				&& $arEvent["EVENT_FORMATTED"]["IS_IMPORTANT"]
+			)
+		)
+		{
+			$className .= " feed-post-block-separator";
+		}
+
 		?><div class="<?=$className?>" id="log-entry-<?=$arEvent["EVENT"]["ID"]?>" ondragenter="BX('feed_comments_block_<?=$arEvent["EVENT"]["ID"]?>').style.display = 'block';__logShowCommentForm('<?=$arEvent["COMMENTS_PARAMS"]["ENTITY_XML_ID"]?>')">
 			<div id="sonet_log_day_item_<?=$ind?>" class="feed-post-cont-wrap<?
 			if (
@@ -181,7 +218,7 @@ else
 				&& intval($arEvent["EVENT"]["ENTITY_ID"]) > 0
 			)
 			{
-				?> sonet-log-item-where-<?=$arEvent["EVENT"]["ENTITY_TYPE"]?>-<?=intval($arEvent["EVENT"]["ENTITY_ID"])?>-all <?
+				?> sonet-log-item-where-<?=$arEvent["EVENT"]["ENTITY_TYPE"]?>-<?=intval($arEvent["EVENT"]["ENTITY_ID"])?>-all<?
 				if (
 					array_key_exists("EVENT_ID", $arEvent["EVENT"])
 					&& strlen($arEvent["EVENT"]["EVENT_ID"]) > 0
@@ -192,6 +229,7 @@ else
 					if (
 						array_key_exists("EVENT_ID_FULLSET", $arEvent["EVENT"])
 						&& strlen($arEvent["EVENT"]["EVENT_ID_FULLSET"]) > 0
+						&& $arEvent["EVENT"]["EVENT_ID_FULLSET"] != $arEvent["EVENT"]["EVENT_ID"]
 					)
 					{
 						?> sonet-log-item-where-<?=$arEvent["EVENT"]["ENTITY_TYPE"]?>-<?=intval($arEvent["EVENT"]["ENTITY_ID"])?>-<?=str_replace("_", '-', $arEvent["EVENT"]["EVENT_ID_FULLSET"])?> <?
@@ -357,11 +395,16 @@ else
 						{
 							if ($arParams["PUBLIC_MODE"] != 'Y')
 							{
+								$className = (array_key_exists("IS_EXTRANET", $arEvent["CREATED_BY"]) && $arEvent["CREATED_BY"]["IS_EXTRANET"] == "Y" ? " feed-post-user-name-extranet" : "");
+								$href = str_replace(array("#user_id#", "#USER_ID#", "#id#", "#ID#"), $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"], $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["PATH_TO_SONET_USER_PROFILE"]);
 								$anchor_id = $randomString.($randomId++);
-								$strCreatedBy .= '<a class="feed-post-user-name'.(array_key_exists("IS_EXTRANET", $arEvent["CREATED_BY"]) && $arEvent["CREATED_BY"]["IS_EXTRANET"] == "Y" ? " feed-post-user-name-extranet" : "").'" id="anchor_'.$anchor_id.'" bx-post-author-id="'.$arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"].'" href="'.str_replace(array("#user_id#", "#USER_ID#", "#id#", "#ID#"), $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"], $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["PATH_TO_SONET_USER_PROFILE"]).'">'.CUser::FormatName($arParams["NAME_TEMPLATE"], $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"], ($arParams["SHOW_LOGIN"] != "N" ? true : false)).'</a>';
-								$strCreatedBy .= '<script type="text/javascript">';
-								$strCreatedBy .= 'BX.tooltip('.$arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"].', "anchor_'.$anchor_id.'", "'.$jsAjaxPage.'");';
-								$strCreatedBy .= '</script>';
+
+								$strCreatedBy .= '<a class="feed-post-user-name'.$className.'"'.
+									' id="anchor_'.$anchor_id.'"'.
+									' bx-post-author-id="'.$arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"].'"'.
+									' bx-post-author-gender="'.$arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["PERSONAL_GENDER"].'"'.
+									' bx-tooltip-user-id="'.$arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"].'"'.
+									' href="'.$href.'">'.CUser::FormatName($arParams["NAME_TEMPLATE"], $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"], ($arParams["SHOW_LOGIN"] != "N" ? true : false)).'</a>';
 							}
 							else
 							{
@@ -390,10 +433,16 @@ else
 						)
 						{
 							$anchor_id = $randomString.($randomId++);
-							$strCreatedBy .= '<a class="feed-post-user-name'.(isset($arEvent["CREATED_BY"]["IS_EXTRANET"]) && $arEvent["CREATED_BY"]["IS_EXTRANET"] == "Y" ? " feed-post-user-name-extranet" : "").'" id="anchor_'.$anchor_id.'" bx-post-author-id="'.$arEvent["ENTITY"]["TOOLTIP_FIELDS"]["ID"].'" href="'.str_replace(array("#user_id#", "#USER_ID#", "#id#", "#ID#"), $arEvent["ENTITY"]["TOOLTIP_FIELDS"]["ID"], $arEvent["ENTITY"]["TOOLTIP_FIELDS"]["PATH_TO_SONET_USER_PROFILE"]).'">'.CUser::FormatName($arParams["NAME_TEMPLATE"], $arEvent["ENTITY"]["TOOLTIP_FIELDS"], ($arParams["SHOW_LOGIN"] != "N" ? true : false)).'</a>';
-							$strCreatedBy .= '<script type="text/javascript">';
-							$strCreatedBy .= 'BX.tooltip('.$arEvent["ENTITY"]["TOOLTIP_FIELDS"]["ID"].', "anchor_'.$anchor_id.'", "'.$jsAjaxPage.'");';
-							$strCreatedBy .= '</script>';
+							$href = str_replace(array("#user_id#", "#USER_ID#", "#id#", "#ID#"), $arEvent["ENTITY"]["TOOLTIP_FIELDS"]["ID"], $arEvent["ENTITY"]["TOOLTIP_FIELDS"]["PATH_TO_SONET_USER_PROFILE"]);
+							$className = (isset($arEvent["CREATED_BY"]["IS_EXTRANET"]) && $arEvent["CREATED_BY"]["IS_EXTRANET"] == "Y" ? " feed-post-user-name-extranet" : "");
+
+							$strCreatedBy .= '<a '.
+								' class="feed-post-user-name'.$className.'"'.
+								' id="anchor_'.$anchor_id.'"'.
+								' bx-post-author-id="'.$arEvent["ENTITY"]["TOOLTIP_FIELDS"]["ID"].'"'.
+								' bx-post-author-gender="'.$arEvent["ENTITY"]["TOOLTIP_FIELDS"]["PERSONAL_GENDER"].'"'.
+								' bx-tooltip-user-id="'.$arEvent["ENTITY"]["TOOLTIP_FIELDS"]["ID"].'"'.
+								' href="'.$href.'">'.CUser::FormatName($arParams["NAME_TEMPLATE"], $arEvent["ENTITY"]["TOOLTIP_FIELDS"], ($arParams["SHOW_LOGIN"] != "N" ? true : false)).'</a>';
 						}
 						elseif (
 							array_key_exists("FORMATTED", $arEvent["ENTITY"])
@@ -429,6 +478,37 @@ else
 
 					?><?=($strCreatedBy != "" ? $strCreatedBy : "")?><?
 					?><span><?=$strDestination?></span><?
+
+					?><div class="feed-post-time-wrap"><?
+
+						$timestamp = (
+							isset($arEvent["EVENT_FORMATTED"])
+							&& isset($arEvent["EVENT_FORMATTED"]["LOG_DATE_FORMAT"])
+								? MakeTimeStamp($arEvent["EVENT_FORMATTED"]["LOG_DATE_FORMAT"])
+								: (
+							array_key_exists("LOG_DATE_FORMAT", $arEvent)
+								? MakeTimeStamp($arEvent["LOG_DATE_FORMAT"])
+								: $arEvent["LOG_DATE_TS"]
+							)
+						);
+
+						$datetime_detail = \CComponentUtil::getDateTimeFormatted(array(
+							'TIMESTAMP' => $timestamp,
+							'DATETIME_FORMAT' => $arParams["DATE_TIME_FORMAT"],
+							'DATETIME_FORMAT_WITHOUT_YEAR' => (isset($arParams["DATE_TIME_FORMAT_WITHOUT_YEAR"]) ? $arParams["DATE_TIME_FORMAT_WITHOUT_YEAR"] : false),
+							'TZ_OFFSET' => $arResult["TZ_OFFSET"]
+						));
+
+						if (!empty($url))
+						{
+							?><a href="<?=htmlspecialcharsbx($url)?>"><div class="feed-time"><?=$datetime_detail?></div></a><?
+						}
+						else
+						{
+							?><div class="feed-time"><?=$datetime_detail?></div><?
+						}
+
+					?></div><?
 
 					if (
 						array_key_exists("EVENT_FORMATTED", $arEvent)
@@ -485,23 +565,44 @@ else
 				?></div><? // title
 
 				// body
-				$EVENT_ID = $arEvent["EVENT"]["EVENT_ID"];
 
-/*
-				elseif (in_array($EVENT_ID, array("timeman_entry", "report")))
-				{
-					$contentViewXmlId = "TIMEMAN".$EVENT_ID.'-'.intval($arEvent["EVENT"]["SOURCE_ID"]);
-				}
-*/
+				$stub = false;
 				if (
+					array_key_exists("EVENT_FORMATTED", $arEvent)
+					&& array_key_exists("STUB", $arEvent["EVENT_FORMATTED"])
+					&& $arEvent["EVENT_FORMATTED"]["STUB"]
+				)
+				{
+					$stub = true;
+					?><?$APPLICATION->IncludeComponent(
+						"bitrix:socialnetwork.log.entry.stub",
+						"",
+						array(
+							"EVENT" => $arEvent['EVENT'],
+						),
+						$component,
+						array(
+							"HIDE_ICONS" => "Y"
+						)
+					);?><?
+				}
+				elseif (
 					array_key_exists("EVENT_FORMATTED", $arEvent)
 					&& array_key_exists("IS_IMPORTANT", $arEvent["EVENT_FORMATTED"])
 					&& $arEvent["EVENT_FORMATTED"]["IS_IMPORTANT"]
 				)
 				{
 					$APPLICATION->SetAdditionalCSS('/bitrix/components/bitrix/rating.vote/templates/like/popup.css');
+
 					?><div class="feed-post-text-block feed-info-block"><?
-						?><div class="feed-post-text-block-inner feed-post-contentview" id="<?=(!empty($arResult["CONTENT_ID"]) ? "feed-post-contentview-".htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>" bx-content-view-xml-id="<?=htmlspecialcharsBx($arResult["CONTENT_ID"])?>"><?
+
+						$className = "feed-post-contentview";
+						if ($arParams["FROM_LOG"] == "Y")
+						{
+							$className .= " feed-post-text-block-inner";
+						}
+
+						?><div class="<?=$className?>" id="<?=(!empty($arResult["CONTENT_ID"]) ? "feed-post-contentview-".htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>" bx-content-view-xml-id="<?=htmlspecialcharsBx($arResult["CONTENT_ID"])?>"><?
 							?><div class="feed-post-text-block-inner-inner" id="log_entry_body_<?=$arEvent["EVENT"]["ID"]?>"><?
 
 							if (
@@ -523,20 +624,38 @@ else
 							?><?=$arEvent["EVENT_FORMATTED"]["MESSAGE"]?>
 
 							</div><?
-						?></div>
-						<div class="feed-post-text-more" onclick="__logEventExpand(this); return false;" id="log_entry_more_<?=$arEvent["EVENT"]["ID"]?>"><?
-							?><div class="feed-post-text-more-but"></div><?
 						?></div><?
-						?><script>
-							if (typeof arMoreButtonID == 'undefined')
-							{
-								var arMoreButtonID = [];
-							}
-							arMoreButtonID[arMoreButtonID.length] = {
-								'bodyBlockID' : 'log_entry_body_<?=$arEvent["EVENT"]["ID"]?>',
-								'moreButtonBlockID' : 'log_entry_more_<?=$arEvent["EVENT"]["ID"]?>'
-							};
-						</script><?
+
+						if($arParams["FROM_LOG"] == 'Y')
+						{
+							?><div class="feed-post-text-more" onclick="BX.UI.Animations.expand({
+								moreButtonNode: this,
+								type: 'post',
+								classBlock: 'feed-post-text-block',
+								classOuter: 'feed-post-text-block-inner',
+								classInner: 'feed-post-text-block-inner-inner',
+								heightLimit: 300,
+								callback: oLF.expandPost
+								})" id="log_entry_more_<?=$arEvent["EVENT"]["ID"]?>"><?
+								?><div class="feed-post-text-more-but"></div><?
+							?></div><?
+							?><script>
+								BX.ready(function() {
+									if (
+										typeof oLF != 'undefined'
+										&& BX.type.isNotEmptyObject(oLF)
+										&& BX.type.isArray(oLF.arMoreButtonID)
+									)
+									{
+										oLF.arMoreButtonID.push({
+											bodyBlockID: 'log_entry_body_<?=$arEvent["EVENT"]["ID"]?>',
+											moreButtonBlockID: 'log_entry_more_<?=$arEvent["EVENT"]["ID"]?>',
+											informerBlockID: 'log_entry_inform_<?=$arEvent["EVENT"]["ID"]?>'
+										});
+									}
+								});
+							</script><?
+						}
 					?></div><?
 				}
 				elseif (
@@ -785,31 +904,56 @@ else
 				) // all other events
 				{
 					?><div class="feed-post-text-block"><?
+
+						$className = " feed-post-contentview";
+						if ($arParams["FROM_LOG"] == "Y")
+						{
+							$className .= " feed-post-text-block-inner";
+						}
+
 						if ($arResult["CONTENT_ID"])
 						{
-							?><div class="feed-post-text-block-inner feed-post-contentview" id="feed-post-text-contentview-<?=htmlspecialcharsBx($arResult["CONTENT_ID"])?>" bx-content-view-xml-id="<?=htmlspecialcharsBx($arResult["CONTENT_ID"])?>"><?
+							?><div class="<?=$className?>" id="feed-post-text-contentview-<?=htmlspecialcharsBx($arResult["CONTENT_ID"])?>" bx-content-view-xml-id="<?=htmlspecialcharsBx($arResult["CONTENT_ID"])?>"><?
 								?><div class="feed-post-text-block-inner-inner" id="log_entry_body_<?=$arEvent["EVENT"]["ID"]?>"><?=$arEvent["EVENT_FORMATTED"]["MESSAGE"]?></div><?
 							?></div><?
 						}
 						else
 						{
-							?><div class="feed-post-text-block-inner feed-post-contentview"><?
+							?><div class="<?=$className?>"><?
 								?><div class="feed-post-text-block-inner-inner" id="log_entry_body_<?=$arEvent["EVENT"]["ID"]?>"><?=$arEvent["EVENT_FORMATTED"]["MESSAGE"]?></div><?
 							?></div><?
 						}
-						?><div class="feed-post-text-more" id="log_entry_more_<?=$arEvent["EVENT"]["ID"]?>" onclick="__logEventExpand(this); return false;"><?
-							?><div class="feed-post-text-more-but"></div><?
-						?></div><?
-						?><script>
-							if (typeof arMoreButtonID == 'undefined')
-							{
-								var arMoreButtonID = [];
-							}
-							arMoreButtonID[arMoreButtonID.length] = {
-								'bodyBlockID' : 'log_entry_body_<?=$arEvent["EVENT"]["ID"]?>',
-								'moreButtonBlockID' : 'log_entry_more_<?=$arEvent["EVENT"]["ID"]?>'
-							};
-						</script><?
+
+						if($arParams["FROM_LOG"] == 'Y')
+						{
+							?><div class="feed-post-text-more" id="log_entry_more_<?=$arEvent["EVENT"]["ID"]?>" onclick="BX.UI.Animations.expand({
+								moreButtonNode: this,
+								type: 'post',
+								classBlock: 'feed-post-text-block',
+								classOuter: 'feed-post-text-block-inner',
+								classInner: 'feed-post-text-block-inner-inner',
+								heightLimit: 300,
+								callback: oLF.expandPost
+								})"><?
+								?><div class="feed-post-text-more-but"></div><?
+							?></div><?
+							?><script>
+								BX.ready(function() {
+									if (
+										typeof oLF != 'undefined'
+										&& BX.type.isNotEmptyObject(oLF)
+										&& BX.type.isArray(oLF.arMoreButtonID)
+									)
+									{
+										oLF.arMoreButtonID.push({
+											bodyBlockID : 'log_entry_body_<?=$arEvent["EVENT"]["ID"]?>',
+											moreButtonBlockID : 'log_entry_more_<?=$arEvent["EVENT"]["ID"]?>',
+											informerBlockID: 'log_entry_inform_<?=$arEvent["EVENT"]["ID"]?>'
+										});
+									}
+								});
+							</script><?
+						}
 					?></div><?
 				}
 
@@ -845,6 +989,27 @@ else
 					}
 				}
 
+				if (
+					$arEvent["EVENT"]["EVENT_ID"] != 'tasks'
+					&& !empty($arEvent["TAGS"])
+					&& is_array($arEvent["TAGS"])
+				)
+				{
+					?><div class="feed-com-tags-block"><noindex>
+						<div class="feed-com-files-title"><?=Loc::getMessage("SONET_C30_TAGS")?></div>
+						<div class="feed-com-files-cont" id="logentry-tags-<?=intval($arEvent["EVENT"]["ID"])?>"><?
+							$i=0;
+							foreach($arEvent["TAGS"] as $v)
+							{
+								if($i!=0)
+									echo ",";
+								?> <a href="<?=$v["URL"]?>" rel="nofollow" class="feed-com-tag" bx-tag-value="<?=htmlspecialcharsbx($v["NAME"])?>"><?=htmlspecialcharsEx($v["NAME"])?></a><?
+								$i++;
+							}
+							?></div>
+					</noindex></div><?
+				}
+
 				// Used to display some HTML before informers
 				if ($arEvent["EVENT_FORMATTED"]["FOOTER_MESSAGE"] != '')
 				{
@@ -852,8 +1017,52 @@ else
 				}
 
 				$tplID = 'SOCCOMMENT_'.$arEvent["COMMENTS_PARAMS"]["ENTITY_XML_ID"].'_';
+				$separatorClassName = "feed-post-informers";
 
-				?><div class="feed-post-informers"><?
+				?><div class="<?=$separatorClassName?>" id="log_entry_inform_<?=intval($arEvent["EVENT"]["ID"])?>"><div class="feed-post-informers-cont"><?
+
+					$voteId = false;
+					if (
+						$arParams["SHOW_RATING"] == "Y"
+						&& strlen($arEvent["EVENT"]["RATING_TYPE_ID"]) > 0
+						&& intval($arEvent["EVENT"]["RATING_ENTITY_ID"]) > 0
+					)
+					{
+						$voteId = $arEvent["EVENT"]["RATING_TYPE_ID"].'_'.$arEvent["EVENT"]["RATING_ENTITY_ID"].'-'.(time()+rand(0, 1000));
+						$emotion = (isset($arEvent["RATING"]) && !empty($arEvent["RATING"]["USER_REACTION"]) ? strtoupper($arEvent["RATING"]["USER_REACTION"]) : 'LIKE');
+
+						if ($arResult["bIntranetInstalled"])
+						{
+							?><span id="bx-ilike-button-<?=htmlspecialcharsbx($voteId)?>" class="feed-inform-ilike feed-new-like"><?
+								?><span class="bx-ilike-left-wrap<?=(isset($arEvent["RATING"]) && isset($arEvent["RATING"]["USER_HAS_VOTED"]) && $arEvent["RATING"]["USER_HAS_VOTED"] == "Y" ? ' bx-you-like-button' : '')?>"><a href="#like" class="bx-ilike-text"><?=\CRatingsComponentsMain::getRatingLikeMessage($emotion)?></a></span><?
+							?></span><?
+						}
+						else
+						{
+							?><span class="feed-inform-ilike"><?
+							$APPLICATION->IncludeComponent(
+								"bitrix:rating.vote",
+								$arParams["RATING_TYPE"],
+								array(
+									"ENTITY_TYPE_ID" => $arEvent["EVENT"]["RATING_TYPE_ID"],
+									"ENTITY_ID" => $arEvent["EVENT"]["RATING_ENTITY_ID"],
+									"OWNER_ID" => $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"],
+									"USER_VOTE" => $arEvent["RATING"]["USER_VOTE"],
+									"USER_REACTION" => $arEvent["RATING"]["USER_REACTION"],
+									"USER_HAS_VOTED" => $arEvent["RATING"]["USER_HAS_VOTED"],
+									"TOTAL_VOTES" => $arEvent["RATING"]["TOTAL_VOTES"],
+									"TOTAL_POSITIVE_VOTES" => $arEvent["RATING"]["TOTAL_POSITIVE_VOTES"],
+									"TOTAL_NEGATIVE_VOTES" => $arEvent["RATING"]["TOTAL_NEGATIVE_VOTES"],
+									"TOTAL_VALUE" => $arEvent["RATING"]["TOTAL_VALUE"],
+									"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"],
+								),
+								$component,
+								array("HIDE_ICONS" => "Y")
+							);
+							?></span><?
+						}
+					}
+
 					if (
 						array_key_exists("HAS_COMMENTS", $arEvent)
 						&& $arEvent["HAS_COMMENTS"] == "Y"
@@ -863,53 +1072,12 @@ else
 					{
 						$bHasComments = true;
 						?><span class="feed-inform-comments"><?
-							?><?if (intval($arEvent["COMMENTS_COUNT"]) > 0 )
-							{
-								if ($url !== "")
-								{
-									?><a href="<?=$url?>"><?=GetMessage("SONET_C30_COMMENTS")?></a><?
-								}
-								else
-								{
-									?><span class="feed-inform-comments-nolink"><?=GetMessage("SONET_C30_COMMENTS")?></span><?
-								}
-							}
-							else
-							{
-								?><a href="javascript:void(0);" onclick="BX('feed_comments_block_<?=$arEvent["EVENT"]["ID"]?>').style.display = 'block';<?
-								?>__logShowCommentForm('<?=$arEvent["COMMENTS_PARAMS"]["ENTITY_XML_ID"]?>')"><?=GetMessage("SONET_C30_COMMENT_ADD")?></a><?
-							}
+							?><a href="javascript:void(0);" onclick="BX('feed_comments_block_<?=$arEvent["EVENT"]["ID"]?>').style.display = 'block'; __logShowCommentForm('<?=$arEvent["COMMENTS_PARAMS"]["ENTITY_XML_ID"]?>')"><?=GetMessage("SONET_C30_COMMENT_ADD")?></a><?
 						?></span><?
 					}
 					else
-						$bHasComments = false;
-
-					if (
-						$arParams["SHOW_RATING"] == "Y"
-						&& strlen($arEvent["EVENT"]["RATING_TYPE_ID"]) > 0
-						&& intval($arEvent["EVENT"]["RATING_ENTITY_ID"]) > 0
-
-					)
 					{
-						?><span class="feed-inform-ilike"><?
-						$APPLICATION->IncludeComponent(
-							"bitrix:rating.vote", $arParams["RATING_TYPE"],
-							Array(
-								"ENTITY_TYPE_ID" => $arEvent["EVENT"]["RATING_TYPE_ID"],
-								"ENTITY_ID" => $arEvent["EVENT"]["RATING_ENTITY_ID"],
-								"OWNER_ID" => $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"],
-								"USER_VOTE" => $arEvent["RATING"]["USER_VOTE"],
-								"USER_HAS_VOTED" => $arEvent["RATING"]["USER_HAS_VOTED"],
-								"TOTAL_VOTES" => $arEvent["RATING"]["TOTAL_VOTES"],
-								"TOTAL_POSITIVE_VOTES" => $arEvent["RATING"]["TOTAL_POSITIVE_VOTES"],
-								"TOTAL_NEGATIVE_VOTES" => $arEvent["RATING"]["TOTAL_NEGATIVE_VOTES"],
-								"TOTAL_VALUE" => $arEvent["RATING"]["TOTAL_VALUE"],
-								"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"]
-							),
-							$component,
-							array("HIDE_ICONS" => "Y")
-						);
-						?></span><?
+						$bHasComments = false;
 					}
 
 					if (
@@ -947,8 +1115,14 @@ else
 							)
 						);
 
-						?><a href="#" data-log-entry-url="<?=$strLogEntryURL?>" onclick="
-							__logShowPostMenu(
+						?><a
+							href="#"
+							data-log-entry-url="<?=$strLogEntryURL?>"
+							data-log-entry-createtask="<?=($arResult["canGetPostContent"]) && !$stub ? 'Y' : 'N'?>"
+							data-log-entry-entity-type="<?=(!empty($arResult["POST_CONTENT_TYPE_ID"]) ? htmlspecialcharsbx($arResult["POST_CONTENT_TYPE_ID"]) : "")?>"
+							data-log-entry-entity-id="<?=(!empty($arResult["POST_CONTENT_ID"]) ? intval($arResult["POST_CONTENT_ID"]) : "")?>"
+							data-log-entry-log-id="<?=intval($arEvent["EVENT"]["ID"])?>"
+							onclick="__logShowPostMenu(
 								this,
 								'<?=$ind?>',
 								'<?=$arEvent["EVENT"]["ENTITY_TYPE"] ?>',
@@ -959,9 +1133,8 @@ else
 								'<?=$arEvent["EVENT"]["ID"] ?>',
 								<?=(array_key_exists("FAVORITES", $arEvent) && $arEvent["FAVORITES"] == "Y" ? "true" : "false")?>,
 								<?=CUtil::PhpToJSObject($arMenuItemsAdditional)?>
-							);
-							return BX.PreventDefault(this);
-						" class="feed-post-more-link"><span class="feed-post-more-text"><?=GetMessage("SONET_LOG_T_BUTTON_MORE")?></span><span class="feed-post-more-arrow"></span></a><?
+							); return BX.PreventDefault(this);"
+							class="feed-post-more-link"><span class="feed-post-more-text"><?=GetMessage("SONET_LOG_T_BUTTON_MORE")?></span><span class="feed-post-more-arrow"></span></a><?
 					}
 
 					?><span class="feed-post-time-wrap"><?
@@ -981,39 +1154,43 @@ else
 								array("HIDE_ICONS" => "Y")
 							);
 						}
+					?></span><?
 
-						if ($url !== "")
-						{
-							echo '<a href="'.$url.'">';
-						}
-
-						$timestamp =
-						(
-							isset($arEvent["EVENT_FORMATTED"])
-							&& isset($arEvent["EVENT_FORMATTED"]["LOG_DATE_FORMAT"])
-								? MakeTimeStamp($arEvent["EVENT_FORMATTED"]["LOG_DATE_FORMAT"])
-								: (
-									array_key_exists("LOG_DATE_FORMAT", $arEvent)
-									? MakeTimeStamp($arEvent["LOG_DATE_FORMAT"])
-									: $arEvent["LOG_DATE_TS"]
-								)
-						);
-
-						$datetime_detail = CSocNetLogComponent::getDateTimeFormatted($timestamp, array(
-							"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"],
-							"DATE_TIME_FORMAT_WITHOUT_YEAR" => $arParams["DATE_TIME_FORMAT_WITHOUT_YEAR"],
-							"TIME_FORMAT" => $arParams["TIME_FORMAT"]
-						));
-
-						?><span class="feed-time"><?=$datetime_detail?></span><?
-
-						if ($url !== "")
-						{
-							echo '</a>';
-						}
-
-					?></span>
-				</div><?
+					if (
+						$arResult["bIntranetInstalled"]
+						&& $arParams["SHOW_RATING"] == "Y"
+						&& strlen($arEvent["EVENT"]["RATING_TYPE_ID"]) > 0
+						&& intval($arEvent["EVENT"]["RATING_ENTITY_ID"]) > 0
+					)
+					{
+						?><div class="feed-post-emoji-top-panel-outer"><?
+							?><div id="feed-post-emoji-top-panel-container-<?=htmlspecialcharsbx($voteId)?>" class="feed-post-emoji-top-panel-box <?=(intval($arEvent["RATING"]["TOTAL_POSITIVE_VOTES"]) > 0 ? 'feed-post-emoji-top-panel-container-active' : '')?>"><?
+								$APPLICATION->IncludeComponent(
+									"bitrix:rating.vote",
+									"like_react",
+									array(
+										"ENTITY_TYPE_ID" => $arEvent["EVENT"]["RATING_TYPE_ID"],
+										"ENTITY_ID" => $arEvent["EVENT"]["RATING_ENTITY_ID"],
+										"OWNER_ID" => $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"],
+										"USER_VOTE" => $arEvent["RATING"]["USER_VOTE"],
+										"USER_REACTION" => $arEvent["RATING"]["USER_REACTION"],
+										"USER_HAS_VOTED" => $arEvent["RATING"]["USER_HAS_VOTED"],
+										"TOTAL_VOTES" => $arEvent["RATING"]["TOTAL_VOTES"],
+										"TOTAL_POSITIVE_VOTES" => $arEvent["RATING"]["TOTAL_POSITIVE_VOTES"],
+										"TOTAL_NEGATIVE_VOTES" => $arEvent["RATING"]["TOTAL_NEGATIVE_VOTES"],
+										"TOTAL_VALUE" => $arEvent["RATING"]["TOTAL_VALUE"],
+										"REACTIONS_LIST" => $arEvent["RATING"]["REACTIONS_LIST"],
+										"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"],
+										'TOP_DATA' => (!empty($arResult['TOP_RATING_DATA']) ? $arResult['TOP_RATING_DATA'] : false),
+										'VOTE_ID' => $voteId
+									),
+									$component,
+									array("HIDE_ICONS" => "Y")
+								);
+							?></div><?
+						?></div><?
+					}
+				?></div><? // feed-post-informers
 
 				if ($_REQUEST["action"] == "get_entry")
 				{
@@ -1026,7 +1203,7 @@ else
 					die();
 				}
 
-			?></div><? // cont_wrap
+			?></div></div><? // cont_wrap
 
 			if (
 				isset($arEvent["HAS_COMMENTS"])
@@ -1034,18 +1211,16 @@ else
 			)
 			{
 				?><script>
+					BX.viewElementBind(
+						'feed_comments_block_<?=$arEvent["EVENT"]["ID"]?>',
+						{},
+						function(node){
+							return BX.type.isElementNode(node) && (node.getAttribute('data-bx-viewer') || node.getAttribute('data-bx-image'));
+						}
+					);
+					top.postFollow<?=$arParams["ID"]?> = postFollow<?=$arParams["ID"]?> = '<?=$arParams["FOLLOW"]?>';
+				</script><?
 
-				BX.viewElementBind(
-					'feed_comments_block_<?=$arEvent["EVENT"]["ID"]?>',
-					{},
-					function(node){
-						return BX.type.isElementNode(node) && (node.getAttribute('data-bx-viewer') || node.getAttribute('data-bx-image'));
-					}
-				);
-				top.postFollow<?=$arParams["ID"]?> = postFollow<?=$arParams["ID"]?> = '<?=$arParams["FOLLOW"]?>';
-				</script>
-
-				<div class="feed-comments-block" id="feed_comments_block_<?=$arEvent["EVENT"]["ID"]?>" style="display: <?=(intval($arEvent["COMMENTS_COUNT"]) > 0 ? "block" : "none")?>"><?
 				$arRecords = array();
 				if (!!$component && !!$component->__parent && !!$component->__parent->arResult)
 				{
@@ -1069,15 +1244,15 @@ else
 						$arRecords[$commentId] = array(
 							"ID" => $commentId,
 							"NEW" => ($USER->IsAuthorized()
-									&& $arEvent["EVENT"]["FOLLOW"] != "N"
-									&& $arComment["EVENT"]["USER_ID"] != $USER->GetID()
-									&& intval($arResult["LAST_LOG_TS"]) > 0
-									&& $event_date_log_ts > $arResult["LAST_LOG_TS"]
-									&& (
-										$arResult["COUNTER_TYPE"] == "**"
-										|| $arResult["COUNTER_TYPE"] == "CRM_**"
-										|| $arResult["COUNTER_TYPE"] == "blog_post"
-									)
+							&& $arEvent["EVENT"]["FOLLOW"] != "N"
+							&& $arComment["EVENT"]["USER_ID"] != $USER->GetID()
+							&& intval($arResult["LAST_LOG_TS"]) > 0
+							&& $event_date_log_ts > $arResult["LAST_LOG_TS"]
+							&& (
+								$arResult["COUNTER_TYPE"] == "**"
+								|| $arResult["COUNTER_TYPE"] == "CRM_**"
+								|| $arResult["COUNTER_TYPE"] == "blog_post"
+							)
 								? "Y"
 								: "N"
 							),
@@ -1087,6 +1262,7 @@ else
 								"LAST_NAME" => $arComment["CREATED_BY"]["TOOLTIP_FIELDS"]["LAST_NAME"],
 								"SECOND_NAME" => $arComment["CREATED_BY"]["TOOLTIP_FIELDS"]["SECOND_NAME"],
 								"LOGIN" => $arComment["CREATED_BY"]["TOOLTIP_FIELDS"]["LOGIN"],
+								"PERSONAL_GENDER" => $arComment["CREATED_BY"]["TOOLTIP_FIELDS"]["PERSONAL_GENDER"],
 								"AVATAR" => $arComment["AVATAR_SRC"],
 								"EXTERNAL_AUTH_ID" => (isset($arComment["CREATED_BY"]["TOOLTIP_FIELDS"]["EXTERNAL_AUTH_ID"]) ? $arComment["CREATED_BY"]["TOOLTIP_FIELDS"]["EXTERNAL_AUTH_ID"] : false),
 								"UF_USER_CRM_ENTITY" => (isset($arComment["CREATED_BY"]["TOOLTIP_FIELDS"]["UF_USER_CRM_ENTITY"]) ? $arComment["CREATED_BY"]["TOOLTIP_FIELDS"]["UF_USER_CRM_ENTITY"] : false)
@@ -1095,7 +1271,11 @@ else
 							"POST_TIMESTAMP" => $arComment["LOG_DATE_TS"],
 							"POST_MESSAGE_TEXT" => (array_key_exists("FULL_MESSAGE_CUT", $arComment["EVENT_FORMATTED"]) ? $arComment["EVENT_FORMATTED"]["FULL_MESSAGE_CUT"] : ""),
 							"~POST_MESSAGE_TEXT" => "",
+							"AUX" => (!empty($arComment["AUX"]) ? $arComment["AUX"] : ''),
+							"AUX_LIVE_PARAMS" => (!empty($arComment["AUX_LIVE_PARAMS"]) ? $arComment["AUX_LIVE_PARAMS"] : array()),
+							"CLASSNAME" => ""
 						);
+
 						if (
 							strlen($arComment["EVENT"]["RATING_TYPE_ID"]) > 0
 							&& $arComment["EVENT"]["RATING_ENTITY_ID"] > 0
@@ -1107,30 +1287,70 @@ else
 								$commentRatingEntityTypeId = $arComment["EVENT"]["RATING_TYPE_ID"];
 							}
 
-							ob_start();
-							$RATING_ENTITY_ID = $arComment["EVENT"]["RATING_ENTITY_ID"];
+							if ($arResult["bIntranetInstalled"])
+							{
+								ob_start();
 
-							?><span class="sonet-log-comment-like rating_vote_text"><?
-							$APPLICATION->IncludeComponent(
-								"bitrix:rating.vote", $arParams["RATING_TYPE"],
-								Array(
-									"ENTITY_TYPE_ID" => $arComment["EVENT"]["RATING_TYPE_ID"],
-									"ENTITY_ID" => $RATING_ENTITY_ID,
-									"OWNER_ID" => $arComment["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"],
-									"USER_VOTE" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["USER_VOTE"],
-									"USER_HAS_VOTED" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["USER_HAS_VOTED"],
-									"TOTAL_VOTES" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["TOTAL_VOTES"],
-									"TOTAL_POSITIVE_VOTES" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["TOTAL_POSITIVE_VOTES"],
-									"TOTAL_NEGATIVE_VOTES" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["TOTAL_NEGATIVE_VOTES"],
-									"TOTAL_VALUE" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["TOTAL_VALUE"],
-									"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"],
-								),
-								$component,
-								array("HIDE_ICONS" => "Y")
-							);
-							?></span><?
-							$APPLICATION->AddViewContent(implode('_', array($tplID, 'ID', $commentId, "BEFORE_ACTIONS")), ob_get_clean(), 50);
+								$RATING_ENTITY_ID = $arComment["EVENT"]["RATING_ENTITY_ID"];
+								$voteId = $arComment["EVENT"]["RATING_TYPE_ID"].'_'.$RATING_ENTITY_ID.'-'.(time()+rand(0, 1000));
+
+								$arRecords[$commentId]["RATING_VOTE_ID"] = $voteId;
+								$arRecords[$commentId]["RATING_USER_HAS_VOTED"] = $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["USER_HAS_VOTED"];
+								$arRecords[$commentId]["RATING_USER_REACTION"] = $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["USER_REACTION"];
+
+								$APPLICATION->IncludeComponent(
+									"bitrix:rating.vote",
+									"like_react",
+									Array(
+										"COMMENT" => "Y",
+										"ENTITY_TYPE_ID" => $arComment["EVENT"]["RATING_TYPE_ID"],
+										"ENTITY_ID" => $RATING_ENTITY_ID,
+										"OWNER_ID" => $arComment["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"],
+										"USER_VOTE" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["USER_VOTE"],
+										"USER_REACTION" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["USER_REACTION"],
+										"USER_HAS_VOTED" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["USER_HAS_VOTED"],
+										"TOTAL_VOTES" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["TOTAL_VOTES"],
+										"TOTAL_POSITIVE_VOTES" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["TOTAL_POSITIVE_VOTES"],
+										"TOTAL_NEGATIVE_VOTES" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["TOTAL_NEGATIVE_VOTES"],
+										"TOTAL_VALUE" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["TOTAL_VALUE"],
+										"REACTIONS_LIST" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["REACTIONS_LIST"],
+										"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"],
+										"VOTE_ID" => ($arResult["bIntranetInstalled"] ? $voteId : false)
+									),
+									$component,
+									array("HIDE_ICONS" => "Y")
+								);
+
+								$APPLICATION->AddViewContent(implode('_', array($tplID, 'ID', $commentId, "LIKE_REACT")), ob_get_clean(), 100);
+							}
+							else
+							{
+								ob_start();
+								$RATING_ENTITY_ID = $arComment["EVENT"]["RATING_ENTITY_ID"];
+
+								?><span class="sonet-log-comment-like rating_vote_text"><?
+								$APPLICATION->IncludeComponent(
+									"bitrix:rating.vote", $arParams["RATING_TYPE"],
+									Array(
+										"ENTITY_TYPE_ID" => $arComment["EVENT"]["RATING_TYPE_ID"],
+										"ENTITY_ID" => $RATING_ENTITY_ID,
+										"OWNER_ID" => $arComment["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"],
+										"USER_VOTE" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["USER_VOTE"],
+										"USER_HAS_VOTED" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["USER_HAS_VOTED"],
+										"TOTAL_VOTES" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["TOTAL_VOTES"],
+										"TOTAL_POSITIVE_VOTES" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["TOTAL_POSITIVE_VOTES"],
+										"TOTAL_NEGATIVE_VOTES" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["TOTAL_NEGATIVE_VOTES"],
+										"TOTAL_VALUE" => $arResult["RATING_COMMENTS"][$RATING_ENTITY_ID]["TOTAL_VALUE"],
+										"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER"],
+									),
+									$component,
+									array("HIDE_ICONS" => "Y")
+								);
+								?></span><?
+								$APPLICATION->AddViewContent(implode('_', array($tplID, 'ID', $commentId, "BEFORE_ACTIONS")), ob_get_clean(), 50);
+							}
 						}
+
 						if (
 							is_array($arComment["UF"])
 							&& count($arComment["UF"]) > 0
@@ -1152,6 +1372,7 @@ else
 										null,
 										array("HIDE_ICONS"=>"Y")
 									);
+									$arRecords[$commentId]["CLASSNAME"] = "feed-com-block-uf";
 								}
 							}
 							if (
@@ -1163,7 +1384,14 @@ else
 							}
 
 							$APPLICATION->AddViewContent(implode('_', array($tplID, 'ID', $commentId, "AFTER")), ob_get_clean(), 50);
-							$arRecords[$commentId]["CLASSNAME"] = "feed-com-block-uf";
+						}
+
+						if (
+							!empty($arComment["EVENT_FORMATTED"]["URLPREVIEW"])
+							&& $arComment["EVENT_FORMATTED"]["URLPREVIEW"] === true
+						)
+						{
+							$arRecords[$commentId]["CLASSNAME"] .= " feed-com-block-urlpreview";
 						}
 					}
 				}
@@ -1187,6 +1415,8 @@ else
 						"TEMPLATE_ID" => $tplID,
 						"CONTENT_TYPE_ID" => ($commentRatingEntityTypeId ? $commentRatingEntityTypeId : ""),
 						"ENTITY_XML_ID" => $arEvent["COMMENTS_PARAMS"]["ENTITY_XML_ID"],
+						"POST_CONTENT_TYPE_ID" => $arResult["POST_CONTENT_TYPE_ID"],
+						"COMMENT_CONTENT_TYPE_ID" => $arResult["COMMENT_CONTENT_TYPE_ID"],
 						"RECORDS" => array_reverse($arRecords, true),
 						"NAV_STRING" => ($tmp ? "/bitrix/components/bitrix/socialnetwork.log.entry/ajax.php?".http_build_query(array(
 								"action" => "get_comments",
@@ -1203,6 +1433,7 @@ else
 								"nt" => $arParams["NAME_TEMPLATE"],
 								"sl" => $arParams["SHOW_LOGIN"],
 								"dtf" => $arParams["DATE_TIME_FORMAT"],
+								"dtfwoy" => $arParams["DATE_TIME_FORMAT_WITHOUT_YEAR"],
 								"tf" => $arParams["TIME_FORMAT"],
 								"as" => $arParams["AVATAR_SIZE"],
 								"lang" => LANGUAGE_ID,
@@ -1215,7 +1446,8 @@ else
 						"RIGHTS" => array(
 							"MODERATE" => "N",
 							"EDIT" => $arResult["COMMENT_RIGHTS_EDIT"],
-							"DELETE" => $arResult["COMMENT_RIGHTS_DELETE"]
+							"DELETE" => $arResult["COMMENT_RIGHTS_DELETE"],
+							"CREATETASK" => ($arResult["bTasksAvailable"] && $arResult["canGetCommentContent"] ? "Y" : "N")
 						),
 						"VISIBLE_RECORDS_COUNT" => count($arRecords),
 
@@ -1246,6 +1478,7 @@ else
 						"SHOW_LOGIN" => $arParams['SHOW_LOGIN'],
 
 						"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"],
+						"DATE_TIME_FORMAT_WITHOUT_YEAR" => $arParams["DATE_TIME_FORMAT_WITHOUT_YEAR"],
 						"LAZYLOAD" => $arParams["LAZYLOAD"],
 
 						"NOTIFY_TAG" => $arEvent["COMMENTS_PARAMS"]["NOTIFY_TAGS"],
@@ -1253,25 +1486,36 @@ else
 						"SHOW_MINIMIZED" => "Y",
 						"SHOW_POST_FORM" => (
 							isset($arEvent["HAS_COMMENTS"])
-								&& $arEvent["HAS_COMMENTS"] === "Y"
-								&& isset($arEvent["CAN_ADD_COMMENTS"])
-								&& $arEvent["CAN_ADD_COMMENTS"] === "Y"
-									? "Y"
-									: "N"
-							),
-
+							&& $arEvent["HAS_COMMENTS"] === "Y"
+							&& isset($arEvent["CAN_ADD_COMMENTS"])
+							&& $arEvent["CAN_ADD_COMMENTS"] === "Y"
+								? "Y"
+								: "N"
+						),
 						"IMAGE_SIZE" => $arParams["IMAGE_SIZE"],
 						"mfi" => $arParams["mfi"],
 						"AUTHOR_URL_PARAMS" => array(
 							"entityType" => 'LOG_ENTRY',
 							"entityId" => $arEvent["EVENT"]["ID"]
 						),
-						),
-						$this->__component
-					);
-						?><?=$arResult["OUTPUT_LIST"]["HTML"]?><?
-						?><script type="text/javascript">BX.ready(function(){
+					),
+					$this->__component
+				);
 
+				$blockClassName = "feed-comments-block";
+				if (
+					!empty($arResult["OUTPUT_LIST"]["DATA"])
+					&& !empty($arResult["OUTPUT_LIST"]["DATA"]["NAV_STRING_COUNT_MORE"])
+					&& intval($arResult["OUTPUT_LIST"]["DATA"]["NAV_STRING_COUNT_MORE"]) > 0
+				)
+				{
+					$blockClassName .= " feed-comments-block-nav";
+				}
+
+				?><div class="<?=$blockClassName?>" id="feed_comments_block_<?=$arEvent["EVENT"]["ID"]?>"><?
+					?><?=$arResult["OUTPUT_LIST"]["HTML"]?><?
+					?><script type="text/javascript">
+						BX.ready(function(){
 							BX.UserContentView.init();
 							BX.SocialnetworkLogEntry.registerViewAreaList({
 								containerId: 'feed_comments_block_<?=$arEvent["EVENT"]["ID"]?>',
@@ -1280,25 +1524,35 @@ else
 							});
 
 							__logCommentsListRedefine("<?=$arEvent["COMMENTS_PARAMS"]["ENTITY_XML_ID"]?>", "sonet_log_day_item_<?=$ind?>", "anchor_<?=CUtil::JSEscape($anchor_id)?>", "<?=$arEvent["EVENT"]["ID"]?>");
-							<?if ($USER->IsAuthorized() && CModule::IncludeModule("pull") && CPullOptions::GetNginxStatus()) { ?>
+							<?
+							if (
+								$USER->IsAuthorized()
+								&& CModule::IncludeModule("pull")
+								&& CPullOptions::GetNginxStatus())
+							{
+								?>
 								BX.addCustomEvent(window, "OnUCCommentWasPulled", function(id) { if (id && id[0] == '<?=$arEvent["COMMENTS_PARAMS"]["ENTITY_XML_ID"]?>') { BX.show(BX('feed_comments_block_<?=$arEvent["EVENT"]["ID"]?>')); } });
-							<? } ?>
-						});</script><?
-						?><div class="feed-com-corner"></div>
-					</div><?
-				}
+								<?
+							}
+							?>
+						});
 
-				if (
-					(
-						!isset($arParams["USE_FAVORITES"])
-						|| $arParams["USE_FAVORITES"] != "N"
-					)
-					&& $USER->IsAuthorized()
+					</script><?
+					?><div class="feed-com-corner"></div>
+				</div><?
+			}
+
+			if (
+				(
+					!isset($arParams["USE_FAVORITES"])
+					|| $arParams["USE_FAVORITES"] != "N"
 				)
-				{
-					$bFavorites = (array_key_exists("FAVORITES", $arEvent) && $arEvent["FAVORITES"] == "Y");
-					?><div id="log_entry_favorites_<?=intval($arEvent["EVENT"]["ID"])?>" onmousedown="__logChangeFavorites(<?=$arEvent["EVENT"]["ID"]?>, this, '<?=($bFavorites ? "N" : "Y")?>'); this.blur(); return BX.PreventDefault(this);" class="feed-post-important-switch<?=($bFavorites ? " feed-post-important-switch-active" : "")?>" title="<?=GetMessage("SONET_LOG_TITLE_FAVORITES_N")?>"></div><?
-				}
+				&& $USER->IsAuthorized()
+			)
+			{
+				$bFavorites = (array_key_exists("FAVORITES", $arEvent) && $arEvent["FAVORITES"] == "Y");
+				?><div id="log_entry_favorites_<?=intval($arEvent["EVENT"]["ID"])?>" onmousedown="__logChangeFavorites(<?=$arEvent["EVENT"]["ID"]?>, this, '<?=($bFavorites ? "N" : "Y")?>'); this.blur(); return BX.PreventDefault(this);" class="feed-post-important-switch<?=($bFavorites ? " feed-post-important-switch-active" : "")?>" title="<?=GetMessage("SONET_LOG_TITLE_FAVORITES_N")?>"></div><?
+			}
 		?></div><?
 	}
 }

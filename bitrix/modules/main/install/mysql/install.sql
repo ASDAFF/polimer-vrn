@@ -67,6 +67,7 @@ CREATE TABLE b_event_type
 	NAME varchar(100),
 	DESCRIPTION text,
 	SORT INT(18) not null default '150',
+	EVENT_TYPE varchar(10) not null default 'email',
 	PRIMARY KEY (ID),
 	UNIQUE ux_1 (EVENT_NAME, LID)
 );
@@ -139,6 +140,7 @@ CREATE TABLE b_group
 	ACTIVE char(1) not null default 'Y',
 	C_SORT int(18) not null default '100',
 	ANONYMOUS char(1) not null default 'N',
+	IS_SYSTEM char(1) not null default 'Y',
 	NAME varchar(255) not null,
 	DESCRIPTION varchar(255),
 	SECURITY_POLICY text,
@@ -213,7 +215,9 @@ CREATE TABLE b_user
 	UNIQUE ix_login (LOGIN, EXTERNAL_AUTH_ID),
 	INDEX ix_b_user_email (EMAIL),
 	INDEX ix_b_user_activity_date (LAST_ACTIVITY_DATE),
-	INDEX IX_B_USER_XML_ID (XML_ID)
+	INDEX IX_B_USER_XML_ID (XML_ID),
+	INDEX ix_user_last_login(LAST_LOGIN),
+	INDEX ix_user_date_register(DATE_REGISTER)
 );
 
 CREATE TABLE b_user_index
@@ -303,7 +307,8 @@ CREATE TABLE b_agent
 	RUNNING char(1) not null default 'N',
 	PRIMARY KEY (ID),
 	INDEX ix_act_next_exec(ACTIVE, NEXT_EXEC),
-	INDEX ix_agent_user_id(USER_ID)
+	INDEX ix_agent_user_id(USER_ID),
+	INDEX ix_agent_name(NAME(100))
 );
 
 CREATE TABLE b_file
@@ -322,6 +327,19 @@ CREATE TABLE b_file
 	HANDLER_ID VARCHAR(50),
 	EXTERNAL_ID VARCHAR(50),
 	INDEX IX_B_FILE_EXTERNAL_ID(EXTERNAL_ID),
+	PRIMARY KEY (ID)
+);
+
+CREATE TABLE b_file_preview
+(
+	ID INT(18) not null auto_increment,
+	FILE_ID INT(18) not null,
+	PREVIEW_ID INT(18),
+	PREVIEW_IMAGE_ID INT(18),
+	CREATED_AT datetime not null,
+	TOUCHED_AT datetime,
+	INDEX IX_B_FILE_PL_TOUCH(TOUCHED_AT),
+	INDEX IX_B_FILE_PL_FILE(FILE_ID),
 	PRIMARY KEY (ID)
 );
 
@@ -578,6 +596,7 @@ CREATE TABLE b_rating_vote
 	CREATED datetime not null,
 	USER_ID int(11) not null,
 	USER_IP varchar(64) not null,
+	REACTION varchar(8) null,
 	PRIMARY KEY (ID),
 	KEY IX_RAT_VOTE_ID (RATING_VOTING_ID, USER_ID),
 	KEY IX_RAT_VOTE_ID_2 (ENTITY_TYPE_ID, ENTITY_ID, USER_ID),
@@ -618,6 +637,15 @@ CREATE TABLE b_rating_voting_prepare
 	TOTAL_NEGATIVE_VOTES int(11) not null,
 	PRIMARY KEY (ID),
 	KEY IX_RATING_VOTING_ID (RATING_VOTING_ID)
+);
+
+CREATE TABLE b_rating_voting_reaction
+(
+	ENTITY_TYPE_ID varchar(50) not null,
+	ENTITY_ID int(11) not null,
+	REACTION varchar(8) not null default '',
+	TOTAL_VOTES int(11) not null,
+	PRIMARY KEY (ENTITY_TYPE_ID, ENTITY_ID, REACTION)
 );
 
 CREATE TABLE b_rating_prepare
@@ -945,7 +973,6 @@ CREATE TABLE b_hot_keys
 	USER_ID int(18) not null,
 	PRIMARY KEY (ID),
 	UNIQUE ix_b_hot_keys_co_u (CODE_ID,USER_ID),
-	INDEX ix_hot_keys_code (CODE_ID),
 	INDEX ix_hot_keys_user (USER_ID)
 );
 
@@ -1095,29 +1122,29 @@ CREATE TABLE b_finder_dest
 CREATE TABLE b_urlpreview_metadata
 (
 	ID int(11) NOT NULL AUTO_INCREMENT,
-	URL varchar(200) NOT NULL,
+	URL varchar(2000) NOT NULL,
 	TYPE char(1) NOT NULL DEFAULT 'S',
 	DATE_INSERT datetime NOT NULL,
 	DATE_EXPIRE datetime NULL,
 	TITLE varchar(200) NULL,
 	DESCRIPTION text,
 	IMAGE_ID int(11) NULL,
-	IMAGE varchar(255) NULL,
+	IMAGE varchar(2000) NULL,
 	EMBED mediumtext,
 	EXTRA text,
 	PRIMARY KEY (ID),
-	INDEX IX_URLPREVIEW_METADATA_URL (URL)
+	INDEX IX_URLPREVIEW_METADATA_URL (URL(255))
 );
 
 CREATE TABLE b_urlpreview_route
 (
 	ID int(11) NOT NULL AUTO_INCREMENT,
-	ROUTE varchar(200) NOT NULL,
+	ROUTE varchar(2000) NOT NULL,
 	MODULE varchar(50) NOT NULL,
 	CLASS varchar(150) NOT NULL,
 	PARAMETERS mediumtext,
 	PRIMARY KEY (ID),
-	UNIQUE KEY UX_URLPREVIEW_ROUTE_ROUTE (ROUTE)
+	UNIQUE KEY UX_URLPREVIEW_ROUTE_ROUTE (ROUTE(255))
 );
 
 CREATE TABLE b_geoip_handlers
@@ -1219,4 +1246,106 @@ create table b_user_auth_action
 	PRIMARY KEY (ID),
 	index ix_auth_action_user(USER_ID, PRIORITY),
 	index ix_auth_action_date(ACTION_DATE)
+);
+
+CREATE TABLE b_main_mail_sender
+(
+	ID INT NOT NULL AUTO_INCREMENT,
+	NAME VARCHAR(255) NOT NULL DEFAULT '',
+	EMAIL VARCHAR(255) NOT NULL,
+	USER_ID INT NOT NULL,
+	IS_CONFIRMED TINYINT NOT NULL DEFAULT 0,
+	IS_PUBLIC TINYINT NOT NULL DEFAULT 0,
+	OPTIONS TEXT NULL,
+	PRIMARY KEY (ID),
+	INDEX IX_B_MAIN_MAIL_SENDER_USER_ID (USER_ID, IS_CONFIRMED, IS_PUBLIC)
+);
+
+CREATE TABLE b_main_mail_blacklist
+(
+	ID int NOT NULL auto_increment,
+	DATE_INSERT	datetime	NOT NULL,
+	CODE varchar(255)	NULL,
+	PRIMARY KEY (ID),
+	UNIQUE UK_B_MAIN_MAIL_BLACKLIST_CODE (CODE)
+);
+
+CREATE TABLE `b_numerator`
+(
+	`ID` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`NAME` VARCHAR(255) NULL DEFAULT NULL,
+	`TEMPLATE` VARCHAR(255) NULL DEFAULT NULL,
+	`TYPE` VARCHAR(50) NULL DEFAULT NULL,
+	`SETTINGS` TEXT NULL,
+	`CREATED_AT` DATETIME NULL DEFAULT NULL,
+	`CREATED_BY` INT(11) NULL DEFAULT NULL,
+	`UPDATED_AT` DATETIME NULL DEFAULT NULL,
+	`UPDATED_BY` INT(11) NULL DEFAULT NULL,
+	PRIMARY KEY (`ID`)
+);
+
+CREATE TABLE `b_numerator_sequence`
+(
+	`NUMERATOR_ID` INT(11) NOT NULL DEFAULT '0',
+	`KEY` VARCHAR(32) NOT NULL DEFAULT '0',
+	`TEXT_KEY` VARCHAR(50) NULL DEFAULT NULL,
+	`NEXT_NUMBER` INT(11) NULL DEFAULT NULL,
+	`LAST_INVOCATION_TIME` INT(11) NULL DEFAULT NULL,
+	PRIMARY KEY (`NUMERATOR_ID`, `KEY`)
+);
+
+CREATE TABLE b_user_profile_history
+(
+	ID int not null auto_increment,
+	USER_ID int not null,
+	EVENT_TYPE int,
+	DATE_INSERT datetime,
+	REMOTE_ADDR varchar(40),
+	USER_AGENT text,
+	REQUEST_URI text,
+	UPDATED_BY_ID int,
+	PRIMARY KEY (ID),
+	INDEX ix_profile_history_user(USER_ID)
+);
+
+CREATE TABLE b_user_profile_record
+(
+	ID int not null auto_increment,
+	HISTORY_ID int not null,
+	FIELD varchar(40),
+	DATA mediumtext,
+	PRIMARY KEY (ID),
+	INDEX ix_profile_record_history_field(HISTORY_ID, FIELD)
+);
+
+CREATE TABLE b_user_phone_auth
+(
+	USER_ID int not null,
+	PHONE_NUMBER varchar(25) not null,
+	OTP_SECRET text,
+	ATTEMPTS int default 0,
+	CONFIRMED char(1) default 'N',
+	DATE_SENT datetime,
+	PRIMARY KEY (USER_ID),
+	UNIQUE INDEX ix_user_phone_auth_number(PHONE_NUMBER)
+);
+
+CREATE TABLE b_sms_template
+(
+	ID int not null auto_increment,
+	EVENT_NAME varchar(255) not null,
+	ACTIVE char(1) not null default 'Y',
+	SENDER varchar(50),
+	RECEIVER varchar(50),
+	MESSAGE text,
+	LANGUAGE_ID char(2),
+	PRIMARY KEY (ID),
+	INDEX ix_sms_message_name (EVENT_NAME(50))
+);
+
+CREATE TABLE b_sms_template_site
+(
+	TEMPLATE_ID int not null,
+	SITE_ID char(2) not null,
+	PRIMARY KEY (TEMPLATE_ID, SITE_ID)
 );

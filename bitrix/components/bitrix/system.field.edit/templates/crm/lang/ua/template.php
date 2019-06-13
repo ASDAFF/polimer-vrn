@@ -1,4 +1,5 @@
 <?
+$MESS["CRM_FF_ORDER"] = "Замовлення";
 $MESS["CRM_FF_LEAD"] = "Ліди";
 $MESS["CRM_FF_CONTACT"] = "Контакти";
 $MESS["CRM_FF_COMPANY"] = "Компанії";
@@ -17,4 +18,5 @@ $MESS["CRM_CES_CREATE_LEAD"] = "Лід";
 $MESS["CRM_CES_CREATE_CONTACT"] = "Контакт";
 $MESS["CRM_CES_CREATE_COMPANY"] = "Компанію";
 $MESS["CRM_CES_CREATE_DEAL"] = "Угоду";
+$MESS["CRM_SFE_PERMISSION_DENIED"] = "Доступ заборонено";
 ?>

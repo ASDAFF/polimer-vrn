@@ -143,7 +143,7 @@ class CAllSaleAffiliate
 		}
 		else
 		{
-			$strSql = 
+			$strSql =
 				"SELECT A.ID, A.SITE_ID, A.USER_ID, A.AFFILIATE_ID, A.PLAN_ID, A.ACTIVE, A.PAID_SUM, ".
 				"	A.APPROVED_SUM, A.PENDING_SUM, A.ITEMS_NUMBER, A.ITEMS_SUM, A.AFF_SITE, A.AFF_DESCRIPTION, A.FIX_PLAN, ".
 				"	".$DB->DateToCharFunction("A.TIMESTAMP_X", "FULL")." as TIMESTAMP_X, ".
@@ -201,7 +201,7 @@ class CAllSaleAffiliate
 	function Calculate($dateFrom = false, $dateTo = false, $datePlanFrom = false, $datePlanTo = false)
 	{
 		global $DB;
-		
+
 		$arFilter = array(
 			"ACTIVE" => "Y",
 			"ORDER_ALLOW_DELIVERY" => "Y"
@@ -469,6 +469,8 @@ class CAllSaleAffiliate
 	{
 		global $DB;
 
+		$disableCalculate = false;
+
 		// Prepare function params - affiliate
 		$arAffiliate = CSaleAffiliate::CheckAffiliateFunc($affiliate);
 		if (!$arAffiliate)
@@ -476,11 +478,18 @@ class CAllSaleAffiliate
 
 		$db_events = GetModuleEvents("sale", "OnBeforeAffiliateCalculate");
 		while ($arEvent = $db_events->Fetch())
-			if (ExecuteModuleEventEx($arEvent, Array(&$arAffiliate, &$dateFrom, &$dateTo, &$datePlanFrom, &$datePlanTo))===false)
+		{
+			if (ExecuteModuleEventEx($arEvent, Array(&$arAffiliate, &$dateFrom, &$dateTo, &$datePlanFrom, &$datePlanTo, &$disableCalculate)) === false)
+			{
 				return false;
-
+			}
+		}
 
 		$affiliateID = IntVal($arAffiliate["ID"]);
+		if ($disableCalculate === true)
+		{
+			return True;
+		}
 
 		if (!$dateFrom || StrLen($dateFrom) <= 0)
 		{
@@ -494,7 +503,7 @@ class CAllSaleAffiliate
 
 		// Get affiliate plan
 		$arAffiliatePlan = CSaleAffiliate::SetAffiliatePlan($arAffiliate, $datePlanFrom, $datePlanTo);
-		
+
 		if (!$arAffiliatePlan)
 			return False;
 		if ($arAffiliatePlan && !is_array($arAffiliatePlan))
@@ -585,7 +594,6 @@ class CAllSaleAffiliate
 				'order' => array('ID' => 'ASC')
 			)
 		);
-		$fOrderId = "";
 		while ($arOrder = $dbOrders->fetch())
 		{
 			$arProductSections = array();
@@ -603,6 +611,7 @@ class CAllSaleAffiliate
 			{
 				if ($arOrder["BASKET_MODULE"] == "catalog")
 				{
+					CModule::IncludeModule("iblock");
 					CModule::IncludeModule("catalog");
 
 					$arSku = CCatalogSku::GetProductInfo($arOrder["BASKET_PRODUCT_ID"]);
@@ -610,8 +619,37 @@ class CAllSaleAffiliate
 						$elementId = $arSku["ID"];
 					else
 						$elementId = $arOrder["BASKET_PRODUCT_ID"];
-					
-					$arProductSections = CCatalogProduct::GetProductSections($elementId);
+
+					$elementSectionIterator = Bitrix\Iblock\SectionElementTable::getList(array(
+						'select' => array('IBLOCK_SECTION_ID'),
+						'filter' => array('=IBLOCK_ELEMENT_ID' => $elementId, '=ADDITIONAL_PROPERTY_ID' => null),
+					));
+					$elementSectionList = [];
+					while ($elementSection = $elementSectionIterator->fetch())
+					{
+						$arSectionsChains = \CIBlockSection::GetNavChain(0, $elementSection['IBLOCK_SECTION_ID'], array('ID'), true);
+						foreach ($arSectionsChains as $arSectionsChain)
+						{
+							$elementSectionList[$arSectionsChain['ID']] = $arSectionsChain['ID'];
+						}
+					}
+					unset($elementSectionIterator);
+
+					if ($elementSectionList)
+					{
+						sort($elementSectionList);
+						$sectionIterator = Bitrix\Iblock\SectionTable::getList(array(
+							'select' => array('ID', 'LEFT_MARGIN'),
+							'filter' => array('@ID' => $elementSectionList),
+							'order' => array('LEFT_MARGIN' => 'DESC')
+						));
+						while($section = $sectionIterator->fetch())
+						{
+							$arProductSections[] = $section['ID'];
+						}
+						unset($sectionIterator);
+					}
+					unset($elementSectionList);
 				}
 				else
 				{
@@ -628,7 +666,7 @@ class CAllSaleAffiliate
 			$realRate = $arAffiliatePlan["BASE_RATE"];
 			$realRateType = $arAffiliatePlan["BASE_RATE_TYPE"];
 			$realRateCurrency = $arAffiliatePlan["BASE_RATE_CURRENCY"];
-			
+
 			$coountArProd = count($arProductSections);
 			for ($i = 0; $i < $coountArProd; $i++)
 			{
@@ -844,7 +882,7 @@ class CAllSaleAffiliate
 
 		return True;
 	}
-	
+
 	function OnBeforeUserDelete($UserID)
 	{
 		global $DB;

@@ -3,21 +3,25 @@
 namespace Bitrix\Sale\PaySystem;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\IO\Directory;
 use Bitrix\Main\IO\File;
+use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Request;
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\BusinessValue;
 use Bitrix\Sale\Internals\EntityCollection;
-use Bitrix\Sale\Internals\PaymentTable;
 use Bitrix\Sale\Internals\PaySystemActionTable;
 use Bitrix\Sale\Internals\PaySystemRestHandlersTable;
 use Bitrix\Sale\Internals\ServiceRestrictionTable;
 use Bitrix\Sale\Order;
 use Bitrix\Sale\Payment;
+use Bitrix\Sale\Registry;
+use Bitrix\Sale\Services\Base\Restriction;
 use Bitrix\Sale\Services\PaySystem\Restrictions;
 
 Loc::loadMessages(__FILE__);
@@ -28,6 +32,9 @@ Loc::loadMessages(__FILE__);
  */
 final class Manager
 {
+	const HANDLER_AVAILABLE_TRUE = true;
+	const HANDLER_AVAILABLE_FALSE = false;
+
 	const EVENT_ON_GET_HANDLER_DESC = 'OnSaleGetHandlerDescription';
 	const CACHE_ID = "BITRIX_SALE_INNER_PS_ID";
 	const TTL = 31536000;
@@ -42,12 +49,19 @@ final class Manager
 	);
 
 	/**
-	 * @return array
+	 * @return mixed
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function getHandlerDirectories()
 	{
 		$handlerDirectories = self::$handlerDirectories;
 		$handlerDirectories['CUSTOM'] = Option::get("sale", "path2user_ps_files", BX_PERSONAL_ROOT."/php_interface/include/sale_payment/");
+
+		if (IsModuleInstalled('intranet'))
+		{
+			unset($handlerDirectories['SYSTEM_OLD']);
+		}
 
 		return $handlerDirectories;
 	}
@@ -113,6 +127,14 @@ final class Manager
 	public static function add(array $data)
 	{
 		return PaySystemActionTable::add($data);
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function generateXmlId()
+	{
+		return uniqid('bx_');
 	}
 
 	/**
@@ -183,16 +205,18 @@ final class Manager
 
 	/**
 	 * @param $paymentId
+	 * @param string $registryType
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
 	 */
-	public static function getIdsByPayment($paymentId)
+	public static function getIdsByPayment($paymentId, $registryType = Registry::REGISTRY_TYPE_ORDER)
 	{
 		if (empty($paymentId))
+		{
 			return array(0, 0);
+		}
 
 		$params = array(
-			'select' => array('ID', 'ORDER_ID'),
+			'select' => array('ID', 'ORDER_ID')
 		);
 
 		if (intval($paymentId).'|' == $paymentId.'|')
@@ -204,13 +228,19 @@ final class Manager
 			$params['filter']['ACCOUNT_NUMBER'] = $paymentId;
 		}
 
-		$data = PaymentTable::getRow($params);
+		$registry = Registry::getInstance($registryType);
+
+		/** @var Payment $paymentClassName */
+		$paymentClassName = $registry->getPaymentClassName();
+		$result = $paymentClassName::getList($params);
+		$data = $result->fetch() ?: array();
 
 		return array((int)$data['ORDER_ID'], (int)$data['ID']);
 	}
 
 	/**
 	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	public static function getConsumersList()
 	{
@@ -223,7 +253,12 @@ final class Manager
 			$data = self::getHandlerDescription($item['ACTION_FILE']);
 			$data['NAME'] = $item['NAME'];
 			$data['GROUP'] = 'PAYSYSTEM';
-			$data['PROVIDERS'] = array('VALUE', 'COMPANY', 'ORDER', 'USER', 'PROPERTY', 'PAYMENT');
+			$data['PROVIDERS'] = [
+				'VALUE', 'COMPANY', 'ORDER', 'USER', 'PROPERTY',
+				'PAYMENT', 'BANK_DETAIL', 'MC_BANK_DETAIL',
+				'REQUISITE', 'MC_REQUISITE', 'CRM_COMPANY',
+				'CRM_MYCOMPANY', 'CRM_CONTACT'
+			];
 
 			$result['PAYSYSTEM_'.$item['ID']] = $data;
 		}
@@ -252,13 +287,15 @@ final class Manager
 	 * @param Payment $payment
 	 * @param int $mode
 	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getListWithRestrictions(Payment $payment, $mode = Restrictions\Manager::MODE_CLIENT)
 	{
 		$result = array();
 
 		$dbRes = self::getList(array(
-			'filter' => array('ACTIVE' => 'Y'),
+			'filter' => array('ACTIVE' => 'Y', 'ENTITY_REGISTRY_TYPE' => $payment::getRegistryType()),
 			'order' => array('SORT' => 'ASC', 'NAME' => 'ASC')
 		));
 
@@ -286,6 +323,8 @@ final class Manager
 
 	/**
 	 * @return array
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\IO\FileNotFoundException
 	 */
 	public static function getHandlerList()
@@ -296,18 +335,20 @@ final class Manager
 			'USER' => array()
 		);
 
-		$oldHandlerList = array('yandex_3x', 'bill', 'bill_de', 'bill_ua', 'bill_en', 'bill_la', 'paymaster', 'assist', 'liqpay', 'qiwi', 'sberbank_new', 'sberbank', 'webmoney_web', 'money.mail', 'payment_forward_calc', 'payment_forward', 'roboxchange', 'cash');
-
 		foreach (self::getHandlerDirectories() as $type => $dir)
 		{
 			if (!Directory::isDirectoryExists($documentRoot.$dir))
+			{
 				continue;
+			}
 
 			$directory = new Directory($documentRoot.$dir);
 			foreach ($directory->getChildren() as $handler)
 			{
-				if (!$handler->isDirectory() || (in_array($handler->getName(), $oldHandlerList) && $type == 'SYSTEM_OLD'))
+				if (!$handler->isDirectory())
+				{
 					continue;
+				}
 
 				$isDescriptionExist = false;
 				/** @var Directory $handler */
@@ -317,6 +358,7 @@ final class Manager
 					{
 						$data = array();
 						$psTitle = '';
+						$isAvailable = null;
 
 						if (strpos($item->getName(), '.description') !== false)
 						{
@@ -327,28 +369,33 @@ final class Manager
 							if (array_key_exists('NAME', $data))
 							{
 								$psTitle = $data['NAME'].' ('.$handlerName.')';
+								if (isset($data['IS_AVAILABLE']))
+								{
+									$isAvailable = $data['IS_AVAILABLE'];
+								}
 							}
 							else
 							{
 								if ($psTitle == '')
+								{
 									$psTitle = $handlerName;
+								}
 								else
+								{
 									$psTitle .= ' ('.$handlerName.')';
+								}
 
-								$handlerName = str_replace($documentRoot, '', $handler->getPath());
+								$handlerName = str_replace(Path::normalize($documentRoot), '', $handler->getPath());
 							}
 							$group = (strpos($type, 'SYSTEM') !== false) ? 'SYSTEM' : 'USER';
 
 							if (!isset($result[$group][$handlerName]))
 							{
-								if (array_key_exists('DOMAIN', $data))
+								if ($isAvailable !== null
+									&& $isAvailable === static::HANDLER_AVAILABLE_FALSE
+								)
 								{
-									if ((IsModuleInstalled('bitrix24') && $data['DOMAIN'] === 'BOX') ||
-										(!IsModuleInstalled('bitrix24') && $data['DOMAIN'] === 'CLOUD')
-									)
-									{
-										continue(2);
-									}
+									continue(2);
 								}
 
 								$result[$group][$handlerName] = $psTitle;
@@ -487,6 +534,7 @@ final class Manager
 			'PSA_NAME' => Loc::getMessage('SALE_PS_MANAGER_INNER_NAME'),
 			'ACTION_FILE' => 'inner',
 			'ACTIVE' => 'Y',
+			'ENTITY_REGISTRY_TYPE' => Registry::REGISTRY_TYPE_ORDER,
 			'NEW_WINDOW' => 'N'
 		);
 
@@ -588,6 +636,7 @@ final class Manager
 			'CONNECT_SETTINGS_BILLEN' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_CONNECT_SETTINGS_BILLEN'), 'SORT' => 100),
 			'CONNECT_SETTINGS_BILLUA' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_CONNECT_SETTINGS_BILLUA'), 'SORT' => 100),
 			'CONNECT_SETTINGS_BILLLA' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_CONNECT_SETTINGS_BILLLA'), 'SORT' => 100),
+			'CONNECT_SETTINGS_SBERBANK' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_CONNECT_SETTINGS_SBERBANK'), 'SORT' => 100),
 			'GENERAL_SETTINGS' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_GENERAL_SETTINGS'), 'SORT' => 100),
 			'COLUMN_SETTINGS' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_COLUMN'), 'SORT' => 100),
 			'VISUAL_SETTINGS' => array('NAME' => Loc::getMessage('SALE_PS_MANAGER_GROUP_VISUAL'), 'SORT' => 100),
@@ -600,40 +649,42 @@ final class Manager
 	/**
 	 * @param $primary
 	 * @return \Bitrix\Main\Entity\DeleteResult
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function delete($primary)
 	{
-		$paySystemInfo = array();
-		if ($primary)
+		if (empty($primary))
 		{
-			$dbRes = PaySystemActionTable::getById($primary);
-			$paySystemInfo = $dbRes->fetch();
+			throw new ArgumentException('Parameter $primary can\'t be empty');
 		}
 
-		$result = PaySystemActionTable::delete($primary);
-		if ($result->isSuccess())
+		$paySystemInfo = PaySystemActionTable::getRowById($primary);
+		if ($paySystemInfo['LOGOTIP'])
 		{
-			if ($paySystemInfo['LOGOTIP'])
-				\CFile::Delete($paySystemInfo['LOGOTIP']);
+			\CFile::Delete($paySystemInfo['LOGOTIP']);
+		}
 
-			$restrictionList =  Restrictions\Manager::getRestrictionsList($primary);
-			if ($restrictionList)
+		$restrictionList =  Restrictions\Manager::getRestrictionsList($primary);
+		if ($restrictionList)
+		{
+			Restrictions\Manager::getClassesList();
+
+			foreach ($restrictionList as $restriction)
 			{
-				Restrictions\Manager::getClassesList();
-
-				foreach ($restrictionList as $restriction)
+				/** @var Restriction $className */
+				$className = $restriction["CLASS_NAME"];
+				if (is_subclass_of($className, '\Bitrix\Sale\Services\Base\Restriction'))
 				{
-					/** @var \Bitrix\Sale\Services\Base\Restriction $className */
-					$className = $restriction["CLASS_NAME"];
-					if (is_subclass_of($className, '\Bitrix\Sale\Services\Base\Restriction'))
-					{
-						$className::delete($restriction['ID'], $primary);
-					}
+					$className::delete($restriction['ID'], $primary);
 				}
 			}
 		}
 
-		return $result;
+		BusinessValue::delete(Service::PAY_SYSTEM_PREFIX.$primary);
+
+		return PaySystemActionTable::delete($primary);
 	}
 
 	/**
@@ -649,7 +700,7 @@ final class Manager
 			'filter' => array(
 				'SERVICE_ID' => $paySystemId,
 				'SERVICE_TYPE' => Restrictions\Manager::SERVICE_TYPE_PAYMENT,
-				'=CLASS_NAME' => '\Bitrix\Sale\Services\PaySystem\Restrictions\PersonType'
+				'=CLASS_NAME' => '\\'.Restrictions\PersonType::class
 			)
 		));
 
@@ -715,7 +766,7 @@ final class Manager
 	/**
 	 * @return array
 	 */
-	private function getRestHandlers()
+	private static function getRestHandlers()
 	{
 		$result = array();
 

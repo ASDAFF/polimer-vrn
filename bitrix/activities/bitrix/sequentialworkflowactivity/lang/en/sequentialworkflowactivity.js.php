@@ -1,4 +1,5 @@
 <?
+$MESS["SEQWF_MARKETPLACE_ADD"] = "Add More...";
 $MESS["SEQWF_END"] = "End";
 $MESS["SEQWF_BEG"] = "Start";
 $MESS["SEQWF_CONF"] = "The selected action will be removed from your action list. Continue?";

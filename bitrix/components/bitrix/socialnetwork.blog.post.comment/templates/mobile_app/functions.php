@@ -5,7 +5,6 @@ function socialnetworkBlogPostCommentMobile(
 	array $arResult,
 	SocialnetworkBlogPostComment $component)
 {
-	global $APPLICATION;
 	$arParams["AVATAR_SIZE"] = (intval($arParams["AVATAR_SIZE"]) ?: 58);
 	$arAvatarSizes = array(
 		"AVATAR_SIZE" => intval(array_key_exists("AVATAR_SIZE_COMMON", $arParams) ? $arParams["AVATAR_SIZE_COMMON"] : $arParams["AVATAR_SIZE"]),
@@ -114,13 +113,14 @@ function socialnetworkBlogPostCommentMobile(
 			"NAME" => $arUser["~NAME"],
 			"LAST_NAME" => $arUser["~LAST_NAME"],
 			"SECOND_NAME" => $arUser["~SECOND_NAME"],
+			"PERSONAL_GENDER" => $arUser["~PERSONAL_GENDER"],
 			"AVATAR" => array_key_exists($avatarKey, $arUser) ? $arUser[$avatarKey]["src"] : '',
 			"EXTERNAL_AUTH_ID" => (isset($arUser["EXTERNAL_AUTH_ID"]) ? $arUser["EXTERNAL_AUTH_ID"] : false)
 		),
 		"FILES" => false,
 		"UF" => false,
 		"POST_MESSAGE_TEXT" => $text,
-		"~POST_MESSAGE_TEXT" => $comment["POST_TEXT"],
+		"~POST_MESSAGE_TEXT" => \Bitrix\Main\Text\Emoji::decode($comment["POST_TEXT"]),
 		"CLASSNAME" => "",
 		"BEFORE_HEADER" => "",
 		"BEFORE_ACTIONS" => "",
@@ -160,6 +160,17 @@ function socialnetworkBlogPostCommentMobile(
 				$res["UF"][$key]['URL_TO_POST'] = str_replace('#source_post_id#', $arPostField['POST_ID'], $arResult['urlToPost']);
 			}
 		}
+	}
+
+	if ($arParams["SHOW_RATING"] == "Y")
+	{
+		$res["RATING_VOTE_ID"] = 'BLOG_COMMENT_'.$res['ID'].'-'.(time()+rand(0, 1000));
+		$res["RATING_USER_HAS_VOTED"] = (
+			isset($arResult['RATING'][$res["ID"]])
+			&& isset($arResult['RATING'][$res["ID"]]["USER_HAS_VOTED"])
+				? $arResult['RATING'][$res["ID"]]["USER_HAS_VOTED"]
+				: "N"
+		);
 	}
 
 	return $res;

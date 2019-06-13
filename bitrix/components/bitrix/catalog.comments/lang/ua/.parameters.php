@@ -6,7 +6,7 @@ $MESS["CATALOG_SC_ELEMENT_ID"] = "Ідентифікатор товару";
 $MESS["CATALOG_SC_ELEMENT_CODE"] = "Код товару";
 $MESS["CATALOG_SC_IBLOCK_ID"] = "Ідентифікатор інфоблоків";
 $MESS["CATALOG_SC_BLOG_URL"] = "Назва блогу латинськими буквами";
-$MESS["CATALOG_SC_EMAIL_NOTIFY"] = "Повідомлення по електронній пошті";
+$MESS["CATALOG_SC_EMAIL_NOTIFY"] = "Сповіщення по електронній пошті";
 $MESS["CATALOG_SC_URL_TO_COMMENT"] = "Шлях до коментованого товару";
 $MESS["CATALOG_SC_PATH_TO_SMILE"] = "Шлях до посмішкам";
 $MESS["CATALOG_SC_COMMENTS_COUNT"] = "Кількість показуються коментарів";
@@ -44,4 +44,5 @@ $MESS["CP_CC_ALLOW_IMAGE_UPLOAD_VALUE_A"] = "Всім";
 $MESS["CP_CC_ALLOW_IMAGE_UPLOAD_VALUE_R"] = "Зареєстрованим користувачам";
 $MESS["CP_CC_ALLOW_IMAGE_UPLOAD_VALUE_N"] = "Нікому";
 $MESS["CATALOG_SC_SHOW_DEACTIVATED"] = "Показувати коментарі до деактивованих товарів";
+$MESS["CATALOG_SC_CHECK_DATES"] = "Показувати коментарі тільки для активних на даний момент елементів";
 ?>

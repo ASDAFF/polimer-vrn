@@ -18,12 +18,12 @@ final class GoogleApiSync
 	 */
 	private $syncTransport;
 	private $eventsSyncToken = '',
-			$defaultTimezone = '',
+			$defaultTimezone = 'UTC',
 			$userId = 0,
 			$calendarList = array(),
 			$defaultReminderData = array(),
-			$calendarColors = array(),
-			$eventColors = array(),
+			$calendarColors = false,
+			$eventColors = false,
 			$eventMapping = array(
 				'DAV_XML_ID'	=>	'iCalUID',
 				'NAME'			=>	'summary',
@@ -139,21 +139,49 @@ final class GoogleApiSync
 
 	private function setColors()
 	{
-		if (empty($this->calendarColors) || empty($this->eventColors))
+		if ($this->calendarColors === false || $this->eventColors === false)
 		{
-			$colorData = $this->syncTransport->getColors();
-			if (!is_array($colorData) || empty($colorData['calendar']) || empty($colorData['event']))
+			$cacheTime = 86400 * 7;
+			$colorData = null;
+
+			if ($cacheTime)
 			{
-				return;
-			}
-			foreach ($colorData['calendar'] as $key => $calendarColor)
-			{
-				$this->calendarColors[$key] = $calendarColor;
+				$cache = \Bitrix\Main\Data\Cache::createInstance();
+				$cacheId = "google_colors";
+				$cachePath = 'googlecolors';
+
+				if ($cache->initCache($cacheTime, $cacheId, $cachePath))
+				{
+					$res = $cache->getVars();
+					$colorData = $res["colorData"];
+				}
 			}
 
-			foreach ($colorData['event'] as $key => $eventColor)
+			if (!$cacheTime || empty($colorData))
 			{
-				$this->eventColors[$key] = $eventColor;
+				$colorData = $this->syncTransport->getColors();
+				if ($cacheTime && isset($cache, $cacheId, $cachePath))
+				{
+					$cache->startDataCache($cacheTime, $cacheId, $cachePath);
+					$cache->endDataCache(array(
+						"colorData" => $colorData
+					));
+				}
+			}
+
+			$this->calendarColors = array();
+			$this->eventColors = array();
+			if (is_array($colorData) && !empty($colorData['calendar']) && !empty($colorData['event']))
+			{
+				foreach ($colorData['calendar'] as $key => $color)
+				{
+					$this->calendarColors[$key] = $color;
+				}
+
+				foreach ($colorData['event'] as $key => $color)
+				{
+					$this->eventColors[$key] = $color;
+				}
 			}
 		}
 	}
@@ -165,7 +193,8 @@ final class GoogleApiSync
 	 */
 	private function getCalendarColor($colorId, $background = true)
 	{
-		return $this->calendarColors[$colorId][($background ? 'background' : 'foreground')];
+		$calendarColors = is_array($this->calendarColors) ? $this->calendarColors : array();
+		return $calendarColors[$colorId][($background ? 'background' : 'foreground')];
 	}
 
 	/**
@@ -175,7 +204,8 @@ final class GoogleApiSync
 	 */
 	private function getEventColor($colorId, $background = true)
 	{
-		return $this->eventColors[$colorId][($background ? 'background' : 'foreground')];
+		$eventColors = is_array($this->eventColors) ? $this->eventColors : array();
+		return $eventColors[$colorId][($background ? 'background' : 'foreground')];
 	}
 
 	/**
@@ -210,7 +240,6 @@ final class GoogleApiSync
 
 		if (!empty($calendarList['items']))
 		{
-
 			foreach($calendarList['items'] as $calendarItem)
 			{
 				$calendarItem['backgroundColor'] = $this->getCalendarColor($calendarItem['colorId']);
@@ -259,27 +288,43 @@ final class GoogleApiSync
 				unset($calendarData['SYNC_TOKEN']);
 				return $this->getEvents($calendarData, $extIdAsKey, false);
 			}
+
 			$this->defaultReminderData = (!empty($results['defaultReminders'])) ? $results['defaultReminders'] : $this->defaultReminderData;
-			$this->defaultTimezone = (!empty($results['timeZone'])) ? $results['timeZone'] : $this->defaultTimezone;
+
+			if (!empty($results['timeZone']))
+			{
+				try
+				{
+					new \DateTimeZone($results['timeZone']);
+					$this->defaultTimezone = $results['timeZone'];
+				}
+				catch(Exception $e){}
+			}
 
 			$syncToken = (!empty($results['nextSyncToken'])) ? $results['nextSyncToken'] : $syncToken;
 
 			if (empty($results['items']) && empty($results['nextPageToken']))
+			{
 				break;
+			}
 
 			foreach ($results['items'] as $result)
+			{
 				$eventsList[] = $this->prepareEvent($result);
+			}
 		}
 		while ((!empty($results['nextPageToken']) && $getEventsRequestParams['pageToken'] = $results['nextPageToken']));
 
 		$this->eventsSyncToken = $syncToken;
 
 		if ($extIdAsKey)
+		{
 			foreach($eventsList as $key => $eventData)
 			{
 				$eventsList[$eventData['DAV_XML_ID']] = $eventData;
 				unset($eventsList[$key]);
 			}
+		}
 
 		return $eventsList;
 	}
@@ -373,11 +418,12 @@ final class GoogleApiSync
 					$minutes = 24 * 60 * $remindRule['count'];
 				}
 				$newEvent['reminders']['overrides'][] = array(
-					'minutes'	=> $minutes,
-					'method'	=> 'popup', //todo - should able to be changed in settings
+					'minutes' => $minutes,
+					'method' => 'popup', //todo - should able to be changed in settings
 				);
 			}
 		}
+
 		if ($eventData['DT_SKIP_TIME'] == "Y")
 		{
 			$startDate = new Type\Date($eventData['DATE_FROM']);
@@ -394,7 +440,7 @@ final class GoogleApiSync
 		}
 		else
 		{
-			if (!empty($eventData['TZ_FROM']))
+			if (!empty($eventData['TZ_FROM']) && $eventData['TZ_FROM'] != 'false')
 			{
 				$dateTimeZoneFrom = new \DateTimeZone($eventData['TZ_FROM']);
 			}
@@ -406,7 +452,7 @@ final class GoogleApiSync
 			$newEvent['start']['dateTime'] = $eventStartDateTime->format(\DateTime::RFC3339);
 			$newEvent['start']['timeZone'] = $dateTimeZoneFrom->getName();
 
-			if (!empty($eventData['TZ_TO']))
+			if (!empty($eventData['TZ_TO']) && $eventData['TZ_TO'] != 'false')
 			{
 				$dateTimeZoneTo = new \DateTimeZone($eventData['TZ_TO']);
 			}
@@ -414,6 +460,7 @@ final class GoogleApiSync
 			{
 				$dateTimeZoneTo = new \DateTimeZone("UTC");
 			}
+
 			$eventEndDateTime = new Type\DateTime($eventData['DATE_TO'], Type\Date::convertFormatToPhp(FORMAT_DATETIME), $dateTimeZoneTo);
 			$newEvent['end']['dateTime'] = $eventEndDateTime->format(\DateTime::RFC3339);
 			$newEvent['end']['timeZone'] = $dateTimeZoneTo->getName();
@@ -438,12 +485,12 @@ final class GoogleApiSync
 			}
 			elseif (!empty($rRuleData['UNTIL']))
 			{
-				$tsTo = strtotime($rRuleData['UNTIL']);
+				$tsTo = new Type\Date($rRuleData['UNTIL']);
 				if ($eventData['DT_SKIP_TIME'] == "N")
 				{
-					$tsTo += self::ONE_DAY;
+					$tsTo->add('+1 day');
 				}
-				$rRule .= ';UNTIL=' . date('Ymd\THis\Z', $tsTo);
+				$rRule .= ';UNTIL='.$tsTo->format('Ymd\THis\Z');
 			}
 			$newEvent['recurrence'][] = $rRule;
 
@@ -465,6 +512,7 @@ final class GoogleApiSync
 				}
 			}
 		}
+
 		if (!empty($eventData['DAV_XML_ID']) && stripos($eventData['DAV_XML_ID'], '@google.com') !== false)
 		{
 			$externalEvent = $this->syncTransport->updateEvent($newEvent, urlencode($calendarId), $eventData['DAV_XML_ID']);
@@ -473,6 +521,7 @@ final class GoogleApiSync
 		{
 			$externalEvent = $this->syncTransport->insertEvent($newEvent, urlencode($calendarId));
 		}
+
 		return ($externalEvent) ? $externalEvent['iCalUID'] : '';
 	}
 
@@ -484,7 +533,10 @@ final class GoogleApiSync
 	 */
 	private function prepareEvent($event)
 	{
-		$returnData = array();
+		$returnData = [
+			'TZ_FROM' => $this->defaultTimezone,
+			'TZ_TO' => $this->defaultTimezone
+		];
 		foreach ($this->eventMapping as $internalKey => $externalKey)
 		{
 			$returnData[$internalKey] = (isset($event[$externalKey]) ? $event[$externalKey] : '');
@@ -510,15 +562,25 @@ final class GoogleApiSync
 
 		if (!empty($event['start']['dateTime']) && !empty($event['end']['dateTime']))
 		{
-			if (!empty($event['start']['timeZone']))
-				$returnData['TZ_FROM'] = $event['start']['timeZone'];
-			else
+			try
+			{
+				$returnData['TZ_FROM'] = empty($event['start']['timeZone']) ? $this->defaultTimezone : $event['start']['timeZone'];
+				new \DateTimeZone($returnData['TZ_FROM']);
+			}
+			catch(Exception $e)
+			{
 				$returnData['TZ_FROM'] = $this->defaultTimezone;
+			}
 
-			if (!empty($event['end']['timeZone']))
-				$returnData['TZ_TO'] = $event['end']['timeZone'];
-			else
+			try
+			{
+				$returnData['TZ_TO'] = empty($event['end']['timeZone']) ? $this->defaultTimezone : $event['end']['timeZone'];
+				new \DateTimeZone($returnData['TZ_TO']);
+			}
+			catch(Exception $e)
+			{
 				$returnData['TZ_TO'] = $this->defaultTimezone;
+			}
 
 			$eventStartDateTime = new Type\DateTime($event['start']['dateTime'], \DateTime::RFC3339, new \DateTimeZone($this->defaultTimezone));
 			$returnData['DATE_FROM'] = \CCalendar::Date(\CCalendar::Timestamp($eventStartDateTime->setTimeZone(new \DateTimeZone($returnData['TZ_FROM']))->format(Type\Date::convertFormatToPhp(FORMAT_DATETIME))));
@@ -604,8 +666,17 @@ final class GoogleApiSync
 								}
 								break;
 							case 'UNTIL':
-								$untilTs = strtotime($rRuleVal);
-								$rRuleSet['UNTIL'] = \CCalendar::Date($untilTs, false, false);
+								try
+								{
+									$rRuleValDateTime = new Type\DateTime($rRuleVal, 'Ymd\THis\Z', new \DateTimeZone('UTC'));
+									$rRuleValDateTime->setTimeZone(new \DateTimeZone($returnData['TZ_TO']));
+									$rRuleSet['UNTIL'] = \CCalendar::Date(\CCalendar::Timestamp($rRuleValDateTime->format(Type\Date::convertFormatToPhp(FORMAT_DATETIME))) - 60, false, false);
+								}
+								catch(Exception $e)
+								{
+									$rRuleSet['UNTIL'] = \CCalendar::Date(strtotime($rRuleVal), false, false);
+								}
+
 								break;
 						}
 					}

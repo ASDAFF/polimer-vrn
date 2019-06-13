@@ -10,13 +10,7 @@ class CBPAllHistoryService
 
 	public function __construct()
 	{
-		$useGZipCompressionOption = \Bitrix\Main\Config\Option::get("bizproc", "use_gzip_compression", "");
-		if ($useGZipCompressionOption === "Y")
-			$this->useGZipCompression = true;
-		elseif ($useGZipCompressionOption === "N")
-			$this->useGZipCompression = false;
-		else
-			$this->useGZipCompression = (function_exists("gzcompress") && !defined('BX_UTF'));
+		$this->useGZipCompression = \CBPWorkflowTemplateLoader::useGZipCompression();
 	}
 
 	protected function ParseFields(&$arFields, $id = 0)

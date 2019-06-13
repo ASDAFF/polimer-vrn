@@ -1,5 +1,4 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var CBitrixComponent $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -10,7 +9,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
-use Bitrix\Socialnetwork\Item\UserToGroup;
+use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule("socialnetwork"))
 {
@@ -18,9 +17,10 @@ if (!CModule::IncludeModule("socialnetwork"))
 	return;
 }
 
+$arResult["IS_IFRAME"] = $_REQUEST["IFRAME"] == "Y";
+
 $arParams["USER_ID"] = IntVal($USER->GetID());
 $arParams["GROUP_ID"] = IntVal($arParams["GROUP_ID"]);
-
 $arParams["SET_NAV_CHAIN"] = ($arParams["SET_NAV_CHAIN"] == "N" ? "N" : "Y");
 
 if (strLen($arParams["USER_VAR"]) <= 0)
@@ -77,6 +77,7 @@ else
 			$arResult["CurrentUserPerms"] = CSocNetUserToGroup::InitUserPerms($USER->GetID(), $arResult["Group"], CSocNetUser::IsCurrentUserModuleAdmin());
 			$arResult["Urls"]["User"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER"], array("user_id" => $USER->GetID()));
 			$arResult["Urls"]["Group"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP"], array("group_id" => $arResult["Group"]["ID"]));
+			$arResult["Urls"]["GroupsList"] = \Bitrix\Socialnetwork\ComponentHelper::getWorkgroupSEFUrl();
 
 			if ($arParams["SET_TITLE"] == "Y")
 			{
@@ -105,12 +106,29 @@ else
 			{
 				if ($arParams["SET_TITLE"] == "Y")
 				{
-					$APPLICATION->SetTitle($arResult["Group"]["NAME"].": ".GetMessage("SONET_C37_PAGE_TITLE"));
+					if ($arResult["IS_IFRAME"])
+					{
+						$APPLICATION->SetTitle(Loc::getMessage($arResult["Group"]["PROJECT"] == "Y" ? "SONET_C37_PAGE_TITLE_PROJECT" : "SONET_C37_PAGE_TITLE"));
+						$APPLICATION->SetPageProperty('PageSubtitle', $arResult["Group"]["NAME"]);
+					}
+					else
+					{
+						$APPLICATION->SetTitle($arResult["Group"]["NAME"].": ".Loc::getMessage($arResult["Group"]["PROJECT"] == "Y" ? "SONET_C37_PAGE_TITLE_PROJECT" : "SONET_C37_PAGE_TITLE"));
+					}
 				}
 
 				$arResult["ShowForm"] = "Input";
-				if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["save"]) > 0 && check_bitrix_sessid())
+				if (
+					$_SERVER["REQUEST_METHOD"] == "POST"
+					&& strlen($_POST["save"]) > 0
+					&& check_bitrix_sessid()
+				)
 				{
+					if ($_POST["ajax_request"] == "Y")
+					{
+						CUtil::JSPostUnescape();
+					}
+
 					$errorMessage = "";
 
 					if (strlen($errorMessage) <= 0)
@@ -131,6 +149,18 @@ else
 					else
 					{
 						$arResult["ShowForm"] = "Confirm";
+					}
+
+					if ($_POST["ajax_request"] == "Y")
+					{
+						$APPLICATION->RestartBuffer();
+						echo CUtil::PhpToJsObject(array(
+							'MESSAGE' => (strlen($errorMessage) > 0 ? 'ERROR' : 'SUCCESS'),
+							'ERROR_MESSAGE' => (strlen($errorMessage) > 0 ? $errorMessage : ''),
+							'URL' => (strlen($errorMessage) > 0 ? '' : $arResult["Urls"]["GroupsList"]),
+						));
+						require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
+						die();
 					}
 				}
 			}

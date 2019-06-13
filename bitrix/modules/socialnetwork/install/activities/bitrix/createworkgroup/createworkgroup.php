@@ -19,7 +19,7 @@ class CBPCreateWorkGroup
 
 	public function Execute()
 	{
-		global $USER_FIELD_MANAGER;
+		global $USER_FIELD_MANAGER, $DB;
 
 		if (!CModule::IncludeModule("socialnetwork"))
 			return CBPActivityExecutionStatus::Closed;
@@ -48,7 +48,7 @@ class CBPCreateWorkGroup
 		unset($dbSubjects, $row);
 
 		$options = array(
-			"SITE_ID" => $this->GroupSite ? $this->GroupSite : SITE_ID,
+			"SITE_ID" => ($this->GroupSite ? $this->GroupSite : SITE_ID),
 			"NAME" => $this->GroupName,
 			"VISIBLE" => "Y",
 			"OPENED" => "N",
@@ -57,6 +57,17 @@ class CBPCreateWorkGroup
 			"INITIATE_PERMS" => SONET_ROLES_OWNER,
 			"SPAM_PERMS" => SONET_ROLES_USER,
 		);
+
+		if (
+			\Bitrix\Main\Loader::includeModule('extranet')
+			&& ($options['SITE_ID'] == \CExtranet::getExtranetSiteID())
+		)
+		{
+			$options['SITE_ID'] = [
+				$options['SITE_ID'],
+				\CSite::getDefSite()
+			];
+		}
 
 		$userFieldsList = $USER_FIELD_MANAGER->getUserFields("SONET_GROUP", 0, LANGUAGE_ID);
 		foreach($userFieldsList as $field => $arUserField)
@@ -97,19 +108,30 @@ class CBPCreateWorkGroup
 		foreach ($users AS $user)
 		{
 			if ($user == $ownerId)
+			{
 				continue;
-			CSocNetUserToGroup::Add(
+			}
+
+			if (CSocNetUserToGroup::Add(
 				array(
 					"USER_ID" => $user,
 					"GROUP_ID" => $groupId,
 					"ROLE" => SONET_ROLES_USER,
-					"=DATE_CREATE" => $GLOBALS["DB"]->CurrentTimeFunction(),
-					"=DATE_UPDATE" => $GLOBALS["DB"]->CurrentTimeFunction(),
+					"=DATE_CREATE" => $DB->CurrentTimeFunction(),
+					"=DATE_UPDATE" => $DB->CurrentTimeFunction(),
 					"INITIATED_BY_TYPE" => SONET_INITIATED_BY_GROUP,
 					"INITIATED_BY_USER_ID" => $ownerId,
 					"MESSAGE" => false,
 				)
-			);
+			))
+			{
+				\Bitrix\Socialnetwork\Item\UserToGroup::addInfoToChat(array(
+					'group_id' => $groupId,
+					'user_id' => $user,
+					'action' => \Bitrix\Socialnetwork\Item\UserToGroup::CHAT_ACTION_IN,
+					'sendMessage' => false
+				));
+			}
 		}
 
 		return CBPActivityExecutionStatus::Closed;
@@ -203,7 +225,8 @@ class CBPCreateWorkGroup
 		$arMap = array(
 			"group_name" => "GroupName",
 			"owner_id" => "OwnerId",
-			"users" => "Users"
+			"users" => "Users",
+			"group_site" => "GroupSite"
 		);
 
 		$arProperties = array();
@@ -215,7 +238,9 @@ class CBPCreateWorkGroup
 		}
 
 		if (strlen($arProperties["GroupSite"]) <= 0)
+		{
 			$arProperties["GroupSite"] = $arCurrentValues["group_site_x"];
+		}
 
 		$userFieldsList = $USER_FIELD_MANAGER->getUserFields("SONET_GROUP", 0, LANGUAGE_ID);
 		foreach ($userFieldsList as $field)
@@ -278,4 +303,3 @@ class CBPCreateWorkGroup
 		return $fieldsList;
 	}
 }
-?>

@@ -1,4 +1,5 @@
 <?
+$MESS["SPOL_DISALLOW_CANCEL"] = "Заборонити скасування замовлення";
 $MESS["SPOL_DESC_YES"] = "Так";
 $MESS["SPOL_DESC_NO"] = "Ні";
 $MESS["SPOL_PATH_TO_DETAIL"] = "Сторінка c докладною інформацією про замовлення";
@@ -24,4 +25,5 @@ $MESS["SPOL_ORDER_LIST_SORT_PRICE"] = "Сума замовлення";
 $MESS["SPOL_ORDER_LIST_DEFAULT_SORT"] = "Сортування замовлень";
 $MESS["SPOL_RESTRICT_CHANGE_PAYSYSTEM"] = "Заборонити зміну платіжної системи у замовлень в статусах";
 $MESS["SPOL_NOT_CHOSEN"] = "(не обрано)";
+$MESS["SPOL_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"] = "Перераховувати замовлення після зміни платіжної системи";
 ?>

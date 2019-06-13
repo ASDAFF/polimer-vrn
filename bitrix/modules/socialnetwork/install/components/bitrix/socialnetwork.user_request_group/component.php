@@ -1,5 +1,16 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+/** @var CBitrixComponent $this */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var string $componentPath */
+/** @var string $componentName */
+/** @var string $componentTemplate */
+/** @global CDatabase $DB */
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\ComponentHelper;
 
 if (!CModule::IncludeModule("socialnetwork"))
 {
@@ -8,6 +19,7 @@ if (!CModule::IncludeModule("socialnetwork"))
 }
 
 $arParams["GROUP_ID"] = IntVal($arParams["GROUP_ID"]);
+$arResult["IS_IFRAME"] = $_REQUEST["IFRAME"] == "Y";
 
 if (strLen($arParams["USER_VAR"]) <= 0)
 	$arParams["USER_VAR"] = "user_id";
@@ -28,11 +40,19 @@ $arParams["PATH_TO_GROUP_REQUESTS"] = trim($arParams["PATH_TO_GROUP_REQUESTS"]);
 if (strlen($arParams["PATH_TO_GROUP_REQUESTS"]) <= 0)
 	$arParams["PATH_TO_GROUP_REQUESTS"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=group_requests&".$arParams["GROUP_VAR"]."=#group_id#");
 
+if (empty($arParams["PATH_TO_USER_REQUESTS"]))
+{
+	$arParams["PATH_TO_USER_REQUESTS"] = ComponentHelper::getUserSEFUrl()."user/#user_id#/requests/";
+}
+
+
 $arParams["SET_NAV_CHAIN"] = ($arParams["SET_NAV_CHAIN"] == "N" ? "N" : "Y");
 $bAutoSubscribe = (array_key_exists("USE_AUTOSUBSCRIBE", $arParams) && $arParams["USE_AUTOSUBSCRIBE"] == "N" ? false : true);
 
-if (!$GLOBALS["USER"]->IsAuthorized())
+if (!$USER->IsAuthorized())
+{
 	$arResult["NEED_AUTH"] = "Y";
+}
 else
 {
 	$arGroup = CSocNetGroup::GetByID($arParams["GROUP_ID"]);
@@ -42,34 +62,54 @@ else
 		|| !is_array($arGroup) 
 		|| $arGroup["ACTIVE"] != "Y" 
 	)
+	{
 		$arResult["FatalError"] = GetMessage("SONET_P_USER_NO_GROUP").". ";
+	}
 	else
 	{
 		$arGroupSites = array();
 		$rsGroupSite = CSocNetGroup::GetSite($arGroup["ID"]);
 		while ($arGroupSite = $rsGroupSite->Fetch())
+		{
 			$arGroupSites[] = $arGroupSite["LID"];
+		}
 
 		if (!in_array(SITE_ID, $arGroupSites))
+		{
 			$arResult["FatalError"] = GetMessage("SONET_P_USER_NO_GROUP");
+		}
 		else
 		{
 			$arResult["Group"] = $arGroup;
 
-			$arResult["CurrentUserPerms"] = CSocNetUserToGroup::InitUserPerms($GLOBALS["USER"]->GetID(), $arResult["Group"], CSocNetUser::IsCurrentUserModuleAdmin());
+			$arResult["CurrentUserPerms"] = CSocNetUserToGroup::InitUserPerms($USER->GetID(), $arResult["Group"], CSocNetUser::IsCurrentUserModuleAdmin());
 
 			$arResult["Urls"]["Group"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP"], array("group_id" => $arResult["Group"]["ID"]));
+			$arResult["Urls"]["GroupsList"] = ComponentHelper::getWorkgroupSEFUrl();
 			$arResult["Urls"]["GroupRequests"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_REQUESTS"], array("group_id" => $arResult["Group"]["ID"]));
+			$arResult["Urls"]["UserRequests"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_REQUESTS"], array("user_id" => $USER->getId()));
 
 			if ($arParams["SET_TITLE"] == "Y")
 				$APPLICATION->SetTitle(GetMessage("SONET_C39_PAGE_TITLE"));
 
 			if (!$arResult["CurrentUserPerms"]["UserCanViewGroup"])
+			{
 				$arResult["FatalError"] = GetMessage("SONET_C39_CANT_VIEW").". ";
+			}
 			else
 			{
 				if ($arParams["SET_TITLE"] == "Y")
-					$APPLICATION->SetTitle($arResult["Group"]["NAME"].": ".GetMessage("SONET_C39_PAGE_TITLE"));
+				{
+					if ($arResult["IS_IFRAME"])
+					{
+						$APPLICATION->SetTitle(Loc::getMessage($arResult["Group"]["PROJECT"] == "Y" ? "SONET_C39_PAGE_TITLE_PROJECT" : "SONET_C39_PAGE_TITLE"));
+						$APPLICATION->SetPageProperty('PageSubtitle', $arResult["Group"]["NAME"]);
+					}
+					else
+					{
+						$APPLICATION->SetTitle($arResult["Group"]["NAME"].": ".GetMessage("SONET_C39_PAGE_TITLE"));
+					}
+				}
 
 				if ($arParams["SET_NAV_CHAIN"] != "N")
 				{
@@ -78,17 +118,21 @@ else
 				}
 
 				if ($arResult["CurrentUserPerms"]["UserIsMember"])
-					$arResult["FatalError"] = GetMessage("SONET_C39_ALREADY_MEMBER").". ";
-				elseif ($arResult["CurrentUserPerms"]["UserRole"] && $_REQUEST["EventType"] != "GroupRequest")
 				{
-				
+					$arResult["FatalError"] = GetMessage("SONET_C39_ALREADY_MEMBER").". ";
+				}
+				elseif (
+					$arResult["CurrentUserPerms"]["UserRole"]
+					&& $_REQUEST["EventType"] != "GroupRequest"
+				)
+				{
 					if ($arResult["CurrentUserPerms"]["UserRole"] == SONET_ROLES_REQUEST)
 					{
 						$dbUserRequests = CSocNetUserToGroup::GetList(
 							array("DATE_CREATE" => "ASC"),
 							array(
-							"USER_ID" => $GLOBALS["USER"]->GetID(),
-							"GROUP_ID" => $arParams["GROUP_ID"],						
+							"USER_ID" => $USER->GetID(),
+							"GROUP_ID" => $arParams["GROUP_ID"],
 							"ROLE" => SONET_ROLES_REQUEST,
 							"INITIATED_BY_TYPE" => SONET_INITIATED_BY_GROUP,
 						),
@@ -107,7 +151,7 @@ else
 							$arEventTmp["EventType"] = "GroupRequest";
 
 							$pu = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER"], array("user_id" => $arUserRequests["INITIATED_BY_USER_ID"]));
-							$canViewProfileU = CSocNetUserPerms::CanPerformOperation($GLOBALS["USER"]->GetID(), $arUserRequests["INITIATED_BY_USER_ID"], "viewprofile", CSocNetUser::IsCurrentUserModuleAdmin());
+							$canViewProfileU = CSocNetUserPerms::CanPerformOperation($USER->GetID(), $arUserRequests["INITIATED_BY_USER_ID"], "viewprofile", CSocNetUser::IsCurrentUserModuleAdmin());
 
 							if (intval($arUserRequests["INITIATED_BY_USER_PHOTO"]) <= 0)
 							{
@@ -195,21 +239,25 @@ else
 				{
 					$errorMessage = "";
 
-					if ($_REQUEST["EventType"] == "GroupRequest" && check_bitrix_sessid() && IntVal($_REQUEST["eventID"]) > 0)
+					if (
+						$_REQUEST["EventType"] == "GroupRequest"
+						&& check_bitrix_sessid()
+						&& IntVal($_REQUEST["eventID"]) > 0
+					)
 					{
 						if ($_REQUEST["action"] == "add")
 						{
-							if (!CSocNetUserToGroup::UserConfirmRequestToBeMember($GLOBALS["USER"]->GetID(), IntVal($_REQUEST["eventID"]), $bAutoSubscribe))
+							if (!CSocNetUserToGroup::UserConfirmRequestToBeMember($USER->GetID(), IntVal($_REQUEST["eventID"]), $bAutoSubscribe))
 							{
 								if ($e = $APPLICATION->GetException())
 									$errorMessage .= $e->GetString();
 							}
 							else
-								$arResult["Success"] = "Added";						
+								$arResult["Success"] = "Added";
 						}
 						elseif ($_REQUEST["action"] == "reject")
 						{
-							if (!CSocNetUserToGroup::UserRejectRequestToBeMember($GLOBALS["USER"]->GetID(), IntVal($_REQUEST["eventID"])))
+							if (!CSocNetUserToGroup::UserRejectRequestToBeMember($USER->GetID(), IntVal($_REQUEST["eventID"])))
 							{
 								if ($e = $APPLICATION->GetException())
 									$errorMessage .= $e->GetString();
@@ -217,44 +265,100 @@ else
 							else
 								$arResult["Success"] = "Rejected";
 						}
-					}					
+					}
 					elseif ($arResult["Group"]["OPENED"] == "Y")
 					{
-						if (
-							!CSocNetUserToGroup::SendRequestToBeMember($GLOBALS["USER"]->GetID(), $arResult["Group"]["ID"], "", "", $bAutoSubscribe)
-							&& ($e = $APPLICATION->GetException())
-						)
-							$errorMessage .= $e->GetString();
+						if (check_bitrix_sessid())
+						{
+							if ($_POST["ajax_request"] == "Y")
+							{
+								CUtil::JSPostUnescape();
+							}
 
-						if (strlen($errorMessage) > 0)
-							$arResult["ErrorMessage"] = $errorMessage;
-						else
-							$arResult["ShowForm"] = "Confirm";					
+							if (
+								!CSocNetUserToGroup::SendRequestToBeMember($USER->GetID(), $arResult["Group"]["ID"], "", "", $bAutoSubscribe)
+								&& ($e = $APPLICATION->GetException())
+							)
+							{
+								$errorMessage .= $e->GetString();
+							}
+
+							if (strlen($errorMessage) > 0)
+							{
+								$arResult["ErrorMessage"] = $errorMessage;
+							}
+							else
+							{
+								$arResult["ShowForm"] = "Confirm";
+							}
+
+							if ($_REQUEST["ajax_request"] == "Y")
+							{
+								$APPLICATION->RestartBuffer();
+								echo CUtil::PhpToJsObject(array(
+									'MESSAGE' => (strlen($errorMessage) > 0 ? 'ERROR' : 'SUCCESS'),
+									'ERROR_MESSAGE' => (strlen($errorMessage) > 0 ? $errorMessage : ''),
+									'URL' => (strlen($errorMessage) > 0 ? '' : $arResult["Urls"]["Group"]),
+								));
+								require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
+								die();
+							}
+						}
 					}
 					else
 					{
 						$arResult["ShowForm"] = "Input";
-						if ($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["save"]) > 0 && check_bitrix_sessid())
+						if (
+							$_SERVER["REQUEST_METHOD"] == "POST"
+							&& strlen($_POST["save"]) > 0
+							&& check_bitrix_sessid()
+						)
 						{
+							if ($_POST["ajax_request"] == "Y")
+							{
+								CUtil::JSPostUnescape();
+							}
+
 							$errorMessage = "";
 
 							if (strlen($_POST["MESSAGE"]) <= 0)
+							{
 								$errorMessage .= GetMessage("SONET_C39_NO_TEXT").". ";
+							}
 
 							if (strlen($errorMessage) <= 0)
 							{
 								$arResult["Urls"]["GroupRequests"] = (CMain::IsHTTPS() ? "https://" : "http://").$_SERVER['HTTP_HOST'].$arResult["Urls"]["GroupRequests"];
 								if (
-									!CSocNetUserToGroup::SendRequestToBeMember($GLOBALS["USER"]->GetID(), $arResult["Group"]["ID"], $_POST["MESSAGE"], $arResult["Urls"]["GroupRequests"], $bAutoSubscribe)
+									!CSocNetUserToGroup::SendRequestToBeMember($USER->GetID(), $arResult["Group"]["ID"], $_POST["MESSAGE"], $arResult["Urls"]["GroupRequests"], $bAutoSubscribe)
 									&& ($e = $APPLICATION->GetException())
 								)
+								{
 									$errorMessage .= $e->GetString();
+								}
 							}
 
 							if (strlen($errorMessage) > 0)
+							{
 								$arResult["ErrorMessage"] = $errorMessage;
+							}
 							else
+							{
 								$arResult["ShowForm"] = "Confirm";
+							}
+
+							if ($_REQUEST["ajax_request"] == "Y")
+							{
+								$APPLICATION->RestartBuffer();
+								echo CUtil::PhpToJsObject(array(
+									'MESSAGE' => (strlen($errorMessage) > 0 ? 'ERROR' : 'SUCCESS'),
+									'ERROR_MESSAGE' => (strlen($errorMessage) > 0 ? $errorMessage : ''),
+									'URL' => (strlen($errorMessage) > 0 ? '' : $arResult["Urls"]["Group"]),
+									'URL_GROUPS_LIST' => (strlen($errorMessage) > 0 ? '' : $arResult["Urls"]["GroupsList"]),
+								));
+								require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
+								die();
+							}
 						}
 					}
 				}

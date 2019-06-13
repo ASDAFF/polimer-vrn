@@ -1,9 +1,13 @@
 <?
+use Bitrix\Socialnetwork\LogTable;
+
 class CSocNetLogRights
 {
 	public static function Add($LOG_ID, $GROUP_CODE, $bShare = false, $followSet = true)
 	{
 		global $DB, $CACHE_MANAGER;
+
+		static $logDataCache = array();
 
 		if (is_array($GROUP_CODE))
 		{
@@ -24,12 +28,37 @@ class CSocNetLogRights
 				}
 			}
 
-			$NEW_RIGHT_ID = $DB->Add(
+			if (!isset($logDataCache[$LOG_ID]))
+			{
+				$res = LogTable::getList(array(
+					'filter' => array(
+						'ID' => $LOG_ID
+					),
+					'select' => array('LOG_UPDATE')
+				));
+				if ($logEntry = $res->fetch())
+				{
+					$logDataCache[$LOG_ID] = $logEntry;
+				}
+			}
+
+			$fields = array(
+				"LOG_ID" => $LOG_ID,
+				"GROUP_CODE" => $GROUP_CODE,
+			);
+
+			if (
+				!empty($logDataCache[$LOG_ID])
+				&& !empty($logDataCache[$LOG_ID]['LOG_UPDATE'])
+				&& ($logDataCache[$LOG_ID]['LOG_UPDATE'] instanceof \Bitrix\Main\Type\DateTime)
+			)
+			{
+				$fields['LOG_UPDATE'] = $logDataCache[$LOG_ID]['LOG_UPDATE']->toString();
+			}
+
+			$NEW_RIGHT_ID = $DB->add(
 				"b_sonet_log_right",
-				array(
-					"LOG_ID" => $LOG_ID,
-					"GROUP_CODE" => $GROUP_CODE,
-				),
+				$fields,
 				array(),
 				"",
 				true // ignore errors
@@ -41,7 +70,14 @@ class CSocNetLogRights
 				{
 					if($followSet)
 					{
-						CSocNetLogFollow::Set($matches[1], "L".$LOG_ID, "Y", ConvertTimeStamp(time() + CTimeZone::GetOffset(), "FULL", SITE_ID));
+						\Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(array(
+							'logId' => $LOG_ID,
+							'userId' => $matches[1],
+							'typeList' => array(
+								'FOLLOW',
+							),
+							'followDate' => 'CURRENT'
+						));
 					}
 				}
 				elseif (

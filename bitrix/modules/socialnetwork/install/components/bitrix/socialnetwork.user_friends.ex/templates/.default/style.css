@@ -17,7 +17,13 @@
 * + html .sonet-members-member-block { width: 46%; overflow: hidden; position: relative; }
 .sonet-members-item .sonet-members-member-block-over { background-color: #f5f5f5; }
 .sonet-members-item .sonet-members-member-block-active { background-color: #f5f1db!important; }
-.sonet-members-member-text { display: block; overflow: hidden; padding-left: 3%; padding-right:3%; width:auto; }
+.sonet-members-member-text {
+	display: block;
+	overflow: hidden;
+	padding-left: 3%;
+	padding-right: 3%;
+	width: auto;
+}
 * html .sonet-members-item .sonet-members-member-text { padding-right: 7px; padding-left: 7px; width: 345px; zoom: 1; }
 .sonet-members-checkbox { display: none; left: 2%; top: 4px; margin: 0; border: 0; overflow: hidden; height: 15px; width: 15px; padding: 0; font-size: 1px; line-height: 1; position: absolute; }
 * html .sonet-members-checkbox { left: 2px; top: 4px; }

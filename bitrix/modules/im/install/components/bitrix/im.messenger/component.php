@@ -25,10 +25,13 @@ if ($arParams['CONTEXT'] == 'DESKTOP' || $arParams['DESKTOP'] == 'Y')
 {
 	$GLOBALS["APPLICATION"]->SetPageProperty("BodyClass", "im-desktop");
 
-	CIMMessenger::SetDesktopStatusOnline();
+	CIMMessenger::SetDesktopStatusOnline(null, false);
 	CIMMessenger::SetDesktopVersion(empty($_GET['BXD_API_VERSION'])? 0 : $_GET['BXD_API_VERSION']);
 	$arParams["DESIGN"] = "DESKTOP";
 	$arResult["CONTEXT"] = "DESKTOP";
+
+	$event = new \Bitrix\Main\Event("im", "onDesktopStart", array('USER_ID' => $USER->GetID()));
+	$event->send();
 }
 else if ($arParams["CONTEXT"] == "FULLSCREEN" || $arParams['FULLSCREEN'] == 'Y')
 {
@@ -131,13 +134,24 @@ if ($arParams["INIT"] == 'Y')
 	}
 	if ($arResult["CONTEXT"] == "DESKTOP")
 	{
-		$CIMContactList = new CIMContactList();
-		$arResult['CONTACT_LIST'] = $CIMContactList->GetList();
-
-		foreach ($arResult['CONTACT_LIST']['chats'] as $key => $value)
+		if (\COption::GetOptionInt('im', 'contact_list_load'))
 		{
-			$value['fake'] = true;
-			$arResult['CHAT']['chat'][$key] = $value;
+			$CIMContactList = new CIMContactList();
+			$arResult['CONTACT_LIST'] = $CIMContactList->GetList();
+
+			foreach ($arResult['CONTACT_LIST']['chats'] as $key => $value)
+			{
+				$value['fake'] = true;
+				$arResult['CHAT']['chat'][$key] = $value;
+			}
+		}
+		else
+		{
+			$arResult['CONTACT_LIST'] = Array(
+				'users' => Array(),
+				'groups' => Array(),
+				'userInGroup' => Array(),
+			);
 		}
 
 		if ($arParams['RECENT'] != 'Y')
@@ -324,6 +338,7 @@ else if ($arResult["DESIGN"] == 'DESKTOP')
 	$initJs = 'im_page';
 
 CJSCore::Init($initJs);
+\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.buttons.icons']);
 
 if (!(isset($arParams['TEMPLATE_HIDE']) && $arParams['TEMPLATE_HIDE'] == 'Y'))
 	$this->IncludeComponentTemplate();

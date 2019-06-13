@@ -109,7 +109,8 @@ class CAllSearch extends CDBResult
 		$query = $this->Query->GetQueryString((BX_SEARCH_VERSION > 1? "sct": "sc").".SEARCHABLE_CONTENT", $strQuery, $bTagsSearch, $aParamsEx["STEMMING"], $this->_opt_ERROR_ON_EMPTY_STEM);
 
 		$fullTextParams = $aParamsEx;
-		$fullTextParams["LIMIT"] = $this->limit;
+		if (!isset($fullTextParams["LIMIT"]))
+			$fullTextParams["LIMIT"] = $this->limit;
 		$fullTextParams["OFFSET"] = $this->offset;
 		$fullTextParams["QUERY_OBJECT"] = $this->Query;
 		$result = CSearchFullText::getInstance()->search($arParams, $aSort, $fullTextParams, $bTagsCloud);
@@ -168,7 +169,8 @@ class CAllSearch extends CDBResult
 		}
 		elseif (
 			BX_SEARCH_VERSION > 1
-			&& count($this->Query->m_stemmed_words_id)
+			&& !empty($this->Query->m_stemmed_words_id)
+			&& is_array($this->Query->m_stemmed_words_id)
 			&& array_sum($this->Query->m_stemmed_words_id) === 0
 		)
 		{
@@ -677,6 +679,7 @@ class CAllSearch extends CDBResult
 	function Fetch()
 	{
 		static $arSite = array();
+		$DB = CDatabase::GetModuleConnection('search');
 
 		$r = parent::Fetch();
 
@@ -748,8 +751,22 @@ class CAllSearch extends CDBResult
 				$r["TITLE_FORMATED"] = $this->PrepareSearchResult(htmlspecialcharsEx($r["TITLE"]));
 				$r["TITLE_FORMATED_TYPE"] = "html";
 				$r["TAGS_FORMATED"] = tags_prepare($r["TAGS"], SITE_ID);
-				$r["BODY_FORMATED"] = $this->PrepareSearchResult(htmlspecialcharsEx($r["BODY"]));
-				$r["BODY_FORMATED_TYPE"] = "html";
+				if ($r["BODY"])
+				{
+					$r["BODY_FORMATED"] = $this->PrepareSearchResult(htmlspecialcharsEx($r["BODY"]));
+					$r["BODY_FORMATED_TYPE"] = "html";
+				}
+				else
+				{
+					$max_body_size = COption::GetOptionInt("search", "max_body_size");
+					$sqlBody = $max_body_size > 0? "left(BODY,".$max_body_size.") as BODY": "BODY";
+					$rsBody = $DB->Query("select $sqlBody from b_search_content where ID=".$r["ID"]);
+					if ($arBody = $rsBody->Fetch())
+					{
+						$r["BODY_FORMATED"] = $this->PrepareSearchResult(htmlspecialcharsEx($arBody["BODY"]));
+						$r["BODY_FORMATED_TYPE"] = "html";
+					}
+				}
 			}
 		}
 
@@ -1264,8 +1281,8 @@ class CAllSearch extends CDBResult
 				$DB->Query("DELETE FROM b_search_content_site WHERE SEARCH_CONTENT_ID = ".$ID, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 				$DB->Query("DELETE FROM b_search_content_title WHERE SEARCH_CONTENT_ID = ".$ID, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 				$DB->Query("DELETE FROM b_search_tags WHERE SEARCH_CONTENT_ID = ".$ID, false, "File: ".__FILE__."<br>Line: ".__LINE__);
-				$DB->Query("DELETE FROM b_search_content WHERE ID = ".$ID, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 				CSearchFullText::getInstance()->deleteById($ID);
+				$DB->Query("DELETE FROM b_search_content WHERE ID = ".$ID, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 
 				return 0;
 			}
@@ -2087,7 +2104,7 @@ class CAllSearch extends CDBResult
 				case "RANK":
 					if (!($this->flagsUseRatingSort & 0x02))
 						$this->flagsUseRatingSort = 0x01;
-					$arOrder[] = $key." ".$ord;
+					$arOrder[] = '`'.$key."` ".$ord;
 					break;
 				case "TITLE_RANK":
 				case "CUSTOM_RANK":
@@ -2113,7 +2130,7 @@ class CAllSearch extends CDBResult
 			if (count($arOrder) == 0)
 			{
 				$arOrder[] = "CUSTOM_RANK DESC";
-				$arOrder[] = "RANK DESC";
+				$arOrder[] = "`RANK` DESC";
 				$arOrder[] = $strSearchContentAlias."DATE_CHANGE DESC";
 				$this->flagsUseRatingSort = 0x01;
 			}
@@ -2476,8 +2493,8 @@ class CAllSearch extends CDBResult
 			$DB->Query("DELETE FROM b_search_content_site WHERE SEARCH_CONTENT_ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			$DB->Query("DELETE FROM b_search_content_title WHERE SEARCH_CONTENT_ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			$DB->Query("DELETE FROM b_search_tags WHERE SEARCH_CONTENT_ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
-			$DB->Query("DELETE FROM b_search_content WHERE ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			CSearchFullText::getInstance()->deleteById($ar["ID"]);
+			$DB->Query("DELETE FROM b_search_content WHERE ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
 
 		CSearchTags::CleanCache();
@@ -2503,8 +2520,8 @@ class CAllSearch extends CDBResult
 			$DB->Query("DELETE FROM b_search_content_site WHERE SEARCH_CONTENT_ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			$DB->Query("DELETE FROM b_search_content_title WHERE SEARCH_CONTENT_ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			$DB->Query("DELETE FROM b_search_tags WHERE SEARCH_CONTENT_ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
-			$DB->Query("DELETE FROM b_search_content WHERE ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			CSearchFullText::getInstance()->deleteById($ar["ID"]);
+			$DB->Query("DELETE FROM b_search_content WHERE ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
 
 		CSearchTags::CleanCache();
@@ -2514,12 +2531,13 @@ class CAllSearch extends CDBResult
 	{
 		$DB = CDatabase::GetModuleConnection('search');
 		$bIncSites = false;
+		$op = (strpos($ITEM_ID, '%') !== false? '%=': '=');
 
 		if ($PARAM1 !== false && $PARAM2 !== false)
 		{
 			$strSqlWhere = CSearch::__PrepareFilter(array(
 				"MODULE_ID" => $MODULE_ID,
-				"ITEM_ID" => $ITEM_ID,
+				$op."ITEM_ID" => $ITEM_ID,
 				array(
 					"=PARAM1" => $PARAM1,
 					"PARAM2" => $PARAM2,
@@ -2531,7 +2549,7 @@ class CAllSearch extends CDBResult
 		{
 			$strSqlWhere = CSearch::__PrepareFilter(array(
 				"MODULE_ID" => $MODULE_ID,
-				"ITEM_ID" => $ITEM_ID,
+				$op."ITEM_ID" => $ITEM_ID,
 				"PARAM1" => $PARAM1,
 				"PARAM2" => $PARAM2,
 				"SITE_ID" => $SITE_ID,
@@ -2559,8 +2577,8 @@ class CAllSearch extends CDBResult
 			$DB->Query("DELETE FROM b_search_content_site WHERE SEARCH_CONTENT_ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			$DB->Query("DELETE FROM b_search_content_title WHERE SEARCH_CONTENT_ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			$DB->Query("DELETE FROM b_search_tags WHERE SEARCH_CONTENT_ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
-			$DB->Query("DELETE FROM b_search_content WHERE ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			CSearchFullText::getInstance()->deleteById($ar["ID"]);
+			$DB->Query("DELETE FROM b_search_content WHERE ID = ".$ar["ID"], false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
 
 		CSearchTags::CleanCache();

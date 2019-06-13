@@ -2,7 +2,8 @@
 /** @global CUser $USER */
 /** @global int $ID */
 use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+	Bitrix\Main\Localization\Loc,
+	Bitrix\Catalog;
 
 if ($USER->CanDoOperation('catalog_price'))
 {
@@ -15,6 +16,7 @@ if ($USER->CanDoOperation('catalog_price'))
 		? CIBlockElementRights::UserHasRightTo($IBLOCK_ID, $PRODUCT_ID, "element_edit_price")
 		: CIBlockRights::UserHasRightTo($IBLOCK_ID, $IBLOCK_ID, "element_edit_price")
 	);
+	$enableQuantityRanges = Catalog\Config\Feature::isPriceQuantityRangesEnabled();
 
 	if ($boolPriceRights)
 	{
@@ -34,13 +36,16 @@ if ($USER->CanDoOperation('catalog_price'))
 		$SUBCAT_VAT_ID = intval($SUBCAT_VAT_ID);
 		$SUBCAT_VAT_INCLUDED = !isset($SUBCAT_VAT_INCLUDED) || $SUBCAT_VAT_INCLUDED == 'N' ? 'N' : 'Y';
 
-		$bUseExtForm = (isset($_POST['subprice_useextform']) && $_POST['subprice_useextform'] == 'Y');
+		if ($enableQuantityRanges)
+			$bUseExtForm = (isset($_POST['subprice_useextform']) && $_POST['subprice_useextform'] == 'Y');
+		else
+			$bUseExtForm = false;
 		if (!$bUseExtForm)
 			$SUBCAT_ROW_COUNTER = 0;
 
 		for ($i = 0; $i <= $SUBCAT_ROW_COUNTER; $i++)
 		{
-			${"SUBCAT_BASE_PRICE_".$i} = str_replace(",", ".", ${"SUBCAT_BASE_PRICE_".$i});
+			${"SUBCAT_BASE_PRICE_".$i} = str_replace([' ', ','], ['', '.'], ${"SUBCAT_BASE_PRICE_".$i});
 
 			if (intval(${"SUBCAT_BASE_QUANTITY_FROM_".$i}) > 0
 				|| intval(${"SUBCAT_BASE_QUANTITY_TO_".$i}) > 0

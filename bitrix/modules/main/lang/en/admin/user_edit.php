@@ -1,4 +1,6 @@
 <?
+$MESS["MAIN_USER_EDIT_HISTORY"] = "History";
+$MESS["MAIN_USER_EDIT_HISTORY_TITLE"] = "User profile update log";
 $MESS["ACCOUNT_INSERT"] = "The administrator has registered you on the site";
 $MESS["ACCOUNT_UPDATE"] = "The administrator has updated your personal information.";
 $MESS["EDIT_USER_TITLE"] = "User # #ID#";
@@ -107,4 +109,6 @@ $MESS["MAIN_USER_EDIT_EXT"] = "External code:";
 $MESS["USER_EDIT_TITLE"] = "Salutation:";
 $MESS["user_edit_lang_not_set"] = "(not set)";
 $MESS["user_edit_lang"] = "Notification language:";
+$MESS["MAIN_ADMIN_AUTH"] = "Authorize";
+$MESS["MAIN_ADMIN_AUTH_TITLE"] = "Authorize as this user";
 ?>

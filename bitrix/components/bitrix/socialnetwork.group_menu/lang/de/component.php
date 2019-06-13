@@ -1,4 +1,5 @@
 <?
+$MESS["SONET_UM_MARKETPLACE"] = "Anwendungen";
 $MESS["SONET_UM_CALENDAR"] = "Kalender";
 $MESS["SONET_UM_FORUM"] = "Diskussion";
 $MESS["SONET_UM_FILES"] = "Drive";

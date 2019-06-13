@@ -43,6 +43,13 @@ create table b_sonet_group
   index IX_SONET_GROUP_1(OWNER_ID)
 );
 
+create table b_sonet_group_tag (
+	GROUP_ID int(11) NOT NULL,
+	NAME varchar(255) NOT NULL,
+	PRIMARY KEY (GROUP_ID,NAME),
+	index IX_SONET_GROUP_TAG_2(`NAME`)
+);
+
 create table b_sonet_group_template
 (
 	ID int not null auto_increment,
@@ -178,7 +185,6 @@ create table b_sonet_user_perms
   OPERATION_ID varchar(50) not null,
   RELATION_TYPE char(1) not null,
   primary key (ID),
-  index IX_SONET_USER_PERMS_1(USER_ID),
   unique IX_SONET_USER_PERMS_2(USER_ID, OPERATION_ID)
 );
 
@@ -190,7 +196,6 @@ create table b_sonet_user_events
   ACTIVE char(1) not null default 'Y',
   SITE_ID char(2) not null,
   primary key (ID),
-  index IX_SONET_USER_PERMS_1(USER_ID),
   unique IX_SONET_USER_PERMS_2(USER_ID, EVENT_ID)
 );
 
@@ -220,6 +225,8 @@ create table b_sonet_log
   RATING_TYPE_ID varchar(50) default NULL,
   RATING_ENTITY_ID int(11) default NULL,
   SOURCE_TYPE varchar(50) default NULL,
+  TRANSFORM char(1) default NULL,
+  INACTIVE char(1) default NULL,
   primary key (ID),
   index IX_SONET_LOG_1(ENTITY_TYPE, ENTITY_ID, EVENT_ID),
   index IX_SONET_LOG_2(USER_ID, LOG_DATE, EVENT_ID),
@@ -254,6 +261,7 @@ create table b_sonet_log_comment (
   URL varchar(500) default NULL,
   RATING_TYPE_ID varchar(50) default NULL,
   RATING_ENTITY_ID int(11) default NULL,
+  SHARE_DEST varchar(255) default NULL,
   primary key (ID),
   index IX_SONET_LOG_COMMENT_1(ENTITY_TYPE, ENTITY_ID, EVENT_ID),
   index IX_SONET_LOG_COMMENT_2(USER_ID, LOG_DATE, EVENT_ID),
@@ -276,7 +284,6 @@ create table b_sonet_log_events
   TRANSPORT char(1) NOT NULL default 'N',
   VISIBLE char(1) NOT NULL default 'Y',
   primary key (ID),
-  index IX_SONET_LOG_EVENTS_1(USER_ID),
   index IX_SONET_LOG_EVENTS_2(ENTITY_TYPE, ENTITY_ID, EVENT_ID),
   unique IX_SONET_LOG_EVENTS_3(USER_ID, ENTITY_TYPE, ENTITY_ID, ENTITY_CB, ENTITY_MY, EVENT_ID, SITE_ID),
   index IX_SONET_LOG_EVENTS_4(USER_ID, ENTITY_CB, ENTITY_ID),
@@ -301,9 +308,11 @@ create table if not exists b_sonet_log_right
 	ID int(11) not null auto_increment,
 	LOG_ID int(11) not null,
 	GROUP_CODE varchar(50) not null,
+	LOG_UPDATE datetime null,
 	primary key (ID),
 	unique ix_b_sonet_log_right_group_code(LOG_ID, GROUP_CODE),
-	index ix_b_sonet_log_right_group_log(GROUP_CODE, LOG_ID)
+	index ix_b_sonet_log_right_group_log(GROUP_CODE, LOG_ID),
+	index ix_b_sonet_log_right_logupdate (LOG_UPDATE)
 );
 
 create table b_sonet_log_counter
@@ -344,6 +353,15 @@ create table b_sonet_log_follow
 	index IX_SONET_FOLLOW_1(`USER_ID`, `REF_ID`),
 	index IX_SONET_FOLLOW_2(`USER_ID`, `CODE`, `TYPE`, `FOLLOW_DATE`),
 	index IX_SONET_FOLLOW_3(`CODE`, `TYPE`, `USER_ID`)
+);
+
+create table b_sonet_log_subscribe
+(
+	USER_ID int(11) not null,
+	LOG_ID int(11) not null,
+	TYPE char(3) not null,
+	END_DATE datetime,
+	primary key (USER_ID, LOG_ID, TYPE)
 );
 
 create table b_sonet_log_smartfilter

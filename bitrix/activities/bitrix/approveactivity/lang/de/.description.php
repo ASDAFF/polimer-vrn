@@ -15,4 +15,6 @@ $MESS["BPAA_DESCR_CM"] = "Kommentare";
 $MESS["BPAA_DESCR_APPROVERS"] = "Genehmigt von";
 $MESS["BPAA_DESCR_REJECTERS"] = "Abgelehnt von";
 $MESS["BPAA_DESCR_TASKS"] = "Aufgaben";
+$MESS["BPAA_DESCR_APPROVERS_STRING"] = "Bestätigt von (Text)";
+$MESS["BPAA_DESCR_REJECTERS_STRING"] = "Abgelehnt von (Text)";
 ?>

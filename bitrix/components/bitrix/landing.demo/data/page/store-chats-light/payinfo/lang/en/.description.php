@@ -1,0 +1,6 @@
+<?
+$MESS["LANDING_DEMO_STORE_CHATS_LIGHT-PAYINFO-DESC"] = "Available payment options";
+$MESS["LANDING_DEMO_STORE_CHATS_LIGHT-PAYINFO-NAME"] = "Payment options";
+$MESS["LANDING_DEMO_STORE_CHATS_LIGHT-PAYINFO-RICH_DESC"] = "Fast mobile payment options are available!";
+$MESS["LANDING_DEMO_STORE_CHATS_LIGHT-PAYINFO-RICH_NAME"] = "How do I pay?";
+?>

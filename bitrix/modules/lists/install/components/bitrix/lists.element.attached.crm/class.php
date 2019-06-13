@@ -154,7 +154,7 @@ class ListsElementAttachedCrmComponent extends CBitrixComponent
 	protected function performGridActionDelete()
 	{
 		if(empty($this->arParams['ID_FOR_DELETE'])
-			|| !$this->checkElementPermission($this->iblockId,$this->arParams['ID_FOR_DELETE']))
+			|| !$this->checkDeletePermission($this->iblockId,$this->arParams['ID_FOR_DELETE']))
 			return;
 
 		$newPropertyValues = array();
@@ -216,7 +216,7 @@ class ListsElementAttachedCrmComponent extends CBitrixComponent
 		}
 	}
 
-	protected function checkElementPermission($iblockId, array $listElementId)
+	protected function checkDeletePermission($iblockId, array $listElementId)
 	{
 		$iblockObject = Bitrix\Iblock\IblockTable::getList(array(
 			'select' => array('IBLOCK_TYPE_ID', 'SOCNET_GROUP_ID'),
@@ -249,9 +249,12 @@ class ListsElementAttachedCrmComponent extends CBitrixComponent
 					$isSocnetGroupClosed = true;
 				}
 			}
-
-			if($isSocnetGroupClosed || ($listsPerm < CListPermissions::CAN_WRITE ||
-				!CIBlockElementRights::userHasRightTo($iblockId, $elementId, 'element_edit')))
+			if(!$isSocnetGroupClosed && ($listsPerm >= CListPermissions::CAN_WRITE ||
+				CIBlockElementRights::userHasRightTo($iblockId, $elementId, 'element_delete')))
+			{
+				return true;
+			}
+			else
 			{
 				return false;
 			}

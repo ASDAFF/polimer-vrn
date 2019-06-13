@@ -45,7 +45,11 @@ abstract class ProviderBuilderBase
 	public static function create($providerClass, $context)
 	{
 		$builder = new static();
-		$builder->providerClass = $providerClass;
+
+		if ($providerClass && !is_string($providerClass))
+		{
+			$builder->providerClass = $providerClass;
+		}
 		$builder->context = $context;
 
 		return $builder;
@@ -303,11 +307,67 @@ abstract class ProviderBuilderBase
 	}
 
 	/**
-	 * @param Sale\Result $result
+	 * @param Sale\Result $resultAfterDeliver
 	 *
 	 * @return Sale\Result
+	 * @throws Main\ObjectNotFoundException
 	 */
-	abstract public function createItemsResultAfterDeliver(Sale\Result $result);
+	public function createItemsResultAfterDeliver(Sale\Result $resultAfterDeliver)
+	{
+		$result = new Sale\Result();
+		$resultList = array();
+		$products = $this->getItems();
+
+		if (empty($products))
+		{
+			return $result;
+		}
+
+		$resultDeliverData = $resultAfterDeliver->getData();
+
+		foreach ($products as $productId => $productData)
+		{
+			$providerName = $this->getProviderName();
+			if (empty($resultDeliverData['DELIVER_PRODUCTS_LIST']) ||
+				empty($resultDeliverData['DELIVER_PRODUCTS_LIST'][$providerName]) ||
+				!array_key_exists($productId, $resultDeliverData['DELIVER_PRODUCTS_LIST'][$providerName]))
+			{
+				continue;
+			}
+
+			if (empty($productData['SHIPMENT_ITEM_LIST']))
+			{
+				continue;
+			}
+
+			/**
+			 * @var int $shipmentItemIndex
+			 * @var Sale\ShipmentItem $shipmentItem
+			 */
+			foreach ($productData['SHIPMENT_ITEM_LIST'] as $shipmentItemIndex => $shipmentItem)
+			{
+				$basketItem = $shipmentItem->getBasketItem();
+
+				if (!$basketItem)
+				{
+					throw new Main\ObjectNotFoundException('Entity "BasketItem" not found');
+				}
+
+				$resultList[$basketItem->getBasketCode()] = $resultDeliverData['DELIVER_PRODUCTS_LIST'][$providerName][$productId];
+			}
+		}
+
+		if (!empty($resultList))
+		{
+			$result->setData(
+				array(
+					'RESULT_AFTER_DELIVER_LIST' => $resultList
+				)
+			);
+		}
+
+		return $result;
+	}
 
 	/**
 	 * @param array $productData
@@ -319,11 +379,20 @@ abstract class ProviderBuilderBase
 
 	/**
 	 * @internal
-	 * @return mixed
+	 * @return string|null
 	 */
 	public function getProviderClass()
 	{
 		return $this->providerClass;
+	}
+
+	/**
+	 * @internal
+	 * @return string|null
+	 */
+	public function getCallbackFunction()
+	{
+		return $this->callbackFunction;
 	}
 
 	/**

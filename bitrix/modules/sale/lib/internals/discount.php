@@ -13,8 +13,8 @@ use Bitrix\Main,
 	Bitrix\Main\Localization\Loc,
 	Bitrix\Sale\Discount\Actions,
 	Bitrix\Sale\Discount\Gift,
-	Bitrix\Sale\Discount\Index;
-use Bitrix\Sale\Discount\Analyzer;
+	Bitrix\Sale\Discount\Index,
+	Bitrix\Sale\Discount\Analyzer;
 
 Loc::loadMessages(__FILE__);
 
@@ -138,7 +138,7 @@ class DiscountTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('DISCOUNT_ENTITY_ACTIVE_TO_FIELD')
 			)),
 			'TIMESTAMP_X' => new Main\Entity\DatetimeField('TIMESTAMP_X', array(
-				'default_value' => new Main\Type\DateTime(),
+				'default_value' => function(){ return new Main\Type\DateTime(); },
 				'title' => Loc::getMessage('DISCOUNT_ENTITY_TIMESTAMP_X_FIELD')
 			)),
 			'MODIFIED_BY' => new Main\Entity\IntegerField('MODIFIED_BY', array(
@@ -146,7 +146,7 @@ class DiscountTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('DISCOUNT_ENTITY_MODIFIED_BY_FIELD')
 			)),
 			'DATE_CREATE' => new Main\Entity\DatetimeField('DATE_CREATE', array(
-				'default_value' => new Main\Type\DateTime(),
+				'default_value' => function(){ return new Main\Type\DateTime(); },
 				'title' => Loc::getMessage('DISCOUNT_ENTITY_DATE_CREATE_FIELD')
 			)),
 			'CREATED_BY' => new Main\Entity\IntegerField('CREATED_BY', array(
@@ -392,6 +392,8 @@ class DiscountTable extends Main\Entity\DataManager
 
 		static::updateSpecificFields($id['ID'], $specificFields);
 		static::updateConfigurationIfNeeded($fields, $specificFields);
+
+		self::dropIblockCache();
 	}
 
 	/**
@@ -525,6 +527,8 @@ class DiscountTable extends Main\Entity\DataManager
 
 		static::updateSpecificFields($id['ID'], $specificFields);
 		static::updateConfigurationIfNeeded($fields, $specificFields);
+
+		self::dropIblockCache();
 	}
 
 	/**
@@ -569,6 +573,8 @@ class DiscountTable extends Main\Entity\DataManager
 		}
 		Gift\RelatedDataTable::deleteByDiscount($id);
 		Index\Manager::getInstance()->dropIndex($id);
+
+		self::dropIblockCache();
 
 		unset($id);
 	}
@@ -654,16 +660,14 @@ class DiscountTable extends Main\Entity\DataManager
 
 	protected static function setShortDescription(&$result, array $data)
 	{
-		if(!empty($data['SHORT_DESCRIPTION_STRUCTURE']) || empty($data['ACTIONS']))
-		{
+		if (!empty($data['SHORT_DESCRIPTION_STRUCTURE']))
 			return;
-		}
+		if (empty($data['ACTIONS']) && empty($data['ACTIONS_LIST']))
+			return;
 
 		$actionConfiguration = Actions::getActionConfiguration($data);
-		if(!$actionConfiguration)
-		{
+		if (!$actionConfiguration)
 			return;
-		}
 
 		$result['SHORT_DESCRIPTION_STRUCTURE'] = $actionConfiguration;
 	}
@@ -704,5 +708,26 @@ class DiscountTable extends Main\Entity\DataManager
 
 		if (!isset($data['ACTIONS_LIST']) && isset($data['ACTIONS']))
 			$result['ACTIONS_LIST'] = (is_array($data['ACTIONS']) ? $data['ACTIONS'] : unserialize($data['ACTIONS']));
+	}
+
+	/**
+	 * Temporary drop iblock cache method.
+	 *
+	 * @return void
+	 * @throws Main\LoaderException
+	 */
+	private static function dropIblockCache()
+	{
+		if (
+			!Main\ModuleManager::isModuleInstalled('bitrix24')
+			|| !Main\Loader::includeModule('crm')
+			|| !Main\Loader::includeModule('iblock')
+		)
+			return;
+
+		$iblockId = \CCrmCatalog::GetDefaultID();
+		if ($iblockId > 0)
+			\CIBlock::clearIblockTagCache($iblockId);
+		unset($iblockId);
 	}
 }

@@ -6,4 +6,5 @@ $MESS["SONET_C37_PAGE_TITLE"] = "Leave Group";
 $MESS["SONET_C37_IS_OWNER"] = "A group owner cannot leave a group.";
 $MESS["SONET_C37_NOT_MEMBER"] = "You are not a member of this group.";
 $MESS["SONET_C37_IS_AUTO_MEMBER"] = "Group members connected via their department cannot leave the group.";
+$MESS["SONET_C37_PAGE_TITLE_PROJECT"] = "Leave Project";
 ?>

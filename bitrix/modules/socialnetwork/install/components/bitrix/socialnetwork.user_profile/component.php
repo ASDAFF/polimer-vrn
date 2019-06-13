@@ -6,6 +6,10 @@
  * @copyright 2001-2014 Bitrix
  */
 
+use Bitrix\Main\Loader;
+use Bitrix\Socialnetwork\ComponentHelper;
+use Bitrix\Main\ModuleManager;
+
 /**
  * Bitrix vars
  * @global CUser $USER
@@ -145,14 +149,12 @@ $arParams["PATH_TO_USER_PASSWORDS"] = trim($arParams["PATH_TO_USER_PASSWORDS"]);
 if (strlen($arParams["PATH_TO_USER_PASSWORDS"]) <= 0)
 	$arParams["PATH_TO_USER_PASSWORDS"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=user_passwords&".$arParams["USER_VAR"]."=#user_id#");
 
-if (\Bitrix\Main\Loader::includeModule('dav'))
+if (Loader::includeModule('dav'))
 {
 	$arParams["PATH_TO_USER_SYNCHRONIZE"] = trim($arParams["PATH_TO_USER_SYNCHRONIZE"]);
 	if (strlen($arParams["PATH_TO_USER_SYNCHRONIZE"]) <= 0)
 		$arParams["PATH_TO_USER_SYNCHRONIZE"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=user_synchronize&".$arParams["USER_VAR"]."=#user_id#");
 }
-
-
 
 $arParams["PATH_TO_USER_CODES"] = trim($arParams["PATH_TO_USER_CODES"]);
 if (strlen($arParams["PATH_TO_USER_CODES"]) <= 0)
@@ -323,8 +325,8 @@ else
 	}
 	else
 	{
-		$arContext = \Bitrix\Socialnetwork\ComponentHelper::getUrlContext();
-		$arParams['PATH_TO_USER_EDIT'] = \Bitrix\Socialnetwork\ComponentHelper::addContextToUrl($arParams['PATH_TO_USER_EDIT'], $arContext);
+		$arContext = ComponentHelper::getUrlContext();
+		$arParams['PATH_TO_USER_EDIT'] = ComponentHelper::addContextToUrl($arParams['PATH_TO_USER_EDIT'], $arContext);
 
 		if (!CSocNetUser::CanProfileView($USER->GetID(), $arResult["User"], SITE_ID, $arContext))
 		{
@@ -403,22 +405,14 @@ else
 		{
 			$arResult["User"]["TYPE"] = 'email';
 		}
-		elseif (
-			$arResult["User"]["EXTERNAL_AUTH_ID"] == 'replica'
-			&& IsModuleInstalled('socialservices')
-		)
+		elseif (in_array($arResult["User"]["EXTERNAL_AUTH_ID"], ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica'))))
 		{
-			$arResult["User"]["TYPE"] = 'replica';
-		}
-		elseif (
-			($arResult["User"]["EXTERNAL_AUTH_ID"] == 'bot' && IsModuleInstalled('im')) ||
-			($arResult["User"]["EXTERNAL_AUTH_ID"] == 'imconnector' && IsModuleInstalled('imconnector'))
-		)
-		{
-			$arResult["User"]["TYPE"] = $arResult["User"]["EXTERNAL_AUTH_ID"] == 'bot'? 'bot': 'imconnector';
+			$arResult["User"]["TYPE"] = $arResult["User"]["EXTERNAL_AUTH_ID"];
 			$arResult["CurrentUserPerms"]["Operations"]["modifyuser_main"] = false;
 			$arResult["CurrentUserPerms"]["Operations"]["modifyuser"] = false;
 		}
+
+
 		elseif ($arResult["User"]["IS_EXTRANET"] == "Y")
 		{
 			$arResult["User"]["TYPE"] = 'extranet';
@@ -503,22 +497,30 @@ else
 		}
 		if (CModule::IncludeModule('mail'))
 		{
-			$dbMailbox = CMailbox::getList(
-				array(
-					'TIMESTAMP_X' => 'DESC'
+			$arResult['User']['MAILBOXES'] = array();
+
+			$dbMailbox = \Bitrix\Mail\MailboxTable::getList(array(
+				'filter' => array(
+					'=LID' => SITE_ID,
+					'=ACTIVE' => 'Y',
+					'=USER_ID' => $arParams['ID'],
+					'=SERVER_TYPE' => 'imap',
 				),
-				array(
-					'LID'     => SITE_ID,
-					'ACTIVE'  => 'Y',
-					'USER_ID' => intval($arParams['ID']),
-					'SERVER_TYPE' => 'imap|controller|domain'
-				)
-			);
-			$mailbox = $dbMailbox->fetch();
-			if (strpos($mailbox['LOGIN'], '@') !== false)
+				'order' => array(
+					'ID' => 'ASC',
+				),
+			));
+			while ($mailbox = $dbMailbox->fetch())
 			{
-				$arResult['User']['MAILBOX'] = $mailbox['LOGIN'];
+				// filter public
+				\Bitrix\Mail\MailboxTable::normalizeEmail($mailbox);
+				if (strpos($mailbox['EMAIL'], '@') !== false)
+				{
+					$arResult['User']['MAILBOXES'][] = $mailbox['EMAIL'];
+				}
 			}
+
+			$arResult['User']['MAILBOX'] = end($arResult['User']['MAILBOXES']);
 
 			if (
 				$arParams['ID'] == IntVal($USER->GetID())
@@ -526,7 +528,7 @@ else
 			)
 			{
 				$arResult['User']['EMAIL_FORWARD_TO'] = array();
-				if (\Bitrix\Main\ModuleManager::isModuleInstalled('blog'))
+				if (ModuleManager::isModuleInstalled('blog'))
 				{
 					$res = Bitrix\Mail\User::getForwardTo(SITE_ID, $arParams['ID'], 'BLOG_POST');
 					if (is_array($res))
@@ -539,7 +541,7 @@ else
 					}
 				}
 
-				if (\Bitrix\Main\ModuleManager::isModuleInstalled('tasks'))
+				if (ModuleManager::isModuleInstalled('tasks'))
 				{
 					$res = Bitrix\Mail\User::getForwardTo(SITE_ID, $arParams['ID'], 'TASKS_TASK');
 					if (is_array($res))
@@ -678,8 +680,16 @@ else
 								$arEmails_tmp = array();
 								if (strlen($val) > 0)
 									$arEmails_tmp[] = '<a href="mailto:'.$val.'">'.$val.'</a>';
-								if (!empty($arResult['User']['MAILBOX']) && strtolower($arResult['User']['MAILBOX']) != strtolower($val))
-									$arEmails_tmp[] = '<a href="mailto:'.$arResult['User']['MAILBOX'].'">'.$arResult['User']['MAILBOX'].'</a>';
+								if (!empty($arResult['User']['MAILBOXES']))
+								{
+									foreach ($arResult['User']['MAILBOXES'] as $item)
+									{
+										if (strtolower($item) != strtolower($val))
+										{
+											$arEmails_tmp[] = '<a href="mailto:'.$item.'">'.$item.'</a>';
+										}
+									}
+								}
 								$val = join(', ', $arEmails_tmp);
 								break;
 
@@ -761,6 +771,13 @@ else
 								if (StrLen($val) > 0)
 								{
 									$val = \CUser::FormatLastActivityDate(MakeTimeStamp($val, 'YYYY-MM-DD HH:MI:SS'));
+								}
+								break;
+
+							case 'DATE_REGISTER':
+								if (StrLen($val) > 0)
+								{
+									$val = FormatDateFromDB($val, $arParams["DATE_TIME_FORMAT"], true);
 								}
 								break;
 

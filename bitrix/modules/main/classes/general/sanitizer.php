@@ -47,6 +47,7 @@
 		protected $bDelSanitizedTags = true;
 		protected $bDoubleEncode = true;
 		protected $secLevel = self::SECURE_LEVEL_HIGH;
+		protected $additionalAttrs = array();
 		protected $arNoClose = array(
 								'br','hr','img','area','base',
 								'basefont','col','frame','input',
@@ -81,6 +82,38 @@
 			}
 
 			$this->localAlph .= '\\x80-\\xFF';
+		}
+
+		/**
+		 * Allow additional attributes in html.
+		 * @param array $attrs Additional attrs
+		 * Example:
+			$sanitizer->allowAttributes(array(
+				'aria-label' => array(
+						'tag' => function($tag)
+						{
+							return ($tag == 'div');
+						},
+						'content' => function($value)
+						{
+							return !preg_match("#[^\\s\\w\\-\\#\\.;]#i" . BX_UTF_PCRE_MODIFIER, $value);
+						}
+					)
+			));
+		 * @return void
+		 */
+		public function allowAttributes(array $attrs)
+		{
+			foreach ($attrs as $code => $item)
+			{
+				if (
+					isset($item['tag']) && is_callable($item['tag']) &&
+					isset($item['content']) && is_callable($item['content'])
+				)
+				{
+					$this->additionalAttrs[$code] = $item;
+				}
+			}
 		}
 
 		/**
@@ -140,6 +173,17 @@
 			return $counter;
 		}
 
+		public function DeleteAttributes(array $arDeleteAttrs)
+		{
+			$this->secLevel = self::SECURE_LEVEL_CUSTOM;
+			$arResultTags = array();
+			foreach ($this->arHtmlTags as $tagName => $arAttrs)
+			{
+				$arResultTags[$tagName] = array_diff($arAttrs, $arDeleteAttrs);
+			}
+			$this->arHtmlTags = $arResultTags;
+		}
+
 		/**
 		 * Deletes all tags from white list
 		 */
@@ -169,13 +213,19 @@
 		 * !WARNING! if DeleteSanitizedTags = false and ApplyHtmlSpecChars = false
 		 * html will not be sanitized!
 		 * @param bool $bApply true|false
+		 * @deprecated
 		 */
 		public function ApplyHtmlSpecChars($bApply=true)
 		{
 			if($bApply)
+			{
 				$this->bHtmlSpecChars = true;
+			}
 			else
+			{
 				$this->bHtmlSpecChars = false;
+				trigger_error('It is strongly not recommended to use \CBXSanitizer::ApplyHtmlSpecChars(false)', E_USER_WARNING);
+			}
 		}
 
 		/**
@@ -307,7 +357,7 @@
 						'h6'		=> array('style','id','class','align'),
 						'hr'		=> array('style','id','class'),
 						'i'		=> array('style','id','class'),
-						'img'		=> array('style','id','class','src','alt','height','width','title'),
+						'img'		=> array('style','id','class','src','alt','height','width','title','align'),
 						'ins'		=> array('title','style','id','class'),
 						'li'		=> array('style','id','class'),
 						'map'		=> array('shape','coords','href','alt','title','style','id','class','name'),
@@ -344,48 +394,98 @@
 		// Checks if tag's attributes are in white list ($this->arHtmlTags)
 		protected function IsValidAttr(&$arAttr)
 		{
-			if(!isset($arAttr[1]) || !isset($arAttr[3]))
+			if (!isset($arAttr[1]) || !isset($arAttr[3]))
+			{
 				return false;
+			}
 
+			$attr = strtolower($arAttr[1]);
 			$attrValue = $this->Decode($arAttr[3]);
 
-			switch (strtolower($arAttr[1]))
+			switch ($attr)
 			{
 				case 'src':
 				case 'href':
 				case 'data-url':
-					if(!preg_match("#^(http://|https://|ftp://|file://|mailto:|callto:|skype:|tel:|\\#|/)#i".BX_UTF_PCRE_MODIFIER, $attrValue))
-						$arAttr[3] = "http://".$arAttr[3];
-
-					$valid = (!preg_match("#javascript:|data:|[^\\w".$this->localAlph."a-zA-Z:/\\.=@;,!~\\*\\&\\#\\)(%\\s\\+\$\\?\\-\\[\\]]#i".BX_UTF_PCRE_MODIFIER, $attrValue)) ? true : false;
+					if(!preg_match("#^(http://|https://|ftp://|file://|mailto:|callto:|skype:|tel:|sms:|\\#|/)#i".BX_UTF_PCRE_MODIFIER, $attrValue))
+					{
+						$arAttr[3] = 'http://' . $arAttr[3];
+					}
+					$valid = (!preg_match("#javascript:|data:|[^\\w".$this->localAlph."a-zA-Z:/\\.=@;,!~\\*\\&\\#\\)(%\\s\\+\$\\?\\-\\[\\]]#i".BX_UTF_PCRE_MODIFIER, $attrValue))
+							? true : false;
 					break;
 
 				case 'height':
 				case 'width':
 				case 'cellpadding':
 				case 'cellspacing':
-					$valid = !preg_match("#^[^0-9\\-]+(px|%|\\*)*#i".BX_UTF_PCRE_MODIFIER, $attrValue) ? true : false;
+					$valid = !preg_match("#^[^0-9\\-]+(px|%|\\*)*#i".BX_UTF_PCRE_MODIFIER, $attrValue)
+							? true : false;
 					break;
 
 				case 'title':
 				case 'alt':
-					$valid = !preg_match("#[^\\w".$this->localAlph."\\.\\?!,:;\\s\\-]#i".BX_UTF_PCRE_MODIFIER, $attrValue) ? true : false;
+					$valid = !preg_match("#[^\\w".$this->localAlph."\\.\\?!,:;\\s\\-]#i".BX_UTF_PCRE_MODIFIER, $attrValue)
+							? true : false;
 					break;
 
 				case 'style':
-					$valid = !preg_match("#(behavior|expression|position|javascript)#i".BX_UTF_PCRE_MODIFIER, $attrValue) && !preg_match("#[^\\/\\w\\s)(!%,:\\.;\\-\\#\\']#i".BX_UTF_PCRE_MODIFIER, $attrValue) ? true : false;
+					$attrValue = str_replace('&quot;', '',  $attrValue);
+					$valid = !preg_match("#(behavior|expression|position|javascript)#i".BX_UTF_PCRE_MODIFIER, $attrValue) && !preg_match("#[^\\/\\w\\s)(!%,:\\.;\\-\\#\\']#i".BX_UTF_PCRE_MODIFIER, $attrValue)
+							? true : false;
 					break;
 
 				case 'coords':
-					$valid = !preg_match("#[^0-9\\s,\\-]#i".BX_UTF_PCRE_MODIFIER, $attrValue) ? true : false;
+					$valid = !preg_match("#[^0-9\\s,\\-]#i".BX_UTF_PCRE_MODIFIER, $attrValue)
+							? true : false;
 					break;
 
 				default:
-					$valid = !preg_match("#[^\\s\\w".$this->localAlph."\\-\\#\\.;]#i".BX_UTF_PCRE_MODIFIER, $attrValue) ? true : false;
+					if (array_key_exists($attr, $this->additionalAttrs))
+					{
+						$valid = true === call_user_func_array(
+							$this->additionalAttrs[$attr]['content'],
+							array($attrValue)
+						);
+					}
+					else
+					{
+						$valid = !preg_match("#[^\\s\\w" . $this->localAlph . "\\-\\#\\.;]#i" . BX_UTF_PCRE_MODIFIER, $attrValue)
+								? true : false;
+					}
 					break;
 			}
 
 			return $valid;
+		}
+
+		protected function encodeAttributeValue(array $attr)
+		{
+			if (!$this->bHtmlSpecChars)
+			{
+				return $attr[3];
+			}
+
+			$result = $attr[3];
+			$flags = ENT_QUOTES;
+
+			if ($attr[1] === 'style')
+			{
+				$flags = ENT_COMPAT;
+			}
+			elseif ($attr[1] === 'href')
+			{
+				$result = str_replace('&', '##AMP##', $result);
+			}
+
+			$result = htmlspecialchars($result, $flags, LANG_CHARSET, $this->bDoubleEncode);
+
+			if ($attr[1] === 'href')
+			{
+				$result = str_replace('##AMP##', '&', $result);
+			}
+
+			return $result;
 		}
 
 		/**
@@ -603,24 +703,33 @@
 							}
 
 							//find attributies an erase unallowed
-							preg_match_all('#([a-z_-]+)\s*=\s*([\'\"])\s*(.*?)\s*\2#is'.BX_UTF_PCRE_MODIFIER, $matches[3], $arTagAttrs, PREG_SET_ORDER);
+							preg_match_all('#([a-z0-9_-]+)\s*=\s*([\'\"])\s*(.*?)\s*\2#is'.BX_UTF_PCRE_MODIFIER, $matches[3], $arTagAttrs, PREG_SET_ORDER);
 							$attr = array();
 							foreach($arTagAttrs as $arTagAttr)
 							{
-								if(in_array(strtolower($arTagAttr[1]), $this->arHtmlTags[$seg[$i]['tagName']]))
+								$currTag = $seg[$i]['tagName'];
+								$attrOne = strtolower($arTagAttr[1]);
+								$attrAllowed = in_array(
+									$attrOne,
+									$this->arHtmlTags[$seg[$i]['tagName']]
+								);
+								if (
+									!$attrAllowed &&
+									array_key_exists($attrOne, $this->additionalAttrs)
+								)
+								{
+									$attrAllowed = true === call_user_func_array(
+										$this->additionalAttrs[$attrOne]['tag'],
+										array($currTag)
+									);
+								}
+								if ($attrAllowed)
 								{
 									$arTagAttr[3] = str_replace('"', "'", $arTagAttr[3]); //We will wrap attribute by "
 
 									if($this->IsValidAttr($arTagAttr))
 									{
-										if($this->bHtmlSpecChars)
-										{
-											$attr[strtolower($arTagAttr[1])] = htmlspecialchars($arTagAttr[3], ENT_QUOTES, LANG_CHARSET, $this->bDoubleEncode);
-										}
-										else
-										{
-											$attr[strtolower($arTagAttr[1])] = $arTagAttr[3];
-										}
+										$attr[$attrOne] = $this->encodeAttributeValue($arTagAttr);
 									}
 								}
 							}

@@ -107,4 +107,8 @@ $MESS["MAIN_USER_EDIT_EXT"] = "Внешний код:";
 $MESS["USER_EDIT_TITLE"] = "Обращение:";
 $MESS["user_edit_lang_not_set"] = "(не установлен)";
 $MESS["user_edit_lang"] = "Язык для уведомлений:";
+$MESS["MAIN_ADMIN_AUTH"] = "Авторизоваться";
+$MESS["MAIN_ADMIN_AUTH_TITLE"] = "Авторизоваться под данным пользователем";
+$MESS["MAIN_USER_EDIT_HISTORY"] = "История";
+$MESS["MAIN_USER_EDIT_HISTORY_TITLE"] = "История изменения профиля пользователя";
 ?>

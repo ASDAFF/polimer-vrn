@@ -1,4 +1,5 @@
 <?
+$MESS["SPOD_DISALLOW_CANCEL"] = "Stornierung der Bestellung nicht erlauben";
 $MESS["SPOD_SHOW_ALL"] = "(alle anzeigen)";
 $MESS["SPOD_ID"] = "Bestellungs ID";
 $MESS["SPOD_PROPS_NOT_SHOW"] = "Eigenschaften für die Kundengruppe nicht anzeigen";

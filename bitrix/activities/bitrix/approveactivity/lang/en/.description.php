@@ -15,4 +15,6 @@ $MESS["BPAA_DESCR_CM"] = "Comments";
 $MESS["BPAA_DESCR_APPROVERS"] = "Approved by";
 $MESS["BPAA_DESCR_REJECTERS"] = "Rejected by";
 $MESS["BPAA_DESCR_TASKS"] = "Tasks";
+$MESS["BPAA_DESCR_APPROVERS_STRING"] = "Approvers (text)";
+$MESS["BPAA_DESCR_REJECTERS_STRING"] = "Decliners (text)";
 ?>

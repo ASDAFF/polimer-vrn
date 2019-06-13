@@ -39,7 +39,7 @@ class Log
 				));
 				if ($fields = $res->fetch())
 				{
-					$postFields = $fields;
+					$logFields = $fields;
 
 					if ($logFields['LOG_DATE'] instanceof \Bitrix\Main\Type\DateTime)
 					{

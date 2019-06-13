@@ -147,10 +147,8 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 
 .sonet-group-create-popup-form-email-block .errortext { cursor: default; display: block; font-size: 14px; color: #ff3c00; width: 550px; border-radius: 2px; padding: 3px 5px; position: relative; text-decoration: none; }
 
-.sonet-group-create-popup .feed-add-post-destination-wrap {background:#FFF;}
 .sonet-group-create-popup-users-title {padding-bottom:10px;}
 
-.feed-add-post-destination-wrap.sonet-group-create-tabs-text-error { border-width: 2px!important; border-color: #ff3c00!important; border-radius: 2px!important; border-style: solid!important; }
 .sonet-group-create-popup .invite-dialog-inv-form {
 	width:auto;
 	min-width:0;
@@ -214,12 +212,7 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 	min-height: 200px;
 }
 
-.task-iframe-popup {
-	background: #eef2f4 !important;
-	padding: 0 15px 0 21px;
-}
-
-.task-iframe-popup .social-group-create-container.second-step {
+.sonet-slider-frame-popup .social-group-create-container.second-step {
 	padding-bottom: 40px;
 }
 .popup-window .social-group-create-buttons {
@@ -447,6 +440,36 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 	font: 19px/32px OpenSans-Regular, "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
+.bx-firefox .social-group-create-info-panel-title input::-moz-placeholder,
+.bx-firefox .social-group-create-info-panel-title input:-moz-placeholder {
+	color: #a8a8a8;
+	text-overflow: ellipsis;
+	opacity: 1;
+	transition: color 270ms ease;
+}
+
+.social-group-create-info-panel-title input:focus:-moz-placeholder,
+.social-group-create-info-panel-title input:focus::-moz-placeholder { color: rgba(0, 0, 0, 0) }
+
+.bx-ie .social-group-create-info-panel-title input:-ms-input-placeholder {
+	color: #a8a8a8;
+	text-overflow: ellipsis;
+	opacity: 1;
+	transition: color 270ms ease;
+}
+
+.bx-ie .social-group-create-info-panel-title input:focus:-ms-input-placeholder { color: rgba(0, 0, 0, 0) }
+
+.bx-chrome .social-group-create-info-panel-title input::-webkit-input-placeholder {
+	color: #a8a8a8;
+	text-overflow: ellipsis;
+	opacity: 1;
+	transition: color 270ms ease;
+}
+
+.social-group-create-info-panel-title input:focus::-moz-placeholder { color: rgba(0, 0, 0, 0) }
+
+
 .social-group-create-info-editor {
 	background: rgb(255, 255, 255);
 }
@@ -531,30 +554,43 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 }
 
 .social-group-create-link-upload .webform-field-upload {
-	height: 16px;
+	height: 17px;
 	line-height: 16px;
 	cursor: pointer;
+	font-size: 13px;
 }
 
 .social-group-create-link-upload .webform-small-button.webform-button-upload,
 .social-group-create-link-upload .webform-small-button.webform-button-replace {
-	display: inline-block;
 	height: 16px;
 	background: transparent;
 	font: 400 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #525C69;
 	white-space: nowrap;
-	transition: border-bottom .22s ease;
+	transition: border-bottom .3s ease;
 	text-align: left;
 	text-transform: inherit;
 	box-shadow: none;
 	cursor: pointer;
 }
 
+.social-group-create-link-upload .webform-small-button.webform-button-upload {
+	display: inline-block;
+	border-bottom: 1px dashed rgba(130,139,149,.5);
+	color: #828B95;
+	text-decoration: none;
+	transition: border-bottom .3s;
+}
+
+.social-group-create-link-upload.social-group-create-link-upload-set .webform-field-upload {
+	display: none;
+}
+
 .social-group-create-link-upload .webform-field-upload:hover .webform-button-upload,
 .social-group-create-link-upload .webform-field-upload:hover .webform-button-replace {
+	border-bottom: 1px dashed transparent;
 	background: transparent;
-	color: #3f4752;
+	color: #828B95;
 }
 
 .social-group-create-link-upload .webform-field-item-wrap {
@@ -718,14 +754,13 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 
 .social-group-create-form-field .social-group-create-form-field-controls {
 	position: relative;
-	display: inline-block;
+	display: flex;
+	flex-wrap: wrap;
 	min-width: 200px;
-	height: 30px;
 	vertical-align: middle;
 	white-space: nowrap;
 	line-height: 30px;
 	overflow: hidden;
-	margin: 0 5px 5px 0;
 }
 
 .social-group-create-form-field .social-group-create-form-field-loading {
@@ -803,18 +838,10 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 	margin: 0 120px 0 0;
 }
 
-.social-group-create-form-control-block .social-group-create-form-field.feed-add-post-destination-wrap,
-.social-group-create-form-control-block .social-group-create-form-field.feed-add-post-destination-wrap {
-	margin-right: 220px;
-}
-
-.social-group-create-form-control-block .social-group-create-form-field .feed-add-destination-inp {
-	margin-bottom: 6px;
-}
-
-.social-group-create-form-control-block .social-group-create-form-field .feed-add-destination-link {
-	margin-top: 9px;
-	margin-bottom: 9px;
+.social-group-create-form-control-block .main-user-selector-wrap
+{
+	flex: 1 1 auto;
+	margin: 0 220px 0 0;
 }
 
 .social-group-create-form-control-block .social-group-create-text {
@@ -904,7 +931,7 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 	flex-direction: column;
 	flex-wrap: wrap;
 	margin: -8px 0 0 0;
-	max-height: 170px;
+	height: 170px;
 	max-width: 330px;
 }
 
@@ -913,21 +940,22 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 }
 
 .social-group-create-form-field-list-item {
+	position: relative;
 	display: flex;
 	align-items: center;
 	padding: 0 6px 0 3px;
 	height: 33px;
 	font: 14px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #525C69;
+	min-width: 250px;
 	-webkit-transition: background .3s;
 	transition: background .3s;
 }
 
 .social-group-create-form-field-list-label {
-	position: relative;
 	display: inline-block;
 	padding: 0 0 0 20px;
-	margin-right: 20px;
+	margin-right: 5px;
 }
 
 .social-group-create-form-field-list-input {
@@ -938,8 +966,75 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 	transform: translateY(-50%);
 }
 
+.social-group-create-form-field-input-text {
+	display: none;
+	position: absolute;
+	left: 20px;
+	top: -3px;
+	padding: 12px;
+	width: 100%;
+	max-width: 162px;
+	height: 38px;
+	border: 1px solid #C6CDD3;
+	border-radius: 2px;
+	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: #535C69;
+	box-sizing: border-box;
+	z-index: 1;
+}
+.social-group-create-form-field-list-item.custom-value .social-group-create-form-field-input-text {
+	display: inline-block;
+}
+
+.social-group-create-form-pencil {
+	display: inline-block;
+	margin: 0 5px 0 0;
+	width: 12px;
+	height: 12px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2210%22%20height%3D%2210%22%20viewBox%3D%220%200%2010%2010%22%3E%3Cpath%20fill%3D%22%23525C68%22%20d%3D%22M7.64.044L1.346%206.33c.522.248%201.006.568%201.44.952.356.414.653.874.883%201.37.388-.39%204.37-4.367%206.286-6.283-.243-.54-.576-1.034-.98-1.462-.39-.37-.846-.66-1.34-.862L7.64.043zM.78%207.086l-.476%202.61%202.87-.475c-.206-.488-.505-.935-.89-1.316-.425-.38-.94-.66-1.502-.818z%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	vertical-align: middle;
+	transition: opacity .3s;
+	opacity: .35;
+	cursor: pointer;
+}
+
+.social-group-create-form-pencil:hover {
+	opacity: 1;
+}
+
+.social-group-create-form-field-list-item.custom-value .social-group-create-form-pencil {
+	display: none;
+}
+
+.social-group-create-form-field-cancel {
+	display: none;
+	width: 13px;
+	height: 13px;
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2213%22%20height%3D%2213%22%20viewBox%3D%220%200%2013%2013%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M3.123%204.297C3.928%203.155%205.24%202.41%206.72%202.41c2.45%200%204.437%202.032%204.437%204.537S9.17%2011.483%206.72%2011.483c-.812%200-1.573-.225-2.228-.615l-.843%201.19c.893.564%201.945.89%203.07.89%203.24%200%205.868-2.687%205.868-6%200-3.315-2.627-6-5.867-6-1.828%200-3.46.856-4.537%202.198V.703H.777v5h5V4.297H3.123z%22%20opacity%3D%22.5%22/%3E%3C/svg%3E');
+	background-repeat: no-repeat;
+	vertical-align: middle;
+	transition: opacity .3s;
+	cursor: pointer;
+	position: absolute;
+	left: 190px;
+}
+
+.social-group-create-form-field-cancel:hover {
+	opacity: .5;
+}
+
+.social-group-create-form-field-list-item.custom-value .social-group-create-form-field-cancel {
+	display: inline-block;
+}
+
 .social-group-create-form-field-list-name {
 	display: inline-block;
+	margin: 0 5px 0 0;
+}
+
+.social-group-create-form-field-list-item.custom-value .social-group-create-form-field-list-name {
+	display: none;
 }
 
 .social-group-create-field-select {
@@ -1012,19 +1107,6 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 	max-width: 800px;
 }
 
-.task-iframe-popup .social-group-create-footer-fixed {
-	box-shadow: 0 -2px 4px 0 #c6c9cb;
-	overflow: hidden;
-	position: fixed;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	z-index: 99;
-	padding: 15px;
-	background: #fff;
-	text-align: left;
-}
-
 .social-group-create-add-task textarea {
 	padding: 10px;
 	resize: none;
@@ -1047,3 +1129,24 @@ a.sonet-invitation-dash-link:hover{ color: #696969; border-color: #696969; text-
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-size: 13px;
 }
+
+.social-group-create-link-upload .upload-file-name {
+	line-height: 16px;
+}
+
+.social-group-create-link-upload .webform-field-upload input {
+
+}
+
+.social-group-create-link-upload .webform-field-upload .webform-small-button {
+	position: static;
+	line-height: 12px;
+}
+
+.social-group-create-options-add-dept-hint {
+	display: none;
+	padding: 4px 0 0 8px;
+	font-size: 11px;
+}
+.social-group-create-options-add-dept-hint.visible {display: block;}
+

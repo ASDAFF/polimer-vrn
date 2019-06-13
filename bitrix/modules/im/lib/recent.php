@@ -1,7 +1,9 @@
 <?php
 namespace Bitrix\Im;
 
-use Bitrix\Main\Application;
+use Bitrix\Main\Application,
+	Bitrix\Main\Localization\Loc;
+Loc::loadMessages(__FILE__);
 
 class Recent
 {
@@ -135,29 +137,11 @@ class Recent
 				{
 					$avatar = \CIMChat::GetAvatarImage($row['CHAT_AVATAR'], 100, false);
 					$color = strlen($row['CHAT_COLOR']) > 0? Color::getColor($row['CHAT_COLOR']): Color::getColorByNumber($row['ITEM_ID']);
-					if ($row["CHAT_TYPE"] == IM_MESSAGE_PRIVATE)
+					$chatType = \Bitrix\Im\Chat::getType($row);
+
+					if ($generalChatId == $row['ITEM_ID'])
 					{
-						$chatType = 'private';
-					}
-					else if ($row["CHAT_ENTITY_TYPE"] == 'CALL')
-					{
-						$chatType = 'call';
-					}
-					else if ($row["CHAT_ENTITY_TYPE"] == 'LINES')
-					{
-						$chatType = 'lines';
-					}
-					else if ($row["CHAT_ENTITY_TYPE"] == 'LIVECHAT')
-					{
-						$chatType = 'livechat';
-					}
-					else
-					{
-						if ($generalChatId == $row['ITEM_ID'])
-						{
-							$row["CHAT_ENTITY_TYPE"] = 'GENERAL';
-						}
-						$chatType = $row["CHAT_TYPE"] == IM_MESSAGE_OPEN? 'open': 'chat';
+						$row["CHAT_ENTITY_TYPE"] = 'GENERAL';
 					}
 
 					$muteList = Array();
@@ -351,7 +335,7 @@ class Recent
 		return $result;
 	}
 
-	public static function pin($dialogId, $action, $userId = null)
+	public static function pin($dialogId, $pin, $userId = null)
 	{
 		$userId = \Bitrix\Im\Common::getUserId($userId);
 		if (!$userId)
@@ -359,21 +343,24 @@ class Recent
 			return false;
 		}
 
-		$action = $action === true? 'Y': 'N';
+		$pin = $pin === true? 'Y': 'N';
 
-		$isChat = false;
 		$id = $dialogId;
 		if (substr($dialogId, 0, 4) == 'chat')
 		{
-			$isChat = true;
+			$itemTypes = \Bitrix\Im\Chat::getTypes();
 			$id = substr($dialogId, 4);
+		}
+		else
+		{
+			$itemTypes = IM_MESSAGE_PRIVATE;
 		}
 
 		$element = \Bitrix\Im\Model\RecentTable::getList(Array(
 			'select' => Array('USER_ID', 'ITEM_TYPE', 'ITEM_ID', 'PINNED'),
 			'filter' => Array(
 				'=USER_ID' => $userId,
-				($isChat? '!=': '=').'ITEM_TYPE' => 'P',
+				'=ITEM_TYPE' => $itemTypes,
 				'=ITEM_ID' => $id
 			)
 		))->fetch();
@@ -381,7 +368,7 @@ class Recent
 		{
 			return false;
 		}
-		if ($element['PINNED'] == $action)
+		if ($element['PINNED'] == $pin)
 		{
 			return true;
 		}
@@ -390,7 +377,7 @@ class Recent
 			'USER_ID' => $element['USER_ID'],
 			'ITEM_TYPE' => $element['ITEM_TYPE'],
 			'ITEM_ID' => $element['ITEM_ID'],
-		), array('PINNED' => $action));
+		), array('PINNED' => $pin));
 
 		self::clearCache($element['USER_ID']);
 
@@ -403,12 +390,9 @@ class Recent
 				'expiry' => 3600,
 				'params' => Array(
 					'dialogId' => $dialogId,
-					'active' => $action == 'Y'
+					'active' => $pin == 'Y'
 				),
-				'extra' => Array(
-					'im_revision' => IM_REVISION,
-					'im_revision_mobile' => IM_REVISION_MOBILE,
-				),
+				'extra' => \Bitrix\Im\Common::getPullExtra()
 			));
 		}
 
@@ -418,6 +402,85 @@ class Recent
 	public static function hide($dialogId, $userId = null)
 	{
 		return \CIMContactList::DialogHide($dialogId, $userId);
+	}
+
+	/**
+	 * @param $dialogId
+	 * @param null $userId
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public static function show($dialogId, $userId = null)
+	{
+		$result = false;
+		$userId = Common::getUserId($userId);
+
+		if ($userId)
+		{
+			$relation = Chat::makeRelationShow($dialogId, $userId);
+
+			if (!empty($relation['ID']))
+			{
+				$recent = Array(
+					'ENTITY_ID' => $dialogId,
+					'MESSAGE_ID' => $relation['UNREAD_ID'],
+					'CHAT_TYPE' => $relation['MESSAGE_TYPE'],
+					'USER_ID' => $userId,
+					'CHAT_ID' => $dialogId,
+					'RELATION_ID' => $relation['ID']
+				);
+
+				if ($relation['PARAMS']['SESSION_ID'])
+				{
+					$recent['SESSION_ID'] = $relation['PARAMS']['SESSION_ID'];
+				}
+
+				$result = \CIMContactList::SetRecent($recent);
+
+				$pullInclude = \Bitrix\Main\Loader::includeModule("pull");
+
+				if ($pullInclude)
+				{
+					$chat = \CIMChat::GetChatData(
+						array(
+							'ID' =>$dialogId,
+							'USE_CACHE' => 'N',
+						)
+					);
+
+					$imMessage = new \CIMMessage($userId);
+					$message = $imMessage->GetMessage($relation['LAST_ID']);
+
+					if (!empty($chat))
+					{
+						$pullParams = Array(
+							'module_id' => 'im',
+							'command' => 'chatShow',
+							'params' => \CIMMessage::GetFormatMessage(
+								Array(
+									 'ID' => $relation['LAST_ID'],
+									 'CHAT_ID' => $dialogId,
+									 'TO_CHAT_ID' => $dialogId,
+									 'FROM_USER_ID' => $message['AUTHOR_ID'],
+									 'SYSTEM' => 'Y',
+									 'MESSAGE' => $message['MESSAGE'],
+									 'DATE_CREATE' => time(),
+									 //'PARAMS' => self::PrepareParamsForPull($arFields['PARAMS']),
+									 //'FILES' => $arFields['FILES'],
+									 'NOTIFY' => true,
+									 'COUNTER' => 1
+								 )
+							),
+							'extra' => \Bitrix\Im\Common::getPullExtra()
+						);
+						$result = \Bitrix\Pull\Event::add($userId, $pullParams);
+					}
+				}
+			}
+		}
+
+		return $result;
 	}
 
 	public static function clearCache($userId = null)

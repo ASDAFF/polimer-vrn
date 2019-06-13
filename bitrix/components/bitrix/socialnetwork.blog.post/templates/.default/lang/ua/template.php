@@ -46,7 +46,7 @@ $MESS["BLOG_DESTINATION_ALL_BSM"] = "Всім";
 $MESS["BLOG_PHOTO"] = "Фото:";
 $MESS["BLOG_FILES"] = "Файли:";
 $MESS["BLOG_COMMENTS"] = "Коментарі";
-$MESS["BLOG_LINK"] = "Посилання";
+$MESS["BLOG_LINK"] = "Посилання на повідомлення";
 $MESS["BLOG_LINK2"] = "Скопіювати посилання";
 $MESS["BLOG_HREF"] = "Перейти до повідомлення";
 $MESS["BLOG_BLOG_BLOG_MORE"] = "Читати детальніше...";
@@ -77,4 +77,5 @@ $MESS["BLOG_POST_CREATE_TASK_FAILURE_TITLE"] = "Помилка";
 $MESS["BLOG_POST_CREATE_TASK_SUCCESS_DESCRIPTION"] = "Ви можете перейти до перегляду і редагування завдання";
 $MESS["BLOG_POST_CREATE_TASK_ERROR_GET_DATA"] = "Не вдалося отримати дані для створення завдання";
 $MESS["BLOG_POST_LINK_COPIED"] = "Посилання скопійовано";
+$MESS["BLOG_POST_LIMITED_VIEW"] = "(одержувачі побачать пост після конвертації відео)";
 ?>

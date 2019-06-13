@@ -1,3 +1,3 @@
 <?
-$MESS["BLOG_BLOG_FAVORITE"] = "Найкращі повідомлення";
+$MESS["BLOG_BLOG_FAVORITE"] = "Кращі повідомлення";
 ?>

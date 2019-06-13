@@ -27,4 +27,6 @@ $MESS["ECLF_HIDE_ADD_SECT"] = "Приховати додаткові парам�
 $MESS["ECLF_PLANNER_FULL_FORM"] = "Докладно";
 $MESS["ECLF_PLANNER_TITLE"] = "Планувальник";
 $MESS["ECLF_PLANNER_PROPOSE_TIME"] = "Підібрати час";
+$MESS['ECLF_DESTINATION_ADD_USERS'] = "Додати співробітників, групи або відділи";
+$MESS['ECLF_DESTINATION_ADD_MORE'] = "Додати ще";
 ?>

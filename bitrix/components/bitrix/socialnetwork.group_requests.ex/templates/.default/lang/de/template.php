@@ -19,4 +19,16 @@ $MESS["SONET_GRE_T_SUBTITLE_OUT_PROJECT"] = "Einladungen zum Projekt";
 $MESS["SONET_GRE_T_NO_REQUESTS_DESCR_PROJECT"] = "Zeigt Anfragen wegen Projektbeitritt an.";
 $MESS["SONET_GRE_T_NO_REQUESTS_OUT_DESCR_PROJECT"] = "Zeigt Einladungen zum Projekt an.";
 $MESS["SONET_GRE_T_INVITE_PROJECT"] = "Zum Projekt einladen";
+$MESS["SONET_GRE_T_USER"] = "Nutzer";
+$MESS["SONET_GRE_T_DATE_REQUEST_IN"] = "Datum der Anfrage";
+$MESS["SONET_GRE_T_DATE_REQUEST_OUT"] = "Datum der Einladung";
+$MESS["SONET_GRE_T_MESSAGE2_IN"] = "Text der Anfrage";
+$MESS["SONET_GRE_T_MESSAGE2_OUT"] = "Text der Einladung";
+$MESS["SONET_GRE_T_NO_REQUESTS2"] = "Momentan gibt es keine Anfragen zum Gruppenbeitritt.";
+$MESS["SONET_GRE_T_NO_REQUESTS2_PROJECT"] = "Momentan gibt es keine Anfragen zum Projektbeitritt.";
+$MESS["SONET_GRE_T_NO_REQUESTS2_OUT"] = "Momentan gibt es keine Einladungen in die Gruppe.";
+$MESS["SONET_GRE_T_NO_REQUESTS2_OUT_PROJECT"] = "Momentan gibt es Einladungen zum Projekt.";
+$MESS["SONET_GRE_T_ERROR"] = "Fehler bei Verarbeitung der Anfrage.";
+$MESS["SONET_GRE_T_BUTTON_ACCEPT"] = "Akzeptieren";
+$MESS["SONET_GRE_T_BUTTON_DECLINE"] = "Ablehnen";
 ?>

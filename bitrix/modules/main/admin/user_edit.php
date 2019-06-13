@@ -77,6 +77,15 @@ $editable = ($USER->IsAdmin() ||
 	($USER->CanDoOperation('edit_all_users') && !in_array(1, $arUserGroups))
 );
 
+//authorize as user
+if($_REQUEST["action"] == "authorize" && check_bitrix_sessid() && $USER->CanDoOperation('edit_php'))
+{
+	$USER->Logout();
+	$USER->Authorize(intval($_REQUEST["ID"]));
+	$USER->CheckAuthActions();
+	LocalRedirect("user_edit.php?lang=".LANGUAGE_ID."&ID=".intval($_REQUEST["ID"]));
+}
+
 
 $canSelfEdit = true;
 if($ID==$uid && !($USER->CanDoOperation('edit_php') || ($USER->CanDoOperation('edit_all_users') && $USER->CanDoOperation('edit_groups'))))
@@ -137,6 +146,8 @@ if(
 	&& check_bitrix_sessid()
 )
 {
+	$adminSidePanelHelper->decodeUriComponent();
+
 	if(COption::GetOptionString('main', 'use_encrypted_auth', 'N') == 'Y')
 	{
 		//possible encrypted user password
@@ -387,19 +398,29 @@ if(
 				CUser::SendUserInfo($ID, $_POST["LID"], $text, true);
 			}
 
-			if($USER->CanDoOperation('edit_all_users') || $USER->CanDoOperation('edit_subordinate_users') || ($USER->CanDoOperation('edit_own_profile') && $ID==$uid))
+			if ($adminSidePanelHelper->isAjaxRequest())
 			{
-				if($_POST["save"] <> '')
-					LocalRedirect($strRedirect_admin);
-				elseif($_POST["apply"] <> '')
-					LocalRedirect($strRedirect."&ID=".$ID."&".$tabControl->ActiveTabParam());
-				elseif(strlen($save_and_add)>0)
-					LocalRedirect($strRedirect."&ID=0&".$tabControl->ActiveTabParam());
+				$adminSidePanelHelper->sendSuccessResponse("base", array("ID" => $ID, "COPY_ID" => "0"));
 			}
-			elseif($new=="Y")
-				LocalRedirect($strRedirect."&ID=".$ID."&".$tabControl->ActiveTabParam());
+			else
+			{
+				if($USER->CanDoOperation('edit_all_users') || $USER->CanDoOperation('edit_subordinate_users') || ($USER->CanDoOperation('edit_own_profile') && $ID==$uid))
+				{
+					if($_POST["save"] <> '')
+						LocalRedirect($strRedirect_admin);
+					elseif($_POST["apply"] <> '')
+						LocalRedirect($strRedirect."&ID=".$ID."&".$tabControl->ActiveTabParam());
+					elseif(strlen($_POST["save_and_add"])>0)
+						LocalRedirect($strRedirect."&ID=0&".$tabControl->ActiveTabParam());
+				}
+				elseif($new=="Y")
+					LocalRedirect($strRedirect."&ID=".$ID."&".$tabControl->ActiveTabParam());
+			}
 		}
 	}
+
+	if ($strError)
+		$adminSidePanelHelper->sendJsonErrorResponse($strError);
 }
 
 $str_GROUP_ID = array();
@@ -461,9 +482,29 @@ if($canViewUserList)
 {
 	$aMenu[] = array(
 		"TEXT"	=> GetMessage("RECORD_LIST"),
-		"LINK"	=> "/bitrix/admin/user_admin.php?lang=".LANGUAGE_ID."&apply_filter=Y",
+		"LINK"	=> "/bitrix/admin/user_admin.php?lang=".LANGUAGE_ID."&set_default=Y",
 		"ICON"	=> "btn_list",
 		"TITLE"	=> GetMessage("RECORD_LIST_TITLE"),
+	);
+}
+
+if($USER->CanDoOperation('edit_php') && $ID != $USER->GetID())
+{
+	$aMenu[] = array(
+		"ICON" => "",
+		"TEXT" => GetMessage("MAIN_ADMIN_AUTH"),
+		"TITLE" => GetMessage("MAIN_ADMIN_AUTH_TITLE"),
+		"LINK" => "/bitrix/admin/user_edit.php?lang=".LANGUAGE_ID."&ID=".$ID."&action=authorize&".bitrix_sessid_get()
+	);
+}
+
+if($USER->CanDoOperation('edit_all_users'))
+{
+	$aMenu[] = array(
+		"ICON" => "",
+		"TEXT" => GetMessage("MAIN_USER_EDIT_HISTORY"),
+		"TITLE" => GetMessage("MAIN_USER_EDIT_HISTORY_TITLE"),
+		"LINK" => "/bitrix/admin/profile_history.php?lang=".LANGUAGE_ID."&find_user_id=".$ID."&set_filter=Y"
 	);
 }
 
@@ -471,7 +512,6 @@ if($USER->CanDoOperation('edit_all_users') || $USER->CanDoOperation('edit_subord
 {
 	if ($ID>0 && $COPY_ID<=0)
 	{
-		$aMenu[] = array("SEPARATOR"=>"Y");
 		$aMenu[] = array(
 			"TEXT"	=> GetMessage("MAIN_NEW_RECORD"),
 			"LINK"	=> "/bitrix/admin/user_edit.php?lang=".LANGUAGE_ID,
@@ -496,9 +536,6 @@ if($USER->CanDoOperation('edit_all_users') || $USER->CanDoOperation('edit_subord
 		}
 	}
 }
-
-if(!empty($aMenu))
-	$aMenu[] = array("SEPARATOR"=>"Y");
 
 $context = new CAdminContextMenu($aMenu);
 $context->Show();

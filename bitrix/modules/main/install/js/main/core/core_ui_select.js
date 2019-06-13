@@ -560,13 +560,16 @@
 				}
 				else
 				{
-					if (!this.getPopup().isShown())
+					if (event && event.type === "click")
 					{
-						this.inputFocus();
-					}
-					else
-					{
-						this.inputBlur();
+						if (!this.getPopup().isShown())
+						{
+							this.inputFocus();
+						}
+						else
+						{
+							this.inputBlur();
+						}
 					}
 				}
 			}
@@ -815,7 +818,9 @@
 			}
 			else
 			{
-				popup.close();
+				setTimeout(function() {
+					popup.close();
+				});
 			}
 
 			BX.removeClass(this.getNode(), this.classFocus);
@@ -837,8 +842,11 @@
 
 			if (!popup.isShown())
 			{
-				this.adjustPopupPosition();
-				popup.show();
+				setTimeout(function() {
+					this.adjustPopupPosition();
+					popup.show();
+				}.bind(this));
+
 
 				if (!BX.hasClass(document.documentElement, 'bx-ie'))
 				{
@@ -970,7 +978,7 @@
 					}
 				);
 
-				BX.style(this.popup.popupContainer, 'min-width', nodeRect.width + 'px');
+				BX.style(this.popup.popupContainer, 'width', nodeRect.width + 'px');
 				BX.addClass(this.popup.popupContainer, this.classPopup);
 
 				popupItems = this.createPopupItems(items);
@@ -1036,6 +1044,15 @@
 		var control, square, squareContainer, valueDelete, search;
 		var squares = [];
 
+		var attrs = BX.type.isPlainObject(data.attrs) ? data.attrs : {};
+
+		attrs = BX.util.objectMerge({}, attrs, {
+			'data-name': data.name,
+			'data-params': JSON.stringify(data.params),
+			'data-items': JSON.stringify(data.items),
+			'data-value': JSON.stringify(data.value)
+		});
+
 		if ('value' in data && BX.type.isArray(data.value))
 		{
 			squares = data.value.map(function(current) {
@@ -1050,12 +1067,7 @@
 		control = {
 			block: 'main-ui-multi-select',
 			mix: ['main-ui-control'],
-			attrs: {
-				'data-name': data.name,
-				'data-params': JSON.stringify(data.params),
-				'data-items': JSON.stringify(data.items),
-				'data-value': JSON.stringify(data.value)
-			},
+			attrs: attrs,
 			content: []
 		};
 
@@ -1107,16 +1119,19 @@
 	BX.Main.ui.block['main-ui-select'] = function(data)
 	{
 		var control, name, search, valueDelete;
+		var attrs = BX.type.isPlainObject(data.attrs) ? data.attrs : {};
+
+		attrs = BX.util.objectMerge({}, attrs, {
+			'data-name': data.name,
+			'data-params': JSON.stringify(data.params),
+			'data-items': JSON.stringify(data.items),
+			'data-value': JSON.stringify(data.value)
+		});
 
 		control = {
 			block: 'main-ui-select',
 			mix: ['main-ui-control'],
-			attrs: {
-				'data-name': data.name,
-				'data-params': JSON.stringify(data.params),
-				'data-items': JSON.stringify(data.items),
-				'data-value': JSON.stringify(data.value)
-			},
+			attrs: attrs,
 			content: []
 		};
 

@@ -39,11 +39,6 @@ else
 	$userId = intval($USER->GetID());
 	if ($userId <= 0)
 	{
-		// TODO need change AUTHORIZE ERROR callbacks
-		//header("HTTP/1.0 401 Not Authorized");
-		//header("Content-Type: application/x-javascript");
-		//header("BX-Authorize: ".bitrix_sessid());
-
 		echo CUtil::PhpToJsObject(Array(
 			'ERROR' => 'AUTHORIZE_ERROR',
 			'BITRIX_SESSID' => bitrix_sessid()
@@ -91,7 +86,7 @@ if (check_bitrix_sessid())
 					'server_time' => $serverTime,
 					'server_time_unix' => $serverTimeUnix,
 					'server_name' => COption::GetOptionString('main', 'server_name', $_SERVER['SERVER_NAME']),
-					'revision' => PULL_REVISION,
+					'revision_web' => PULL_REVISION_WEB,
 					'revision_mobile' => PULL_REVISION_MOBILE,
 				),
 			);

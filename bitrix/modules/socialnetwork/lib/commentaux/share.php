@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Socialnetwork\CommentAux;
 
+use Bitrix\Socialnetwork\ComponentHelper;
 use Bitrix\Socialnetwork\Livefeed;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
@@ -19,20 +20,46 @@ final class Share extends Base
 
 		if (!empty($fields['SHARE_DEST']))
 		{
-			$destinationList = explode(',', $fields['SHARE_DEST']);
-			if (!empty($destinationList))
+			$params['mention'] = $shareDestValue = false;
+			$valuesList = explode("|", $fields["SHARE_DEST"]);
+			foreach($valuesList as $value)
 			{
-				foreach($destinationList as $key => $value)
+				if ($value != 'mention')
 				{
-					$destinationList[$key] = trim($value);
+					$shareDestValue = $value;
 				}
-				$params['destinationList'] = $destinationList;
+				else
+				{
+					$params['mention'] = true;
+				}
+			}
+
+			if ($shareDestValue)
+			{
+				$destinationList = explode(',', $shareDestValue);
+				if (!empty($destinationList))
+				{
+					foreach($destinationList as $key => $value)
+					{
+						$destinationList[$key] = trim($value);
+					}
+					$params['destinationList'] = $destinationList;
+				}
 			}
 		}
 
 		if (!empty($fields['HIDDEN_DEST']))
 		{
 			$params['hiddenDestinationList'] = $fields['HIDDEN_DEST'];
+		}
+
+		if (
+			!empty($fields['PATH_ENTITY_TYPE'])
+			&& !empty($fields['PATH_ENTITY_ID'])
+		)
+		{
+			$params['pathEntityType'] = $fields['PATH_ENTITY_TYPE'];
+			$params['pathEntityId'] = intval($fields['PATH_ENTITY_ID']);
 		}
 
 		return $params;
@@ -47,11 +74,11 @@ final class Share extends Base
 		static $groupPath = null;
 		static $departmentPath = null;
 		static $parser = null;
+		static $availableUsersList = null;
 
 		$result = '';
 		$params = $this->params;
 		$options = $this->options;
-
 		$newRightsNameList = array();
 
 		if (
@@ -59,18 +86,39 @@ final class Share extends Base
 			&& is_array($params['destinationList'])
 		)
 		{
+			$currentUserExtranet = (
+				(!isset($options['bPublicPage']) || !$options['bPublicPage'])
+				&& ComponentHelper::isCurrentUserExtranet()
+			);
+			if (
+				$availableUsersList === null
+				&& Loader::includeModule('extranet')
+			)
+			{
+				$availableUsersList = ($currentUserExtranet ? \CExtranet::getMyGroupsUsers(SITE_ID) : array());
+			}
+
 			foreach($params['destinationList'] as $destinationCode)
 			{
+				$hiddenDestination = (
+					isset($params['hiddenDestinationList'])
+					&& is_array($params['hiddenDestinationList'])
+					&& in_array($destinationCode, $params['hiddenDestinationList'])
+				);
+
 				if(
-					!isset($params['hiddenDestinationList'])
-					|| !is_array($params['hiddenDestinationList'])
-					|| !in_array($destinationCode, $params['hiddenDestinationList'])
+					!$hiddenDestination
+					|| (
+						isset($params['mention'])
+						&& $params['mention']
+					)
 				)
 				{
 					if (preg_match('/^(SG|U||UA|DR)(\d*)$/', $destinationCode, $matches))
 					{
 						$entityType = $matches[1];
 						$entityId = (isset($matches[2]) ? $matches[2] : false);
+						$hiddenEntity = $renderParts = false;
 
 						switch($entityType)
 						{
@@ -79,7 +127,22 @@ final class Share extends Base
 								break;
 							case 'U':
 							case 'UA':
-								$renderParts = new Livefeed\RenderParts\User($options);
+								if (
+									$currentUserExtranet
+									&& $entityType == 'U'
+									&& !in_array($entityId, $availableUsersList)
+									&& (
+										!isset($params['mention'])
+										|| !$params['mention']
+									)
+								)
+								{
+									$hiddenEntity = true;
+								}
+								else
+								{
+									$renderParts = new Livefeed\RenderParts\User(array_merge($options, array('skipLink' => $hiddenDestination)));
+								}
 								break;
 							case 'DR':
 								$renderParts = new Livefeed\RenderParts\Department($options);
@@ -110,6 +173,10 @@ final class Share extends Base
 									: htmlspecialcharsback($entityDataFormatted['name'])
 							);
 						}
+						elseif ($hiddenEntity)
+						{
+							$newRightsNameList[] = Loc::getMessage("SONET_COMMENTAUX_SHARE_HIDDEN");
+						}
 					}
 				}
 				else
@@ -129,6 +196,21 @@ final class Share extends Base
 					$parser = new \CTextParser();
 					$parser->allow = array("HTML" => "N", "ANCHOR" => "Y", "USER" => "Y");
 				}
+
+				if (
+					!empty($params['pathEntityType'])
+					&& !empty($params['pathEntityId'])
+				)
+				{
+					$parser->pathToUserEntityType = $params['pathEntityType'];
+					$parser->pathToUserEntityId = intval($params['pathEntityId']);
+				}
+				else
+				{
+					$parser->pathToUserEntityType = false;
+					$parser->pathToUserEntityId = false;
+				}
+
 				$result = $parser->convertText($result);
 			}
 		}
@@ -171,7 +253,9 @@ final class Share extends Base
 				{
 					$ratingVoteParams['ENTITY_LINK'] = $this->getRatingCommentLink(array(
 						'commentId' => $fields['ID'],
-						'commentAuthorId' => $ratingVoteParams['OWNER_ID']
+						'commentAuthorId' => $ratingVoteParams['OWNER_ID'],
+						'ratingEntityTypeId' => $ratingVoteParams['ENTITY_TYPE_ID'],
+						'ratingEntityId' => $ratingVoteParams['ENTITY_ID']
 					));
 
 					$ratingVoteParams["ENTITY_PARAM"] = 'COMMENT';
@@ -199,21 +283,41 @@ final class Share extends Base
 	{
 		$result = false;
 
-		if (
-			!empty($fields["SHARE_DEST"])
-			&& !empty($params["POST_DATA"])
-			&& !empty($params["POST_DATA"]["SPERM_HIDDEN"])
-		)
+		if (!empty($fields["SHARE_DEST"]))
 		{
-			$dest = explode(",", $fields["SHARE_DEST"]);
-			if(!empty($dest))
+			if (ComponentHelper::isCurrentUserExtranet())
 			{
-				foreach($dest as $destId)
+				$result = true;
+			}
+			elseif (
+				!empty($params["POST_DATA"])
+				&& !empty($params["POST_DATA"]["SPERM_HIDDEN"])
+			)
+			{
+				$shareDestValue = false;
+				$valuesList = explode("|", $fields["SHARE_DEST"]);
+				foreach($valuesList as $value)
 				{
-					if(in_array($destId, $params["POST_DATA"]["SPERM_HIDDEN"]))
+					if ($value != 'mention')
 					{
-						$result = true;
+						$shareDestValue = $value;
 						break;
+					}
+				}
+
+				if ($shareDestValue)
+				{
+					$dest = explode(",", $shareDestValue);
+					if(!empty($dest))
+					{
+						foreach($dest as $destId)
+						{
+							if(in_array($destId, $params["POST_DATA"]["SPERM_HIDDEN"]))
+							{
+								$result = true;
+								break;
+							}
+						}
 					}
 				}
 			}

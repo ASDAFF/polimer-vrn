@@ -1,8 +1,11 @@
 <?
 $MESS["AUTH_AUTH"] = "Авторизація";
-$MESS["AUTH_SEND"] = "Вислати";
+$MESS["AUTH_FORGOT_PASSWORD_2"] = "Виберіть, яку інформацію використовувати для зміни пароля:";
 $MESS["AUTH_GET_CHECK_STRING"] = "Вислати контрольний рядок";
-$MESS["AUTH_FORGOT_PASSWORD_1"] = "Якщо ви забули пароль, введіть логін або e-mail. Контрольний рядок для зміни пароля, а також ваші реєстраційні дані, будуть вислані вам по e-mail.";
 $MESS["AUTH_LOGIN_EMAIL"] = "Логін або E-mail";
+$MESS["AUTH_SEND"] = "Вислати";
+$MESS["forgot_pass_email_note"] = "Контрольний рядок для зміни пароля, а також ваші реєстраційні дані, будуть вислані вам по email.";
+$MESS["forgot_pass_phone_number"] = "Номер телефону";
+$MESS["forgot_pass_phone_number_note"] = "На ваш номер телефону буде надіслано СМС з кодом для зміни пароля.";
 $MESS["system_auth_captcha"] = "Введіть символи з картинки";
 ?>

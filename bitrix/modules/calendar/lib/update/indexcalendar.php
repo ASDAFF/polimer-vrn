@@ -81,7 +81,6 @@ final class IndexCalendar extends Stepper
 					'steps' => $newStatus['steps']
 				);
 
-
 				return self::CONTINUE_EXECUTION;
 			}
 
@@ -99,7 +98,7 @@ final class IndexCalendar extends Stepper
 				'fetchAttendees' => true,
 				'parseRecursion' => false,
 				'checkPermissions' => false,
-				//'getUserfields' => false,
+				'parseDescription' => false,
 				'fetchSection' => true,
 				'limit' => self::PORTION
 			)

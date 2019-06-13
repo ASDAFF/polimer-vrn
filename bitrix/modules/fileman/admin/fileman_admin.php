@@ -31,8 +31,8 @@ $io = CBXVirtualIo::GetInstance();
 
 $path = $APPLICATION->UnJSEscape(trim($_REQUEST['path']));
 $site = $_REQUEST['site'];
-
 $site = CFileMan::__CheckSite($site);
+$show_perms_for = isset($_REQUEST['show_perms_for']) ? intval($_REQUEST['show_perms_for']) : 0;
 
 if($_SERVER["REQUEST_METHOD"]=="POST" && strlen($_GET["fu_action"]) > 0 && check_bitrix_sessid())
 {
@@ -626,7 +626,7 @@ while($Elem = $db_DirContent->NavNext(true, "f_"))
 	{
 		//$row->AddField("NAME", $showField, $editField);
 		$row->AddViewField("NAME",$showField);
-		$row->AddInputField("NAME", Array('size'=>'40', name => 'FIELDS['.$f_NAME.'][NAME]', 'value' => htmlspecialcharsbx($val)));
+		$row->AddInputField("NAME", Array('size'=>'40', 'name' => 'FIELDS['.$f_NAME.'][NAME]', 'value' => htmlspecialcharsbx($val)));
 	}
 
 

@@ -64,6 +64,7 @@ class CBPCalendar2Activity
 			}
 			CCalendar::SaveEvent(
 				array(
+					'userId' => CBPHelper::ExtractUsers($this->CalendarUser, $documentId, true),
 					'arFields' => $arFields,
 					'autoDetectSection' => true,
 					'autoCreateSection' => true
@@ -81,8 +82,6 @@ class CBPCalendar2Activity
 				if (!$arFields['SKIP_TIME'] && !$this->CalendarTimezone)
 				{
 					$tzName = CCalendar::GetUserTimezoneName($calendarUser);
-					if(!$tzName)
-						$tzName = CCalendar::GetGoodTimezoneForOffset(CCalendar::GetCurrentOffsetUTC($calendarUser));
 					$arFields["TZ_FROM"] = $arFields["TZ_TO"] = $tzName;
 				}
 
@@ -166,10 +165,6 @@ class CBPCalendar2Activity
 		{
 			$userId = $USER->GetId();
 			$tzName = CCalendar::GetUserTimezoneName($userId);
-			if (!$tzName)
-			{
-				$tzName = CCalendar::GetGoodTimezoneForOffset(CCalendar::GetCurrentOffsetUTC($userId));
-			}
 			$arCurrentValues["calendar_timezone"] = $tzName;
 		}
 
@@ -224,4 +219,3 @@ class CBPCalendar2Activity
 		return true;
 	}
 }
-?>

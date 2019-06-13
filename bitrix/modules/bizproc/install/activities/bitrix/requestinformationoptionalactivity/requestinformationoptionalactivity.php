@@ -27,6 +27,7 @@ class CBPRequestInformationOptionalActivity
 			"OverdueDate" => null,
 			"RequestedInformation" => null,
 			"ResponcedInformation" => null,
+			"TaskId" => 0,
 			"Comments" => "",
 			"TaskButtonMessage" => "",
 			'TaskButtonCancelMessage' => '',
@@ -45,6 +46,7 @@ class CBPRequestInformationOptionalActivity
 		);
 
 		$this->SetPropertiesTypes(array(
+			'TaskId' => ['Type' => 'int'],
 			'Comments' => array(
 				'Type' => 'string'
 			),
@@ -61,6 +63,7 @@ class CBPRequestInformationOptionalActivity
 	{
 		parent::ReInitialize();
 
+		$this->TaskId = 0;
 		$this->Comments = '';
 		$this->InfoUser = null;
 		$this->IsTimeout = 0;
@@ -128,7 +131,18 @@ class CBPRequestInformationOptionalActivity
 		if ($requestedInformation && is_array($requestedInformation) && count($requestedInformation) > 0)
 		{
 			foreach ($requestedInformation as $v)
+			{
+				if (CBPHelper::isEmptyValue($v['Default']))
+				{
+					$varValue = $this->GetVariable($v['Name']);
+					if (!CBPDocument::IsExpression($varValue))
+					{
+						$v['Default'] = $varValue;
+					}
+				}
+
 				$arParameters["REQUEST"][] = $v;
+			}
 		}
 
 		$overdueDate = $this->OverdueDate;
@@ -154,6 +168,7 @@ class CBPRequestInformationOptionalActivity
 				'DOCUMENT_NAME' => $documentService->GetDocumentName($documentId)
 			)
 		);
+		$this->TaskId = $this->taskId;
 		$this->taskUsers = $arUsers;
 
 		if (!$this->IsPropertyExists("SetStatusMessage") || $this->SetStatusMessage == "Y")

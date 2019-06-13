@@ -40,11 +40,8 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["submit"] <> '' && (!isset($_P
 		}
 		if(strlen($_POST["user_email"]) > 1 && !check_email($_POST["user_email"]))
 			$arResult["ERROR_MESSAGE"][] = GetMessage("MF_EMAIL_NOT_VALID");
-
-
 		if($arParams["USE_CAPTCHA"] == "Y")
 		{
-			include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/captcha.php");
 			$captcha_code = $_POST["captcha_sid"];
 			$captcha_word = $_POST["captcha_word"];
 			$cpt = new CCaptcha();
@@ -57,9 +54,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST" && $_POST["submit"] <> '' && (!isset($_P
 			else
 				$arResult["ERROR_MESSAGE"][] = GetMessage("MF_CAPTHCA_EMPTY");
 
-		}
-
-
+		}			
 		if(empty($arResult["ERROR_MESSAGE"]))
 		{
 			$arFields = Array(

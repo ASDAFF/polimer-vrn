@@ -334,31 +334,84 @@ BX.Sale.Admin.OrderShipment.prototype.updateShipmentStatus = function(field, sta
 		'shipmentId' : BX('SHIPMENT_ID_'+this.index).value,
 		'field' : field,
 		'status' : status,
-		'callback' : BX.proxy(function (result)
+		'callback' : BX.proxy(function(result){
+			this.callbackUpdateShipmentStatus(result, field, status, params)
+		}, this)
+	};
+	BX.Sale.Admin.OrderAjaxer.sendRequest(request);
+};
+
+
+BX.Sale.Admin.OrderShipment.prototype.callbackUpdateShipmentStatus = function(result, field, status, params)
+{
+	if (result.ERROR && result.ERROR.length > 0)
+	{
+		BX.Sale.Admin.OrderEditPage.showDialog(result.ERROR);
+	}
+	else if (result.NEED_CONFIRM && result.NEED_CONFIRM === true)
+	{
+		var confirmTitle = false;
+		var confirmMessage = false;
+
+		if (result.WARNING && result.WARNING.length > 0)
 		{
-			if (result.ERROR && result.ERROR.length > 0)
-			{
-				BX.Sale.Admin.OrderEditPage.showDialog(result.ERROR);
+			confirmMessage = result.WARNING;
+		}
+
+		if (result.CONFIRM_TITLE && result.CONFIRM_TITLE.length > 0)
+		{
+			confirmTitle = result.CONFIRM_TITLE ;
+		}
+
+		if (result.CONFIRM_MESSAGE && result.CONFIRM_MESSAGE.length > 0)
+		{
+			confirmMessage = confirmMessage + "<br/>" + result.CONFIRM_MESSAGE;
+		}
+
+
+		BX.Sale.Admin.OrderEditPage.showConfirmDialog(
+			confirmMessage,
+			confirmTitle,
+			BX.proxy(function(){
+				this.sendStrictUpdateShipmentStatus(field, status, params)
+			}, this),
+			function () {
+				return;
 			}
-			else
-			{
-				this[params.callback](params.args);
+		);
+	}
+	else
+	{
+		this[params.callback](params.args);
 
-				if(result.RESULT)
-					BX.Sale.Admin.OrderEditPage.callFieldsUpdaters(result.RESULT);
+		if(result.RESULT)
+			BX.Sale.Admin.OrderEditPage.callFieldsUpdaters(result.RESULT);
 
-				if (result.WARNING && result.WARNING.length > 0)
-				{
-					BX.Sale.Admin.OrderEditPage.showDialog(result.WARNING);
-				}
+		if (result.WARNING && result.WARNING.length > 0)
+		{
+			BX.Sale.Admin.OrderEditPage.showDialog(result.WARNING);
+		}
 
-				if(typeof result.MARKERS != 'undefined')
-				{
-					var node = BX('sale-adm-order-problem-block');
-					if(node)
-						node.innerHTML = result.MARKERS;
-				}
-			}
+		if(typeof result.MARKERS != 'undefined')
+		{
+			var node = BX('sale-adm-order-problem-block');
+			if(node)
+				node.innerHTML = result.MARKERS;
+		}
+	}
+};
+
+BX.Sale.Admin.OrderShipment.prototype.sendStrictUpdateShipmentStatus = function(field, status, params)
+{
+	var request = {
+		'action' : 'updateShipmentStatus',
+		'orderId' : BX('ID').value,
+		'shipmentId' : BX('SHIPMENT_ID_'+this.index).value,
+		'field' : field,
+		'status' : status,
+		'strict': true,
+		'callback' : BX.proxy(function(result){
+			this.callbackUpdateShipmentStatus(result, field, status, params)
 		}, this)
 	};
 	BX.Sale.Admin.OrderAjaxer.sendRequest(request);
@@ -626,10 +679,21 @@ BX.Sale.Admin.OrderShipment.prototype.setDeliveryBasePrice = function(basePrice)
 
 BX.Sale.Admin.OrderShipment.prototype.setDeliveryPrice = function(price)
 {
-	if(!BX('PRICE_DELIVERY_'+this.index))
-		return;
+	var priceCell = BX('PRICE_DELIVERY_'+this.index);
 
-	BX('PRICE_DELIVERY_'+this.index).value = price;
+	if(!priceCell)
+	{
+		return;
+	}
+
+	if(priceCell.tagName === 'INPUT')
+	{
+		priceCell.value = price;
+	}
+	else if(priceCell.tagName === 'TD')
+	{
+		priceCell.innerHTML = BX.Sale.Admin.OrderEditPage.currencyFormat(price);
+	}
 };
 
 BX.Sale.Admin.OrderShipment.prototype.setCalculatedPriceDelivery = function(deliveryPrice)
@@ -1089,16 +1153,15 @@ BX.Sale.Admin.OrderShipment.prototype.sendQueryCheckStatus = function(checkId)
 			{
 				BX.Sale.Admin.OrderEditPage.showDialog(result.ERROR);
 			}
-			else
+			
+			var shipmentId = result.SHIPMENT_ID;
+			BX('SHIPMENT_CHECK_LIST_ID_' + shipmentId).innerHTML = result.CHECK_LIST_HTML;
+			if (BX('SHIPMENT_CHECK_LIST_ID_SHORT_VIEW' + shipmentId) !== undefined && BX('SHIPMENT_CHECK_LIST_ID_SHORT_VIEW' + shipmentId) !== null)
 			{
-				CloseWaitWindow();
-				var shipmentId = result.SHIPMENT_ID;
-				BX('SHIPMENT_CHECK_LIST_ID_' + shipmentId).innerHTML = result.CHECK_LIST_HTML;
-				if (BX('SHIPMENT_CHECK_LIST_ID_SHORT_VIEW' + shipmentId) !== undefined && BX('SHIPMENT_CHECK_LIST_ID_SHORT_VIEW' + shipmentId) !== null)
-				{
-					BX('SHIPMENT_CHECK_LIST_ID_SHORT_VIEW' + shipmentId).innerHTML = result.CHECK_LIST_HTML;
-				}
+				BX('SHIPMENT_CHECK_LIST_ID_SHORT_VIEW' + shipmentId).innerHTML = result.CHECK_LIST_HTML;
 			}
+
+			CloseWaitWindow();
 		}, this)
 	};
 

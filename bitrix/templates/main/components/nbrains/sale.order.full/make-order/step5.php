@@ -82,7 +82,7 @@
 						$end_price = $item['PRICE']-($item['PRICE']/100*$item['DISCOUNT_PRICE']);
 					
 						?>
-						<td style="white-space: nowrap;"><?=sprintf('%01.2f',$end_price*$item['QUANTITY']);?> ₽</td>
+						<td style="white-space: nowrap;"><?=round($end_price*$item['QUANTITY'], 2);?> ₽</td>
 						<td></td>
 					</tr>
 				<?endforeach;?>
@@ -90,7 +90,7 @@
 
 			<div class="line">
 				<div class="name">Итого:</div>
-				<div class="val"><span><?=count($arResult["BASKET_ITEMS"])?> <?=$prod?> на сумму <?=$arResult["ORDER_TOTAL_PRICE_FORMATED"]?> ₽</span></div>
+				<div class="val"><span><?=count($arResult["BASKET_ITEMS"])?> <?=$prod?> на сумму <?=$arResult["ORDER_TOTAL_PRICE_FORMATED"]?></span></div>
 			</div>
 			<?
 			//echo "<pre>"; print_r($arResult); echo "</pre>";$arBasketItems["DISCOUNT_PRICE"] = CCatalogProduct::GetOptimalPrice($arBasketItems["PRODUCT_ID"], 1, $USER->GetUserGroupArray(), 'N')['RESULT_PRICE']['PERCENT'];

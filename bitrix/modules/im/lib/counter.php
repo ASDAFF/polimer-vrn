@@ -39,9 +39,10 @@ class Counter
 		}
 
 		$query = "
-			SELECT R1.CHAT_ID, R1.MESSAGE_TYPE, R2.USER_ID PRIVATE_USER_ID, R1.COUNTER
+			SELECT R1.CHAT_ID, R1.MESSAGE_TYPE, IF(R2.USER_ID > 0, R2.USER_ID, 0) PRIVATE_USER_ID, R1.COUNTER, IF(RC.USER_ID > 0, 'Y', 'N') IN_RECENT
 			FROM b_im_relation R1 
 			LEFT JOIN b_im_relation R2 ON R1.MESSAGE_TYPE = '".IM_MESSAGE_PRIVATE."' AND R2.CHAT_ID = R1.CHAT_ID AND R2.USER_ID <> R1.USER_ID
+			LEFT JOIN b_im_recent RC ON RC.USER_ID = R1.USER_ID AND RC.ITEM_TYPE = R1.MESSAGE_TYPE AND RC.ITEM_ID = IF(R1.MESSAGE_TYPE = '".IM_MESSAGE_PRIVATE."', R2.USER_ID, R1.CHAT_ID)
 			WHERE R1.USER_ID = ".intval($userId)." AND R1.STATUS <> ".IM_STATUS_READ."
 		";
 		$counters = \Bitrix\Main\Application::getInstance()->getConnection()->query($query)->fetchAll();
@@ -53,23 +54,30 @@ class Counter
 				$result['TYPE']['ALL'] += (int)$entity['COUNTER'];
 				$result['TYPE']['NOTIFY'] += (int)$entity['COUNTER'];
 			}
-			else if ($entity['MESSAGE_TYPE'] == IM_MESSAGE_PRIVATE)
-			{
-				$result['TYPE']['ALL'] += (int)$entity['COUNTER'];
-				$result['TYPE']['DIALOG'] += (int)$entity['COUNTER'];
-				$result['DIALOG'][$entity['PRIVATE_USER_ID']] = (int)$entity['COUNTER'];
-			}
-			else if ($entity['MESSAGE_TYPE'] == IM_MESSAGE_OPEN_LINE)
-			{
-				$result['TYPE']['ALL'] += (int)$entity['COUNTER'];
-				$result['TYPE']['LINES'] += (int)$entity['COUNTER'];
-				$result['LINES'][$entity['CHAT_ID']] = (int)$entity['COUNTER'];
-			}
 			else
 			{
-				$result['TYPE']['ALL'] += (int)$entity['COUNTER'];
-				$result['TYPE']['CHAT'] += (int)$entity['COUNTER'];
-				$result['CHAT'][$entity['CHAT_ID']] = (int)$entity['COUNTER'];
+				if ($entity['IN_RECENT'] == 'N')
+				{
+					continue;
+				}
+				if ($entity['MESSAGE_TYPE'] == IM_MESSAGE_PRIVATE)
+				{
+					$result['TYPE']['ALL'] += (int)$entity['COUNTER'];
+					$result['TYPE']['DIALOG'] += (int)$entity['COUNTER'];
+					$result['DIALOG'][$entity['PRIVATE_USER_ID']] = (int)$entity['COUNTER'];
+				}
+				else if ($entity['MESSAGE_TYPE'] == IM_MESSAGE_OPEN_LINE)
+				{
+					$result['TYPE']['ALL'] += (int)$entity['COUNTER'];
+					$result['TYPE']['LINES'] += (int)$entity['COUNTER'];
+					$result['LINES'][$entity['CHAT_ID']] = (int)$entity['COUNTER'];
+				}
+				else
+				{
+					$result['TYPE']['ALL'] += (int)$entity['COUNTER'];
+					$result['TYPE']['CHAT'] += (int)$entity['COUNTER'];
+					$result['CHAT'][$entity['CHAT_ID']] = (int)$entity['COUNTER'];
+				}
 			}
 		}
 
@@ -231,7 +239,7 @@ class Counter
 	{
 		return new EventResult(EventResult::SUCCESS, Array(
 			self::TYPE_MESSENGER => Array(
-				'NAME' => Loc::getMessage('IM_COUNTER_TYPE_MESSENGER'),
+				'NAME' => Loc::getMessage('IM_COUNTER_TYPE_MESSENGER_2'),
 				'DEFAULT' => true
 			),
 		), self::MODULE_ID);

@@ -10,7 +10,7 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 
-CJSCore::Init(array('lists'));
+CJSCore::Init(array("lists"));
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/main/utils.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/lists/css/autorun_progress_bar.css');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/lists/js/autorun_progress_bar.js');
@@ -147,7 +147,7 @@ $pagetitleAlignRightContainer = "lists-align-right-container";
 if($isBitrix24Template)
 {
 	$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-	$APPLICATION->SetPageProperty("BodyClass", "pagetitle-toolbar-field-view");
+	$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."pagetitle-toolbar-field-view");
 	$this->SetViewTarget("inside_pagetitle");
 	$pagetitleFlexibleSpace = "";
 	$pagetitleAlignRightContainer = "";
@@ -249,6 +249,7 @@ $APPLICATION->IncludeComponent(
 		"GRID_ID" => $arResult["GRID_ID"],
 		"COLUMNS" => $arResult["ELEMENTS_HEADERS"],
 		"ROWS" => $arResult["ELEMENTS_ROWS"],
+		"MESSAGES" => $arResult["GRID_MESSAGES"],
 		"NAV_STRING" => $arResult["NAV_STRING"],
 		"TOTAL_ROWS_COUNT" => $arResult["NAV_OBJECT"]->NavRecordCount,
 		"PAGE_SIZES" => $arResult["GRID_PAGE_SIZES"],
@@ -309,17 +310,6 @@ $APPLICATION->IncludeComponent(
 			CT_BLL_SHOW_SECTION_GRID: '<?=GetMessageJS("CT_BLL_SHOW_SECTION_GRID")?>',
 			CT_BLL_HIDE_SECTION_GRID: '<?=GetMessageJS("CT_BLL_HIDE_SECTION_GRID")?>'
 		});
-
-		if(BX["viewElementBind"])
-		{
-			BX.viewElementBind('<?=$arResult["GRID_ID"]?>', {showTitle: true},
-				function(node)
-				{
-					return BX.type.isElementNode(node) && (node.getAttribute('data-bx-viewer')
-						|| node.getAttribute('data-bx-image'));
-				}
-			);
-		}
 	});
 </script>
 

@@ -101,5 +101,4 @@ CJSCore::init(array('lists'));
 			?>
 		</div>
 	</div>
-	
 <? endforeach; ?>

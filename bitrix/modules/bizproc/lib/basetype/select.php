@@ -128,28 +128,46 @@ class Select extends Base
 	protected static function renderControl(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
 	{
 		$selectorValue = null;
-		$typeValue = array();
-		if (!is_array($value) || is_array($value) && \CBPHelper::isAssociativeArray($value))
-			$value = array($value);
+		$typeValue = [];
+		if (!is_array($value))
+		{
+			$value = (array) $value;
+		}
+
+		if (\CBPHelper::isAssociativeArray($value))
+		{
+			$value = array_keys($value);
+		}
 
 		foreach ($value as $v)
 		{
-			if (\CBPActivity::isExpression($v))
+			if ($allowSelection && \CBPActivity::isExpression($v))
+			{
 				$selectorValue = $v;
+			}
 			else
+			{
 				$typeValue[] = (string)$v;
+			}
 		}
+
 		// need to show at least one control
 		if (empty($typeValue))
+		{
 			$typeValue[] = null;
+		}
+
+		$className = static::generateControlClassName($fieldType, $field);
 
 		$renderResult = '<select id="'.htmlspecialcharsbx(static::generateControlId($field))
-			.'" class="'.htmlspecialcharsbx(static::generateControlClassName($fieldType, $field))
+			.'" class="'.htmlspecialcharsbx($className)
 			.'" name="'.htmlspecialcharsbx(static::generateControlName($field))
 			.($fieldType->isMultiple() ? '[]' : '').'"'.($fieldType->isMultiple() ? ' size="5" multiple' : '').'>';
 
-		if (!$fieldType->isRequired() || $allowSelection)
+		if (!$fieldType->isMultiple()) //TODO: watch this
+		{
 			$renderResult .= '<option value="">['.Loc::getMessage('BPCGHLP_NOT_SET').']</option>';
+		}
 
 		$settings = static::getFieldSettings($fieldType);
 		$groups = $settings['Groups'] ? $settings['Groups'] : null;
@@ -198,7 +216,7 @@ class Select extends Base
 			$options = static::getFieldOptions($fieldType);
 			foreach ($options as $k => $v)
 			{
-				$renderResult .= '<option value="'.htmlspecialcharsbx($k).'"'.(in_array((string)$k, $typeValue) ? ' selected' : '').'>'.htmlspecialcharsbx($v).'</option>';
+				$renderResult .= '<option value="'.htmlspecialcharsbx($k).'"'.(in_array((string)$k, $typeValue) ? ' selected' : '').'>'.htmlspecialcharsbx(htmlspecialcharsback($v)).'</option>';
 			}
 		}
 
@@ -231,6 +249,11 @@ class Select extends Base
 	 */
 	public static function renderControlSingle(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
 	{
+		if ($renderMode & FieldType::RENDER_MODE_PUBLIC)
+		{
+			$allowSelection = false;
+		}
+
 		return static::renderControl($fieldType, $field, $value, $allowSelection, $renderMode);
 	}
 
@@ -244,6 +267,11 @@ class Select extends Base
 	 */
 	public static function renderControlMultiple(FieldType $fieldType, array $field, $value, $allowSelection, $renderMode)
 	{
+		if ($renderMode & FieldType::RENDER_MODE_PUBLIC)
+		{
+			$allowSelection = false;
+		}
+
 		return static::renderControl($fieldType, $field, $value, $allowSelection, $renderMode);
 	}
 
@@ -370,8 +398,10 @@ class Select extends Base
 	 */
 	public static function formatValueMultiple(FieldType $fieldType, $value, $format = 'printable')
 	{
-		if (is_array($value) && \CBPHelper::isAssociativeArray($value))
+		if (\CBPHelper::isAssociativeArray($value))
+		{
 			$value = array_keys($value);
+		}
 		return parent::formatValueMultiple($fieldType, $value, $format);
 	}
 
@@ -383,7 +413,7 @@ class Select extends Base
 	 */
 	public static function formatValueSingle(FieldType $fieldType, $value, $format = 'printable')
 	{
-		if (is_array($value) && \CBPHelper::isAssociativeArray($value))
+		if (\CBPHelper::isAssociativeArray($value))
 		{
 			$keys = array_keys($value);
 			$value = isset($keys[0]) ? $keys[0] : null;
@@ -399,8 +429,10 @@ class Select extends Base
 	 */
 	public static function convertValueMultiple(FieldType $fieldType, $value, $toTypeClass)
 	{
-		if (is_array($value) && \CBPHelper::isAssociativeArray($value))
+		if (\CBPHelper::isAssociativeArray($value))
+		{
 			$value = array_keys($value);
+		}
 		return parent::convertValueMultiple($fieldType, $value, $toTypeClass);
 	}
 

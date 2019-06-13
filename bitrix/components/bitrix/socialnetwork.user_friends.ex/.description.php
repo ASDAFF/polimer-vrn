@@ -2,8 +2,8 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 $arComponentDescription = array(
-	"NAME" => GetMessage("SONET_GUE_TEMPLATE_NAME"),
-	"DESCRIPTION" => GetMessage("SONET_GUE_TEMPLATE_DESCRIPTION"),
+	"NAME" => GetMessage("SONET_UFE_TEMPLATE_NAME"),
+	"DESCRIPTION" => GetMessage("SONET_UFE_TEMPLATE_DESCRIPTION"),
 	"ICON" => "/images/icon.gif",
 	"SORT" => 250,
 	"PATH" => array(

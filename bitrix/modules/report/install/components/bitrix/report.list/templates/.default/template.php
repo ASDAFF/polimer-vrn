@@ -7,6 +7,8 @@ global $APPLICATION;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
+
 CJSCore::Init(array('report', 'socnetlogdest'));
 
 $GLOBALS['APPLICATION']->SetTitle(GetMessage('REPORT_LIST'));
@@ -252,6 +254,17 @@ if($arResult['NEED_DISPLAY_UPDATE_14_5_2_MESSAGE']):
 	</div>
 </div>
 
+<?php
+$editUrl = CComponentEngine::MakePathFromTemplate(
+	$arParams['PATH_TO_REPORT_CONSTRUCT'], ['report_id' => 'REPORT_ID', 'action' => 'edit']);
+$deleteUrl = CComponentEngine::MakePathFromTemplate(
+	$arParams['PATH_TO_REPORT_CONSTRUCT'], ['report_id' => 'REPORT_ID', 'action' => 'delete']);
+$copyUrl = CComponentEngine::MakePathFromTemplate(
+	$arParams['PATH_TO_REPORT_CONSTRUCT'], ['report_id' => 'REPORT_ID', 'action' => 'copy']);
+$deleteConfirmUrl = CComponentEngine::MakePathFromTemplate(
+	$arParams['PATH_TO_REPORT_CONSTRUCT'], ['report_id' => 'REPORT_ID', 'action' => 'delete_confirmed']);
+?>
+
 <script type="text/javascript">
 	BX(function () {
 
@@ -260,14 +273,10 @@ if($arResult['NEED_DISPLAY_UPDATE_14_5_2_MESSAGE']):
 			containerId:'<?=CUtil::JSEscape($containerID)?>',
 			ownerId: '<?=$ownerId?>',
 			sessionError: '<?= !empty($_SESSION['REPORT_LIST_ERROR']) ? true : false ?>',
-			editUrl:'<?=CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_REPORT_CONSTRUCT'],
-				array('report_id' => 'REPORT_ID', 'action' => 'edit'))?>',
-			deleteUrl:'<?=CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_REPORT_CONSTRUCT'],
-				array('report_id' => 'REPORT_ID', 'action' => 'delete'));?>',
-			copyUrl:'<?=CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_REPORT_CONSTRUCT'],
-				array('report_id' => 'REPORT_ID', 'action' => 'copy'));?>',
-			deleteConfirmUrl:'<?=CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_REPORT_CONSTRUCT'],
-				array('report_id' => 'REPORT_ID', 'action' => 'delete_confirmed'));?>'
+			editUrl: '<?=CUtil::JSEscape($editUrl)?>',
+			deleteUrl: '<?=CUtil::JSEscape($deleteUrl)?>',
+			copyUrl: '<?=CUtil::JSEscape($copyUrl)?>',
+			deleteConfirmUrl: '<?=CUtil::JSEscape($deleteConfirmUrl)?>'
 		});
 
 		BX.message({
@@ -312,19 +321,13 @@ define("REPORT_LIST_CREATE_BUTTON", true);?>
 
 </div>
 <? $this->SetViewTarget("pagetitle", 100);?>
-	<a class="webform-small-button webform-small-button-blue"
-		onclick="BX.Report['<?=$jsClass?>'].import()">
-		<span class="webform-small-button-text"><?=GetMessage('REPORT_IMPORT_BUTTON')?></span>
-	</a>
+	<a class="ui-btn ui-btn-primary" onclick="BX.Report['<?=$jsClass?>'].import()"><?=GetMessage('REPORT_IMPORT_BUTTON')?></a>
 
-	<a class="webform-small-button webform-small-button-blue webform-small-button-add"
+	<a class="ui-btn ui-btn-primary ui-btn-icon-add"
 		href="<?=CComponentEngine::MakePathFromTemplate(
 					$arParams["PATH_TO_REPORT_CONSTRUCT"],
 					array("report_id" => 0, 'action' => 'create'));?>
-	">
-		<span class="webform-small-button-icon"></span>
-		<span class="webform-small-button-text"><?=GetMessage('REPORT_ADD')?></span>
-	</a>
+	"><?=GetMessage('REPORT_ADD')?></a>
 <?
 
 $this->EndViewTarget();

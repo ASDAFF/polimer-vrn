@@ -117,22 +117,28 @@ if ($arResult['EVENT']['IS_MEETING'])
 	$arResult['ATTENDEES_INDEX'] = array();
 	$arResult['EVENT']['ACCEPTED_ATTENDEES'] = array();
 	$arResult['EVENT']['DECLINED_ATTENDEES'] = array();
-	foreach ($arResult['EVENT']['~ATTENDEES'] as $i => $att)
+
+	if (is_array($arResult['EVENT']['ATTENDEE_LIST']))
 	{
-		$arResult['ATTENDEES_INDEX'][$att["USER_ID"]] = array(
-			"STATUS" => $att['STATUS']
-		);
-
-		if ($att['STATUS'] != "Q")
+		$userIndex = CCalendarEvent::getUserIndex();
+		foreach ($arResult['EVENT']['ATTENDEE_LIST'] as $attendee)
 		{
-			$att['AVATAR_SRC'] = CCalendar::GetUserAvatar($att);
-			$att['URL'] = CCalendar::GetUserUrl($att["USER_ID"], $arParams["PATH_TO_USER"]);
-		}
+			if (isset($userIndex[$attendee["id"]]))
+			{
+				$arResult['ATTENDEES_INDEX'][$attendee["id"]] = [
+					"STATUS" => $attendee['status']
+				];
 
-		if ($att['STATUS'] == "Y")
-			$arResult['EVENT']['ACCEPTED_ATTENDEES'][] = $att;
-		elseif($att['STATUS'] == "N")
-			$arResult['EVENT']['DECLINED_ATTENDEES'][] = $att;
+				if ($attendee['STATUS'] == "Y")
+				{
+					$arResult['EVENT']['ACCEPTED_ATTENDEES'][] = $userIndex[$attendee["id"]];
+				}
+				elseif($attendee['STATUS'] == "N")
+				{
+					$arResult['EVENT']['DECLINED_ATTENDEES'][] = $userIndex[$attendee["id"]];
+				}
+			}
+		}
 	}
 }
 

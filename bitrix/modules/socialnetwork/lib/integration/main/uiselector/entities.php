@@ -23,7 +23,8 @@ class Entities
 		$result = array(
 			'ITEMS' => array(),
 			'ITEMS_LAST' => array(),
-			'DEST_SORT' => array()
+			'DEST_SORT' => array(),
+			'ADDITIONAL_INFO' => array()
 		);
 
 		$filterParams = array(
@@ -36,16 +37,31 @@ class Entities
 			$filterParams["CODE_TYPE"] = $options['contextCode'];
 		}
 
-		$destSortData = \CSocNetLogDestination::getDestinationSort($filterParams);
-
+		$dataAdditional = array();
+		$destSortData = \CSocNetLogDestination::getDestinationSort($filterParams, $dataAdditional);
 		$result["DEST_SORT"] = $destSortData;
-
 		$lastItems = $items = array();
 		\CSocNetLogDestination::fillLastDestination(
 			$destSortData,
 			$lastItems,
 			array(
-				"EMAILS" => (isset($options["allowAddUser"]) ? $options["allowAddUser"] : 'N')
+				"EMAILS" => (
+					(
+						isset($options["allowAddUser"])
+						&& $options["allowAddUser"] == 'Y'
+					)
+					|| (
+						isset($options["allowSearchEmailUsers"])
+						&& $options["allowSearchEmailUsers"] == 'Y'
+					)
+					|| (
+						isset($options["allowEmailInvitation"])
+						&& $options["allowEmailInvitation"] == 'Y'
+					)
+						? 'Y'
+						: 'N'
+				),
+				"DATA_ADDITIONAL" => $dataAdditional
 			)
 		);
 
@@ -57,6 +73,16 @@ class Entities
 		{
 			$lastItems['GROUPS'] = array(
 				'UA' => true
+			);
+			$items['GROUPS'] = array(
+				'UA' => array(
+					'id' => 'UA',
+					'name' => (
+						ModuleManager::isModuleInstalled('intranet')
+							? Loc::getMessage("MPF_DESTINATION_3")
+							: Loc::getMessage("MPF_DESTINATION_4")
+					)
+				)
 			);
 		}
 
@@ -149,10 +175,25 @@ class Entities
 				}
 			}
 
-			if ($options["allowEmailInvitation"] == "Y")
+			if (
+				(
+					isset($options["allowAddUser"])
+					&& $options["allowAddUser"] == 'Y'
+				)
+				|| (
+					isset($options["allowSearchEmailUsers"])
+					&& $options["allowSearchEmailUsers"] == 'Y'
+				)
+				|| (
+					isset($options["allowEmailInvitation"])
+					&& $options["allowEmailInvitation"] == 'Y'
+				)
+			)
 			{
-//				\Bitrix\Socialnetwork\ComponentHelper::fillSelectedUsersToInvite($_POST, $arParams, $arResult);
+				$items['LAST'] = $result["ITEMS_LAST"];
 				\CSocNetLogDestination::fillEmails($items);
+				$result["ITEMS_LAST"] = $items['LAST'];
+				unset($items['LAST']);
 			}
 		}
 
@@ -165,6 +206,10 @@ class Entities
 			$structure = \CSocNetLogDestination::getStucture(array("LAZY_LOAD" => true));
 			$items['DEPARTMENT'] = $structure['department'];
 			$items['DEPARTMENT_RELATION'] = $structure['department_relation'];
+			$result['ADDITIONAL_INFO']['DEPARTMENT'] = array(
+				'PREFIX' => 'DR',
+				'TYPE' => 'tree'
+			);
 		}
 
 		$result["ITEMS"] = $items;
@@ -293,6 +338,7 @@ class Entities
 					"NAME_TEMPLATE" => Handler::getNameTemplate($requestFields)
 				)
 			),
+			'leafEntityType' => 'USERS',
 			'dataOnly' => true
 		);
 	}

@@ -1,5 +1,6 @@
 <?
 $MESS["BLOG_BUTTON_SEND"] = "Senden";
+$MESS["BLOG_BUTTON_PUBLISH"] = "Veröffentlichen";
 $MESS["BLOG_BUTTON_CANCEL"] = "Abbrechen";
 $MESS["BLOG_BUTTON_DRAFT"] = "Als Entwurf";
 $MESS["BLOG_TITLE"] = "Thema";
@@ -31,4 +32,11 @@ $MESS["BLOG_POST_EDIT_T_CREATE_TASK_SUCCESS_TITLE"] = "Aufgabe wurde erstellt";
 $MESS["BLOG_POST_EDIT_T_CREATE_TASK_SUCCESS_DESCRIPTION"] = "Sie können jetzt die Aufgabe anzeigen und bearbeiten.";
 $MESS["BLOG_POST_EDIT_T_CREATE_TASK_BUTTON_TITLE"] = "Aufgabe anzeigen";
 $MESS["MPF_DRAG_ATTACHMENTS2"] = "Dateien hochladen?";
+$MESS["IMPORTANT_TILL_TITLE"] = "Ankündigung anzeigen:";
+$MESS["IMPORTANT_FOR_ALWAYS"] = "Immer";
+$MESS["IMPORTANT_FOR_ONE_DAY"] = "einen Tag";
+$MESS["IMPORTANT_FOR_TWO_DAYS"] = "zwei Tage";
+$MESS["IMPORTANT_FOR_WEEK"] = "eine Woche";
+$MESS["IMPORTANT_FOR_MONTH"] = "einen Monat";
+$MESS["IMPORTANT_FOR_CUSTOM"] = "bis zum";
 ?>

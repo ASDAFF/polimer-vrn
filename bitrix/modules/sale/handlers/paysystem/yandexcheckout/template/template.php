@@ -3,7 +3,7 @@
 	\Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/themes/.default/sale.css");
 	Loc::loadMessages(__FILE__);
 
-	$sum = roundEx($params['SUM'], 2);
+	$sum = round($params['SUM'], 2);
 ?>
 
 <div class="sale-paysystem-wrapper">

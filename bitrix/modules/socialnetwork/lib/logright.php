@@ -8,6 +8,8 @@
 namespace Bitrix\Socialnetwork;
 
 use Bitrix\Main\Entity;
+use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Application;
 
 class LogRightTable extends Entity\DataManager
 {
@@ -38,5 +40,38 @@ class LogRightTable extends Entity\DataManager
 		);
 
 		return $fieldsMap;
+	}
+
+	public static function setLogUpdate($params = array())
+	{
+		$logId = (isset($params['logId']) ? intval($params['logId']) : 0);
+		$value = (!empty($params['value']) ? $params['value'] : false);
+
+		if ($logId <= 0)
+		{
+			return false;
+		}
+
+		$connection = Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		$now = $helper->getCurrentDateTimeFunction();
+		if (
+			!$value
+			|| strtolower($value) == strtolower($now)
+		)
+		{
+			$value = new SqlExpression($now);
+		}
+
+		$updateFields = array(
+			"LOG_UPDATE" => $value,
+		);
+
+		$tableName = self::getTableName();
+		list($prefix, $values) = $helper->prepareUpdate($tableName, $updateFields);
+		$connection->queryExecute("UPDATE {$tableName} SET {$prefix} WHERE `LOG_ID` = ".$logId);
+
+		return true;
 	}
 }

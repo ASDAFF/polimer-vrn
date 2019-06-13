@@ -98,6 +98,7 @@
 				data: data
 			};
 
+		this.parent.disableCheckAllCheckboxes();
 		BX.onCustomEvent(
 			window,
 			"Grid::beforeRequest",
@@ -108,14 +109,7 @@
 
 		if (!BX.type.isNotEmptyString(url))
 		{
-			if (BX.SidePanel && BX.SidePanel.Instance && BX.SidePanel.Instance.isOpen())
-			{
-				url = BX.SidePanel.Instance.getPageUrl();
-			}
-			else
-			{
-				url = window.location.pathname + window.location.search;
-			}
+			url = this.parent.baseUrl;
 		}
 
 		url = BX.Grid.Utils.addUrlParams(url, { sessid: BX.bitrix_sessid(), internal: 'true', grid_id: this.parent.getId() });
@@ -166,6 +160,7 @@
 
 					if (BX.type.isFunction(then))
 					{
+						self.parent.enableCheckAllCheckboxes();
 						BX.delegate(then, self)(response, xhr);
 					}
 				},
@@ -175,6 +170,7 @@
 
 					if (BX.type.isFunction(error))
 					{
+						self.parent.enableCheckAllCheckboxes();
 						BX.delegate(error, self)(xhr, err);
 					}
 				}

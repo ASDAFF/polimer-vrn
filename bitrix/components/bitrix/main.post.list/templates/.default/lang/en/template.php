@@ -1,4 +1,5 @@
 <?
+$MESS["BLOG_C_VIEW2"] = "Previous comments";
 $MESS["B_B_MS_LINK"] = "Link";
 $MESS["BPC_MES_EDIT"] = "Edit";
 $MESS["BPC_MES_SHOW"] = "Show";
@@ -22,4 +23,6 @@ $MESS["MPL_ERROR_OCCURRED"] = "That's an error.";
 $MESS["MPL_CLOSE"] = "Close";
 $MESS["MPL_LINK_COPIED"] = "Link copied";
 $MESS["B_B_MS_LINK2"] = "Copy link";
+$MESS["MPL_HAVE_WRITTEN_M"] = "wrote:";
+$MESS["MPL_HAVE_WRITTEN_F"] = "wrote:";
 ?>

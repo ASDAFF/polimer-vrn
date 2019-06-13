@@ -149,7 +149,7 @@ final class SocialnetworkGroupUsersEx extends CBitrixComponent
 					"USER_IS_EXTRANET" => (isset($GLOBALS["arExtranetUserID"]) && is_array($GLOBALS["arExtranetUserID"]) && in_array($arRequests["USER_ID"], $GLOBALS["arExtranetUserID"]) ? "Y" : "N")
 				);
 
-				if ($key == "Moderators")
+				if (in_array($key, array("Moderators", "Users")))
 				{
 					$record["IS_OWNER"] = ($arRequests["ROLE"] == \Bitrix\Socialnetwork\UserToGroupTable::ROLE_OWNER);
 				}

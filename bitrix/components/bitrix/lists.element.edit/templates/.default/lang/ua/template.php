@@ -38,13 +38,13 @@ $MESS["CT_BLEE_BIZPROC_CONSTANTS_FILL"] = "Заповнити значення �
 $MESS["CT_BLEE_BIZPROC_CONSTANTS_FILL_TITLE"] = "Налаштування констант Бізнес-процесу";
 $MESS["CT_BLEE_BIZPROC_SAVE_BUTTON"] = "Зберегти";
 $MESS["CT_BLEE_BIZPROC_CANCEL_BUTTON"] = "Скасування";
-$MESS["CT_BLEE_BIZPROC_NOTIFY_TITLE"] = "Повідомлення адміністратора";
+$MESS["CT_BLEE_BIZPROC_NOTIFY_TITLE"] = "Сповіщення адміністратора";
 $MESS["CT_BLEE_BIZPROC_SELECT_STAFF_SET_RESPONSIBLE"] = "Чому я не можу зберегти зміни";
 $MESS["CT_BLEE_BIZPROC_NOTIFY_ADMIN_TEXT_ONE"] = "Константи бізнес-процесу не налаштовані";
-$MESS["CT_BLEE_BIZPROC_NOTIFY_ADMIN_TEXT_TWO"] = "Відправте повідомлення одному з користувачів, який зможе
+$MESS["CT_BLEE_BIZPROC_NOTIFY_ADMIN_TEXT_TWO"] = "Відправте сповіщення одному з користувачів, який зможе
 налаштувати константи бізнес-процесу або делегувати право керування налаштуваннями вам.";
 $MESS["CT_BLEE_BIZPROC_NOTIFY_ADMIN_MESSAGE"] = "Повідомити:";
-$MESS["CT_BLEE_BIZPROC_NOTIFY_ADMIN_MESSAGE_BUTTON"] = "Надіслати повідомлення";
+$MESS["CT_BLEE_BIZPROC_NOTIFY_ADMIN_MESSAGE_BUTTON"] = "Надіслати сповіщення";
 $MESS["CT_BLEE_BIZPROC_NOTIFY_ADMIN_BUTTON_CLOSE"] = "Закрити";
 $MESS["CT_BLEE_TOOLBAR_ACTION"] = "Дії";
 $MESS["CT_BLEE_TOOLBAR_RETURN_LIST_ELEMENT"] = "ДО СПИСКУ";

@@ -35,12 +35,38 @@ class CBPWebHookActivity
 				&& ($handlerData['scheme'] == 'http' || $handlerData['scheme'] == 'https')
 			)
 			{
-				$handler = CHTTP::urnEncode($handler);
+				$target = $handlerData['scheme'] . '://';
+				if (isset($handlerData['user']) || isset($handlerData['pass']))
+				{
+					$target .= $handlerData['user'];
+					if (isset($handlerData['pass']))
+					{
+						$target .= ':'. $handlerData['pass'];
+					}
+					$target .= '@';
+				}
+				$target .= $handlerData['host'];
+				if (isset($handlerData['port']))
+				{
+					$target .= ':'.$handlerData['port'];
+				}
+				if (isset($handlerData['path']))
+				{
+					$target .= CHTTP::urnEncode($handlerData['path']);
+				}
+				if (isset($handlerData['query']))
+				{
+					$target .= '?'.CHTTP::urnEncode($handlerData['query']);
+				}
+				if (isset($handlerData['fragment']))
+				{
+					$target .= '#'.CHTTP::urnEncode($handlerData['fragment']);
+				}
 
 				$queryItems = array(
 					Sqs::queryItem(
 						null,
-						$handler,
+						$target,
 						array(
 							'document_id' => $this->GetDocumentId(),
 						),

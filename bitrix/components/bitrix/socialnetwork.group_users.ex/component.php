@@ -13,11 +13,15 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @global CUserTypeManager $USER_FIELD_MANAGER */
 global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
+use Bitrix\Main\Localization\Loc;
+
 if (!CModule::IncludeModule("socialnetwork"))
 {
 	ShowError(GetMessage("SONET_MODULE_NOT_INSTALL"));
 	return;
 }
+
+$arResult["IS_IFRAME"] = ($_REQUEST["IFRAME"] == "Y");
 
 $arParams["GROUP_ID"] = IntVal($arParams["GROUP_ID"]);
 
@@ -52,6 +56,17 @@ if (strlen($arParams["PATH_TO_GROUP_EDIT"]) <= 0)
 {
 	$arParams["PATH_TO_GROUP_EDIT"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=group_edit&".$arParams["GROUP_VAR"]."=#group_id#");
 }
+
+$arParams["PATH_TO_GROUP_INVITE"] = trim($arParams["PATH_TO_GROUP_INVITE"]);
+if (empty($arParams["PATH_TO_GROUP_INVITE"]))
+{
+	$parent = $this->getParent();
+	if (is_object($parent) && strlen($parent->__name) > 0)
+	{
+		$arParams["PATH_TO_GROUP_INVITE"] = $parent->arResult["PATH_TO_GROUP_INVITE"];
+	}
+}
+
 $arParams["PATH_TO_CONPANY_DEPARTMENT"] = trim($arParams["PATH_TO_CONPANY_DEPARTMENT"]);
 if (strlen($arParams["PATH_TO_CONPANY_DEPARTMENT"]) <= 0)
 {
@@ -60,7 +75,9 @@ if (strlen($arParams["PATH_TO_CONPANY_DEPARTMENT"]) <= 0)
 
 $arParams["ITEMS_COUNT"] = IntVal($arParams["ITEMS_COUNT"]);
 if ($arParams["ITEMS_COUNT"] <= 0)
+{
 	$arParams["ITEMS_COUNT"] = 20;
+}
 
 $arParams["THUMBNAIL_LIST_SIZE"] = IntVal($arParams["THUMBNAIL_LIST_SIZE"]);
 if ($arParams["THUMBNAIL_LIST_SIZE"] <= 0)
@@ -126,16 +143,28 @@ else
 
 			$arResult["Urls"]["Group"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP"], array("group_id" => $arResult["Group"]["ID"]));
 			$arResult["Urls"]["GroupEdit"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_EDIT"], array("group_id" => $arResult["Group"]["ID"]));
+			$arResult["Urls"]["GroupInvite"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_INVITE"], array("group_id" => $arResult["Group"]["ID"]));
+
+			$pageTitle = Loc::getMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_PAGE_TITLE_PROJECT" : "SONET_GUE_PAGE_TITLE");
+			$strTitleFormatted = $arResult["Group"]["NAME"];
 
 			if ($arParams["SET_TITLE"] == "Y")
 			{
-				$APPLICATION->SetTitle($arResult["Group"]["NAME"].": ".GetMessage($arResult["Group"]["PROJECT"] == 'Y' ? "SONET_GUE_PAGE_TITLE_PROJECT" : "SONET_GUE_PAGE_TITLE"));
+				if ($arResult['IS_IFRAME'])
+				{
+					$APPLICATION->SetTitle($pageTitle);
+					$APPLICATION->SetPageProperty("PageSubtitle", $strTitleFormatted);
+				}
+				else
+				{
+					$APPLICATION->SetTitle($strTitleFormatted.": ".$pageTitle);
+				}
 			}
 
 			if ($arParams["SET_NAV_CHAIN"] != "N")
 			{
-				$APPLICATION->AddChainItem($arResult["Group"]["NAME"], $arResult["Urls"]["Group"]);
-				$APPLICATION->AddChainItem(GetMessage("SONET_GUE_PAGE_TITLE"));
+				$APPLICATION->AddChainItem($strTitleFormatted, $arResult["Urls"]["Group"]);
+				$APPLICATION->AddChainItem($pageTitle);
 			}
 
 			$arResult["Departments"] = array();

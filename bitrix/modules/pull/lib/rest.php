@@ -3,6 +3,7 @@ namespace Bitrix\Pull;
 
 use Bitrix\Main,
 	Bitrix\Main\Localization\Loc;
+use Bitrix\Pull\Rest\GuestAuth;
 
 if(!\Bitrix\Main\Loader::includeModule('rest'))
 	return;
@@ -15,6 +16,9 @@ class Rest extends \IRestService
 	{
 		return array(
 			'pull' => array(
+				'pull.application.config.get' =>  array('callback' => array(__CLASS__, 'applicationConfigGet'), 'options' => array('private' => true)),
+				'pull.channel.public.get' =>  array('callback' => array(__CLASS__, 'channelPublicGet'), 'options' => array()),
+				'pull.channel.public.list' =>  array('callback' => array(__CLASS__, 'channelPublicList'), 'options' => array()),
 				'pull.watch.extend' =>  array('callback' => array(__CLASS__, 'watchExtend'), 'options' => array()),
 			),
 			'pull_channel' => array(
@@ -37,25 +41,139 @@ class Rest extends \IRestService
 		);
 	}
 
+	public static function channelPublicGet($params, $n, \CRestServer $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		$type = \CPullChannel::TYPE_PRIVATE;
+		if ($params['APPLICATION'] == 'Y')
+		{
+			$clientId = $server->getClientId();
+			if (!$clientId)
+			{
+				throw new \Bitrix\Rest\RestException("Get application public channel available only for application authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_WRONG_REQUEST);
+			}
+			$type = $clientId;
+		}
+
+		$userId = intval($params['USER_ID']);
+
+		$configParams = Array();
+		$configParams['TYPE'] = $type;
+		$configParams['USER_ID'] = $userId;
+		$configParams['JSON'] = true;
+
+		$config = \Bitrix\Pull\Channel::getPublicId($configParams);
+		if (!$config)
+		{
+			throw new \Bitrix\Rest\RestException("Push & Pull server is not configured", "SERVER_ERROR", \CRestServer::STATUS_INTERNAL);
+		}
+
+		return $config;
+	}
+
+	public static function channelPublicList($params, $n, \CRestServer $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		$type = \CPullChannel::TYPE_PRIVATE;
+		if ($params['APPLICATION'] == 'Y')
+		{
+			$clientId = $server->getClientId();
+			if (!$clientId)
+			{
+				throw new \Bitrix\Rest\RestException("Get application public channel available only for application authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_WRONG_REQUEST);
+			}
+			$type = $clientId;
+		}
+
+		$users = Array();
+		if (is_string($params['USERS']))
+		{
+			$params['USERS'] = \CUtil::JsObjectToPhp($params['USERS']);
+		}
+		if (is_array($params['USERS']))
+		{
+			foreach ($params['USERS'] as $userId)
+			{
+				$userId = intval($userId);
+				if ($userId > 0)
+				{
+					$users[$userId] = $userId;
+				}
+			}
+		}
+
+		if (empty($users))
+		{
+			throw new \Bitrix\Rest\RestException("A wrong format for the USERS field is passed", "INVALID_FORMAT", \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$configParams = Array();
+		$configParams['TYPE'] = $type;
+		$configParams['USERS'] = $users;
+		$configParams['JSON'] = true;
+
+		$config = \Bitrix\Pull\Channel::getPublicIds($configParams);
+		if (!$config)
+		{
+			throw new \Bitrix\Rest\RestException("Push & Pull server is not configured", "SERVER_ERROR", \CRestServer::STATUS_INTERNAL);
+		}
+
+		return $config;
+	}
+
+	public static function applicationConfigGet($params, $n, \CRestServer $server)
+	{
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		$clientId = $server->getClientId();
+		if (!$clientId)
+		{
+			throw new \Bitrix\Rest\RestException("Get access to application config available only for application authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+		}
+
+		$configParams = Array();
+		$configParams['CACHE'] = $params['CACHE'] != 'N';
+		$configParams['REOPEN'] = $params['REOPEN'] != 'N';
+		$configParams['CUSTOM_TYPE'] = $clientId;
+		$configParams['JSON'] = true;
+
+		$config = \Bitrix\Pull\Config::get($configParams);
+		if (!$config)
+		{
+			throw new \Bitrix\Rest\RestException("Push & Pull server is not configured", "SERVER_ERROR", \CRestServer::STATUS_INTERNAL);
+		}
+
+		return $config;
+	}
 
 	public static function configGet($params, $n, \CRestServer $server)
 	{
 		$params = array_change_key_case($params, CASE_UPPER);
 
-		if (!method_exists('CRestServer', 'getAuthType'))
+		if ($server->getAuthType() === \Bitrix\Rest\OAuth\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Please install rest 17.5.0 for use this method.", "NEED_UPDATE", \CRestServer::STATUS_INTERNAL);
+			throw new \Bitrix\Rest\RestException("Method not available for OAuth authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
 		}
 
-		if (!in_array($server->getAuthType(), Array(
-			\Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE,
-			\Bitrix\Rest\APAuth\Auth::AUTH_TYPE
-		)))
+		global $USER;
+		$guestMode = defined("PULL_USER_ID") && (int)PULL_USER_ID != 0;
+		if($server->getAuthType() === GuestAuth::AUTH_TYPE && $guestMode)
 		{
-			throw new \Bitrix\Rest\RestException("Get access to Push & Pull config available only for session or webhook authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			$userId = (int)PULL_USER_ID;
+		}
+		else if ($USER->IsAuthorized())
+		{
+			$userId = $USER->getId();
+		}
+		else
+		{
+			throw new \Bitrix\Rest\RestException("Method not available for guest session at the moment.", "AUTHORIZE_ERROR", \CRestServer::STATUS_FORBIDDEN);
 		}
 
 		$configParams = Array();
+		$configParams['USER_ID'] = $userId;
 		$configParams['CACHE'] = $params['CACHE'] != 'N';
 		$configParams['REOPEN'] = $params['REOPEN'] != 'N';
 		$configParams['JSON'] = true;
@@ -87,6 +205,15 @@ class Rest extends \IRestService
 	public static function counterTypesGet($params, $n, \CRestServer $server)
 	{
 		$types = \Bitrix\Pull\MobileCounter::getTypes();
+
+		if (isset($params['USER_VALUES']) && $params['USER_VALUES'] == 'Y')
+		{
+			$config = \Bitrix\Pull\MobileCounter::getConfig();
+			foreach ($types as $type => $value)
+			{
+				$types[$type]['VALUE'] = $config[$type];
+			}
+		}
 
 		$result = Array();
 		foreach ($types as $type)
@@ -160,7 +287,7 @@ class Rest extends \IRestService
 			{
 				if ($withUserValues)
 				{
-					$typeConfig['ACTIVE'] = $userConfig[$moduleId][$typeId];
+					$typeConfig['VALUE'] = $userConfig[$moduleId][$typeId];
 				}
 				$types[] = array_change_key_case($typeConfig, CASE_LOWER);
 			}
@@ -240,7 +367,7 @@ class Rest extends \IRestService
 	{
 		$params = array_change_key_case($params, CASE_UPPER);
 
-		$status = (bool)$params['STATUS'];
+		$status = (bool)$params['ACTIVE'];
 		\Bitrix\Pull\Push::setStatus($status);
 
 		return true;
@@ -255,7 +382,8 @@ class Rest extends \IRestService
 	{
 		$params = array_change_key_case($params, CASE_UPPER);
 
-		$status = (bool)$params['STATUS'];
+		$status = (bool)$params['ACTIVE'];
+
 		\Bitrix\Pull\PushSmartfilter::setStatus($status);
 
 		return true;

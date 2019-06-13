@@ -47,8 +47,14 @@ class App
 				return false;
 			}
 			$iframe = $fields['IFRAME'].(isset($check['query'])? '&': '?');
-			$iframeWidth = isset($fields['IFRAME_WIDTH']) && intval($fields['IFRAME_WIDTH']) > 250? intval($fields['IFRAME_WIDTH']): $iframeWidth;
-			$iframeHeight = isset($fields['IFRAME_HEIGHT']) && intval($fields['IFRAME_HEIGHT']) > 50? intval($fields['IFRAME_HEIGHT']): $iframeHeight;
+			if (isset($fields['IFRAME_WIDTH']))
+			{
+				$iframeWidth = intval($fields['IFRAME_WIDTH']) > 250? $fields['IFRAME_WIDTH']: 250;
+			}
+			if (isset($fields['IFRAME_HEIGHT']))
+			{
+				$iframeHeight = intval($fields['IFRAME_HEIGHT']) > 50? $fields['IFRAME_HEIGHT']: 50;
+			}
 			$iframePopup = isset($fields['IFRAME_POPUP']) && $fields['IFRAME_POPUP'] == 'Y'? 'Y': $iframePopup;
 		}
 		else if (!$jscommand)
@@ -224,10 +230,7 @@ class App
 				'params' => Array(
 					'iconId' => $appId
 				),
-				'extra' => Array(
-					'im_revision' => IM_REVISION,
-					'im_revision_mobile' => IM_REVISION_MOBILE,
-				)
+				'extra' => \Bitrix\Im\Common::getPullExtra()
 			));
 		}
 
@@ -326,11 +329,11 @@ class App
 		}
 		if (isset($updateFields['IFRAME_WIDTH']))
 		{
-			$update['IFRAME_WIDTH'] = intval($updateFields['IFRAME_WIDTH']) > 250? intval($updateFields['IFRAME_WIDTH']): 350;
+			$update['IFRAME_WIDTH'] = intval($updateFields['IFRAME_WIDTH']) > 250? intval($updateFields['IFRAME_WIDTH']): 250;
 		}
 		if (isset($updateFields['IFRAME_HEIGHT']))
 		{
-			$update['IFRAME_HEIGHT'] = intval($updateFields['IFRAME_HEIGHT']) > 50? intval($updateFields['IFRAME_HEIGHT']): 150;
+			$update['IFRAME_HEIGHT'] = intval($updateFields['IFRAME_HEIGHT']) > 50? intval($updateFields['IFRAME_HEIGHT']): 50;
 		}
 		if (isset($updateFields['IFRAME_POPUP']))
 		{
@@ -392,11 +395,11 @@ class App
 						'iframeHeight' => $update['IFRAME_HEIGHT'],
 						'iframePopup' => $update['IFRAME_POPUP'],
 					),
-					'extra' => Array(
-						'im_revision' => IM_REVISION,
-						'im_revision_mobile' => IM_REVISION_MOBILE,
-					)
+					'extra' => \Bitrix\Im\Common::getPullExtra()
 				));
+			}
+			else if ($update['ICON_ID'])
+			{
 			}
 			else
 			{
@@ -406,10 +409,7 @@ class App
 					'params' => Array(
 						'iconId' => $appId
 					),
-					'extra' => Array(
-						'im_revision' => IM_REVISION,
-						'im_revision_mobile' => IM_REVISION_MOBILE,
-					)
+					'extra' => \Bitrix\Im\Common::getPullExtra()
 				));
 			}
 		}

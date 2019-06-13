@@ -18,12 +18,9 @@ if($arParams['USE_PLAYLIST_AS_SOURCES'] === 'Y' && is_array($arParams['TRACKS'])
 	foreach($arParams['TRACKS'] as $key => $source)
 	{
 		?>
-		<source src="<?=htmlspecialcharsbx($source['src']);?>" type="<?=htmlspecialcharsbx($source['type']);?>"<?
-		if($key == count($arParams['TRACKS']) - 1)
-		{
-			?> onerror="BX.onCustomEvent(this, 'MobilePlayer:onError', [this.parentNode, this.src]);"<?
-		}
-		?>><?
+		<source src="<?=htmlspecialcharsbx($source['src']);?>" type="<?=htmlspecialcharsbx($source['type']);?>"
+        onerror="BX.onCustomEvent(this, 'MobilePlayer:onError', [this.parentNode, this.src]);">
+		<?
 	}
 }
 else

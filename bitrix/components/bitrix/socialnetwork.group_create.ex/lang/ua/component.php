@@ -17,4 +17,17 @@ $MESS["SONET_GCE_CANNOT_EMAILS_ADD"] = "Адреси #EMAIL# вже викори
 $MESS["SONET_GCE_USER_BANNED_IN_GROUP"] = "Користувач з адресою #EMAIL# заблокований в даній групі";
 $MESS["SONET_GCE_USER_REQUEST_SENT"] = "Користувачеві з адресою #EMAIL# вже відправлено запрошення";
 $MESS["SONET_GCE_USER_IN_GROUP"] = "Користувач з адресою #EMAIL# вже складається в групі";
+$MESS["SONET_GCE_ERR_NAME_PROJECT"] = "Не вказано назву проекту";
+$MESS["SONET_GCE_ERR_SUBJECT_PROJECT"] = "Не вказана тематика проекту";
+$MESS["SONET_GCE_ERR_PERMS_PROJECT"] = "Не вказані права на запрошення користувачів до проекту";
+$MESS["SONET_GCE_IP_OWNER_PROJECT"] = "Тільки керівник проекту";
+$MESS["SONET_GCE_IP_MOD_PROJECT"] = "Керівник проекту та його помічники";
+$MESS["SONET_GCE_IP_USER_PROJECT"] = "Всі учасники проекту";
+$MESS["SONET_GCE_USER_IN_GROUP_PROJECT"] = "Користувач з адресою #EMAIL# вже перебуває в проекті";
+$MESS["SONET_GCE_TITLE_CREATE"] = "Створити групу або проект";
+$MESS["SONET_GCE_TITLE_EDIT"] = "Редагувати групу";
+$MESS["SONET_GCE_TITLE_EDIT_PROJECT"] = "Редагувати проект";
+$MESS["SONET_GCE_TITLE_INVITE"] = "Запросити в групу";
+$MESS["SONET_GCE_TITLE_INVITE_PROJECT"] = "Запросити в проект";
+$MESS["SONET_GCE_INVITE_MESSAGE_TEXT"] = "Запрошую вас на корпоративний портал нашої компанії. Тут ми зможемо разом працювати над проектами і завданнями, керувати документами, планувати зустрічі і зборів, спілкуватися в блогах і багато іншого.";
 ?>

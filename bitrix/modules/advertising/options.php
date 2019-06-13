@@ -141,7 +141,7 @@ $tabControl->BeginNextTab();
 	?>
 		<tr>
 			<td valign="top"><?=GetMessage("AD_UPLOAD_SUBDIR")?></td>
-			<td valign="middle"><input type="text" size="30" maxlength="255" value="<?=$UPLOAD_SUBDIR?>" name="UPLOAD_SUBDIR"></td>
+			<td valign="middle"><input type="text" size="30" maxlength="255" value="<?=htmlspecialcharsbx($UPLOAD_SUBDIR)?>" name="UPLOAD_SUBDIR"></td>
 		</tr>
 <?$tabControl->BeginNextTab();?>
 <?require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/admin/group_rights.php");?>

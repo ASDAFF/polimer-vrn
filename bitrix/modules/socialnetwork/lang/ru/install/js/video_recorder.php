@@ -16,4 +16,5 @@ $MESS["BLOG_VIDEO_RECORD_PERMISSIONS_ERROR_TITLE"] = "Ошибка";
 $MESS["BLOG_VIDEO_RECORD_SPOTLIGHT_MESSAGE"] = "<b>Записывайте видеосообщения и делитесь с коллегами.</b>";
 $MESS["BLOG_VIDEO_RECORD_TRANFORM_LIMIT_TEXT"] = "Чтобы видео можно было запустить прямо в Битрикс24, закончите запись в течение <span class=\"bx-videomessage-transform-time-tip\">60 секунд</span> Если получится дольше, то мы обязательно сохраним его, но файл может воспроизводиться не во всех браузерах.";
 $MESS["BLOG_VIDEO_RECORD_RESTART_BUTTON"] = "Записать заново";
+$MESS["BLOG_VIDEO_RECORD_ERROR_CHROME_HTTPS"] = "К сожалению, в вашем браузере не поддерживается http протокол.<br /><br />Попробуйте другой браузер, например, Firefox";
 ?>

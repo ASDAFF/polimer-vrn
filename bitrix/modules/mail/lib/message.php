@@ -168,7 +168,7 @@ class Message
 				//'big'   => array(),
 				//'small' => array(),
 			));
-			$sanitizer->applyHtmlSpecChars(false);
+			$sanitizer->applyDoubleEncode(false);
 			$html = $sanitizer->sanitizeHtml($html);
 
 			$parser = new \CTextParser();
@@ -348,27 +348,39 @@ class Message
 				if (strlen(trim($value)) >= 10 && $subject['sgnlen'] >= 10)
 				{
 					$dist = $subject['strlen']-strlen($value);
+
 					if (abs($dist) < 10)
 					{
 						if ($dist >= 0 && strpos($subject['value'], $value) !== false)
+						{
 							return true;
+						}
+
 						if (max($subject['strlen'], strlen($value)) < 256 && levenshtein($subject['value'], $value) < 10)
+						{
 							return true;
+						}
 					}
 				}
 
 				$date = preg_replace('/(?<=[\s\d])UT$/i', '+0000', trim($value));
-				if (strtotime($date) !== false)
+				if (preg_match('/\d{1,2}:\d{2}(:\d{2})?\x20?(am|pm)?/i', $date) && strtotime($date) !== false)
+				{
 					return true;
+				}
 
 				if (preg_match('/([a-z\d_](\.?[a-z\d_-]+)*)?[a-z\d_]@(([a-z\d][a-z\d-]*)?[a-z\d]\.?)+/i', $value))
+				{
 					return true;
+				}
 
 				return false;
 			};
 
 			foreach ($matches as $item)
+			{
 				$score += (int) $isHeader($item[1], $item[2]);
+			}
 		}
 
 		return $score;
@@ -433,9 +445,9 @@ class Message
 		 * To: <to>
 		 * Subject: <subject>
 		 */
-		$fullHeadRegex = '/(?:^|\n)
+		$fullHeadRegex = '/(?:^|\n\n)
 			(?<hr>_{20,}\n(?:[\t\x20]*\n)?)?
-			(?<head>(?:[^\:\n]{1,20}:[\t\x20]+.+(?:\n|$)){2,8})\s*$
+			(?<head>(?:[^\:\n]{1,20}:[\t\x20]+.+(?:\n|$)){2,6})\s*$
 		/x'.BX_UTF_PCRE_MODIFIER;
 		if (preg_match($fullHeadRegex, $data, $matches))
 		{
@@ -514,10 +526,11 @@ class Message
 		/ix'.BX_UTF_PCRE_MODIFIER;
 
 		$hasMarker = preg_match($shortHeadRegex, $data);
-		$fullHeadRegex = '/(?:^|\n)\s*
+		$fullHeadRegex = '/(?:^|\n\n)\s*
 			(?<marker>-{3,}.{4,40}?-{3,}[\t\x20]*\n)'.($hasMarker ? '' : '?').'
 			(?<head>(?:[\t\x20]*\n)?
-			(?<lines>(?:[^\:\n]{1,20}:[\t\x20]+.+(?:\n|$)){2,8})(?:\s*\n)?)
+			(?<lines>(?:[^\:\n]{1,20}:[\t\x20]+.+(?:\n|$)){2,6}))
+			\s*(?:\n|$)
 		/x'.BX_UTF_PCRE_MODIFIER;
 
 		if (preg_match($fullHeadRegex, $data, $matches, PREG_OFFSET_CAPTURE))

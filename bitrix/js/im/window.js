@@ -65,8 +65,6 @@
 				this.contentBodyWindow = true;
 			}
 
-
-
 			this.popup = BX('im-workarea-popup');
 			this.popupBackground = this.popup;
 			this.content = BX('im-workarea-content');
@@ -87,7 +85,6 @@
 			{
 				this.popupBackground = BX('im-workarea-popup-bg');
 			}
-
 
 			if (this.context == 'PAGE')
 			{
@@ -146,7 +143,14 @@
 			document.body.insertBefore(this.content, document.body.firstChild);
 		}
 
-		if (BX.desktop && BX.desktop.apiReady && !BX.desktop.enableInVersion(29))
+		if (
+			BX.desktop
+			&& BX.desktop.apiReady
+			&& (
+				navigator.userAgent.toLowerCase().indexOf('linux') > 0 && !BX.desktop.enableInVersion(29)
+				|| navigator.userAgent.toLowerCase().indexOf('linux') < 0 && !BX.desktop.enableInVersion(37)
+			)
+		)
 		{
 			BX.PULL.tryConnectSet(null, false);
 			BX.desktop.notSupported();
@@ -465,8 +469,17 @@
 
 			if (!BX('bx-desktop-tab-content-'+params.id) && params.id == params.target)
 			{
+				var isActive = false;
+				if (
+					this.currentTab == params.id
+					|| this.tabItems[this.currentTab] && this.tabItems[this.currentTab].target == params.id
+				)
+				{
+					isActive = true;
+				}
+
 				this.contentTabContent.appendChild(
-					BX.create('div', { attrs : { 'data-id': params.id, id: 'bx-desktop-tab-content-'+params.id}, props : { className : "bx-desktop-tab-content bx-desktop-tab-content-"+params.id+(this.currentTab == params.id? ' bx-desktop-tab-content-active': '') }, children: params.initContent? [params.initContent]: []})
+					BX.create('div', { attrs : { 'data-id': params.id, id: 'bx-desktop-tab-content-'+params.id}, props : { className : "bx-desktop-tab-content bx-desktop-tab-content-"+params.id+(isActive? ' bx-desktop-tab-content-active': '') }, children: params.initContent? [params.initContent]: []})
 				);
 				params.events.init();
 			}
@@ -501,9 +514,10 @@
 		return true;
 	}
 
-	MessengerWindow.prototype.changeTab = function (tabId, force)
+	MessengerWindow.prototype.changeTab = function (tabId, force, skipFireEvent)
 	{
 		force = typeof(force) == 'undefined'? true: force;
+		skipFireEvent = typeof(skipFireEvent) == 'undefined'? false: skipFireEvent;
 
 		if (typeof(tabId) == 'object')
 		{
@@ -554,7 +568,7 @@
 				BX.addClass(BX('bx-desktop-tab-content-'+this.currentTabTarget), 'bx-desktop-tab-content-active');
 			}
 
-			if (fireEvent)
+			if (fireEvent && !skipFireEvent)
 			{
 				if (this.tabItems[this.lastTab])
 				{
@@ -566,10 +580,9 @@
 					BX.onCustomEvent(this, 'OnDesktopTabChange', [this.currentTab, this.lastTab]);
 					this.tabItems[this.currentTab].events.open();
 				}
-
 			}
 		}
-		else
+		else if (!skipFireEvent)
 		{
 			this.tabItems[tabId].events.open();
 		}
@@ -721,6 +734,8 @@
 	{
 		if (this.context == 'DESKTOP')
 			return true;
+		else if (this.context == 'PAGE')
+			return true;
 		else if (this.context == 'POPUP-FULLSCREEN' && !BX.hasClass(this.popup, 'bx-im-fullscreen-closed'))
 			return true;
 
@@ -774,23 +789,37 @@
 		this.popupTimeout = setTimeout(BX.delegate(function(){
 			BX.removeClass(this.popup, 'bx-im-fullscreen-opening');
 			BX.addClass(this.popup, 'bx-im-fullscreen-open');
-			if (this.BXIM.webrtc.callOverlay)
-			{
-				BX.style(this.BXIM.webrtc.callOverlay, 'height', (this.BXIM.messenger.popupMessengerFullHeight-1)+'px');
-			}
 		}, this), 400);
+
+		if (BX.SidePanel && BX.SidePanel.Instance.getTopSlider())
+		{
+			var zIndex = BX.SidePanel.Instance.getTopSlider().getZindex();
+			BX.style(this.popup, 'z-index', zIndex+1);
+		}
 
 		BX.onCustomEvent(this, 'OnMessengerWindowShowPopup', [dialogId]);
 		return true;
 	}
 
-	MessengerWindow.prototype.closePopup = function()
+	MessengerWindow.prototype.closePopup = function(params)
 	{
-		if (!this.isPopupShow() || this.BXIM.webrtc.callInit)
+		if(!BX.type.isPlainObject(params))
+		{
+			params = {};
+		}
+
+		if (!this.isPopupShow() || this.BXIM.callController.hasActiveCall() || this.redirectFlag)
 			return false;
 
 		if (this.popupTimestart+400 > (+new Date()))
 			return false;
+
+		if (params.redirect)
+		{
+			this.redirectFlag = true;
+			document.location.href = params.redirect;
+			return true;
+		}
 
 		clearTimeout(this.popupTimeout);
 		BX.removeClass(document.body, 'bx-im-fullscreen-block-scroll');
@@ -804,8 +833,9 @@
 			BX.removeClass(this.popup, 'bx-im-fullscreen-closing');
 			BX.removeClass(this.popup, 'bx-im-fullscreen-open');
 			BX.addClass(this.popup, 'bx-im-fullscreen-closed');
-
+			BX.style(this.popup, 'z-index', '');
 		}, this), 400);
+
 
 		return true;
 	}

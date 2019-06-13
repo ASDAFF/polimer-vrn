@@ -22,11 +22,22 @@ class CAllSaleDiscount
 	static protected $cacheDiscountHandlers = array();
 	static protected $usedModules = array();
 
-	public static function DoProcessOrder(
-		&$arOrder,
-		/** @noinspection PhpUnusedParameterInspection */$arOptions,
-		/** @noinspection PhpUnusedParameterInspection */&$arErrors
-	)
+	/**
+	 * @deprecated strongly deprecated since sale 15.5.0.
+	 * @see \Bitrix\Sale\Discount
+	 *
+	 * @param array &$arOrder
+	 * @param array $arOptions
+	 * @param array &$arErrors
+	 * @return void
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\ObjectException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function DoProcessOrder(&$arOrder, $arOptions, &$arErrors)
 	{
 		if (empty($arOrder['BASKET_ITEMS']) || !is_array($arOrder['BASKET_ITEMS']))
 			return;
@@ -141,7 +152,8 @@ class CAllSaleDiscount
 		{
 			$groupDiscountIterator = Sale\Internals\DiscountGroupTable::getList(array(
 				'select' => array('DISCOUNT_ID'),
-				'filter' => array('@GROUP_ID' => CUser::GetUserGroup($arOrder['USER_ID']), '=ACTIVE' => 'Y')
+				'filter' => array('@GROUP_ID' => CUser::GetUserGroup($arOrder['USER_ID']), '=ACTIVE' => 'Y'),
+				'order' => array('DISCOUNT_ID' => 'ASC')
 			));
 			while ($groupDiscount = $groupDiscountIterator->fetch())
 			{
@@ -236,7 +248,7 @@ class CAllSaleDiscount
 			else
 			{
 				$needDiscountHandlers = array();
-				foreach ($arIDS as &$discountID)
+				foreach ($arIDS as $discountID)
 				{
 					if (!isset(self::$cacheDiscountHandlers[$discountID]))
 						$needDiscountHandlers[] = $discountID;
@@ -278,7 +290,26 @@ class CAllSaleDiscount
 					'>=ACTIVE_TO' => $currentDatetime
 				)
 			);
-			if (empty($couponList))
+
+			$couponsDiscount = array();
+			if (!empty($couponList))
+			{
+				$iterator = Sale\Internals\DiscountCouponTable::getList(array(
+					'select' => array('DISCOUNT_ID', 'COUPON'),
+					'filter' => array('@DISCOUNT_ID' => $arIDS,'@COUPON' => array_keys($couponList)),
+					'order' => array('DISCOUNT_ID' => 'ASC')
+				));
+				while ($row = $iterator->fetch())
+				{
+					$id = (int)$row['DISCOUNT_ID'];
+					if (isset($couponsDiscount[$id]))
+						continue;
+					$couponsDiscount[$id] = $row['COUPON'];
+				}
+				unset($id, $row, $iterator);
+			}
+
+			if (empty($couponsDiscount))
 			{
 				$discountFilter['=USE_COUPONS'] = 'N';
 			}
@@ -289,10 +320,9 @@ class CAllSaleDiscount
 					'=USE_COUPONS' => 'N',
 					array(
 						'=USE_COUPONS' => 'Y',
-						'=COUPON.COUPON' => array_keys($couponList)
+						'@ID' => array_keys($couponsDiscount)
 					)
 				);
-				$discountSelect['DISCOUNT_COUPON'] = 'COUPON.COUPON';
 			}
 
 			$newDiscounts = null;
@@ -303,7 +333,6 @@ class CAllSaleDiscount
 				'order' => $discountOrder
 			));
 
-			$discountApply = array();
 			$resultDiscountList = array();
 			$resultDiscountKeys = array();
 			$resultDiscountIndex = 0;
@@ -311,9 +340,8 @@ class CAllSaleDiscount
 			while ($discount = $discountIterator->fetch())
 			{
 				$discount['ID'] = (int)$discount['ID'];
-				if (isset($discountApply[$discount['ID']]))
-					continue;
-				$discountApply[$discount['ID']] = true;
+				if ($discount['USE_COUPONS'] == 'Y')
+					$discount['DISCOUNT_COUPON'] = $couponsDiscount[$discount['ID']];
 
 				if($skipPriorityLevel == $discount['PRIORITY'])
 				{
@@ -489,12 +517,12 @@ class CAllSaleDiscount
 						$itemDiscountsApply = true;
 						$descr = $row['RESULT']['DESCR_DATA'][0];
 						$validDiscount = (
-							isset($descr['TYPE']) && $descr['TYPE'] == Sale\OrderDiscountManager::DESCR_TYPE_VALUE
+							isset($descr['TYPE']) && $descr['TYPE'] == Sale\Discount\Formatter::TYPE_VALUE
 							&& (
-								$descr['VALUE_ACTION'] == Sale\OrderDiscountManager::DESCR_VALUE_ACTION_DISCOUNT
-								|| $descr['VALUE_ACTION'] == Sale\OrderDiscountManager::DESCR_VALUE_ACTION_ACCUMULATE
+								$descr['VALUE_ACTION'] == Sale\Discount\Formatter::VALUE_ACTION_DISCOUNT
+								|| $descr['VALUE_ACTION'] == Sale\Discount\Formatter::VALUE_ACTION_CUMULATIVE
 							)
-							&& $descr['VALUE_TYPE'] == Sale\OrderDiscountManager::DESCR_VALUE_TYPE_PERCENT
+							&& $descr['VALUE_TYPE'] == Sale\Discount\Formatter::VALUE_TYPE_PERCENT
 						);
 
 						if (!$validDiscount)
@@ -535,9 +563,9 @@ class CAllSaleDiscount
 						}
 						$descr = $discount['RESULT']['BASKET'][$code]['DESCR_DATA'][0];
 						if (
-							isset($descr['TYPE']) && $descr['TYPE'] == Sale\OrderDiscountManager::DESCR_TYPE_VALUE
-							&& $descr['VALUE_ACTION'] == Sale\OrderDiscountManager::DESCR_VALUE_ACTION_DISCOUNT
-							&& $descr['VALUE_TYPE'] == Sale\OrderDiscountManager::DESCR_VALUE_TYPE_PERCENT
+							isset($descr['TYPE']) && $descr['TYPE'] == Sale\Discount\Formatter::TYPE_VALUE
+							&& $descr['VALUE_ACTION'] == Sale\Discount\Formatter::VALUE_ACTION_DISCOUNT
+							&& $descr['VALUE_TYPE'] == Sale\Discount\Formatter::VALUE_TYPE_PERCENT
 						)
 						{
 							$simplePercentValue = $descr['VALUE'];
@@ -1550,6 +1578,7 @@ class CAllSaleDiscount
 								'Value' => (string)roundEx($arFields['DISCOUNT_VALUE'], SALE_VALUE_PRECISION),
 								'Unit' => 'Perc',
 								'All' => 'AND',
+								'True' => 'True'
 							),
 							'CHILDREN' => array(
 							),
@@ -1565,6 +1594,7 @@ class CAllSaleDiscount
 								'Value' => (string)$dblValue,
 								'Unit' => 'CurAll',
 								'All' => 'AND',
+								'True' => 'True'
 							),
 							'CHILDREN' => array(
 							),
@@ -1718,7 +1748,7 @@ class CAllSaleDiscount
 			array(
 				'ORDER' => '$arOrder',
 				'ORDER_FIELDS' => '$arOrder',
-				'ORDER_PROPS' => '$arOrder[\'PROPS\']',
+				'ORDER_PROPS' => '$arOrder[\'ORDER_PROP\']',
 				'ORDER_BASKET' => '$arOrder[\'BASKET_ITEMS\']',
 				'BASKET' => '$arBasket',
 				'BASKET_ROW' => '$row',
@@ -1842,15 +1872,12 @@ class CAllSaleDiscount
 				continue;
 			if (is_string($fields[$fieldName]))
 			{
-				try
-				{
-					$fields[$fieldName] = trim($fields[$fieldName]);
-					$fields[$fieldName] = ($fields[$fieldName] !== '' ? new Main\Type\DateTime($fields[$fieldName]) : null);
-				}
-				catch (Main\ObjectException $e)
-				{
-					$fields[$fieldName] = new Main\Type\Date($fields[$fieldName]);
-				}
+				$fields[$fieldName] = trim($fields[$fieldName]);
+				$fields[$fieldName] = (
+					$fields[$fieldName] === ''
+					? null
+					: Main\Type\DateTime::createFromUserTime($fields[$fieldName])
+				);
 			}
 			$result[$fieldName] = $fields[$fieldName];
 		}

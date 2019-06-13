@@ -29,4 +29,5 @@ $MESS["SONET_GCE_TITLE_EDIT"] = "Arbeitsgruppe bearbeiten";
 $MESS["SONET_GCE_TITLE_EDIT_PROJECT"] = "Projekt bearbeiten";
 $MESS["SONET_GCE_TITLE_INVITE"] = "In die Arbeitsgruppe einladen";
 $MESS["SONET_GCE_TITLE_INVITE_PROJECT"] = "Zum Projekt einladen";
+$MESS["SONET_GCE_INVITE_MESSAGE_TEXT"] = "Ich lade Sie in unser Intranet ein. Hier können wir gemeinsam an Projekten und Aufgaben arbeiten, Termine und Besprechungen planen, Dokumente verwalten, miteinander kommunizieren usw.";
 ?>

@@ -170,6 +170,8 @@ class CIMConvert
 			self::$nextConvertPerStep = $step*2;
 		else
 			self::$nextConvertPerStep = $step;
+
+		return true;
 	}
 
 	public static function UndeliveredMessageAgent()
@@ -210,13 +212,15 @@ class CIMConvert
 	{
 		global $DB;
 
-		$strSql = "SELECT COUNT(*) CNT FROM b_sonet_messages WHERE DATE_VIEW IS NOT NULL AND TO_DELETED = 'N' AND MESSAGE_TYPE = 'P'";
+		$strSql = "SELECT COUNT(*) CNT FROM b_sonet_messages WHERE DATE_VIEW IS NOT NULL AND TO_DELETED = 'N' AND MESSAGE_TYPE = '".IM_MESSAGE_PRIVATE."'";
 		$res = $DB->Query($strSql, true);
 		if (!$res)
 			return 0;
 
 		if ($row = $res->Fetch())
 			return intval($row['CNT']);
+
+		return 0;
 	}
 }
 

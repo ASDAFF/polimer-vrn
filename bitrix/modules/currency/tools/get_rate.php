@@ -72,7 +72,7 @@ else
 					break;
 				case 'BYR':
 				case 'BYN':
-					$url = 'https://www.nbrb.by/Services/XmlExRates.aspx?ondate='.$DB->FormatDate($date, CLang::GetDateFormat('SHORT', LANGUAGE_ID), 'Y-M-D');
+					$url = 'http://www.nbrb.by/Services/XmlExRates.aspx?ondate='.$DB->FormatDate($date, CLang::GetDateFormat('SHORT', LANGUAGE_ID), 'Y-M-D');
 					break;
 				case 'RUB':
 				case 'RUR':
@@ -80,6 +80,7 @@ else
 					break;
 			}
 			$http = new Main\Web\HttpClient();
+			$http->setRedirect(true);
 			$data = $http->get($url);
 
 			$charset = 'windows-1251';

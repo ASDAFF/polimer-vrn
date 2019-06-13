@@ -18,13 +18,7 @@ class CAllBPWorkflowTemplateLoader
 
 	private function __construct()
 	{
-		$useGZipCompressionOption = \Bitrix\Main\Config\Option::get("bizproc", "use_gzip_compression", "");
-		if ($useGZipCompressionOption === "Y")
-			$this->useGZipCompression = true;
-		elseif ($useGZipCompressionOption === "N")
-			$this->useGZipCompression = false;
-		else
-			$this->useGZipCompression = function_exists("gzcompress");
+		$this->useGZipCompression = static::useGZipCompression();
 	}
 
 	public function __clone()
@@ -271,9 +265,8 @@ class CAllBPWorkflowTemplateLoader
 
 		$dbResult = $DB->Query(
 			"SELECT COUNT('x') as CNT ".
-			"FROM b_bp_workflow_state WS ".
-			"	INNER JOIN b_bp_workflow_instance WI ON (WS.ID = WI.ID) ".
-			"WHERE WS.WORKFLOW_TEMPLATE_ID = ".intval($id)." "
+			"FROM b_bp_workflow_instance WI ".
+			"WHERE WI.WORKFLOW_TEMPLATE_ID = ".intval($id)." "
 		);
 
 		if ($arResult = $dbResult->Fetch())
@@ -583,6 +576,21 @@ class CAllBPWorkflowTemplateLoader
 			throw new Exception(str_replace("#ID#", $workflowTemplateId, GetMessage("BPCGWTL_INVALID_WF_ID")));
 
 		return $result;
+	}
+
+	public static function getTemplateUserId($workflowTemplateId)
+	{
+		$userId = 0;
+		$dbTemplatesList = self::GetList(
+			[],
+			['ID' => (int) $workflowTemplateId], false,false, ['USER_ID']
+		);
+		if ($row = $dbTemplatesList->Fetch())
+		{
+			$userId = (int) $row['USER_ID'];
+		}
+
+		return $userId;
 	}
 
 	public static function getTemplateConstants($workflowTemplateId)
@@ -1050,8 +1058,17 @@ class CAllBPWorkflowTemplateLoader
 
 			foreach ($datumTmp["DOCUMENT_FIELDS"] as $code => $field)
 			{
+				//skip printable
 				if (strtoupper(substr($code, -$len)) == "_PRINTABLE")
+				{
 					continue;
+				}
+
+				//skip references
+				if (strpos($code, '.') !== false)
+				{
+					continue;
+				}
 
 				$documentField = array(
 					"name" => $field["Name"],
@@ -1071,9 +1088,13 @@ class CAllBPWorkflowTemplateLoader
 				$documentField = array_merge($documentField, $field);
 
 				if (!array_key_exists($code, $arDocumentFields))
+				{
 					$documentService->AddDocumentField($documentType, $documentField);
+				}
 				else
+				{
 					$documentService->UpdateDocumentField($documentType, $documentField);
+				}
 			}
 		}
 
@@ -1261,6 +1282,25 @@ class CAllBPWorkflowTemplateLoader
 
 		return $id;
 	}
+
+	public static function useGZipCompression()
+	{
+		$useGZipCompressionOption = \Bitrix\Main\Config\Option::get("bizproc", "use_gzip_compression", "");
+		if ($useGZipCompressionOption === "Y")
+		{
+			$result = true;
+		}
+		elseif ($useGZipCompressionOption === "N")
+		{
+			$result = false;
+		}
+		else
+		{
+			$result = function_exists("gzcompress");
+		}
+
+		return $result;
+	}
 }
 
 class CBPWorkflowTemplateResult extends CDBResult
@@ -1301,20 +1341,29 @@ class CBPWorkflowTemplateResult extends CDBResult
 
 		if ($res)
 		{
-			if (array_key_exists("DOCUMENT_TYPE", $res))
+			if (array_key_exists("DOCUMENT_TYPE", $res) && !is_array($res["DOCUMENT_TYPE"]))
+			{
 				$res["DOCUMENT_TYPE"] = array($res["MODULE_ID"], $res["ENTITY"], $res["DOCUMENT_TYPE"]);
-			if (array_key_exists("TEMPLATE", $res))
+			}
+
+			if (array_key_exists("TEMPLATE", $res) && !is_array($res["TEMPLATE"]))
+			{
 				$res["TEMPLATE"] = $this->GetFromSerializedForm($res["TEMPLATE"]);
-			if (array_key_exists("VARIABLES", $res))
+			}
+
+			if (array_key_exists("VARIABLES", $res) && !is_array($res["VARIABLES"]))
+			{
 				$res["VARIABLES"] = $this->GetFromSerializedForm($res["VARIABLES"]);
-			if (array_key_exists("CONSTANTS", $res))
+			}
+
+			if (array_key_exists("CONSTANTS", $res) && !is_array($res["CONSTANTS"]))
+			{
 				$res["CONSTANTS"] = $this->GetFromSerializedForm($res["CONSTANTS"]);
-			if (array_key_exists("PARAMETERS", $res))
+			}
+
+			if (array_key_exists("PARAMETERS", $res) && !is_array($res["PARAMETERS"]))
 			{
 				$res["PARAMETERS"] = $this->GetFromSerializedForm($res["PARAMETERS"]);
-				$arParametersKeys = array_keys($res["PARAMETERS"]);
-				foreach ($arParametersKeys as $parameterKey)
-					$res["PARAMETERS"][$parameterKey]["Type"] = $res["PARAMETERS"][$parameterKey]["Type"];
 			}
 		}
 

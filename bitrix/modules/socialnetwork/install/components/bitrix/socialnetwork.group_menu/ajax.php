@@ -120,6 +120,7 @@ if (check_bitrix_sessid())
 
 				$result = Array(
 					"SUCCESS" => "Y",
+					"ID" => $groupID,
 					"NAME" => $groupFields["NAME"],
 					"URL" => $groupUrlData["URL"],
 					"EXTRANET" => (

@@ -106,36 +106,37 @@ class CAllSaleBasket
 				$arMailProp = array();
 				$arPayerProp = array();
 
-				// select person type
-				$dbPersonType = CSalePersonType::GetList(array("SORT" => "ASC"), array("LID" => $LID), false, false, array('ID'));
-				while ($arPersonType = $dbPersonType->Fetch())
-				{
-					// select ID props is mail
-					$dbProperties = CSaleOrderProps::GetList(
-						array(),
-						array("PERSON_TYPE_ID" => $arPersonType["ID"], "IS_EMAIL" => "Y", "ACTIVE" => "Y"),
-						false,
-						false,
-						array('ID', 'PERSON_TYPE_ID')
-					);
-					while ($arProperties = $dbProperties->Fetch())
-						$arMailProp[$arProperties["PERSON_TYPE_ID"]] = $arProperties["ID"];
-
-					// select ID props is name
-					$arPayerProp = array();
-					$dbProperties = CSaleOrderProps::GetList(
-						array(),
-						array("PERSON_TYPE_ID" => $arPersonType["ID"], "IS_PAYER" => "Y", "ACTIVE" => "Y"),
-						false,
-						false,
-						array('ID', 'PERSON_TYPE_ID')
-					);
-					while ($arProperties = $dbProperties->Fetch())
-						$arPayerProp[$arProperties["PERSON_TYPE_ID"]] = $arProperties["ID"];
-				}//end while
-
 				// load user profiles
 				$arUserProfiles = CSaleOrderUserProps::DoLoadProfiles($USER_ID);
+				if (!empty($arUserProfiles))
+				{
+					// select person type
+					$dbPersonType = CSalePersonType::GetList(array("SORT" => "ASC"), array("LID" => $LID), false, false, array('ID'));
+					while ($arPersonType = $dbPersonType->Fetch())
+					{
+						// select ID props is mail
+						$dbProperties = CSaleOrderProps::GetList(
+							array(),
+							array("PERSON_TYPE_ID" => $arPersonType["ID"], "IS_EMAIL" => "Y", "ACTIVE" => "Y"),
+							false,
+							false,
+							array('ID', 'PERSON_TYPE_ID')
+						);
+						while ($arProperties = $dbProperties->Fetch())
+							$arMailProp[$arProperties["PERSON_TYPE_ID"]] = $arProperties["ID"];
+
+						// select ID props is name
+						$dbProperties = CSaleOrderProps::GetList(
+							array(),
+							array("PERSON_TYPE_ID" => $arPersonType["ID"], "IS_PAYER" => "Y", "ACTIVE" => "Y"),
+							false,
+							false,
+							array('ID', 'PERSON_TYPE_ID')
+						);
+						while ($arProperties = $dbProperties->Fetch())
+							$arPayerProp[$arProperties["PERSON_TYPE_ID"]] = $arProperties["ID"];
+					}//end while
+				}
 
 				$rsUser = CUser::GetByID($USER_ID);
 				$arUser = $rsUser->Fetch();
@@ -159,7 +160,15 @@ class CAllSaleBasket
 									$arUserSendName[$personType] = trim($profiles["VALUES"][$namePropID]);
 									break;
 								}
+								else
+								{
+									$arUserSendName[$personType] = $userName;
+								}
 							}
+						}
+						else
+						{
+							$arUserSendName[$personType] = $userName;
 						}
 					}
 				}
@@ -182,6 +191,10 @@ class CAllSaleBasket
 								{
 									$arUserSendMail[$personType] = trim($profiles["VALUES"][$mailPropID]);
 									break;
+								}
+								else
+								{
+									$arUserSendMail[$personType] = $arUser["EMAIL"];
 								}
 							}
 						}
@@ -1952,7 +1965,7 @@ class CAllSaleBasket
 				$notes = $basket['NOTES'];
 			unset($basket, $basketIterator);
 		}
-		
+
 		$providerName = CSaleBasket::GetProductProvider(array("MODULE" => $module, "PRODUCT_PROVIDER_CLASS" => $productProvider));
 		if ($providerName)
 		{
@@ -3189,29 +3202,31 @@ class CAllSaleBasket
 			$dbTmp = CSaleUser::GetList(array("ID" => $TO_FUSER_ID));
 			if (!empty($dbTmp))
 			{
-				$arOldBasket = array();
-				$dbBasket = CSaleBasket::GetList(array(), array("FUSER_ID" => $TO_FUSER_ID, "ORDER_ID" => false));
-				while ($arBasket = $dbBasket->Fetch())
-				{
-					$arOldBasket[$arBasket["PRODUCT_ID"]] = $arBasket;
-					$_SESSION["SALE_BASKET_NUM_PRODUCTS"][SITE_ID]++;
-				}
+				$basketToFUser = Sale\Basket::loadItemsForFUser($TO_FUSER_ID, SITE_ID);
+				$basketFromFUser = Sale\Basket::loadItemsForFUser($FROM_FUSER_ID, SITE_ID);
 
-				$dbBasket = CSaleBasket::GetList(array(), array("FUSER_ID" => $FROM_FUSER_ID, "ORDER_ID" => false));
-				while ($arBasket = $dbBasket->Fetch())
+				if ($basketFromFUser->count() > 0)
 				{
-					$arUpdate = array("FUSER_ID" => $TO_FUSER_ID);
-					if(!empty($arOldBasket[$arBasket["PRODUCT_ID"]]))
+					$_SESSION["SALE_BASKET_NUM_PRODUCTS"][SITE_ID] = $basketToFUser->count();
+					/** @var Sale\BasketItem $basketItemFrom */
+					foreach ($basketFromFUser as $basketItemFrom)
 					{
-						$arUpdate["QUANTITY"] = $arBasket["QUANTITY"] + $arOldBasket[$arBasket["PRODUCT_ID"]]["QUANTITY"];
-						CSaleBasket::Delete($arBasket["ID"]);
-						CSaleBasket::_Update($arOldBasket[$arBasket["PRODUCT_ID"]]["ID"], $arUpdate);
+						/** @var Sale\BasketItem $basketItem */
+						$basketItem = $basketToFUser->getExistsItemByItem($basketItemFrom);
+						if ($basketItem)
+						{
+							$basketItem->setField('QUANTITY', $basketItem->getQuantity() + $basketItemFrom->getQuantity());
+							$basketItemFrom->delete();
+						}
+						else
+						{
+							$basketItemFrom->setFieldNoDemand('FUSER_ID', $TO_FUSER_ID);
+							$_SESSION["SALE_BASKET_NUM_PRODUCTS"][SITE_ID]++;
+						}
 					}
-					else
-					{
-						$_SESSION["SALE_BASKET_NUM_PRODUCTS"][SITE_ID]++;
-						CSaleBasket::_Update($arBasket["ID"], $arUpdate);
-					}
+
+					$basketToFUser->save();
+					$basketFromFUser->save();
 				}
 				Sale\BasketComponentHelper::updateFUserBasket($TO_FUSER_ID, SITE_ID);
 				Sale\BasketComponentHelper::updateFUserBasket($FROM_FUSER_ID, SITE_ID);
@@ -3647,16 +3662,23 @@ class CAllSaleUser
 			$dbUserLogin = CUser::GetByLogin($autoLogin);
 		}
 
-		$defaultGroup = COption::GetOptionString("main", "new_user_registration_def_group", "");
-		if ($defaultGroup != "")
+		$groups = [];
+
+		if (\Bitrix\Main\ModuleManager::isModuleInstalled('intranet') && \Bitrix\Main\Loader::includeModule('crm'))
 		{
-			$arDefaultGroup = explode(",", $defaultGroup);
-			$arPolicy = CUser::GetGroupPolicy($arDefaultGroup);
+			$groups = \Bitrix\Crm\Order\BuyerGroup::getDefaultGroups();
 		}
 		else
 		{
-			$arPolicy = CUser::GetGroupPolicy(array());
+			$defaultGroup = COption::GetOptionString("main", "new_user_registration_def_group", "");
+
+			if (!empty($defaultGroup))
+			{
+				$groups = explode(",", $defaultGroup);
+			}
 		}
+
+		$arPolicy = CUser::GetGroupPolicy($groups);
 
 		$passwordMinLength = intval($arPolicy["PASSWORD_LENGTH"]);
 		if ($passwordMinLength <= 0)
@@ -3675,8 +3697,10 @@ class CAllSaleUser
 			"LOGIN" => $autoLogin,
 			"PASSWORD" => $autoPassword,
 			"PASSWORD_CONFIRM" => $autoPassword,
-			"GROUP_ID" => $arDefaultGroup,
+			"GROUP_ID" => $groups,
 			"LID" => $siteId,
+			// reset department for intranet
+			'UF_DEPARTMENT' => []
 		);
 
 		if(strlen($autoName) > 0)
@@ -3840,6 +3864,8 @@ class CAllSaleUser
 	{
 		global $DB;
 
+		$DB->StartUsingMasterOnly();
+
 		$ID = IntVal($ID);
 		if ($ID <= 0)
 			return False;
@@ -3867,6 +3893,8 @@ class CAllSaleUser
 
 		$strSql = "UPDATE b_sale_fuser SET ".$strUpdate." WHERE ID = ".$ID." ";
 		$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+
+		$DB->StopUsingMasterOnly();
 
 		return $ID;
 	}

@@ -1,6 +1,6 @@
 <?
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Currency;
+use Bitrix\Main\Localization\Loc,
+	Bitrix\Currency;
 
 Loc::loadMessages(__FILE__);
 
@@ -127,6 +127,7 @@ class CAllCurrencyLang
 				$fields['LID'] = $language;
 			}
 		}
+
 		if (empty($errorMessages))
 		{
 			if (isset($fields['FORMAT_STRING']) && empty($fields['FORMAT_STRING']))
@@ -215,6 +216,70 @@ class CAllCurrencyLang
 				$fields['CREATED_BY'] = (int)$fields['CREATED_BY'];
 				if ($fields['CREATED_BY'] <= 0)
 					$fields['CREATED_BY'] = $intUserID;
+			}
+		}
+
+		if (empty($errorMessages))
+		{
+			if ($action == 'ADD')
+			{
+				if (!empty($fields['THOUSANDS_VARIANT']) && isset(self::$arSeparators[$fields['THOUSANDS_VARIANT']]))
+				{
+					if ($fields['DEC_POINT'] == self::$arSeparators[$fields['THOUSANDS_VARIANT']])
+					{
+						$errorMessages[] = array(
+							'id' => 'DEC_POINT',
+							'text' => Loc::getMessage(
+								'BT_CUR_LANG_ERR_DEC_POINT_EQUAL_THOUSANDS_SEP',
+								array('#LANG#' => $language)
+							)
+						);
+					}
+				}
+			}
+			else
+			{
+				if (
+					isset($fields['DEC_POINT'])
+					|| (isset($fields['THOUSANDS_VARIANT']) && isset(self::$arSeparators[$fields['THOUSANDS_VARIANT']]))
+				)
+				{
+					$copyFields = $fields;
+					$needFields = [];
+					if (!isset($copyFields['DEC_POINT']))
+						$needFields[] = 'DEC_POINT';
+					if (!isset($copyFields['THOUSANDS_VARIANT']))
+						$needFields[] = 'THOUSANDS_VARIANT';
+
+					if (!empty($needFields))
+					{
+						$row = Currency\CurrencyLangTable::getList([
+							'select' => $needFields,
+							'filter' => ['=CURRENCY' => $currency, '=LID' => $language]
+						])->fetch();
+						if (!empty($row))
+						{
+							$copyFields = array_merge($copyFields, $row);
+							$needFields = [];
+						}
+						unset($row);
+					}
+					if (
+						empty($needFields)
+						&& (!empty($copyFields['THOUSANDS_VARIANT']) && isset(self::$arSeparators[$copyFields['THOUSANDS_VARIANT']]))
+						&& ($copyFields['DEC_POINT'] == self::$arSeparators[$copyFields['THOUSANDS_VARIANT']])
+					)
+					{
+						$errorMessages[] = array(
+							'id' => 'DEC_POINT',
+							'text' => Loc::getMessage(
+								'BT_CUR_LANG_ERR_DEC_POINT_EQUAL_THOUSANDS_SEP',
+								array('#LANG#' => $language)
+							)
+						);
+					}
+					unset($needFields, $copyFields);
+				}
 			}
 		}
 
@@ -562,20 +627,28 @@ class CAllCurrencyLang
 		if ($currency === false)
 			return '';
 
-		$price = (float)$price;
-		$arCurFormat = (isset(self::$arCurrencyFormat[$currency]) ? self::$arCurrencyFormat[$currency] : self::GetFormatDescription($currency));
-		$intDecimals = $arCurFormat['DECIMALS'];
-		if (self::isAllowUseHideZero() && $arCurFormat['HIDE_ZERO'] == 'Y')
-		{
-			if (round($price, $arCurFormat["DECIMALS"]) == round($price, 0))
-				$intDecimals = 0;
-		}
-		$price = number_format($price, $intDecimals, $arCurFormat['DEC_POINT'], $arCurFormat['THOUSANDS_SEP']);
+		$format = (isset(self::$arCurrencyFormat[$currency])
+			? self::$arCurrencyFormat[$currency]
+			: self::GetFormatDescription($currency)
+		);
 
-		return (
-			$useTemplate
-			? self::applyTemplate($price, $arCurFormat['FORMAT_STRING'])
-			: $price
+		return self::formatValue($price, $format, $useTemplate);
+	}
+
+	public static function formatValue($value, array $format, $useTemplate = true)
+	{
+		$value = (float)$value;
+		$decimals = $format['DECIMALS'];
+		if (self::isAllowUseHideZero() && $format['HIDE_ZERO'] == 'Y')
+		{
+			if (round($value, $format['DECIMALS']) == round($value, 0))
+				$decimals = 0;
+		}
+		$result = number_format($value, $decimals, $format['DEC_POINT'], $format['THOUSANDS_SEP']);
+
+		return ($useTemplate
+			? self::applyTemplate($result, $format['FORMAT_STRING'])
+			: $result
 		);
 	}
 

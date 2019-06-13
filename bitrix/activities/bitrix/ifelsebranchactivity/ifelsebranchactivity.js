@@ -55,6 +55,8 @@ IfElseBranchActivity = function()
 
 		for(var i in ob.childActivities)
 		{
+			if (!ob.childActivities.hasOwnProperty(i))
+				continue;
 			ob.childActivities[i].Draw(ob.childsContainer.rows[ob.iHead + i*2 + 1].cells[0]);
 			ob.CreateLine(parseInt(i) + 1);
 		}

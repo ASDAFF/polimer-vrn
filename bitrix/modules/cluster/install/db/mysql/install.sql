@@ -65,7 +65,7 @@ CREATE TABLE b_cluster_table
 
 CREATE TABLE b_cluster_queue
 (
-	ID INT(11) NOT NULL auto_increment,
+	ID BIGINT(11) NOT NULL auto_increment,
 	TIMESTAMP_X TIMESTAMP,
 	GROUP_ID INT(11) NOT NULL,
 	COMMAND VARCHAR(50),

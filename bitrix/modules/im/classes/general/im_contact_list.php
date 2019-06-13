@@ -104,7 +104,7 @@ class CAllIMContactList
 		$arUserInGroup = array();
 		$arExtranetUsers = array();
 
-		$groups = \Bitrix\Im\Integration\Socialnetwork\Extranet::getGroup(Array('CURRENT_USER' => $this->user_id));
+		$groups = \Bitrix\Im\Integration\Socialnetwork\Extranet::getGroup(Array(), $this->user_id);
 		if (is_array($groups))
 		{
 			foreach ($groups as $groupId => $group)
@@ -205,7 +205,7 @@ class CAllIMContactList
 
 			$nameTemplate = self::GetUserNameTemplate(SITE_ID);
 			$nameTemplateSite = CSite::GetNameFormat(false);
-			$cache_id = 'im_contact_list_v21_'.$nameTemplate.'_'.$nameTemplateSite.(!empty($arExtranetUsers)? '_'.$USER->GetID(): '').$bVoximplantEnable.$bColorEnabled.$bOpenChatEnabled;
+			$cache_id = 'im_contact_list_v23_'.$nameTemplate.'_'.$nameTemplateSite.(!empty($arExtranetUsers)? '_'.$USER->GetID(): '').$bVoximplantEnable.$bColorEnabled.$bOpenChatEnabled;
 			$obCLCache = new CPHPCache;
 			$cache_dir = '/bx/imc/contact';
 
@@ -310,6 +310,7 @@ class CAllIMContactList
 						{
 							$arUser[$key] = !is_array($value) && !is_object($value)? htmlspecialcharsEx($value): $value;
 						}
+
 						$arFileTmp = CFile::ResizeImageGet(
 							$arUser["PERSONAL_PHOTO"],
 							array('width' => 100, 'height' => 100),
@@ -337,9 +338,9 @@ class CAllIMContactList
 
 						$arUsers[$arUser["ID"]] = Array(
 							'id' => $arUser["ID"],
-							'name' => CUser::FormatName($nameTemplateSite, $arUser, true, false),
+							'name' => \Bitrix\Im\User::formatFullNameFromDatabase($arUser),
 							'active' => $arUser['ACTIVE'] == 'Y',
-							'first_name' => $arUser['NAME'],
+							'first_name' => \Bitrix\Im\User::formatNameFromDatabase($arUser),
 							'last_name' => $arUser['LAST_NAME'],
 							'work_position' => $arUser['WORK_POSITION'],
 							'color' => $color,
@@ -388,6 +389,7 @@ class CAllIMContactList
 							$arPhones[$arUser["ID"]]['WORK_PHONE'] = $arUser['WORK_PHONE'];
 							$arPhones[$arUser["ID"]]['PERSONAL_MOBILE'] = $arUser['PERSONAL_MOBILE'];
 							$arPhones[$arUser["ID"]]['PERSONAL_PHONE'] = $arUser['PERSONAL_PHONE'];
+							$arPhones[$arUser["ID"]]['INNER_PHONE'] = $arUser['UF_PHONE_INNER'];
 						}
 					}
 				}
@@ -420,7 +422,7 @@ class CAllIMContactList
 				{
 					if (isset($arGroups[$dep_id]))
 					{
-						$arGroups[$dep_id]['status'] = (isset($arGroupStatus[$dep_id]) && $arGroupStatus[$dep_id] == 'close'? 'close': 'open');
+						$arGroups[$dep_id]['status'] = 'open';
 					}
 				}
 			}
@@ -590,9 +592,9 @@ class CAllIMContactList
 
 			$arUsers[$arUser["ID"]] = Array(
 				'id' => $arUser["ID"],
-				'name' => CUser::FormatName($nameTemplateSite, $arUser, true, false),
+				'name' => \Bitrix\Im\User::formatFullNameFromDatabase($arUser),
 				'active' => $arUser['ACTIVE'] == 'Y',
-				'first_name' => $arUser['NAME'],
+				'first_name' => \Bitrix\Im\User::formatNameFromDatabase($arUser),
 				'last_name' => $arUser['LAST_NAME'],
 				'work_position' => $arUser['WORK_POSITION'],
 				'color' => self::GetUserColor($arUser["ID"], $arUser['PERSONAL_GENDER'] == 'M'? 'M': 'F'),
@@ -667,9 +669,9 @@ class CAllIMContactList
 						$id = 'network'.$arUser["NETWORK_ID"];
 						$arUsers[$id] = Array(
 							'id' => $id,
-							'name' => CUser::FormatName($nameTemplateSite, $arUser, true, false),
+							'name' => \Bitrix\Im\User::formatFullNameFromDatabase($arUser),
 							'active' => true,
-							'first_name' => $arUser['NAME'],
+							'first_name' => \Bitrix\Im\User::formatNameFromDatabase($arUser),
 							'last_name' => $arUser['LAST_NAME'],
 							'work_position' => $arUser['CLIENT_DOMAIN'],
 							'color' => IM\Color::getColor('GRAY'),
@@ -863,7 +865,7 @@ class CAllIMContactList
 	{
 		$getDepartment = $arParams['DEPARTMENT'] == 'N' ? false : true;
 		$getHrPhoto = $arParams['HR_PHOTO'] == 'Y' ? true : false;
-		$getPhones = $arParams['PHONES'] == 'Y' ? true : false;
+		$getPhones = $arParams['PHONES'] == 'Y' && IsModuleInstalled('intranet')? true : false;
 		$useCache = $arParams['USE_CACHE'] == 'N' ? false : true;
 		$showOnline = $arParams['SHOW_ONLINE'] == 'N' ? false : true;
 		$extraFields = $arParams['EXTRA_FIELDS'] == 'Y' ? true : false;
@@ -907,7 +909,7 @@ class CAllIMContactList
 				$cache_ttl = defined("BX_COMP_MANAGED_CACHE") ? 18144000 : 1800;
 
 			$uid = (is_object($USER)? $USER->GetID(): 'AGENT');
-            $cache_id = 'user_data_v29_'.$uid.'_'.implode('|', $arFilter['=ID']).'_'.$nameTemplate.'_'.$nameTemplateSite.'_'.$extraFields.'_'.$getPhones.'_'.$getDepartment.'_'.$bIntranetEnable.'_'.$bVoximplantEnable.'_'.LANGUAGE_ID.'_'.$bColorEnabled;
+            $cache_id = 'user_data_v31_'.$uid.'_'.implode('|', $arFilter['=ID']).'_'.$nameTemplate.'_'.$nameTemplateSite.'_'.$extraFields.'_'.$getPhones.'_'.$getDepartment.'_'.$bIntranetEnable.'_'.$bVoximplantEnable.'_'.LANGUAGE_ID.'_'.$bColorEnabled;
 
      		$userHash = md5($uid);
             $cache_dir = '/bx/imc/userdata/'.substr($userHash, 0, 2).'/'.substr($userHash, 2, 2);
@@ -1026,9 +1028,9 @@ class CAllIMContactList
 
 			$arUsers[$arUser["ID"]] = Array(
 				'id' => $arUser["ID"],
-				'name' => CUser::FormatName($nameTemplateSite, $arUser, true, false),
+				'name' => \Bitrix\Im\User::formatFullNameFromDatabase($arUser),
 				'active' => $arUser['ACTIVE'] == 'Y',
-				'first_name' => $arUser['NAME'],
+				'first_name' => \Bitrix\Im\User::formatNameFromDatabase($arUser),
 				'last_name' => $arUser['LAST_NAME'],
 				'work_position' => $arUser['WORK_POSITION'],
 				'color' => $color,
@@ -1110,6 +1112,7 @@ class CAllIMContactList
 					$arPhones[$arUser["ID"]]['WORK_PHONE'] = $arUser['WORK_PHONE'];
 					$arPhones[$arUser["ID"]]['PERSONAL_MOBILE'] = $arUser['PERSONAL_MOBILE'];
 					$arPhones[$arUser["ID"]]['PERSONAL_PHONE'] = $arUser['PERSONAL_PHONE'];
+					$arPhones[$arUser["ID"]]['INNER_PHONE'] = $arUser['UF_PHONE_INNER'];
 				}
 				if (isset($arPhones[$arUser["ID"]]))
 				{
@@ -1323,6 +1326,8 @@ class CAllIMContactList
 
 	public static function DeleteRecent($entityId, $isChat = false, $userId = false)
 	{
+		global $DB;
+
 		if (is_array($entityId))
 		{
 			foreach ($entityId as $key => $value)
@@ -1344,16 +1349,22 @@ class CAllIMContactList
 		if (intval($userId) <= 0)
 			$userId = $GLOBALS['USER']->GetID();
 
-		global $DB;
-
 		if ($isChat)
 		{
-			$itemType = "ITEM_TYPE != '".IM_MESSAGE_PRIVATE."'";
+			$itemType = "ITEM_TYPE IN ('".implode("','", \Bitrix\Im\Chat::getTypes())."')";
 		}
 		else
 		{
 			$itemType = "ITEM_TYPE = '".IM_MESSAGE_PRIVATE."'";
 		}
+
+		$strSQL = "
+			UPDATE b_im_relation R
+			INNER JOIN b_im_recent RC ON RC.USER_ID = ".$userId." AND RC.".$itemType." AND RC.".$sqlEntityId."
+			SET R.STATUS = '".IM_STATUS_READ."', R.UNREAD_ID = 0, R.MESSAGE_STATUS = '".IM_MESSAGE_STATUS_RECEIVED."', R.COUNTER = 0, R.LAST_READ = NOW()
+			WHERE R.ID = RC.ITEM_RID;
+		";
+		$DB->Query($strSQL, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
 
 		$strSQL = "DELETE FROM b_im_recent WHERE USER_ID = ".$userId." AND ".$itemType." AND ".$sqlEntityId;
 		$DB->Query($strSQL, false, "FILE: ".__FILE__."<br> LINE: ".__LINE__);
@@ -1372,6 +1383,8 @@ class CAllIMContactList
 				CPullWatch::Delete($userId, 'IM_PUBLIC_'.intval($entityId));
 			}
 		}
+
+		\Bitrix\Im\Counter::clearCache($userId);
 
 		$obCache = new CPHPCache();
 		$obCache->CleanDir('/bx/imc/recent'.CIMMessenger::GetCachePath($userId));
@@ -1419,10 +1432,7 @@ class CAllIMContactList
 				'params' => Array(
 					'dialogId' => $dialogId
 				),
-				'extra' => Array(
-					'im_revision' => IM_REVISION,
-					'im_revision_mobile' => IM_REVISION_MOBILE,
-				),
+				'extra' => \Bitrix\Im\Common::getPullExtra()
 			));
 		}
 
@@ -1589,9 +1599,9 @@ class CAllIMContactList
 
 					$item['USER'] = Array(
 						'id' => $arRes['ITEM_ID'],
-						'name' => CUser::FormatName($nameTemplateSite, $arRes, true, false),
+						'name' => \Bitrix\Im\User::formatFullNameFromDatabase($arRes),
 						'active' => $arRes['ACTIVE'] == 'Y',
-						'first_name' => $arRes['NAME'],
+						'first_name' => \Bitrix\Im\User::formatNameFromDatabase($arRes),
 						'last_name' => $arRes['LAST_NAME'],
 						'work_position' => $arRes['WORK_POSITION'],
 						'color' => self::GetUserColor($arRes["ID"], $arRes['PERSONAL_GENDER'] == 'M'? 'M': 'F'),
@@ -1619,13 +1629,10 @@ class CAllIMContactList
 				}
 				else
 				{
-					if ($arRes["CHAT_ENTITY_TYPE"] == 'CALL')
+					$chatType = \Bitrix\Im\Chat::getType($arRes);
+
+					if ($arRes["CHAT_ENTITY_TYPE"] == 'LINES')
 					{
-						$chatType = 'call';
-					}
-					else if ($arRes["CHAT_ENTITY_TYPE"] == 'LINES')
-					{
-						$chatType = 'lines';
 						if ($isOperator)
 						{
 							$item['LINES'] = Array(
@@ -1634,17 +1641,9 @@ class CAllIMContactList
 							);
 						}
 					}
-					else if ($arRes["CHAT_ENTITY_TYPE"] == 'LIVECHAT')
+					else if ($generalChatId == $arRes['M_CHAT_ID'])
 					{
-						$chatType = 'livechat';
-					}
-					else
-					{
-						if ($generalChatId == $arRes['M_CHAT_ID'])
-						{
-							$arRes["CHAT_ENTITY_TYPE"] = 'GENERAL';
-						}
-						$chatType = $arRes["ITEM_TYPE"] == IM_MESSAGE_OPEN? 'open': 'chat';
+						$arRes["CHAT_ENTITY_TYPE"] = 'GENERAL';
 					}
 
 					$muteList = Array();
@@ -1656,7 +1655,7 @@ class CAllIMContactList
 					$itemId = 'chat'.$itemId;
 					$item['CHAT'] = Array(
 						'id' => $arRes['ITEM_ID'],
-						'name' => $arRes["C_TITLE"],
+						'name' => \Bitrix\Im\Text::decodeEmoji($arRes["C_TITLE"]),
 						'color' => $arRes["CHAT_COLOR"] == ""? IM\Color::getColorByNumber($arRes['ITEM_ID']): IM\Color::getColor($arRes['CHAT_COLOR']),
 						'avatar' => CIMChat::GetAvatarImage($arRes["C_AVATAR"]),
 						'extranet' => $arRes["CHAT_EXTRANET"] == ""? "": ($arRes["CHAT_EXTRANET"] == "Y"? true: false),
@@ -1989,6 +1988,14 @@ class CAllIMContactList
 			if (substr($userId, 0, 7) == 'network')
 			{
 				$networkId[$userId] = substr($userId, 7);
+			}
+			elseif (substr($userId, 0, 10) == 'department')
+			{
+				$sid = intval(substr($userId, 10));
+				if ($sid > 0)
+				{
+					$structureId[$userId] = $sid;
+				}
 			}
 			elseif (substr($userId, 0, 9) == 'structure')
 			{

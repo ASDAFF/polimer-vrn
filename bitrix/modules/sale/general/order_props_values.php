@@ -7,8 +7,7 @@ use	Bitrix\Sale\Compatible,
 
 Loc::loadMessages(__FILE__);
 
-/** @deprecated */
-class CSaleOrderPropsValue
+class CAllSaleOrderPropsValue
 {
 	function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
 	{
@@ -36,10 +35,10 @@ class CSaleOrderPropsValue
 
 		// add aliases
 
-		$query = new Compatible\OrderQueryLocation(Internals\OrderPropsValueTable::getEntity());
-		$query->addLocationRuntimeField('VALUE', 'PROPERTY');
+		$query = new Compatible\OrderPropertyValuesQuery(Internals\OrderPropsValueTable::getEntity());
 		$query->addAliases(array(
 			// for GetList
+			'VALUE_ORIG'           => 'VALUE',
 			'PROP_ID'              => 'PROPERTY.ID',
 			'PROP_PERSON_TYPE_ID'  => 'PROPERTY.PERSON_TYPE_ID',
 			'PROP_NAME'            => 'PROPERTY.NAME',

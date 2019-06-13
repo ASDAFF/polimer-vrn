@@ -20,4 +20,6 @@ $MESS["REPORT_CHART_TYPE_PIE"] = "Kreisdiagramm";
 $MESS["REPORT_UNKNOWN_FIELD_DEFINITION"] = "Im Bericht wird ein nicht existierendes Feld verwendet. Möglicherweise ist das ein benutzerdefiniertes Feld, welches gelöscht wurde. Sie müssen die Einstellungen des Berichts überprüfen und erneut speichern.";
 $MESS["REPORT_HELPER_NOT_DEFINED"] = "Es wurde keine Hilfsklasse definiert.";
 $MESS["REPORT_COLUMNS_HAS_CYCLIC_DEPENDENCY"] = "Bericht kann nicht erstellt werden, weil es in einer oder in mehreren Spalten einen zirkelbezug gibt. Stellen Sie bitte sicher, dass die Spalten mit der Operation \"% vom Feldwert\" nicht den Zirkelbezug aufweisen.";
+$MESS["REPORT_STEXPORT_TITLE"] = "Bericht exportieren";
+$MESS["REPORT_STEXPORT_SUMMARY"] = "Es wird eine Berichtsdatei erstellt. Der Export von einem großen Datenumfang kann einige Zeit dauern.";
 ?>

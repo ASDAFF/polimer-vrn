@@ -1,4 +1,5 @@
 <?
+$MESS["SONET_UM_MARKETPLACE"] = "Застосунки";
 $MESS["BLOG_MODULE_NOT_INSTALL"] = "Модуль соціальної мережі не встановлений.";
 $MESS["SONET_P_USER_NO_USER"] = "Користувач не знайдений.";
 $MESS["SONET_P_USER_NO_GROUP"] = "Група не знайдена.";

@@ -63,6 +63,70 @@ class StatusTable extends Main\Entity\DataManager
 				'title'         => Loc::getMessage('B_SALE_STATUS_COLOR'),
 			)),
 
+			new Main\Entity\StringField('XML_ID', array(
+				'title' => Loc::getMessage('B_SALE_STATUS_XML_ID'),
+			)),
+
+			new Main\ORM\Fields\Relations\Reference(
+				'STATUS_LANG',
+				StatusLangTable::class,
+				Main\ORM\Query\Join::on('this.ID', 'ref.STATUS_ID'),
+				array('join_type' => 'left')
+			)
 		);
+	}
+
+	/**
+	 * @param mixed $primary
+	 * @param array $data
+	 *
+	 * @return Main\Entity\UpdateResult
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws \Exception
+	 */
+	public static function update($primary, array $data)
+	{
+		$result = parent::update($primary, $data);
+		if (Main\Config\Option::get('sale', 'expiration_processing_events', 'N') === 'Y')
+		{
+			foreach (GetModuleEvents("sale", "OnStatusUpdate", true) as $event)
+			{
+				ExecuteModuleEventEx($event, array($primary, $data));
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array $data
+	 *
+	 * @return Main\Entity\AddResult
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws \Exception
+	 */
+	public static function add(array $data)
+	{
+		$result = parent::add($data);
+		if (Main\Config\Option::get('sale', 'expiration_processing_events', 'N') === 'Y')
+		{
+			$id = $result->getId();
+			foreach (GetModuleEvents("sale", "OnStatusAdd", true) as $event)
+			{
+				ExecuteModuleEventEx($event, array($id, $data));
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function generateXmlId()
+	{
+		return uniqid('bx_');
 	}
 }

@@ -15,4 +15,6 @@ $MESS["BPAA_DESCR_REJECTERS"] = "Відхилили користувачі";
 $MESS["BPAA_DESCR_LA_COMMENT"] = "Коментар останнього голосуючого";
 $MESS["BPAA_DESCR_CM"] = "Коментарі";
 $MESS["BPAA_DESCR_TASKS"] = "Завдання";
+$MESS["BPAA_DESCR_APPROVERS_STRING"] = "Затвердили користувачі (текст)";
+$MESS["BPAA_DESCR_REJECTERS_STRING"] = "Відхилили користувачі (текст)";
 ?>

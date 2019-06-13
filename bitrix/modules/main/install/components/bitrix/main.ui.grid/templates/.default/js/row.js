@@ -35,12 +35,53 @@
 				this.node = node;
 				this.parent = parent;
 				this.settings = new BX.Grid.Settings();
+				this.bindNodes = [];
+
+				if (this.isBodyChild())
+				{
+					this.bindNodes = [].slice.call(this.node.parentNode.querySelectorAll("tr[data-bind=\""+this.getId()+"\"]"));
+					if (this.bindNodes.length)
+					{
+						this.node.addEventListener("mouseover", this.onMouseOver.bind(this));
+						this.node.addEventListener("mouseleave", this.onMouseLeave.bind(this));
+						this.bindNodes.forEach(function(row) {
+							row.addEventListener("mouseover", this.onMouseOver.bind(this));
+							row.addEventListener("mouseleave", this.onMouseLeave.bind(this));
+							row.addEventListener("click", function() {
+								if (this.isSelected())
+								{
+									this.unselect()
+								}
+								else
+								{
+									this.select();
+								}
+							}.bind(this));
+						}, this);
+					}
+				}
 
 				if (this.parent.getParam('ALLOW_CONTEXT_MENU'))
 				{
 					BX.bind(this.getNode(), 'contextmenu', BX.delegate(this._onRightClick, this));
 				}
 			}
+		},
+
+		onMouseOver: function()
+		{
+			this.node.classList.add("main-grid-row-over");
+			this.bindNodes.forEach(function(row) {
+				row.classList.add("main-grid-row-over");
+			});
+		},
+
+		onMouseLeave: function()
+		{
+			this.node.classList.remove("main-grid-row-over");
+			this.bindNodes.forEach(function(row) {
+				row.classList.remove("main-grid-row-over");
+			});
 		},
 
 		isCustom: function()
@@ -77,6 +118,13 @@
 				{
 					cellValues.forEach(function(cellValue) {
 						values[cellValue.NAME] = cellValue.VALUE !== undefined ? cellValue.VALUE : "";
+
+						if (cellValue.hasOwnProperty("RAW_NAME") && cellValue.hasOwnProperty("RAW_VALUE"))
+						{
+							values[cellValue.NAME + "_custom"] = values[cellValue.NAME + "_custom"] || {};
+							values[cellValue.NAME + "_custom"][cellValue.RAW_NAME] =
+								values[cellValue.NAME + "_custom"][cellValue.RAW_NAME] || cellValue.RAW_VALUE;
+						}
 					});
 				}
 				else if (cellValues)
@@ -105,7 +153,8 @@
 				else if(BX.hasClass(editor, 'main-grid-editor-custom'))
 				{
 					result = [];
-					editor.querySelectorAll('input, select, checkbox, textarea').forEach(function(element) {
+					var inputs = [].slice.call(editor.querySelectorAll('input, select, checkbox, textarea'));
+					inputs.forEach(function(element) {
 						switch (element.tagName)
 						{
 							case "SELECT":
@@ -120,6 +169,8 @@
 									});
 									result.push({
 										'NAME': editor.getAttribute('data-name'),
+										'RAW_NAME': element.name,
+										'RAW_VALUE': selectValues,
 										'VALUE': selectValues
 									});
 								}
@@ -127,6 +178,8 @@
 								{
 									result.push({
 										'NAME': editor.getAttribute('data-name'),
+										'RAW_NAME': element.name,
+										'RAW_VALUE': element.value,
 										'VALUE': element.value
 									});
 								}
@@ -134,17 +187,20 @@
 							case 'INPUT':
 								switch(element.type.toUpperCase())
 								{
+									case 'RADIO':
 									case 'CHECKBOX':
 										result.push({
 											'NAME': editor.getAttribute('data-name'),
+											'RAW_NAME': element.name,
+											'RAW_VALUE': element.checked ? element.value : '',
 											'VALUE': element.checked ? element.value : ''
 										});
-										break;
-									case 'HIDDEN':
 										break;
 									default:
 										result.push({
 											'NAME': editor.getAttribute('data-name'),
+											'RAW_NAME': element.name,
+											'RAW_VALUE': element.value,
 											'VALUE': element.value
 										});
 								}
@@ -152,6 +208,8 @@
 							default:
 								result.push({
 									'NAME': editor.getAttribute('data-name'),
+									'RAW_NAME': element.name,
+									'RAW_VALUE': element.value,
 									'VALUE': element.value
 								});
 						}
@@ -362,9 +420,7 @@
 		 */
 		setParentId: function(id)
 		{
-			id = id.toString();
-			var dataset = this.getDataset();
-			dataset['parentId'] = id;
+			this.getDataset()['parentId'] = id;
 		},
 
 
@@ -542,7 +598,7 @@
 				}
 
 				BX.onCustomEvent(window, 'Grid::rowUpdated', [{id: id, data: data, grid: self.parent, response: this}]);
-				BX.onCustomEvent(window, 'Grid::updated', []);
+				BX.onCustomEvent(window, 'Grid::updated', [self.parent]);
 
 				if (BX.type.isFunction(callback))
 				{
@@ -591,7 +647,7 @@
 				}
 
 				BX.onCustomEvent(window, 'Grid::rowRemoved', [{id: id, data: data, grid: self.parent, response: this}]);
-				BX.onCustomEvent(window, 'Grid::updated', []);
+				BX.onCustomEvent(window, 'Grid::updated', [self.parent]);
 
 				if (BX.type.isFunction(callback))
 				{
@@ -681,22 +737,25 @@
 			var editObject, editor, height, contentContainer;
 
 			[].forEach.call(cells, function(current, index) {
-				try {
-					editObject = self.getCellEditDataByCellIndex(index);
-				} catch (err) {
-					throw new Error(err);
-				}
-
-				if (self.parent.getEditor().validateEditObject(editObject))
+				if (current.dataset.editable === 'true')
 				{
-					contentContainer = self.getContentContainer(current);
-					height = BX.height(contentContainer);
-					editor = self.parent.getEditor().getEditor(editObject, height);
+					try {
+						editObject = self.getCellEditDataByCellIndex(index);
+					} catch (err) {
+						throw new Error(err);
+					}
 
-					if (!self.getEditorContainer(current) && BX.type.isDomNode(editor))
+					if (self.parent.getEditor().validateEditObject(editObject))
 					{
-						current.appendChild(editor);
-						BX.hide(contentContainer);
+						contentContainer = self.getContentContainer(current);
+						height = BX.height(contentContainer);
+						editor = self.parent.getEditor().getEditor(editObject, height);
+
+						if (!self.getEditorContainer(current) && BX.type.isDomNode(editor))
+						{
+							current.appendChild(editor);
+							BX.hide(contentContainer);
+						}
 					}
 				}
 			});
@@ -791,11 +850,19 @@
 					}
 				}.bind(this));
 
-				BX.bind(this.actionsMenu.popupWindow.popupContainer, 'click', BX.delegate(function() {
+				BX.bind(this.actionsMenu.popupWindow.popupContainer, 'click', BX.delegate(function(event) {
 					var actionsMenu = this.getActionsMenu();
 					if (actionsMenu)
 					{
-						actionsMenu.close();
+						var target = BX.getEventTarget(event);
+						var item = BX.findParent(target, {
+							className: 'menu-popup-item'
+						}, 10);
+
+						if (!item || !item.dataset.preventCloseContextMenu)
+						{
+							actionsMenu.close();
+						}
 					}
 				}, this));
 			}
@@ -819,12 +886,12 @@
 
 		showActionsMenu: function(event)
 		{
+			BX.fireEvent(document.body, 'click');
+
 			this.getActionsMenu().popupWindow.show();
 
 			if (event)
 			{
-				BX.fireEvent(document.body, 'click');
-
 				this.getActionsMenu().popupWindow.popupContainer.style.top = ((event.pageY - 25) + BX.PopupWindow.getOption("offsetTop")) + "px";
 				this.getActionsMenu().popupWindow.popupContainer.style.left = ((event.pageX + 20) + BX.PopupWindow.getOption("offsetLeft")) + "px";
 			}
@@ -911,7 +978,7 @@
 		{
 			var checkbox;
 
-			if (!this.isEdit())
+			if (!this.isEdit() && !this.parent.getRows().hasEditable())
 			{
 				checkbox = this.getCheckbox();
 
@@ -920,6 +987,9 @@
 					if (!BX.data(checkbox, 'disabled'))
 					{
 						BX.addClass(this.getNode(), this.settings.get('classCheckedRow'));
+						this.bindNodes.forEach(function(row) {
+							BX.addClass(row, this.settings.get('classCheckedRow'));
+						}, this);
 						checkbox.checked = true;
 					}
 				}
@@ -931,6 +1001,9 @@
 			if (!this.isEdit())
 			{
 				BX.removeClass(this.getNode(), this.settings.get('classCheckedRow'));
+				this.bindNodes.forEach(function(row) {
+					BX.removeClass(row, this.settings.get('classCheckedRow'));
+				}, this);
 				if (this.getCheckbox())
 				{
 					this.getCheckbox().checked = false;

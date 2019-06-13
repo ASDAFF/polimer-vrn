@@ -84,7 +84,7 @@ $CurrentUserPerms = CSocNetUserPerms::InitUserPerms(
 $dbUser = CUser::GetByID($arParams["ID"]);
 $arResult["User"] = $dbUser->GetNext();
 
-if (in_array($arResult["User"]["EXTERNAL_AUTH_ID"], \Bitrix\Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector'))))
+if (in_array($arResult["User"]["EXTERNAL_AUTH_ID"], \Bitrix\Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array('bot', 'imconnector', 'replica'))))
 {
 	$CurrentUserPerms["Operations"]["modifyuser_main"] = false;
 	$CurrentUserPerms["Operations"]["modifyuser"] = false;
@@ -107,6 +107,17 @@ $arResult["bEdit"] = (
 		? "Y"
 		: "N"
 );
+
+//check integrator for cloud
+if (
+	CModule::IncludeModule("bitrix24")
+	&& $arResult["User"]["ID"] != $USER->GetID()
+	&& \CBitrix24::isIntegrator($USER->GetID())
+	&& \CBitrix24::IsPortalAdmin($arResult["User"]["ID"])
+)
+{
+	$arResult["bEdit"] = "N";
+}
 
 if ($arResult['bEdit'] != 'Y')
 {
@@ -314,8 +325,6 @@ else
 			'LOGIN', 'PASSWORD', 'CONFIRM_PASSWORD',
 		);
 
-		$removeAdminRights = false;
-
 		$arFieldsValue = array();
 		foreach ($arFields as $key)
 		{
@@ -329,20 +338,8 @@ else
 				if (sizeof($arPICTURE_WORK) != 0)
 					$arFieldsValue[$key] = $arPICTURE_WORK;
 			}
-			elseif ('GROUP_ID' == $key)
+			elseif ('GROUP_ID' == $key && !IsModuleInstalled("bitrix24"))
 			{
-				//moving admin rights to another user
-				if (
-					\Bitrix\Main\Loader::includeModule("bitrix24")
-					&& in_array(1, $_POST[$key])
-					&& $USER->GetID() != $arResult["User"]['ID']
-					&& $arResult["User"]['ACTIVE'] == "Y"
-					&& !CBitrix24::isMoreAdminAvailable()
-				)
-				{
-					$removeAdminRights = true;
-				}
-
 				if (is_array($arGroupsCanEditID) && is_array($_POST[$key]))
 				{
 					$arFieldsValue[$key] = array_intersect($_POST[$key], $arGroupsCanEditID);
@@ -350,6 +347,51 @@ else
 			}
 			elseif ($_POST[$key] !== $arResult['User'][$key])
 				$arFieldsValue[$key] = $_POST[$key];
+		}
+
+		$removeAdminRights = false;
+
+		//groups for bitrix24 cloud
+		if (
+			\Bitrix\Main\Loader::includeModule("bitrix24")
+			&& \CBitrix24::IsPortalAdmin($USER->GetID())
+			&& $USER->GetID() != $arResult["User"]['ID']
+			&& !( // not extranet
+				!is_array($arResult["User"]['UF_DEPARTMENT'])
+				|| empty($arResult["User"]['UF_DEPARTMENT'][0])
+			)
+			&& $arResult["User"]['ACTIVE'] == "Y"
+		)
+		{
+			//moving admin rights to another user
+			if (
+				!\CBitrix24::IsPortalAdmin($arResult["User"]['ID'])
+				&& $_POST["IS_ADMIN"] == "Y"
+				&& !CBitrix24::isMoreAdminAvailable()
+			)
+			{
+				$removeAdminRights = true;
+			}
+			
+			$curUserGroups = CUser::GetUserGroup($arResult["User"]['ID']);
+			foreach ($curUserGroups as $groupKey => $group)
+			{
+				if ($group == 1 || $group == 12 || $group == 11)
+				{
+					unset($curUserGroups[$groupKey]);
+				}
+			}
+			if ($_POST["IS_ADMIN"] == "Y")
+			{
+				$curUserGroups[] = "1";
+				$curUserGroups[] = "12";
+			}
+			else
+			{
+				$curUserGroups[] = "11";
+			}
+
+			$arFieldsValue["GROUP_ID"] = $curUserGroups;
 		}
 
 		//time zones
@@ -517,18 +559,19 @@ else
 
 	if (CModule::IncludeModule('mail'))
 	{
-		$dbMailbox = CMailbox::getList(
-			array(
-				'TIMESTAMP_X' => 'DESC'
+		$dbMailbox = \Bitrix\Mail\MailboxTable::getList(array(
+			'filter' => array(
+				'=LID' => SITE_ID,
+				'=ACTIVE' => 'Y',
+				'=USER_ID' => $arParams['ID'],
+				'=SERVER_TYPE' => 'imap',
 			),
-			array(
-				'LID'     => SITE_ID,
-				'ACTIVE'  => 'Y',
-				'USER_ID' => intval($arParams['ID']),
-				'SERVER_TYPE' => 'imap|controller|domain'
-			)
-		);
+			'order' => array(
+				'TIMESTAMP_X' => 'DESC',
+			),
+		));
 		$mailbox = $dbMailbox->fetch();
+		\Bitrix\Mail\MailboxTable::normalizeEmail($mailbox);
 		if (strpos($mailbox['LOGIN'], '@') !== false)
 			$arResult['User']['MAILBOX'] = $mailbox['LOGIN'];
 	}

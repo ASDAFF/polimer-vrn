@@ -19,4 +19,16 @@ $MESS["SONET_GRE_T_SUBTITLE_OUT_PROJECT"] = "Project membership invitations";
 $MESS["SONET_GRE_T_NO_REQUESTS_DESCR_PROJECT"] = "Shows user requests for project membership.";
 $MESS["SONET_GRE_T_NO_REQUESTS_OUT_DESCR_PROJECT"] = "Shows project membership invitations.";
 $MESS["SONET_GRE_T_INVITE_PROJECT"] = "Invite to project";
+$MESS["SONET_GRE_T_USER"] = "User";
+$MESS["SONET_GRE_T_DATE_REQUEST_IN"] = "Request date";
+$MESS["SONET_GRE_T_DATE_REQUEST_OUT"] = "Invite date";
+$MESS["SONET_GRE_T_MESSAGE2_IN"] = "Request text";
+$MESS["SONET_GRE_T_MESSAGE2_OUT"] = "Invitation text";
+$MESS["SONET_GRE_T_NO_REQUESTS2"] = "There are no currently workgroup membership requests.";
+$MESS["SONET_GRE_T_NO_REQUESTS2_PROJECT"] = "There are no currently project membership requests.";
+$MESS["SONET_GRE_T_NO_REQUESTS2_OUT"] = "There are no currently workgroup invitations.";
+$MESS["SONET_GRE_T_NO_REQUESTS2_OUT_PROJECT"] = "There are no currently project invitations.";
+$MESS["SONET_GRE_T_ERROR"] = "Error processing request.";
+$MESS["SONET_GRE_T_BUTTON_ACCEPT"] = "Accept";
+$MESS["SONET_GRE_T_BUTTON_DECLINE"] = "Decline";
 ?>

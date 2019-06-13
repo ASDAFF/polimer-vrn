@@ -1,4 +1,5 @@
 <?
+$MESS["SPO_DISALLOW_CANCEL"] = "Stornierung der Bestellung nicht erlauben";
 $MESS["SPO_ORDERS_PER_PAGE"] = "Bestellungen pro Seite";
 $MESS["SPO_DESC_YES"] = "Ja";
 $MESS["SPO_DESC_NO"] = "Nein";

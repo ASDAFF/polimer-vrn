@@ -52,7 +52,7 @@ class CSaleDeliveryRequestProcessComponent extends CBitrixComponent
 	{
 		global $APPLICATION;
 
-		if ($APPLICATION->GetGroupRight("sale") < "W")
+		if ($APPLICATION->GetGroupRight("sale") < "U")
 		{
 			ShowError(Loc::getMessage('SALE_CSDRP_ACCESS_DENIED'));
 			return;

@@ -3,8 +3,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\ModuleManager;
+use \Bitrix\Socialnetwork\ComponentHelper;
+use \Bitrix\Blog\Item\Permissions;
 
-global $USER_FIELD_MANAGER, $CACHE_MANAGER;
+global $USER_FIELD_MANAGER, $CACHE_MANAGER, $DB;
 
 /** @var SocialnetworkBlogPostComment $this */
 /** @var array $arParams */
@@ -140,6 +142,21 @@ $arParams["ATTACHED_IMAGE_MAX_HEIGHT_FULL"] = (IntVal($arParams["ATTACHED_IMAGE_
 
 $commentUrlID = IntVal($_REQUEST[$arParams["COMMENT_ID_VAR"]]);
 
+$arParams["NAV_TYPE_NEW"] = (isset($arParams['NAV_TYPE_NEW']) && $arParams['NAV_TYPE_NEW'] == 'Y' ? 'Y' : 'N');
+$arResult['firstPage'] = (
+	!isset($_REQUEST["last_comment_id"]) // web
+	&& empty($_REQUEST["FILTER"]) // mobile
+	&& $commentUrlID <= 0
+/*
+	&& (
+		empty($arParams['LOG_CONTENT_ITEM_TYPE'])
+		|| $arParams['LOG_CONTENT_ITEM_TYPE'] != \Bitrix\Socialnetwork\LogIndexTable::ITEM_TYPE_COMMENT
+		|| empty($arParams['LOG_CONTENT_ITEM_ID'])
+		|| intval($arParams['LOG_CONTENT_ITEM_ID']) <= 0
+	)
+*/
+);
+
 $arParams["DATE_TIME_FORMAT_S"] = $arParams["DATE_TIME_FORMAT"];
 
 CSocNetLogComponent::processDateTimeFormatParams($arParams);
@@ -211,8 +228,8 @@ $arParams["COMMENT_PROPERTY"][] = "UF_BLOG_COMM_URL_PRV";
 $arBlog = $arParams["BLOG_DATA"];
 $arPost = $arParams["POST_DATA"];
 
-$arResult["Perm"] = BLOG_PERMS_DENY;
-$arResult["PostPerm"] = BLOG_PERMS_DENY;
+$arResult["Perm"] = Permissions::DENY;
+$arResult["PostPerm"] = Permissions::DENY;
 $arResult["PermBySG"] = false;
 
 if(IntVal($_REQUEST["comment_post_id"]) > 0)
@@ -225,8 +242,8 @@ if(IntVal($_REQUEST["comment_post_id"]) > 0)
 
 	if($arPost["AUTHOR_ID"] == $user_id)
 	{
-		$arResult["Perm"] = BLOG_PERMS_FULL;
-		$arResult["PostPerm"] = BLOG_PERMS_FULL;
+		$arResult["Perm"] = Permissions::FULL;
+		$arResult["PostPerm"] = Permissions::FULL;
 	}
 	else
 	{
@@ -236,7 +253,7 @@ if(IntVal($_REQUEST["comment_post_id"]) > 0)
 				: $arParams["POST_DATA"]["perms"]
 		);
 
-		if ($arResult["PostPerm"] > BLOG_PERMS_DENY)
+		if ($arResult["PostPerm"] > Permissions::DENY)
 		{
 			$arResult["Perm"] = CBlogComment::GetSocNetUserPerms($arParams["ID"], $arPost["AUTHOR_ID"]);
 		}
@@ -252,15 +269,30 @@ else
 			: $arParams["POST_DATA"]["perms"]
 	);
 
-	if($arResult["PostPerm"] > BLOG_PERMS_DENY)
+	if($arResult["PostPerm"] > Permissions::DENY)
 	{
-		$arResult["Perm"] = (
-			$arResult["bIntranetInstalled"]
-			&& IsModuleInstalled("bitrix24")
-			&& $arParams["POST_DATA"]["HAVE_ALL_IN_ADR"] == "Y"
-				? ($arPost["AUTHOR_ID"] == $user_id ? BLOG_PERMS_FULL : BLOG_PERMS_WRITE)
-				: CBlogComment::GetSocNetUserPermsNew($arParams["ID"], $arPost["AUTHOR_ID"], $USER->getID(), $arResult["PermBySG"])
-		);
+		if ($arResult["bIntranetInstalled"])
+		{
+			if(
+				$arPost["AUTHOR_ID"] == $user_id
+				|| CSocNetUser::isCurrentUserModuleAdmin()
+			)
+			{
+				$arResult["Perm"] = Permissions::FULL;
+			}
+			else
+			{
+				$arResult["Perm"] = (
+					$arParams["POST_DATA"]["HAVE_ALL_IN_ADR"] == "Y"
+						? Permissions::WRITE
+						: CBlogComment::GetSocNetUserPermsNew($arParams["ID"], $arPost["AUTHOR_ID"], $USER->getID(), $arResult["PermBySG"])
+				);
+			}
+		}
+		else
+		{
+			$arResult["Perm"] = CBlogComment::GetSocNetUserPermsNew($arParams["ID"], $arPost["AUTHOR_ID"], $USER->getID(), $arResult["PermBySG"]);
+		}
 	}
 }
 
@@ -287,7 +319,7 @@ if(
 			$arComment = CBlogComment::GetByID(IntVal($_GET["delete_comment_id"]));
 			if (
 				(
-					$arResult["Perm"]>=BLOG_PERMS_MODERATE
+					$arResult["Perm"] >= Permissions::MODERATE
 					|| (
 						IntVal($user_id) > 0
 						&& $arComment["AUTHOR_ID"] == $user_id
@@ -300,7 +332,10 @@ if(
 				{
 					if(CBlogComment::Delete(IntVal($_GET["delete_comment_id"])))
 					{
-						BXClearCache(true, "/blog/comment/".intval($arParams["ID"] / 100)."/".$arParams["ID"]."/");
+						BXClearCache(true, ComponentHelper::getBlogPostCacheDir(array(
+							'TYPE' => 'post_comments',
+							'POST_ID' => $arParams["ID"]
+						)));
 						CBlogComment::DeleteLog(IntVal($_GET["delete_comment_id"]));
 
 						$arResult["ajax_comment"] = IntVal($_GET["delete_comment_id"]);
@@ -331,7 +366,7 @@ if(
 		$arTagInline = \Bitrix\Socialnetwork\Util::detectTags($arComment, array('POST_TEXT'));
 
 		if (
-			$arResult["Perm"] >= BLOG_PERMS_MODERATE
+			$arResult["Perm"] >= Permissions::MODERATE
 			&& !empty($arComment)
 		)
 		{
@@ -348,7 +383,10 @@ if(
 						"SEARCH_GROUP_ID" => \Bitrix\Main\Config\Option::get("socialnetwork", "userbloggroup_id", false, SITE_ID)
 					)))
 					{
-						BXClearCache(true, "/blog/comment/".intval($arParams["ID"] / 100)."/".$arParams["ID"]."/");
+						BXClearCache(true, ComponentHelper::getBlogPostCacheDir(array(
+							'TYPE' => 'post_comments',
+							'POST_ID' => $arParams["ID"]
+						)));
 						$parserBlog = new blogTextParser(false, $arParams["PATH_TO_SMILE"], array("bPublic" => $arParams["bPublicPage"]));
 
 						$dbRes = CSocNetLog::GetList(
@@ -461,7 +499,7 @@ if(
 	{
 		$arComment = CBlogComment::GetByID(IntVal($_GET["hide_comment_id"]));
 		if (
-			$arResult["Perm"] >= BLOG_PERMS_MODERATE
+			$arResult["Perm"] >= Permissions::MODERATE
 			&& !empty($arComment)
 		)
 		{
@@ -475,7 +513,10 @@ if(
 				{
 					if($commentID = CBlogComment::Update($arComment["ID"], Array("PUBLISH_STATUS" => BLOG_PUBLISH_STATUS_READY)))
 					{
-						BXClearCache(true, "/blog/comment/".intval($arParams["ID"] / 100)."/".$arParams["ID"]."/");
+						BXClearCache(true, ComponentHelper::getBlogPostCacheDir(array(
+							'TYPE' => 'post_comments',
+							'POST_ID' => $arParams["ID"]
+						)));
 						CBlogComment::DeleteLog($arComment["ID"]);
 						$arResult["ajax_comment"] = $arComment["ID"];
 					}
@@ -502,14 +543,14 @@ if(
 	$arResult["CanUserComment"] = false;
 	$arResult["canModerate"] = false;
 	if (
-		$arResult["Perm"] >= BLOG_PERMS_PREMODERATE
+		$arResult["Perm"] >= Permissions::PREMODERATE
 		&& $arParams["CAN_USER_COMMENT"] == 'Y'
 	)
 	{
 		$arResult["CanUserComment"] = true;
 	}
 
-	if ($arResult["Perm"] >= BLOG_PERMS_MODERATE)
+	if ($arResult["Perm"] >= Permissions::MODERATE)
 	{
 		$arResult["canModerate"] = true;
 	}
@@ -560,14 +601,19 @@ if(
 		}
 	}
 
-	if(strlen($arPost["ID"])>0 && $_SERVER["REQUEST_METHOD"]=="POST" && strlen($_POST["post"]) > 0)
+	if(
+		$_SERVER["REQUEST_METHOD"] == "POST"
+		&& !empty($arPost["ID"])
+		&& isset($_POST["post"])
+		&& strlen($_POST["post"]) > 0
+	)
 	{
 		if ($_POST["decode"] == "Y")
 		{
 			CUtil::JSPostUnescape();
 		}
 
-		if($arResult["Perm"] >= BLOG_PERMS_PREMODERATE)
+		if($arResult["Perm"] >= Permissions::PREMODERATE)
 		{
 			if(check_bitrix_sessid())
 			{
@@ -673,8 +719,7 @@ if(
 						"POST_ID" => $arPost["ID"],
 						"BLOG_ID" => $arBlog["ID"],
 						"TITLE" => trim($_POST["subject"]),
-						"POST_TEXT" => trim($_POST["comment"]),
-						"DATE_CREATE" => ConvertTimeStamp(time() + $arResult["TZ_OFFSET"], "FULL"),
+						"POST_TEXT" => trim(preg_replace("/\xe2\x81\xa0/is", ' ', $_POST["comment"])), // INVISIBLE_CURSOR from editor
 						"AUTHOR_IP" => $UserIP[0],
 						"AUTHOR_IP1" => $UserIP[1],
 						"URL" => $arBlog["URL"],
@@ -682,7 +727,21 @@ if(
 						"SEARCH_GROUP_ID" => \Bitrix\Main\Config\Option::get("socialnetwork", "userbloggroup_id", false, SITE_ID)
 					);
 
-					if ($arResult["Perm"] == BLOG_PERMS_PREMODERATE)
+					if(\Bitrix\Main\Config\Configuration::getValue("utf_mode") === true)
+					{
+						$conn = \Bitrix\Main\Application::getConnection();
+						$table = \Bitrix\Blog\CommentTable::getTableName();
+
+						if ($arFields["POST_TEXT"] <> '')
+						{
+							if (!$conn->isUtf8mb4($table, 'POST_TEXT'))
+							{
+								$arFields["POST_TEXT"] = \Bitrix\Main\Text\Emoji::encode($arFields["POST_TEXT"]);
+							}
+						}
+					}
+
+					if ($arResult["Perm"] == Permissions::PREMODERATE)
 					{
 						$arFields["PUBLISH_STATUS"] = BLOG_PUBLISH_STATUS_READY;
 					}
@@ -716,7 +775,7 @@ if(
 						$arParams["AVATAR_SIZE_COMMENT"] = IntVal($_REQUEST["as"]);
 					}
 
-					if(strlen($strErrorMessage)<=0)
+					if(strlen($strErrorMessage) <= 0)
 					{
 						if (!\Bitrix\Blog\Item\Comment::checkDuplicate(array(
 							'MESSAGE' => $arFields["POST_TEXT"],
@@ -795,16 +854,51 @@ if(
 							$arParams["MOBILE"] == "Y"
 							&& in_array("UF_BLOG_COMM_URL_PRV", $arParams["COMMENT_PROPERTY"])
 							&& empty($arFields["UF_BLOG_COMM_URL_PRV"])
-							&& ($urlPreviewValue = \Bitrix\Socialnetwork\ComponentHelper::getUrlPreviewValue($arFields["POST_TEXT"]))
+							&& ($urlPreviewValue = ComponentHelper::getUrlPreviewValue($arFields["POST_TEXT"]))
 						)
 						{
 							$arFields["UF_BLOG_COMM_URL_PRV"] = $urlPreviewValue;
 						}
 						$arTagInline = \Bitrix\Socialnetwork\Util::detectTags($arFields, array('POST_TEXT'));
 
-						if($commentId = CBlogComment::Add($arFields))
+						$log_id = 0;
+
+						$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
+						$dbRes = CSocNetLog::GetList(
+							array("ID" => "DESC"),
+							array(
+								"EVENT_ID" => $blogPostLivefeedProvider->getEventId(),
+								"SOURCE_ID" =>$arPost["ID"]
+							),
+							false,
+							false,
+							array("ID", "TMP_ID")
+						);
+						if ($arRes = $dbRes->Fetch())
 						{
-							BXClearCache(true, "/blog/comment/".intval($arParams["ID"] / 100)."/".$arParams["ID"]."/");
+							$log_id = $arRes["ID"];
+						}
+
+						if (intval($log_id) > 0)
+						{
+							// add share
+							$shareCommentId = \Bitrix\Blog\Item\Comment::processCommentShare(array(
+								"commentText" => $_POST['comment'],
+								"authorId" => $user_id,
+								"postId" => $arPost["ID"],
+								"blogId" => $arPost["BLOG_ID"],
+								"siteId" => SITE_ID,
+							));
+						}
+
+						$arFields["DATE_CREATE"] = ConvertTimeStamp(time() + $arResult["TZ_OFFSET"], "FULL");
+
+						if($commentId = \CBlogComment::add($arFields))
+						{
+							BXClearCache(true, ComponentHelper::getBlogPostCacheDir(array(
+								'TYPE' => 'post_comments',
+								'POST_ID' => $arParams["ID"]
+							)));
 							$images = Array();
 
 							$DB->Query("UPDATE b_blog_image SET COMMENT_ID=".IntVal($commentId)." WHERE BLOG_ID=".IntVal($arBlog["ID"])." AND POST_ID=".IntVal($arPost["ID"])." AND IS_COMMENT = 'Y' AND (COMMENT_ID = 0 OR COMMENT_ID is null) AND USER_ID=".IntVal($user_id)."", true);
@@ -830,23 +924,7 @@ if(
 								|| strlen($arFields["PUBLISH_STATUS"]) <= 0
 							)
 							{
-								$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
-
-								$dbRes = CSocNetLog::GetList(
-									array("ID" => "DESC"),
-									array(
-										"EVENT_ID" => $blogPostLivefeedProvider->getEventId(),
-										"SOURCE_ID" =>$arPost["ID"]
-									),
-									false,
-									false,
-									array("ID", "TMP_ID")
-								);
-								if ($arRes = $dbRes->Fetch())
-								{
-									$log_id = $arRes["ID"];
-								}
-								else
+								if ($log_id <= 0)
 								{
 									$arParamsNotify = Array(
 										"bSoNet" => true,
@@ -873,7 +951,7 @@ if(
 								$text4mail = $parserBlog->convert4mail($_POST['comment'], $arImages);
 								$text4im = $parserBlog->convert4im($_POST['comment']);
 
-								$arPSR = CBlogPost::GetSocnetPerms($arPost["ID"]);
+								$arPSR = \CBlogPost::getSocnetPerms($arPost["ID"], false);
 								$arUsrCode = $arUsrIdToPush = array();
 								if(!empty($arPSR["U"]))
 								{
@@ -891,7 +969,7 @@ if(
 
 								if (intval($log_id) > 0)
 								{
-									$text4message = $parserBlog->convert($_POST['comment'], false, $arImages, $arAllow, array("isSonetLog"=>true));
+									$text4message = $parserBlog->convert($_POST['comment'], false, $arImages, $arAllow, array("isSonetLog" => true));
 
 									$arFieldsForSocnet = array(
 										"ENTITY_TYPE" => SONET_ENTITY_USER,
@@ -938,8 +1016,6 @@ if(
 									}
 								}
 
-								preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, $_POST['comment'], $arMention);
-
 								$arFieldsIM = Array(
 									"TYPE" => "COMMENT",
 									"COMMENT_ID" => $commentId,
@@ -954,14 +1030,17 @@ if(
 										"SG" => array()
 									),
 									"AUTHOR_ID" => $arPost["AUTHOR_ID"],
-									"BODY" => $text4im,
+									"BODY" => $text4im
 								);
+
+								preg_match_all("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, $_POST['comment'], $arMention);
 
 								if (!empty($arMention))
 								{
 									$arFieldsIM["MENTION_ID"] = $arMention[1];
 									if (
-										$_POST["act"] != "edit"
+										$arParams["MOBILE"] == "Y"
+										&& $_POST["act"] != "edit"
 										&& is_array($arMention[1])
 										&& !empty($arMention[1])
 									)
@@ -1090,6 +1169,11 @@ if(
 						}
 						else
 						{
+							if (!empty($shareCommentId))
+							{
+								\CBlogComment::delete($shareCommentId);
+							}
+
 							if ($e = $APPLICATION->GetException())
 								$arResult["COMMENT_ERROR"] = "<b>".GetMessage("B_B_PC_COM_ERROR")."</b><br />".$e->GetString();
 						}
@@ -1112,14 +1196,14 @@ if(
 					}
 					elseif (
 						$arOldComment["AUTHOR_ID"] == $user_id
-						|| $arResult["Perm"] >= BLOG_PERMS_FULL
+						|| $arResult["Perm"] >= Permissions::FULL
 					)
 					{
 						$arFields = Array(
 							"POST_TEXT" => $_POST["comment"],
 							"URL" => $arBlog["URL"],
 						);
-						if($arResult["Perm"] == BLOG_PERMS_PREMODERATE)
+						if($arResult["Perm"] == Permissions::PREMODERATE)
 						{
 							$arFields["PUBLISH_STATUS"] = BLOG_PUBLISH_STATUS_READY;
 						}
@@ -1194,7 +1278,7 @@ if(
 						$dbComment = CBlogComment::GetList(array(), Array("POST_ID" => $arPost["ID"], "BLOG_ID" => $arBlog["ID"], ">ID" => $commentID));
 						if(
 							$dbComment->Fetch()
-							&& $arResult["Perm"] < BLOG_PERMS_FULL
+							&& $arResult["Perm"] < Permissions::FULL
 							&& !$arResult["bIntranetInstalled"]
 						)
 						{
@@ -1219,11 +1303,29 @@ if(
 								);
 							}
 
+							if(
+								$arParams["MOBILE"] == "Y"
+								&& in_array("UF_BLOG_COMM_URL_PRV", $arParams["COMMENT_PROPERTY"])
+								&& empty($arFields["UF_BLOG_COMM_URL_PRV"])
+								&& (
+									empty($arPostFields['UF_BLOG_COMM_URL_PRV'])
+									|| empty($arPostFields['UF_BLOG_COMM_URL_PRV']['VALUE'])
+								)
+								&& !empty($arFields["POST_TEXT"])
+								&& ($urlPreviewValue = ComponentHelper::getUrlPreviewValue($arFields["POST_TEXT"]))
+							)
+							{
+								$arFields["UF_BLOG_COMM_URL_PRV"] = $urlPreviewValue;
+							}
+
 							$arFields["SEARCH_GROUP_ID"] = \Bitrix\Main\Config\Option::get("socialnetwork", "userbloggroup_id", false, SITE_ID);
 
 							if($commentID = CBlogComment::Update($commentID, $arFields))
 							{
-								BXClearCache(true, "/blog/comment/".intval($arParams["ID"] / 100)."/".$arParams["ID"]."/");
+								BXClearCache(true, ComponentHelper::getBlogPostCacheDir(array(
+									'TYPE' => 'post_comments',
+									'POST_ID' => $arParams["ID"]
+								)));
 								$images = Array();
 								$res = CBlogImage::GetList(array(), array("POST_ID"=>$arPost["ID"], "BLOG_ID" => $arBlog["ID"], "COMMENT_ID" => $commentID, "IS_COMMENT" => "Y"));
 								while ($aImg = $res->Fetch())
@@ -1308,7 +1410,7 @@ if(
 													"IGNORE_ADMIN" => true
 												));
 
-												if ($postPerm < BLOG_PERMS_PREMODERATE)
+												if ($postPerm < Permissions::PREMODERATE)
 												{
 													$arUserIdToShare[] = $val;
 												}
@@ -1337,7 +1439,8 @@ if(
 										}
 										$arSocNetRights = array_unique($arSocNetRights);
 
-										\Bitrix\Socialnetwork\ComponentHelper::processBlogPostShare(
+										// share when update comment
+										ComponentHelper::processBlogPostShare(
 											array(
 												"POST_ID" => $arPost["ID"],
 												"BLOG_ID" => $arPost["BLOG_ID"],
@@ -1351,7 +1454,8 @@ if(
 												"PATH_TO_POST" => COption::GetOptionString("socialnetwork", "userblogpost_page", '/company/personal/user/#user_id#/blog/#post_id#', SITE_ID),
 												"NAME_TEMPLATE" => CSite::GetNameFormat(),
 												"SHOW_LOGIN" => "Y",
-												"LIVE" => "N"
+												"LIVE" => "N",
+												"MENTION" => "Y"
 											)
 										);
 									}
@@ -1418,7 +1522,7 @@ if(
 	}
 
 	//Comments output
-	if($arResult["Perm"]>=BLOG_PERMS_READ)
+	if($arResult["Perm"] >= BLOG_PERMS_READ)
 	{
 		/////////////////////////////////////////////////////////////////////////////////////
 
@@ -1474,12 +1578,15 @@ if(
 					$arCacheID[$param_key] = (array_key_exists($param_key, $arParams) ? $arParams[$param_key] : false);
 				}
 
-				$cache_id = "blog_comment_".$USER->IsAuthorized()."_".md5(serialize($arCacheID))."_".LANGUAGE_ID."_".$arParams["DATE_TIME_FORMAT"]."_".Bitrix\Main\Context::getCurrent()->getCulture()->getDateTimeFormat();
+				$cache_id = "blog_comment_".$USER->IsAuthorized()."_".md5(serialize($arCacheID))."_".LANGUAGE_ID."_".$arParams["DATE_TIME_FORMAT"]."_".Bitrix\Main\Context::getCurrent()->getCulture()->getDateTimeFormat().($arParams["NAV_TYPE_NEW"] == 'Y' && $arResult['firstPage'] ? '_'.$arParams["PAGE_SIZE"] : '');
 				if ($arResult["TZ_OFFSET"] <> 0)
 				{
 					$cache_id .= "_".$arResult["TZ_OFFSET"];
 				}
-				$cache_path = "/blog/comment/".intval($arParams["ID"] / 100)."/".$arParams["ID"]."/";
+				$cache_path = ComponentHelper::getBlogPostCacheDir(array(
+					'TYPE' => 'post_comments',
+					'POST_ID' => $arParams["ID"]
+				));
 
 				if(IntVal($arResult["ajax_comment"]) > 0)
 				{
@@ -1488,7 +1595,7 @@ if(
 				}
 
 				if (
-					$arParams["CACHE_TIME"] > 0 
+					$arParams["CACHE_TIME"] > 0
 					&& $cache->InitCache($arParams["CACHE_TIME"], $cache_id, $cache_path)
 				)
 				{
@@ -1513,8 +1620,6 @@ if(
 							}
 						}
 					}
-
-					CBitrixComponentTemplate::ApplyCachedData($Vars["templateCachedData"]);
 					$cache->Output();
 				}
 				else
@@ -1537,7 +1642,6 @@ if(
 					$arResult["CommentsResult"] = Array();
 					$arResult["IDS"] = Array();
 
-					$arOrder = Array("DATE_CREATE" => "ASC", "ID" => "ASC");
 					$arFilter = Array("POST_ID" => $arParams["ID"], "BLOG_ID" => $arPost["BLOG_ID"]);
 					if($arResult["is_ajax_post"] == "Y" && IntVal($arResult["ajax_comment"]) > 0)
 					{
@@ -1545,12 +1649,32 @@ if(
 					}
 					$arSelectedFields = Array("ID", "BLOG_ID", "POST_ID", "AUTHOR_ID", "AUTHOR_NAME", "AUTHOR_EMAIL", "POST_TEXT", "DATE_CREATE", "PUBLISH_STATUS", "HAS_PROPS", "SHARE_DEST");
 
-					if ($GLOBALS["DB"]->type == "MYSQL")
+					if ($DB->type == "MYSQL")
 					{
 						$arSelectedFields[] = "DATE_CREATE_TS";
 					}
 
-					$dbComment = CBlogComment::GetList($arOrder, $arFilter, false, false, $arSelectedFields);
+					$navParams = (
+						$arParams["NAV_TYPE_NEW"] == 'Y'
+						&& $arResult['firstPage']
+							? array('nTopCount' => $arParams['PAGE_SIZE'])
+							: false
+					);
+
+					$arOrder = (
+						$arParams["NAV_TYPE_NEW"] == 'Y'
+						&& $arResult['firstPage']
+							? array("DATE_CREATE" => "DESC", "ID" => "DESC")
+							: array("DATE_CREATE" => "ASC", "ID" => "ASC")
+					);
+
+					$dbComment = CBlogComment::GetList(
+						$arOrder,
+						$arFilter,
+						false,
+						$navParams,
+						$arSelectedFields
+					);
 					$resComments = Array();
 
 					$arCommentsAll = array();
@@ -1564,6 +1688,13 @@ if(
 						}
 
 						$arCommentsAll[] = $arComment;
+					}
+					if (
+						$arParams["NAV_TYPE_NEW"] == 'Y'
+						&& $arResult['firstPage']
+					)
+					{
+						$arCommentsAll = array_reverse($arCommentsAll);
 					}
 
 					if (!empty($arIdToGet))
@@ -1714,7 +1845,7 @@ if(
 												$arCss = $APPLICATION->sPath2css;
 												$arJs = $APPLICATION->arHeadScripts;
 
-												$urlPreviewText = \Bitrix\Socialnetwork\ComponentHelper::getUrlPreviewContent($arPostField, array(
+												$urlPreviewText = ComponentHelper::getUrlPreviewContent($arPostField, array(
 													"LAZYLOAD" => $arParams["LAZYLOAD"],
 													"MOBILE" => (isset($arParams["MOBILE"]) && $arParams["MOBILE"] == "Y" ? "Y" : "N"),
 													"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
@@ -1746,7 +1877,7 @@ if(
 							}
 
 							if ($commentAuxProvider = \Bitrix\Socialnetwork\CommentAux\Base::findProvider(
-								$arComment,
+								array_merge($arComment, (!empty($arParams["LOG_ID"]) ? array('PATH_ENTITY_TYPE' => 'LOG_ENTRY', 'PATH_ENTITY_ID' => intval($arParams["LOG_ID"])) : array())),
 								array(
 									"mobile" => (isset($arParams["MOBILE"]) && $arParams["MOBILE"] == "Y"),
 									"bPublicPage" => $arParams["bPublicPage"],
@@ -1874,7 +2005,6 @@ if(
 							$CACHE_MANAGER->EndTagCache();
 						}
 						$cache->EndDataCache(array(
-							"templateCachedData" => $this->GetTemplateCachedData(),
 							"arResult" => $arResult
 						));
 					}
@@ -1918,8 +2048,15 @@ if(
 
 			foreach($arResult["CommentsResult"] as $k1 => $v1)
 			{
-				if(IntVal($commentUrlID) > 0 && $commentUrlID == $v1["ID"] && $v1["AUTHOR_ID"] == $user_id && $v1["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_READY)
+				if(
+					IntVal($commentUrlID) > 0
+					&& $commentUrlID == $v1["ID"]
+					&& $v1["AUTHOR_ID"] == $user_id
+					&& $v1["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_READY
+				)
+				{
 					$arResult["MESSAGE"] = GetMessage("B_B_PC_HIDDEN_POSTED");
+				}
 
 				/** @var bool|object $handler */
 				if ($handler = $handlerManager->getHandlerByPostText($v1["POST_TEXT"]))
@@ -1990,7 +2127,7 @@ if(
 
 				if (
 					($arResult["bIntranetInstalled"] && $bAuthor)
-					|| ($arResult["Perm"] >= BLOG_PERMS_FULL && !$arResult["bIntranetInstalled"])
+					|| ($arResult["Perm"] >= Permissions::FULL && !$arResult["bIntranetInstalled"])
 					|| CSocNetUser::IsCurrentUserModuleAdmin()
 					|| $APPLICATION->GetGroupRight("blog") >= "W"
 				)
@@ -2009,7 +2146,7 @@ if(
 					$arResult["CommentsResult"][$k1]["CAN_EDIT"] = "N";
 				}
 
-				if(!$arResult["bIntranetInstalled"] & $arResult["Perm"] < BLOG_PERMS_FULL && !empty($arResult["CommentsResult"][$k1-1]))
+				if(!$arResult["bIntranetInstalled"] & $arResult["Perm"] < Permissions::FULL && !empty($arResult["CommentsResult"][$k1-1]))
 				{
 					$arResult["CommentsResult"][$k1-1]["CAN_EDIT"] = "N";
 				}
@@ -2078,7 +2215,7 @@ if(
 
 				if (isset($arResult["CommentsResult"][$k1]))
 				{
-					if($arResult["Perm"] >= BLOG_PERMS_MODERATE)
+					if($arResult["Perm"] >= Permissions::MODERATE)
 					{
 						if($v1["PUBLISH_STATUS"] == BLOG_PUBLISH_STATUS_PUBLISH)
 							$arResult["CommentsResult"][$k1]["CAN_HIDE"] = "Y";
@@ -2097,10 +2234,10 @@ if(
 						{
 							unset($arResult["CommentsResult"][$k1]);
 							unset($arResult["IDS"][$k1]);
+							$arPost["NUM_COMMENTS_ALL"]--;
 						}
 					}
 				}
-
 			}
 
 			if($arResult["newCount"] < $arParams["PAGE_SIZE_MIN"]) // 3

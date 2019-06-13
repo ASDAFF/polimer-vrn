@@ -102,8 +102,7 @@ class Result extends Entity\Result
 	 * Adds the error.
 	 *
 	 * @param Error $error
-	 *
-	 * @return void
+	 * @return Result
 	 */
 	public function addError(Error $error)
 	{
@@ -116,20 +115,8 @@ class Result extends Entity\Result
 			$this->isSuccess = false;
 			$this->errors[] = $error;
 		}
-	}
 
-	/**
-	 * @param Error[] $errors
-	 *
-	 * @return null
-	 */
-	public function addNotices(array $errors)
-	{
-		/** @var Error $error */
-		foreach ($errors as $error)
-		{
-			$this->addError(ResultNotice::create($error));
-		}
+		return $this;
 	}
 
 	/**
@@ -157,6 +144,7 @@ class Result extends Entity\Result
 		return $messages;
 	}
 
+
 	/**
 	 * @return bool
 	 */
@@ -164,6 +152,7 @@ class Result extends Entity\Result
 	{
 		return (count($this->warnings));
 	}
+
 
 }
 

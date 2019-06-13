@@ -122,10 +122,10 @@ class IblockMoneyProperty
 		$currentValue = $explode[0] ? $explode[0] : '';
 		$currentCurrency = $explode[1] ? $explode[1] : '';
 
-		if(!$currentCurrency)
+		if (!$currentCurrency)
 			return intval($currentValue) ? $currentValue : '';
 
-		if(CurrencyManager::isCurrencyExist($currentCurrency))
+		if (CurrencyManager::isCurrencyExist($currentCurrency))
 		{
 			if(!empty($controlSettings['MODE']))
 			{
@@ -140,9 +140,10 @@ class IblockMoneyProperty
 				}
 			}
 
-			$format = \CCurrencyLang::GetFormatDescription($currentCurrency);
-			$currentValue = number_format($currentValue, $format['DECIMALS'], $format['DEC_POINT'], $format['THOUSANDS_SEP']);
-			return \CCurrencyLang::applyTemplate($currentValue, $format['FORMAT_STRING']);
+			list($currentValue, $currentCurrency, $decimalsValue) = self::getSeparatedValues($value['VALUE']);
+			$currentValue = $currentValue.'.'.$decimalsValue;
+
+			return \CCurrencyLang::CurrencyFormat($currentValue, $currentCurrency, true);
 		}
 
 		return  '';
@@ -181,7 +182,7 @@ class IblockMoneyProperty
 				}
 				else
 				{
-					$regExp = '/^\d{1,3}(('.$thousandsSep.'){0,1}\d{3})?$/';
+					$regExp = '/^\d{1,3}(('.$thousandsSep.'){0,1}\d{3})*$/';
 				}
 			}
 			elseif($thousandsSep && !$decPoint)
@@ -250,6 +251,18 @@ class IblockMoneyProperty
 	public static function convertFromDB($property, $value)
 	{
 		return $value;
+	}
+
+	private static function getSeparatedValues($value)
+	{
+		$explode = is_string($value) ? explode(self::SEPARATOR, $value) : array();
+		$currentValue = $explode[0] ? $explode[0] : '';
+		$currentCurrency = $explode[1] ? $explode[1] : '';
+		$format = \CCurrencyLang::GetFormatDescription($currentCurrency);
+		$explode = explode($format['DEC_POINT'], $currentValue);
+		$currentValue = $explode[0] ? $explode[0] : '';
+		$decimalsValue = $explode[1] ? $explode[1] : '';
+		return array($currentValue, $currentCurrency, $decimalsValue);
 	}
 
 	/**
@@ -388,7 +401,7 @@ class IblockMoneyProperty
 					{
 						if (this.isDecimalsNull)
 						{
-							this.regExp = '^\\d{1,3}('+this.thousandsSep+'?\\d{3})?$';
+							this.regExp = '^\\d{1,3}('+this.thousandsSep+'?\\d{3})*$';
 							this.exampleValue = '6'+this.thousandsSep+'456';
 						}
 						else

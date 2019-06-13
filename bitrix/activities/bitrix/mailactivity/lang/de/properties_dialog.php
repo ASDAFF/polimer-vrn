@@ -13,5 +13,5 @@ $MESS["BPMA_PD_MAIL_SITE"] = "Website der Nachrichtenvorlage";
 $MESS["BPMA_PD_MAIL_SITE_OTHER"] = "Sonstige";
 $MESS["BPMA_PD_MAIL_SEPARATOR"] = "Trennzeichen für E-Mail-Adressen";
 $MESS["BPMA_PD_FILE"] = "Anhänge";
-$MESS["BPMA_PD_FILE_DESCRIPTION"] = "Mit dem E-Mail-System senden";
+$MESS["BPMA_PD_FILE_SELECT"] = "auswählen";
 ?>

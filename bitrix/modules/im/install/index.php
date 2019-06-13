@@ -69,6 +69,7 @@ class im extends CModule
 
 		RegisterModule("im");
 		RegisterModuleDependences('main', 'OnAddRatingVote', 'im', 'CIMEvent', 'OnAddRatingVote');
+		RegisterModuleDependences('main', 'OnChangeRatingVote', 'im', 'CIMEvent', 'OnAddRatingVote');
 		RegisterModuleDependences('main', 'OnCancelRatingVote', 'im', 'CIMEvent', 'OnCancelRatingVote');
 		RegisterModuleDependences('main', 'OnAfterUserAdd', 'im', 'CIMEvent', 'OnAfterUserAdd');
 		RegisterModuleDependences('main', 'OnAfterUserUpdate', 'im', 'CIMEvent', 'OnAfterUserUpdate');
@@ -104,9 +105,11 @@ class im extends CModule
 
 		CModule::IncludeModule("im");
 
-		if(CIMMessenger::IsMysqlDb() && $DB->Query("CREATE fulltext index IXF_IM_MESS_1 on b_im_message (MESSAGE)", true))
+		$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/mysql/install_ft.sql");
+		if ($errors === false)
 		{
 			\Bitrix\Im\Model\MessageTable::getEntity()->enableFullTextIndex("MESSAGE");
+			\Bitrix\Im\Model\ChatIndexTable::getEntity()->enableFullTextIndex("SEARCH_CONTENT");
 		}
 
 		if (CIMConvert::ConvertCount() > 0)
@@ -140,16 +143,20 @@ class im extends CModule
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates", True, True);
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/im/install/public", $_SERVER["DOCUMENT_ROOT"]."/", True, True);
 
-			CUrlRewriter::add(array(
-				"CONDITION" => "#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#",
-				"RULE" => "alias=\$1",
-				"PATH" => "/desktop_app/router.php",
-			));
-			CUrlRewriter::add(array(
-				"CONDITION" => "#^/online/(/?)([^/]*)#",
-				"RULE" => "",
-				"PATH" => "/desktop_app/router.php",
-			));
+			$siteId = \CSite::GetDefSite();
+			if ($siteId)
+			{
+				\Bitrix\Main\UrlRewriter::add($siteId, array(
+					"CONDITION" => "#^/online/([\.\-0-9a-zA-Z]+)(/?)([^/]*)#",
+					"RULE" => "alias=\$1",
+					"PATH" => "/desktop_app/router.php",
+				));
+				\Bitrix\Main\UrlRewriter::add($siteId, array(
+					"CONDITION" => "#^/online/(/?)([^/]*)#",
+					"RULE" => "",
+					"PATH" => "/desktop_app/router.php",
+				));
+			}
 
 			$GLOBALS["APPLICATION"]->SetFileAccessPermission('/desktop_app/', array("*" => "R"));
 			$GLOBALS["APPLICATION"]->SetFileAccessPermission('/online/', array("*" => "R"));
@@ -323,6 +330,7 @@ class im extends CModule
 		UnRegisterModuleDependences("disk", "onAfterDeleteFile", "im", "CIMDisk", "OnAfterDeleteFile");
 		UnRegisterModuleDependences("perfmon", "OnGetTableSchema", "im", "CIMTableSchema", "OnGetTableSchema");
 		UnRegisterModuleDependences('main', 'OnAddRatingVote', 'im', 'CIMEvent', 'OnAddRatingVote');
+		UnRegisterModuleDependences('main', 'OnChangeRatingVote', 'im', 'CIMEvent', 'OnAddRatingVote');
 		UnRegisterModuleDependences('main', 'OnAfterUserAdd', 'im', 'CIMEvent', 'OnAfterUserAdd');
 		UnRegisterModuleDependences('main', 'OnUserDelete', 'im', 'CIMEvent', 'OnUserDelete');
 		UnRegisterModuleDependences("main", "OnBeforeUserSendPassword", "im", "CIMEvent", "OnBeforeUserSendPassword");

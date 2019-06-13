@@ -14,6 +14,7 @@
 		this.clickDisabled = false;
 		this.lastWait = [];
 		this.animationStartHeight = 0;
+		this.initedEditorsList = [];
 	};
 
 	window.SBPEFullForm.instance = null;
@@ -592,6 +593,7 @@
 							else if(
 								BX.type.isElementNode(messageBody.childNodes[ii])
 								&& !BX.hasClass(messageBody.childNodes[ii], 'urlpreview')
+								&& !BX.hasClass(messageBody.childNodes[ii], 'feed-add-post-strings-blocks')
 							)
 							{
 								BX.adjust(messageBody.childNodes[ii], {style : {display : (type == 'file' ? "none" : "")}});
@@ -612,7 +614,10 @@
 											wdObj.urlUpload = wdObj.agent.uploadFileUrl = wdObj.urlUpload.replace('&random_folder=Y', '&dropped=Y');
 										}
 										BX('bx-b-uploadfile-blogPostForm').setAttribute("bx-press", "pressOn");
-										window.SBPETabs.changePostFormTab("message");
+										if (window.SBPETabs.getInstance().active != 'file')
+										{
+											window.SBPETabs.changePostFormTab("message");
+										}
 									});
 								}
 								window["PlEditorblogPostForm"].controllerInit('show');
@@ -1135,68 +1140,19 @@
 		}
 	};
 
-
-	window.BXfpGratSelectCallback = function(item/*, type_user, name*/)
-	{
-		BXfpGratMedalSelectCallback(item, 'grat');
-	};
-
-	window.BXfpMedalSelectCallback = function(item/*, type_user, name*/)
-	{
-		BXfpGratMedalSelectCallback(item, 'medal');
-	};
-
-	window.BXfpGratMedalSelectCallback = function(item, type)
-	{
-		if (type != 'grat')
-			type = 'medal';
-
-		var prefix = 'U';
-
-		BX('feed-add-post-'+type+'-item').appendChild(
-			BX.create("span", {
-				attrs : { 'data-id' : item.id },
-				props : { className : "feed-add-post-"+type+" feed-add-post-destination-users" },
-				children: [
-					BX.create("input", {
-						attrs : { 'type' : 'hidden', 'name' : (type == 'grat' ? 'GRAT' : 'MEDAL')+'['+prefix+'][]', 'value' : item.id }
-					}),
-					BX.create("span", {
-						props : { 'className' : "feed-add-post-"+type+"-text" },
-						html : item.name
-					}),
-					BX.create("span", {
-						props : { 'className' : "feed-add-post-del-but"},
-						events : {
-							'click' : function(e){
-								BX.SocNetLogDestination.deleteItem(item.id, 'users', window["BXSocNetLogGratFormName"]);
-								BX.PreventDefault(e)
-							},
-							'mouseover' : function(){
-								BX.addClass(this.parentNode, 'feed-add-post-'+type+'-hover')
-							},
-							'mouseout' : function(){
-								BX.removeClass(this.parentNode, 'feed-add-post-'+type+'-hover')
-							}
-						}
-					})
-				]
-			})
-		);
-
-		BX('feed-add-post-'+type+'-input').value = '';
-
-		BX.SocNetLogDestination.BXfpSetLinkName({
-			formName: (type == 'grat' ? window["BXSocNetLogGratFormName"] : window["BXSocNetLogMedalFormName"]),
-			tagInputName: 'bx-' + type + '-tag',
-			tagLink1: BX.message('BX_FPGRATMEDAL_LINK_1'),
-			tagLink2: BX.message('BX_FPGRATMEDAL_LINK_2')
-		});
-	};
-
 	if (!!BX.SocNetGratSelector)
 		return;
 
+	BX.SocNetPostDateEndData =
+		{
+			isInitialized: false,
+			popupShowingPeriods: null,
+			customDateStyleModifier: 'feed-add-post-expire-date-customize',
+			popupTriggerSelector: '.js-important-till-popup-trigger',
+			customDatePopupOptionClass: 'js-custom-date-end',
+			customDateFinalSelector: '.js-date-post-showing-custom',
+			postExpireDateBlockSelector: '.js-post-expire-date-block'
+		};
 	BX.SocNetGratSelector =
 		{
 			popupWindow: null,
@@ -1223,7 +1179,147 @@
 			obElementBindMainPopup: {},
 			obElementBindSearchPopup: {}
 		};
+	BX.SocNetPostDateEndData.init = function ()
+	{
+		if (this.isInitialized)
+		{
+			return;
+		}
+		this.addEventHandlers();
+		if (!this.formDateTimeEditing.value)
+		{
+			this.customDateSelectedTitle.innerText = this.getCurrentDate();
+		}
+		this.isInitialized = true;
+	};
 
+	BX.SocNetPostDateEndData.addEventHandlers = function ()
+	{
+		this.postExpireDateBlock = document.querySelector(this.postExpireDateBlockSelector);
+		this.formUfInputDateCustom = document.querySelector('.js-form-post-end-time');
+		this.formDateDuration = document.querySelector('.js-form-post-end-period');
+		this.formDateTimeEditing = document.querySelector('.js-form-editing-post-end-time');
+		this.popupTrigger = document.querySelector(this.popupTriggerSelector);
+		if (this.popupTrigger)
+		{
+			this.popupTrigger.addEventListener("click", function (event)
+			{
+				BX.SocNetPostDateEndData.showPostEndPeriodsPopup();
+			});
+		}
+
+		this.customDateSelectedTitle = document.querySelector(this.customDateFinalSelector);
+		if (this.customDateSelectedTitle)
+		{
+			this.customDateSelectedTitle.addEventListener("click", (function (event) {
+				var curDate = new Date();
+				var curTimestamp = Math.round(curDate / 1000) - curDate.getTimezoneOffset() * 60;
+				if (this.formDateTimeEditing.value)
+				{
+					curDate = BX.parseDate(this.formDateTimeEditing.value);
+					curTimestamp = BX.date.convertToUTC(curDate);
+				}
+				BX.calendar({
+					node: this.customDateSelectedTitle,
+					form: "blogPostForm",
+					value: curTimestamp,
+					bTime: false,
+					'callback': function(){
+						return true;
+					},
+					'callback_after': BX.SocNetPostDateEndData.onEndDateSet.bind(BX.SocNetPostDateEndData)
+				});
+			}).bind(this));
+		}
+	};
+	BX.SocNetPostDateEndData.showPostEndPeriodsPopup = function()
+	{
+		if (!this.popupShowingPeriods)
+		{
+			this.createPopupShowingPeriods();
+		}
+		this.popupShowingPeriods.popupWindow.show();
+	};
+	BX.SocNetPostDateEndData.createPopupShowingPeriods = function()
+	{
+		if (!this.menuItems)
+		{
+			this.menuItems = this.createPopupItems();
+		}
+		this.popupShowingPeriods = BX.PopupMenu.create(
+			"feed-add-post-form-popup42",
+			BX("js-post-expire-date-wrapper"),
+			this.menuItems,
+			{
+				className: "feed-add-post-expire-date-options",
+				closeByEsc : true,
+				angle: true
+			}
+		);
+	};
+	BX.SocNetPostDateEndData.createPopupItems = function()
+	{
+		var menuPostDurationItems = [];
+		var selectOptions = BX.findChildren(document.querySelector('.js-post-showing-duration-options-container'), {'className': 'js-post-showing-duration-option'}, true);
+		if (selectOptions)
+		{
+			selectOptions.forEach(function(element){
+				menuPostDurationItems.push({
+					onclick: this.onPopupItemClick.bind(this),
+					dataset: {
+						value: element.getAttribute('data-value'),
+						class: element.getAttribute('data-class')
+					},
+					text: element.getAttribute('data-text'),
+					className: 'menu-popup-item menu-popup-no-icon ' + element.getAttribute('data-class')
+				});
+			}.bind(this));
+			return menuPostDurationItems;
+		}
+		return [];
+	};
+	BX.SocNetPostDateEndData.onPopupItemClick = function(event) {
+		var element = event.currentTarget;
+		if (element.getAttribute('data-class') == this.customDatePopupOptionClass)
+		{
+			this.postExpireDateBlock.classList.add(this.customDateStyleModifier);
+			if (this.formDateTimeEditing.value)
+			{
+				this.formUfInputDateCustom.value = this.formDateTimeEditing.value;
+				this.customDateSelectedTitle.innerText = this.formDateTimeEditing.value;
+			}
+			else
+			{
+				this.formUfInputDateCustom.value = this.getCurrentDate();
+			}
+		}
+		else
+		{
+			this.postExpireDateBlock.classList.remove(this.customDateStyleModifier);
+			this.formUfInputDateCustom.value = null;
+		}
+		this.popupTrigger.innerText = element.innerText.toLowerCase();
+		this.formDateDuration.value = element.getAttribute('data-value').toUpperCase();
+		this.popupShowingPeriods.popupWindow.close();
+	};
+	BX.SocNetPostDateEndData.onEndDateSet = function (value)
+	{
+		if (!value)
+		{
+			return;
+		}
+		this.formDateTimeEditing.value = this.getFormattedDate(value);
+		this.formUfInputDateCustom.value = this.getFormattedDate(value);
+		this.customDateSelectedTitle.innerText = this.getFormattedDate(value);
+	};
+	BX.SocNetPostDateEndData.getFormattedDate = function (value)
+	{
+		return BX.date.format(BX.date.convertBitrixFormat(BX.message('FORMAT_DATE')), value);
+	};
+	BX.SocNetPostDateEndData.getCurrentDate = function ()
+	{
+		return BX.SocNetPostDateEndData.getFormattedDate(new Date());
+	};
 	BX.SocNetGratSelector.init = function(arParams)
 	{
 		if(!arParams.name)
@@ -1431,11 +1527,18 @@
 					if(data[titleID].length > 0 && data[titleID] != BX(titleID).getAttribute("placeholder"))
 					{
 						if(BX('divoPostFormLHE_blogPostForm').style.display != "none")
+						{
 							window['showPanelTitle_' + formId](true);
+						}
 						else
+						{
 							window["bShowTitle"] = true;
+						}
+
 						if (!!BX(titleID).__onchange)
+						{
 							BX(titleID).__onchange();
+						}
 					}
 
 					var formTags = window["BXPostFormTags_" + formId];
@@ -1448,35 +1551,10 @@
 						}
 					}
 
-					if(BX.SocNetLogDestination)
-					{
-						var i;
-						if(data['SPERM[DR][]'])
-						{
-							for (i = 0; i < data['SPERM[DR][]'].length; i++ )
-							{
-								BX.SocNetLogDestination.selectItem(BXSocNetLogDestinationFormName, '', 3, data['SPERM[DR][]'][i], 'department', false);
-							}
-						}
-						if(data['SPERM[SG][]'])
-						{
-							for (i = 0; i < data['SPERM[SG][]'].length; i++ )
-							{
-								BX.SocNetLogDestination.selectItem(BXSocNetLogDestinationFormName, '', 3, data['SPERM[SG][]'][i], 'sonetgroups', false);
-							}
-						}
-						if(data['SPERM[U][]'])
-						{
-							for (i = 0; i < data['SPERM[U][]'].length; i++ )
-							{
-								BX.SocNetLogDestination.selectItem(BXSocNetLogDestinationFormName, '', 3, data['SPERM[U][]'][i], 'users', false);
-							}
-						}
-						if(!data['SPERM[UA][]'])
-						{
-							BX.SocNetLogDestination.deleteItem('UA', 'groups', BXSocNetLogDestinationFormName);
-						}
-					}
+					BX.onCustomEvent('onAutoSaveRestoreDestination', [{
+						formId: formId,
+						data: data
+					}]);
 
 					bindLHEEvents(ob);
 				});
@@ -1497,6 +1575,8 @@
 
 	BX.SocnetBlogPostInit = function(formID, params)
 	{
+		this.disabled = false;
+
 		formParams[formID] = {
 			editorID : params['editorID'],
 			showTitle : (!!params['showTitle']),
@@ -1546,25 +1626,31 @@
 				formParams[formID]['showTitle'] = bShowTitleCopy;
 		};
 
-		window["setBlogPostFormSubmitted"] = function(value)
+		window["setBlogPostFormSubmitted"] = BX.proxy(function(value)
 		{
 			if (BX("blog-submit-button-save"))
 			{
 				if (value)
 				{
-					BX.addClass(BX("blog-submit-button-save"), 'feed-add-button-load');
+					BX.addClass(BX("blog-submit-button-save"), 'ui-btn-clock');
 				}
 				else
 				{
-					BX.removeClass(BX("blog-submit-button-save"), 'feed-add-button-load');
+					BX.removeClass(BX("blog-submit-button-save"), 'ui-btn-clock');
 				}
 			}
 
 			formParams[formID]["submitted"] = value;
-		};
+			this.disabled = value;
+		}, this);
 
-		window["submitBlogPostForm"] = function(editor, value)
+		window["submitBlogPostForm"] = BX.proxy(function(editor, value)
 		{
+			if (this.disabled)
+			{
+				return;
+			}
+
 			if (typeof editor != "object")
 			{
 				value = editor;
@@ -1588,27 +1674,59 @@
 					BX('POST_TITLE').value = "";
 				}
 
+				var submitButton = null;
+
 				if (
 					value == 'save'
 					&& BX("blog-submit-button-save")
 				)
 				{
-					BX.addClass(BX("blog-submit-button-save"), 'feed-add-button-load');
+					submitButton = BX("blog-submit-button-save");
 				}
-
-				if (
+				else if (
 					value == 'draft'
 					&& BX("blog-submit-button-draft")
 				)
 				{
-					BX.addClass(BX("blog-submit-button-draft"), 'feed-add-button-load');
+					submitButton = BX("blog-submit-button-draft");
+				}
+
+				if (submitButton)
+				{
+					BX.addClass(submitButton, 'ui-btn-clock');
+					this.disabled = true;
+
+					window.addEventListener('beforeunload', BX.proxy(function(event) { // is called on every sumbit, with or without dialog
+						var __submitButton = this.submitButton;
+						var __form = this.form;
+
+						setTimeout(function() {
+							BX.removeClass(__submitButton, 'ui-btn-clock');
+							__form.disabled = false;
+							formParams[formID]["submitted"] = false;
+						}, 3000); // timeout needed to process a form on a back-end
+					}, {
+						submitButton: submitButton,
+						form: this
+					}));
+				}
+
+				var activeTab = window.SBPETabs.getInstance().active;
+				if (BX.type.isNotEmptyString(activeTab))
+				{
+					var actionUrl = BX(formID).action;
+					actionUrl = BX.util.remove_url_param(actionUrl, [ 'b24statTab' ]);
+					actionUrl = BX.util.add_url_param(actionUrl, {
+						b24statTab: activeTab
+					});
+					BX(formID).action = actionUrl;
 				}
 
 				BX.submit(BX(formID), value);
 
 				formParams[formID]["submitted"] = true;
 			}
-		};
+		}, this);
 
 		var onHandlerInited = function(obj, form) {
 				if (form == formID)
@@ -1624,7 +1742,14 @@
 							{
 								if (!!div[ii])
 								{
-									BX.adjust(div[ii], { style : { display : "block", height : "auto", opacity : 1 } } );
+									BX.adjust(div[ii], {
+										style : {
+											display : "block",
+											height : "auto",
+											opacity : 1
+										}
+									});
+									div[ii].style.padding = null;
 								}
 							}
 							if(formParams[formID]["showTitle"])
@@ -1641,7 +1766,14 @@
 							{
 								if (!!div[ii])
 								{
-									BX.adjust(div[ii], {style:{display:"block",height:"0px", opacity:0}});
+									BX.adjust(div[ii], {
+										style: {
+											display: "block",
+											height: "0",
+											opacity: 0,
+											padding: 0
+										}
+									});
 								}
 							}
 							if(formParams[formID]["showTitle"])
@@ -1659,6 +1791,11 @@
 			},
 			onEditorInited = function(editor)
 			{
+				if (BX.util.in_array(editor.id, window.SBPEFullForm.getInstance().initedEditorsList))
+				{
+					return;
+				}
+
 				if (editor.id == formParams[formID]["editorID"])
 				{
 					formParams[formID]["editor"] = editor;
@@ -1743,6 +1880,7 @@
 						editor.SetContent(content);
 						editor.Focus();
 					}
+					window.SBPEFullForm.getInstance().initedEditorsList.push(editor.id);
 				}
 			};
 
@@ -1751,7 +1889,9 @@
 			onHandlerInited(formParams[formID]["handler"], formID);
 		BX.addCustomEvent(window, 'OnEditorInitedAfter', onEditorInited);
 		if (formParams[formID]["editor"])
+		{
 			onEditorInited(formParams[formID]["editor"]);
+		}
 
 		BX.addCustomEvent(window, 'onSocNetLogMoveBody', function(p){ if(p == 'sonet_log_microblog_container') { reinit(formID); } } );
 

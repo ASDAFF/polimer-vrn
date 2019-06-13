@@ -23,6 +23,10 @@ class ResponseFacebook extends Response
 			{
 				$errorText = Loc::getMessage('SEO_RETARGETING_SERVICE_RESPONSE_FACEBOOK_ERROR_URL_REQUIRED');
 			}
+
+			$errorText = Loc::getMessage('SEO_RETARGETING_SERVICE_RESPONSE_FACEBOOK_ERROR')
+				. ': '
+				. $errorText;
 			$this->addError(new Error($errorText, $parsed['error']['code']));
 		}
 

@@ -29,7 +29,7 @@ class CAllAgent
 		$z = $DB->Query("
 			SELECT ID
 			FROM b_agent
-			WHERE NAME = '".$DB->ForSql($name, 2000)."'
+			WHERE NAME = '".$DB->ForSql($name)."'
 			AND USER_ID".($user_id? " = ".(int)$user_id: " IS NULL")
 		);
 		if (!($agent = $z->Fetch()))
@@ -103,7 +103,7 @@ class CAllAgent
 
 		$strSql = "
 				DELETE FROM b_agent
-				WHERE NAME = '".$DB->ForSql($name, 2000)."'
+				WHERE NAME = '".$DB->ForSql($name)."'
 				".$module."
 				AND  USER_ID".($user_id ? " = ".(int)$user_id : " IS NULL");
 
@@ -313,10 +313,6 @@ class CAllAgent
 		{
 			$errMsg[] = array("id" => "LAST_EXEC", "text" => Loc::getMessage("MAIN_AGENT_ERROR_LAST_EXEC"));
 		}
-
-		if($arFields["MODULE_ID"] <> '')
-			if(!IsModuleInstalled($arFields["MODULE_ID"]))
-				$errMsg[] = array("id" => "MODULE_ID", "text" => Loc::getMessage("MAIN_AGENT_ERROR_MODULE"));
 
 		if(!empty($errMsg))
 		{

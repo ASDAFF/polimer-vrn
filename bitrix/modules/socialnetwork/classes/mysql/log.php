@@ -3,7 +3,9 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/socialnetwork/classes/ge
 
 use Bitrix\Socialnetwork\Item\LogIndex;
 use Bitrix\Socialnetwork\LogIndexTable;
+use Bitrix\Socialnetwork\LogRightTable;
 use Bitrix\Socialnetwork\LogTagTable;
+use Bitrix\Socialnetwork\LogSubscribeTable;
 
 class CSocNetLog extends CAllSocNetLog
 {
@@ -13,8 +15,6 @@ class CSocNetLog extends CAllSocNetLog
 	function Add($arFields, $bSendEvent = true)
 	{
 		global $DB, $USER_FIELD_MANAGER;
-
-		$arSocNetAllowedSubscribeEntityTypesDesc = CSocNetAllowed::GetAllowedEntityTypesDesc();
 
 		$arFields1 = \Bitrix\Socialnetwork\Util::getEqualityFields($arFields);
 
@@ -80,16 +80,13 @@ class CSocNetLog extends CAllSocNetLog
 
 			if ($ID > 0)
 			{
-				if (
-					intval($arFields["USER_ID"]) > 0
-					&& strlen($arFields["ENTITY_TYPE"]) > 0
-					&& array_key_exists($arFields["ENTITY_TYPE"], $arSocNetAllowedSubscribeEntityTypesDesc)
-					&& is_array($arSocNetAllowedSubscribeEntityTypesDesc[$arFields["ENTITY_TYPE"]])
-					&& $arSocNetAllowedSubscribeEntityTypesDesc[$arFields["ENTITY_TYPE"]]["USE_CB_FILTER"] == "Y"
-				)
-				{
-					CSocNetLogFollow::Set($arFields["USER_ID"], "L".$ID, "Y");
-				}
+				\Bitrix\Socialnetwork\ComponentHelper::userLogSubscribe(array(
+					'logId' => $ID,
+					'userId' => (isset($arFields["USER_ID"]) ? intval($arFields["USER_ID"]) : 0),
+					'typeList' => array(
+						'FOLLOW',
+					)
+				));
 
 				if ($bSendEvent)
 				{
@@ -149,9 +146,10 @@ class CSocNetLog extends CAllSocNetLog
 		}
 
 		$arFields1 = \Bitrix\Socialnetwork\Util::getEqualityFields($arFields);
-
 		if (!CSocNetLog::CheckFields("UPDATE", $arFields, $ID))
+		{
 			return false;
+		}
 		else
 		{
 			$arSiteID = Array();
@@ -239,6 +237,33 @@ class CSocNetLog extends CAllSocNetLog
 					'fields' => $arFields
 				));
 			}
+
+			if (
+				!empty($arFields['LOG_UPDATE'])
+				|| !empty($arFields1['LOG_UPDATE'])
+			)
+			{
+				$res = \Bitrix\Socialnetwork\LogTable::getList(array(
+					'filter' => array(
+						'ID' => $ID
+					),
+					'select' => array('LOG_UPDATE')
+				));
+				if (
+					($logFields = $res->fetch())
+					&& !empty($logFields['LOG_UPDATE'])
+				)
+				{
+					LogRightTable::setLogUpdate(array(
+						'logId' => $ID,
+						'value' => $logFields['LOG_UPDATE']
+					));
+					LogIndexTable::setLogUpdate(array(
+						'logId' => $ID,
+						'value' => $logFields['LOG_UPDATE']
+					));
+				}
+			}
 		}
 
 		return $ID;
@@ -317,8 +342,11 @@ class CSocNetLog extends CAllSocNetLog
 			"COMMENTS_COUNT" => Array("FIELD" => "L.COMMENTS_COUNT", "TYPE" => "int"),
 			"ENABLE_COMMENTS" => Array("FIELD" => "L.ENABLE_COMMENTS", "TYPE" => "string"),
 			"SOURCE_TYPE" => Array("FIELD" => "L.SOURCE_TYPE", "TYPE" => "string"),
+			"INACTIVE" => Array("FIELD" => "L.INACTIVE", "TYPE" => "string"),
 			"CONTENT" => Array("FIELD" => "LI.CONTENT", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_log_index LI ON (LI.LOG_ID = L.ID)"),
 			"CONTENT_LOG_UPDATE" => Array("FIELD" => "LI.LOG_UPDATE", "TYPE" => "datetime", "FROM" => "INNER JOIN b_sonet_log_index LI ON (LI.LOG_ID = L.ID)"),
+			"CONTENT_ITEM_TYPE" => Array("FIELD" => "LI.ITEM_TYPE", "TYPE" => "string", "FROM" => "INNER JOIN b_sonet_log_index LI ON (LI.LOG_ID = L.ID)"),
+			"CONTENT_ITEM_ID" => Array("FIELD" => "LI.ITEM_ID", "TYPE" => "int", "FROM" => "INNER JOIN b_sonet_log_index LI ON (LI.LOG_ID = L.ID)"),
 			"CONTENT_DATE_CREATE" => Array("FIELD" => "LI.DATE_CREATE", "TYPE" => "datetime", "FROM" => "INNER JOIN b_sonet_log_index LI ON (LI.LOG_ID = L.ID)"),
 			"GROUP_NAME" => Array("FIELD" => "G.NAME", "TYPE" => "string", "FROM" => "LEFT JOIN b_sonet_group G ON (L.ENTITY_TYPE = 'G' AND L.ENTITY_ID = G.ID)"),
 			"GROUP_OWNER_ID" => Array("FIELD" => "G.OWNER_ID", "TYPE" => "int", "FROM" => "LEFT JOIN b_sonet_group G ON (L.ENTITY_TYPE = 'G' AND L.ENTITY_ID = G.ID)"),
@@ -384,7 +412,6 @@ class CSocNetLog extends CAllSocNetLog
 			isset($USER) 
 			&& is_object($USER) 
 			&& $USER->IsAuthorized() 
-			&& $arParams["USE_FOLLOW"] == "Y"
 		)
 		{
 			$default_follow = CSocNetLogFollow::GetDefaultValue($USER->GetID());
@@ -418,6 +445,16 @@ class CSocNetLog extends CAllSocNetLog
 			{
 				$arSelectFields[] = "FOLLOW";
 			}
+		}
+
+		if (
+			!isset($arFilter["INACTIVE"])
+			&& !isset($arFilter["!INACTIVE"])
+			&& !isset($arFilter["=INACTIVE"])
+			&& !isset($arFilter["!=INACTIVE"])
+		)
+		{
+			$arFilter["!=INACTIVE"] = 'Y';
 		}
 
 		if (array_key_exists("SITE_ID", $arFilter))
@@ -527,6 +564,34 @@ class CSocNetLog extends CAllSocNetLog
 					"TYPE" => "string",
 					"FROM" => "INNER JOIN b_sonet_log_right SLR0 ON L.ID = SLR0.LOG_ID"
 				);
+
+				if (!empty($arFilter['>=LOG_UPDATE']))
+				{
+					$arFields["SLR_LOG_UPDATE"] = Array(
+						"FIELD" => "SLR0.LOG_UPDATE",
+						"TYPE" => "datetime",
+						"FROM" => "INNER JOIN b_sonet_log_right SLR0 ON L.ID = SLR0.LOG_ID"
+					);
+					$arFilter['>=SLR_LOG_UPDATE'] = $arFilter['>=LOG_UPDATE'];
+					unset($arFilter['>=LOG_UPDATE']);
+
+					if (!empty($arOrder['LOG_UPDATE']))
+					{
+						$arOrder['SLR_LOG_UPDATE'] = $arOrder['LOG_UPDATE'];
+						unset($arOrder['LOG_UPDATE']);
+					}
+
+					if (!empty($arOrder['ID']))
+					{
+						$arFields["SLR_LOG_ID"] = Array(
+							"FIELD" => "SLR0.LOG_ID",
+							"TYPE" => "int",
+							"FROM" => "INNER JOIN b_sonet_log_right SLR0 ON L.ID = SLR0.LOG_ID"
+						);
+						$arOrder['SLR_LOG_ID'] = $arOrder['ID'];
+						unset($arOrder['ID']);
+					}
+				}
 			}
 
 			if(
@@ -550,10 +615,7 @@ class CSocNetLog extends CAllSocNetLog
 				"FROM" => "INNER JOIN b_sonet_log_tag SLT ON L.ID = SLT.LOG_ID"
 			);
 
-			if (array_key_exists("@TAG", $arFilter))
-			{
-				$strDistinct = " DISTINCT ";
-			}
+			$strDistinct = " DISTINCT ";
 		}
 		if (
 			array_key_exists("USER_ID|COMMENT_USER_ID", $arFilter)
@@ -582,8 +644,8 @@ class CSocNetLog extends CAllSocNetLog
 		}
 
 		$arFields = array_merge($arFields1, $arFields);
-
 		$arSqls = CSocNetGroup::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields, $obUserFieldsSql);
+
 		$listEvents = GetModuleEvents("socialnetwork", "OnBuildSocNetLogSql");
 		while ($arEvent = $listEvents->Fetch())
 		{
@@ -852,6 +914,50 @@ class CSocNetLog extends CAllSocNetLog
 				return False;
 		}
 
+		if (
+			!empty($arParams["FILTER_BY_CONTENT"])
+			&& is_array($arParams["FILTER_BY_CONTENT"])
+		)
+		{
+			$tmpFields = array(
+				"CONTENT" => array("FIELD" => "CONTENT", "TYPE" => "string"),
+				"DATE_CREATE" => array("FIELD" => "LI.DATE_CREATE", "TYPE" => "datetime"),
+			);
+			$tmpFilter = $arParams["FILTER_BY_CONTENT"];
+			$tmpJoin = array();
+
+			$strMinIDJoin = "INNER JOIN (
+				SELECT LOG_ID, MAX(ITEM_TYPE) as ITEM_TYPE, MAX(ITEM_ID) as ITEM_ID
+				FROM b_sonet_log_index TLI
+				WHERE 
+					".CSqlUtil::PrepareWhere($tmpFields, $tmpFilter, $tmpJoin)."
+				GROUP BY LOG_ID
+			) as TLI ON (TLI.LOG_ID = L.ID)
+			INNER JOIN b_sonet_log_index LI ON (LI.ITEM_TYPE = TLI.ITEM_TYPE AND LI.ITEM_ID = TLI.ITEM_ID)";
+
+			$arSqls["SELECT"] .= ',LI.ITEM_TYPE as CONTENT_ITEM_TYPE';
+			$arSqls["SELECT"] .= ',LI.ITEM_ID as CONTENT_ITEM_ID';
+			$arSqls["SELECT"] .= ',LI.LOG_UPDATE as CONTENT_LOG_UPDATE_X1';
+			$arSqls["SELECT"] .= ','.$DB->DateToCharFunction('LI.LOG_UPDATE', 'FULL').' as CONTENT_LOG_UPDATE';
+			$arSqls["SELECT"] .= ',LI.DATE_CREATE as CONTENT_DATE_CREATE_X1';
+			$arSqls["SELECT"] .= ','.$DB->DateToCharFunction('LI.DATE_CREATE', 'FULL').' as CONTENT_DATE_CREATE';
+
+			if (!empty($arParams["FILTER_BY_CONTENT_DATE"]))
+			{
+				$tmpFilter = $arParams["FILTER_BY_CONTENT_DATE"];
+				$arSqls["WHERE"] .= (!empty($arSqls["WHERE"]) ? " AND " : "").CSqlUtil::PrepareWhere($tmpFields, $tmpFilter, $tmpJoin);
+			}
+
+			if (empty($arSqls["ORDERBY"]))
+			{
+				$arSqls["ORDERBY"] = " CONTENT_LOG_UPDATE_X1 DESC ";
+			}
+			else
+			{
+				$arSqls["ORDERBY"] = " CONTENT_LOG_UPDATE_X1 DESC, ".$arSqls["ORDERBY"];
+			}
+		}
+
 		$strSql =
 			"SELECT ".$arSqls["SELECT"]." ".
 			$obUserFieldsSql->GetSelect()." ".
@@ -1048,6 +1154,18 @@ class CSocNetLog extends CAllSocNetLog
 		$DB->Query("DELETE FROM b_sonet_log_favorites WHERE LOG_ID = ".$ID, true);
 		$DB->Query("DELETE FROM b_sonet_log_tag WHERE LOG_ID = ".$ID, true);
 
+		$logFields = array();
+		$res = \Bitrix\Socialnetwork\LogTable::getList(array(
+			'filter' => array(
+				'ID' => $ID
+			),
+			'select' => array('EVENT_ID', 'SOURCE_ID')
+		));
+		if ($fields = $res->fetch())
+		{
+			$logFields = $fields;
+		}
+
 		$bSuccess = $DB->Query("DELETE FROM b_sonet_log WHERE ID = ".$ID, true);
 
 		if ($bSuccess)
@@ -1057,7 +1175,7 @@ class CSocNetLog extends CAllSocNetLog
 			$db_events = GetModuleEvents("socialnetwork", "OnSocNetLogDelete");
 			while ($arEvent = $db_events->Fetch())
 			{
-				ExecuteModuleEventEx($arEvent, array($ID));
+				ExecuteModuleEventEx($arEvent, array($ID, $logFields));
 			}
 
 			LogIndex::deleteIndex(array(

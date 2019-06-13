@@ -966,7 +966,7 @@ class LiveFeedAjaxController extends Controller
 				}
 			}
 
-			if(!empty($errorsTmp))
+			/*if(!empty($errorsTmp))
 			{
 				$documentStates = null;
 				CBPDocument::AddDocumentToHistory(
@@ -974,7 +974,7 @@ class LiveFeedAjaxController extends Controller
 					$elementData['NAME'],
 					$this->getUser()->getID()
 				);
-			}
+			}*/
 		}
 		else
 		{
@@ -1062,7 +1062,7 @@ class LiveFeedAjaxController extends Controller
 
 		foreach($this->lists['FIELDS'] as $fieldId => $field)
 		{
-			$this->lists['FIELDS'][$fieldId]['NAME'] = htmlspecialcharsbx($this->lists['FIELDS'][$fieldId]['NAME']);
+			$this->lists['FIELDS'][$fieldId]['NAME'] = $this->lists['FIELDS'][$fieldId]['NAME'];
 
 			if($list->is_field($fieldId))
 			{
@@ -1968,25 +1968,22 @@ class LiveFeedAjaxController extends Controller
 		switch ($this->iblockCode)
 		{
 			case 'bitrix_outgoing_doc':
-				$blueDudeId = 1304135;
-				break;
-			case 'bitrix_incoming_doc':
-				$blueDudeId = 1304134;
+				$blueDudeCode = 2216841;
 				break;
 			case 'bitrix_cash':
-				$blueDudeId = 1304133;
+				$blueDudeCode = 2216531;
 				break;
 			case 'bitrix_trip':
-				$blueDudeId = 1304137;
+				$blueDudeCode = 2216791;
 				break;
 			case 'bitrix_invoice':
-				$blueDudeId = 1304131;
+				$blueDudeCode = 2215233;
 				break;
 			case 'bitrix_holiday':
-				$blueDudeId = 1304136;
+				$blueDudeCode = 2216341;
 				break;
 			default:
-				$blueDudeId = 0;
+				$blueDudeCode = 0;
 				break;
 		}
 
@@ -2009,10 +2006,10 @@ class LiveFeedAjaxController extends Controller
 
 		<div class="bx-lists-iblock-description">
 			<?= nl2br(htmlspecialcharsbx($this->iblockDescription)) ?>
-			<? if(!empty($blueDudeId)): ?>
+			<? if(!empty($blueDudeCode)): ?>
 				<br><br>
 				<a style="cursor:pointer;"
-				   onclick='BX.Helper.show("redirect=detail&HD_SOURCE=article&HD_ID=<?=$blueDudeId ?>");'>
+				   onclick='BX.Helper.show("redirect=detail&code=<?=$blueDudeCode ?>");'>
 					<?= Loc::getMessage('LISTS_IS_DESRIPTION_DETAIL') ?>
 				</a>
 			<? endif ?>

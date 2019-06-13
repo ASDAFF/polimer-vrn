@@ -59,7 +59,7 @@ class CAjax
 				else
 				{
 					// special hack
-					$sRealBitrixModules = strtolower(str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules")));
+					$sRealBitrixModules = substr(strtolower(str_replace("\\", "/", realpath($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main"))), 0, -5);
 					if(strpos($sSrcFile, $sRealBitrixModules) === 0)
 					{
 						$sSrcFile = "/bitrix/modules".substr($sSrcFile, strlen($sRealBitrixModules));
@@ -77,12 +77,6 @@ class CAjax
 								$sSrcFile = "/bitrix/components/bitrix".substr($sSrcFile, strlen($sRealBitrixComponentsDir));
 								$bSrcFound = true;
 							}
-						}
-						elseif (preg_match("#/bitrix/modules#", $sSrcFile))
-						{
-							$sRealDocRoot = substr($sSrcFile, 0, strpos($sSrcFile, "/bitrix/modules/"));
-							$sSrcFile = substr($sSrcFile, strlen($sRealDocRoot));
-							$bSrcFound = true;
 						}
 					}
 				}
@@ -170,14 +164,17 @@ class CAjax
 		return '
 <form '.trim($form_params).'><input type="hidden" name="'.BX_AJAX_PARAM_ID.'" id="'.BX_AJAX_PARAM_ID.'_'.$ajax_id.'_'.$rnd.'" value="'.$ajax_id.'" /><input type="hidden" name="AJAX_CALL" value="Y" /><script type="text/javascript">
 function _processform_'.$rnd.'(){
-	var obForm = top.BX(\''.BX_AJAX_PARAM_ID.'_'.$ajax_id.'_'.$rnd.'\').form;
-	top.BX.bind(obForm, \'submit\', function() {'.CAjax::GetFormEventValue($container_id, $bReplace, $bShadow, '"').'});
-	top.BX.removeCustomEvent(\'onAjaxSuccess\', _processform_'.$rnd.');
+	if (BX(\''.BX_AJAX_PARAM_ID.'_'.$ajax_id.'_'.$rnd.'\'))
+	{
+		var obForm = BX(\''.BX_AJAX_PARAM_ID.'_'.$ajax_id.'_'.$rnd.'\').form;
+		BX.bind(obForm, \'submit\', function() {'.CAjax::GetFormEventValue($container_id, $bReplace, $bShadow, '"').'});
+	}
+	BX.removeCustomEvent(\'onAjaxSuccess\', _processform_'.$rnd.');
 }
-if (top.BX(\''.BX_AJAX_PARAM_ID.'_'.$ajax_id.'_'.$rnd.'\'))
+if (BX(\''.BX_AJAX_PARAM_ID.'_'.$ajax_id.'_'.$rnd.'\'))
 	_processform_'.$rnd.'();
 else
-	top.BX.addCustomEvent(\'onAjaxSuccess\', _processform_'.$rnd.');
+	BX.addCustomEvent(\'onAjaxSuccess\', _processform_'.$rnd.');
 </script>';
 	}
 

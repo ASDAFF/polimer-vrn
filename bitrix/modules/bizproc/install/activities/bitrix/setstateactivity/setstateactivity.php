@@ -21,6 +21,7 @@ class CBPSetStateActivity
 			$stateActivity->SetNextStateName($this->TargetStateName);
 			if ($this->CancelCurrentState == 'Y')
 			{
+				$this->WriteToTrackingService(GetMessage("BPSSA_EXECUTE_CANCEL"));
 				$this->workflow->CancelActivity($stateActivity);
 				return CBPActivityExecutionStatus::Executing;
 			}

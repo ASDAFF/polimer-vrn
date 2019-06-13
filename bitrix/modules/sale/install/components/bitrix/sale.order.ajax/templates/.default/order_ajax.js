@@ -43,37 +43,43 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 	}
 
 	BX.Sale.OrderAjaxComponent = {
-		BXFormPosting: false,
-		regionBlockNotEmpty: false,
-		locationsInitialized: false,
-		locations: {},
-		cleanLocations: {},
-		locationsTemplate: '',
-		pickUpMapFocused: false,
-		basketColumns: [],
-		options: {},
-		activeSectionId: '',
-		firstLoad: true,
-		initialized: {},
-		mapsReady: false,
-		lastSelectedDelivery: 0,
-		deliveryLocationInfo: {},
-		deliveryPagination: {},
-		deliveryCachedInfo: [],
-		paySystemPagination: {},
-		validation: {},
-		hasErrorSection: {},
-		pickUpPagination: {},
-		timeOut: {},
-		isMobile: BX.browser.IsMobile(),
-		isHttps: window.location.protocol === "https:",
-		orderSaveAllowed: false,
+
+		initializePrimaryFields: function()
+		{
+			this.BXFormPosting = false;
+			this.regionBlockNotEmpty = false;
+			this.locationsInitialized = false;
+			this.locations = {};
+			this.cleanLocations = {};
+			this.locationsTemplate = '';
+			this.pickUpMapFocused = false;
+			this.options = {};
+			this.activeSectionId = '';
+			this.firstLoad = true;
+			this.initialized = {};
+			this.mapsReady = false;
+			this.lastSelectedDelivery = 0;
+			this.deliveryLocationInfo = {};
+			this.deliveryPagination = {};
+			this.deliveryCachedInfo = [];
+			this.paySystemPagination = {};
+			this.validation = {};
+			this.hasErrorSection = {};
+			this.pickUpPagination = {};
+			this.timeOut = {};
+			this.isMobile = BX.browser.IsMobile();
+			this.isHttps = window.location.protocol === "https:";
+			this.orderSaveAllowed = false;
+			this.socServiceHiddenNode = false;
+		},
 
 		/**
 		 * Initialization of sale.order.ajax component js
 		 */
 		init: function(parameters)
 		{
+			this.initializePrimaryFields();
+
 			this.result = parameters.result || {};
 			this.prepareLocations(parameters.locations);
 			this.params = parameters.params || {};
@@ -177,7 +183,23 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					form.querySelector('input[type=hidden][name=sessid]').value = BX.bitrix_sessid();
 				}
 
-				BX.ajax.submit(BX('bx-soa-order-form'), BX.proxy(this.saveOrder, this));
+				BX.ajax.submitAjax(
+					BX('bx-soa-order-form'),
+					{
+						url: this.ajaxUrl,
+						method: 'POST',
+						dataType: 'json',
+						data: {
+							via_ajax: 'Y',
+							action: 'saveOrderAjax',
+							sessid: BX.bitrix_sessid(),
+							SITE_ID: this.siteId,
+							signedParamsString: this.signedParamsString
+						},
+						onsuccess: BX.proxy(this.saveOrderWithJson, this),
+						onfailure: BX.proxy(this.handleNotRedirected, this)
+					}
+				);
 			}
 			else
 			{
@@ -314,46 +336,49 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			return true;
 		},
 
-		saveOrder: function(result)
+		saveOrderWithJson: function(result)
 		{
-			// safari mobile fix
-			result = result.replace(/<a href="\S*">(\S*)<\/a>/g, '$1');
-			
-			var res = BX.parseJSON(result), redirected = false;
-			if (res && res.order)
-			{
-				result = res.order;
-				this.result.SHOW_AUTH = result.SHOW_AUTH;
-				this.result.AUTH = result.AUTH;
+			var redirected = false;
 
-				if (this.result.SHOW_AUTH)
+			if (result && result.order)
+			{
+				result = result.order;
+
+				if (result.REDIRECT_URL)
 				{
+					if (this.params.USE_ENHANCED_ECOMMERCE === 'Y')
+					{
+						this.setAnalyticsDataLayer('purchase', result.ID);
+					}
+
+					redirected = true;
+					location.href = result.REDIRECT_URL;
+				}
+				else if (result.SHOW_AUTH)
+				{
+					this.result.SHOW_AUTH = result.SHOW_AUTH;
+					this.result.AUTH = result.AUTH;
+
 					this.editAuthBlock();
 					this.showAuthBlock();
 					this.animateScrollTo(this.authBlockNode);
 				}
 				else
 				{
-					if (result.REDIRECT_URL && result.REDIRECT_URL.length)
-					{
-						if (this.params.USE_ENHANCED_ECOMMERCE === 'Y')
-						{
-							this.setAnalyticsDataLayer('purchase', result.ID);
-						}
-
-						redirected = true;
-						document.location.href = result.REDIRECT_URL;
-					}
-
 					this.showErrors(result.ERROR, true, true);
 				}
 			}
 
 			if (!redirected)
 			{
-				this.endLoader();
-				this.disallowOrderSave();
+				this.handleNotRedirected();
 			}
+		},
+
+		handleNotRedirected: function()
+		{
+			this.endLoader();
+			this.disallowOrderSave();
 		},
 
 		/**
@@ -1654,7 +1679,13 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 
 			if (this.firstLoad && this.result.IS_AUTHORIZED && typeof this.result.LAST_ORDER_DATA.FAIL === 'undefined')
+			{
 				this.showActualBlock();
+			}
+			else if (!this.result.SHOW_AUTH)
+			{
+				this.changeVisibleContent();
+			}
 
 			this.checkNotifications();
 
@@ -1761,7 +1792,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			this.fade(actionSection);
 			this.show(section.next);
-			this.animateScrollTo(section.next, 500);
+			this.animateScrollTo(section.next, 800);
 			return BX.PreventDefault(event);
 		},
 
@@ -2023,7 +2054,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			}
 
 			new BX.easing({
-				duration: nextSection ? 1000 : 600,
+				duration: nextSection ? 800 : 600,
 				start: {height: objHeightOrig, scrollTop: windowScrollTop},
 				finish: {height: objHeight, scrollTop: scrollTo},
 				transition: BX.easing.makeEaseOut(BX.easing.transitions.quad),
@@ -2299,7 +2330,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		 */
 		changeVisibleContent: function()
 		{
-			var sections = this.orderBlockNode.querySelectorAll('.bx-soa-section[data-visited]'),
+			var sections = this.orderBlockNode.querySelectorAll('.bx-soa-section.bx-active'),
 				i, state;
 
 			var orderDataLoaded = !!this.result.IS_AUTHORIZED && this.params.USE_PRELOAD === 'Y' && this.result.LAST_ORDER_DATA.FAIL !== true,
@@ -2399,11 +2430,6 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			this.editTotalBlock();
 			this.totalBlockFixFont();
-
-			if (!this.result.SHOW_AUTH)
-			{
-				this.changeVisibleContent();
-			}
 
 			this.showErrors(this.result.ERROR, false);
 			this.showWarnings();
@@ -2899,19 +2925,25 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			if (!BX('bx-soa-soc-auth-services'))
 				return;
 
-			var nodes = [],
-				socServiceHiddenNode = BX('bx-soa-soc-auth-services').querySelector('.bx-authform-social');
+			var nodes = [];
 
-			if (socServiceHiddenNode)
+			if (this.socServiceHiddenNode === false)
+			{
+				var socServiceHiddenNode = BX('bx-soa-soc-auth-services').querySelector('.bx-authform-social');
+
+				if (BX.type.isDomNode(socServiceHiddenNode))
+				{
+					this.socServiceHiddenNode = socServiceHiddenNode.innerHTML;
+					BX.remove(socServiceHiddenNode);
+				}
+			}
+
+			if (this.socServiceHiddenNode)
 			{
 				nodes.push(BX.create('DIV', {
-						props: {className: 'bx-authform-social'},
-						children: [
-							BX.create('H3', {props: {className: 'bx-title'}, text: BX.message('SOA_DO_SOC_SERV')}),
-							socServiceHiddenNode.cloneNode(true)
-						]
-					})
-				);
+					props: {className: 'bx-authform-social'},
+					html: '<h3 class="bx-title">' + BX.message('SOA_DO_SOC_SERV') + '</h3>' + this.socServiceHiddenNode
+				}));
 				nodes.push(BX.create('hr', {props: {className: 'bxe-light'}}));
 			}
 
@@ -3442,11 +3474,13 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				logoNode.setAttribute('style', 'background-image: url(' + logotype + ');');
 			}
 
-			if (data.DETAIL_PAGE_URL && data.DETAIL_PAGE_URL.length)
+			if (this.params.HIDE_DETAIL_PAGE_URL !== 'Y' && data.DETAIL_PAGE_URL && data.DETAIL_PAGE_URL.length)
+			{
 				logoNode = BX.create('A', {
 					props: {href: data.DETAIL_PAGE_URL},
 					children: [logoNode]
 				});
+			}
 
 			return BX.create('DIV', {
 				props: {className: 'bx-soa-item-img-block'},
@@ -3461,8 +3495,10 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				props = data.PROPS || [],
 				propsNodes = [];
 
-			if (data.DETAIL_PAGE_URL && data.DETAIL_PAGE_URL.length)
+			if (this.params.HIDE_DETAIL_PAGE_URL !== 'Y' && data.DETAIL_PAGE_URL && data.DETAIL_PAGE_URL.length)
+			{
 				titleHtml = '<a href="' + data.DETAIL_PAGE_URL + '">' + titleHtml + '</a>';
+			}
 
 			if (this.options.showPropsInBasket && props.length)
 			{
@@ -3868,16 +3904,16 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 							children: [
 								BX.create('INPUT', {
 									props: {
-										id: 'coupon',
 										className: 'form-control bx-ios-fix',
 										type: 'text'
 									},
 									events: {
-										change: BX.delegate(function(){
-											var newCoupon = BX('coupon');
+										change: BX.delegate(function(event){
+											var newCoupon = BX.getEventTarget(event);
 											if (newCoupon && newCoupon.value)
 											{
 												this.sendRequest('enterCoupon', newCoupon.value);
+												newCoupon.value = '';
 											}
 										}, this)
 									}
@@ -4008,25 +4044,22 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			return BX.create('DIV', {
 				props: {className: 'bx-soa-coupon-label'},
 				children: active
-					? [BX.create('LABEL', {attr: {'for': 'coupon'}, html: this.params.MESS_USE_COUPON + ':'})]
+					? [BX.create('LABEL', {html: this.params.MESS_USE_COUPON + ':'})]
 					: [this.params.MESS_COUPON + ':']
 			});
 		},
 
 		addCoupon: function(coupon)
 		{
-			var couponListNodes = this.orderBlockNode.querySelectorAll('.bx-soa-coupon:not(.bx-soa-coupon-item-fixed) .bx-soa-coupon-item'),
-				couponInput = BX('coupon'), i;
+			var couponListNodes = this.orderBlockNode.querySelectorAll('.bx-soa-coupon:not(.bx-soa-coupon-item-fixed) .bx-soa-coupon-item');
 
-			for (i = 0; i < couponListNodes.length; i++)
+			for (var i = 0; i < couponListNodes.length; i++)
 			{
-				if (couponListNodes[i].querySelector('[data-coupon="' + BX.util.htmlspecialchars(coupon) + '"'))
+				if (couponListNodes[i].querySelector('[data-coupon="' + BX.util.htmlspecialchars(coupon) + '"]'))
 					break;
 
 				couponListNodes[i].appendChild(this.getCouponNode({text: coupon}, true, 'bx-soa-coupon-item-danger'));
 			}
-
-			couponInput && (couponInput.value = '');
 		},
 
 		removeCoupon: function(coupon)
@@ -4188,10 +4221,12 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 			locationString = this.getLocationString(this.regionHiddenBlockNode);
 			if (locationProperty && locationString.length)
-				addedHtml += '<strong>' + BX.util.htmlspecialchars(locationProperty.NAME) + ':</strong> ' + locationString + '<br>';
+				addedHtml += '<strong>' + BX.util.htmlspecialchars(locationProperty.NAME) + ':</strong> '
+					+ BX.util.htmlspecialchars(locationString) + '<br>';
 
 			if (zipProperty && zipValue.length)
-				addedHtml += '<strong>' + BX.util.htmlspecialchars(zipProperty.NAME) + ':</strong> ' + zipValue;
+				addedHtml += '<strong>' + BX.util.htmlspecialchars(zipProperty.NAME) + ':</strong> '
+					+ BX.util.htmlspecialchars(zipValue);
 
 			node.innerHTML += addedHtml;
 
@@ -4278,7 +4313,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				this.regionBlockNotEmpty = true;
 
-				labelHtml = '<label class="bx-soa-custom-label" for="soa-property-' + locationId + '">'
+				labelHtml = '<label class="bx-soa-custom-label" for="soa-property-' + parseInt(locationId) + '">'
 					+ (currentProperty.REQUIRED == 'Y' ? '<span class="bx-authform-starrequired">*</span> ' : '')
 					+ BX.util.htmlspecialchars(currentProperty.NAME)
 					+ (currentProperty.DESCRIPTION.length ? ' <small>(' + BX.util.htmlspecialchars(currentProperty.DESCRIPTION) + ')</small>' : '')
@@ -4590,12 +4625,15 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 				i, label, options = [],
 				profileChangeInput, input;
 
-			if (profilesLength && this.params.ALLOW_USER_PROFILES === 'Y')
+			if (profilesLength)
 			{
-				this.regionBlockNotEmpty = true;
-
-				if (profilesLength > 1 || this.params.ALLOW_NEW_PROFILE === 'Y')
+				if (
+					this.params.ALLOW_USER_PROFILES === 'Y'
+					&& (profilesLength > 1 || this.params.ALLOW_NEW_PROFILE === 'Y')
+				)
 				{
+					this.regionBlockNotEmpty = true;
+
 					label = BX.create('LABEL', {props: {className: 'bx-soa-custom-label'}, html: this.params.MESS_SELECT_PROFILE});
 
 					for (i in this.result.USER_PROFILES)
@@ -4640,7 +4678,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 					node.appendChild(
 						BX.create('DIV', {
-							props: {className: "form-group bx-soa-location-input-container"},
+							props: {className: 'form-group bx-soa-location-input-container'},
 							children: [label, profileChangeInput, input]
 						})
 					);
@@ -4658,7 +4696,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 								BX.create('INPUT', {
 									props: {
 										name: 'PROFILE_ID',
-										type: "hidden",
+										type: 'hidden',
 										value: this.result.USER_PROFILES[i].ID}
 								})
 							);
@@ -5942,10 +5980,13 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 			{
 				currentProperty = this.locations[locationId][0].coordinates;
 
-				if (parseFloat(currentProperty.LONGITUDE) != 0 && parseFloat(currentProperty.LATITUDE) != 0)
+				var long = parseFloat(currentProperty.LONGITUDE),
+					lat = parseFloat(currentProperty.LATITUDE);
+
+				if (!isNaN(long) && !isNaN(lat) && long != 0 && lat != 0)
 				{
-					data.lat = parseFloat(currentProperty.LATITUDE);
-					data.lon = parseFloat(currentProperty.LONGITUDE);
+					data.lon = long;
+					data.lat = lat;
 				}
 			}
 
@@ -6404,7 +6445,12 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				this.editPropsItems(propsNode);
 				showPropMap && this.editPropsMap(propsNode);
-				this.editPropsComment(propsNode);
+
+				if (this.params.HIDE_ORDER_DESCRIPTION !== 'Y')
+				{
+					this.editPropsComment(propsNode);
+				}
+
 				propsContent.appendChild(propsNode);
 				this.getBlockFooter(propsContent);
 
@@ -6594,7 +6640,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 						for (i = 0; i < propNodes.length; i++)
 						{
 							locationString = this.getLocationString(propNodes[i]);
-							values.push(locationString.length ? locationString : BX.message('SOA_NOT_SELECTED'));
+							values.push(locationString.length ? BX.util.htmlspecialchars(locationString) : BX.message('SOA_NOT_SELECTED'));
 						}
 					}
 					propsItemNode.innerHTML += values.join('<br>');
@@ -6908,7 +6954,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 		{
 			var str = values.join(', ');
 
-			return str.length ? str : BX.message('SOA_NOT_SELECTED');
+			return str.length ? BX.util.htmlspecialchars(str) : BX.message('SOA_NOT_SELECTED');
 		},
 
 		alterProperty: function(settings, propContainer)
@@ -7495,14 +7541,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 
 				if (value.length > 0 && arProperty.PATTERN && arProperty.PATTERN.length)
 				{
-					var pattern = arProperty.PATTERN;
-					var clearPattern = pattern.substr(1, pattern.lastIndexOf(pattern[0]) - 1);
-					if (clearPattern && clearPattern.length)
-					{
-						pattern = clearPattern;
-					}
-
-					re = new RegExp(pattern);
+					re = new RegExp(arProperty.PATTERN);
 					if (!re.test(value))
 						errors.push(field + ' ' + BX.message('SOA_INVALID_PATTERN'));
 				}
@@ -8082,7 +8121,7 @@ BX.namespace('BX.Sale.OrderAjaxComponent');
 					}
 
 					products.push({
-						'id': item.data.ID,
+						'id': item.data.PRODUCT_ID,
 						'name': item.data.NAME,
 						'price': item.data.PRICE,
 						'brand': (item.data[this.params.BRAND_PROPERTY + '_VALUE'] || '').split(', ').join('/'),

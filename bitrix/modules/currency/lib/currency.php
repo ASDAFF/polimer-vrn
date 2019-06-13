@@ -69,7 +69,7 @@ class CurrencyTable extends Main\Entity\DataManager
 			)),
 			'DATE_UPDATE' => new Main\Entity\DatetimeField('DATE_UPDATE', array(
 				'required' => true,
-				'default_value' => new Main\Type\DateTime(),
+				'default_value' => function(){ return new Main\Type\DateTime(); },
 				'title' => Loc::getMessage('CURRENCY_ENTITY_DATE_UPDATE_FIELD')
 			)),
 			'NUMCODE' => new Main\Entity\StringField('NUMCODE', array(
@@ -85,6 +85,7 @@ class CurrencyTable extends Main\Entity\DataManager
 				'title' => Loc::getMessage('CURRENCY_ENTITY_CREATED_BY_FIELD')
 			)),
 			'DATE_CREATE' => new Main\Entity\DatetimeField('DATE_CREATE', array(
+				'default_value' => function(){ return new Main\Type\DateTime(); },
 				'title' => Loc::getMessage('CURRENCY_ENTITY_DATE_CREATE_FIELD')
 			)),
 			'MODIFIED_BY' => new Main\Entity\IntegerField('MODIFIED_BY', array(

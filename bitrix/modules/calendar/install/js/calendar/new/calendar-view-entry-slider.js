@@ -16,12 +16,17 @@
 			this.formType = params.formType || 'slider_main';
 
 			BX.SidePanel.Instance.open(this.sliderId, {
-				contentCallback: BX.delegate(this.createContent, this)
+				contentCallback: BX.delegate(this.createContent, this),
+				events: {
+					onDestroy: function() {
+						this.xhr.abort();
+					}.bind(this),
+					onClose: BX.proxy(this.hide, this),
+					onCloseComplete: BX.proxy(this.destroy, this)
+				}
 			});
 
 			this.calendar.disableKeyHandler();
-			BX.addCustomEvent("SidePanel.Slider:onClose", BX.proxy(this.hide, this));
-			BX.addCustomEvent("SidePanel.Slider:onCloseComplete", BX.proxy(this.destroy, this));
 
 			BX.bind(document, "click", BX.proxy(this.calendar.util.applyHacksForPopupzIndex, this.calendar.util));
 			this.opened = true;
@@ -74,11 +79,11 @@
 			BX.SidePanel.Instance.close();
 		},
 
-		createContent: function()
+		createContent: function(slider)
 		{
 			var promise = new BX.Promise();
 
-			BX.ajax.get(this.calendar.util.getActionUrl(), {
+			this.xhr = BX.ajax.get(this.calendar.util.getActionUrl(), {
 				action: 'get_view_slider',
 				unique_id: this.id,
 				form_type: this.formType,
@@ -89,10 +94,17 @@
 				section_name: this.entry.getSectionName(),
 				date_from_offset: this.entry.data.TZ_OFFSET_FROM,
 				reqId: Math.round(Math.random() * 1000000)
-			}, BX.delegate(function (html)
+			}, BX.delegate(function(html)
 			{
-				promise.fulfill(BX.util.trim(html));
-				this.initControls();
+				if (slider.isDestroyed())
+				{
+					promise.fulfill();
+				}
+				else
+				{
+					promise.fulfill(BX.util.trim(html));
+					this.initControls();
+				}
 			}, this));
 
 			return promise;
@@ -100,10 +112,15 @@
 
 		initControls: function ()
 		{
+			this.DOM.buttonSet = BX(this.id + '_buttonset');
+			if (!this.DOM.buttonSet)
+			{
+				return;
+			}
+
 			this.initPlannerControl();
 			this.initUserListControl();
 
-			this.DOM.buttonSet = BX(this.id + '_buttonset');
 			this.DOM.editButton = BX(this.id + '_but_edit');
 			this.DOM.delButton = BX(this.id + '_but_del');
 
@@ -216,11 +233,12 @@
 		initUserListControl: function()
 		{
 			var userList = {y : [], i: [], q: [], n: []};
+
 			if (this.entry.isMeeting())
 			{
 				this.entry.getAttendees().forEach(function(user)
 				{
-					if (user.STATUS == 'H')
+					if (user.STATUS === 'H')
 					{
 						userList.y.push(user);
 					}
@@ -271,11 +289,12 @@
 					closeByEsc: true,
 					offsetTop: 0,
 					offsetLeft: 0,
-					width: 200,
+					width: 220,
 					resizable: false,
 					lightShadow: true,
 					content: this.DOM.userListPopupWrap,
-					className: 'calendar-user-list-popup'
+					className: 'calendar-user-list-popup',
+					zIndex: 4000
 				});
 
 			this.userListPopup.setAngle({offset: 36});
@@ -294,7 +313,7 @@
 				currentStatus: BX(this.id + '_current_status').value || this.entry.getCurrentStatus(),
 				changeStatusCallback: BX.delegate(function(value)
 				{
-					this.calendar.entryController.setMeetingStatus(this.entry, value);
+					return this.calendar.entryController.setMeetingStatus(this.entry, value);
 				}, this)
 			});
 		},
@@ -379,11 +398,10 @@
 
 		updateStatus: function()
 		{
-			if (this.status == 'Q')
+			if (this.status === 'Q')
 			{
 				this.selectorButton.style.display = 'none';
 				this.buttonY.style.display = '';
-				//this.buttonI.style.display = '';
 				this.buttonN.style.display = '';
 			}
 			else
@@ -405,12 +423,16 @@
 				this.menuPopup.close();
 			}
 
-			if (this.changeStatusCallback && typeof this.changeStatusCallback == 'function')
+			var res = true;
+			if (BX.type.isFunction(this.changeStatusCallback))
 			{
-				this.changeStatusCallback(this.status);
+				res = this.changeStatusCallback(this.status);
 			}
 
-			this.updateStatus();
+			if (res)
+			{
+				this.updateStatus();
+			}
 		},
 
 		showPopup: function ()
@@ -422,33 +444,25 @@
 
 			var menuItems;
 
-			if (this.status == 'Y' || this.status == 'H')
+			if (this.status === 'Y' || this.status === 'H')
 			{
 				menuItems = [
 					{
 						text: BX.message('EC_VIEW_DESIDE_BUT_N'),
 						onclick: BX.proxy(function(){this.setStatus('N');}, this)
 					}
-					//{
-					//	text: BX.message('EC_VIEW_DESIDE_BUT_I'),
-					//	onclick: BX.proxy(function(){this.setStatus('I');}, this)
-					//}
 				];
 			}
-			else if(this.status == 'N')
+			else if(this.status === 'N')
 			{
 				menuItems = [
 					{
 						text: BX.message('EC_VIEW_DESIDE_BUT_Y'),
 						onclick: BX.proxy(function(){this.setStatus('Y');}, this)
 					}
-					//{
-					//	text: BX.message('EC_VIEW_DESIDE_BUT_I'),
-					//	onclick: BX.proxy(function(){this.setStatus('I');}, this)
-					//}
 				];
 			}
-			else if(this.status == 'I')
+			else if(this.status === 'I')
 			{
 				menuItems =[
 					{
@@ -481,6 +495,7 @@
 			BX.addCustomEvent(this.menuPopup.popupWindow, 'onPopupClose', BX.delegate(function()
 			{
 				BX.PopupMenu.destroy(this.id);
+				this.menuPopup = null;
 			}, this));
 		}
 	};

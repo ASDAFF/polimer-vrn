@@ -1,8 +1,8 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
-define("PULL_REVISION", 17);
-define("PULL_REVISION_MOBILE", 1);
+define("PULL_REVISION_WEB", 19);
+define("PULL_REVISION_MOBILE", 2);
 
 global $APPLICATION, $DBType;
 
@@ -32,8 +32,8 @@ CModule::AddAutoloadClasses(
 );
 
 CJSCore::RegisterExt('pull', array(
-	'js' => '/bitrix/js/pull/pull.js',
-	'lang' => '/bitrix/modules/pull/lang/'.LANGUAGE_ID.'/js_pull.php',
-	'rel' => defined('BX_PULL_SKIP_LS')? array('ajax'): array('ajax', 'ls')
+	'skip_core' => true,
+	'rel' => array('pull.client')
 ));
-?>
+
+\Bitrix\Pull\Loader::register();

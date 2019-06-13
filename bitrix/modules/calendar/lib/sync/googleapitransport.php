@@ -34,7 +34,6 @@ final class GoogleApiTransport //implements IErrorable
 	{
 		$requestBody = Web\Json::encode($channelInfo, JSON_UNESCAPED_SLASHES);
 		return $this->doRequest(Web\HttpClient::HTTP_POST, self::API_BASE_URL . 'users/me/calendarList/watch', $requestBody);
-
 	}
 
 	/**
@@ -48,7 +47,6 @@ final class GoogleApiTransport //implements IErrorable
 		$this->currentMethod = __METHOD__;
 		$requestBody = Web\Json::encode($channelInfo, JSON_UNESCAPED_SLASHES);
 		return $this->doRequest(Web\HttpClient::HTTP_POST, self::API_BASE_URL . 'calendars/' . urlencode($calendarId) . '/events/watch', $requestBody);
-		#return $this->client->getResult();
 	}
 
 	/**
@@ -110,11 +108,12 @@ final class GoogleApiTransport //implements IErrorable
 	private function doRequest($type, $url, $requestParams = '')
 	{
 		$this->errors = $response = array();
-		if (!in_array($type, array(Web\HttpClient::HTTP_PATCH, Web\HttpClient::HTTP_PUT, "DELETE", Web\HttpClient::HTTP_GET, Web\HttpClient::HTTP_POST)))
+		if (!in_array($type, array(Web\HttpClient::HTTP_PATCH, Web\HttpClient::HTTP_PUT, Web\HttpClient::HTTP_DELETE, Web\HttpClient::HTTP_GET, Web\HttpClient::HTTP_POST)))
 		{
 			throw new ArgumentException('Bad request type');
 		}
 		$this->client->query($type, $url, ($requestParams ? $requestParams : null));
+
 		//Only "OK" response is acceptable.
 		if ($this->client->getStatus() == 200)
 		{
@@ -148,7 +147,7 @@ final class GoogleApiTransport //implements IErrorable
 	public function deleteEvent($eventId, $calendarId)
 	{
 		$this->currentMethod = __METHOD__;
-		return $this->doRequest("DELETE", self::API_BASE_URL . 'calendars/' . $calendarId . '/events/' . str_replace('@google.com', '', $eventId));
+		return $this->doRequest(Web\HttpClient::HTTP_DELETE, self::API_BASE_URL . 'calendars/' . $calendarId . '/events/' . str_replace('@google.com', '', $eventId));
 	}
 
 	/**
@@ -264,6 +263,11 @@ final class GoogleApiTransport //implements IErrorable
 	 */
 	public function getErrorByCode($code)
 	{
+		if (!is_array($this->errors))
+		{
+			return array();
+		}
+
 		$errorsByCode = array_filter($this->errors, function($error) use ($code)
 		{
 			return $error['code'] == $code;

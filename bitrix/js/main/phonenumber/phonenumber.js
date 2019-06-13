@@ -30,11 +30,14 @@
 	var whitespace = '\\s';
 	var brackets = '()\\[\\]';
 	var tildes = '~';
+	var extensionSeparators = ';#';
+	var extensionSymbols = ',';
 
 	var phoneNumberStartPattern = '[' + plusChar + validDigits + ']';
-	var afterPhoneNumberEndPattern = '[^' + validDigits + ']+$';
+	var afterPhoneNumberEndPattern = '[^' + validDigits + extensionSeparators + extensionSymbols + ']+$';
 	var minLengthPhoneNumberPattern = '[' + validDigits + ']{' + MIN_LENGTH_FOR_NSN + '}';
-	var validPunctuation = dashes + slashes + dot + whitespace + brackets + tildes;
+	var validPunctuation = dashes + slashes + dot + whitespace + brackets + tildes + extensionSeparators + extensionSymbols;
+	var significantChars = validDigits + plusChar + extensionSeparators + extensionSymbols;
 
 	var validPhoneNumber =
 		'[' + plusChar + ']{0,1}' +
@@ -106,7 +109,7 @@
 		this.nationalNumber = null;
 		this.numberType = null;
 		this.extension = null;
-
+		this.extensionSeparator = null;
 
 		this.international = false;
 		this.nationalPrefix = null;
@@ -148,15 +151,40 @@
 		return result;
 	};
 
+	BX.PhoneNumber.getValidNumberPattern = function()
+	{
+		return validPhoneNumber;
+	};
+
+	BX.PhoneNumber.getValidNumberRegex = function()
+	{
+		return new RegExp(validPhoneNumber);
+	};
+
 	BX.PhoneNumber.prototype.format = function(formatType)
 	{
-		if(!this.valid)
-			return this.rawNumber;
-
-		if(!formatType)
-			return BX.PhoneNumberFormatter.formatOriginal(this);
+		if(this.valid)
+		{
+			if(!formatType)
+			{
+				return BX.PhoneNumberFormatter.formatOriginal(this);
+			}
+			else
+			{
+				return BX.PhoneNumberFormatter.format(this, formatType)
+			}
+		}
 		else
-			return BX.PhoneNumberFormatter.format(this, formatType)
+		{
+			if(ShortNumberFormatter.isApplicable(this.getRawNumber()))
+			{
+				return ShortNumberFormatter.format(this.getRawNumber());
+			}
+			else
+			{
+				return this.rawNumber;
+			}
+		}
 	};
 
 	BX.PhoneNumber.prototype.getRawNumber = function()
@@ -219,14 +247,29 @@
 		this.numberType = numberType;
 	};
 
+	BX.PhoneNumber.prototype.hasExtension = function()
+	{
+		return !!this.extension;
+	};
+
 	BX.PhoneNumber.prototype.getExtension = function()
 	{
 		return this.extension;
 	};
 
-	BX.PhoneNumber.prototype.getExtension = function(extension)
+	BX.PhoneNumber.prototype.setExtension = function(extension)
 	{
 		this.extension = extension;
+	};
+
+	BX.PhoneNumber.prototype.getExtensionSeparator = function()
+	{
+		return this.extensionSeparator;
+	};
+
+	BX.PhoneNumber.prototype.setExtensionSeparator = function(extensionSeparator)
+	{
+		this.extensionSeparator = extensionSeparator;
 	};
 
 	BX.PhoneNumber.prototype.isInternational = function()
@@ -305,6 +348,12 @@
 		{
 			return result;
 		}
+
+		var extensionParseResult = _stripExtension(formattedPhoneNumber);
+		var extension = extensionParseResult.extension;
+		var extensionSeparator = extensionParseResult.extensionSeparator;
+
+		formattedPhoneNumber = extensionParseResult.phoneNumber;
 
 		var parseResult = _parsePhoneNumberAndCountryPhoneCode(formattedPhoneNumber);
 		if(parseResult === false)
@@ -405,6 +454,8 @@
 		result.setInternational(isInternational);
 		result.setHasPlus(hasPlusChar);
 		result.setNationalPrefix(nationalPrefix);
+		result.setExtension(extension);
+		result.setExtensionSeparator(extensionSeparator);
 		result.setValid(numberType !== false);
 
 		return result;
@@ -428,9 +479,15 @@
 			return number.getRawNumber();
 
 		if(formatType === BX.PhoneNumber.Format.E164)
-			return '+' + number.getCountryCode() + number.getNationalNumber();
+		{
+			var result = '+' + number.getCountryCode()
+				+ number.getNationalNumber()
+				+ (number.hasExtension() ? number.getExtensionSeparator() + " " + number.getExtension() : "");
 
-		var countryMetadata = metadata[number.getCountry()];
+			return result;
+		}
+
+		var countryMetadata = _getCountryMetadata(number.getCountry());
 		var isInternational = formatType === BX.PhoneNumber.Format.INTERNATIONAL;
 		var format = this.selectFormatForNumber(number.getNationalNumber(), isInternational, countryMetadata);
 
@@ -446,6 +503,11 @@
 		else
 		{
 			formattedNationalNumber = number.getNationalNumber();
+		}
+
+		if(number.hasExtension())
+		{
+			formattedNationalNumber += number.getExtensionSeparator() + " " + number.getExtension();
 		}
 
 		if(formatType === BX.PhoneNumber.Format.INTERNATIONAL)
@@ -470,14 +532,30 @@
 			return number.getRawNumber();
 
 		var formattedNationalNumber = this.formatNationalNumberWithOriginalFormat(number, format);
+
+		if(number.hasExtension())
+		{
+			formattedNationalNumber += number.getExtensionSeparator() + " " + number.getExtension();
+		}
+
 		if(number.isInternational())
 		{
-			return (number.hasPlus() ? '+' : '') + number.getCountryCode() + ' ' + formattedNationalNumber;
+			var formattedNumber = (number.hasPlus() ? '+' : '') + number.getCountryCode() + ' ' + formattedNationalNumber;
 		}
 		else
 		{
-			return formattedNationalNumber;
+			formattedNumber = formattedNationalNumber;
 		}
+
+		// If no digit was inserted/removed/altered in a process of formatting, return the formatted number;
+		var normalizedFormattedNumber = _stripLetters(formattedNumber);
+		var normalizedRawInput = _stripLetters(number.getRawNumber());
+		if (normalizedFormattedNumber !== normalizedRawInput)
+		{
+			formattedNumber = number.getRawNumber();
+		}
+
+		return formattedNumber;
 	};
 
 	BX.PhoneNumberFormatter.selectFormatForNumber = function(nationalNumber, isInternational, countryMetadata)
@@ -574,8 +652,8 @@
 		var patternRegex =  new RegExp(format['pattern']);
 		var nationalNumber = number.getNationalNumber();
 		var countryMetadata = _getCountryMetadata(number.getCountry());
-		var nationalPrefix = number.getNationalPrefix() || '';
-		var hasNationalPrefix = nationalPrefix !== '';
+		var nationalPrefix = _getNationalPrefix(countryMetadata, true);
+		var hasNationalPrefix = _numberContainsNationalPrefix(number.getRawNumber(), nationalPrefix, countryMetadata);
 
 		if(!isInternational && hasNationalPrefix)
 		{
@@ -641,10 +719,10 @@
 	// This is the minimum length of the leading digits of a phone number
 	// to guarantee the first "leading digits pattern" for a phone number format
 	// to be preemptive.
-	const MIN_LEADING_DIGITS_LENGTH = 3;
+	var MIN_LEADING_DIGITS_LENGTH = 3;
 
-	const VALID_INCOMPLETE_PHONE_NUMBER = '[' + plusChar + ']{0,1}' + '[' + validPunctuation + validDigits + ']*';
-	const VALID_INCOMPLETE_PHONE_NUMBER_PATTERN = new RegExp('^' + VALID_INCOMPLETE_PHONE_NUMBER + '$', 'i');
+	var VALID_INCOMPLETE_PHONE_NUMBER = '[' + plusChar + ']{0,1}' + '[' + validPunctuation + validDigits + ']*';
+	var VALID_INCOMPLETE_PHONE_NUMBER_PATTERN = new RegExp('^' + VALID_INCOMPLETE_PHONE_NUMBER + '$', 'i');
 
 	BX.PhoneNumber.IncompleteFormatter = function(defaultCountry)
 	{
@@ -666,6 +744,8 @@
 		this.hasNationalPrefix = false;
 		this.hasPlusChar = false;
 		this.formattedNumber = null;
+		this.extension = '';
+		this.extensionSeparator = '';
 	};
 
 	BX.PhoneNumber.IncompleteFormatter.prototype.format = function(incompleteNumber)
@@ -682,6 +762,11 @@
 		}
 
 		this.isInternational = extractedNumber[0] === plusChar;
+
+		var stripResult = _stripExtension(extractedNumber);
+		extractedNumber = stripResult.phoneNumber;
+		this.extension = stripResult.extension;
+		this.extensionSeparator = stripResult.extensionSeparator;
 
 		extractedNumber = _stripLetters(extractedNumber);
 		this.rawInput = extractedNumber;
@@ -728,13 +813,14 @@
 	BX.PhoneNumber.IncompleteFormatter.prototype.getFormattedNumber = function()
 	{
 		var formattedNationalNumber = this.formatNationalNumber();
+		var result = formattedNationalNumber ? formattedNationalNumber : this.rawInput;
 
-		if(formattedNationalNumber)
+		if(this.extensionSeparator)
 		{
-			return formattedNationalNumber;
+			result += this.extensionSeparator + " " + this.extension;
 		}
 
-		return this.rawInput;
+		return result;
 	};
 
 	BX.PhoneNumber.IncompleteFormatter.prototype.extractCountryCode = function()
@@ -774,7 +860,8 @@
 				return false;
 			}
 			this.hasNationalPrefix = true;
-			this.nationalPrefix = this.nationalNumber.substr(0, this.nationalNumber.length - possibleNationalNumber.length);
+			//this.nationalPrefix = this.nationalNumber.substr(0, this.nationalNumber.length - possibleNationalNumber.length);
+			this.nationalPrefix = this.countryMetadata['nationalPrefix'];
 			this.nationalNumber = possibleNationalNumber;
 			return true;
 		}
@@ -784,9 +871,8 @@
 	BX.PhoneNumber.IncompleteFormatter.prototype.resetState = function()
 	{
 		this.country = null;
-		this.country = null;
-		this.countryCode = null;
-		this.nationalPrefix = null;
+		this.countryCode = '';
+		this.nationalPrefix = '';
 		this.nationalNumber = null;
 		this.isInternational = false;
 		this.hasNationalPrefix = false;
@@ -794,6 +880,8 @@
 		this.selectedFormat = null;
 		this.formattedNumber = null;
 		this.formattingTemplate = null;
+		this.extension = '';
+		this.extensionSeparator = '';
 	};
 
 	BX.PhoneNumber.IncompleteFormatter.prototype.findSuitableCountry = function()
@@ -815,18 +903,33 @@
 			return this.formatCompleteNumber(this.nationalNumber);
 		}
 
+		if(!this.isInternational && this.countryCode === '' && this.nationalPrefix === '' && ShortNumberFormatter.isApplicable(this.rawInput))
+		{
+			return ShortNumberFormatter.format(this.rawInput);
+		}
+
 		if(this.selectFormat())
 		{
 			this.formattedNumber = this.formatUsingTemplate();
 
 			if(this.isInternational)
 			{
-				return (this.hasPlusChar ? plusChar : '') + this.countryCode + ' ' + this.formattedNumber;
+				var formattedNumber = (this.hasPlusChar ? plusChar : '') + this.countryCode + ' ' + this.formattedNumber;
 			}
 			else
 			{
-				return this.formattedNumber;
+				formattedNumber = this.formattedNumber;
 			}
+
+			// If no digit was inserted/removed/altered in a process of formatting, return the formatted number;
+			var normalizedFormattedNumber = _stripLetters(formattedNumber);
+			var normalizedRawInput = _stripLetters(this.rawInput);
+			if (normalizedFormattedNumber !== normalizedRawInput)
+			{
+				formattedNumber = this.rawInput;
+			}
+
+			return formattedNumber;
 		}
 	};
 
@@ -1007,10 +1110,6 @@
 		this.nationalPrefix = '';
 	};
 
-	// Formatted number input control
-
-	var significantChars = '[\\d+]';
-
 	/**
 	 *
 	 * @param {object} params
@@ -1018,6 +1117,9 @@
 	 * @param {Element} [params.flagNode]
 	 * @param {int} [params.flagSize] 16, 24 or 32
 	 * @param {string} [params.defaultCountry]
+	 * @param {int} [params.countryPopupHeight] 180
+	 * @param {string} [params.countryPopupClassName] ''
+	 * @param {Array} [params.countryTopList]
 	 * @param {boolean} [params.forceLeadingPlus]
 	 * @param {Function} [params.onInitialize]
 	 * @param {Function} [params.onChange]
@@ -1037,6 +1139,9 @@
 		this.forceLeadingPlus = params.forceLeadingPlus === true;
 		this.flagNode = BX.type.isDomNode(params.flagNode) ? params.flagNode : null;
 		this.flagSize = ([16, 24, 32].indexOf(params.flagSize) !== -1) ? params.flagSize : 16;
+		this.countryPopupHeight = params.countryPopupHeight || 180;
+		this.countryPopupClassName = params.countryPopupClassName || '';
+		this.countryTopList = params.countryTopList || [];
 		this.flagNodeInitialClass = '';
 
 		this.countries = null;
@@ -1056,6 +1161,9 @@
 		this._digitsCount = 0;
 		this._selectedDigitsBeforeAction = 0;
 		this._countryBefore = '';
+
+		this.initialized = false;
+		this.initializationPromises = [];
 
 		this.init();
 		this.bindEvents();
@@ -1088,6 +1196,11 @@
 				self.inputNode.value = self.formatter.getFormattedNumber();
 			}
 			self.drawCountryFlag();
+			self.initialized = true;
+			self.initializationPromises.forEach(function(promise)
+			{
+				promise.resolve();
+			});
 			self.callbacks.initialize();
 		});
 	};
@@ -1102,9 +1215,46 @@
 		}
 	};
 
+	BX.PhoneNumber.Input.prototype.setValue = function (newValue)
+	{
+		this.waitForInitialization().then(function()
+		{
+			this.inputNode.value = this.formatter.format(newValue.toString());
+			this.callbacks.change({
+				value: this.getValue(),
+				formattedValue: this.getFormattedValue(),
+				country: this.getCountry(),
+				countryCode: this.getCountryCode()
+			});
+
+			if(this._countryBefore !== this.getCountry())
+			{
+				this.drawCountryFlag();
+				this.callbacks.countryChange({
+					country: this.getCountry(),
+					countryCode: this.getCountryCode()
+				});
+			}
+		}.bind(this));
+	};
+
+	BX.PhoneNumber.Input.prototype.waitForInitialization = function()
+	{
+		var result = new BX.Promise();
+
+		if(this.initialized)
+		{
+			result.resolve();
+			return result;
+		}
+
+		this.initializationPromises.push(result);
+		return result;
+	};
+
 	BX.PhoneNumber.Input.prototype.getValue = function()
 	{
-		return _normalizePhoneNumber(this.inputNode.value);
+		return _stripNonSignificantChars(this.inputNode.value);
 	};
 
 	BX.PhoneNumber.Input.prototype.getFormattedValue = function()
@@ -1152,7 +1302,7 @@
 				return;
 			}
 		}
-		else if(e.key.length === 1 && e.key.search(/\d/) !== 0 && !e.ctrlKey && !e.metaKey)
+		else if(e.key.length === 1 && e.key.search(/[\d,;#]/) !== 0 && !e.ctrlKey && !e.metaKey)
 		{
 			e.preventDefault();
 			e.stopPropagation();
@@ -1274,6 +1424,9 @@
 
 		this.selectCountry({
 			node: this.flagNode,
+			countryPopupHeight: this.countryPopupHeight,
+			countryPopupClassName: this.countryPopupClassName,
+			countryTopList: this.countryTopList,
 			onSelect: this._onCountrySelect.bind(this)
 		});
 	};
@@ -1338,9 +1491,33 @@
 
 	BX.PhoneNumber.Input.prototype.selectCountry = function (params)
 	{
-		var onSelect  = BX.type.isFunction(params.onSelect) ? params.onSelect : BX.DoNothing;
-		var popupContent = BX.create("span", {});
 		var self = this;
+		var onSelect  = BX.type.isFunction(params.onSelect) ? params.onSelect : BX.DoNothing;
+		var popupContent = BX.create("span", {
+			events: {
+				click: BX.delegateEvent(
+					{
+						attribute: 'data-country',
+					},
+					function()
+					{
+						self.countrySelectPopup.close();
+						onSelect({
+							country: this.getAttribute('data-country')
+						});
+					}
+				)
+			}
+		});
+
+		var separator = null;
+		var topList = {};
+		if(params.countryTopList && params.countryTopList.length > 0)
+		{
+			separator = popupContent.appendChild(
+				BX.create('span', {props: {className: 'main-phonenumber-country-separator'}})
+			);
+		}
 
 		this.loadCountries().then(function()
 		{
@@ -1353,17 +1530,9 @@
 					return;
 
 
-				popupContent.appendChild(BX.create("div", {
+				var countryNode = popupContent.appendChild(BX.create("div", {
 					props: {className: "main-phonenumber-country"},
-					events: {
-						click: function()
-						{
-							self.countrySelectPopup.close();
-							onSelect({
-								country: countryDescriptor.CODE
-							})
-						}
-					},
+					attrs: {'data-country': countryDescriptor.CODE},
 					children: [
 						BX.create("span", {
 							props: {className: "main-phonenumber-country-flag bx-flag-16 " + country.toLowerCase()}
@@ -1374,19 +1543,41 @@
 						})
 					]
 				}));
+
+				if(params.countryTopList.indexOf(countryDescriptor.CODE) >= 0)
+				{
+					topList[countryDescriptor.CODE] = countryNode.cloneNode(true);
+				}
 			});
+
+			if(params.countryTopList && params.countryTopList.length > 0)
+			{
+				params.countryTopList.forEach(function(countryCode)
+				{
+					if(typeof topList[countryCode] !== 'undefined')
+					{
+						popupContent.insertBefore(topList[countryCode], separator);
+					}
+				});
+
+				if (popupContent.firstChild === separator)
+				{
+					popupContent.removeChild(separator);
+				}
+			}
 
 			self.countrySelectPopup = new BX.PopupWindow(
 				'phoneNumberInputSelectCountry',
 				params.node,
 				{
+					className: params.countryPopupClassName || '',
 					autoHide: true,
-					zIndex: 100,
+					zIndex: (BX.WindowManager ? BX.WindowManager.GetZIndex() + 100 : 100),
 					closeByEsc: true,
 					bindOptions: {
 						position: 'top'
 					},
-					height: 180,
+					height: params.countryPopupHeight,
 					offsetRight: 35,
 					angle: {
 						offset: 33
@@ -1413,6 +1604,46 @@
 	};
 
 // Internal functions
+
+	var ShortNumberFormatter = {
+		templates: {
+			3: 'x-xx',
+			4: 'xx-xx',
+			5: 'x-xx-xx',
+			6: 'xx-xx-xx',
+			7: 'xxx-xx-xx'
+		},
+
+		/**
+		 *
+		 * @param {string} rawNumber
+		 * @return string
+		 */
+		format: function(rawNumber)
+		{
+			var template = this.templates[rawNumber.length];
+			if(!template)
+			{
+				return rawNumber;
+			}
+
+			var i = 0;
+			var pattern = new RegExp(template.replace(/[^x]/g, "").replace(/x/g, "(\\d)"));
+			var format = template.replace(/x/g, function (){ return "$" + ++i;});
+
+			return rawNumber.replace(pattern, format);
+		},
+
+		/**
+		 * Return true if the phone number could be formatted using this formatter and false otherwise.
+		 * @param {string} rawNumber
+		 * @return boolean
+		 */
+		isApplicable: function(rawNumber)
+		{
+			return /^\d{3,7}$/.test(rawNumber);
+		}
+	};
 
 	/**
 	 * Extracts phone number from the input string.
@@ -1446,7 +1677,7 @@
 	 */
 	var _parsePhoneNumberAndCountryPhoneCode = function(phoneNumber)
 	{
-		phoneNumber = _normalizePhoneNumber(phoneNumber);
+		phoneNumber = _stripNonSignificantChars(phoneNumber);
 		if(!phoneNumber)
 			return false;
 
@@ -1494,24 +1725,28 @@
 	};
 
 	/**
-	 * Strips letters from the phone number, except for the leading plus character.
-	 * @param {string} phoneNumber Phone number.
-	 * @return string
+	 *
+	 * @param {string} phoneNumber
+	 * @private
 	 */
-	var _normalizePhoneNumber = function(phoneNumber)
+	var _stripExtension = function(phoneNumber)
 	{
-		if (!phoneNumber)
-			return '';
+		var extension = "";
+		var extensionSeparator = "";
+		var separatorPosition = phoneNumber.search(new RegExp("[" + extensionSeparators + "]"));
 
-		var isInternational = phoneNumber[0] === plusChar;
+		if(separatorPosition >= 0)
+		{
+			extensionSeparator = phoneNumber[separatorPosition];
+			extension = phoneNumber.substr(separatorPosition);
+			phoneNumber = phoneNumber.substr(0, separatorPosition);
+		}
 
-		// Remove non-digits (and strip the possible leading '+')
-		phoneNumber = _stripLetters(phoneNumber);
-
-		if (isInternational)
-			return plusChar + phoneNumber;
-		else
-			return phoneNumber;
+		return {
+			extensionSeparator: extensionSeparator,
+			extension: _stripEverythingElse(extension, extensionSymbols + validDigits),
+			phoneNumber: phoneNumber
+		};
 	};
 
 	/**
@@ -1777,6 +2012,21 @@
 
 	};
 
+	var _getNationalPrefix = function(countryMetadata, stripNonDigits)
+	{
+		if(!countryMetadata.hasOwnProperty('nationalPrefix'))
+		{
+			return '';
+		}
+
+		var nationalPrefix = countryMetadata['nationalPrefix'];
+		if (stripNonDigits)
+		{
+			nationalPrefix = _stripLetters(nationalPrefix);
+		}
+		return nationalPrefix;
+	};
+
 	var _getNationalPrefixFormattingRule = function (format, countryMetadata)
 	{
 		if(format.hasOwnProperty('nationalPrefixFormattingRule'))
@@ -1791,6 +2041,23 @@
 			var mainCountryMetadata = _getCountryMetadata(mainCountry);
 
 			return mainCountryMetadata['nationalPrefixFormattingRule'] || '';
+		}
+	};
+
+	var _numberContainsNationalPrefix = function(phoneNumber, nationalPrefix, countryMetadata)
+	{
+		if (phoneNumber.indexOf(nationalPrefix) === 0)
+		{
+			// Some Japanese numbers (e.g. 00777123) might be mistaken to contain the national prefix
+			// when written without it (e.g. 0777123) if we just do prefix matching. To tackle that, we
+			// check the validity of the number if the assumed national prefix is removed (777123 won't
+			// be valid in Japan).
+			var numberWithoutPrefix = phoneNumber.substr(nationalPrefix.length);
+			return BX.PhoneNumberParser.getInstance()._realParse(numberWithoutPrefix, countryMetadata['id']).isValid();
+		}
+		else
+		{
+			return false;
 		}
 	};
 
@@ -1863,18 +2130,28 @@
 	 */
 	var _stripLetters = function(str)
 	{
-		return str.replace(new RegExp("[^\\d]", "g"), "");
+		return _stripEverythingElse(str, validDigits)
+	};
+
+	var _stripNonSignificantChars = function(str)
+	{
+		return _stripEverythingElse(str, significantChars);
+	};
+
+	var _stripEverythingElse = function(str, allowedSymbols)
+	{
+		return str.replace(new RegExp("[^" + allowedSymbols + "]", "g"), "");
 	};
 
 	var _countMatches = function(needle, haystack)
 	{
-		var matches = haystack.match(needle instanceof RegExp ? needle : new RegExp(needle, 'g'));
+		var matches = haystack.match(needle instanceof RegExp ? needle : new RegExp("[" + needle + "]", 'g'));
 		return matches ? matches.length : 0;
 	};
 
 	var _getDigitPositions = function(str)
 	{
-		var re = /[\d+]/g;
+		var re = new RegExp("[" + significantChars + "]", "g");
 		var result = [];
 		var match;
 
@@ -1885,7 +2162,6 @@
 		}
 		return result;
 	};
-
 
 	function _repeat(str, times)
 	{

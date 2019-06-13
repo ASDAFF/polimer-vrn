@@ -3,17 +3,7 @@ IncludeModuleLangFile(__FILE__);
 
 class CCloudStorageService_GoogleStorage extends CCloudStorageService
 {
-	protected $status = 0;
-	protected $headers = array();
-	protected $errno = 0;
-	protected $errstr = '';
-	protected $result = '';
 	protected $new_end_point;
-
-	function GetLastRequestStatus()
-	{
-		return $this->status;
-	}
 
 	function GetObject()
 	{
@@ -811,8 +801,10 @@ class CCloudStorageService_GoogleStorage extends CCloudStorageService
 			$this->url = $RequestURI.$params,
 			$content, '', $ContentType
 		);
-		$this->headers_sent = $obRequest->additional_headers;
 		$this->status = $obRequest->status;
+		$this->host = $host;
+		$this->verb = $verb;
+		$this->url =  $file_name.$params;
 		$this->headers = $obRequest->headers;
 		$this->errno = $obRequest->errno;
 		$this->errstr = $obRequest->errstr;

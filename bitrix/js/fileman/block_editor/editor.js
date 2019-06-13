@@ -205,12 +205,15 @@ BXBlockEditor.prototype.initControls = function()
 	this.panelList['preview'].panel = BX.findChildByClassName(this.context, 'preview' + '-panel', true);
 	BX.bind(this.panelList['preview'].button, 'click', function(){_this.showPreview('preview');});
 
-	return;
+	var getHtmlBtn = this.context.querySelector('[data-role="block-editor-tab-btn-get-html"]');
+	BX.clipboard.bindCopyClick(getHtmlBtn, {'text': this.getContent.bind(this)});
 
+	/*
 	this.panelList['get-html'] = {};
 	this.panelList['get-html'].button = BX.findChildByClassName(this.context, 'bx-editor-block-btn-' + 'get-html', true);
 	this.panelList['get-html'].panel = BX.findChildByClassName(this.context, 'get-html' + '-panel', true);
 	BX.bind(this.panelList['get-html'].button, 'click', function(){_this.showHtml('get-html');});
+	*/
 
 };
 
@@ -434,7 +437,14 @@ BXBlockEditor.prototype.initBlockPlaces = function()
 			{
 				html = this.phpParser.replacePhpByLayout(item.value);
 			}
+			
+			var emptyTextLayout = '<div ' + this.CONST_ATTR_BLOCK + '="text">';
+			if (html.indexOf(emptyTextLayout) === 0 && html.length < emptyTextLayout.length + 10)
+			{
+				html = ' ';
+			}
 			placeInfo.html += html;
+
 		}, this);
 
 
@@ -695,16 +705,28 @@ BXBlockEditor.prototype.initEditDialog = function()
 		BX.delegate(this.editDialog.save, this.editDialog)
 	);
 
+	var formNode = BX.findParent(this.resultNode, {'tag': 'form'});
+	var self = this;
 	BX.bind(
-		BX.findParent(this.resultNode, {'tag': 'form'}),
+		formNode,
 		'submit',
-		BX.delegate(function(){
-			this.editDialog.save(
-				BX.delegate(function(){
-					this.isFinalSave = true;
-					this.save();
-				}, this));
-		}, this)
+		function(e)
+		{
+			if (self.isFinalSave)
+			{
+				self.isFinalSave = false;
+				return;
+			}
+
+			e.preventDefault();
+			e.stopPropagation();
+
+			self.editDialog.save(function(){
+				self.isFinalSave = true;
+				self.save();
+				BX.submit(formNode);
+			});
+		}
 	);
 };
 
@@ -925,7 +947,7 @@ BXBlockEditor.prototype.getContent = function(withoutPHP)
 
 	// clean resources from editor resources
 	if(doc.head)
-	for(var i = 0;  i < doc.head.childNodes.length; i++)
+	for(var i = doc.head.childNodes.length - 1;  i >= 0; i--)
 	{
 		var node = doc.head.childNodes.item(i);
 		var nodeName = node.nodeName;
@@ -943,6 +965,11 @@ BXBlockEditor.prototype.getContent = function(withoutPHP)
 				{
 					//node.removeAttribute(this.CONST_ATTR_STYLIST_TAG);
 				}
+			}
+			
+			if (node.href && node.href.indexOf('/bitrix/js/fileman/block_editor/editor.css') > -1)
+			{
+				BX.remove(node);
 			}
 		}
 	}
@@ -971,7 +998,7 @@ BXBlockEditor.prototype.getContent = function(withoutPHP)
 
 		// get block content
 		var blockContent = BX.findChild(block, {'className': 'bx-content'}, true);
-		var blockContentChildren = blockContent.childNodes;
+		var blockContentChildren = BX.convert.nodeListToArray(blockContent.childNodes);
 
 		if(withoutPHP && block && block.getAttribute && block.getAttribute(this.CONST_ATTR_BLOCK) == 'component')
 		{
@@ -1000,7 +1027,7 @@ BXBlockEditor.prototype.getContent = function(withoutPHP)
 
 
 	// get html
-	result = doc.documentElement.outerHTML;
+	var result = doc.documentElement.outerHTML;
 
 	// replace placeholder #bx_....# by PHP-chunk
 	if (!withoutPHP)
@@ -1204,6 +1231,8 @@ BXBlockEditor.prototype.removeBlock = function(block)
 	var parentRemovedNode = block.node.parentNode;
 	BX.remove(block.node);
 	this.actualizeBlockPlace(parentRemovedNode);
+
+	BX.onCustomEvent(this, 'onBlockRemoveAfter', [parentRemovedNode]);
 
 	this.save();
 	this.editDialog.hide();
@@ -1667,6 +1696,7 @@ function BXBlockEditorBlockComponent()
 
 		var _this = this;
 		this.caller.editDialog.save();
+		this.caller.currentEditingBlock = this;
 		this.caller.phpParser.showComponentPropertiesDialog(
 			this.getContentClearPhp(),
 			function(html){
@@ -2117,9 +2147,8 @@ BXBlockEditorPHPParser.prototype.getAttrName = function()
 BXBlockEditorPHPParser.prototype.getPhpSliceDescription = function(phpSlice)
 {
 	var result = {'name': 'PHP', 'title': 'PHP'};
-
 	var component = this.htmlEditor.components.IsComponent(phpSlice);
-	if(component)
+	if(component && this.htmlEditor.components.components)
 	{
 		var cData = this.htmlEditor.components.GetComponentData(component.name);
 		var name = cData.title || component.name;

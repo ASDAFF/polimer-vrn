@@ -132,6 +132,9 @@
 			controls: []
 		};
 
+		this.quantityDelay = null;
+		this.quantityTimer = null;
+
 		this.obProduct = null;
 		this.obQuantity = null;
 		this.obQuantityUp = null;
@@ -506,13 +509,22 @@
 
 				if (this.config.showQuantity)
 				{
+					var startEventName = this.isTouchDevice ? 'touchstart' : 'mousedown';
+					var endEventName = this.isTouchDevice ? 'touchend' : 'mouseup';
+
 					if (this.obQuantityUp)
 					{
+						BX.bind(this.obQuantityUp, startEventName, BX.proxy(this.startQuantityInterval, this));
+						BX.bind(this.obQuantityUp, endEventName, BX.proxy(this.clearQuantityInterval, this));
+						BX.bind(this.obQuantityUp, 'mouseout', BX.proxy(this.clearQuantityInterval, this));
 						BX.bind(this.obQuantityUp, 'click', BX.delegate(this.quantityUp, this));
 					}
 
 					if (this.obQuantityDown)
 					{
+						BX.bind(this.obQuantityDown, startEventName, BX.proxy(this.startQuantityInterval, this));
+						BX.bind(this.obQuantityDown, endEventName, BX.proxy(this.clearQuantityInterval, this));
+						BX.bind(this.obQuantityDown, 'mouseout', BX.proxy(this.clearQuantityInterval, this));
 						BX.bind(this.obQuantityDown, 'click', BX.delegate(this.quantityDown, this));
 					}
 
@@ -1774,6 +1786,27 @@
 			}
 		},
 
+		startQuantityInterval: function()
+		{
+			var target = BX.proxy_context;
+			var func = target.id === this.visual.QUANTITY_DOWN_ID
+				? BX.proxy(this.quantityDown, this)
+				: BX.proxy(this.quantityUp, this);
+
+			this.quantityDelay = setTimeout(
+				BX.delegate(function() {
+					this.quantityTimer = setInterval(func, 150);
+				}, this),
+				300
+			);
+		},
+
+		clearQuantityInterval: function()
+		{
+			clearTimeout(this.quantityDelay);
+			clearInterval(this.quantityTimer);
+		},
+
 		quantityUp: function()
 		{
 			var curValue = 0,
@@ -1866,17 +1899,15 @@
 
 						this.checkPriceRange(curValue);
 
+						intCount = Math.floor(
+							Math.round(curValue * this.precisionFactor / this.stepQuantity) / this.precisionFactor
+						) || 1;
+						curValue = (intCount <= 1 ? this.stepQuantity : intCount * this.stepQuantity);
+						curValue = Math.round(curValue * this.precisionFactor) / this.precisionFactor;
+
 						if (curValue < this.minQuantity)
 						{
 							curValue = this.minQuantity;
-						}
-						else
-						{
-							intCount = Math.round(
-									Math.round(curValue * this.precisionFactor / this.stepQuantity) / this.precisionFactor
-								) || 1;
-							curValue = (intCount <= 1 ? this.stepQuantity : intCount * this.stepQuantity);
-							curValue = Math.round(curValue * this.precisionFactor) / this.precisionFactor;
 						}
 
 						this.obQuantity.value = curValue;

@@ -6,15 +6,8 @@
 		this.pulledEntriesIndex = {};
 		this.requestedEntriesIndex = {};
 		this.entriesRaw = [];
+		this.userIndex = {};
 		this.loadedEntriesIndex = {};
-
-		var
-			initYear = parseInt(this.calendar.util.config.init_year),
-			initMonth = parseInt(this.calendar.util.config.init_month);
-
-		this.fillChunkIndex(new Date(initYear, initMonth - 2, 1), new Date(initYear, initMonth + 1, 0));
-
-		this.handleEntriesList(data.entries);
 	}
 
 	EntryController.prototype = {
@@ -48,14 +41,14 @@
 				{
 					if ((entriesRaw[i]['~TYPE'] == 'tasks' && !activeSectionIndex['tasks'])
 						||
-						(entriesRaw[i]['~TYPE'] != 'tasks' && !activeSectionIndex[parseInt(entriesRaw[i]['SECT_ID'])])
+						(entriesRaw[i]['~TYPE'] != 'tasks' && entriesRaw[i]['SECT_ID']
+						&& !activeSectionIndex[parseInt(entriesRaw[i]['SECT_ID'])])
 					)
 					{
 						continue;
 					}
 
 					entry = new Entry(this.calendar, entriesRaw[i]);
-
 					if (params.viewRange)
 					{
 						if (entry.applyViewRange(params.viewRange))
@@ -80,8 +73,11 @@
 
 			if ((action == 'edit' || action == 'delete') && !this.calendar.util.readOnlyMode())
 			{
-				if (entry.isMeeting() && entry.id !== entry.parentId)
+				if ((entry.isMeeting() && entry.id !== entry.parentId)
+				|| entry.isResourcebooking())
+				{
 					return false;
+				}
 
 				var section = this.calendar.sectionController.getSection(entry.sectionId);
 				return section && section.canDo && section.canDo('edit');
@@ -117,7 +113,7 @@
 		saveEntry: function(data)
 		{
 			var url = this.calendar.util.getActionUrl();
-			url += (url.indexOf('?') == -1) ? '?' : '&';
+			url += (url.indexOf('?') === -1) ? '?' : '&';
 			url += 'markAction=newEvent';
 			url += '&markType=' + this.calendar.util.type;
 			url += '&markMeeting=' + (this.checkMeetingByCodes(data.attendeesCodes) ? 'Y' : 'N');
@@ -144,9 +140,44 @@
 				},
 				handler: BX.delegate(function(response)
 				{
-					this.handleEntriesList(response.entries);
-					this.calendar.getView().displayEntries();
-					//this.calendar.reload();
+					if (response.location_busy_warning)
+					{
+						alert(BX.message('EC_LOCATION_RESERVE_ERROR'));
+
+						this.handleEntriesList(response.entries);
+						this.calendar.getView().displayEntries();
+
+						var
+							reload = true,
+							entry = response.entries.find(function(el){return el.ID == response.id;});
+
+						if (entry)
+						{
+							var uid = this.getUniqueId(entry);
+							if (uid)
+							{
+								entry = this.calendar.getView().getEntryById(uid);
+								if (entry)
+								{
+									this.calendar.entryController.editEntry({
+										entry: entry,
+										tryLocation: data.location
+									});
+									reload = false;
+								}
+							}
+						}
+
+						if (reload)
+						{
+							this.calendar.reload();
+						}
+					}
+					else
+					{
+						this.handleEntriesList(response.entries);
+						this.calendar.getView().displayEntries();
+					}
 				}, this)
 			});
 		},
@@ -173,9 +204,10 @@
 			}
 
 			var attendees = [];
-
 			if (entry.isMeeting())
-				entry.data['~ATTENDEES'].forEach(function(user){attendees.push(user['USER_ID']);});
+			{
+				entry.data['ATTENDEE_LIST'].forEach(function(user){attendees.push(user['id']);});
+			}
 
 			this.calendar.request({
 				type: 'post',
@@ -187,7 +219,7 @@
 					date_to: entry.isFullDay() ? this.calendar.util.formatDate(entry.to) : this.calendar.util.formatDateTime(entry.to),
 					skip_time: entry.isFullDay() ? 'Y' : 'N',
 					attendees: attendees,
-
+					location: entry.location || '',
 					recursive: entry.isRecursive() ? 'Y' : 'N',
 					is_meeting: entry.isMeeting() ? 'Y' : 'N',
 					section: entry.sectionId,
@@ -202,6 +234,11 @@
 						alert(BX.message('EC_BUSY_ALERT'));
 					}
 
+					if (response.location_busy_warning)
+					{
+						alert(BX.message('EC_LOCATION_RESERVE_ERROR'));
+					}
+
 					this.calendar.reload();
 				}, this)
 			});
@@ -212,7 +249,7 @@
 			if (!params)
 				params = {};
 
-			if (!entry || !entry.id || entry.isTask())
+			if (!this.calendar.entryController.canDo(entry, 'delete') || entry.isTask())
 				return false;
 
 			if (entry.wasEverRecursive() && !params.confirmed)
@@ -424,148 +461,109 @@
 
 		loadEntries: function (params)
 		{
+			// Show loader
+			if (this.calendar.currentViewName !== 'list')
+			{
+				this.calendar.showLoader();
+			}
+
 			var sections = this.calendar.sectionController.getSectionsInfo();
-
-			this.calendar.request({
-				type: 'post',
-				data: {
-					action: 'load_entries',
-					month_from: params.startDate ? (params.startDate.getMonth() + 1) : '',
-					year_from: params.startDate ? params.startDate.getFullYear() : '',
-					month_to: params.finishDate ? params.finishDate.getMonth() + 1 : '',
-					year_to: params.finishDate ? params.finishDate.getFullYear() : '',
-					active_sect: sections.active,
-					hidden_sect: sections.hidden,
-					sup_sect: sections.superposed,
-					loadNext: params.loadNext ? 'Y' : 'N',
-					loadPrevious: params.loadPrevious ? 'Y' : 'N',
-					loadLimit: params.loadLimit || 0,
-					cal_dav_data_sync: this.calendar.reloadGoogle ? 'Y' : 'N'
-				},
-				handler: BX.delegate(function(response)
+			if (this.calendar.isExternalMode())
+			{
+				this.calendar.triggerEvent('loadEntries',
 				{
-					//var sectionsNow = this.calendar.sectionController.getSectionsInfo();
-					//if (!_this.CompareArrays(sections.superposed, sectionsNow.superposed) ||
-					//	!_this.CompareArrays(sections.active, sectionsNow.active) ||
-					//	!_this.CompareArrays(sections.hidden, sectionsNow.hidden)
-					//)
-					//{
-					//	return;
-					//}
-					//this.entriesRaw = response.entries;
-
-					this.handleEntriesList(response.entries);
-
-					if (!params.finishDate && this.entriesRaw.length > 0)
+					params: params,
+					onLoadCallback : BX.delegate(function(json)
 					{
-						var finishDate = this.entriesRaw[this.entriesRaw.length - 1].DATE_FROM;
-						finishDate = BX.parseDate(finishDate);
-						if (finishDate)
+						this.calendar.hideLoader();
+
+						this.handleEntriesList(json.entries);
+
+						if (!params.finishDate && this.entriesRaw.length > 0)
 						{
-							finishDate.setFullYear(finishDate.getFullYear(), finishDate.getMonth(), 0);
-							params.finishDate = finishDate;
+							var finishDate = this.entriesRaw[this.entriesRaw.length - 1].DATE_FROM;
+							finishDate = BX.parseDate(finishDate);
+							if (finishDate)
+							{
+								finishDate.setFullYear(finishDate.getFullYear(), finishDate.getMonth(), 0);
+								params.finishDate = finishDate;
+							}
 						}
-					}
 
-					if (params.startDate && params.finishDate)
+						if (params.startDate && params.finishDate)
+						{
+							this.fillChunkIndex(params.startDate, params.finishDate, {
+								index: this.pulledEntriesIndex,
+								sections: sections.allActive
+							});
+						}
+
+						if (BX.type.isFunction(params.finishCallback))
+						{
+							params.finishCallback(json);
+						}
+					}, this),
+					onErrorCallback : BX.delegate(function(error)
 					{
-						this.fillChunkIndex(params.startDate, params.finishDate, {
-							index: this.pulledEntriesIndex,
-							sections: sections.allActive
-						});
-					}
-
-					if (params.finishCallback && typeof params.finishCallback == 'function')
+						this.calendar.hideLoader();
+					}, this)
+				});
+			}
+			else
+			{
+				this.calendar.request({
+					type: 'post',
+					data: {
+						action: 'load_entries',
+						month_from: params.startDate ? (params.startDate.getMonth() + 1) : '',
+						year_from: params.startDate ? params.startDate.getFullYear() : '',
+						month_to: params.finishDate ? params.finishDate.getMonth() + 1 : '',
+						year_to: params.finishDate ? params.finishDate.getFullYear() : '',
+						active_sect: sections.active,
+						hidden_sect: sections.hidden,
+						sup_sect: sections.superposed,
+						loadNext: params.loadNext ? 'Y' : 'N',
+						loadPrevious: params.loadPrevious ? 'Y' : 'N',
+						loadLimit: params.loadLimit || 0,
+						cal_dav_data_sync: this.calendar.reloadGoogle ? 'Y' : 'N'
+					},
+					handler: BX.delegate(function(response)
 					{
-						params.finishCallback(response);
-					}
+						this.calendar.hideLoader();
 
-					this.calendar.reloadGoogle = false;
-				}, this)
-			});
+						this.handleEntriesList(response.entries, response.userIndex);
 
-			return;
+						if (!params.finishDate && this.entriesRaw.length > 0)
+						{
+							var finishDate = this.entriesRaw[this.entriesRaw.length - 1].DATE_FROM;
+							finishDate = BX.parseDate(finishDate);
+							if (finishDate)
+							{
+								finishDate.setFullYear(finishDate.getFullYear(), finishDate.getMonth(), 0);
+								params.finishDate = finishDate;
+							}
+						}
 
-			//if (m == undefined)
-			//	m = this.activeDate.month;
-			//if (y == undefined)
-			//	y = this.activeDate.year;
-			//if (params == undefined)
-			//	params = {};
-			//var
-			//	sect, ind,
-			//	_this = this,
-			//	sections = this.GetCurrentSections();
-			//var req = this.Request({
-			//	getData: this.GetReqData('load_events', {
-			//		month: parseInt(m, 10) + 1,
-			//		year: y,
-			//		active_sect: sections.active,
-			//		hidden_sect: sections.hidden,
-			//		sup_sect: sections.superposed,
-			//		cal_dav_data_sync: this.bSyncGoogle ? 'Y' : 'N'
-			//	}),
-			//	errorText: EC_MESS.LoadEventsErr,
-			//	handler: function(oRes)
-			//	{
-			//		var sectionsNow = _this.GetCurrentSections();
-			//
-			//		if (!_this.CompareArrays(sections.superposed, sectionsNow.superposed) ||
-			//			!_this.CompareArrays(sections.active, sectionsNow.active) ||
-			//			!_this.CompareArrays(sections.hidden, sectionsNow.hidden)
-			//		)
-			//		{
-			//			return;
-			//		}
-			//
-			//		if (_this.bCalDAV && _this.bSyncGoogle && oRes.connections && oRes.connections.length > 0)
-			//		{
-			//			_this.arConnections = oRes.connections;
-			//			for (ind in _this.arSections)
-			//			{
-			//				if (_this.arSections.hasOwnProperty(ind))
-			//				{
-			//					sect = _this.arSections[ind];
-			//					if (sect.CAL_DAV_CAL && sect.CAL_DAV_CON && sect.DOM.pStatus)
-			//					{
-			//						for (i in _this.arConnections)
-			//						{
-			//							if (_this.arConnections.hasOwnProperty(i) && _this.arConnections[i].id == sect.CAL_DAV_CON)
-			//							{
-			//								sect['~CAL_DAV_LAST_SYNC'] = _this.arConnections[i].last_result;
-			//								if (sect['~CAL_DAV_LAST_SYNC'].indexOf("[200]") >= 0)
-			//								{
-			//									sect.DOM.pStatus.className = 'bxec-spr bxec-cal-dav-google';
-			//									sect.DOM.pStatus.title = '';
-			//								}
-			//								else
-			//								{
-			//									sect.DOM.pStatus.className = 'bxec-spr bxec-cal-dav-google-fail';
-			//									sect.DOM.pStatus.title = EC_MESS.SyncError + ': ' + el['~CAL_DAV_LAST_SYNC'];
-			//								}
-			//								break;
-			//							}
-			//						}
-			//					}
-			//				}
-			//			}
-			//		}
-			//
-			//		_this.bSyncGoogle = false;
-			//		_this.HandleLoadedEvents({
-			//			events: oRes.events,
-			//			attendees: oRes.attendees,
-			//			month: m,
-			//			year: y,
-			//			Params: params
-			//		});
-			//	}
-			//});
+						if (params.startDate && params.finishDate)
+						{
+							this.fillChunkIndex(params.startDate, params.finishDate, {
+								index: this.pulledEntriesIndex,
+								sections: sections.allActive
+							});
+						}
 
-			this.loadEventsLastRequestId = req.reqId;
+						if (BX.type.isFunction(params.finishCallback))
+						{
+							params.finishCallback(response);
+						}
+
+						this.calendar.reloadGoogle = false;
+					}, this)
+				});
+			}
 		},
 
-		handleEntriesList: function(entries)
+		handleEntriesList: function(entries, userIndex)
 		{
 			if (entries && entries.length)
 			{
@@ -576,7 +574,7 @@
 				for (i = 0; i < entries.length; i++)
 				{
 					if((!showDeclined || parseInt(entries[i].CREATED_BY) !== this.calendar.util.userId)
-						&& entries[i].MEETING_STATUS == 'N')
+						&& entries[i].MEETING_STATUS === 'N')
 					{
 						continue;
 					}
@@ -588,13 +586,24 @@
 					}
 					else
 					{
-						if (entries[i].CAL_TYPE == this.calendar.util.type
+						if (entries[i].CAL_TYPE === this.calendar.util.type
 							&&
-							entries[i].OWNER_ID == this.calendar.util.ownerId
+							parseInt(entries[i].OWNER_ID) === parseInt(this.calendar.util.ownerId)
 						)
 						{
 							this.entriesRaw[this.loadedEntriesIndex[smartId]] = entries[i];
 						}
+					}
+				}
+			}
+
+			if (BX.type.isNotEmptyObject(userIndex))
+			{
+				for (var id in userIndex)
+				{
+					if (userIndex.hasOwnProperty(id))
+					{
+						this.userIndex[id] = userIndex[id];
 					}
 				}
 			}
@@ -608,7 +617,7 @@
 				sid += '|' + (entry ? this.calendar.util.formatDate(entry.from) : this.calendar.util.formatDate(BX.parseDate(entryData.DATE_FROM)));
 			}
 
-			if (entryData['~TYPE'] == 'tasks')
+			if (entryData['~TYPE'] === 'tasks')
 			{
 				sid += '|' + 'task';
 			}
@@ -651,7 +660,7 @@
 			if (typeof params == 'undefined')
 				params = {};
 
-			if (status == 'N' && !params.confirmed)
+			if (status === 'N' && !params.confirmed)
 			{
 				if (entry.isRecursive())
 				{
@@ -679,6 +688,7 @@
 					this.calendar.reload();
 				}, this)
 			});
+			return true;
 		},
 
 		showConfirmDeleteDialog: function(entry)
@@ -745,6 +755,11 @@
 				}
 			}
 			return false;
+		},
+
+		getUserIndex: function()
+		{
+			return this.userIndex;
 		}
 	};
 
@@ -752,17 +767,20 @@
 	{
 		this.calendar = calendar;
 		this.data = data;
-
-		this.fullDay = data.DT_SKIP_TIME == 'Y';
 		this.id = data.ID || 0;
+
+		if (!this.data.DT_SKIP_TIME)
+		{
+			this.data.DT_SKIP_TIME = this.data.SKIP_TIME ? 'Y' : 'N';
+		}
+
+		this.fullDay = data.DT_SKIP_TIME === 'Y';
 		this.parentId = data.PARENT_ID || 0;
 		this.textColor = data.TEXT_COLOR;
 		this.accessibility = data.ACCESSIBILITY;
-		this.important = data.IMPORTANCE == 'high';
+		this.important = data.IMPORTANCE === 'high';
 		this.private = !!data.PRIVATE_EVENT;
-
 		this.sectionId = this.isTask() ? 'tasks' : parseInt(data.SECT_ID);
-
 		this.name = data.NAME;
 		this.parts = [];
 
@@ -805,6 +823,15 @@
 	Entry.prototype = {
 		prepareData: function()
 		{
+			if (!this.data.DT_LENGTH)
+			{
+				this.data.DT_LENGTH = this.data.DURATION || 0;
+			}
+			if (this.fullDay && !this.data.DT_LENGTH)
+			{
+				this.data.DT_LENGTH = 86400;
+			}
+
 			if (this.isTask())
 			{
 				this.from = BX.parseDate(this.data.DATE_FROM) || new Date();
@@ -813,6 +840,11 @@
 			else
 			{
 				this.from = BX.parseDate(this.data.DATE_FROM) || new Date();
+				if (this.fullDay)
+				{
+					this.from.setHours(0, 0, 0, 0);
+				}
+
 				if (this.data.DT_SKIP_TIME !== "Y")
 				{
 					this.from = new Date(this.from.getTime() - (parseInt(this.data['~USER_OFFSET_FROM']) || 0) * 1000);
@@ -822,7 +854,14 @@
 
 			if (!this.data.ATTENDEES_CODES && !this.isTask())
 			{
-				this.data.ATTENDEES_CODES = ['U' + this.data.CREATED_BY];
+				if (this.data.CAL_TYPE === 'user')
+				{
+					this.data.ATTENDEES_CODES = ['U' + this.data.OWNER_ID];
+				}
+				else
+				{
+					this.data.ATTENDEES_CODES = ['U' + this.data.CREATED_BY];
+				}
 			}
 
 			this.startDayCode = this.from;
@@ -836,7 +875,23 @@
 
 		getAttendees: function()
 		{
-			return this.data['~ATTENDEES'] || [];
+			if (!this.attendeeList && BX.type.isArray(this.data['ATTENDEE_LIST']))
+			{
+				this.attendeeList = [];
+				var userIndex = this.calendar.entryController.getUserIndex();
+
+				this.data['ATTENDEE_LIST'].forEach(function(user)
+				{
+					if (userIndex[user.id])
+					{
+						var attendee = BX.clone(userIndex[user.id]);
+						attendee.STATUS = user.status;
+						attendee.ENTRY_ID = user.entryId;
+						this.attendeeList.push(attendee);
+					}
+				}, this);
+			}
+			return this.attendeeList || [];
 		},
 
 		cleanParts: function()
@@ -876,6 +931,17 @@
 			return this.calendar.sectionController.getSection(this.sectionId).name || '';
 		},
 
+		getDescription: function(callback)
+		{
+			if (this.data.DESCRIPTION && this.data['~DESCRIPTION'] && BX.type.isFunction(callback))
+			{
+				setTimeout(BX.delegate(function()
+				{
+					callback(this.data['~DESCRIPTION']);
+				}, this), 50);
+			}
+		},
+
 		applyViewRange: function(viewRange)
 		{
 			var
@@ -903,7 +969,7 @@
 
 		isPersonal: function()
 		{
-			return (this.data.CAL_TYPE == 'user' && this.data.OWNER_ID == this.calendar.util.userId);
+			return (this.data.CAL_TYPE === 'user' && this.data.OWNER_ID == this.calendar.util.userId);
 		},
 
 		isMeeting: function()
@@ -911,9 +977,14 @@
 			return !!this.data.IS_MEETING;
 		},
 
+		isResourcebooking: function()
+		{
+			return this.data.EVENT_TYPE === '#resourcebooking#';
+		},
+
 		isTask: function()
 		{
-			return this.data['~TYPE'] == 'tasks';
+			return this.data['~TYPE'] === 'tasks';
 		},
 
 		isFullDay: function()
@@ -943,13 +1014,15 @@
 
 		isCrm: function()
 		{
-			return this.data.UF_CRM_CAL_EVENT && this.data.UF_CRM_CAL_EVENT != "";
+			return !!this.data.UF_CRM_CAL_EVENT;
 		},
 
 		isFirstReccurentEntry: function()
 		{
-			return this.data.DT_FROM_TS === Math.floor(BX.parseDate(this.data['~DATE_FROM']).getTime() / 1000) * 1000
-				&& !this.data.RECURRENCE_ID;
+			return (this.data.DATE_FROM_TS_UTC === Math.floor(BX.parseDate(this.data['~DATE_FROM']).getTime() / 1000) * 1000
+				||
+				BX.parseDate(this.data['DATE_FROM']).getTime() === BX.parseDate(this.data['~DATE_FROM']).getTime()
+				) && !this.data.RECURRENCE_ID;
 		},
 
 		isRecursive: function()
@@ -1040,14 +1113,14 @@
 				{
 					status = this.data.MEETING_STATUS;
 				}
-				else if (this.data['~ATTENDEES'])
+				else if (BX.type.isArray(this.data['ATTENDEE_LIST']))
 				{
-					for (i = 0; i < this.data['~ATTENDEES'].length; i++)
+					for (i = 0; i < this.data['ATTENDEE_LIST'].length; i++)
 					{
-						user = this.data['~ATTENDEES'][i];
-						if (user.USER_ID == this.calendar.util.userId)
+						user = this.data['ATTENDEE_LIST'][i];
+						if (this.data['ATTENDEE_LIST'][i].id == this.calendar.util.userId)
 						{
-							status = user.STATUS;
+							status = this.data['ATTENDEE_LIST'][i].status;
 							break;
 						}
 					}

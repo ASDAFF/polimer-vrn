@@ -11,6 +11,21 @@ use Bitrix\Sale;
 class ProviderBuilderCompatibility extends ProviderBuilderBase
 {
 	/**
+	 * @param $providerClass
+	 * @param $context
+	 *
+	 * @return ProviderBuilderBase
+	 */
+	public static function create($providerClass, $context)
+	{
+		$builder = parent::create($providerClass, $context);
+		if (!$builder->providerClass && is_string($providerClass) && strval($providerClass) != '')
+		{
+			$builder->callbackFunction = $providerClass;
+		}
+		return $builder;
+	}
+	/**
 	 * @param Sale\BasketItemBase $basketItem
 	 */
 	public function addProductByBasketItem(Sale\BasketItemBase $basketItem)
@@ -34,6 +49,7 @@ class ProviderBuilderCompatibility extends ProviderBuilderBase
 			'IS_BUNDLE_PARENT' => false,
 			'IS_BUNDLE_CHILD' => false,
 			'IS_NEW' => ($basketItem->getId() == 0),
+			'SUBSCRIBE' => ($basketItem->getField('SUBSCRIBE') == 'Y'),
 		);
 
 		if ($basketItem instanceof Sale\BasketItem)
@@ -138,16 +154,6 @@ class ProviderBuilderCompatibility extends ProviderBuilderBase
 	 * @return Sale\Result
 	 */
 	public function setItemsResultAfterTryShip(PoolQuantity $pool, array $productTryShipList)
-	{
-		return new Sale\Result();
-	}
-
-	/**
-	 * @param Sale\Result $resultAfterDeliver
-	 *
-	 * @return Sale\Result
-	 */
-	public function createItemsResultAfterDeliver(Sale\Result $resultAfterDeliver)
 	{
 		return new Sale\Result();
 	}

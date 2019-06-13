@@ -7,6 +7,8 @@ global $APPLICATION, $USER_FIELD_MANAGER;
 
 $id = $arParams['id'];
 $event = $arParams['event'];
+$isSocialnetworkEnabled = $arParams['bSocNet'];
+$isCrmEnabled = \Bitrix\Main\ModuleManager::isModuleInstalled('crm');
 
 $fieldsList = array(
 	'description' => array('title' => Loc::getMessage('EC_EDIT_SLIDER_DESCRIPTION_COLUMN')),
@@ -18,6 +20,12 @@ $fieldsList = array(
 	'location' => array('title' => Loc::getMessage('EC_EDIT_SLIDER_LOCATION_COLUMN')),
 	'private' => array('title' => Loc::getMessage('EC_EDIT_SLIDER_PRIVATE_COLUMN'))
 );
+
+if (!$isSocialnetworkEnabled)
+{
+	unset($fieldsList['accessibility']);
+	unset($fieldsList['private']);
+}
 
 $UF = CCalendarEvent::GetEventUserFields($event);
 if (isset($UF['UF_CRM_CAL_EVENT']))
@@ -45,67 +53,15 @@ if (empty($event['UF_WEBDAV_CAL_EVENT']['VALUE']))
 
 $userId = CCalendar::GetCurUserId();
 
-$arHost = CCalendar::GetUser($userId, true);
-$arHost['AVATAR_SRC'] = CCalendar::GetUserAvatarSrc($arHost);
-$arHost['URL'] = CCalendar::GetUserUrl($event['MEETING_HOST'], $arParams["PATH_TO_USER"]);
-$arHost['DISPLAY_NAME'] = CCalendar::GetUserName($arHost);
-$arParams['host'] = $arHost;
-
-if ($event['IS_MEETING'])
-{
-	$attendees = array(
-		'y' => array(
-			'users' => array(),
-			'count' => 4,
-			'countMax' => 8,
-			'title' => GetMessage('EC_ATT_Y'),
-			'id' => "bxview-att-cont-y-".$event['ID']
-		),
-		'n' => array(
-			'users' => array(),
-			'count' => 2,
-			'countMax' => 3,
-			'title' => GetMessage('EC_ATT_N'),
-			'id' => "bxview-att-cont-n-".$event['ID']
-		),
-		'q' => array(
-			'users' => array(),
-			'count' => 2,
-			'countMax' => 3,
-			'title' => GetMessage('EC_ATT_Q'),
-			'id' => "bxview-att-cont-q-".$event['ID']
-		)
-	);
-
-	$userIds = array();
-	if (is_array($event['~ATTENDEES']) && count($event['~ATTENDEES']) > 0)
-	{
-		foreach ($event['~ATTENDEES'] as $i => $att)
-		{
-			$userIds[] = $att["USER_ID"];
-			if ($userId == $att["USER_ID"])
-				$curUserStatus = $att['STATUS'];
-			$att['AVATAR_SRC'] = CCalendar::GetUserAvatarSrc($att);
-			$att['URL'] = CCalendar::GetUserUrl($att["USER_ID"], $arParams["PATH_TO_USER"]);
-			$attendees[strtolower($att['STATUS'])]['users'][] = $att;
-		}
-	}
-}
-
 if ($event['IS_MEETING'] && empty($event['ATTENDEES_CODES']))
+{
 	$event['ATTENDEES_CODES'] = CCalendarEvent::CheckEndUpdateAttendeesCodes($event);
+}
 
 $arParams['event'] = $event;
 $arParams['UF'] = $UF;
 
-$arTabs = array(
-	array('name' => GetMessage('EC_EDEV_EVENT'), 'title' => GetMessage('EC_EDEV_EVENT_TITLE'), 'id' => $id."ed-tab-0", 'active' => true),
-	array('name' => GetMessage('EC_T_DESC'), 'title' => GetMessage('EC_T_DESC_TITLE'), 'id' => $id."ed-tab-1"),
-	array('name' => GetMessage('EC_EDEV_GUESTS'), 'title' => GetMessage('EC_EDEV_GUESTS_TITLE'), 'id' => $id."ed-tab-2", "show" => !!$arParams['bSocNet']),
-	array('name' => GetMessage('EC_EDEV_ADD_TAB'), 'title' => GetMessage('EC_EDEV_ADD_TAB_TITLE'), 'id' => $id."ed-tab-3")
-);
-
-if($arParams['bSocNet'])
+if($isSocialnetworkEnabled)
 {
 	CSocNetTools::InitGlobalExtranetArrays();
 	$DESTINATION = CCalendar::GetSocNetDestination(false, $arParams['event']['ATTENDEES_CODES']);
@@ -113,10 +69,10 @@ if($arParams['bSocNet'])
 ?>
 <div class="webform-buttons calendar-form-buttons-fixed">
 	<div class="calendar-form-footer-container">
-							<span id="<?=$id?>_save" class="webform-small-button webform-small-button-blue">
-								<?= Loc::getMessage('EC_EDIT_SLIDER_SAVE_EVENT_BUTTON')?> <span id="<?=$id?>_save_cmd"></span>
-							</span>
-		<span  id="<?=$id?>_close" class="webform-button-link"><?= Loc::getMessage('EC_EDIT_SLIDER_CANCEL_BUTTON')?></span>
+		<button id="<?=$id?>_save" class="ui-btn ui-btn-success">
+			<?= Loc::getMessage('EC_EDIT_SLIDER_SAVE_EVENT_BUTTON')?> <span id="<?=$id?>_save_cmd"></span>
+		</button>
+		<button  id="<?=$id?>_close" class="ui-btn ui-btn-link"><?= Loc::getMessage('EC_EDIT_SLIDER_CANCEL_BUTTON')?></button>
 	</div>
 </div>
 <div class="calendar-slider-calendar-wrap calendar-slider-calendar-wrap-edit">
@@ -567,6 +523,9 @@ if($arParams['bSocNet'])
 
 						<!--region Destination-->
 						<div class="calendar-options-item calendar-options-item-border calendar-options-item-destination" style="border-bottom: none;">
+							<?if ($event['IS_MEETING'] && is_array($event['ATTENDEES_CODES'])):?>
+							<input id="<?=$id?>_attendees_codes" type="hidden" value="<?= implode($event['ATTENDEES_CODES'], ',')?>" />
+							<?endif;?>
 							<div class="calendar-options-item-column-left">
 								<div class="calendar-options-item-name js-calendar-field-name"  id="<?=$id?>_attendees_title_wrap"><?= Loc::getMessage('EC_EDIT_SLIDER_ATTENDEES_COLUMN')?></div>
 							</div>
@@ -653,7 +612,10 @@ if($arParams['bSocNet'])
 						<!--endregion-->
 
 						<!--region Private-->
-						<?$field = "private";?>
+						<?$field = "private";
+						if (isset($fieldsList[$field]))
+						{
+						?>
 						<div data-bx-block-placeholer="<?= $field?>" class="calendar-field-placeholder">
 							<?if (!$fieldsList[$field]["pinned"])
 							{
@@ -684,50 +646,55 @@ if($arParams['bSocNet'])
 								ob_end_clean();
 							}?>
 						</div>
+						<?}?>
 						<!--endregion-->
 
 						<!--region accessibility-->
-						<?$field = "accessibility";?>
-						<div data-bx-block-placeholer="<?= $field?>" class="calendar-field-placeholder">
-							<?if (!$fieldsList[$field]["pinned"])
+						<? $field = "accessibility";
+							if (isset($fieldsList[$field]))
 							{
-								ob_start();
-							}?>
-							<div class="calendar-options-item calendar-options-item-border calendar-event-location">
-								<div class="calendar-options-item-column-left">
-									<div class="calendar-options-item-name js-calendar-field-name"><?= Loc::getMessage('EC_EDIT_SLIDER_ACCESSIBILITY_COLUMN')?></div>
-								</div>
-								<div class="calendar-options-item-column-right">
-									<div class="calendar-options-item-column-one">
-										<div class="calendar-field-container calendar-field-container-select">
-											<div class="calendar-field-block">
-												<select class="calendar-field calendar-field-select" id="<?=$id?>_accessibility" name="accessibility">
-													<option value="busy"><?=GetMessage('EC_EDIT_SLIDER_ACC_B')?></option>
-													<option value="quest"><?=GetMessage('EC_EDIT_SLIDER_ACC_Q')?></option>
-													<option value="free"><?=GetMessage('EC_EDIT_SLIDER_ACC_F')?></option>
-													<?if (!CCalendar::IsBitrix24()
-														|| COption::GetOptionString("bitrix24",  "absence_limits_enabled", "") != "Y"
-														|| \Bitrix\Bitrix24\Feature::isFeatureEnabled("absence")):?>
-														<option value="absent"><?=GetMessage('EC_EDIT_SLIDER_ACC_A')?> (<?=GetMessage('EC_EDIT_SLIDER_ACC_EX')?>)</option>
-													<?endif;?>
-												</select>
+							?>
+							<div data-bx-block-placeholer="<?= $field?>" class="calendar-field-placeholder">
+								<?if (!$fieldsList[$field]["pinned"])
+								{
+									ob_start();
+								}?>
+								<div class="calendar-options-item calendar-options-item-border calendar-event-location">
+									<div class="calendar-options-item-column-left">
+										<div class="calendar-options-item-name js-calendar-field-name"><?= Loc::getMessage('EC_EDIT_SLIDER_ACCESSIBILITY_COLUMN')?></div>
+									</div>
+									<div class="calendar-options-item-column-right">
+										<div class="calendar-options-item-column-one">
+											<div class="calendar-field-container calendar-field-container-select">
+												<div class="calendar-field-block">
+													<select class="calendar-field calendar-field-select" id="<?=$id?>_accessibility" name="accessibility">
+														<option value="busy"><?=GetMessage('EC_EDIT_SLIDER_ACC_B')?></option>
+														<option value="quest"><?=GetMessage('EC_EDIT_SLIDER_ACC_Q')?></option>
+														<option value="free"><?=GetMessage('EC_EDIT_SLIDER_ACC_F')?></option>
+														<?if (!CCalendar::IsBitrix24()
+															|| COption::GetOptionString("bitrix24",  "absence_limits_enabled", "") != "Y"
+															|| \Bitrix\Bitrix24\Feature::isFeatureEnabled("absence")):?>
+															<option value="absent"><?=GetMessage('EC_EDIT_SLIDER_ACC_A')?> (<?=GetMessage('EC_EDIT_SLIDER_ACC_EX')?>)</option>
+														<?endif;?>
+													</select>
+												</div>
 											</div>
 										</div>
 									</div>
+									<span data-bx-fixfield="<?= $field?>" class="calendar-option-fixedbtn" title="<?= Loc::getMessage('EC_EDIT_SLIDER_FIX_FIELD')?>"></span>
 								</div>
-								<span data-bx-fixfield="<?= $field?>" class="calendar-option-fixedbtn" title="<?= Loc::getMessage('EC_EDIT_SLIDER_FIX_FIELD')?>"></span>
+								<?if (!$fieldsList[$field]["pinned"])
+								{
+									$fieldsList[$field]["html"] = ob_get_contents();
+									ob_end_clean();
+								}?>
 							</div>
-							<?if (!$fieldsList[$field]["pinned"])
-							{
-								$fieldsList[$field]["html"] = ob_get_contents();
-								ob_end_clean();
-							}?>
-						</div>
+						<?}?>
 						<!--endregion-->
 
 						<!--region crm-->
 						<?$field = "crm";
-						if (isset($fieldsList[$field]))
+						if ($isCrmEnabled && isset($fieldsList[$field]))
 						{
 							$crmUF = $UF['UF_CRM_CAL_EVENT'];
 						?>

@@ -25,7 +25,7 @@ class CAllPullStack
 				'server_time' => date('c'),
 				'server_time_unix' => microtime(true),
 				'server_name' => COption::GetOptionString('main', 'server_name', $_SERVER['SERVER_NAME']),
-				'revision' => PULL_REVISION,
+				'revision_web' => PULL_REVISION_WEB,
 				'revision_mobile' => PULL_REVISION_MOBILE,
 			);
 
@@ -43,6 +43,11 @@ class CAllPullStack
 	{
 		global $DB;
 
+		if (!CPullOptions::GetQueueServerStatus())
+		{
+			return false;
+		}
+
 		if (!is_array($channelId))
 		{
 			$channelId = Array($channelId);
@@ -57,7 +62,7 @@ class CAllPullStack
 		$extra = is_array($params['extra'])? $params['extra']: Array();
 		$extra = array_merge($extra, Array(
 			'server_name' => COption::GetOptionString('main', 'server_name', $_SERVER['SERVER_NAME']),
-			'revision' => PULL_REVISION,
+			'revision_web' => PULL_REVISION_WEB,
 			'revision_mobile' => PULL_REVISION_MOBILE,
 		));
 
@@ -76,30 +81,15 @@ class CAllPullStack
 			'params' => is_array($params['params'])? $params['params']: Array(),
 			'extra' => $extra
 		);
-		if (CPullOptions::GetQueueServerStatus())
-		{
-			if (!is_array($channelId) && CPullOptions::GetQueueServerVersion() == 1)
-			{
-				$arData['extra']['channel'] = $channelId;
-			}
 
-			$options = array('expiry' => isset($params['expiry'])? intval($params['expiry']): 86400);
-			$res = CPullChannel::Send($channelId, \Bitrix\Pull\Common::jsonEncode($arData), $options);
-			$result = $res? true: false;
-		}
-		else
+		if (!is_array($channelId) && CPullOptions::GetQueueServerVersion() == 1)
 		{
-			foreach ($channelId as $channel)
-			{
-				$params = Array(
-					'CHANNEL_ID' => $channel,
-					'MESSAGE' => str_replace("\n", " ", serialize($arData)),
-					'~DATE_CREATE' => $DB->CurrentTimeFunction(),
-				);
-				$res = IntVal($DB->Add("b_pull_stack", $params, Array("MESSAGE")));
-				$result = $res? true: false;
-			}
+			$arData['extra']['channel'] = $channelId;
 		}
+
+		$options = array('expiry' => isset($params['expiry'])? intval($params['expiry']): 86400);
+		$res = CPullChannel::Send($channelId, \Bitrix\Pull\Common::jsonEncode($arData), $options);
+		$result = $res? true: false;
 
 		return $result;
 	}

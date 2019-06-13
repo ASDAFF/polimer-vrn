@@ -12,25 +12,20 @@ class Extranet
 		return \Bitrix\Main\Loader::includeModule('extranet') && \Bitrix\Main\Loader::includeModule("socialnetwork");
 	}
 
-	public static function getGroup($params)
+	public static function getGroup($params, $userId = null)
 	{
 		if (!self::checkModules())
 			return false;
 
-		$params = is_array($params)? $params: Array();
+		$params = is_array($params)? $params: [];
 
-		if (!isset($params['CURRENT_USER']) && is_object($GLOBALS['USER']))
-		{
-			$params['CURRENT_USER'] = $GLOBALS['USER']->GetID();
-		}
-
-		$userId = intval($params['CURRENT_USER']);
+		$userId = \Bitrix\Im\Common::getUserId($userId);
 		if ($userId <= 0)
 		{
 			return false;
 		}
 
-		$cacheId = 'im_sonet_extranet_v2_'.$userId;
+		$cacheId = 'im_sonet_extranet_v3_'.$userId;
 		$cachePath = '/bx/imc/sonet/extranet'.\Bitrix\Im\Common::getCacheUserPostfix($userId);
 
 		$cache = \Bitrix\Main\Application::getInstance()->getCache();
@@ -57,15 +52,15 @@ class Extranet
 			array("ID", "GROUP_ID", "GROUP_NAME")
 		);
 
-		$groups = Array();
-		$groupIds = Array();
+		$groups = [];
+		$groupIds = [];
 		while ($row = $db->GetNext(true, false))
 		{
 			$groupIds[] = $row["GROUP_ID"];
 			$groups['SG'.$row['GROUP_ID']] = array(
 				'ID' => 'SG'.$row['GROUP_ID'],
 				'NAME' => Loc::getMessage('IM_INT_SN_GROUP_EXTRANET', Array('#GROUP_NAME#' => $row['GROUP_NAME'])),
-				'USERS' => Array()
+				'USERS' => []
 			);
 
 			$taggedCache->registerTag('sonet_group_'.$row['GROUP_ID']);
@@ -91,18 +86,47 @@ class Extranet
 			false,
 			array("ID", "USER_ID", "GROUP_ID")
 		);
-		while ($ar = $db->GetNext(true, false))
+		while ($row = $db->GetNext(true, false))
 		{
-			if($ar["USER_ID"] == $userId)
+			if($row["USER_ID"] == $userId || !isset($groups['SG'.$row['GROUP_ID']]))
 				continue;
 
-			$groups['SG'.$row['GROUP_ID']]['USERS'][] = $ar["USER_ID"];
+			$groups['SG'.$row['GROUP_ID']]['USERS'][] = $row["USER_ID"];
 		}
 
 		$cache->startDataCache();
 		$cache->endDataCache($groups);
 
 		return $groups;
+	}
+
+	public static function isUserInGroup($userId, $currentUserId = null)
+	{
+		$currentUserId = \Bitrix\Im\Common::getUserId($currentUserId);
+		if ($currentUserId <= 0)
+		{
+			return false;
+		}
+
+		if ($userId == $currentUserId)
+		{
+			return true;
+		}
+
+		$extranetUsers = [];
+		$groups = self::getGroup([], $currentUserId);
+		if (is_array($groups))
+		{
+			foreach ($groups as $group)
+			{
+				foreach ($group['USERS'] as $uid)
+				{
+					$extranetUsers[$uid] = $uid;
+				}
+			}
+		}
+
+		return isset($extranetUsers[$userId]);
 	}
 }
 

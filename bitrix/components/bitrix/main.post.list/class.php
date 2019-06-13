@@ -3,6 +3,7 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -64,7 +65,7 @@ final class MainPostList extends CBitrixComponent
 	{
 		$text = "";
 		if ($this->getUser()->isAuthorized()
-			&& CModule::IncludeModule("pull")
+			&& Loader::includeModule("pull")
 			&& \CPullOptions::GetNginxStatus()
 		)
 		{
@@ -129,7 +130,7 @@ HTML;
 			($this->request->getPost("ENTITY_XML_ID") == $arParams["ENTITY_XML_ID"] ||
 				$this->request->getQuery("ENTITY_XML_ID") == $arParams["ENTITY_XML_ID"]) || $arParams["MODE"] == "PULL_MESSAGE") &&
 			is_array($arParams["PUSH&PULL"]) && $arParams["PUSH&PULL"]["ID"] > 0 &&
-			CModule::IncludeModule("pull") && \CPullOptions::GetNginxStatus())
+			Loader::includeModule("pull") && \CPullOptions::GetNginxStatus())
 		{
 			if ($arParams["PUSH&PULL"]["ACTION"] != "DELETE")
 			{
@@ -139,6 +140,8 @@ HTML;
 					unset($comment["WEB"]);
 					unset($comment["MOBILE"]);
 					$comment["ACTION"] = $arParams["PUSH&PULL"]["ACTION"];
+					$comment["POST_CONTENT_TYPE_ID"] = (!empty($arParams["POST_CONTENT_TYPE_ID"]) ? $arParams["POST_CONTENT_TYPE_ID"] : '');
+					$comment["COMMENT_CONTENT_TYPE_ID"] = (!empty($arParams["COMMENT_CONTENT_TYPE_ID"]) ? $arParams["COMMENT_CONTENT_TYPE_ID"] : '');
 					$comment["USER_ID"] = (isset($arParams["PUSH&PULL"]) && isset($arParams["PUSH&PULL"]["AUTHOR_ID"]) && intval($arParams["PUSH&PULL"]["AUTHOR_ID"]) > 0 ? intval($arParams["PUSH&PULL"]["AUTHOR_ID"]) : $this->getUser()->getId());
 					if ($this->request->getPost("EXEMPLAR_ID") !== null)
 						$comment["EXEMPLAR_ID"] = $this->request->getPost("EXEMPLAR_ID");
@@ -359,9 +362,34 @@ HTML;
 		foreach (array("WEB", "MOBILE") as $key)
 		{
 			$val = ($res[$key] ?: $res);
+
+			$defaultDateTime = \CComponentUtil::getDateTimeFormatted(array(
+				'TIMESTAMP' => $res["POST_TIMESTAMP"],
+				'DATETIME_FORMAT' => $arParams["DATE_TIME_FORMAT"],
+				'DATETIME_FORMAT_WITHOUT_YEAR' => (isset($arParams["DATE_TIME_FORMAT_WITHOUT_YEAR"]) ? $arParams["DATE_TIME_FORMAT_WITHOUT_YEAR"] : false),
+				'TZ_OFFSET' => CTimeZone::GetOffset(),
+				'HIDE_TODAY' => true
+			));
+
 			$result[$key] = array(
-				"POST_TIME" => (isset($val["POST_TIME"]) ? $val["POST_TIME"] : CComponentUtil::GetDateTimeFormatted($res["POST_TIMESTAMP"], $arParams["DATE_TIME_FORMAT"], CTimeZone::GetOffset())),
-				"POST_DATE" => (isset($val["POST_DATE"]) ? $val["POST_DATE"] : CComponentUtil::GetDateTimeFormatted($res["POST_TIMESTAMP"], $arParams["DATE_TIME_FORMAT"], CTimeZone::GetOffset())),
+				"POST_TIME" => (isset($val["POST_TIME"]) ? $val["POST_TIME"] : $defaultDateTime),
+				"POST_DATE" => (isset($val["POST_DATE"]) ? $val["POST_DATE"] : $defaultDateTime),
+				"POST_DATE_AGO" => FormatDate(array(
+					"s" => "sshort",
+					"i" => "ishort",
+					"H" => "Hshort",
+					"d" => "dshort",
+					"m" => "mshort",
+					"Y" => "Yshort"
+				), $res["POST_TIMESTAMP"], time() + CTimeZone::getOffset()),
+				"POST_DATE_AGO_FULL" => FormatDate(array(
+					"s" => "sago",
+					"i" => "iago",
+					"H" => "Hago",
+					"d" => "dago",
+					"m" => "mago",
+					"Y" => "Yago"
+				), $res["POST_TIMESTAMP"], time() + CTimeZone::getOffset()),
 				"CLASSNAME" => $val["CLASSNAME"],
 				"POST_MESSAGE_TEXT" => $val["POST_MESSAGE_TEXT"],
 				"BEFORE_HEADER" => $val["BEFORE_HEADER"].$this->getApplication()->GetViewContent($templateId.'BEFORE_HEADER'),
@@ -371,54 +399,111 @@ HTML;
 				"BEFORE" => $val["BEFORE"].$this->getApplication()->GetViewContent($templateId.'BEFORE'),
 				"AFTER" => $val["AFTER"].$this->getApplication()->GetViewContent($templateId.'AFTER'),
 				"BEFORE_RECORD" => $val["BEFORE_RECORD"].$this->getApplication()->GetViewContent($templateId.'BEFORE_RECORD'),
-				"AFTER_RECORD" => $val["AFTER_RECORD"].$this->getApplication()->GetViewContent($templateId.'AFTER_RECORD')
+				"AFTER_RECORD" => $val["AFTER_RECORD"].$this->getApplication()->GetViewContent($templateId.'AFTER_RECORD'),
+				"LIKE_REACT" => $val["LIKE_REACT"].$this->getApplication()->GetViewContent($templateId.'LIKE_REACT'),
 			);
 		}
 
-		if ($result["RATING"] === false && array_key_exists("RATING_RESULTS", $this->arParams))
+		$userHasVoted = (
+			(
+				isset($res["RATING_USER_HAS_VOTED"])
+				&& $res["RATING_USER_HAS_VOTED"] == "Y"
+			)
+			|| (
+				isset($this->arParams["RATING_RESULTS"])
+				&& isset($this->arParams["RATING_RESULTS"])
+				&& isset($this->arParams["RATING_RESULTS"][$result["ID"]])
+				&& isset($this->arParams["RATING_RESULTS"][$result["ID"]]["USER_HAS_VOTED"])
+				&& $this->arParams["RATING_RESULTS"][$result["ID"]]["USER_HAS_VOTED"] == 'Y'
+			)
+		);
+
+		if (
+			!empty($res["RATING_VOTE_ID"])
+			&& ModuleManager::isModuleInstalled('intranet')
+		)
 		{
+			if (!empty($res["RATING_USER_REACTION"]))
+			{
+				$emotion = strtoupper($res["RATING_USER_REACTION"]);
+			}
+			else
+			{
+				$emotion = (!empty($this->arParams["RATING_RESULTS"][$result["ID"]]["USER_REACTION"]) ? strtoupper($this->arParams["RATING_RESULTS"][$result["ID"]]["USER_REACTION"]) : 'LIKE');
+			}
+
+			$buttonText = \CRatingsComponentsMain::getRatingLikeMessage($emotion);
+
+			ob_start();
+			?><span id="bx-ilike-button-<?=htmlspecialcharsbx($res["RATING_VOTE_ID"])?>" class="feed-inform-ilike feed-new-like"><?
+				?><span class="bx-ilike-left-wrap<?=($userHasVoted ? ' bx-you-like-button' : '')?>"><a href="#like" class="bx-ilike-text"><?=$buttonText?></a></span><?
+			?></span><?
+			$result["WEB"]["BEFORE_ACTIONS"] .= ob_get_clean();
+
+			ob_start();
+			?><span id="bx-ilike-button-<?=htmlspecialcharsbx($res["RATING_VOTE_ID"])?>" class="post-comment-control-item post-comment-control-item-like bx-ilike-text" data-rating-vote-id="<?=htmlspecialcharsbx($res["RATING_VOTE_ID"])?>"><?
+				?><span class="bx-ilike-left-wrap<?=($userHasVoted ? ' bx-you-like-button' : '')?>"><?
+					?><span class="bx-ilike-text"><?=$buttonText?></span><?
+				?></span><?
+			?></span><?
+			$result["MOBILE"]["BEFORE_ACTIONS"] .= ob_get_clean();
+		}
+
+		if (
+			$result["RATING"] === false
+			&& array_key_exists("RATING_RESULTS", $this->arParams)
+		)
+		{
+			$ratingValues = (
+				!empty($this->arParams["RATING_RESULTS"][$result["ID"]])
+					? array(
+						"USER_VOTE" => $this->arParams["RATING_RESULTS"][$result["ID"]]["USER_VOTE"],
+						"USER_HAS_VOTED" => $this->arParams["RATING_RESULTS"][$result["ID"]]["USER_HAS_VOTED"],
+						"TOTAL_VOTES" => $this->arParams["RATING_RESULTS"][$result["ID"]]["TOTAL_VOTES"],
+						"TOTAL_POSITIVE_VOTES" => $this->arParams["RATING_RESULTS"][$result["ID"]]["TOTAL_POSITIVE_VOTES"],
+						"TOTAL_NEGATIVE_VOTES" => $this->arParams["RATING_RESULTS"][$result["ID"]]["TOTAL_NEGATIVE_VOTES"],
+						"TOTAL_VALUE" => $this->arParams["RATING_RESULTS"][$result["ID"]]["TOTAL_VALUE"],
+						"USER_REACTION" => $this->arParams["RATING_RESULTS"][$result["ID"]]["USER_REACTION"],
+						"REACTIONS_LIST" => $this->arParams["RATING_RESULTS"][$result["ID"]]["REACTIONS_LIST"],
+					)
+					: array()
+			);
+
 			ob_start();
 			$result["RATING"] = $result["WEB"]["RATING"] = $this->getApplication()->includeComponent(
 				"bitrix:rating.vote",
-				"like",
-				Array(
+				(!empty($res["RATING_VOTE_ID"]) && ModuleManager::isModuleInstalled('intranet') ? "like_react" : "like"),
+				array(
+					"COMMENT" => "Y",
 					"ENTITY_TYPE_ID" => $this->arParams["RATING_TYPE_ID"],
 					"ENTITY_ID" => $result["ID"],
 					"OWNER_ID" => $result["AUTHOR"]["ID"],
-					"USER_VOTE" => $this->arParams["RATING_RESULTS"][$result["ID"]]["USER_VOTE"],
-					"USER_HAS_VOTED" => $this->arParams["RATING_RESULTS"][$result["ID"]]["USER_HAS_VOTED"],
-					"TOTAL_VOTES" => $this->arParams["RATING_RESULTS"][$result["ID"]]["TOTAL_VOTES"],
-					"TOTAL_POSITIVE_VOTES" => $this->arParams["RATING_RESULTS"][$result["ID"]]["TOTAL_POSITIVE_VOTES"],
-					"TOTAL_NEGATIVE_VOTES" => $this->arParams["RATING_RESULTS"][$result["ID"]]["TOTAL_NEGATIVE_VOTES"],
-					"TOTAL_VALUE" => $this->arParams["RATING_RESULTS"][$result["ID"]]["TOTAL_VALUE"],
-					"PATH_TO_USER_PROFILE" => $this->arParams["AUTHOR_URL"]
-				),
+					"PATH_TO_USER_PROFILE" => $this->arParams["AUTHOR_URL"],
+					"VOTE_ID" => (!empty($res["RATING_VOTE_ID"]) ? $res["RATING_VOTE_ID"] : "")
+				) + $ratingValues,
 				$this,
 				array("HIDE_ICONS" => "Y")
 			);
-			$result["WEB"]["BEFORE_ACTIONS"] .= ob_get_clean();
+
+			$result["WEB"][(!empty($res["RATING_VOTE_ID"]) && ModuleManager::isModuleInstalled('intranet') ? "LIKE_REACT" : "BEFORE_ACTIONS")] .= ob_get_clean();
 
 			ob_start();
 			$result["MOBILE"]["RATING"] = $this->getApplication()->includeComponent(
 				"bitrix:rating.vote",
-				"mobile_comment_like",
-				Array(
+				"like_react",
+				array(
+					"MOBILE" => "Y",
+					"COMMENT" => "Y",
 					"ENTITY_TYPE_ID" => $this->arParams["RATING_TYPE_ID"],
 					"ENTITY_ID" => $result["ID"],
 					"OWNER_ID" => $result["AUTHOR"]["ID"],
-					"USER_VOTE" => $this->arParams["RATING_RESULTS"][$result["ID"]]["USER_VOTE"],
-					"USER_HAS_VOTED" => $this->arParams["RATING_RESULTS"][$result["ID"]]["USER_HAS_VOTED"],
-					"TOTAL_VOTES" => $this->arParams["RATING_RESULTS"][$result["ID"]]["TOTAL_VOTES"],
-					"TOTAL_POSITIVE_VOTES" => $this->arParams["RATING_RESULTS"][$result["ID"]]["TOTAL_POSITIVE_VOTES"],
-					"TOTAL_NEGATIVE_VOTES" => $this->arParams["RATING_RESULTS"][$result["ID"]]["TOTAL_NEGATIVE_VOTES"],
-					"TOTAL_VALUE" => $this->arParams["RATING_RESULTS"][$result["ID"]]["TOTAL_VALUE"],
-					"PATH_TO_USER_PROFILE" => $this->arParams["AUTHOR_URL"]
-				),
+					"PATH_TO_USER_PROFILE" => $this->arParams["AUTHOR_URL"],
+					"VOTE_ID" => (!empty($res["RATING_VOTE_ID"]) ? $res["RATING_VOTE_ID"] : "")
+				) + $ratingValues,
 				$this,
 				array("HIDE_ICONS" => "Y")
 			);
-
-			$result["MOBILE"]["AFTER"] .= ob_get_clean();
+			$result["MOBILE"]["LIKE_REACT"] .= ob_get_clean();
 		}
 
 		if (is_array($res["FILES"]))
@@ -521,7 +606,8 @@ HTML;
 		if (is_array($res["UF"]))
 		{
 			ob_start();
-			foreach ($res["UF"] as $arPostField)
+			$uf = (isset($res["WEB"]['UF']) ? $res["WEB"]['UF'] : $res['UF']);
+			foreach ($uf as $arPostField)
 			{
 				if(!empty($arPostField["VALUE"]))
 				{
@@ -543,7 +629,8 @@ HTML;
 
 			ob_start();
 
-			foreach ($res["UF"] as $arPostField)
+			$uf = (isset($res["MOBILE"]['UF']) ? $res["MOBILE"]['UF'] : $res['UF']);
+			foreach ($uf as $arPostField)
 			{
 				if(!empty($arPostField["VALUE"]))
 				{
@@ -582,7 +669,7 @@ HTML;
 
 		if ($extranetSiteId === null)
 		{
-			$extranetSiteId = (CModule::IncludeModule('extranet') ? CExtranet::GetExtranetSiteID() : false);
+			$extranetSiteId = (Loader::includeModule('extranet') ? CExtranet::GetExtranetSiteID() : false);
 		}
 
 		$authorUrl = (
@@ -643,6 +730,9 @@ HTML;
 			}
 		}
 
+		$viewUri = new \Bitrix\Main\Web\Uri(htmlspecialcharsback(str_replace(array("#ID#", "#id#"), $res["ID"], $arParams["VIEW_URL"])));
+		$viewUri->deleteParams(['b24statAction']);
+
 		$replacement = array(
 			"#ID#" =>
 				$res["ID"],
@@ -657,13 +747,15 @@ HTML;
 			"#APPROVED#" =>
 				($res["APPROVED"] != "Y" ? "hidden" : "approved"),
 			"#DATE#" => (ConvertTimeStamp(($res["POST_TIMESTAMP"] + CTimeZone::GetOffset()), "SHORT") == $todayString ? $res["POST_TIME"] : $res["POST_DATE"]),
+//			"#DATE#" => $res["POST_DATE_AGO"],
+//			"#DATE_FULL#" => $res["POST_DATE_AGO_FULL"],
 			"#TEXT#" => str_replace(array("\001", "#"), array("", "\001"), $res["POST_MESSAGE_TEXT"]),
 			"#CLASSNAME#" =>
 				(isset($res["CLASSNAME"]) ? " ".$res["CLASSNAME"] : ""),
 			"#VOTE_ID#" =>
 				(is_array($res["RATING"]) ? $res["RATING"]["VOTE_ID"] : ""),
 			"#VIEW_URL#" =>
-				str_replace(array("#ID#", "#id#"), $res["ID"], $arParams["VIEW_URL"]),
+				$viewUri->getUri(),
 			"#VIEW_SHOW#" =>
 				($arParams["VIEW_URL"] == "" ? "N" : "Y"),
 			"#EDIT_URL#" =>
@@ -693,6 +785,8 @@ HTML;
 					? "Y"
 					: "N"
 			),
+			"#POST_ENTITY_TYPE#" => (!empty($arParams["POST_CONTENT_TYPE_ID"]) ? $arParams["POST_CONTENT_TYPE_ID"] : ''),
+			"#COMMENT_ENTITY_TYPE#" => (!empty($arParams["COMMENT_CONTENT_TYPE_ID"]) ? $arParams["COMMENT_CONTENT_TYPE_ID"] : ''),
 			"#BEFORE_HEADER#" => $res["BEFORE_HEADER"],
 			"#BEFORE_ACTIONS#" => $res["BEFORE_ACTIONS"],
 			"#AFTER_ACTIONS#" => $res["AFTER_ACTIONS"],
@@ -701,6 +795,7 @@ HTML;
 			"#AFTER#" => $res["AFTER"],
 			"#BEFORE_RECORD#" => $res["BEFORE_RECORD"],
 			"#AFTER_RECORD#" => $res["AFTER_RECORD"],
+			"#LIKE_REACT#" => (!empty($res["LIKE_REACT"]) ? $res["LIKE_REACT"] : ''),
 			"#AUTHOR_ID#" =>
 				$res["AUTHOR"]["ID"],
 			"#AUTHOR_AVATAR_IS#" =>
@@ -714,6 +809,15 @@ HTML;
 							: ""
 					)
 			),
+			"#AUTHOR_AVATAR_BG#" => (
+				!empty($res["AUTHOR"]["AVATAR"])
+					? "background-image:url('".$res["AUTHOR"]["AVATAR"]."')"
+					: (
+						!empty($arParams["AVATAR_DEFAULT"])
+							? "background-image:url('".$arParams["AVATAR_DEFAULT"]."')"
+							: ""
+					)
+				),
 			"#AUTHOR_URL#" => $authorUrl,
 			"#AUTHOR_NAME#" =>
 				CUser::FormatName(
@@ -727,18 +831,27 @@ HTML;
 				),
 				($arParams["SHOW_LOGIN"] != "N"),
 				false),
-			"#AUTHOR_TOOLTIP_PARAMS#" => CUtil::PhpToJSObject($authorTooltipParams),
+			"#AUTHOR_PERSONAL_GENDER#" => !empty($res["AUTHOR"]["PERSONAL_GENDER"]) ?
+				$res["AUTHOR"]["PERSONAL_GENDER"] : "",
+			"#AUTHOR_TOOLTIP_PARAMS#" => htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($authorTooltipParams)),
 			"#SHOW_POST_FORM#" =>
 				$arParams["SHOW_POST_FORM"],
-			"#AUTHOR_EXTRANET_STYLE#" => $authorStyle,
+			"#AUTHOR_EXTRANET_STYLE#" =>
+				$authorStyle,
+			"#RATING_NONEMPTY_CLASS#" =>
+				(!empty($res['RATING']) && !empty($res['RATING']['TOTAL_VOTES']) && $res['RATING']['TOTAL_VOTES'] > 0 ? 'comment-block-rating-nonempty' : ''),
 			"background:url('') no-repeat center;" =>
 				""
 		);
+
 		return str_replace(array_merge(array_keys($replacement), array("\001")), array_merge(array_values($replacement), array("#")), $template);
 	}
 
 	protected function prepareParams(array &$arParams, array &$arResult)
 	{
+		static $currentExtranetUser = null;
+		static $availableUsersList = null;
+
 		// Action params
 		/*@param string $arParams["mfi"] contains hash of something to add new uploaded file into session array */
 		$arParams["mfi"] = trim($arParams["mfi"]);
@@ -860,6 +973,35 @@ HTML;
 					BX_RESIZE_IMAGE_EXACT
 				)
 		);
+
+		$arResult["NAV_STRING_COUNT_MORE"] = 0;
+		if ($arParams["NAV_STRING"] && $arParams["NAV_RESULT"])
+		{
+			$arResult["NAV_STRING_COUNT_MORE"] = $arParams["NAV_RESULT"]->NavRecordCount;
+			$arResult["NAV_STRING_COUNT_MORE"] -= (
+				$arParams["VISIBLE_RECORDS_COUNT"] > 0
+					? $arParams["VISIBLE_RECORDS_COUNT"]
+					: $arParams["NAV_RESULT"]->NavPageNomer * $arParams["NAV_RESULT"]->NavPageSize
+			);
+		}
+
+		if (
+			$currentExtranetUser === null
+			&& $availableUsersList === null
+		)
+		{
+			$currentExtranetUser = (
+				Loader::includeModule('socialnetwork')
+				&& !CSocNetUser::isCurrentUserModuleAdmin(SITE_ID, false)
+				&& Loader::includeModule('extranet')
+				&& !CExtranet::isIntranetUser()
+			);
+
+			$availableUsersList = ($currentExtranetUser ? \CExtranet::getMyGroupsUsers(SITE_ID) : array());
+		}
+
+		$arResult["currentExtranetUser"] = $currentExtranetUser;
+		$arResult["availableUsersList"] = $availableUsersList;
 	}
 
 	public function executeComponent()
@@ -880,6 +1022,44 @@ HTML;
 			}
 			$this->sendIntoPull($this->arParams, $this->arResult);
 
+			if (
+				$this->scope == self::STATUS_SCOPE_MOBILE
+				&& strtolower($this->getMode()) == 'plain'
+				&& is_array($this->arParams['RECORDS'])
+				&& !empty($this->arParams['RECORDS'])
+				&& !empty($this->arParams['IS_POSTS_LIST'])
+				&& $this->arParams['IS_POSTS_LIST'] == "N"
+				&& Loader::includeModule('socialnetwork')
+			)
+			{
+				$contentEntityType = (
+					!empty($this->arParams["RATING_TYPE_ID"])
+						? $this->arParams["RATING_TYPE_ID"]
+						: (
+							!empty($this->arParams["CONTENT_TYPE_ID"])
+								? $this->arParams["CONTENT_TYPE_ID"]
+								: ''
+							)
+				);
+
+				foreach($this->arParams['RECORDS'] as $key => $record)
+				{
+					if (!empty($contentEntityType))
+					{
+						$provider = \Bitrix\Socialnetwork\Livefeed\Provider::init([
+							'ENTITY_TYPE' => $contentEntityType,
+							'ENTITY_ID' => $record["ID"],
+						]);
+						if ($provider)
+						{
+							$provider->setContentView(array(
+								'save' => false
+							));
+						}
+					}
+				}
+			}
+
 			if ($this->arParams["MODE"] == "PULL_MESSAGE")
 			{
 				$json = $this->parseHTML($output, "RECORD");
@@ -891,7 +1071,11 @@ HTML;
 			}
 
 			$output .= $this->joinToPull();
-			return array("HTML" => $output, "JSON" => $json);
+			return array(
+				"HTML" => $output,
+				"JSON" => $json,
+				"DATA" => $this->arResult
+			);
 		}
 		catch (\Exception $e)
 		{
@@ -907,9 +1091,8 @@ HTML;
 		$this->getApplication()->restartBuffer();
 		while (ob_end_clean());
 		header('Content-Type:application/json; charset=UTF-8');
-		?><?=Json::encode($response)?><?
 		/** @noinspection PhpUndefinedClassInspection */
-		\CMain::finalActions();
+		\CMain::finalActions(Json::encode($response));
 		die;
 	}
 
@@ -926,7 +1109,11 @@ HTML;
 			$messageList = $SHParser->getInnerHTML('<!--LOAD_SCRIPT-->', '<!--END_LOAD_SCRIPT-->').
 				$FHParser->getInnerHTML('<!--RCRDLIST_'.$arParams["ENTITY_XML_ID"].'-->', '<!--RCRDLIST_END_'.$arParams["ENTITY_XML_ID"].'-->');
 
-			$messageNavigation = $FHParser->getTagHTML('a[class=feed-com-all]');
+			$messageNavigation = $FHParser->getTagHTML(
+					$this->scope == self::STATUS_SCOPE_MOBILE
+						? 'a[class=post-comments-link]'
+						: 'a[class=feed-com-all]'
+			);
 
 			$JSResult += array(
 				'status' => "success",
@@ -950,7 +1137,6 @@ HTML;
 				$res = array_merge($arParams["~RECORDS"][$record], $res, ($this->isWeb() ? $res["WEB"] : $res["MOBILE"]));
 				unset($res["WEB"]);
 				unset($res["MOBILE"]);
-
 
 				if (!!$res["FILES"] && (
 						$this->arParams["RIGHTS"]["EDIT"] == "ALL" ||
@@ -1010,6 +1196,10 @@ HTML;
 
 	public function getDateTimeFormatted($timestamp, $arFormatParams)
 	{
-		return CComponentUtil::GetDateTimeFormatted($timestamp, (isset($arFormatParams["DATE_TIME_FORMAT"]) ? $arFormatParams["DATE_TIME_FORMAT"] : false));
+		return \CComponentUtil::getDateTimeFormatted(array(
+			'TIMESTAMP' => $timestamp,
+			'DATETIME_FORMAT' => (isset($arFormatParams["DATE_TIME_FORMAT"]) ? $arFormatParams["DATE_TIME_FORMAT"] : false),
+			'DATETIME_FORMAT_WITHOUT_YEAR' => (isset($arFormatParams["DATE_TIME_FORMAT_WITHOUT_YEAR"]) ? $arFormatParams["DATE_TIME_FORMAT_WITHOUT_YEAR"] : false)
+		));
 	}
 }

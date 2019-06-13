@@ -3,6 +3,7 @@ $MESS["REPORT_CONSTRUCT"] = "Конструктор звітів";
 $MESS["REPORT_TITLE"] = "Назва звіту";
 $MESS["REPORT_DEFAULT_TITLE"] = "Новий звіт";
 $MESS["REPORT_PERIOD"] = "Звітний період";
+$MESS["REPORT_PERIOD_HIDDEN"] = "Не відображати у звіті";
 $MESS["REPORT_COLUMNS"] = "Колонки";
 $MESS["REPORT_CALC_COLUMN"] = "Обчислити колонку";
 $MESS["REPORT_ADD_SELECT_COLUMN"] = "Додати";

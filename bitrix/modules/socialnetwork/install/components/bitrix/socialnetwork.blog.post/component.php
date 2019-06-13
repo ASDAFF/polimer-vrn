@@ -14,6 +14,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
 use Bitrix\Socialnetwork\Livefeed;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Socialnetwork\ComponentHelper;
 
 if (!CModule::IncludeModule("blog"))
 {
@@ -34,7 +36,8 @@ if (
 }
 
 $arResult["bFromList"] = ($arParams["FROM_LOG"] == "Y" || $arParams["TYPE"] == "DRAFT" || $arParams["TYPE"] == "MODERATION");
-$arResult["bExtranetInstalled"] = CModule::IncludeModule("extranet");
+$arResult["bIntranetInstalled"] = ModuleManager::isModuleInstalled("intranet");
+$arResult["bExtranetInstalled"] = ($arResult["bIntranetInstalled"] && CModule::IncludeModule("extranet"));
 $arResult["bExtranetSite"] = ($arResult["bExtranetInstalled"] && CExtranet::IsExtranetSite());
 $arResult["bExtranetUser"] = ($arResult["bExtranetInstalled"] && !CExtranet::IsIntranetUser());
 $arResult["ReadOnly"] = (isset($arParams["GROUP_READ_ONLY"]) && $arParams["GROUP_READ_ONLY"] == "Y");
@@ -44,11 +47,6 @@ $arParams["PATH_TO_LOG_TAG"] = $folderUsers."log/?TAG=#tag#";
 if (SITE_TEMPLATE_ID == 'bitrix24')
 {
 	$arParams["PATH_TO_LOG_TAG"] .= "&apply_filter=Y";
-}
-
-if ($arResult["bExtranetUser"])
-{
-	$arUserIdVisible = CExtranet::GetMyGroupsUsersSimple(SITE_ID);
 }
 
 if(!is_array($arParams["GROUP_ID"]))
@@ -65,6 +63,11 @@ foreach($arParams["GROUP_ID"] as $k=>$v)
 }
 
 $arResult["bPublicPage"] = (isset($arParams["PUB"]) && $arParams["PUB"] == "Y");
+
+if ($arResult["bExtranetUser"] && !$arResult["bPublicPage"])
+{
+	$arUserIdVisible = CExtranet::GetMyGroupsUsersSimple(SITE_ID);
+}
 
 $arResult["bTasksInstalled"] = CModule::IncludeModule("tasks");
 $arResult["bTasksAvailable"] = (
@@ -184,7 +187,7 @@ if(IsModuleInstalled("vote"))
 {
 	$arParams["POST_PROPERTY"][] = "UF_BLOG_POST_VOTE";
 }
-if(IsModuleInstalled("intranet"))
+if($arResult["bIntranetInstalled"])
 {
 	$arParams["POST_PROPERTY"][] = "UF_GRATITUDE";
 }
@@ -205,7 +208,7 @@ $arResult["TZ_OFFSET"] = CTimeZone::GetOffset();
 
 $arResult["ALLOW_EMAIL_INVITATION"] = (
 	IsModuleInstalled('mail')
-	&& IsModuleInstalled('intranet')
+	&& $arResult["bIntranetInstalled"]
 	&& (
 		!\Bitrix\Main\Loader::includeModule('bitrix24')
 		|| \CBitrix24::isEmailConfirmed()
@@ -263,7 +266,10 @@ if (
 $arPost = array();
 $cacheTtl = 2592000;
 $cacheId = 'blog_post_socnet_general_'.$arParams["ID"].'_'.LANGUAGE_ID.($arResult["TZ_OFFSET"] <> 0 ? "_".$arResult["TZ_OFFSET"] : "")."_".Bitrix\Main\Context::getCurrent()->getCulture()->getDateTimeFormat();
-$cacheDir = '/blog/socnet_post/gen/'.intval($arParams["ID"] / 100).'/'.$arParams["ID"];
+$cacheDir = ComponentHelper::getBlogPostCacheDir(array(
+	'TYPE' => 'post_general',
+	'POST_ID' => $arParams["ID"]
+));
 
 $obCache = new CPHPCache;
 if($obCache->InitCache($cacheTtl, $cacheId, $cacheDir))
@@ -360,23 +366,6 @@ if(
 			}
 		}
 
-		if (
-			!$arResult["bFromList"]
-			&& $_SERVER["REQUEST_METHOD"] != "POST"
-		)
-		{
-			CBlogPost::counterInc($arPost["ID"]);
-
-			if ($liveFeedEntity = Livefeed\BlogPost::init(array(
-				'ENTITY_TYPE' => Livefeed\Provider::DATA_ENTITY_TYPE_BLOG_POST,
-				'ENTITY_ID' => $arPost["ID"],
-				'LOG_ID' => (isset($arParams["LOG_ID"]) ? intval($arParams["LOG_ID"]) : false)
-			)))
-			{
-				$liveFeedEntity->setContentView();
-			}
-		}
-
 		$arPost = CBlogTools::htmlspecialcharsExArray($arPost);
 
 		if($arPost["AUTHOR_ID"] == $user_id)
@@ -460,15 +449,25 @@ if(
 
 					if (CBlogPost::Delete($arParams["ID"]))
 					{
-						BXClearCache(True, "/".SITE_ID."/blog/popular_posts/");
+						BXClearCache(true, ComponentHelper::getBlogPostCacheDir(array(
+							'TYPE' => 'posts_popular',
+							'SITE_ID' => SITE_ID
+						)));
 						$url = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_BLOG"], array("blog" => $arBlog["URL"], "user_id" => $arBlog["OWNER_ID"], "group_id" => $arBlog["SOCNET_GROUP_ID"]));
 						if(strpos($url, "?") === false)
 							$url .= "?";
 						else
 							$url .= "&";
 						$url .= "del_id=".$arParams["ID"]."&success=Y";
-						BXClearCache(true, "/blog/socnet_post/".intval($arParams["ID"] / 100)."/".$arParams["ID"]."/");
-						BXClearCache(true, "/blog/socnet_post/gen/".intval($arParams["ID"] / 100)."/".$arParams["ID"]);
+						BXClearCache(true, ComponentHelper::getBlogPostCacheDir(array(
+							'TYPE' => 'post',
+							'POST_ID' => $arParams["ID"]
+						)));
+						BXClearCache(true, ComponentHelper::getBlogPostCacheDir(array(
+							'TYPE' => 'post_general',
+							'POST_ID' => $arParams["ID"]
+						)));
+						BXClearCache(true, CComponentEngine::MakeComponentPath("bitrix:socialnetwork.blog.blog"));
 
 						LocalRedirect($url);
 					}
@@ -493,9 +492,18 @@ if(
 				{
 					if(CBlogPost::Update($arParams["ID"], Array("PUBLISH_STATUS" => BLOG_PUBLISH_STATUS_READY)))
 					{
-						BXClearCache(True, "/".SITE_ID."/blog/popular_posts/");
-						BXClearCache(true, "/blog/socnet_post/".intval($arParams["ID"] / 100)."/".$arParams["ID"]."/");
-						BXClearCache(true, "/blog/socnet_post/gen/".intval($arParams["ID"] / 100)."/".$arParams["ID"]);
+						BXClearCache(True, ComponentHelper::getBlogPostCacheDir(array(
+							'TYPE' => 'posts_popular',
+							'SITE_ID' => SITE_ID
+						)));
+						BXClearCache(true, ComponentHelper::getBlogPostCacheDir(array(
+							'TYPE' => 'post',
+							'POST_ID' => $arParams["ID"]
+						)));
+						BXClearCache(true, ComponentHelper::getBlogPostCacheDir(array(
+							'TYPE' => 'post_general',
+							'POST_ID' => $arParams["ID"]
+						)));
 						CBlogPost::DeleteLog($arParams["ID"]);
 
 						$url = (
@@ -532,6 +540,23 @@ if(
 
 		if ($arResult["PostPerm"] > BLOG_PERMS_DENY)
 		{
+			if (
+				!$arResult["bFromList"]
+				&& $_SERVER["REQUEST_METHOD"] != "POST"
+			)
+			{
+				CBlogPost::counterInc($arPost["ID"]);
+
+				if ($liveFeedEntity = Livefeed\BlogPost::init(array(
+					'ENTITY_TYPE' => Livefeed\Provider::DATA_ENTITY_TYPE_BLOG_POST,
+					'ENTITY_ID' => $arPost["ID"],
+					'LOG_ID' => (isset($arParams["LOG_ID"]) ? intval($arParams["LOG_ID"]) : false)
+				)))
+				{
+					$liveFeedEntity->setContentView();
+				}
+			}
+
 			/* share */
 			if(
 				$_SERVER["REQUEST_METHOD"] == "POST" 
@@ -543,12 +568,8 @@ if(
 				CUtil::JSPostUnescape();
 				$APPLICATION->RestartBuffer();
 
-				$spermNew = $_POST["SPERM"];
-				$spermOld = CBlogPost::GetSocNetPerms($arParams["ID"]);
 				$perms2update = array();
-				$arNewRights = array();
-				$comId = false;
-
+				$spermOld = CBlogPost::getSocNetPerms($arParams["ID"]);
 				foreach($spermOld as $type => $val)
 				{
 					foreach($val as $id => $values)
@@ -568,9 +589,47 @@ if(
 					}
 				}
 
+				$arNewRights = array();
+
+				if (isset($_POST['DEST_CODES']))
+				{
+					$_POST['SPERM'] = array(
+						'UA' => array(),
+						'U' => array(),
+						'UE' => array(),
+						'SG' => array(),
+						'DR' => array()
+					);
+					foreach($_POST['DEST_CODES'] as $destCode)
+					{
+						if ($destCode == 'UA')
+						{
+							$_POST['SPERM']['UA'][] = 'UA';
+						}
+						elseif (preg_match('/^UE(.+)$/i', $destCode, $matches))
+						{
+							$_POST['SPERM']['UE'][] = $matches[1];
+						}
+						elseif (preg_match('/^U(\d+)$/i', $destCode, $matches))
+						{
+							$_POST['SPERM']['U'][] = 'U'.$matches[1];
+						}
+						elseif (preg_match('/^SG(\d+)$/i', $destCode, $matches))
+						{
+							$_POST['SPERM']['SG'][] = 'SG'.$matches[1];
+						}
+						elseif (preg_match('/^DR(\d+)$/i', $destCode, $matches))
+						{
+							$_POST['SPERM']['DR'][] = 'DR'.$matches[1];
+						}
+					}
+					unset($_POST['DEST_CODES']);
+				}
+
+				$spermNew = $_POST["SPERM"];
 				$tmp = $_POST;
 				$tmp['SPERM'] = $spermNew;
-				\Bitrix\Socialnetwork\ComponentHelper::processBlogPostNewMailUser($tmp, $arResult);
+				ComponentHelper::processBlogPostNewMailUser($tmp, $arResult);
 				$spermNew = $tmp['SPERM'];
 
 				$bCurrentUserAdmin = CSocNetUser::IsCurrentUserModuleAdmin();
@@ -626,7 +685,7 @@ if(
 					&& $canPublish
 				)
 				{
-					\Bitrix\Socialnetwork\ComponentHelper::processBlogPostShare(
+					ComponentHelper::processBlogPostShare(
 						array(
 							"POST_ID" => $arParams["ID"],
 							"BLOG_ID" => $arPost["BLOG_ID"],
@@ -635,7 +694,9 @@ if(
 							"NEW_RIGHTS" => $arNewRights,
 							"USER_ID" => $user_id
 						),
-						$arParams
+						array_merge($arParams, array(
+							"CAN_USER_COMMENT" => (!$arResult["ReadOnly"] ? 'Y' : 'N')
+						))
 					);
 				}
 				elseif (!$canPublish)
@@ -657,9 +718,22 @@ if(
 			/* end share */
 			if(!$arResult["bFromList"])
 			{
-				$strTitle = ($arPost["MICRO"] != "Y" ? $arPost["TITLE"] : TruncateText(blogTextParser::killAllTags($arPost["DETAIL_TEXT"]), 100));
+				if ($arPost["MICRO"] != "Y")
+				{
+					$strTitle = $arPost["TITLE"];
+				}
+				else
+				{
+					$strTitle = blogTextParser::killAllTags($arPost["DETAIL_TEXT"]);
 
-				if (IsModuleInstalled("intranet"))
+					$parser = new \CTextParser();
+					$parser->allow = array('CLEAR_SMILES' => 'Y');
+					$strTitle = preg_replace("/&nbsp;/is".BX_UTF_PCRE_MODIFIER, "", $parser->convertText($strTitle));
+
+					$strTitle = htmlspecialcharsback(TruncateText($strTitle, 100));
+				}
+
+				if ($arResult["bIntranetInstalled"])
 				{
 					$APPLICATION->SetPageProperty("title", $strTitle);
 				}
@@ -726,7 +800,10 @@ if(
 				}
 			}
 
-			$cache_path = "/blog/socnet_post/".intval($arPost["ID"] / 100)."/".$arPost["ID"]."/";
+			$cache_path = ComponentHelper::getBlogPostCacheDir(array(
+				'TYPE' => 'post',
+				'POST_ID' => $arPost["ID"]
+			));
 
 			if (
 				$arParams["CACHE_TIME"] > 0
@@ -762,8 +839,6 @@ if(
 						}
 					}
 				}
-
-				CBitrixComponentTemplate::ApplyCachedData($Vars["templateCachedData"]);
 				$cache->Output();
 			}
 			else
@@ -915,7 +990,7 @@ if(
 									$arCss = $APPLICATION->sPath2css;
 									$arJs = $APPLICATION->arHeadScripts;
 
-									$arResult['URL_PREVIEW'] = \Bitrix\Socialnetwork\ComponentHelper::getUrlPreviewContent($arPostField, array(
+									$arResult['URL_PREVIEW'] = ComponentHelper::getUrlPreviewContent($arPostField, array(
 										"LAZYLOAD" => $arParams["LAZYLOAD"],
 										"MOBILE" => (isset($arParams["MOBILE"]) && $arParams["MOBILE"] == "Y" ? "Y" : "N"),
 										"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
@@ -1288,7 +1363,7 @@ if(
 					);
 				}
 
-				$arResult["Post"]["LIMITED_VIEW"] = \Bitrix\Socialnetwork\ComponentHelper::getBlogPostLimitedViewStatus(array(
+				$arResult["Post"]["LIMITED_VIEW"] = ComponentHelper::getBlogPostLimitedViewStatus(array(
 					'logId' => intval($arParams["LOG_ID"]),
 					'postId' => intval($arResult["Post"]["ID"]),
 					'authorId' => $arResult["Post"]["AUTHOR_ID"],
@@ -1323,7 +1398,6 @@ if(
 				if ($arParams["CACHE_TIME"] > 0)
 				{
 					$arCacheData = Array(
-						"templateCachedData" => $this->GetTemplateCachedData(),
 						"Post" => $arResult["Post"],
 						"images" => $arResult["images"],
 						"Category" => $arResult["Category"],
@@ -1341,7 +1415,7 @@ if(
 				}
 			}
 
-			$arResult["arUser"]["urlToPostImportant"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_POST_IMPORTANT"], array("user_id"=> $arPost["AUTHOR_ID"]));			
+			$arResult["arUser"]["urlToPostImportant"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_POST_IMPORTANT"], array("user_id"=> $arPost["AUTHOR_ID"]));
 
 			$arResult["CanComment"] = (
 				!$arResult["ReadOnly"]
@@ -1374,7 +1448,7 @@ if(
 			{
 				$arResult["Post"]["SPERM_HIDDEN"] = 0;
 				$arGroupID = CSocNetLogTools::GetAvailableGroups(
-					($arResult["bExtranetUser"] ? "Y" : "N"),
+					($arResult["bExtranetUser"] && !$arResult["bPublicPage"] ? "Y" : "N"),
 					($arResult["bExtranetSite"] ? "Y" : "N")
 				);
 
@@ -1398,10 +1472,11 @@ if(
 							|| (
 								$group_code == "DR"
 								&& $arResult["bExtranetUser"]
+								&& !$arResult["bPublicPage"]
 							)
 							|| (
 								$group_code == "U"
-								&& isset($arUserIdVisible)
+								&& isset($arUserIdVisible) // current extranet user
 								&& is_array($arUserIdVisible)
 								&& !in_array($entity_id, $arUserIdVisible)
 							)
@@ -1409,9 +1484,14 @@ if(
 								$group_code == "U"
 								&& isset($arBlogSPermDesc["IS_EXTRANET"])
 								&& $arBlogSPermDesc["IS_EXTRANET"] == "Y"
-								&& isset($arAvailableExtranetUserID)
-								&& is_array($arAvailableExtranetUserID)
-								&& !in_array($entity_id, $arAvailableExtranetUserID)
+								&& (
+									$arResult["bPublicPage"]
+									|| (
+										isset($arAvailableExtranetUserID)
+										&& is_array($arAvailableExtranetUserID)
+										&& !in_array($entity_id, $arAvailableExtranetUserID)
+									)
+								)
 							)
 						)
 						{
@@ -1490,32 +1570,34 @@ if(
 				}
 			}
 
-			if($arParams["SHOW_RATING"] == "Y" && !empty($arResult["Post"]))
+			if(
+				$arParams["SHOW_RATING"] == "Y"
+				&& !empty($arResult["Post"])
+			)
 			{
-				if (
-					array_key_exists("RATING_ENTITY_ID", $arParams)
-					&& intval($arParams["RATING_ENTITY_ID"]) > 0
-					&& array_key_exists("RATING_TOTAL_VALUE", $arParams)
-					&& is_numeric($arParams["RATING_TOTAL_VALUE"])
-					&& array_key_exists("RATING_TOTAL_VOTES", $arParams)
-					&& intval($arParams["RATING_TOTAL_VOTES"]) >= 0
-					&& array_key_exists("RATING_TOTAL_POSITIVE_VOTES", $arParams)
-					&& intval($arParams["RATING_TOTAL_POSITIVE_VOTES"]) >= 0
-					&& array_key_exists("RATING_TOTAL_NEGATIVE_VOTES", $arParams)
-					&& intval($arParams["RATING_TOTAL_NEGATIVE_VOTES"]) >= 0
-					&& array_key_exists("RATING_USER_VOTE_VALUE", $arParams)
-					&& is_numeric($arParams["RATING_USER_VOTE_VALUE"])
-				)
-					$arResult['RATING'][$arResult["Post"]["ID"]] = array(
-						"USER_VOTE" => $arParams["RATING_USER_VOTE_VALUE"],
-						"USER_HAS_VOTED" => ($arParams["RATING_USER_VOTE_VALUE"] == 0 ? "N" : "Y"),
-						"TOTAL_VOTES" => $arParams["RATING_TOTAL_VOTES"],
-						"TOTAL_POSITIVE_VOTES" => $arParams["RATING_TOTAL_POSITIVE_VOTES"],
-						"TOTAL_NEGATIVE_VOTES" => $arParams["RATING_TOTAL_NEGATIVE_VOTES"],
-						"TOTAL_VALUE" => $arParams["RATING_TOTAL_VALUE"]
+				$arResult['RATING'][$arResult["Post"]["ID"]] = (
+						array_key_exists("RATING_ENTITY_ID", $arParams)
+						&& intval($arParams["RATING_ENTITY_ID"]) > 0
+						&& array_key_exists("RATING_TOTAL_VALUE", $arParams)
+						&& is_numeric($arParams["RATING_TOTAL_VALUE"])
+						&& array_key_exists("RATING_TOTAL_VOTES", $arParams)
+						&& intval($arParams["RATING_TOTAL_VOTES"]) >= 0
+						&& array_key_exists("RATING_TOTAL_POSITIVE_VOTES", $arParams)
+						&& intval($arParams["RATING_TOTAL_POSITIVE_VOTES"]) >= 0
+						&& array_key_exists("RATING_TOTAL_NEGATIVE_VOTES", $arParams)
+						&& intval($arParams["RATING_TOTAL_NEGATIVE_VOTES"]) >= 0
+						&& array_key_exists("RATING_USER_VOTE_VALUE", $arParams)
+						&& is_numeric($arParams["RATING_USER_VOTE_VALUE"])
+							? array(
+								"USER_VOTE" => $arParams["RATING_USER_VOTE_VALUE"],
+								"USER_HAS_VOTED" => ($arParams["RATING_USER_VOTE_VALUE"] == 0 ? "N" : "Y"),
+								"TOTAL_VOTES" => $arParams["RATING_TOTAL_VOTES"],
+								"TOTAL_POSITIVE_VOTES" => $arParams["RATING_TOTAL_POSITIVE_VOTES"],
+								"TOTAL_NEGATIVE_VOTES" => $arParams["RATING_TOTAL_NEGATIVE_VOTES"],
+								"TOTAL_VALUE" => $arParams["RATING_TOTAL_VALUE"]
+							)
+							: CRatings::GetRatingVoteResult('BLOG_POST', $arResult["Post"]["ID"])
 					);
-				else
-					$arResult['RATING'][$arResult["Post"]["ID"]] = CRatings::GetRatingVoteResult('BLOG_POST', $arResult["Post"]["ID"]);
 			}
 
 			if ($arParams["IS_UNREAD"])
@@ -1542,7 +1624,10 @@ if(
 					);
 
 					$cache = new CPHPCache;
-					$cache_path = "/blog/socnet_post/".intval($arPost["ID"] / 100)."/".$arPost["ID"]."/";
+					$cache_path = ComponentHelper::getBlogPostCacheDir(array(
+						'TYPE' => 'post',
+						'POST_ID' => $arPost["ID"]
+					));
 					$cache_id = "blog_socnet_post_read_".$USER->GetID();
 
 					if ($cache->InitCache($arParams["CACHE_TIME"], $cache_id, $cache_path))

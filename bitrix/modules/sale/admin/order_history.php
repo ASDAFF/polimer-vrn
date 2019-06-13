@@ -171,10 +171,17 @@ while ($arChangeRecord = $dbRecords->Fetch())
 {
 	$entityName = '';
 	$row =& $lAdminHistory->AddRow($arChangeRecord["ID"], $arChangeRecord, '', '');
+	if ($arChangeRecord["DATE_CREATE"] instanceof \Bitrix\Main\Type\Date)
+	{
+		$datetime = $arChangeRecord["DATE_CREATE"];
+	}
+	else
+	{
+		$datetime = new \Bitrix\Main\Type\DateTime($arChangeRecord["DATE_CREATE"]);
+	}
 
-	$datetime = new \Bitrix\Main\Type\DateTime($arChangeRecord["DATE_CREATE"]);
 	$datetime->format(\Bitrix\Main\Type\DateTime::getFormat());
-	$row->AddField("DATE_CREATE", $datetime);
+	$row->AddField("DATE_CREATE", $datetime->toString());
 
 	$row->AddField("USER_ID", GetFormatedUserName($arChangeRecord["USER_ID"], false));
 	$arRecord = CSaleOrderChange::GetRecordDescription($arChangeRecord["TYPE"], $arChangeRecord["DATA"]);

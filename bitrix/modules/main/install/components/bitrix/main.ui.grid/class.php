@@ -3,6 +3,7 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text;
 use Bitrix\Main\Grid;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Web;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
@@ -338,6 +339,32 @@ class CMainUIGrid extends CBitrixComponent
 			false
 		);
 
+		$this->arParams["TILE_GRID_MODE"] = Grid\Params::prepareBoolean(
+			array($this->arParams["TILE_GRID_MODE"]),
+			false
+		);
+
+		$this->arParams["JS_CLASS_TILE_GRID_ITEM"] = Grid\Params::prepareString(
+			array($this->arParams["JS_CLASS_TILE_GRID_ITEM"]),
+			null
+		);
+
+		$this->arParams["TILE_SIZE"] = Grid\Params::prepareString(
+			array($this->arParams["TILE_SIZE"]),
+			null
+		);
+
+		if (is_array($this->arParams["ROW_LAYOUT"]) && !empty($this->arParams["ROW_LAYOUT"]))
+		{
+			$this->arParams["ALLOW_COLUMNS_SORT"] = false;
+			$this->arParams["ALLOW_SORT"] = false;
+		}
+
+		$this->arParams["TOP_ACTION_PANEL_PINNED_MODE"] = Grid\Params::prepareBoolean(
+			array($this->arParams["TOP_ACTION_PANEL_PINNED_MODE"]),
+			false
+		);
+
 		return $this->arParams;
 	}
 
@@ -361,6 +388,7 @@ class CMainUIGrid extends CBitrixComponent
 		$this->arResult["COLS_EDIT_META"] = $this->prepareColumnsEditMeta();
 		$this->arResult["COLS_EDIT_META_ALL"] = $this->prepareColumnsEditMetaAll();
 		$this->arResult["ROWS"] = $this->prepareRows();
+		$this->arResult["TILE_GRID_ITEMS"] = $this->prepareTileGridItems();
 		$this->arResult["HAS_ACTIONS"] = $this->prepareHasActions();
 		$this->arResult["EDIT_DATE"] = $this->prepareEditDate();
 		$this->arResult["ALLOW_EDIT"] = $this->prepareAllowEdit();
@@ -390,6 +418,12 @@ class CMainUIGrid extends CBitrixComponent
 		$this->arResult["DEFAULT_COLUMNS"] = $this->prepareDefaultColumns();
 		$this->arResult["DEPTH"] = $this->prepareDepth();
 		$this->arResult["MESSAGES"] = $this->prepareMessages($this->arParams["MESSAGES"]);
+		$this->arResult["LAZY_LOAD"] = $this->arParams["LAZY_LOAD"];
+		$this->arResult["HAS_STICKED_COLUMNS"] = !empty($this->getGridOptions()->getStickedColumns());
+		$this->arResult["HANDLE_RESPONSE_ERRORS"] = (
+			isset($this->arParams["HANDLE_RESPONSE_ERRORS"])
+			&& $this->arParams["HANDLE_RESPONSE_ERRORS"] === true
+		);
 
 		return $this;
 	}
@@ -398,7 +432,7 @@ class CMainUIGrid extends CBitrixComponent
 	{
 		$result = array();
 		$isArray = is_array($messages);
-		$isAssociative = ($isArray && \Bitrix\Main\Type\Collection::isAssociative($messages));
+		$isAssociative = ($isArray && Collection::isAssociative($messages));
 
 		if ($isArray && $isAssociative)
 		{
@@ -622,9 +656,42 @@ class CMainUIGrid extends CBitrixComponent
 		$this->applyColumnsCustomNames();
 		$this->applyColumnsDisplay();
 		$this->applyRowsSort();
+		$this->applyColumnsSticked();
 		$this->applyColumnsSort();
 		$this->applyColumnsSizes();
 		return $this;
+	}
+
+
+	protected function applyColumnsSticked()
+	{
+		$gridOptions = $this->getGridOptions();
+		$stickedColumns = $gridOptions->getStickedColumns();
+
+		if (is_array($stickedColumns))
+		{
+			$this->arResult["HAS_STICKED_COLUMNS"] = false;
+
+			foreach ($this->arResult["COLUMNS_ALL"] as $key => $column)
+			{
+				$this->arResult["COLUMNS_ALL"][$key]["sticked"] = in_array($column["id"], $stickedColumns);
+
+				if ($this->isShownColumn($column))
+				{
+					$this->arResult["COLUMNS"][$key]["sticked"] = in_array($column["id"], $stickedColumns);
+
+					if (!$this->arResult["HAS_STICKED_COLUMNS"] && $this->arResult["COLUMNS"][$key]["sticked"])
+					{
+						$this->arResult["HAS_STICKED_COLUMNS"] = true;
+					}
+				}
+			}
+		}
+
+		Collection::sortByColumn($this->arResult["COLUMNS"], [
+			"sticked" => SORT_DESC,
+			"sort_index" => SORT_ASC
+		]);
 	}
 
 
@@ -640,7 +707,13 @@ class CMainUIGrid extends CBitrixComponent
 			foreach ($this->getShowedColumnsList() as $key => $item)
 			{
 				$this->arResult["COLUMNS"][$item] = $this->arResult["COLUMNS_ALL"][$item];
+				$this->arResult["COLUMNS"][$item]["sort_index"] = $key;
 			}
+
+			Collection::sortByColumn($this->arResult["COLUMNS"], [
+				"sticked" => SORT_DESC,
+				"sort_index" => SORT_ASC
+			]);
 		}
 	}
 
@@ -697,6 +770,7 @@ class CMainUIGrid extends CBitrixComponent
 			{
 				$this->arResult["COLUMNS_ALL"][$id]["is_shown"] = true;
 				$this->arResult["COLUMNS"][$id] = $this->arResult["COLUMNS_ALL"][$id];
+				$this->arResult["COLUMNS"][$id]["sort_index"] = $key;
 			}
 		}
 
@@ -1122,6 +1196,10 @@ class CMainUIGrid extends CBitrixComponent
 				{
 					$row["default_action"]["js"] = "(window.location = '".$row["default_action"]["href"]."')";
 				}
+				elseif (isset($row["default_action"]["onclick"]) && is_string($row["default_action"]["onclick"]))
+				{
+					$row["default_action"]["js"] = $row["default_action"]["onclick"];
+				}
 			}
 			else
 			{
@@ -1212,9 +1290,46 @@ class CMainUIGrid extends CBitrixComponent
 				}
 			}
 			$this->arParams["ROWS"][$key] = $actualRow;
+
+			if (!isset($this->arParams["ROWS"][$key]["editableColumns"]))
+			{
+				$this->arParams["ROWS"][$key]["editableColumns"] = [];
+			}
 		}
 
 		return $this->arParams["ROWS"];
+	}
+
+	protected function prepareTileGridItems()
+	{
+		if (!$this->arParams['TILE_GRID_MODE'])
+		{
+			return null;
+		}
+		$this->setTemplateName('tilegrid');
+
+		if (isset($this->arParams['TILE_GRID_ITEMS']))
+		{
+			return $this->arParams['TILE_GRID_ITEMS'];
+		}
+
+		return $this->reformatRowsToTileGridItems($this->arParams['ROWS']);
+	}
+
+	protected function reformatRowsToTileGridItems($rows)
+	{
+		$items = [];
+
+		foreach ($rows as $row)
+		{
+			$items[] = [
+				'id' => $row['ID'],
+				'name' => isset($row['NAME'])? $row['NAME'] : null,
+				'image' => isset($row['IMAGE'])? $row['IMAGE'] : null,
+			];
+		}
+
+		return $items;
 	}
 
 	protected function prepareColumnsEditMeta()
@@ -1705,7 +1820,19 @@ class CMainUIGrid extends CBitrixComponent
 		$column["width"] = $this->prepareColumnWidth($column);
 		$column["editable"] = $this->prepareEditable($column);
 		$column["prevent_default"] = $this->preparePreventDefault($column);
+		$column["sticked"] = $this->prepareSticked($column);
+		$column["sticked_default"] = json_encode($this->prepareSticked($column));
 		return $column;
+	}
+
+	/**
+	 * Prepares sticked value
+	 * @param array $column
+	 * @return bool
+	 */
+	protected function prepareSticked($column)
+	{
+		return is_bool($column["sticked"]) ? $column["sticked"] : false;
 	}
 
 	protected function preparePreventDefault(array $column)
@@ -1826,11 +1953,13 @@ class CMainUIGrid extends CBitrixComponent
 		{
 			$this->arResult["COLUMNS"] = array();
 
+			$index = 0;
 			foreach ($this->prepareColumnsAll() as $key => $item)
 			{
 				if ($item["is_shown"])
 				{
 					$this->arResult["COLUMNS"][$key] = $item;
+					$this->arResult["COLUMNS"][$key]["sort_index"] = $index++;
 				}
 			}
 		}
@@ -1862,6 +1991,22 @@ class CMainUIGrid extends CBitrixComponent
 			}
 
 			$gridOptions->setColumnsSizes(null, $columnsSizes);
+		}
+
+		if ($gridOptions->getStickedColumns() === null)
+		{
+			$stickedColumns = [];
+
+			foreach ($this->arResult["COLUMNS_ALL"] as $key => $column)
+			{
+				if ($column["sticked"] && $this->isShownColumn($column))
+				{
+					$stickedColumns[] = $key;
+				}
+			}
+
+			$gridOptions->setStickedColumns($stickedColumns);
+			$isNeedSave = true;
 		}
 
 		if ($isNeedSave)
@@ -2033,6 +2178,12 @@ class CMainUIGrid extends CBitrixComponent
 			if ($this->arParams["ENABLE_COLLAPSIBLE_ROWS"])
 			{
 				$this->prepareMultilevelRows();
+			}
+
+			$templateName = $this->getTemplateName();
+			if ( (empty($templateName) || $templateName === ".default") && $this->arParams['TILE_GRID_MODE'])
+			{
+				$this->setTemplateName('tilegrid');
 			}
 
 			$this->includeComponentTemplate();

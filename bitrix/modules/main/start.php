@@ -29,6 +29,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/lib/loader.php");
 		"bitrix\\main\\objectexception" => "lib/exception.php",
 		"bitrix\\main\\systemexception" => "lib/exception.php",
 		"bitrix\\main\\accessdeniedexception" => "lib/exception.php",
+		"bitrix\\main\\decodingexception" => "lib/exception.php",
 		"bitrix\\main\\io\\invalidpathexception" => "lib/io/ioexception.php",
 		"bitrix\\main\\io\\filenotfoundexception" => "lib/io/ioexception.php",
 		"bitrix\\main\\io\\filedeleteexception" => "lib/io/ioexception.php",
@@ -128,8 +129,12 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/lib/loader.php");
 		"bitrix\\main\\composite\\abstractresponse" => "lib/composite/responder.php",
 		"bitrix\\main\\composite\\fileresponse" => "lib/composite/responder.php",
 		"bitrix\\main\\composite\\memcachedresponse" => "lib/composite/responder.php",
+		"bitrix\\main\\security\\otpexception" => "lib/security/securityexception.php",
 	)
 );
+
+// old class names compatibility
+require_once $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/compatibility.php";
 
 function getmicrotime()
 {

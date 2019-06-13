@@ -108,7 +108,7 @@ if ($target == 'get_all')
 		foreach($taskbars as $tname => $tskbr)
 		{
 			// Display settings
-			?>window.arTaskbarSettings["<?=$tname;?>"] = {show: <?= $tskbr['show'] ? 'true' : 'false'?>, set: <?= $tskbr['set'] == 2 ? 2 : 3?>, active: <?= $tskbr['active'] ? 'true' : 'false'?>};<?
+			?>window.arTaskbarSettings["<?= CUtil::JSEscape($tname)?>"] = {show: <?= $tskbr['show'] ? 'true' : 'false'?>, set: <?= $tskbr['set'] == 2 ? 2 : 3?>, active: <?= $tskbr['active'] ? 'true' : 'false'?>};<?
 		}
 	}
 	?></script><?

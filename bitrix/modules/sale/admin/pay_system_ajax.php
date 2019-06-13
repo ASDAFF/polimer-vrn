@@ -29,6 +29,7 @@ if (!\Bitrix\Main\Loader::includeModule('sale'))
 	$arResult["ERROR"] = "Error! Can't include module \"Sale\"";
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/delivery/inputs.php");
+require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/lib/cashbox/inputs/file.php");
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
@@ -53,7 +54,7 @@ if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bit
 
 			$paramsField = "<table>";
 
-			if ($className == '\Bitrix\Sale\Services\PaySystem\Restrictions\Price')
+			if ($className == '\\'.\Bitrix\Sale\Services\PaySystem\Restrictions\Price::class)
 				$paramsField .= '<tr><td colspan=\'2\' style=\'padding-bottom:5px\'><b>'.Loc::getMessage('SALE_PS_PRICE_INFO').'</b></td></tr>';
 
 			foreach ($paramsStructure as $name => $param)
@@ -218,9 +219,42 @@ if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bit
 
 			if (class_exists($className))
 			{
+				$isOrderHandler = strpos($handler, 'orderdocument') === 0;
 				$modeList = $className::getHandlerModeList();
-				if ($modeList)
-					$arResult["PAYMENT_MODE"] = Bitrix\Sale\Internals\Input\Enum::getEditHtml('PS_MODE', array('OPTIONS' => $modeList));
+				if ($modeList || $isOrderHandler)
+				{
+					if ($modeList)
+					{
+						$psMode = $request->get('PS_MODE') ? $request->get('PS_MODE') : $paySystem['PS_MODE'];
+						$arResult["PAYMENT_MODE"] = Bitrix\Sale\Internals\Input\Enum::getEditHtml(
+							'PS_MODE',
+							array(
+								'OPTIONS' => $modeList,
+								'ID' => 'PS_MODE',
+								'ONCHANGE' => "BX.Sale.PaySystem.getHandlerOptions(BX('ACTION_FILE'))",
+							),
+							$psMode
+						);
+					}
+
+					if ($isOrderHandler)
+					{
+						$arResult["PAYMENT_MODE_TITLE"] = Loc::getMessage('SALE_PS_PS_MODE_DOCUMENT_TITLE');
+
+						$componentPath = \CComponentEngine::makeComponentPath('bitrix:documentgenerator.templates');
+						$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
+						$uri = new \Bitrix\Main\Web\Uri($componentPath);
+						$params = [
+							'PROVIDER' => \Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Order::class,
+							'MODULE' => 'crm'
+						];
+						$arResult['ORDER_DOC_ADD_LINK'] = $uri->addParams($params)->getLocator();
+					}
+					else
+					{
+						$arResult["PAYMENT_MODE_TITLE"] = Loc::getMessage('SALE_PS_PS_MODE_TITLE');
+					}
+				}
 			}
 
 			if (IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'].$path.'/.description.php'))
@@ -248,7 +282,19 @@ if(strlen($arResult["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bit
 
 					$arResult['SORT'] = 100;
 
-					if (IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'].'/bitrix/images/sale/sale_payments/'.$handler.'.png'))
+					$psMode = $request->get('PS_MODE') ? $request->get('PS_MODE') : $paySystem['PS_MODE'];
+					if ($psMode)
+					{
+						$fullPath = $handler.'/'.$psMode;
+						if (IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'].'/bitrix/images/sale/sale_payments/'.$fullPath.'.png'))
+						{
+							$arResult['LOGOTIP']['NAME'] = $fullPath.'.png';
+							$arResult['LOGOTIP']['PATH'] = '/bitrix/images/sale/sale_payments/'.$fullPath.'.png';
+						}
+					}
+
+					if (!isset($arResult['LOGOTIP'])
+						&& IO\File::isFileExists($_SERVER['DOCUMENT_ROOT'].'/bitrix/images/sale/sale_payments/'.$handler.'.png'))
 					{
 						$arResult['LOGOTIP']['NAME'] = $handler.'.png';
 						$arResult['LOGOTIP']['PATH'] = '/bitrix/images/sale/sale_payments/'.$handler.'.png';

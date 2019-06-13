@@ -2,21 +2,37 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arCurrentValues */
 /** @global CUserTypeManager $USER_FIELD_MANAGER */
-use Bitrix\Main\Loader;
-use Bitrix\Main\ModuleManager;
-use Bitrix\Iblock;
-use Bitrix\Currency;
+use Bitrix\Main\Loader,
+	Bitrix\Main\ModuleManager,
+	Bitrix\Iblock,
+	Bitrix\Catalog,
+	Bitrix\Currency;
 
 global $USER_FIELD_MANAGER;
 
 if (!Loader::includeModule('iblock'))
 	return;
 $catalogIncluded = Loader::includeModule('catalog');
+
+$usePropertyFeatures = Iblock\Model\PropertyFeature::isEnabledFeatures();
+
 $iblockExists = (!empty($arCurrentValues['IBLOCK_ID']) && (int)$arCurrentValues['IBLOCK_ID'] > 0);
 
 $compatibleMode = !(isset($arCurrentValues['COMPATIBLE_MODE']) && $arCurrentValues['COMPATIBLE_MODE'] === 'N');
 
 $arIBlockType = CIBlockParameters::GetIBlockTypes();
+
+$offersIblock = array();
+if ($catalogIncluded)
+{
+	$iterator = Catalog\CatalogIblockTable::getList(array(
+		'select' => array('IBLOCK_ID'),
+		'filter' => array('!=PRODUCT_IBLOCK_ID' => 0)
+	));
+	while ($row = $iterator->fetch())
+		$offersIblock[$row['IBLOCK_ID']] = true;
+	unset($row, $iterator);
+}
 
 $arIBlock = array();
 $iblockFilter = (
@@ -26,8 +42,14 @@ $iblockFilter = (
 );
 $rsIBlock = CIBlock::GetList(array('SORT' => 'ASC'), $iblockFilter);
 while ($arr = $rsIBlock->Fetch())
-	$arIBlock[$arr['ID']] = '['.$arr['ID'].'] '.$arr['NAME'];
-unset($arr, $rsIBlock, $iblockFilter);
+{
+	$id = (int)$arr['ID'];
+	if (isset($offersIblock[$id]))
+		continue;
+	$arIBlock[$id] = '['.$id.'] '.$arr['NAME'];
+}
+unset($id, $arr, $rsIBlock, $iblockFilter);
+unset($offersIblock);
 
 $arProperty = array();
 $arProperty_N = array();
@@ -736,6 +758,14 @@ else
 	unset($arComponentParameters['PARAMETERS']['LIST_PROPERTY_CODE_MOBILE']);
 }
 
+if ($usePropertyFeatures)
+{
+	if (isset($arComponentParameters['PARAMETERS']['PRODUCT_PROPERTIES']))
+		unset($arComponentParameters['PARAMETERS']['PRODUCT_PROPERTIES']);
+	unset($arComponentParameters['PARAMETERS']['LIST_PROPERTY_CODE']);
+	unset($arComponentParameters['PARAMETERS']['DETAIL_PROPERTY_CODE']);
+}
+
 CIBlockParameters::AddPagerSettings(
 	$arComponentParameters,
 	GetMessage("T_IBLOCK_DESC_PAGER_CATALOG"), //$pager_title
@@ -883,14 +913,17 @@ if($arCurrentValues["USE_COMPARE"]=="Y")
 if (!empty($offers))
 {
 	$arComponentParameters["PARAMETERS"]["LIST_OFFERS_FIELD_CODE"] = CIBlockParameters::GetFieldCode(GetMessage("CP_BC_LIST_OFFERS_FIELD_CODE"), "LIST_SETTINGS");
-	$arComponentParameters["PARAMETERS"]["LIST_OFFERS_PROPERTY_CODE"] = array(
-		"PARENT" => "LIST_SETTINGS",
-		"NAME" => GetMessage("CP_BC_LIST_OFFERS_PROPERTY_CODE"),
-		"TYPE" => "LIST",
-		"MULTIPLE" => "Y",
-		"VALUES" => $arProperty_Offers,
-		"ADDITIONAL_VALUES" => "Y",
-	);
+	if (!$usePropertyFeatures)
+	{
+		$arComponentParameters["PARAMETERS"]["LIST_OFFERS_PROPERTY_CODE"] = array(
+			"PARENT" => "LIST_SETTINGS",
+			"NAME" => GetMessage("CP_BC_LIST_OFFERS_PROPERTY_CODE"),
+			"TYPE" => "LIST",
+			"MULTIPLE" => "Y",
+			"VALUES" => $arProperty_Offers,
+			"ADDITIONAL_VALUES" => "Y",
+		);
+	}
 	$arComponentParameters["PARAMETERS"]["LIST_OFFERS_LIMIT"] = array(
 		"PARENT" => "LIST_SETTINGS",
 		"NAME" => GetMessage("CP_BC_LIST_OFFERS_LIMIT"),
@@ -899,14 +932,17 @@ if (!empty($offers))
 	);
 
 	$arComponentParameters["PARAMETERS"]["DETAIL_OFFERS_FIELD_CODE"] = CIBlockParameters::GetFieldCode(GetMessage("CP_BC_DETAIL_OFFERS_FIELD_CODE"), "DETAIL_SETTINGS");
-	$arComponentParameters["PARAMETERS"]["DETAIL_OFFERS_PROPERTY_CODE"] = array(
-		"PARENT" => "DETAIL_SETTINGS",
-		"NAME" => GetMessage("CP_BC_DETAIL_OFFERS_PROPERTY_CODE"),
-		"TYPE" => "LIST",
-		"MULTIPLE" => "Y",
-		"VALUES" => $arProperty_Offers,
-		"ADDITIONAL_VALUES" => "Y",
-	);
+	if (!$usePropertyFeatures)
+	{
+		$arComponentParameters["PARAMETERS"]["DETAIL_OFFERS_PROPERTY_CODE"] = array(
+			"PARENT" => "DETAIL_SETTINGS",
+			"NAME" => GetMessage("CP_BC_DETAIL_OFFERS_PROPERTY_CODE"),
+			"TYPE" => "LIST",
+			"MULTIPLE" => "Y",
+			"VALUES" => $arProperty_Offers,
+			"ADDITIONAL_VALUES" => "Y",
+		);
+	}
 }
 
 if($arCurrentValues["SHOW_TOP_ELEMENTS"]!="N")
@@ -957,15 +993,18 @@ if($arCurrentValues["SHOW_TOP_ELEMENTS"]!="N")
 		"DEFAULT" => "desc",
 		"ADDITIONAL_VALUES" => "Y",
 	);
-	$arComponentParameters["PARAMETERS"]["TOP_PROPERTY_CODE"] = array(
-		"PARENT" => "TOP_SETTINGS",
-		"NAME" => GetMessage("BC_P_TOP_PROPERTY_CODE"),
-		"TYPE" => "LIST",
-		"MULTIPLE" => "Y",
-		'REFRESH' => isset($templateProperties['TOP_PROPERTY_CODE_MOBILE']) ? 'Y' : 'N',
-		"ADDITIONAL_VALUES" => "Y",
-		"VALUES" => $arProperty,
-	);
+	if (!$usePropertyFeatures)
+	{
+		$arComponentParameters["PARAMETERS"]["TOP_PROPERTY_CODE"] = array(
+			"PARENT" => "TOP_SETTINGS",
+			"NAME" => GetMessage("BC_P_TOP_PROPERTY_CODE"),
+			"TYPE" => "LIST",
+			"MULTIPLE" => "Y",
+			'REFRESH' => isset($templateProperties['TOP_PROPERTY_CODE_MOBILE']) ? 'Y' : 'N',
+			"ADDITIONAL_VALUES" => "Y",
+			"VALUES" => $arProperty,
+		);
+	}
 
 	if (isset($templateProperties['TOP_PROPERTY_CODE_MOBILE']))
 	{
@@ -976,14 +1015,17 @@ if($arCurrentValues["SHOW_TOP_ELEMENTS"]!="N")
 	if (!empty($offers))
 	{
 		$arComponentParameters["PARAMETERS"]["TOP_OFFERS_FIELD_CODE"] = CIBlockParameters::GetFieldCode(GetMessage("CP_BC_TOP_OFFERS_FIELD_CODE"), "TOP_SETTINGS");
-		$arComponentParameters["PARAMETERS"]["TOP_OFFERS_PROPERTY_CODE"] = array(
-			"PARENT" => "TOP_SETTINGS",
-			"NAME" => GetMessage("CP_BC_TOP_OFFERS_PROPERTY_CODE"),
-			"TYPE" => "LIST",
-			"MULTIPLE" => "Y",
-			"VALUES" => $arProperty_Offers,
-			"ADDITIONAL_VALUES" => "Y",
-		);
+		if (!$usePropertyFeatures)
+		{
+			$arComponentParameters["PARAMETERS"]["TOP_OFFERS_PROPERTY_CODE"] = array(
+				"PARENT" => "TOP_SETTINGS",
+				"NAME" => GetMessage("CP_BC_TOP_OFFERS_PROPERTY_CODE"),
+				"TYPE" => "LIST",
+				"MULTIPLE" => "Y",
+				"VALUES" => $arProperty_Offers,
+				"ADDITIONAL_VALUES" => "Y",
+			);
+		}
 		$arComponentParameters["PARAMETERS"]["TOP_OFFERS_LIMIT"] = array(
 			"PARENT" => "TOP_SETTINGS",
 			"NAME" => GetMessage("CP_BC_TOP_OFFERS_LIMIT"),
@@ -1098,6 +1140,9 @@ else
 {
 	unset($arComponentParameters["PARAMETERS"]["USE_REVIEW"]);
 	unset($arComponentParameters["GROUPS"]["REVIEW_SETTINGS"]);
+	unset($arComponentParameters["PARAMETERS"]["LIST_OFFERS_LIMIT"]);
+	if (isset($arComponentParameters["PARAMETERS"]["TOP_OFFERS_LIMIT"]))
+		unset($arComponentParameters["PARAMETERS"]["TOP_OFFERS_LIMIT"]);
 }
 
 if ($catalogIncluded && $arCurrentValues["USE_STORE"]=='Y')
@@ -1402,14 +1447,17 @@ if(empty($offers))
 }
 else
 {
-	$arComponentParameters["PARAMETERS"]["OFFERS_CART_PROPERTIES"] = array(
-		"PARENT" => "BASKET",
-		"NAME" => GetMessage("CP_BC_OFFERS_CART_PROPERTIES"),
-		"TYPE" => "LIST",
-		"MULTIPLE" => "Y",
-		"VALUES" => $arProperty_OffersWithoutFile,
-		"HIDDEN" => (isset($arCurrentValues['ADD_PROPERTIES_TO_BASKET']) && $arCurrentValues['ADD_PROPERTIES_TO_BASKET'] == 'N' ? 'Y' : 'N')
-	);
+	if (!$usePropertyFeatures)
+	{
+		$arComponentParameters["PARAMETERS"]["OFFERS_CART_PROPERTIES"] = array(
+			"PARENT" => "BASKET",
+			"NAME" => GetMessage("CP_BC_OFFERS_CART_PROPERTIES"),
+			"TYPE" => "LIST",
+			"MULTIPLE" => "Y",
+			"VALUES" => $arProperty_OffersWithoutFile,
+			"HIDDEN" => (isset($arCurrentValues['ADD_PROPERTIES_TO_BASKET']) && $arCurrentValues['ADD_PROPERTIES_TO_BASKET'] == 'N' ? 'Y' : 'N')
+		);
+	}
 
 	$arComponentParameters["PARAMETERS"]["OFFERS_SORT_FIELD"] = array(
 		"PARENT" => "OFFERS_SETTINGS",

@@ -13,6 +13,10 @@ $arActivityDescription = array(
 		'OWN_NAME' => GetMessage('BPRIOA_DESCR_TASKS')
 	),
 	"RETURN" => array(
+		'TaskId' => [
+			'NAME' => 'ID',
+			'TYPE' => 'int'
+		],
 		"Comments" => array(
 			"NAME" => GetMessage("BPRIOA_DESCR_CM"),
 			"TYPE" => "string",
@@ -27,4 +31,3 @@ $arActivityDescription = array(
 		),
 	),
 );
-?>

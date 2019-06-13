@@ -4,9 +4,21 @@ class CCloudTempFile
 {
 	private static $buckets = array();
 
+	/**
+	 * @return string
+	 */
 	protected static function GetAbsoluteRoot()
 	{
 		return "/tmp";
+	}
+
+	/**
+	 * @param string $file_name
+	 * @return bool
+	 */
+	public static function IsTempFile($file_name)
+	{
+		return preg_match("#^".self::GetAbsoluteRoot()."/BXTEMP-#", $file_name) > 0;
 	}
 
 	protected static $shutdownRegistered = false;
@@ -19,6 +31,11 @@ class CCloudTempFile
 		}
 	}
 
+	/**
+	 * @param CCloudStorageBucket $obBucket
+	 * @param string $file_name
+	 * @return string
+	*/
 	public static function GetFileName($obBucket, $file_name = '')
 	{
 		$dir_name = self::GetAbsoluteRoot();
@@ -122,11 +139,14 @@ class CCloudTempFile
 				$now = date('Y-m-d/H/', time());
 				$dir_name = self::GetAbsoluteRoot()."/";
 				$list = $obBucket->ListFiles($dir_name, true);
-				foreach ($list['file'] as $filePath)
+				if ($list)
 				{
-					if (preg_match("#^BXTEMP-(....-..-../../)#", $filePath, $match) && $match[1] < $now)
+					foreach ($list['file'] as $filePath)
 					{
-						$obBucket->DeleteFile($dir_name.$filePath);
+						if (preg_match("#^BXTEMP-(....-..-../../)#", $filePath, $match) && $match[1] < $now)
+						{
+							$obBucket->DeleteFile($dir_name.$filePath);
+						}
 					}
 				}
 			}

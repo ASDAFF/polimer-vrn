@@ -104,10 +104,18 @@ $arFilterFields = array(
 
 $arOrderProps = array();
 $arOrderPropsCode = array();
-$dbProps = \Bitrix\Sale\Internals\OrderPropsTable::getList(array(
-	'order' => array("PERSON_TYPE_ID" => "ASC", "SORT" => "ASC"),
-	'select' => array("ID", "NAME", "PERSON_TYPE_NAME" => "PERSON_TYPE.NAME", "LID" => "PERSON_TYPE.LID", "PERSON_TYPE_ID", "SORT", "IS_FILTERED", "TYPE", "CODE", "SETTINGS"),
-));
+$dbProps = \Bitrix\Sale\Internals\OrderPropsTable::getList(
+	array(
+		'filter' => array(
+			'=ACTIVE' => 'Y'
+		),
+		'order' => array(
+			"PERSON_TYPE_ID" => "ASC", "SORT" => "ASC"
+		),
+		'select' => array(
+			"ID", "NAME", "PERSON_TYPE_NAME" => "PERSON_TYPE.NAME", "LID" => "PERSON_TYPE.LID", "PERSON_TYPE_ID", "SORT", "IS_FILTERED", "TYPE", "CODE", "SETTINGS"
+		),
+	));
 
 while ($arProps = $dbProps->fetch())
 {
@@ -693,7 +701,7 @@ if($lAdmin->EditAction() && $saleModulePermissions >= "U")
 			if($isOrderNeedSave)
 			{
 				$res = $editOrder->save();
-
+				Sale\Provider::resetTrustData($editOrder->getSiteId());
 				if(!$res->isSuccess())
 				{
 					$errMessages = $res->getErrorMessages();
@@ -849,6 +857,7 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 		}
 		else
 		{
+			$isOrderSaved = false;
 			switch ($_REQUEST['action'])
 			{
 				case "delete":
@@ -859,9 +868,19 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 						break;
 					}
 
-					$res = \Bitrix\Sale\Order::delete($ID);
-					if(!$res->isSuccess())
+					try
+					{
+						$res = \Bitrix\Sale\Order::delete($ID);
+					}
+					catch (Exception $e)
+					{
+						$res = \Bitrix\Sale\Order::deleteNoDemand($ID);
+					}
+
+					if (!$res->isSuccess())
+					{
 						$lAdmin->AddGroupError(implode("<br>\n", $res->getErrorMessages()));
+					}
 					break;
 
 				case "unlock":
@@ -888,6 +907,8 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 						$lAdmin->AddGroupError(implode("<br>\n", $res->getErrorMessages()), $ID);
 						break;
 					}
+					$isOrderSaved = true;
+
 					$res = $saleOrder->save();
 					if(!$res->isSuccess())
 						$lAdmin->AddGroupError(implode("<br>\n", $res->getErrorMessages()), $ID);
@@ -913,6 +934,8 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 						$lAdmin->AddGroupError(implode("<br>\n", $res->getErrorMessages()), $ID);
 						break;
 					}
+					$isOrderSaved = true;
+
 					$res = $saleOrder->save();
 					if(!$res ->isSuccess())
 						$lAdmin->AddGroupError(implode("<br>\n", $res->getErrorMessages()), $ID);
@@ -926,10 +949,7 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 						break;
 					}
 
-					$result = Sale\Archive\Manager::archiveOrders(
-						array(
-							"ID" => array($ID)
-						));
+					$result = Sale\Archive\Manager::archiveOrders(["ID" => $ID], 1);
 					if ($result->isSuccess())
 					{
 						$warnings = $result->getWarningMessages();
@@ -998,6 +1018,8 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 										$lAdmin->AddGroupError($message.' '.$shpMsg);
 								}
 
+								$isOrderSaved = true;
+
 								$saveResult = $saleOrder->save();
 
 								if (!$saveResult->isSuccess())
@@ -1032,7 +1054,7 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 									'##SHIPMENT_ID##' => $shipment->getId()
 								));
 
-							$allowedDeliveryStatusesUpdate = \Bitrix\Sale\DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+							$allowedDeliveryStatusesUpdate = \Bitrix\Sale\DeliveryStatus::getStatusesUserCanDoOperations($USER->GetID(), array('deduction'));
 							$allowUpdate = in_array($shipment->getField("STATUS_ID"), $allowedDeliveryStatusesUpdate);
 
 							if(!$allowUpdate)
@@ -1046,6 +1068,7 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 							if ($setResult->isSuccess())
 							{
 								$warningsList = array();
+								$hasErrors = false;
 
 								$warnings = $setResult->getWarningMessages();
 								$hasWarnings = false;
@@ -1055,17 +1078,18 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 									{
 										$warningsList[] = $message.' '.$shpMsg;
 									}
-
-									$shipment->setField('DEDUCTED', ($_REQUEST['action'] == 'deducted' ? 'N' : 'Y'));
 								}
+
+								$isOrderSaved = true;
 
 								$saveResult = $saleOrder->save();
 								if (!$saveResult->isSuccess())
 								{
+									$hasErrors = true;
 									$lAdmin->AddGroupError(join("\n", $saveResult->getErrorMessages()).' '.$shpMsg);
 								}
 
-								if(empty($warnings))
+								if(empty($warnings) && !$hasErrors)
 								{
 									if($_REQUEST['action'] == 'deducted')
 										$mess = Loc::getMessage('SALE_SHIPMENT_DEDUCTED');
@@ -1098,6 +1122,12 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 									$lAdmin->AddGroupError(join("\n", $serResultMessage).' '.$shpMsg);
 								else
 									$lAdmin->AddGroupError(Loc::getMessage('SALE_SHIPMENT_ALLOW_DELIVERY_ERR').'. '.$shpMsg);
+
+								if ($setResult->hasWarnings())
+								{
+									$isOrderSaved = true;
+									$saveResult = $saleOrder->save();
+								}
 							}
 						}
 					}
@@ -1169,7 +1199,7 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 								'##PAYMENT_ID##' => $payment->getId()
 							));
 
-						$allowedStatusesUpdate = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('update'));
+						$allowedStatusesUpdate = \Bitrix\Sale\OrderStatus::getStatusesUserCanDoOperations($USER->GetID(), array('payment'));
 						$allowUpdate = in_array($saleOrder->getField("STATUS_ID"), $allowedStatusesUpdate);
 
 						if(!$allowUpdate)
@@ -1190,6 +1220,7 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 						}
 						else
 						{
+							$isOrderSaved = true;
 
 							$res = $saleOrder->save();
 
@@ -1263,6 +1294,7 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 										}
 										else
 										{
+											$isOrderSaved = true;
 											$res = $saleOrder->save();
 
 											if(!$res ->isSuccess())
@@ -1283,6 +1315,11 @@ if(($arID = $lAdmin->GroupAction()) && $saleModulePermissions >= "P")
 					}
 
 				break;
+			}
+
+			if ($isOrderSaved)
+			{
+				Sale\Provider::resetTrustData($saleOrder->getSiteId());
 			}
 		}
 	}
@@ -1317,7 +1354,8 @@ $arColumn2Field = array(
 		"SOURCE_NAME" => array("SOURCE_NAME"),
 		"XML_ID" => array("XML_ID"),
 		"COMPANY_ID" => array("COMPANY_ID"),
-		"RESPONSIBLE_ID" => array("RESPONSIBLE_ID")
+		"RESPONSIBLE_ID" => array("RESPONSIBLE_ID"),
+		"AFFILIATE_ID" => array("AFFILIATE_ID"),
 	);
 
 $arHeaders = array(
@@ -1372,6 +1410,8 @@ $arHeaders = array(
 	array("id"=>"XML_ID","content"=>Loc::getMessage("SO_XML_ID"), "sort"=>"XML_ID", "default"=>false),
 	array("id"=>"COMPANY_ID","content"=>Loc::getMessage("SALE_F_COMPANY_ID"), "sort"=>"COMPANY_ID", "default"=>false),
 	array("id"=>"RESPONSIBLE_ID","content"=>Loc::getMessage("SALE_F_RESPONSIBLE_ID"), "sort"=>"RESPONSIBLE_ID", "default"=>false),
+
+	array("id"=>"AFFILIATE_ID","content"=>Loc::getMessage("SI_AFFILIATE"), "sort"=>"AFFILIATE_ID", "default"=>false),
 );
 
 if($DBType == "mysql")
@@ -1707,6 +1747,8 @@ if (!empty($orderList) && is_array($orderList))
 	}
 	$permUpdateOrderList = CSaleOrder::checkUserPermissionOrderList(array_keys($orderList), 'update', $arUserGroups);
 	$permDeleteOrderList = CSaleOrder::checkUserPermissionOrderList(array_keys($orderList), 'delete', $arUserGroups, $USER->GetID());
+
+	$affiliateCache = array();
 
 	foreach ($orderList as $orderId => $arOrder)
 	{
@@ -2053,7 +2095,7 @@ if (!empty($orderList) && is_array($orderList))
 					$fieldValueTmp .= "] ".$LOCAL_STATUS_CACHE[$arOrder["STATUS_ID"]]['NAME'];
 					$colorRGB = array();
 					$colorRGB = sscanf($LOCAL_STATUS_CACHE[$arOrder["STATUS_ID"]]['COLOR'], "#%02x%02x%02x");
-					if (count($colorRGB))
+					if (is_array($colorRGB) && count($colorRGB))
 					{
 						$color = "background:rgba(".$colorRGB[0].",".$colorRGB[1].",".$colorRGB[2].",0.6);";
 						$fieldValue = '<div style=	"'.$color.'
@@ -2805,6 +2847,44 @@ if (!empty($orderList) && is_array($orderList))
 		}
 		$row->AddField("RESPONSIBLE_ID", $fieldValue);
 
+
+		//AFFILIATE
+		$fieldValue = "";
+		if(in_array("AFFILIATE_ID", $arVisibleColumns) && intval($arOrder["AFFILIATE_ID"]) > 0)
+		{
+			$affiliateId = intval($arOrder["AFFILIATE_ID"]);
+			if (isset($affiliateCache[$affiliateId]))
+			{
+				$fieldValue = $affiliateCache[$affiliateId];
+			}
+			else
+			{
+				$affiliateRes = \CSaleAffiliate::GetList(
+					array(),
+					array("ID" => $affiliateId),
+					false,
+					false,
+					array("ID", "USER_ID")
+				);
+
+				if($affiliateData = $affiliateRes->Fetch())
+				{
+					if (isset($formattedUserNames[$affiliateData["USER_ID"]]))
+					{
+						$fieldValue = $formattedUserNames[$affiliateData["USER_ID"]];
+					}
+					else
+					{
+						$fieldValue = GetFormatedUserName($affiliateData["USER_ID"], false, false);
+						$formattedUserNames[$affiliateData["USER_ID"]] = $fieldValue;
+					}
+
+					$affiliateCache[$affiliateId] = $fieldValue;
+				}
+			}
+		}
+		$row->AddField("AFFILIATE_ID", $fieldValue);
+
 		$arActions = array();
 
 		if(($arOrder['LOCK_STATUS'] == "red" && $saleModulePermissions >= "W") || $arOrder['LOCK_STATUS'] == "yellow")
@@ -3107,8 +3187,7 @@ function exportData(val)
 {
 	var oForm = document.form_<?= $sTableID ?>;
 	var expType = oForm.action_target.checked;
-
-	var par = "mode=excel";
+	var oid = [];
 	if(!expType)
 	{
 		var num = oForm.elements.length;
@@ -3119,26 +3198,54 @@ function exportData(val)
 				&& oForm.elements[i].name.toUpperCase() == "ID[]"
 				&& oForm.elements[i].checked == true)
 			{
-				par += "&OID[]=" + oForm.elements[i].value;
+				oid.push(oForm.elements[i].value);
 			}
 		}
 	}
 
-	if(expType)
+	var url = (val == "excel") ? 'sale_order.php' : 'sale_order_export.php';
+	url += "?EXPORT_FORMAT=" + val;
+	if (val !== "excel")
 	{
-		par += "<?= CUtil::JSEscape(GetFilterParams("filter_", false)); ?>";
+		url += "&" + "<?= CUtil::JSEscape(GetFilterParams("filter_", false)); ?>";
 	}
-
-	if(par.length > 0)
-	{
-		var url = 'sale_order_export.php';
-		if (val == "excel")
-		{
-			url = 'sale_order.php';
+	var exportForm = BX.create('form', {
+		attrs: {
+			method: 'post',
+			target: '_blank'
 		}
-		
-		window.open(url + "?EXPORT_FORMAT="+val+"&"+par, "vvvvv");
+	});
+	exportForm.action = url;
+	exportForm.appendChild(BX.create('input', {
+		attrs: {
+			type: 'hidden',
+			name: 'csrf_token',
+			value: BX.message('bitrix_sessid')
+		}
+	}));
+	if (val == "excel")
+	{
+		exportForm.appendChild(BX.create('input', {
+			attrs: {
+				type: 'hidden',
+				name: 'mode',
+				value: 'excel'
+			}
+		}));
 	}
+	for (var i = 0; i < oid.length; i++)
+	{
+		exportForm.appendChild(BX.create('input', {
+			attrs: {
+				type: 'hidden',
+				name: 'OID[]',
+				value: oid[i]
+			}
+		}));
+	}
+	document.body.appendChild(exportForm);
+	exportForm.submit();
+	exportForm.remove();
 }
 </script>
 <?
@@ -3161,12 +3268,12 @@ $arGroupActionsTmp = array(
 if($saleModulePermissions >= "W" || !empty($permDeleteOrderList))
 {
 	$arGroupActionsTmp["archive"] =  array(
-		"action" => "window.confirm('".Loc::getMessage('SALE_CONFIRM_ARCHIVE_GROUP')."')
-					{
-						if (BX(form_".$sTableID."))
-							BX.submit( BX(form_".$sTableID."), 'archive');
-					}
-					",
+		"action" => "
+			if (window.confirm('".Loc::getMessage('SALE_CONFIRM_ARCHIVE_GROUP')."') && BX(form_".$sTableID."))
+			{
+				BX.submit( BX(form_".$sTableID."), 'archive');
+			}
+		",
 		"value" => "archive",
 		"name" => Loc::getMessage("SOAN_LIST_ARCHIVE")
 	);
@@ -3256,13 +3363,24 @@ if($saleModulePermissions == "W" || ($saleModulePermissions >= 'P' && !empty($al
 	$arSitesShop = array();
 	$arSitesTmp = array();
 	$rsSites = CSite::GetList($b = "id", $o = "asc", Array("ACTIVE" => "Y"));
+
 	while ($arSite = $rsSites->GetNext())
 	{
+		if($saleModulePermissions < "W" && count($arAccessibleSites) > 0)
+		{
+			if(!in_array($arSite['ID'], $arAccessibleSites))
+			{
+				continue;
+			}
+		}
+
 		$site = Option::get("sale", "SHOP_SITE_".$arSite["ID"], "");
+
 		if($arSite["ID"] == $site)
 		{
 			$arSitesShop[] = array("ID" => $arSite["ID"], "NAME" => $arSite["NAME"]);
 		}
+
 		$arSitesTmp[] = array("ID" => $arSite["ID"], "NAME" => $arSite["NAME"]);
 	}
 
@@ -3653,7 +3771,7 @@ $oFilter->Begin();
 					$dbRestRes = Sale\Services\PaySystem\Restrictions\Manager::getList(array(
 						'select' => array('SERVICE_ID', 'PARAMS'),
 						'filter' => array(
-							'=CLASS_NAME' => '\Bitrix\Sale\Services\PaySystem\Restrictions\PersonType',
+							'=CLASS_NAME' => '\\'.\Bitrix\Sale\Services\PaySystem\Restrictions\PersonType::class,
 							'SERVICE_ID' => array_keys($paySystemList)
 						)
 					));
@@ -4061,6 +4179,7 @@ $lAdmin->DisplayList();
 echo BeginNote();
 ?>
 <span id="order_sum"><? echo $order_sum;?></span>
+<?echo EndNote();?>
 
 <script type="text/javascript">
 	function sendDeliveryRequestsForCurrentOrders(selectedOnly)
@@ -4096,43 +4215,4 @@ echo BeginNote();
 	}
 </script>
 
-<?$spotlight = new \Bitrix\Main\UI\Spotlight("DELIVERY_REQUESTS_ADDED");?>
-<?if(!$spotlight->isViewed($USER->GetID())):?>
-	<?\CJSCore::init("spotlight");?>
-	<script type="text/javascript">
-		BX.ready(
-			function() {
-				var elem = document.getElementsByClassName('adm-list-table-top');
-
-				if(!elem[0] || !elem[0].nodeName || elem[0].nodeName !== 'DIV')
-					return;
-
-				var target = null;
-
-				for (var i = 0; i < elem[0].childNodes.length; i++)
-				{
-					if(elem[0].childNodes[i].innerHTML === "<?=Loc::getMessage("SALE_O_CONTEXT_B_DELIVERY_REQUESTS")?>")
-					{
-						target = elem[0].childNodes[i];
-						break;
-					}
-				}
-
-				if(target)
-				{
-					var deliveryRequestSpotlight = new BX.SpotLight({
-						targetElement: target,
-						targetVertex: "middle-center",
-						content: "<?=Loc::getMessage('SALE_O_CONTEXT_B_DELIVERY_REQUESTS_SL')?>",
-						id: "DELIVERY_REQUESTS_ADDED",
-						autoSave: true
-					});
-
-					deliveryRequestSpotlight.show();
-				}
-		});
-	</script>
-<?endif;?>
-
-<?echo EndNote();
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
+<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");

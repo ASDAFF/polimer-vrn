@@ -62,41 +62,71 @@ if(check_bitrix_sessid())
 
 		echo '<p><b>'.GetMessage("MAIL_CHECK_TEXT").'&quot;'.$f_NAME.'&quot;:</b></p>';
 
-		if($mb->Connect($res["ID"]))
+		$newMessages = false;
+
+		if (in_array($res['SERVER_TYPE'], array('imap', 'controller', 'domain', 'crdomain')))
 		{
-			CAdminMessage::ShowNote(GetMessage("MAIL_CHECK_CNT")." ".intval($mb->new_mess_count)." ".GetMessage("MAIL_CHECK_CNT_NEW"));
-			$aContext = array();
-			if($mb->new_mess_count>0)
+			$newMessages = \Bitrix\Mail\Helper::syncMailbox($res['ID'], $error);
+		}
+		else if (in_array($res['SERVER_TYPE'], array('pop3')))
+		{
+			if ($mb->connect($res['ID']))
+			{
+				$newMessages = $mb->new_mess_count;
+			}
+			else
+			{
+				$error = \CMailError::getErrorsText();
+			}
+		}
+
+		$aContext = array();
+
+		if ($newMessages !== false && empty($error))
+		{
+			\CAdminMessage::showNote(sprintf(
+				'%s %u %s',
+				getMessage('MAIL_CHECK_CNT'),
+				$newMessages,
+				getMessage('MAIL_CHECK_CNT_NEW')
+			));
+
+			if ($newMessages > 0)
 			{
 				$aContext[] = array(
-					"ICON" => "btn_list",
-					"TEXT"=>GetMessage("MAIL_CHECK_VIEW"),
-					"LINK"=>"mail_message_admin.php?find_mailbox_id=".$f_ID."&lang=".LANG."&find_new=Y&set_filter=Y",
-					"TITLE"=>GetMessage("MAIL_CHECK_VIEW")
+					'ICON'  => 'btn_list',
+					'TEXT'  => getMessage('MAIL_CHECK_VIEW'),
+					'LINK'  => 'mail_message_admin.php?find_mailbox_id='.$f_ID.'&lang='.LANG.'&find_new=Y&set_filter=Y',
+					'TITLE' => getMessage('MAIL_CHECK_VIEW')
 				);
 			}
-			$aContext[] = array(
-				"TEXT"=>GetMessage("MAIL_CHECK_LOG"),
-				"LINK"=>"mail_log.php?set_filter=Y&find_mailbox_id=".$f_ID."&lang=".LANG,
-				"TITLE"=>GetMessage("MAIL_CHECK_LOG")
-			);
 		}
 		else
 		{
-			CAdminMessage::ShowMessage(GetMessage("MAIL_CHECK_ERR")." ".CMailError::GetErrorsText());
+			\CAdminMessage::showMessage(sprintf(
+				'%s %s',
+				getMessage('MAIL_CHECK_ERR'),
+				$error
+			));
+
 			$aContext = array(
 				array(
-					"TEXT"=>GetMessage("MAIL_CHECK_MBOX_PARAMS"),
-					"LINK"=>"mail_mailbox_edit.php?ID=".$f_ID."&lang=".LANG,
-					"TITLE"=>GetMessage("MAIL_CHECK_MBOX_PARAMS")
-				),
-				array(
-					"TEXT"=>GetMessage("MAIL_CHECK_LOG"),
-					"LINK"=>"mail_log.php?set_filter=Y&find_mailbox_id=".$f_ID."&lang=".LANG,
-					"TITLE"=>GetMessage("MAIL_CHECK_LOG")
+					'TEXT'  => getMessage('MAIL_CHECK_MBOX_PARAMS'),
+					'LINK'  => 'mail_mailbox_edit.php?ID='.$f_ID.'&lang='.LANG,
+					'TITLE' => getMessage('MAIL_CHECK_MBOX_PARAMS')
 				),
 			);
 		}
+
+		if (in_array($res['SERVER_TYPE'], array('pop3')))
+		{
+			$aContext[] = array(
+				'TEXT'  => getMessage('MAIL_CHECK_LOG'),
+				'LINK'  => 'mail_log.php?set_filter=Y&find_mailbox_id='.$f_ID.'&lang='.LANG,
+				'TITLE' => getMessage('MAIL_CHECK_LOG')
+			);
+		}
+
 		$context = new CAdminContextMenu($aContext);
 		$context->Show();
 	}

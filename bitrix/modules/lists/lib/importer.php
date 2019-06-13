@@ -474,21 +474,20 @@ class Importer
 
 		if(!empty($path))
 		{
+			$path = rtrim($path, "/");
 			$path = $path."/";
 		}
 		else
 		{
-			if($systemProcesses)
-			{
-				$path = Main\Loader::getDocumentRoot() . static::PATH . $lang . "/";
-			}
-			else
-			{
-				$path = Main\Loader::getDocumentRoot() . static::PATH_USER_PROCESSES . $lang . "/";
-			}
+			$path = self::getPathToProcesses($lang, $systemProcesses);
 		}
 
 		$dir = new Main\IO\Directory($path);
+		if (!$dir->isExists() && $lang === 'en')
+		{
+			return;
+		}
+
 		if ($dir->isExists())
 		{
 			$children = $dir->getChildren();
@@ -512,6 +511,25 @@ class Importer
 				}
 			}
 		}
+		else
+		{
+			$path = self::getPathToProcesses("en", $systemProcesses);
+			self::loadDataProcesses('en', $systemProcesses, $fileData, $path);
+		}
+	}
+
+	private static function getPathToProcesses($lang, $systemProcesses = true)
+	{
+		if($systemProcesses)
+		{
+			$path = Main\Loader::getDocumentRoot() . static::PATH . $lang . "/";
+		}
+		else
+		{
+			$path = Main\Loader::getDocumentRoot() . static::PATH_USER_PROCESSES . $lang . "/";
+		}
+
+		return $path;
 	}
 
 	protected static function createIBlockType()

@@ -109,6 +109,9 @@ WYSIWUG BUGFIXES
   	z-index: 2;
 }
 
+.bx-block-hide {
+	display: none !important;
+}
 
 .bx-block-editor-container .button-panel span{
 /*	display: inline-block;
@@ -155,6 +158,7 @@ WYSIWUG BUGFIXES
 	cursor: pointer;
 }
 
+.bx-block-editor-container .button-panel span.bx-editor-block-btn-html-copy:after,
 .bx-block-editor-container .button-panel span.bx-editor-block-btn-close:after,
 .bx-block-editor-container .button-panel span.bx-editor-block-btn-full:after {
 	content: '';
@@ -166,6 +170,10 @@ WYSIWUG BUGFIXES
 	background-repeat: no-repeat;
 	background-position: center;
 	vertical-align: middle;
+}
+
+.bx-block-editor-container .button-panel span.bx-editor-block-btn-html-copy:after {
+	background-image: url('data:image/svg+xml;charset=utf8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="13" height="14" viewBox="0 0 13 14"%3E%3Cpath fill="%239FA4AB" d="M0.0424137707,4.21519737 L9.74626322,4.21519737 L9.74626322,13.9190468 L0.0424137707,13.9190468 L0.0424137707,4.21519737 Z M1.98318366,11.9782769 L7.80549333,11.9782769 L7.80549333,6.15596726 L1.98318366,6.15596726 L1.98318366,11.9782769 Z M11.0401098,2.92135078 L3.27703025,2.92135078 L3.27703025,0.980580892 L12.9808797,0.980580892 L12.9808797,10.6844303 L11.0401098,10.6844303 L11.0401098,2.92135078 Z"/%3E%3C/svg%3E');
 }
 
 .bx-block-editor-container .button-panel span.bx-editor-block-btn-close:after {
@@ -203,11 +211,11 @@ WYSIWUG BUGFIXES
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 }
-.bx-ie .bx-block-editor-container .edit-panel,
-.bx-ie .bx-block-editor-container .preview-panel,
-.bx-ie .bx-block-editor-container .get-html-panel{
-	display: block;
-}
+/*.bx-ie .bx-block-editor-container .edit-panel,*/
+/*.bx-ie .bx-block-editor-container .preview-panel,*/
+/*.bx-ie .bx-block-editor-container .get-html-panel{*/
+	/*display: block;*/
+/*}*/
 .editing.bx-block-editor-container .bx-editor-block-panel.preview-panel,
 .editing.bx-block-editor-container .bx-editor-block-panel.edit-panel{
 	height: 100%;
@@ -248,7 +256,7 @@ WYSIWUG BUGFIXES
 .bx-ie .bx-block-editor-container .edit-panel .dialog-part{
 	width:15%;
 	float: left;
-	min-width: auto;
+	/*min-width: auto;*/
 	height: 800px;
 }
 .bx-block-editor-container.editing .edit-panel .dialog-part{
@@ -570,6 +578,94 @@ ul.bx-block-editor-i-block-list .bx-block-editor-i-block-list-item-name{
 	white-space: nowrap;
 
 }
+
+/** BLOCK NAVIGATION **/
+.adm-nav-pages-block{
+	float:left;
+	height:25px;
+	margin-top:10px;
+	/*min-width:33%;*/
+	padding-top:3px;
+}
+
+.adm-nav-page,
+.adm-nav-page-separator,
+.adm-nav-page-separator:before {
+	background:url("/bitrix/panel/main/images/bx-admin-sprite-small-2.png") 0 -452px repeat-x #edf3f6;
+	display:inline-block;
+	border:1px solid;
+	border-color:#99acb5 #99acb5 #99acb5 #99acb5;
+	border-radius:2px;
+	-webkit-box-shadow:inset 0 1px 0 #fff;
+	box-shadow:inset 0 1px 0 #fff;
+	color:#5e5e5e;
+	height:18px;
+	font-size:12px;
+	font-weight:bold;
+	line-height:14px;
+	text-shadow:0 1px #fff;
+	text-decoration:none;
+	text-align:center;
+	margin:0 2px;
+	padding:5px 3px 0;
+	position:relative;
+	vertical-align:top;
+	min-width:18px;
+}
+
+.adm-nav-page-separator:before {
+	left:-1px;
+	top:-1px;
+	content:"...";
+	margin:0;
+	position:absolute;
+	padding:5px 0 0;
+	width:100%;
+}
+
+.adm-nav-page-separator:hover:before {opacity:0;}
+
+a.adm-nav-page:hover,
+.adm-nav-page-separator:hover {
+	background-image:none;
+	background-color:#fff;
+	text-decoration:none;
+}
+
+.adm-nav-page:active {
+	background:#6f797f!important;
+	-webkit-box-shadow:0 1px 0 #fff, inset 0 1px 4px #4e5559;
+	box-shadow:0 1px 0 #fff, inset 0 1px 4px #4e5559;
+	border-color:#565e63 #5d666b #5e676c #5d666b;
+	color:#efefef;
+	height:17px;
+	margin:1px 3px 0;
+	text-shadow:0 1px #60686d;
+	min-width:18px;
+	padding:5px 2px 0;
+}
+
+.adm-nav-page-prev:before,
+.adm-nav-page-next:before,
+.adm-nav-page-first:before,
+.adm-nav-page-last:before {
+	background:url("/bitrix/panel/main/images/bx-admin-sprite-small-2.png") no-repeat center -302px;
+	content:"";
+	position:absolute;
+	left:0;
+	top:0;
+	height:100%;
+	width:100%;
+}
+
+
+.adm-nav-page-next:before {background-position:center -323px;}
+.adm-nav-page-first:before {background-position:center -1390px;}
+.adm-nav-page-last:before {background-position:center -1374px;}
+
+.adm-nav-page-next:active:before,
+.adm-nav-page-prev:active:before {top:-2px;}
+
 
 /* PREVIEW */
 .bx-block-editor-preview-container{

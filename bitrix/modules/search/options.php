@@ -91,6 +91,7 @@ index bitrix
 		"TITLE" => GetMessage("SEARCH_OPTIONS_TAB_TITLE_SEARCH"),
 		"OPTIONS" => Array(
 			"max_result_size" => Array(GetMessage("SEARCH_OPTIONS_MAX_RESULT_SIZE"), Array("text", 6)),
+			"max_body_size" => Array(GetMessage("SEARCH_OPTIONS_MAX_BODY_SIZE"), Array("text", 6)),
 			"use_tf_cache" => Array(GetMessage("SEARCH_OPTIONS_USE_TF_CACHE"), Array("checkbox", "N")),
 			"use_word_distance" => Array(
 				GetMessage("SEARCH_OPTIONS_USE_WORD_DISTANCE"),
@@ -117,8 +118,8 @@ index bitrix
 	),
 );
 
-$DB = CDatabase::GetModuleConnection('search');
-if ($DB->type === 'MYSQL')
+$DBsearch = CDatabase::GetModuleConnection('search');
+if ($DBsearch->type === 'MYSQL')
 {
 	$aTabs[1]['OPTIONS']['full_text_engine'][1][1]['mysql'] = GetMessage("SEARCH_OPTIONS_FULL_TEXT_ENGINE_MYSQL");
 }
@@ -183,7 +184,6 @@ if($REQUEST_METHOD=="POST" && strlen($Update.$Apply.$RestoreDefaults)>0 && check
 				|| $old_max_result_size != COption::GetOptionInt("search", "max_result_size")
 			)
 			{
-				$DBsearch = CDatabase::GetModuleConnection('search');
 				$DBsearch->Query("TRUNCATE TABLE b_search_content_freq");
 			}
 

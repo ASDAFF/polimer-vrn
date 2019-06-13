@@ -22,7 +22,7 @@ if (!\Bitrix\Main\Loader::includeModule('sale'))
 
 $saleModulePermissions = $APPLICATION->GetGroupRight("sale");
 
-if(strlen($result["ERROR"]) <= 0 && $saleModulePermissions >= "W" && check_bitrix_sessid())
+if(strlen($result["ERROR"]) <= 0 && $saleModulePermissions >= "U" && check_bitrix_sessid())
 {
 	$action = isset($_REQUEST['action']) ? trim($_REQUEST['action']): '';
 
@@ -187,10 +187,11 @@ else
 if(strtolower(SITE_CHARSET) != 'utf-8')
 	$result = \Bitrix\Main\Text\Encoding::convertEncoding($result, SITE_CHARSET, 'utf-8');
 
-$result = json_encode($result);
-\CMain::FinalActions();
+$APPLICATION->RestartBuffer();
 header('Content-Type: application/json');
-die($result);
+echo json_encode($result);
+\CMain::FinalActions();
+die;
 
 /**
  * @param Requests\Result $reqResult

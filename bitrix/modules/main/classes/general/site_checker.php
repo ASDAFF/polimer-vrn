@@ -436,7 +436,7 @@ class CSiteCheckerTest
 				$strError .= $desc."<br>";
 		}
 
-		if (!function_exists('mcrypt_encrypt') && !function_exists('openssl_encrypt'))
+		if (!function_exists('openssl_encrypt'))
 			$strError .= GetMessage("MAIN_SC_MCRYPT").' OpenSSL';
 
 
@@ -448,6 +448,12 @@ class CSiteCheckerTest
 
 		if ($strError)
 			return $this->Result(false,GetMessage('ERR_NO_MODS')."<br>".$strError);
+
+		if (IsModuleInstalled('intranet'))
+		{
+			if (!class_exists('DOMDocument') || !class_exists('ZipArchive'))
+				return $this->Result(null,GetMessage('ERR_NO_MODS_DOC_GENERATOR'));
+		}
 		return $this->Result(true, GetMessage("MAIN_SC_ALL_MODULES"));
 	}
 
@@ -469,7 +475,6 @@ class CSiteCheckerTest
 			'arg_separator.output' => '&',
 			'register_globals' => 0,
 			'zend.multibyte' => 0,
-			'opcache.revalidate_freq' => 0
 		);
 
 		if (extension_loaded('xcache'))
@@ -490,6 +495,10 @@ class CSiteCheckerTest
 				$strError .=  GetMessage('SC_ERR_PHP_PARAM', array('#PARAM#' => $param, '#CUR#' => $cur ? htmlspecialcharsbx($cur) : 'off', '#REQ#' => $val ? 'on' : 'off'))."<br>";
 		}
 		
+		$param = 'opcache.revalidate_freq';
+		if (($cur = ini_get($param)) <> 0)
+			$strError .= GetMessage('SC_ERR_PHP_PARAM', array('#PARAM#' => $param, '#CUR#' => htmlspecialcharsbx($cur), '#REQ#' => '0'))."<br>";
+
 		$param = 'default_socket_timeout';
 		if (($cur = ini_get($param)) < 60)
 			$strError .= GetMessage('SC_ERR_PHP_PARAM', array('#PARAM#' => $param, '#CUR#' => htmlspecialcharsbx($cur), '#REQ#' => '60'))."<br>";
@@ -497,8 +506,30 @@ class CSiteCheckerTest
 		if (($m = ini_get('max_input_vars')) && $m < 10000)
 			$strError .= GetMessage('ERR_MAX_INPUT_VARS',array('#MIN#' => 10000,'#CURRENT#' => $m))."<br>";
 
-		if (($vm = getenv('BITRIX_VA_VER')) && version_compare($vm, '4.2.0','<'))
-			$strError .= GetMessage('ERR_OLD_VM')."<br>";
+		if (IsModuleInstalled('intranet'))
+		{
+			$vm = getenv('BITRIX_VA_VER');
+			if (!$vm)
+				$strError .= GetMessage('ERR_NO_VM')."<br>";
+			else
+			{
+				$last_version = '7.3.0';
+				$tmp = $_SERVER['DOCUMENT_ROOT'].'/bitrix/tmp/bitrix-env.version';
+				if (!file_exists($tmp) || time() - filemtime($tmp) > 86400)
+				{
+					$ob = new CHTTP();
+					$ob->http_timeout = 5;
+					$ob->Download('http://repos.1c-bitrix.ru/yum/bitrix-env.version', $tmp);
+				}
+
+				if (file_exists($tmp))
+					$last_version_remote = str_replace('-', '.', file_get_contents($tmp));
+				if (version_compare($last_version_remote, $last_version, '>'))
+					$last_version = $last_version_remote;
+				if (version_compare($vm, $last_version,'<'))
+					$strError .= GetMessage('ERR_OLD_VM', array('#CURRENT#' => $vm, '#LAST_VERSION#' => $last_version))."<br>";
+			}
+		}
 
 		// check_divider
 		$locale_info = localeconv();
@@ -533,7 +564,7 @@ class CSiteCheckerTest
 		list($host, $port) = explode(':',$_SERVER['HTTP_HOST']);
 		if ($host != 'localhost' && !preg_match('#^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$#',$host))
 		{
-			if (!preg_match('#^[a-z0-9\-\.]{2,192}\.(xn--)?[a-z0-9]{2,63}$#i', $host))
+			if (!preg_match('#^[a-z0-9\-\.]{1,192}\.(xn--)?[a-z0-9]{2,63}$#i', $host))
 				$strError .= GetMessage("SC_TEST_DOMAIN_VALID", array('#VAL#' => htmlspecialcharsbx($_SERVER['HTTP_HOST'])))."<br>";
 		}
 		if ($strError)
@@ -660,15 +691,15 @@ class CSiteCheckerTest
 		echo fgets($res);
 		fwrite($res, "HELO ".$domain."\r\n");
 		echo fgets($res);
-		fwrite($res, "MAIL FROM: site_checker_from@".$domain."\r\n");
+		fwrite($res, "MAIL FROM: sitecheckerfrom@".$domain."\r\n");
 		echo fgets($res);
-		fwrite($res, "RCPT TO: site_checker_to@".$domain."\r\n");
+		fwrite($res, "RCPT TO: rplsitecheckerto@".$domain."\r\n");
 		echo fgets($res);
 		fwrite($res, "DATA\r\n");
 		echo fgets($res);
 		fwrite($res, 
-		"From: site_checker_from@".$domain."\r\n".
-		"To: site_checker_to@".$domain."\r\n".
+		"From: sitecheckerfrom@".$domain."\r\n".
+		"To: rplsitecheckerto@".$domain."\r\n".
 		"Subject: Site checker mail test\r\n".
 		"Content-type: text/plain\r\n".
 		"MIME-Version: 1.0\r\n".
@@ -1071,17 +1102,20 @@ class CSiteCheckerTest
 				break;
 			}
 
+
 		$overload  = intval(ini_get('mbstring.func_overload'));
 		$encoding = strtolower(ini_get('mbstring.internal_encoding'));
+		$default = strtolower(ini_get('default_charset'));
+		$current = str_replace(array("-", "windows"), array("", "cp"), $encoding ? $encoding : $default);
 
 		if ($bUtf)
 		{
 			$text = GetMessage('SC_MB_UTF');
 
-			$retVal = ($overload == 2) && ($encoding == 'utf8' || $encoding == 'utf-8');
+			$retVal = $overload == 2 && $current == 'utf8';
 			if (!$retVal)
-				$text .= ', '.GetMessage('SC_MB_CUR_SETTINGS').'<br>mbstring.func_overload='.$overload.'<br>mbstring.internal_encoding='.$encoding.
-				'<br>'.GetMessage('SC_MB_REQ_SETTINGS').'<br>mbstring.func_overload=2<br>mbstring.internal_encoding=utf-8';
+				$text .= ', '.GetMessage('SC_MB_CUR_SETTINGS').'<br>mbstring.func_overload='.$overload.'<br>mbstring.internal_encoding="'.$encoding.'"<br>default_charset="'.$default.'"'.
+				'<br>'.GetMessage('SC_MB_REQ_SETTINGS').'<br>mbstring.func_overload=2<br>mbstring.internal_encoding=""<br>default_charset="utf-8"';
 
 			if (!defined('BX_UTF') || BX_UTF !== true)
 			{
@@ -1097,12 +1131,9 @@ class CSiteCheckerTest
 			if ($overload == 2)
 			{
 				$ru = LANG_CHARSET == 'windows-1251';
-				$mb_string_req = '<br>mbstring.internal_encoding='.($ru ? 'cp1251' : 'latin1');
+				$mb_string_req = '<br>mbstring.internal_encoding=""<br>default_charset="'.($ru ? 'cp1251' : 'latin1').'"';
 
-				if ($ru)
-					$retVal = false !== strpos($encoding,'1251');
-				else
-					$retVal = false === strpos($encoding,'utf');
+				$retVal = false === strpos($current,'utf');
 			}
 			else
 			{
@@ -1110,7 +1141,7 @@ class CSiteCheckerTest
 				$retVal = $overload == 0;
 			}
 			if (!$retVal)
-				$text .= ', '.GetMessage('SC_MB_CUR_SETTINGS').'<br>mbstring.func_overload='.$overload.'<br>mbstring.internal_encoding='.$encoding.
+				$text .= ', '.GetMessage('SC_MB_CUR_SETTINGS').'<br>mbstring.func_overload='.$overload.'<br>mbstring.internal_encoding="'.$encoding.'"<br>default_charset="'.$default.'"'.
 				'<br>'.GetMessage('SC_MB_REQ_SETTINGS').$mb_string_req;
 
 			if (defined('BX_UTF'))
@@ -1209,10 +1240,13 @@ class CSiteCheckerTest
 		}
 		else
 		{
+			if (\Bitrix\Main\Config\Option::get("updateserverlight", "is_turned_on", "N") === "Y")
+				return true;
+
 			$strRes = GetHttpResponse($res, $strRequest, $strHeaders);
 
 			$strRes = strtolower(strip_tags($strRes));
-			if ($strRes == "license key is invalid" || $strRes == "license key is required")
+			if ($strRes === "license key is invalid" || $strRes === "license key is required")
 				return true;
 			else
 			{
@@ -1392,9 +1426,9 @@ class CSiteCheckerTest
 
 	function check_push_bitrix()
 	{
-		if (!IsModuleInstalled('pull'))
+		if (!CModule::IncludeModule('pull'))
 			return $this->Result(null, GetMessage("MAIN_NO_PULL_MODULE"));
-		if (COption::GetOptionString('pull', 'push', 'N') != 'Y')
+		if (!CPullOptions::GetPushStatus())
 			return $this->Result(null, GetMessage("MAIN_NO_OPTION_PULL"));
 
 		if ($this->arTestVars['check_access_fail'])
@@ -1564,9 +1598,9 @@ class CSiteCheckerTest
 			return $this->Result($retVal, GetMessage("MAIN_SC_EXTERNAL_ANSWER_INCORRECT"));
 		}
 
-		if (!IsModuleInstalled('pull'))
-			return $this->Result($retVal, GetMessage("MAIN_NO_PULL_MODULE"));
-		if (COption::GetOptionString('pull', 'push', 'N') != 'Y')
+		if (!CModule::IncludeModule('pull'))
+			return $this->Result(null, GetMessage("MAIN_NO_PULL_MODULE"));
+		if (!CPullOptions::GetPushStatus())
 			return $this->Result(null, GetMessage("MAIN_NO_OPTION_PULL"));
 		if (!$ar = parse_url(str_replace('#DOMAIN#', $this->host, COption::GetOptionString('pull', 'path_to_mobile_listener'.($this->ssl ? '_secure' : '')))))
 			return $this->Result(false, GetMessage("MAIN_SC_PATH_SUB"));
@@ -2295,6 +2329,9 @@ class CSiteCheckerTest
 		if ($this->arTestVars['table_charset_fail'])
 			return $this->Result(null, GetMessage('SC_TABLE_COLLATION_NA'));
 
+		$f = $DB->Query('SELECT VERSION() v')->Fetch();
+		$this->db_ver = $f['v'];
+
 		$module = '';
 		$cnt = $iCurrent = 0;
 		if ($dir = opendir($path = $_SERVER['DOCUMENT_ROOT'].'/bitrix/modules'))
@@ -2327,22 +2364,102 @@ class CSiteCheckerTest
 		if (file_exists($file)) // uses database...
 		{
 			$arTableColumns = array();
-			$rs = $DB->Query('SELECT * FROM b_module WHERE id="'.$DB->ForSQL($module).'"');
-			if ($rs->Fetch()) // ... and is installed
-			{
-				if (false === ($query = file_get_contents($file)))
-					return false;
+			$bModuleInstalled = $DB->Query('SELECT * FROM b_module WHERE id="'.$DB->ForSQL($module).'"')->Fetch();
 
-				$arTables = array();
-				$arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $query));
-				foreach($arQuery as $sql)
+			if (false === ($query = file_get_contents($file)))
+				return false;
+
+			$arTables = array();
+			$arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $query));
+			foreach($arQuery as $sql)
+			{
+				if (preg_match('#^(CREATE TABLE )(IF NOT EXISTS)? *`?([a-z0-9_]+)`?(.*);?$#mis',$sql,$regs))
 				{
-					if (preg_match('#^(CREATE TABLE )(IF NOT EXISTS)? *`?([a-z0-9_]+)`?(.*);?$#mis',$sql,$regs))
+					$table = $regs[3];
+					if (preg_match('#^site_checker_#', $table))
+						continue;
+
+					$bTableExists = $DB->Query('SHOW TABLES LIKE "'.$table.'"')->Fetch();
+					if (!$bTableExists && $bModuleInstalled)
 					{
-						$table = $regs[3];
-						if (preg_match('#^site_checker_#', $table))
+						if ($this->fix_mode)
+						{
+							if (!$DB->Query($sql, true))
+								return $this->Result(false, 'Mysql Query Error: '.$sql.' ['.$DB->db_Error.']');
+						}
+						else
+						{
+							$strError .= GetMessage('SC_ERR_NO_TABLE', array('#TABLE#' => $table))."<br>";
+							$_SESSION['FixQueryList'][] = $sql;
+							$this->arTestVars['iError']++;
+							$this->arTestVars['iErrorAutoFix']++;
+							$this->arTestVars['cntNoTables']++;
 							continue;
-						$rs = $DB->Query('SHOW TABLES LIKE "'.$table.'"');
+						}
+					}
+
+					if ($bTableExists || $bModuleInstalled)
+					{
+						$arTables[$table] = $sql;
+						$tmp_table = 'site_checker_'.$table;
+						$DB->Query('DROP TABLE IF EXISTS `'.$tmp_table.'`');
+						$DB->Query($regs[1].' `'.$tmp_table.'`'.$regs[4]);
+					}
+				}
+				elseif (preg_match('#^(ALTER TABLE)( )?`?([a-z0-9_]+)`?(.*);?$#mis',$sql,$regs))
+				{
+					$table = $regs[3];
+					if (!$arTables[$table])
+						continue;
+					$tmp_table = 'site_checker_'.$table;
+					$DB->Query($regs[1].' `'.$tmp_table.'`'.$regs[4]);
+				}
+				elseif (preg_match('#^INSERT INTO *`?([a-z0-9_]+)`?[^\(]*\(?([^)]*)\)?[^V]*VALUES[^\(]*\((.+)\);?$#mis',$sql,$regs))
+				{
+					$table = $regs[1];
+					if (!$arTables[$table] || $arInsertExclude[$table])
+						continue;
+					$tmp_table = 'site_checker_'.$table;
+
+					if ($regs[2])
+						$arColumns = explode(',', $regs[2]);
+					else
+					{
+						if (!$arTableColumns[$tmp_table])
+						{
+							$rs = $DB->Query('SHOW COLUMNS FROM `'.$tmp_table.'`');
+							while($f = $rs->Fetch())
+								$arTableColumns[$tmp_table][] = $f['Field'];
+						}
+						$arColumns = $arTableColumns[$tmp_table];
+					}
+					
+					$strValues = $regs[3];
+					$ar = explode(",",$strValues);
+					$arValues = array();
+					$i = 0;
+					$str = '';
+					foreach($ar as $v)
+					{
+						$str .= ($str ? ',' : '').$v;
+						if (preg_match('#^ *(-?[0-9]+|\'.*\'|".*"|null|now\(\)) *$#i',$str)) 
+						{
+							$arValues[$i] = $str;
+							$str = '';
+							$i++;
+						}
+					}
+					
+					if (!$str)
+					{
+						$sqlSelect = 'SELECT * FROM `'.$table.'` WHERE 1=1 ';
+						foreach($arColumns as $k => $c)
+						{
+							$v = $arValues[$k];
+							if (!preg_match('#null|now\(\)#i',$v))
+								$sqlSelect .= ' AND '.$c.'='.$v;
+						}
+						$rs = $DB->Query($sqlSelect);
 						if (!$rs->Fetch())
 						{
 							if ($this->fix_mode)
@@ -2352,204 +2469,183 @@ class CSiteCheckerTest
 							}
 							else
 							{
-								$strError .= GetMessage('SC_ERR_NO_TABLE', array('#TABLE#' => $table))."<br>";
+								$strError .= GetMessage('SC_ERR_NO_VALUE', array('#TABLE#' => $table, '#SQL#' => $sql))."<br>";
 								$_SESSION['FixQueryList'][] = $sql;
 								$this->arTestVars['iError']++;
 								$this->arTestVars['iErrorAutoFix']++;
-								$this->arTestVars['cntNoTables']++;
+								$this->arTestVars['cntNoValues']++;
+							}
+						}
+					}
+					else
+						echo "Error parsing SQL:\n".$sql."\n";
+				}
+			}
+
+			if (version_compare($this->db_ver, '5.6', '>=') && file_exists($file = str_replace('/install.sql', '/install_ft.sql', $file)))
+			{
+				if (false === ($query = file_get_contents($file)))
+					return false;
+				$query = preg_replace('# on +([a-z_0-9]+) \(#i', ' on site_checker_\\1 (', $query);
+				$arQuery = $DB->ParseSQLBatch(str_replace("\r", "", $query));
+				foreach($arQuery as $sql)
+				{
+					if (!$DB->Query($sql, true))
+						break;
+				}
+			}
+
+			foreach($arTables as $table => $sql)
+			{
+				$tmp_table = 'site_checker_'.$table;
+				$arIndexes = array();
+				$rs = $DB->Query('SHOW INDEXES FROM `'.$table.'`');
+				while($f = $rs->Fetch())
+				{
+					$column = strtolower($f['Column_name'].($f['Sub_part'] ? '('.$f['Sub_part'].')' : ''));
+					if ($arIndexes[$f['Key_name']])
+						$arIndexes[$f['Key_name']] .= ','.$column;
+					else
+						$arIndexes[$f['Key_name']] = $column;
+				}
+
+				$arIndexes_tmp = array();
+				$arFT = array();
+				$rs = $DB->Query('SHOW INDEXES FROM `'.$tmp_table.'`');
+				while($f = $rs->Fetch())
+				{
+					$column = strtolower($f['Column_name'].($f['Sub_part'] ? '('.$f['Sub_part'].')' : ''));
+					if ($arIndexes_tmp[$f['Key_name']])
+						$arIndexes_tmp[$f['Key_name']] .= ','.$column;
+					else
+						$arIndexes_tmp[$f['Key_name']] = $column;
+					if ($f['Index_type'] == 'FULLTEXT')
+						$arFT[$f['Key_name']] = true;
+				}
+
+				foreach($arIndexes_tmp as $name => $ix)
+				{
+					if (!in_array($ix,$arIndexes))
+					{
+						if($arIndexes[$name])
+						{
+							if ($name == 'PRIMARY') // dropping primary is not supported
 								continue;
-							}
-						}
 
-						$arTables[$table] = $sql;
-						$tmp_table = 'site_checker_'.$table;
-						$DB->Query('DROP TABLE IF EXISTS `'.$tmp_table.'`');
-						$DB->Query($regs[1].' `'.$tmp_table.'`'.$regs[4]);
+							$sql = 'ALTER TABLE `'.$table.'` DROP INDEX `'.$name.'`';
+							if ($this->fix_mode)
+							{
+								if (!$DB->Query($sql, true))
+									return $this->Result(false, 'Mysql Query Error: '.$sql.' ['.$DB->db_Error.']');
+							}
+							else
+							{
+								$_SESSION['FixQueryList'][] = $sql;
+								$this->arTestVars['iError']++;
+								$this->arTestVars['iErrorAutoFix']++;
+							}
+						}
 					}
-					elseif (preg_match('#^(ALTER TABLE)( )?`?([a-z0-9_]+)`?(.*);?$#mis',$sql,$regs))
-					{
-						$table = $regs[3];
-						if (!$arTables[$table])
-							continue;
-						$tmp_table = 'site_checker_'.$table;
-						$DB->Query($regs[1].' `'.$tmp_table.'`'.$regs[4]);
-					}
-					elseif (preg_match('#^INSERT INTO *`?([a-z0-9_]+)`?[^\(]*\(?([^)]*)\)?[^V]*VALUES[^\(]*\((.+)\);?$#mis',$sql,$regs))
-					{
-						$table = $regs[1];
-						if (!$arTables[$table] || $arInsertExclude[$table])
-							continue;
-						$tmp_table = 'site_checker_'.$table;
+				}
 
-						if ($regs[2])
-							$arColumns = explode(',', $regs[2]);
-						else
+				$arColumns = array();
+				$rs = $DB->Query('SHOW COLUMNS FROM `'.$table.'`');
+				while($f = $rs->Fetch())
+					$arColumns[strtolower($f['Field'])] = $f;
+
+				$rs = $DB->Query('SHOW COLUMNS FROM `'.$tmp_table.'`');
+				while($f_tmp = $rs->Fetch())
+				{
+					$tmp = TableFieldConstruct($f_tmp);
+					if ($f = $arColumns[strtolower($f_tmp['Field'])])
+					{
+						if (($cur = TableFieldConstruct($f)) != $tmp)
 						{
-							if (!$arTableColumns[$tmp_table])
+							$sql = 'ALTER TABLE `'.$table.'` CHANGE `'.$f['Field'].'` '.$tmp;
+							if ($this->fix_mode)
 							{
-								$rs = $DB->Query('SHOW COLUMNS FROM `'.$tmp_table.'`');
-								while($f = $rs->Fetch())
-									$arTableColumns[$tmp_table][] = $f['Field'];
-							}
-							$arColumns = $arTableColumns[$tmp_table];
-						}
-						
-						$strValues = $regs[3];
-						$ar = explode(",",$strValues);
-						$arValues = array();
-						$i = 0;
-						$str = '';
-						foreach($ar as $v)
-						{
-							$str .= ($str ? ',' : '').$v;
-							if (preg_match('#^ *(-?[0-9]+|\'.*\'|".*"|null|now\(\)) *$#i',$str)) 
-							{
-								$arValues[$i] = $str;
-								$str = '';
-								$i++;
-							}
-						}
-						
-						if (!$str)
-						{
-							$sqlSelect = 'SELECT * FROM `'.$table.'` WHERE 1=1 ';
-							foreach($arColumns as $k => $c)
-							{
-								$v = $arValues[$k];
-								if (!preg_match('#null|now\(\)#i',$v))
-									$sqlSelect .= ' AND '.$c.'='.$v;
-							}
-							$rs = $DB->Query($sqlSelect);
-							if (!$rs->Fetch())
-							{
-								if ($this->fix_mode)
+								if ($this->TableFieldCanBeAltered($f, $f_tmp))
 								{
 									if (!$DB->Query($sql, true))
 										return $this->Result(false, 'Mysql Query Error: '.$sql.' ['.$DB->db_Error.']');
 								}
 								else
-								{
-									$strError .= GetMessage('SC_ERR_NO_VALUE', array('#TABLE#' => $table, '#SQL#' => $sql))."<br>";
-									$_SESSION['FixQueryList'][] = $sql;
-									$this->arTestVars['iError']++;
+									$this->arTestVars['iErrorFix']++;
+							}
+							else
+							{
+								$_SESSION['FixQueryList'][] = $sql;
+								$strError .= GetMessage('SC_ERR_FIELD_DIFFERS', array('#TABLE#' => $table, '#FIELD#' => $f['Field'], '#CUR#' => $cur, '#NEW#' => $tmp))."<br>";
+								$this->arTestVars['iError']++;
+								if ($this->TableFieldCanBeAltered($f, $f_tmp))
 									$this->arTestVars['iErrorAutoFix']++;
-									$this->arTestVars['cntNoValues']++;
-								}
+								$this->arTestVars['cntDiffFields']++;
 							}
 						}
+					}
+					else
+					{
+						$sql = 'ALTER TABLE `'.$table.'` ADD '.preg_replace('#auto_increment#i', '' , $tmp); // if only Primary Key is missing we will have to pass the test twice
+						if ($this->fix_mode)
+						{
+							if (!$DB->Query($sql, true))
+								return $this->Result(false, 'Mysql Query Error: '.$sql.' ['.$DB->db_Error.']');
+						}
 						else
-							echo "Error parsing SQL:\n".$sql."\n";
+						{
+							$_SESSION['FixQueryList'][] = $sql;
+							$strError .= GetMessage('SC_ERR_NO_FIELD', array('#TABLE#' => $table, '#FIELD#' => $f_tmp['Field']))."<br>";
+							$this->arTestVars['iError']++;
+							$this->arTestVars['iErrorAutoFix']++;
+							$this->arTestVars['cntNoFields']++;
+						}
 					}
 				}
 
-				foreach($arTables as $table => $sql)
+				foreach($arIndexes_tmp as $name => $ix)
 				{
-					$tmp_table = 'site_checker_'.$table;
-					$arColumns = array();
-					$rs = $DB->Query('SHOW COLUMNS FROM `'.$table.'`');
-					while($f = $rs->Fetch())
-						$arColumns[strtolower($f['Field'])] = $f;
-
-					$rs = $DB->Query('SHOW COLUMNS FROM `'.$tmp_table.'`');
-					while($f_tmp = $rs->Fetch())
+					if (!in_array($ix,$arIndexes))
 					{
-						$tmp = TableFieldConstruct($f_tmp);
-						if ($f = $arColumns[strtolower($f_tmp['Field'])])
+						if ($name == 'PRIMARY' && $arIndexes['PRIMARY']) // Primary key exists
 						{
-							if (($cur = TableFieldConstruct($f)) != $tmp)
-							{
-								$sql = 'ALTER TABLE `'.$table.'` MODIFY `'.$f_tmp['Field'].'` '.$tmp;
-								if ($this->fix_mode)
-								{
-									if ($this->TableFieldCanBeAltered($f, $f_tmp))
-									{
-										if (!$DB->Query($sql, true))
-											return $this->Result(false, 'Mysql Query Error: '.$sql.' ['.$DB->db_Error.']');
-									}
-									else
-										$this->arTestVars['iErrorFix']++;
-								}
-								else
-								{
-									$_SESSION['FixQueryList'][] = $sql;
-									$strError .= GetMessage('SC_ERR_FIELD_DIFFERS', array('#TABLE#' => $table, '#FIELD#' => $f['Field'], '#CUR#' => $cur, '#NEW#' => $tmp))."<br>";
-									$this->arTestVars['iError']++;
-									if ($this->TableFieldCanBeAltered($f, $f_tmp))
-										$this->arTestVars['iErrorAutoFix']++;
-									$this->arTestVars['cntDiffFields']++;
-								}
-							}
+							$this->arTestVars['iError']++;
+							$strError .= GetMessage('SC_ERR_NO_INDEX', array('#TABLE#' => $table, '#INDEX#' => $name.' ('.$ix.')'))."<br>";
+							continue;
+						}
+
+						$sql = $name == 'PRIMARY' ? 'ALTER TABLE `'.$table.'` ADD PRIMARY KEY ('.$ix.')' : 'CREATE '.($arFT[$name] ? 'FULLTEXT ' : '').'INDEX `'.$name.'` ON `'.$table.'` ('.$ix.')';
+						if ($this->fix_mode)
+						{
+							if (!$DB->Query($sql, true))
+								return $this->Result(false, 'Mysql Query Error: '.$sql.' ['.$DB->db_Error.']');
 						}
 						else
 						{
-							$sql = 'ALTER TABLE `'.$table.'` ADD `'.$f_tmp['Field'].'` '.str_replace('auto_increment', '' , strtolower($tmp)); // if only Primary Key is missing we will have to pass the test twice
-							if ($this->fix_mode)
-							{
-								if (!$DB->Query($sql, true))
-									return $this->Result(false, 'Mysql Query Error: '.$sql.' ['.$DB->db_Error.']');
-							}
-							else
-							{
-								$_SESSION['FixQueryList'][] = $sql;
-								$strError .= GetMessage('SC_ERR_NO_FIELD', array('#TABLE#' => $table, '#FIELD#' => $f_tmp['Field']))."<br>";
-								$this->arTestVars['iError']++;
-								$this->arTestVars['iErrorAutoFix']++;
-								$this->arTestVars['cntNoFields']++;
-							}
+							$_SESSION['FixQueryList'][] = $sql;
+							$strError .= GetMessage('SC_ERR_NO_INDEX', array('#TABLE#' => $table, '#INDEX#' => $name.' ('.$ix.')'))."<br>";
+							$this->arTestVars['iError']++;
+							$this->arTestVars['iErrorAutoFix']++;
+							$this->arTestVars['cntNoIndexes']++;
 						}
 					}
 
-					$arIndexes = array();
-					$rs = $DB->Query('SHOW INDEXES FROM `'.$table.'`');
-					while($f = $rs->Fetch())
+					if ($arFT[$name] && !$this->fullTextIndexEnabled($table, $ix))
 					{
-						$ix =& $arIndexes[$f['Key_name']];
-						$column = strtolower($f['Column_name'].($f['Sub_part'] ? '('.$f['Sub_part'].')' : ''));
-						if ($ix)
-							$ix .= ','.$column;
+						if ($this->fix_mode)
+							$this->enableFullTextIndex($table, $ix);
 						else
-							$ix = $column;
-					}
-
-					$arIndexes_tmp = array();
-					$rs = $DB->Query('SHOW INDEXES FROM `'.$tmp_table.'`');
-					while($f = $rs->Fetch())
-					{
-						$ix =& $arIndexes_tmp[$f['Key_name']];
-						$column = strtolower($f['Column_name'].($f['Sub_part'] ? '('.$f['Sub_part'].')' : ''));
-						if ($ix)
-							$ix .= ','.$column;
-						else
-							$ix = $column;
-					}
-					unset($ix); // unlink the reference
-					foreach($arIndexes_tmp as $name => $ix)
-					{
-						if (!in_array($ix,$arIndexes))
 						{
-							while($arIndexes[$name])
-								$name .= '_sc';
-							$sql = $name == 'PRIMARY' ? 'ALTER TABLE `'.$table.'` ADD PRIMARY KEY ('.$ix.')' : 'CREATE INDEX `'.$name.'` ON `'.$table.'` ('.$ix.')';
-							if ($this->fix_mode)
-							{
-								if (!$DB->Query($sql, true))
-									return $this->Result(false, 'Mysql Query Error: '.$sql.' ['.$DB->db_Error.']');
-							}
-							else
-							{
-								$_SESSION['FixQueryList'][] = $sql;
-								$strError .= GetMessage('SC_ERR_NO_INDEX', array('#TABLE#' => $table, '#INDEX#' => $name.' ('.$ix.')'))."<br>";
-								$this->arTestVars['iError']++;
-								$this->arTestVars['iErrorAutoFix']++;
-								$this->arTestVars['cntNoIndexes']++;
-							}
+							$strError .= GetMessage('SC_ERR_NO_INDEX_ENABLED', array('#TABLE#' => $table, '#INDEX#' => $name.' ('.$ix.')'))."<br>";
+							$this->arTestVars['iError']++;
+							$this->arTestVars['iErrorAutoFix']++;
 						}
 					}
-
-					$DB->Query('DROP TABLE `'.$tmp_table.'`');
 				}
-				echo $strError; // to log
+
+				$DB->Query('DROP TABLE `'.$tmp_table.'`');
 			}
+
+			echo $strError; // to log
 		}
 
 		if ($iCurrent < $cnt) // partial
@@ -2572,7 +2668,8 @@ class CSiteCheckerTest
 		{
 			if ($this->arTestVars['iError'] > 0)
 			{
-				echo implode(";\n", $_SESSION['FixQueryList']).';';
+				if (is_array($_SESSION['FixQueryList']) && count($_SESSION['FixQueryList']))
+					echo implode(";\n", $_SESSION['FixQueryList']).';';
 				$_SESSION['FixQueryList'] = array();
 				return $this->Result(false, GetMessage('SC_CHECK_TABLES_STRUCT_ERRORS', 
 					array(
@@ -2660,6 +2757,40 @@ class CSiteCheckerTest
 		$_SERVER['HTTP_USER_AGENT'] = $HTTP_USER_AGENT;
 
 		return "CSiteCheckerTest::CommonTest();";
+	}
+
+	function enableFullTextIndex($table, $field)
+	{
+		$name = '~ft_'.strtolower($table);
+		global $DB;
+		$options = array();
+		$f = $DB->Query('SELECT * FROM b_option WHERE MODULE_ID="main" AND NAME="'.$name.'"')->Fetch();
+		$optionString = $f['VALUE'];
+		if($optionString <> '')
+		{
+			$options = unserialize($optionString);
+		}
+		$options[strtoupper($field)] = true;
+		if ($f)
+			$DB->Query('UPDATE b_option SET VALUE="'.$DB->ForSQL(serialize($options)).'" WHERE MODULE_ID="main" AND NAME="'.$name.'"');
+		else
+			$DB->Query('INSERT INTO b_option (MODULE_ID, NAME, VALUE) VALUES("main", "'.$name.'", "'.$DB->ForSQL(serialize($options)).'")');
+	}
+
+	function fullTextIndexEnabled($table, $field)
+	{
+		$name = '~ft_'.strtolower($table);
+		global $DB;
+		$options = array();
+		$f = $DB->Query('SELECT * FROM b_option WHERE MODULE_ID="main" AND NAME="'.$name.'"')->Fetch();
+		$optionString = $f['VALUE'];
+		if($optionString <> '')
+		{
+			$options = unserialize($optionString);
+		}
+		if ($options[strtoupper($field)])
+			return true;
+		return false;
 	}
 }
 
@@ -2940,7 +3071,8 @@ function InitPureDB()
 function TableFieldConstruct($f0)
 {
 	global $DB;
-	return $f0['Type'].($f0['Null'] == 'YES' ? ' NULL' : ' NOT NULL').($f0['Default'] === NULL ? ($f0['Null'] == 'YES' ? ' DEFAULT NULL ' : '') : ' DEFAULT '.($f0['Type'] == 'timestamp' && $f0['Default'] == 'CURRENT_TIMESTAMP' ? $f0['Default'] : '"'.$DB->ForSQL($f0['Default']).'"')).' '.$f0['Extra'];
+	$tmp = '`'.$f0['Field'].'` '.$f0['Type'].($f0['Null'] == 'YES' ? ' NULL' : ' NOT NULL').($f0['Default'] === NULL ? ($f0['Null'] == 'YES' ? ' DEFAULT NULL ' : '') : ' DEFAULT '.($f0['Type'] == 'timestamp' && $f0['Default'] == 'CURRENT_TIMESTAMP' ? $f0['Default'] : '"'.$DB->ForSQL($f0['Default']).'"')).' '.$f0['Extra'];
+	return trim($tmp);
 }
 
 function fix_link($mode = 2)

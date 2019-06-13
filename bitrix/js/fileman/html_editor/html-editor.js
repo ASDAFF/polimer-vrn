@@ -193,9 +193,7 @@
 			}
 
 			this.InitImageUploader();
-
 			this.Show();
-
 			BX.onCustomEvent(BXHtmlEditor, 'OnEditorCreated', [this]);
 		},
 
@@ -304,6 +302,7 @@
 				{
 					clearInterval(_this.statusInterval);
 				}
+				_this.iframeView.stopBugusScroll = false;
 			});
 			BX.addCustomEvent(this, "OnTextareaFocus", function()
 			{
@@ -1849,6 +1848,16 @@
 				}
 				return true;
 			};
+
+			this.util.GetNextSibling = function(node)
+			{
+				var res = node.nextSibling;
+				while (res && res.nodeType == 3 && res.nodeValue == '\ufeff' && res.nextSibling)
+				{
+					res = res.nextSibling;
+				}
+				return res || null;
+			};
 		},
 
 		Parse: function(content, bParseBxNodes, bFormat)
@@ -2803,7 +2812,8 @@
 					imageHandled = false,
 					clipboard = e.clipboardData;
 
-				if (clipboard && clipboard.items)
+				// For firefox works wrong (see mantis:88928)
+				if (clipboard && clipboard.items && !BX.browser.IsFirefox())
 				{
 					var item = clipboard.items[0];
 					if (item && item.type.indexOf('image/') > -1)
@@ -2811,6 +2821,7 @@
 						var blob = item.getAsFile();
 						if (blob)
 						{
+
 							var reader = new FileReader();
 							reader.readAsDataURL(blob);
 							reader.onload = function (event)
@@ -2818,7 +2829,6 @@
 								imageHandled = true;
 								var img = new Image();
 								img.src = event.target.result;
-
 								setTimeout(function()
 								{
 									_this.selection.InsertNode(img);
@@ -2878,7 +2888,9 @@
 				}
 
 				if (unbind !== false)
+				{
 					BX.unbind(image, 'load', BX.proxy(this.CheckImage, this));
+				}
 			}
 		},
 
@@ -2888,7 +2900,9 @@
 			{
 				this.skipPasteControl = true;
 				if (this.pasteControl.isOpened)
+				{
 					this.pasteControl.Hide();
+				}
 
 				var base64Image = this.GetBase64Image(image.src);
 

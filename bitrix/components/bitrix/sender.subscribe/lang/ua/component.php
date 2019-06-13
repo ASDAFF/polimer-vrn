@@ -1,4 +1,5 @@
 <?
+$MESS["SENDER_SUBSCR_MODULE_NOT_INSTALLED1"] = "Модуль Маркетинг 24 в даний час недоступний.";
 $MESS["SENDER_SUBSCR_MODULE_NOT_INSTALLED"] = "Модуль Email-маркетингу в даний час недоступний.";
 $MESS["SENDER_SUBSCR_TITLE"] = "Підписка на розсилки";
 $MESS["SENDER_SUBSCR_ERR_EMAIL"] = "Ви вказали невірну email-адресу";

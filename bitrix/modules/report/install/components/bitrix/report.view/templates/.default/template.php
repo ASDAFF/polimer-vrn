@@ -1,9 +1,17 @@
 <?php
+\Bitrix\Main\UI\Extension::load("ui.buttons");
+\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+/** @var CBitrixComponentTemplate $this */
+
 /** @global CMain $APPLICATION */
 global $APPLICATION;
+
+$resultTableId = 'report-result-table';
+
+$isPeriodHidden = isset($arResult['settings']['period']['hidden']) && $arResult['settings']['period']['hidden'] === 'Y';
 
 /**
  * @param CBitrixComponentTemplate &$component
@@ -14,6 +22,13 @@ function reportViewShowTopButtons(&$component, &$arParams, &$arResult)
 {
 	/** @global CMain $APPLICATION */
 	global $APPLICATION;
+
+	$isStExport = is_array($arResult['STEXPORT_PARAMS']);
+	$stExportManagerId = '';
+	if ($isStExport)
+	{
+		$stExportManagerId = $arResult['STEXPORT_PARAMS']['managerId'];
+	}
 
 	$component->SetViewTarget("pagetitle", 100);?>
 
@@ -29,24 +44,31 @@ function reportViewShowTopButtons(&$component, &$arParams, &$arResult)
 				'click',
 				function ()
 				{
+					var isStExport = <? echo $isStExport ? 'true' : 'false'; ?>;
 					BX.PopupMenu.show(
 						element.getAttribute('data-role'),
 						element,
 						[
+							isStExport ?
 							{
 								text: '<?=GetMessage('REPORT_EXCEL_EXPORT')?>',
-								href: '<?php echo $APPLICATION->GetCurPageParam("EXCEL=Y&ncc=1")?>',
+								onclick: "BX.Report.StExportManager.items['<?= CUtil::JSEscape($stExportManagerId) ?>'].startExport('excel')",
+								className: 'reports-title-excel-icon'
+							} :
+							{
+								text: '<?=GetMessage('REPORT_EXCEL_EXPORT')?>',
+								href: '<?=CUtil::JSEscape($APPLICATION->GetCurPageParam("EXCEL=Y&ncc=1"));?>',
 								className: 'reports-title-excel-icon'
 							},
 							{
 								text: '<?=GetMessage('REPORT_COPY')?>',
-								href: '<?=CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_REPORT_CONSTRUCT"], array("report_id" => $arParams['REPORT_ID'], 'action' => 'copy'));?>',
+								href: '<?=CUtil::JSEscape(CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_REPORT_CONSTRUCT"], array("report_id" => $arParams['REPORT_ID'], 'action' => 'copy')));?>',
 								className: 'reports-title-copy-icon'
 							}
 							<? if ($arResult['MARK_DEFAULT'] <= 0 && $arResult['AUTHOR']) : ?>
 							,{
 								text: '<?=GetMessage('REPORT_EDIT')?>',
-								href: '<?=CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_REPORT_CONSTRUCT"], array("report_id" => $arParams['REPORT_ID'], 'action' => 'edit'));?>',
+								href: '<?=CUtil::JSEscape(CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_REPORT_CONSTRUCT"], array("report_id" => $arParams['REPORT_ID'], 'action' => 'edit')));?>',
 								className: 'reports-title-edit-icon'
 							}
 							<? endif; ?>
@@ -65,13 +87,9 @@ function reportViewShowTopButtons(&$component, &$arParams, &$arResult)
 	})();
 </script>
 
-<div class="webform-small-button webform-small-button-transparent webform-cogwheel" data-role="action-report">
-	<div class="webform-button-icon"></div>
-</div>	&nbsp;
-<a class="webform-small-button webform-small-button-blue webform-small-button-back" href="<?=CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_REPORT_LIST"], array());?>">
-	<span class="webform-small-button-icon"></span>
-	<span class="webform-small-button-text"><?=GetMessage('REPORT_RETURN_TO_LIST')?></span>
-</a>
+<button class="ui-btn ui-btn-light-border ui-btn-icon-setting ui-btn-themes" data-role="action-report"></button>
+<a class="ui-btn ui-btn-primary ui-btn-icon-back" href="<?=CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_REPORT_LIST"], array());?>">
+	<?=GetMessage('REPORT_RETURN_TO_LIST')?></a>
 
 <?php
 	$component->EndViewTarget();
@@ -115,10 +133,10 @@ $GLOBALS['APPLICATION']->SetAdditionalCSS('/bitrix/js/report/css/report.css');
 $APPLICATION->SetTitle($arResult['report']['TITLE']);
 
 // determine column data type
-function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array(), $helperClassName)
+function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes, $helperClassName)
 {
 	$dataType = null;
-	if (array_key_exists($viewColumnInfo['fieldName'], $customColumnTypes))
+	if (is_array($customColumnTypes) && array_key_exists($viewColumnInfo['fieldName'], $customColumnTypes))
 	{
 		$dataType = $customColumnTypes[$viewColumnInfo['fieldName']];
 	}
@@ -194,19 +212,53 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 	function prepareChartData(&$arResult, &$arGroupingResult = null)
 	{
 		$nMaxValues = 500;
+		$result = array('requestData' => array(), 'columnsNames' => array(), 'err' => 0);
 
 		// check
 		$chartSettings = $arResult['settings']['chart'];
-		if (!isset($chartSettings['x_column'])) return null;
+		if (!isset($chartSettings['x_column']))
+		{
+			$result['err'] = 49;
+		}
 		$xColumnIndex = $chartSettings['x_column'];
-		if (!is_array($chartSettings['y_columns'])) return null;
+		if (!is_array($arResult['viewColumns'][$xColumnIndex]))
+		{
+			$result['err'] = 49;
+			return $result;
+		}
+		if (!is_array($chartSettings['y_columns']))
+		{
+			$result['err'] = 49;
+			return $result;
+		}
 		$yColumnsCount = count($chartSettings['y_columns']);
-		if ($yColumnsCount === 0) return null;
+		if ($yColumnsCount === 0)
+		{
+			$result['err'] = 49;
+			return $result;
+		}
+		foreach ($chartSettings['y_columns'] as $yColumnIndex)
+		{
+			if (!is_array($arResult['viewColumns'][$yColumnIndex]))
+			{
+				$result['err'] = 49;
+				break;
+			}
+		}
+		if ($result['err'] !== 0)
+		{
+			return $result;
+		}
+
 		$chartTypeIds = array();
 		foreach ($arResult['chartTypes'] as $chartTypeInfo) $chartTypeIds[] = $chartTypeInfo['id'];
 		if (!is_set($chartSettings['type'])
 			|| empty($chartSettings['type'])
-			|| !in_array($chartSettings['type'], $chartTypeIds)) return null;
+			|| !in_array($chartSettings['type'], $chartTypeIds))
+		{
+			$result['err'] = 49;
+			return $result;
+		}
 		$chartType = $chartSettings['type'];
 		if ($chartType === 'pie') $yColumnsCount = 1;    // pie chart has only one array of a values
 		$xColumnDataType = getResultColumnDataType($arResult['viewColumns'][$xColumnIndex],
@@ -289,6 +341,7 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 									case 'crm_status':
 									case 'iblock_element':
 									case 'iblock_section':
+									case 'money':
 										if ($nValue === 0)
 											$dataValue = $cvInfo['value'];
 										else
@@ -357,26 +410,29 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 			}
 		}
 
-		return array('requestData' => $requestData, 'columnsNames' => $columnsHumanTitles);
+		$result['requestData'] = $requestData;
+		$result['columnsNames'] = $columnsHumanTitles;
+
+		return $result;
 	}
 	function validateChartData(&$chartInfo)
 	{
 		$err = 0;
 		$chartXValueTypes = array('boolean', 'date', 'datetime', 'float', 'integer', 'string', 'text', 'enum', 'file',
-			'disk_file', 'employee', 'crm', 'crm_status', 'iblock_element', 'iblock_section');
+			'disk_file', 'employee', 'crm', 'crm_status', 'iblock_element', 'iblock_section', 'money');
 		$chartTypes = array(
 			array('id' => 'line', 'name' => GetMessage('REPORT_CHART_TYPE_LINE1'), 'value_types' => array(
 				/*'boolean', 'date', 'datetime', */
 				'float', 'integer'/*, 'string', 'text', 'enum', 'file', 'disk_file', 'employee', 'crm', 'crm_status',
-				'iblock_element', 'iblock_section'*/)),
+				'iblock_element', 'iblock_section', 'money'*/)),
 			array('id' => 'bar', 'name' => GetMessage('REPORT_CHART_TYPE_BAR1'), 'value_types' => array(
 				/*'boolean', 'date', 'datetime', */
 				'float', 'integer'/*, 'string', 'text', 'enum', 'file', 'disk_file', 'employee', 'crm', 'crm_status',
-				'iblock_element', 'iblock_section'*/)),
+				'iblock_element', 'iblock_section', 'money'*/)),
 			array('id' => 'pie', 'name' => GetMessage('REPORT_CHART_TYPE_PIE'), 'value_types' => array(
 				/*'boolean', 'date', 'datetime', */
 				'float', 'integer'/*, 'string', 'text', 'enum', 'file', 'disk_file', 'employee', 'crm', 'crm_status',
-				'iblock_element', 'iblock_section'*/)),
+				'iblock_element', 'iblock_section', 'money'*/)),
 		);
 
 		// check meta
@@ -481,6 +537,7 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 											case 'crm_status':
 											case 'iblock_element':
 											case 'iblock_section':
+											case 'money':
 												$dataValue = (string)$dataValue;
 												break;
 											default:
@@ -753,9 +810,16 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 	}
 
 	$chartInfo = prepareChartData($arResult);
-	$amChartData = prepareChartDataForAmCharts($chartInfo);
+	if (is_array($chartInfo) && isset($chartInfo['err']) && $chartInfo['err'] !== 0)
+	{
+		$chartErrorCode = $chartInfo['err'];
+	}
+	else
+	{
+		$amChartData = prepareChartDataForAmCharts($chartInfo);
+		$chartErrorCode = $amChartData['err'];
+	}
 	unset($chartInfo);
-	$chartErrorCode = $amChartData['err'];
 	$chartErrorMessage = '';
 	if ($chartErrorCode !== 0)
 	{
@@ -799,6 +863,25 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 			var valueFields = amChartData["valueFields"];
 			var valueColors = amChartData["valueColors"];
 
+			var i, value;
+			if (BX.type.isNotEmptyString(amChartData['categoryField'])
+				&& amChartData['categoryType'] === 'money'
+				&& BX.type.isArray(amChartData['data']))
+			{
+				var ta = BX.create('TEXTAREA');
+				for (i = 0; i < amChartData['data'].length; i++)
+				{
+					value = amChartData['data'][i][amChartData['categoryField']];
+					if (BX.type.isNotEmptyString(value))
+					{
+						ta.innerHTML = value;
+						amChartData['data'][i][amChartData['categoryField']] = ta.textContent;
+					}
+				}
+				ta = null;
+			}
+			i = value = null;
+
 			// CHART
 			var chart = null;
 			if (chartType === "pie")
@@ -841,7 +924,7 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 				chart.valueField = valueFields[0];
 				chart.outlineAlpha = 0.8;
 				chart.outlineThickness = 0;
-				chart.balloonText = "<div>[[__BN__TITLE__]]: [[percents]]%</div>" + valueFields[0] +
+				chart.balloonText = "<div>[[__BN__TITLE__]]: [[percents]]%</div>" + BX.util.htmlspecialchars(valueFields[0]) +
 					": <b>[[value]]</b>";
 				chart.colors = valueColors;
 				chart.groupedTitle = "<?=GetMessage('REPORT_CHART_TRIFLE_LABEL_TEXT')?>";
@@ -856,11 +939,11 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 				chart.depth3D = 15;
 				chart.angle = 30;
 			}
-
-			if (chartType == "line" || chartType == "column")
+			if (chartType === "line" || chartType === "column")
 			{
 				// AXES X
 				var categoryAxis = chart.categoryAxis;
+				var categoryType = "string";
 				categoryAxis.labelRotation = 45;
 				if (chartType === 'column')
 				{
@@ -870,6 +953,7 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 				if (chartType === "line"
 					&& (amChartData["categoryType"] === "date" || amChartData["categoryType"] === "datetime"))
 				{
+					categoryType = "date";
 					categoryAxis.dateFormats = [
 						{period:"fff", format:"JJ:NN:SS"},
 						{period:"ss", format:"JJ:NN:SS"},
@@ -891,7 +975,7 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 					var graph = new AmCharts.AmGraph();
 					graph.title = valueFields[i];
 					graph.valueField = valueFields[i];
-					graph.balloonText = "[[__BN__TITLE__]]: <b>[[value]]</b>";
+					graph.balloonText = BX.util.htmlspecialchars(valueFields[i]) + ": <b>[[value]]</b>";
 					graph.type = chartType;
 					graph.lineAlpha = 0.8;
 					graph.lineColor = valueColors[i];
@@ -914,8 +998,24 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 				if (chartType === "line")
 				{
 					chartCursor.cursorAlpha = 0.8;
-					chartCursor.categoryBalloonDateFormat = "DD.MM.YYYY";
 					chartCursor.cursorPosition = "mouse";
+					if (categoryType === "string")
+					{
+						chartCursor.categoryBalloonFunction = function (value) {
+							if (BX.type.isNotEmptyString(value))
+							{
+								return BX.util.htmlspecialchars(value);
+							}
+							else
+							{
+								return value;
+							}
+						};
+					}
+					else if (categoryType === "date")
+					{
+						chartCursor.categoryBalloonDateFormat = "DD.MM.YYYY";
+					}
 				}
 				else if (chartType === 'column')
 				{
@@ -946,10 +1046,18 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 		<? endif; // if ($chartErrorCode === 0) ?>
 	</script>
 	<?php endif; // if ($arParams['USE_CHART'] && $arResult['settings']['chart']['display']): ?>
-	<div class="report-table-wrap">
+	<div class="report-table-wrap<? echo ($arResult['allowHorizontalScroll'] ? ' main-grid-fade' : ''); ?>"><?
+		if ($arResult['allowHorizontalScroll']) : ?><?
+			?><div class="main-grid-fade-shadow-left"></div><?
+			?><div class="main-grid-fade-shadow-right"></div><?
+			?><div class="main-grid-ear main-grid-ear-left"></div><?
+			?><div class="main-grid-ear main-grid-ear-right"></div><?
+		endif; ?>
+		<div class="main-grid-container">
 		<div class="reports-list-left-corner"></div>
 		<div class="reports-list-right-corner"></div>
-		<table cellspacing="0" class="reports-list-table" id="report-result-table">
+		<table cellspacing="0" class="reports-list-table" id="<?= $resultTableId ?>">
+			<thead>
 			<!-- head -->
 			<tr>
 				<? $i = 0; foreach($arResult['viewColumns'] as $colId => $col): ?>
@@ -998,8 +1106,10 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 					</th>
 				<? endforeach; ?>
 			</tr>
-
+			</thead>
+			<tbody>
 			<!-- data -->
+			<? $rowNum = 0; ?>
 			<? foreach ($arResult['data'] as $row): ?>
 				<tr class="reports-list-item">
 					<? $i = 0; foreach($arResult['viewColumns'] as $col): ?>
@@ -1047,6 +1157,41 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 								}
 							}
 
+							$redSign = false;
+							if (isset($arResult['customChartData'][$rowNum][$col['resultName']]['multiple']))
+							{
+								$customValueInfo = &$arResult['customChartData'][$rowNum][$col['resultName']];
+								if ($customValueInfo['multiple'] === true)
+								{
+									$dataValue = 0;
+									foreach ($customValueInfo as $cvKey => $cvInfo)
+									{
+										if ($cvKey !== 'multiple' && isset($cvInfo['type'])
+											&& ($cvInfo['type'] === 'float' || $cvInfo['type'] === 'integer'))
+										{
+											if ($cvInfo['value'] < 0)
+											{
+												$redSign = true;
+												break;
+											}
+										}
+									}
+									unset($cvKey, $cvInfo);
+								}
+								else
+								{
+									$cvInfo = &$customValueInfo[0];
+									if (isset($cvInfo['type'])
+										&& ($cvInfo['type'] === 'float' || $cvInfo['type'] === 'integer'))
+									{
+										if ($cvInfo['value'] < 0)
+											$redSign = true;
+									}
+									unset($cvInfo);
+								}
+								unset($customValueInfo);
+							}
+
 							// magic glue
 							if (is_array($finalValue))
 							{
@@ -1054,12 +1199,14 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 							}
 							if ($arResult['settings']['red_neg_vals'] === true)
 							{
-								if (is_numeric($finalValue) && $finalValue < 0) $td_class .= ' report-red-neg-val';
+								if ($redSign || (is_numeric($finalValue) && $finalValue < 0))
+									$td_class .= ' report-red-neg-val';
 							}
 						?>
 						<td class="<?=$td_class?>"><?=$finalValue?></td>
 					<? endforeach; ?>
 				</tr>
+			<? $rowNum++; ?>
 			<? endforeach; ?>
 
 			<tr>
@@ -1118,11 +1265,12 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 				<td class="<?=$td_class?>"><?=array_key_exists('TOTAL_'.$col['resultName'], $arResult['total']) ? $arResult['total']['TOTAL_'.$col['resultName']] : '&mdash;'?></td>
 				<? endforeach; ?>
 			</tr>
-
+			</tbody>
 		</table>
+		</div>
 		<script type="text/javascript">
 		BX.ready(function(){
-			var rows = BX.findChildren(BX('report-result-table'), {tag:'th'}, true);
+			var rows = BX.findChildren(BX('<?= $resultTableId ?>'), {tag:'th'}, true);
 			for (i = 0 ; i < rows.length ; i++)
 			{
 				var ds = rows[i].getAttribute('defaultSort');
@@ -1176,6 +1324,10 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 		</span>
 	</div>
 
+	<div class="filter-field filter-field-crm chfilter-field-enum">
+		<label class="filter-field-title">%TITLE% "%COMPARE%"</label>
+	</div>
+
 	<div class="filter-field filter-field-crm chfilter-field-crm">
 		<label class="filter-field-title">%TITLE% "%COMPARE%"</label>
 	</div>
@@ -1189,6 +1341,10 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 	</div>
 
 	<div class="filter-field filter-field-iblock_section chfilter-field-iblock_section">
+		<label class="filter-field-title">%TITLE% "%COMPARE%"</label>
+	</div>
+
+	<div class="filter-field filter-field-money chfilter-field-money">
 		<label class="filter-field-title">%TITLE% "%COMPARE%"</label>
 	</div>
 
@@ -1252,33 +1408,6 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 
 </div>
 
-<!-- UF enumerations control examples -->
-<div id="report-chfilter-examples-ufenums" style="display: none;">
-	<?
-	if (is_array($arResult['ufEnumerations'])):
-		foreach ($arResult['ufEnumerations'] as $ufId => $enums):
-			foreach ($enums as $fieldKey => $enum):
-	?>
-	<div class="filter-field chfilter-field-<?=($ufId.'_'.$fieldKey)?>" callback="RTFilter_chooseBoolean">
-		<label for="" class="filter-field-title">%TITLE% "%COMPARE%"</label>
-		<select name="%NAME%" class="filter-dropdown" id="%ID%" caller="true">
-			<option value=""><?=GetMessage('REPORT_IGNORE_FILTER_VALUE')?></option>
-			<?
-			foreach ($enum as $itemId => $itemInfo):
-			?>
-			<option value="<?=$itemId?>"><?=$itemInfo['VALUE']?></option>
-			<?
-			endforeach;
-			?>
-		</select>
-	</div>
-	<?
-			endforeach;
-		endforeach;
-	endif;
-	?>
-</div>
-
 <div class="sidebar-block">
 	<b class="r2"></b><b class="r1"></b><b class="r0"></b>
 	<div class="sidebar-block-inner">
@@ -1297,7 +1426,7 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 			<?=$APPLICATION->GetViewContent("report_view_prefilter")?>
 
 			<!-- period -->
-			<div class="filter-field">
+			<div class="filter-field<? echo $isPeriodHidden ? ' filter-field-hidden' : ''; ?>">
 				<label for="task-interval-filter" class="filter-field-title"><?=GetMessage('REPORT_PERIOD')?></label>
 				<select class="filter-dropdown" style="margin-bottom: 0;" onchange="OnTaskIntervalChange(this)" id="task-interval-filter" name="F_DATE_TYPE">
 					<?php foreach ($arPeriodTypes as $key => $type): ?>
@@ -1333,16 +1462,24 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 									border="0" src="/bitrix/js/main/core/images/calendar-icon.gif"
 									alt="<?php echo GetMessage("TASKS_PICK_DATE")?>"></a></span>
 				</span>
-					<span class="filter-day-interval<?php if ($arResult["FILTER"]["F_DATE_TYPE"] == "days"): ?> filter-day-interval-selected<?php endif?>"><input type="text" size="5"
-						class="filter-date-days"
-						value="<?=$arResult['form_date']['days']?>"
-						name="F_DATE_DAYS"/> <?php echo GetMessage("TASKS_REPORT_DAYS")?></span>
-
+				<span class="filter-day-interval<?php
+				if ($arResult["FILTER"]["F_DATE_TYPE"] == "days"):
+					?> filter-day-interval-selected<?php
+				endif;
+				?>"><input type="text" size="5" class="filter-date-days"
+						value="<?= htmlspecialcharsbx($arResult['form_date']['days']) ?>"
+						name="F_DATE_DAYS"/> <?php echo GetMessage("TASKS_REPORT_DAYS"); ?></span>
 				<script type="text/javascript">
 
 					function OnTaskIntervalChange(select)
 					{
-						select.parentNode.className = "filter-field filter-field-date-combobox " + "filter-field-date-combobox-" + select.value;
+						var isPeriodHidden = <? echo ($isPeriodHidden ? 'true' : 'false'); ?>;
+						var periodSelect = BX('task-interval-filter');
+						var hide = isPeriodHidden && periodSelect && periodSelect === select;
+						select.parentNode.className = "filter-field" +
+							((hide) ? " filter-field-hidden" : "") +
+							" filter-field-date-combobox" +
+							" filter-field-date-combobox-" + select.value;
 
 						var dateInterval = BX.findNextSibling(select, { "tag": "span", 'className': "filter-date-interval" });
 						var dayInterval = BX.findNextSibling(select, { "tag": "span", 'className': "filter-day-interval" });
@@ -1435,8 +1572,17 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 				foreach ($arResult['changeableFilters'] as $chFilter)
 				{
 					if (isset($chFilter['isUF']) && $chFilter['isUF'] === true && isset($chFilter['data_type'])
-						&& ($chFilter['data_type'] === 'crm' || $chFilter['data_type'] === 'crm_status'
-							|| $chFilter['data_type'] === 'iblock_element' || $chFilter['data_type'] === 'iblock_section')
+						&& in_array(
+								$chFilter['data_type'],
+								[
+									'enum',
+									'crm',
+									'crm_status',
+									'iblock_element',
+									'iblock_section',
+									'money'
+								],
+								true)
 						&& isset($chFilter['ufId']) && isset($chFilter['ufName'])
 						&& is_array($arResult['ufInfo'][$chFilter['ufId']][$chFilter['ufName']]))
 					{
@@ -1469,39 +1615,26 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 
 					cpControl = null;
 					fieldType = info[i].FIELD_TYPE;
-					if (info[i]['IS_UF'] && fieldType === 'enum')
-					{
-						cpControl = BX.clone(
-							BX.findChild(
-								BX('report-chfilter-examples-ufenums'),
-								{className:'chfilter-field-'+info[i]['UF_ID'] + "_" + info[i]['UF_NAME']}
-							),
-							true
-						);
-					}
-					else
-					{
-						// insert value control
-						// search in `examples-custom` by name or type
-						// then search in `examples` by type
-						cpControl = BX.clone(
-							BX.findChild(
-								BX('report-chfilter-examples-custom'),
-								{className:'chfilter-field-'+info[i].FIELD_NAME}
-							)
-							||
-							BX.findChild(
-								BX('report-chfilter-examples-custom'),
-								{className:'chfilter-field-'+fieldType}
-							)
-							||
-							BX.findChild(
-								BX('report-chfilter-examples'),
-								{className:'chfilter-field-'+fieldType}
-							),
-							true
-						);
-					}
+					// insert value control
+					// search in `examples-custom` by name or type
+					// then search in `examples` by type
+					cpControl = BX.clone(
+						BX.findChild(
+							BX('report-chfilter-examples-custom'),
+							{className: 'chfilter-field-' + info[i].FIELD_NAME}
+						)
+						||
+						BX.findChild(
+							BX('report-chfilter-examples-custom'),
+							{className: 'chfilter-field-' + fieldType}
+						)
+						||
+						BX.findChild(
+							BX('report-chfilter-examples'),
+							{className: 'chfilter-field-' + fieldType}
+						),
+						true
+					);
 
 					//global replace %ID%, %NAME%, %TITLE% and etc.
 					cpControl.innerHTML = cpControl.innerHTML.replace(/%((?!VALUE)[A-Z]+)%/gi,
@@ -1516,8 +1649,9 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 					{
 						ufId = info[i]["UF_ID"];
 						ufName = info[i]["UF_NAME"];
-						if (fieldType === 'crm' || fieldType === 'crm_status'
-							|| fieldType === 'iblock_element' || fieldType === 'iblock_section')
+						if (fieldType === 'enum' ||fieldType === 'crm' || fieldType === 'crm_status'
+							|| fieldType === 'iblock_element' || fieldType === 'iblock_section'
+							|| fieldType === 'money')
 						{
 							tipicalControl = false;
 						}
@@ -1855,6 +1989,336 @@ function getResultColumnDataType(&$viewColumnInfo, &$customColumnTypes = array()
 <? endif; ?>
 
 <?php
+
+if ($arResult['allowHorizontalScroll'])
+{
+	$hScrollSettings = array(
+		'tableId' => $resultTableId,
+		'allowHorizontalScroll' => $arResult['allowHorizontalScroll'],
+		'allowPinHeader' => false,
+		'classHide' => 'main-grid-hide',
+		'classShow' => 'show',
+		'classEarLeft' => 'main-grid-ear-left',
+		'classEarRight' => 'main-grid-ear-right',
+		'classFadeContainerLeft' => 'main-grid-fade-left',
+		'classFadeContainerRight' => 'main-grid-fade-right',
+		'classFadeShadowLeft' => 'main-grid-fade-shadow-left',
+		'classFadeShadowRight' => 'main-grid-fade-shadow-right'
+	);
+	?>
+	<script type="text/javascript">
+		BX.ready(function () {
+			BX.loadScript(
+				[
+					'/bitrix/components/bitrix/main.ui.grid/templates/.default/js/utils.js',
+					'/bitrix/components/bitrix/main.ui.grid/templates/.default/js/fader.js'
+				],
+				function() {
+					setTimeout(
+						function() {
+							BX.namespace("BX.Report.View");
+
+							//region Horisontal scrolling
+							if(typeof BX.Report.View.HScrollFader === "undefined")
+							{
+								BX.Report.View.HScrollFader = function(hScroll)
+								{
+									BX.Report.View.HScrollFader.superclass.constructor.apply(this, [hScroll]);
+								};
+								BX.extend(BX.Report.View.HScrollFader, BX.Grid.Fader);
+								BX.Report.View.HScrollFader.prototype.adjustEarOffset = function(prepare)
+								{
+									if (prepare)
+									{
+										this.windowHeight = BX.height(window);
+										this.tbodyPos = BX.pos(this.table.tBodies[0]);
+										this.headerPos = BX.pos(this.table.tHead);
+									}
+
+									var scrollY = window.scrollY;
+
+									if (this.parent.isIE())
+									{
+										scrollY = document.documentElement.scrollTop;
+									}
+
+									var posTop = 0;
+									var posBottom = 0;
+
+									if (!(scrollY > this.tbodyPos.bottom || (scrollY + this.windowHeight) < this.headerPos.top))
+									{
+										if (scrollY > this.headerPos.top)
+										{
+											posTop = scrollY - this.headerPos.top;
+										}
+										else
+										{
+											posTop = 0;
+										}
+
+										if (scrollY + this.windowHeight > this.tbodyPos.bottom)
+										{
+											posBottom = this.tbodyPos.bottom - posTop - this.headerPos.top;
+										}
+										else
+										{
+											posBottom = scrollY + this.windowHeight - posTop - this.headerPos.top;
+										}
+									}
+
+									BX.Grid.Utils.requestAnimationFrame(BX.proxy(function() {
+										if (posTop !== this.lastPosTop)
+										{
+											var translate = 'translate3d(0px, ' + posTop + 'px, 0)';
+											this.getEarLeft().style.transform = translate;
+											this.getEarRight().style.transform = translate;
+										}
+
+										if (posBottom !== this.lastBottomPos)
+										{
+											this.getEarLeft().style.height = posBottom + 'px';
+											this.getEarRight().style.height = posBottom + 'px';
+										}
+
+										this.lastPosTop = posTop;
+										this.lastBottomPos = posBottom;
+									}, this));
+								}
+							}
+
+							if(typeof BX.Report.View.HScroll === "undefined")
+							{
+								BX.Report.View.HScroll = function()
+								{
+									this._id = "";
+									this.settings = new BX.Report.View.Settings({});
+									this.params = {};
+
+									this.ie = null;
+									this.touch = null;
+								};
+
+								BX.Report.View.HScroll.prototype =
+									{
+										initialize: function(id, settings)
+										{
+											this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
+											this.settings = new BX.Report.View.Settings(settings ? settings : {});
+											this.params = {};
+											this.params["ALLOW_HORIZONTAL_SCROLL"] = this.settings.get("allowHorizontalScroll", false);
+											this.params["ALLOW_PIN_HEADER"] = this.settings.get("allowPinHeader", false);
+
+											if (this.getParam('ALLOW_HORIZONTAL_SCROLL'))
+											{
+												this.fader = new BX.Report.View.HScrollFader(this);
+											}
+										},
+										getId: function()
+										{
+											return this._id;
+										},
+										getParam: function(name, defaultval)
+										{
+											return this.params.hasOwnProperty(name) ? this.params[name] : defaultval;
+										},
+										getTable: function ()
+										{
+											var result = null;
+
+											var tableId = this.settings.get("tableId", "");
+											if (BX.type.isNotEmptyString(tableId))
+											{
+												result = BX(tableId);
+											}
+
+											return result;
+										},
+										getContainer: function ()
+										{
+											var result = null;
+
+											var table = this.getTable();
+
+											if (BX.type.isDomNode(table))
+											{
+												result = table.parentNode;
+
+												if (BX.type.isDomNode(result))
+												{
+													result = result.parentNode;
+												}
+												else
+												{
+													result = null;
+												}
+											}
+
+											return result;
+										},
+										isIE: function()
+										{
+											if (!BX.type.isBoolean(this.ie))
+											{
+												this.ie = BX.hasClass(document.documentElement, 'bx-ie');
+											}
+
+											return this.ie;
+										},
+										isTouch: function()
+										{
+											if (!BX.type.isBoolean(this.touch))
+											{
+												this.touch = BX.hasClass(document.documentElement, 'bx-touch');
+											}
+
+											return this.touch;
+										},
+										destroy: function ()
+										{
+											this._id = "";
+											this.settings = new BX.Report.View.Settings({});
+											this.params = {};
+
+											this.ie = null;
+											this.touch = null;
+										}
+									};
+
+								BX.Report.View.HScroll.prototype.getMessage = function(name)
+								{
+									var message = name;
+									var messages = this.settings.get("messages", null);
+									if (messages !== null && typeof(messages) === "object" && messages.hasOwnProperty(name))
+									{
+										message =  messages[name];
+									}
+									else
+									{
+										messages = BX.Report.View.HScroll.messages;
+										if (messages !== null && typeof(messages) === "object" && messages.hasOwnProperty(name))
+										{
+											message =  messages[name];
+										}
+									}
+									return message;
+								};
+
+								if(typeof(BX.Report.View.HScroll.messages) === "undefined")
+								{
+									BX.Report.View.HScroll.messages = {};
+								}
+
+								if(typeof(BX.Report.View.HScroll.items) === "undefined")
+								{
+									BX.Report.View.HScroll.items = {};
+								}
+
+								BX.Report.View.HScroll.create = function(id, settings)
+								{
+									var self = new BX.Report.View.HScroll();
+									self.initialize(id, settings);
+									BX.Report.View.HScroll.items[id] = self;
+									return self;
+								};
+
+								BX.Report.View.HScroll.delete = function(id)
+								{
+									if (BX.Report.View.HScroll.items.hasOwnProperty(id))
+									{
+										BX.Report.View.HScroll.items[id].destroy();
+										delete BX.Report.View.HScroll.items[id];
+									}
+								};
+							}
+
+							if(typeof BX.Report.View.Settings === "undefined")
+							{
+								BX.Report.View.Settings = function(settings)
+								{
+									this.settings = {};
+									if (BX.type.isPlainObject(settings))
+									{
+										this.defaultSettings = settings;
+									}
+									else
+									{
+										this.defaultSettings = {};
+									}
+									this.prepare();
+								};
+
+								BX.Report.View.Settings.prototype = {
+									prepare: function()
+									{
+										this.settings = this.defaultSettings;
+									},
+
+									getDefault: function()
+									{
+										return this.defaultSettings;
+									},
+
+									get: function(name)
+									{
+										var result;
+
+										try {
+											result = (this.getDefault())[name];
+										} catch (err) {
+											result = null;
+										}
+
+										return result;
+									},
+
+									getList: function()
+									{
+										return this.getDefault();
+									}
+								};
+							}
+							//endregion Horisontal scrolling
+
+							BX.Report.View.HScroll.create(
+								"<?=CUtil::JSEscape($resultTableId.'_hscroll')?>",
+								<?=CUtil::PhpToJSObject($hScrollSettings)?>
+							);
+						},
+						10
+					);
+				}
+			);
+		});
+	</script><?php
+}
+
+if (is_array($arResult['STEXPORT_PARAMS']))
+{
+	Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/report/lrpdialog.js');
+	Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/report/stexport.js');
+	?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				BX.Report.LongRunningProcessDialog.messages =
+					{
+						startButton: "<?=GetMessageJS('CRM_REPORT_LRP_DLG_BTN_START')?>",
+						stopButton: "<?=GetMessageJS('CRM_REPORT_LRP_DLG_BTN_STOP')?>",
+						closeButton: "<?=GetMessageJS('CRM_REPORT_LRP_DLG_BTN_CLOSE')?>",
+						wait: "<?=GetMessageJS('CRM_REPORT_LRP_DLG_WAIT')?>",
+						requestError: "<?=GetMessageJS('CRM_REPORT_LRP_DLG_REQUEST_ERR')?>"
+					};
+
+				BX.Report.StExportManager.create(
+					"<?=CUtil::JSEscape($arResult['STEXPORT_PARAMS']['managerId'])?>",
+					<?=CUtil::PhpToJSObject($arResult['STEXPORT_PARAMS'])?>
+				);
+			}
+		);
+	</script><?php
+}
+
 $this->EndViewTarget();
 
 reportViewShowTopButtons($this, $arParams, $arResult);

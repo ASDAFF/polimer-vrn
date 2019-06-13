@@ -247,7 +247,7 @@ abstract class Result implements \IteratorAggregate
 	/**
 	 * Returns an array of fields according to columns in the result.
 	 *
-	 * @return @return \Bitrix\Main\Entity\ScalarField[]
+	 * @return \Bitrix\Main\ORM\Fields\ScalarField[]
 	 */
 	abstract public function getFields();
 
@@ -273,6 +273,22 @@ abstract class Result implements \IteratorAggregate
 	public function getTrackerQuery()
 	{
 		return $this->trackerQuery;
+	}
+
+	/**
+	 * @return callable[]
+	 */
+	public function getConverters()
+	{
+		return $this->converters;
+	}
+
+	/**
+	 * @param callable[] $converters
+	 */
+	public function setConverters($converters)
+	{
+		$this->converters = $converters;
 	}
 
 	/**

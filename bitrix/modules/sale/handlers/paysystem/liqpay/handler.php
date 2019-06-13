@@ -29,7 +29,7 @@ class LiqPayHandler extends PaySystem\ServiceHandler
 			<order_id>PAYMENT_".$busValues['PAYMENT_ID']."</order_id>
 			<amount>".$busValues["PAYMENT_SHOULD_PAY"]."</amount>
 			<currency>".$busValues['PAYMENT_CURRENCY']."</currency>
-			<description>Payment for payment ".$busValues['PAYMENT_ID']."</description>
+			<description>".Loc::getMessage('SALE_HPS_LIQPAY_PARAM_DESCR', array('#PAYMENT_ID#' => $busValues['PAYMENT_ID']))."</description>
 			<default_phone>".$busValues['BUYER_PERSON_PHONE']."</default_phone>
 			<pay_way>".$busValues['LIQPAY_PAY_METHOD']."</pay_way>
 			</request>";
@@ -126,10 +126,8 @@ class LiqPayHandler extends PaySystem\ServiceHandler
 		{
 			$errorMessage = Loc::getMessage('SALE_HPS_LIQPAY_POST_ERROR');
 			$result->addError(new Error($errorMessage));
-			PaySystem\ErrorLog::add(array(
-				'ACTION' => 'processRequest',
-				'MESSAGE' => $errorMessage
-			));
+
+			PaySystem\Logger::addError('LiqPay: processRequest: '.$errorMessage);
 		}
 
 		$status = $this->getValueByTag($this->getOperationXml($request), 'status');
@@ -147,10 +145,7 @@ class LiqPayHandler extends PaySystem\ServiceHandler
 		}
 		else
 		{
-			PaySystem\ErrorLog::add(array(
-				'ACTION' => 'processRequest',
-				'MESSAGE' => 'Incorrect hash'
-			));
+			PaySystem\Logger::addError('LiqPay: processRequest: Incorrect hash');
 			$result->addError(new Error('Incorrect hash'));
 		}
 
@@ -196,10 +191,7 @@ class LiqPayHandler extends PaySystem\ServiceHandler
 		}
 		else
 		{
-			PaySystem\ErrorLog::add(array(
-				'ACTION' => 'processNoticeAction',
-				'MESSAGE' => 'Incorrect sum'
-			));
+			PaySystem\Logger::addError('LiqPay: processNoticeAction: Incorrect sum');
 			$result->addError(new Error('Incorrect sum'));
 		}
 

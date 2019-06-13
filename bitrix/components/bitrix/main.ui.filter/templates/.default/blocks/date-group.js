@@ -15,6 +15,7 @@
 				'data-type': 'type' in data ? data.type : '',
 				'data-name': 'name' in data ? data.name : '',
 				'data-time': data.enableTime
+
 			},
 			content: []
 		};
@@ -24,6 +25,7 @@
 			label = {
 				block: 'main-ui-control-field-label',
 				tag: 'span',
+				attrs: {title: data.label},
 				content: data.label
 			};
 

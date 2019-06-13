@@ -55,7 +55,7 @@ class CAllSaleUserAccount
 	}
 
 	//********** ADD, UPDATE, DELETE **************//
-	function CheckFields($ACTION, &$arFields, $ID = 0)
+	public static function CheckFields($ACTION, &$arFields, $ID = 0)
 	{
 		if ((is_set($arFields, "USER_ID") || $ACTION=="ADD") && intval($arFields["USER_ID"]) <= 0)
 		{
@@ -90,7 +90,7 @@ class CAllSaleUserAccount
 		return true;
 	}
 
-	function Delete($ID)
+	public static function Delete($ID)
 	{
 		global $DB;
 
@@ -120,7 +120,7 @@ class CAllSaleUserAccount
 			CSaleUserTransact::Delete($arTrans["ID"]);
 
 		unset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_".$ID]);
-		unset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE1_".$arOldUserAccount["USER_ID"]."_".$arOldUserAccount["CURRENCY"]]);
+		unset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_".$arOldUserAccount["USER_ID"]."_".$arOldUserAccount["CURRENCY"]]);
 
 		$res = $DB->Query("DELETE FROM b_sale_user_account WHERE ID = ".$ID." ", true);
 
@@ -195,6 +195,7 @@ class CAllSaleUserAccount
 					"CURRENT_BUDGET" => 0.0,
 					"CURRENCY" => $payCurrency,
 					"LOCKED" => "Y",
+					"=TIMESTAMP_X" => $DB->GetNowFunction(),
 					"=DATE_LOCKED" => $DB->GetNowFunction()
 				);
 			if (CSaleUserAccount::Add($arFields))
@@ -625,8 +626,15 @@ class CAllSaleUserAccount
 		{
 			$currentBudget = floatval($arUserAccount["CURRENT_BUDGET"]);
 			$arFields = array(
+					"=TIMESTAMP_X" => $DB->GetNowFunction(),
 					"CURRENT_BUDGET" => $arUserAccount["CURRENT_BUDGET"] + $sum
 				);
+
+			if (!empty($notes))
+			{
+				$arFields['CHANGE_REASON'] = $notes;
+			}
+
 			$result = CSaleUserAccount::Update($arUserAccount["ID"], $arFields);
 		}
 		else
@@ -637,8 +645,14 @@ class CAllSaleUserAccount
 					"CURRENT_BUDGET" => $sum,
 					"CURRENCY" => $currency,
 					"LOCKED" => "Y",
+					"=TIMESTAMP_X" => $DB->GetNowFunction(),
 					"=DATE_LOCKED" => $DB->GetNowFunction()
 				);
+
+			if (!empty($notes))
+			{
+				$arFields['CHANGE_REASON'] = $notes;
+			}
 			$result = CSaleUserAccount::Add($arFields);
 		}
 

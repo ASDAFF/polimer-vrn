@@ -123,7 +123,7 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 								<a href="{{DETAIL_PAGE_URL}}" class="basket-item-info-name-link">
 							{{/DETAIL_PAGE_URL}}
 	
-							<span data-entity="basket-item-name">{{{NAME}}}</span>
+							<span data-entity="basket-item-name">{{NAME}}</span>
 
 							{{#DETAIL_PAGE_URL}}
 								</a>
@@ -195,6 +195,7 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 																{{#SKU_VALUES_LIST}}
 																	<li class="basket-item-scu-item{{#SELECTED}} selected{{/SELECTED}}
 																		{{#NOT_AVAILABLE_OFFER}} not-available{{/NOT_AVAILABLE_OFFER}}"
+																		title="{{NAME}}"
 																		data-entity="basket-item-sku-field"
 																		data-initial="{{#SELECTED}}true{{/SELECTED}}{{^SELECTED}}false{{/SELECTED}}"
 																		data-value-id="{{VALUE_ID}}"
@@ -218,6 +219,7 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 																{{#SKU_VALUES_LIST}}
 																	<li class="basket-item-scu-item{{#SELECTED}} selected{{/SELECTED}}
 																		{{#NOT_AVAILABLE_OFFER}} not-available{{/NOT_AVAILABLE_OFFER}}"
+																		title="{{NAME}}"
 																		data-entity="basket-item-sku-field"
 																		data-initial="{{#SELECTED}}true{{/SELECTED}}{{^SELECTED}}false{{/SELECTED}}"
 																		data-value-id="{{VALUE_ID}}"
@@ -286,6 +288,19 @@ if (!empty($arParams['LABEL_PROP_POSITION']))
 														</div>
 													</div>
 												{{/IS_TEXT}}
+
+												{{#IS_HTML}}
+													<div class="basket-item-property-custom basket-item-property-custom-text
+														{{#HIDE_MOBILE}}hidden-xs{{/HIDE_MOBILE}}"
+														data-entity="basket-item-property">
+														<div class="basket-item-property-custom-name">{{NAME}}</div>
+														<div class="basket-item-property-custom-value"
+															data-column-property-code="{{CODE}}"
+															data-entity="basket-item-property-column-value">
+															{{{VALUE}}}
+														</div>
+													</div>
+												{{/IS_HTML}}
 
 												{{#IS_LINK}}
 													<div class="basket-item-property-custom basket-item-property-custom-text

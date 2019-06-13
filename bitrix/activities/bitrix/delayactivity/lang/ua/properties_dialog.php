@@ -1,4 +1,6 @@
 <?
+$MESS["CPAD_DP_TIME_SERVER"] = "Час сервера";
+$MESS["CPAD_DP_TIME_LOCAL"] = "Локальний час";
 $MESS["CPAD_DP_TIME"] = "Час очікування";
 $MESS["CPAD_DP_TIME_D"] = "днів";
 $MESS["CPAD_DP_TIME_M"] = "хвилин";

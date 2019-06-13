@@ -4,6 +4,10 @@ use Bitrix\Main\Entity;
 
 class CReport
 {
+	protected static $totalCountableAggrFuncs = [
+		'SUM', 'COUNT_DISTINCT', 'AVG', 'MAX', 'MIN'
+	];
+
 	public static $iBlockCompareVariations = array(
 		'EQUAL' => '=',
 		'GREATER_OR_EQUAL' => '>=',
@@ -507,22 +511,24 @@ class CReport
 	/**
 	 * @param                     $elem
 	 * @param                     $select
-	 * @param                     $is_init_entity_aggregated
+	 * @param                     $isInitEntityAggregated
 	 * @param                     $fList
 	 * @param Entity\QueryChain[] $fChainList
-	 * @param                     $helper_class
+	 * @param                     $helperClassName
 	 * @param Entity\Base         $entity
 	 *
 	 * @return array
 	 */
-	public static function prepareSelectViewElement($elem, $select, $is_init_entity_aggregated, $fList, $fChainList, $helper_class, Entity\Base $entity)
+	public static function prepareSelectViewElement($elem, $select, $isInitEntityAggregated, $fList, $fChainList,
+		$helperClassName, Entity\Base $entity)
 	{
-		$result = null;
+		$selectElem = null;
+		$totalInfo = null;
 		$alias = null;
 
 		if (empty($elem['aggr']) && !strlen($elem['prcnt']))
 		{
-			$result = $elem['name'];
+			$selectElem = $elem['name'];
 		}
 		else
 		{
@@ -531,9 +537,24 @@ class CReport
 			/** @var Entity\Field $field */
 			$field = $fList[$elem['name']];
 			$chain = $fChainList[$elem['name']];
-			$alias = $chain->getAlias();
+			$sourceAlias = $alias = $chain->getAlias();
 
-			$dataType = call_user_func(array($helper_class, 'getFieldDataType'), $field);
+			$dataType = call_user_func(array($helperClassName, 'getFieldDataType'), $field);
+
+			// Need pack 1:N aggregations into subquery?
+			$needPack1NAggr = false;
+			if ($chain->hasBackReference() && $elem['aggr'] != 'GROUP_CONCAT')
+			{
+				$confirm = call_user_func_array(
+					array($helperClassName, 'confirmSelectBackReferenceRewrite'),
+					array(&$elem, $chain)
+				);
+
+				if ($confirm)
+				{
+					$needPack1NAggr = true;
+				}
+			}
 
 			if (!empty($elem['aggr']))
 			{
@@ -575,48 +596,117 @@ class CReport
 					}
 					else
 					{
-						$expression = array(
-							$elem['aggr'].'('.$localDef.')', $elem['name']
-						);
+						if ($elem['aggr'] === 'AVG')
+						{
+							if (!is_array($totalInfo))
+							{
+								$totalInfo = [];
+							}
+							$totalInfo['average'] = [
+								'type' => 'average',
+								'cnt' => [
+									'alias' => $sourceAlias.'_AVGCNT',
+									'def' => [
+										'data_type' => 'integer',
+										'expression' => ['COUNT(1)']
+									]
+								],
+								'sum' => [
+									'alias' => $sourceAlias.'_AVGSUM',
+									'def' => [
+										'data_type' => $dataType,
+										'expression' => ['SUM('.$localDef.')', $elem['name']]
+									]
+								]
+							];
+						}
+						else
+						{
+							if ($elem['aggr'] === 'MIN' || $elem['aggr'] === 'MAX')
+							{
+								$typeMap = ['MIN' => 'minimum', 'MAX' => 'maximum'];
+								$type = $typeMap[$elem['aggr']];
+								if (!is_array($totalInfo))
+								{
+									$totalInfo = [];
+								}
+								$totalInfo[$type] = ['type' => $type];
+								unset($typeMap, $type);
+							}
+						}
+
+						$expression = [$elem['aggr'].'('.$localDef.')', $elem['name']];
 					}
 				}
 
 				// pack 1:N aggregations into subquery
-				if ($chain->hasBackReference() && $elem['aggr'] != 'GROUP_CONCAT')
+				if ($needPack1NAggr)
 				{
-					$confirm = call_user_func_array(
-						array($helper_class, 'confirmSelectBackReferenceRewrite'),
-						array(&$elem, $chain)
-					);
-
-					if ($confirm)
+					$filter = array();
+					foreach ($entity->GetPrimaryArray() as $primary)
 					{
-						$filter = array();
-						foreach ($entity->GetPrimaryArray() as $primary)
+						$filter['='.$primary] = new CSQLWhereExpression(
+							'?#', ToLower($entity->getCode()).'.'.$primary
+						);
+					}
+
+					$query = new Entity\Query($entity);
+					$query->addSelect(new Entity\ExpressionField('X', $expression[0], $elem['name']));
+					$query->setFilter($filter);
+					$query->setTableAliasPostfix('_sub');
+
+					$expression = array('('.$query->getQuery().')');
+
+					// double aggregation if init entity aggregated
+					if ($isInitEntityAggregated)
+					{
+						if ($elem['aggr'] == 'COUNT_DISTINCT')
 						{
-							$filter['='.$primary] = new CSQLWhereExpression('?#', ToLower($entity->getCode()).'.'.$primary);
+							$expression[0] = 'SUM('.$expression[0].')';
 						}
-
-						$query = new Entity\Query($entity);
-						$query->addSelect(new Entity\ExpressionField('X', $expression[0], $elem['name']));
-						$query->setFilter($filter);
-						$query->setTableAliasPostfix('_sub');
-
-						$expression = array('('.$query->getQuery().')');
-
-						// double aggregation if init entity aggregated
-						if ($is_init_entity_aggregated)
+						else
 						{
-							if ($elem['aggr'] == 'COUNT_DISTINCT')
+							if ($elem['aggr'] === 'AVG')
 							{
-								$expression[0] = 'SUM('.$expression[0].')';
+								$cntQuery = new Entity\Query($entity);
+								$cntQuery->addSelect(new Entity\ExpressionField('CNT', 'COUNT(1)', $elem['name']));
+								$cntQuery->setFilter($filter);
+								$cntQuery->setTableAliasPostfix('_cnt');
+
+								$sumQuery = new Entity\Query($entity);
+								$sumQuery->addSelect(new Entity\ExpressionField(
+									'SUM', 'SUM('.$localDef.')', $elem['name'])
+								);
+								$sumQuery->setFilter($filter);
+								$sumQuery->setTableAliasPostfix('_sum');
+
+								if (!is_array($totalInfo))
+								{
+									$totalInfo = [];
+								}
+								$totalInfo['average'] = [
+									'type' => 'average',
+									'cnt' => [
+										'alias' => $sourceAlias.'_AVGCNT',
+										'def' => [
+											'data_type' => 'integer',
+											'expression' => ['SUM(('.$cntQuery->getQuery().'))']
+										]
+									],
+									'sum' => [
+										'alias' => $sourceAlias.'_AVGSUM',
+										'def' => [
+											'data_type' => $dataType,
+											'expression' => ['SUM(('.$sumQuery->getQuery().'))']
+										]
+									]
+								];
+
+								unset($cntQuery, $sumQuery);
 							}
-							else
-							{
-								$expression[0] = $elem['aggr'].'('.$expression[0].')';
-							}
+							$expression[0] = $elem['aggr'].'('.$expression[0].')';
 						}
-					} // confirmed
+					}
 				}
 			}
 
@@ -645,7 +735,15 @@ class CReport
 						$localMembers = array_slice($expression, 1);
 					}
 
-					list($remoteAlias, $remoteSelect) = self::prepareSelectViewElement($select[$elem['prcnt']], $select, $is_init_entity_aggregated, $fList, $fChainList, $helper_class, $entity);
+					list($remoteAlias, $remoteSelect) = self::prepareSelectViewElement(
+						$select[$elem['prcnt']],
+						$select,
+						$isInitEntityAggregated,
+						$fList,
+						$fChainList,
+						$helperClassName,
+						$entity
+					);
 
 					if (is_array($remoteSelect) && !empty($remoteSelect['expression']))
 					{
@@ -665,23 +763,41 @@ class CReport
 						$alias = $alias . '_FROM_' . $remoteAlias;
 					}
 
-					$exprDef = '('.$localDef.') / ('.$remoteDef.') * 100';
-
-					$expression = array_merge(array($exprDef), $localMembers, $remoteMembers);
-
+					// Expression
 					// 'ROUND(STATUS / ID * 100)'
 					// 'ROUND( (EX1(F1, F2)) / (EX2(F3, F1)) * 100)',
 					// F1, F2, F3, F1
+					$exprDef = '('.$localDef.') / ('.$remoteDef.') * 100';
+					$expression = array_merge(array($exprDef), $localMembers, $remoteMembers);
+
+					// Total expression
+					if (!is_array($totalInfo))
+					{
+						$totalInfo = [];
+					}
+					$totalInfo['prcntFromCol'] = [
+						'type' => 'prcntFromCol',
+						'local' => [
+							'alias' => $sourceAlias.'_PRCNTFC',
+							'def' => [
+								'data_type' => $dataType,
+								'expression' => array_merge(array($localDef), $localMembers)
+							]
+						],
+						'remote' => [
+							'alias' => $remoteAlias
+						]
+					];
 				}
 			}
 
-			$result = array(
+			$selectElem = array(
 				'data_type' => $dataType,
 				'expression' => $expression
 			);
 		}
 
-		return array($alias, $result);
+		return array($alias, $selectElem, $totalInfo);
 	}
 
 	public static function getFullColumnTitle($view, $viewColumns, $fullHumanTitles)
@@ -739,6 +855,16 @@ class CReport
 		return false;
 	}
 
+	public static function getTotalCountableAggregationFunctions()
+	{
+		return static::$totalCountableAggrFuncs;
+	}
+
+	public static function isTotalCountableAggregationFunction($aggr)
+	{
+		return in_array($aggr, static::getTotalCountableAggregationFunctions(), true);
+	}
+
 	public static function isColumnTotalCountable($view, $helperClassName)
 	{
 		/** @var Entity\Field[] $view */
@@ -750,7 +876,7 @@ class CReport
 		{
 			return true;
 		}
-		elseif ($view['aggr'] == 'SUM' || $view['aggr'] == 'COUNT_DISTINCT')
+		elseif (static::isTotalCountableAggregationFunction($view['aggr']))
 		{
 			return true;
 		}
@@ -1001,11 +1127,11 @@ class CReport
 
 	public static function sqlizeFilter($filter)
 	{
-		$newFilter = array();
+		$newFilter = [];
 
 		foreach ($filter as $fId => $filterInfo)
 		{
-			$iFilterItems = array();
+			$iFilterItems = [];
 
 			foreach ($filterInfo as $key => $subFilter)
 			{
@@ -1021,14 +1147,24 @@ class CReport
 					$compare = self::$iBlockCompareVariations[$subFilter['compare']];
 					$name = $subFilter['name'];
 					$value = $subFilter['value'];
-					if ($compare === '>%')
+
+					switch ($compare)
 					{
-						$compare = '';
-						$value = $value.'%';
+						case '!':
+						case '!%':
+							$iFilterItems[] = [
+								'LOGIC' => 'OR',
+								$compare.$name => $value,
+								'='.$name => false
+							];
+							break;
+						/** @noinspection PhpMissingBreakStatementInspection */
+						case '>%':
+							$compare = '';
+							$value = $value.'%';
+						default:
+							$iFilterItems[] = [$compare.$name => $value];
 					}
-					$iFilterItems[] = array(
-						$compare.$name => $value
-					);
 				}
 				else if ($subFilter['type'] == 'filter')
 				{

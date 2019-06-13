@@ -7,15 +7,25 @@ BX.viewElementBind = function(div, params, isTarget, groupBy)
 {
 	var obElementViewer = new BX.CViewer(params);
 
-	if(!isTarget)
-		isTarget = function(node){
+	if (!isTarget)
+	{
+		isTarget = function (node) {
 			return BX.type.isElementNode(node) && (node.getAttribute('data-bx-viewer') || node.tagName.toUpperCase() == 'IMG');
 		}
-;
+	}
 
-	BX.ready(function(){
-		_viewerElementBind(div, isTarget, groupBy, obElementViewer);
-	});
+	if (BX.getClass('BX.UI.Viewer') && BX(div))
+	{
+		BX.ready(function(){
+			BX.UI.Viewer.bind(BX(div), isTarget);
+		});
+	}
+	else
+	{
+		BX.ready(function(){
+			_viewerElementBind(div, isTarget, groupBy, obElementViewer);
+		});
+	}
 
 	return obElementViewer;
 };
@@ -1430,7 +1440,7 @@ BX.CViewEditableElement.prototype.setDataForCommit = function(data)
 	{
 		this.dataForCommit = data;
 	}
-	else if((BX.browser.IsIE() || BX.browser.IsIE11() || /Edge\/12./i.test(navigator.userAgent)))
+	else if((BX.browser.IsIE() || BX.browser.IsIE11() || /Edge\/./i.test(navigator.userAgent)))
 	{
 		//IE and garbage collector delete all objects (from modal window). This is half-hack.
 		for(var key in arguments)
@@ -1572,7 +1582,7 @@ BX.CViewBlankElement.prototype.discardFile = function(parameters)
 	var uriToDoc = parameters.editUrl ;
 	if(this.editUrl)
 	{
-		uriToDoc = CViewerUrlHelper.getUrlDiscardFile(this.editUrl);
+		uriToDoc = CViewerUrlHelper.getUrlDiscardBlankFile(this.editUrl);
 	}
 	else
 	{
@@ -2122,21 +2132,29 @@ BX.CViewIframeElement.prototype.load = function(successLoadCallback, errorLoadCa
 						return;
 					}
 
-					this.domElement = BX.create('iframe', {
-						props: {
-							className: 'bx-viewer-image',
-							src: data.viewUrl || data.viewerUrl
-						},
-						events: {
-							load: !BX.CViewer.browserWithDeferredCheckIframeError()? BX.proxy(function(){
-								BX.proxy(this.onLoad, this);
-								checkIframeError();
-							}, this) : BX.proxy(this.onLoad, this)
-						},
-						style: {
-							border: 'none'
-						}
-					});
+					if (data.neededOpenWindow)
+					{
+						window.open(data.viewUrl, '_blank');
+						this.domElement = BX.create('span');
+					}
+					else
+					{
+						this.domElement = BX.create('iframe', {
+							props: {
+								className: 'bx-viewer-image',
+								src: data.viewUrl || data.viewerUrl
+							},
+							events: {
+								load: !BX.CViewer.browserWithDeferredCheckIframeError()? BX.proxy(function(){
+									BX.proxy(this.onLoad, this);
+									checkIframeError();
+								}, this) : BX.proxy(this.onLoad, this)
+							},
+							style: {
+								border: 'none'
+							}
+						});
+					}
 					var transformationInProcessMessage = BX.findChildByClassName(this.contentWrap, 'bx-viewer-file-transformation-in-process-message');
 					if(transformationInProcessMessage)
 					{
@@ -3838,10 +3856,13 @@ BX.CViewer.prototype.adjustPos = function()
 	}
 	else
 	{
-		if (!this.CONTENT_WRAP.style.height)
-			this.CONTENT_WRAP.style.height = "100px";
-		if (!this.CONTENT_WRAP.style.width)
-			this.CONTENT_WRAP.style.width = "100px";
+		if (this.CONTENT_WRAP)
+		{
+			if (!this.CONTENT_WRAP.style.height){}
+				this.CONTENT_WRAP.style.height = "100px";
+			if (!this.CONTENT_WRAP.style.width)
+				this.CONTENT_WRAP.style.width = "100px";
+		}
 
 		//this._adjustPosByElement();
 		this.getCurrent().addTimeoutId(
@@ -5244,7 +5265,7 @@ BX.CViewer.prototype.createIframeElement = function(element, params)
 		pdfFallback: element.getAttribute('data-bx-pdfFallback'),
 		previewImage: element.getAttribute('data-bx-previewImage'),
 		transformTimeout: params.transformTimeout,
-		getLastVersionUri: params.getLastVersionUri,
+		getLastVersionUri: params.getLastVersionUri || element.getAttribute('data-bx-getLastVersionUri'),
 		buttons: []
 	});
 	if(iframeElement.isConverted())
@@ -5426,6 +5447,13 @@ var CViewerUrlHelper = {
 	{
 		url = this.addToLinkParam(url, 'service', this.lastService);
 		url = this.addToLinkParam(url, 'document_action', 'discard');
+		return url;
+	},
+
+	getUrlDiscardBlankFile: function(url)
+	{
+		url = this.addToLinkParam(url, 'service', this.lastService);
+		url = this.addToLinkParam(url, 'document_action', 'discardBlank');
 		return url;
 	},
 

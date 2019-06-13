@@ -1,5 +1,4 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var CBitrixComponent $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -121,20 +120,24 @@ if (!array_key_exists("SHOW_FIELDS_TOOLTIP", $arParams))
 if (!array_key_exists("USER_PROPERTY_TOOLTIP", $arParams))
 	$arParams["USER_PROPERTY_TOOLTIP"] = unserialize(COption::GetOptionString("socialnetwork", "tooltip_properties", $arTooltipPropertiesDefault));
 
-if (!$GLOBALS["USER"]->IsAuthorized())
+if (!$USER->IsAuthorized())
 {	
 	$arResult["NEED_AUTH"] = "Y";
 }
 else
 {
 	/***********************  ACTIONS  *******************************/
-
 	if (
 		$_SERVER["REQUEST_METHOD"] == "POST" 
 		&& (in_array($_POST["action"], array("accept", "reject"))) 
 		&& check_bitrix_sessid()
 	)
 	{
+		if ($_POST["ajax_request"] == "Y")
+		{
+			CUtil::JSPostUnescape();
+		}
+
 		$errorMessage = "";
 
 		$arUserRelationIDs = array();
@@ -146,15 +149,21 @@ else
 				if ($_POST["checked_".$i] == "Y")
 				{
 					if ($_POST["type_".$i] == "INVITE_GROUP")
+					{
 						$arGroupRelationIDs[] = intval($_POST["id_".$i]);
+					}
 					else
+					{
 						$arUserRelationIDs[] = intval($_POST["id_".$i]);
+					}
 				}
 			}
 		}
 
 		if (count($arUserRelationIDs) <= 0 && count($arGroupRelationIDs) <= 0)
+		{
 			$errorMessage .= GetMessage("SONET_URE_NOT_SELECTED").". ";
+		}
 
 		if (strlen($errorMessage) <= 0)
 		{
@@ -172,7 +181,9 @@ else
 							if (!CSocNetUserToGroup::UserConfirmRequestToBeMember($arParams["USER_ID"], $relationID, $bAutoSubscribe))
 							{
 								if ($e = $APPLICATION->GetException())
+								{
 									$errorMessage .= $e->GetString();
+								}
 							}
 						}
 						elseif ($_POST["action"] == "reject")
@@ -180,7 +191,9 @@ else
 							if (!CSocNetUserToGroup::UserRejectRequestToBeMember($arParams["USER_ID"], $relationID))
 							{
 								if ($e = $APPLICATION->GetException())
+								{
 									$errorMessage .= $e->GetString();
+								}
 							}
 						}
 					}
@@ -196,7 +209,9 @@ else
 							if (!CSocNetUserRelations::ConfirmRequestToBeFriend($arParams["USER_ID"], $relationID, $bAutoSubscribe))
 							{
 								if ($e = $APPLICATION->GetException())
+								{
 									$errorMessage .= $e->GetString();
+								}
 							}
 						}
 						elseif ($_POST["action"] == "reject")
@@ -204,12 +219,16 @@ else
 							$arRelation = CSocNetUserRelations::GetByID($relationID);
 
 							if (!$arRelation)
+							{
 								continue;
+							}
 
 							if (!CSocNetUserRelations::RejectRequestToBeFriend($arParams["USER_ID"], $relationID))
 							{
 								if ($e = $APPLICATION->GetException())
+								{
 									$errorMessage .= $e->GetString();
+								}
 							}
 						}
 					}
@@ -219,6 +238,7 @@ else
 			{
 				if ($_POST["action"] == "reject")
 				{
+					// groups
 					if (count($arGroupRelationIDs) > 0)
 					{
 						$errorMessage = "";
@@ -226,18 +246,26 @@ else
 						{
 							$arRelation = CSocNetUserToGroup::GetByID($relationID);
 							if (!$arRelation)
+							{
 								continue;
+							}
 
 							if (!CSocNetUserToGroup::Delete($arRelation["ID"]))
 							{
 								if ($e = $APPLICATION->GetException())
+								{
 									$errorMessage .= $e->GetString();
+								}
+
 								if (StrLen($errorMessage) <= 0)
+								{
 									$errorMessage .= GetMessage("SONET_GRE_CANT_DELETE_INVITATION", array("#RELATION_ID#" => $arRelation["ID"]));
+								}
 							}
 						}
 					}
 
+					// users
 					if (count($arUserRelationIDs) > 0)
 					{
 						$errorMessage = "";
@@ -246,19 +274,37 @@ else
 							$arRelation = CSocNetUserRelations::GetByID($relationID);
 
 							if (!$arRelation)
+							{
 								continue;
+							}
 
 							if (!CSocNetUserRelations::Delete($arRelation["ID"]))
 							{
 								if ($e = $APPLICATION->GetException())
+								{
 									$errorMessage .= $e->GetString();
+								}
+
 								if (StrLen($errorMessage) <= 0)
+								{
 									$errorMessage .= GetMessage("SONET_GRE_CANT_DELETE_INVITATION", array("#RELATION_ID#" => $arRelation["ID"]));
+								}
 							}
 						}
 					}
 				}
 			}
+		}
+
+		if ($_POST["ajax_request"] == "Y")
+		{
+			$APPLICATION->RestartBuffer();
+			echo CUtil::PhpToJsObject(array(
+				'MESSAGE' => (strlen($errorMessage) > 0 ? 'ERROR' : 'SUCCESS'),
+				'ERROR_MESSAGE' => (strlen($errorMessage) > 0 ? $errorMessage : ''),
+			));
+			require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
+			die();
 		}
 	}
 
@@ -271,8 +317,13 @@ else
 		$errorMessage = "";
 
 		//ACCESS CHECK: only user himself and socnet admin are allowed to confirm
-		if ($GLOBALS["USER"]->GetID() != $arParams["USER_ID"] && !CSocNetUser::IsCurrentUserModuleAdmin())
+		if (
+			$USER->GetID() != $arParams["USER_ID"]
+			&& !CSocNetUser::IsCurrentUserModuleAdmin()
+		)
+		{
 			$errorMessage = GetMessage("SONET_URE_NO_PERMS");
+		}
 
 		if (isset($_GET["INVITE_GROUP"]))
 		{
@@ -354,7 +405,7 @@ else
 
 	if (is_array($arResult["User"]))
 	{
-		$arResult["CurrentUserPerms"] = CSocNetUserPerms::InitUserPerms($GLOBALS["USER"]->GetID(), $arResult["User"]["ID"], CSocNetUser::IsCurrentUserModuleAdmin());
+		$arResult["CurrentUserPerms"] = CSocNetUserPerms::InitUserPerms($USER->GetID(), $arResult["User"]["ID"], CSocNetUser::IsCurrentUserModuleAdmin());
 
 		if ($arResult["CurrentUserPerms"]["Operations"]["modifyuser"])
 		{
@@ -427,7 +478,7 @@ else
 					"USER_LAST_NAME" => $arUserRequest["FIRST_USER_LAST_NAME"],
 					"USER_FIRST_NAME" => $arUserRequest["FIRST_USER_FIRST_NAME"],
 					"USER_LOGIN" => $arUserRequest["FIRST_USER_LOGIN"],
-					"USER_NAME_FORMATTED" => $strNameFormatted,			
+					"USER_NAME_FORMATTED" => $strNameFormatted,
 					"USER_PERSONAL_PHOTO" => $arUserRequest["FIRST_USER_PERSONAL_PHOTO"],
 					"USER_PERSONAL_PHOTO_IMG" => $arImage,
 					"USER_PROFILE_URL" => $pu,

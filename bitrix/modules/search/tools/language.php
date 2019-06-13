@@ -69,11 +69,16 @@ class CSearchLanguage
 			$file_name = $dir_name."/trigram";
 			if(file_exists($file_name) && is_file($file_name))
 			{
-				$cache_id = filemtime($file_name).",".$file_name;
+				$cache_id = filemtime($file_name).",v1,".$file_name;
 				$obCache = new CPHPCache;
 				if($obCache->StartDataCache(360000, $cache_id, "search"))
 				{
 					$text = file_get_contents($file_name);
+					$keyboard = $this->GetKeyboardLayout();
+					if (defined("BX_UTF") && isset($keyboard["trigram_charset"]))
+					{
+						$text = $GLOBALS["APPLICATION"]->ConvertCharset($text, $keyboard["trigram_charset"], "utf8");
+					}
 					$ar = explode("\n", $text);
 					foreach($ar as $trigramm)
 					{
@@ -221,9 +226,26 @@ class CSearchLanguage
 		}
 
 		if(isset($keyboards[$combo]))
-			return strtr($text, $keyboards[$combo]);
+		{
+			if (defined("BX_UTF"))
+			{
+				$text = static::StrToArray($text);
+				foreach ($text as $pos => $char)
+				{
+					if (isset($keyboards[$combo][$char]))
+						$text[$pos] = $keyboards[$combo][$char];
+				}
+				return implode('', $text);
+			}
+			else
+			{
+				return strtr($text, $keyboards[$combo]);
+			}
+		}
 		else
+		{
 			return $text;
+		}
 	}
 
 	//This function converts text into array of character positions
@@ -308,9 +330,6 @@ class CSearchLanguage
 		if(count($arLanguages) < 2)
 			return false;
 
-		$languages_from = array();
-		$max_len = 0;
-
 		//Give customized languages a chance to guess
 		foreach($arLanguages as $lang)
 		{
@@ -324,30 +343,38 @@ class CSearchLanguage
 
 		//First try to detect language which
 		//was used to type the phrase
+		$max_len = 0;
+		$languages_from = array();
 		foreach($arLanguages as $lang)
 		{
 			$ob = CSearchLanguage::GetLanguage($lang);
 
 			$arScanCodesTmp1 = $ob->ConvertToScancode($text, true);
-			$arScanCodesTmp2_cnt = count(array_filter($arScanCodesTmp1));
-
-			//It will be one with most converted chars
-			if($arScanCodesTmp2_cnt > $max_len)
-			{
-				$max_len = $arScanCodesTmp2_cnt;
-				$languages_from = array($lang => $arScanCodesTmp1);
-			}
-			elseif($arScanCodesTmp2_cnt == $max_len)
-			{
-				$languages_from[$lang] = $arScanCodesTmp1;
-			}
+			$_cnt = count(array_filter($arScanCodesTmp1));
+			if ($_cnt > $max_len)
+				$max_len = $_cnt;
+			$languages_from[$lang] = $arScanCodesTmp1;
 		}
 
-		if($max_len < 2)
+		if (empty($languages_from))
 			return false;
 
-		if(count($languages_from) <= 0)
+		if ($max_len < 2)
 			return false;
+
+		$languages_from = array_filter($languages_from,
+			function($a) use($max_len)
+			{
+				return count(array_filter($a)) >= $max_len;
+			}
+		);
+
+		uasort($languages_from,
+			function($a, $b)
+			{
+				return count(array_filter($b)) - count(array_filter($a));
+			}
+		);
 
 		//If more than one language is detected as input
 		//try to get one with best trigram info
@@ -355,23 +382,19 @@ class CSearchLanguage
 		$i = 0;
 		foreach($languages_from as $lang => $arScanCodes)
 		{
-			$arDetectionFrom[$lang] = array();
-
 			$ob = CSearchLanguage::GetLanguage($lang);
-
-			$arDetectionFrom[$lang][] = $ob->HasTrigrams();
-			$arDetectionFrom[$lang][] = $ob->CheckTrigrams($arScanCodes);
-
 			//Calculate how far sequence of scan codes
 			//is from language model
-			//$deviation = $ob->GetDeviation($arScanCodes);
-			//$arDetection[$lang_from_to][] = $deviation[1];
-			//$arDetection[$lang_from_to][] = intval($deviation[0]*100);
-			//Delay till compare
-			$arDetectionFrom[$lang][] = $ob;
-			$arDetectionFrom[$lang][] = $arScanCodes;
+			$deviation = $ob->GetDeviation($arScanCodes);
 
-			$arDetectionFrom[$lang][] = $i;
+			$arDetectionFrom[$lang] = array(
+				$ob->HasTrigrams(),
+				$ob->CheckTrigrams($arScanCodes),
+				$deviation[1],
+				intval($deviation[0]*100),
+				$i,
+			);
+
 			$i++;
 		}
 		uasort($arDetectionFrom, array("CSearchLanguage", "cmp"));
@@ -381,7 +404,6 @@ class CSearchLanguage
 		$i = 0;
 		foreach($arDetectionFrom as $lang_from => $arTemp)
 		{
-			$arScanCodes = $languages_from[$lang_from];
 			foreach($arLanguages as $lang)
 			{
 				$lang_from_to = $lang_from."=>".$lang;
@@ -390,20 +412,19 @@ class CSearchLanguage
 
 				$ob = CSearchLanguage::GetLanguage($lang);
 
-				$arDetection[$lang_from_to][] = $ob->HasBigrammInfo();
+				$alt_text = CSearchLanguage::ConvertKeyboardLayout($text, $lang_from, $lang);
+				$arScanCodes = $ob->ConvertToScancode($alt_text, true);
+
+				$arDetection[$lang_from_to][] = $ob->HasBigrammInfo()? 0: 1;
 				$arDetection[$lang_from_to][] = $ob->CheckTrigrams($arScanCodes);
+				$arDetection[$lang_from_to][] = -count(array_filter($arScanCodes));
 
 				//Calculate how far sequence of scan codes
 				//is from language model
-				//$deviation = $ob->GetDeviation($arScanCodes);
-				//$arDetection[$lang_from_to][] = $deviation[1];
-				//$arDetection[$lang_from_to][] = intval($deviation[0]*100);
-				//Delay till compare
-				$arDetection[$lang_from_to][] = $ob;
-				$arDetection[$lang_from_to][] = $arScanCodes;
+				$deviation = $ob->GetDeviation($arScanCodes);
+				$arDetection[$lang_from_to][] = $deviation[1];
+				$arDetection[$lang_from_to][] = $deviation[0];
 
-				$alt_text = CSearchLanguage::ConvertKeyboardLayout($text, $lang_from, $lang);
-				$arDetection[$lang_from_to][] = $alt_text !== $text;
 				$arDetection[$lang_from_to][] = $i;
 				$arDetection[$lang_from_to][] = $lang_from_to;
 				$i++;
@@ -412,6 +433,7 @@ class CSearchLanguage
 
 		uasort($arDetection, array("CSearchLanguage", "cmp"));
 		$language_from_to = key($arDetection);
+
 		list($language_from, $language_to) = explode("=>", $language_from_to);
 
 		$alt_text = CSearchLanguage::ConvertKeyboardLayout($text, $language_from, $language_to);
@@ -424,45 +446,15 @@ class CSearchLanguage
 	//Compare to results of text analysis
 	static function cmp($a, $b)
 	{
-		if($a[0] && !$b[0]) //On first place we check if model supports bigrams check
-			return -1;
-		elseif($b[0] && !$a[0])
-			return 1;
-		else
+		$c = count($a);
+		for($i = 0; $i < $c; $i++)
 		{
-			$c = count($a);
-			for($i = 1; $i < $c; $i++)
-			{
-				if($i == 2)
-				{
-					//Delayed deviation calculation
-					if(is_object($a[2]))
-					{
-						$deviation = $a[2]->GetDeviation($a[3]);
-						$a[2] = $deviation[1];
-						if(count($a[3]) > 3)
-							$a[3] = intval($deviation[0]*100);
-						else
-							$a[3] = 100;
-					}
-					if(is_object($b[2]))
-					{
-						$deviation = $b[2]->GetDeviation($b[3]);
-						$b[2] = $deviation[1];
-						if(count($b[3]) > 3)
-							$b[3] = intval($deviation[0]*100);
-						else
-							$b[3] = 100;
-					}
-				}
-
-				if($a[$i] < $b[$i])
-					return -1;
-				elseif($a[$i] > $b[$i])
-					return 1;
-			}
-			return 0;//never happens
+			if($a[$i] < $b[$i])
+				return -1;
+			elseif($a[$i] > $b[$i])
+				return 1;
 		}
+		return 0;//never happens
 	}
 
 	//Function returns distance of the text (sequence of scan codes)
@@ -483,15 +475,17 @@ class CSearchLanguage
 		$zeroes = 0;
 		foreach($text_bigrams as $key => $value)
 		{
-			if(!isset($lang_bigrams[$key]))
+			for ($i = 0;$i < $value; $i++)
 			{
-				$zeroes++;
-				$deviation += $value/$count;
-			}
-			else
-			{
-//echo $this->ConvertFromScancode(explode(" ", $key)),"=",$lang_bigrams[$key]/$lang_count,"<br>";
-				$deviation += abs($value/$count - $lang_bigrams[$key]/$lang_count);
+				if(!isset($lang_bigrams[$key]))
+				{
+					$zeroes++;
+					$deviation += 1/$count;
+				}
+				else
+				{
+					$deviation += abs(1/$count - $lang_bigrams[$key]/$lang_count);
+				}
 			}
 		}
 

@@ -445,8 +445,14 @@ class OrderBuyer
 		foreach ($propertyCollection->getGroups() as $group)
 		{
 			$resultBody = "";
+
+			$groupProperties = $propertyCollection->getPropertiesByGroupId($group['ID']);
+
+			if(!is_array($groupProperties))
+				continue;
+
 			/** @var \Bitrix\Sale\PropertyValue $property */
-			foreach ($propertyCollection->getGroupProperties($group['ID']) as $property)
+			foreach ($propertyCollection->getPropertiesByGroupId($group['ID']) as $property)
 			{
 				$propertyValue = $property->getValue();
 
@@ -532,23 +538,12 @@ class OrderBuyer
 				{
 					if (isset($property['RELATION']))
 					{
-						foreach ($property['RELATION'] as $relation)
+						if ($property['TYPE'] === 'ENUM' && is_array($property['OPTIONS']))
 						{
-							if (
-								in_array($relation['ENTITY_ID'], $order->getPaymentSystemId())
-								||
-								in_array($relation['ENTITY_ID'], $order->getDeliverySystemId())
-							)
-							{
-								if ($property['TYPE'] === 'ENUM' && is_array($property['OPTIONS']))
-								{
-									$property['OPTIONS_SORT'] = array_keys($property['OPTIONS']);
-								}
-								$result[$key][] = $property;
-								$groups[$property['PROPS_GROUP_ID']] = true;
-								break;
-							}
+							$property['OPTIONS_SORT'] = array_keys($property['OPTIONS']);
 						}
+						$result[$key][] = $property;
+						$groups[$property['PROPS_GROUP_ID']] = true;
 					}
 				}
 			}

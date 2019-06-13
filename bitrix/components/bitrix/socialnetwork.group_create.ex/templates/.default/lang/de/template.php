@@ -53,7 +53,6 @@ $MESS["SONET_GCE_T_DEST_EXTRANET_ADD_NAME_TITLE"] = "Vorname";
 $MESS["SONET_GCE_T_DEST_EXTRANET_ADD_LAST_NAME_TITLE"] = "Nachname";
 $MESS["SONET_GCE_T_DEST_EXTRANET_ADD_SEND_PASSWORD_TITLE"] = "Daten zum Einloggen an die angegebene E-Mail-Adresse senden";
 $MESS["SONET_GCE_T_EMAILS_DESCR"] = "E-Mail-Adressen, durch Komma getrennt";
-$MESS["SONET_GCE_T_INVITE_MESSAGE_TEXT"] = "Ich lade Sie in unser Intranet ein. Hier können wir gemeinsam an Projekten und Aufgaben arbeiten, Termine und Besprechungen planen, Dokumente verwalten, miteinander kommunizieren usw.";
 $MESS["SONET_GCE_T_AJAX_ERROR"] = "Fehler bei Verarbeitung der Formulardaten. Versuchen Sie bitte erneut.";
 $MESS["SONET_GCE_T_IMAGE2"] = "Bild";
 $MESS["SONET_GCE_T_SUBJECT_PROJECT"] = "Projektthema";
@@ -112,4 +111,6 @@ $MESS["SONET_GCE_T_BUTTON_TITLE_FURTHER"] = "weiter";
 $MESS["SONET_GCE_T_TITLE_CREATE"] = "Arbeitsgruppe erstellen";
 $MESS["SONET_GCE_T_TITLE_CREATE_PROJECT"] = "Projekt erstellen";
 $MESS["SONET_GCE_T_TITLE_EDIT_PROJECT"] = "Projekt bearbeiten";
+$MESS["SONET_GCE_T_ADD_DEPT_HINT"] = "Wird eine Abteilung ausgewählt, werden alle Abteilungsmitarbeiter zu Gruppenteilnehmern ohne Bestätigung.";
+$MESS["SONET_GCE_T_ADD_DEPT_HINT_PROJECT"] = "Wird eine Abteilung ausgewählt, werden alle Abteilungsmitarbeiter zu Projektteilnehmern ohne Bestätigung.";
 ?>

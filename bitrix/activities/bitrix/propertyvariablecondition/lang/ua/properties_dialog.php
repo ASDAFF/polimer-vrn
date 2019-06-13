@@ -1,4 +1,6 @@
 <?
+$MESS["BPFC_PD_EMPTY"] = "не заповнено";
+$MESS["BPFC_PD_NOT_EMPTY"] = "заповнено";
 $MESS["BPFC_PD_GT"] = "більше";
 $MESS["BPFC_PD_YES"] = "Так";
 $MESS["BPFC_PD_ADD"] = "Додати умову";

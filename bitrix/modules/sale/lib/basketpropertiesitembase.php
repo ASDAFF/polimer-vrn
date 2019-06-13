@@ -1,10 +1,4 @@
 <?php
-/**
- * Bitrix Framework
- * @package bitrix
- * @subpackage sale
- * @copyright 2001-2014 Bitrix
- */
 
 namespace Bitrix\Sale;
 
@@ -24,33 +18,21 @@ abstract class BasketPropertyItemBase extends Internals\CollectableEntity
 	/**
 	 * @return array
 	 */
-	public static function getAllFields()
-	{
-		static $mapFields = array();
-
-		if (!$mapFields)
-			$mapFields = parent::getAllFieldsByMap(static::getFieldMap());
-
-		return $mapFields;
-	}
-
-	/**
-	 * @return array
-	 */
 	public static function getAvailableFields()
 	{
 		return array(
-			'NAME',
-			'VALUE',
-			'CODE',
-			'SORT',
+			'NAME' => 'NAME',
+			'VALUE' => 'VALUE',
+			'CODE' => 'CODE',
+			'SORT' => 'SORT',
+			'XML_ID' => 'XML_ID'
 		);
 	}
 
 	/**
 	 * @return array
 	 */
-	public static function getMeaningfulFields()
+	protected static function getMeaningfulFields()
 	{
 		return array();
 	}
@@ -65,51 +47,68 @@ abstract class BasketPropertyItemBase extends Internals\CollectableEntity
 
 	/**
 	 * @throws NotImplementedException
-	 * @return BasketPropertyItemBase
 	 */
-	protected static function createBasketPropertyItemObject()
+	public static function getRegistryType()
 	{
 		throw new NotImplementedException();
 	}
 
 	/**
+	 * @return BasketPropertyItem
+	 */
+	private static function createBasketPropertyItemObject()
+	{
+		$registry = Registry::getInstance(static::getRegistryType());
+		$basketPropertyItemClassName = $registry->getBasketPropertyItemClassName();
+
+		return new $basketPropertyItemClassName();
+	}
+
+	/**
 	 * @param BasketPropertiesCollectionBase $basketPropertiesCollection
-	 * @return static
+	 * @return BasketPropertyItem
+	 * @throws NotImplementedException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function create(BasketPropertiesCollectionBase $basketPropertiesCollection)
 	{
 		$basketPropertyItem = static::createBasketPropertyItemObject();
 		$basketPropertyItem->setCollection($basketPropertiesCollection);
 
+		$basketPropertyItem->setField('XML_ID', static::generateXmlId());
+
 		return $basketPropertyItem;
 	}
 
 	/**
+	 * @return string
+	 */
+	protected static function generateXmlId()
+	{
+		return uniqid('bx_');
+	}
+
+	/**
+	 * @internal
+	 *
 	 * @return Result
+	 * @throws NotImplementedException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public function save()
 	{
+		$this->checkCallingContext();
+
 		$result = new Result();
-		static $map = array();
 
 		$id = $this->getId();
 
-		if (empty($map))
-		{
-			$map = static::getFieldMap();
-		}
-
-		if ($id > 0)
-		{
-			$fields = $this->fields->getChangedValues();
-		}
-		else
-		{
-			$fields = $this->fields->getValues();
-		}
+		$fields = $this->fields->getChangedValues();
 
 		if (!empty($fields) && is_array($fields))
 		{
+			$map = static::getFieldsMap();
 			foreach ($map as $key => $value)
 			{
 				if ($value instanceof Entity\StringField)
@@ -138,7 +137,9 @@ abstract class BasketPropertyItemBase extends Internals\CollectableEntity
 				}
 
 				if ($resultData = $r->getData())
+				{
 					$result->setData($resultData);
+				}
 			}
 		}
 		else
@@ -157,7 +158,9 @@ abstract class BasketPropertyItemBase extends Internals\CollectableEntity
 			}
 
 			if ($resultData = $r->getData())
+			{
 				$result->setData($resultData);
+			}
 
 			$id = $r->getId();
 			$this->setFieldNoDemand('ID', $id);
@@ -171,19 +174,46 @@ abstract class BasketPropertyItemBase extends Internals\CollectableEntity
 		return $result;
 	}
 
+	/*
+	 * @throws \Bitrix\Main\ObjectNotFoundException
+	 * @throws \Bitrix\Main\
+	 */
+	private function checkCallingContext()
+	{
+		/** @var BasketPropertiesCollectionBase $collection */
+		$collection = $this->getCollection();
+
+		$basketItem = $collection->getBasketItem();
+
+		$basket = $basketItem->getBasket();
+
+		$order = $basket->getOrder();
+
+		if ($order)
+		{
+			if (!$order->isSaveRunning())
+			{
+				trigger_error("Incorrect call to the save process. Use method save() on \Bitrix\Sale\Order entity", E_USER_WARNING);
+			}
+		}
+		else
+		{
+			if (!$basket->isSaveRunning())
+			{
+				trigger_error("Incorrect call to the save process. Use method save() on \Bitrix\Sale\Basket entity", E_USER_WARNING);
+			}
+		}
+	}
+
 	/**
 	 * @return Result
+	 * @throws NotImplementedException
 	 */
 	public function verify()
 	{
 		$result = new Result();
 
-		static $map = array();
-
-		if (empty($map))
-		{
-			$map = static::getFieldMap();
-		}
+		$map = static::getFieldsMap();
 
 		$fieldValues = $fields = $this->fields->getValues();
 
@@ -209,7 +239,19 @@ abstract class BasketPropertyItemBase extends Internals\CollectableEntity
 								$propertyName = substr($propertyName, 0, 50)."...";
 							}
 
-							$result->addError(new ResultWarning(Loc::getMessage("SALE_BASKET_ITEM_PROPERTY_MAX_LENGTH_ERROR", array("#PROPERTY_NAME#" => $propertyName, "#FIELD_TITLE#" => $fieldName, "#MAX_LENGTH#" => $value->getSize())), 'SALE_BASKET_ITEM_PROPERTY_MAX_LENGTH_ERROR'));
+							$result->addError(
+								new ResultWarning(
+									Loc::getMessage(
+										"SALE_BASKET_ITEM_PROPERTY_MAX_LENGTH_ERROR",
+										array(
+											"#PROPERTY_NAME#" => $propertyName,
+											"#FIELD_TITLE#" => $fieldName,
+											"#MAX_LENGTH#" => $value->getSize()
+										)
+									),
+									'SALE_BASKET_ITEM_PROPERTY_MAX_LENGTH_ERROR'
+								)
+							);
 						}
 					}
 				}
@@ -232,12 +274,4 @@ abstract class BasketPropertyItemBase extends Internals\CollectableEntity
 	 */
 	abstract protected function updateInternal($primary, array $data);
 
-	/**
-	 * @throws NotImplementedException
-	 * @return array
-	 */
-	protected static function getFieldMap()
-	{
-		throw new NotImplementedException();
-	}
 }

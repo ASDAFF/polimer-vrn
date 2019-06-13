@@ -20,6 +20,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_befo
 /** @global CUser $USER */
 
 use Bitrix\Socialnetwork\Item\UserToGroup;
+use Bitrix\Main\Localization\Loc;
 
 header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 
@@ -140,10 +141,49 @@ if (check_bitrix_sessid())
 			echo CUtil::PhpToJsObject(Array('ERROR' => 'USER_ACTION_FAILED: '.(($e = $APPLICATION->GetException()) ? $e->GetString() : "")));
 			die();
 		}
-		elseif ($action == 'SETOWNER' && !CSocNetUserToGroup::SetOwner($arUserID[0], $arGroup["ID"], $arGroup))
+		elseif ($action == 'SETOWNER')
 		{
-			echo CUtil::PhpToJsObject(Array('ERROR' => 'USER_ACTION_FAILED: '.(($e = $APPLICATION->GetException()) ? $e->GetString() : "")));
-			die();
+			if (!CSocNetUserToGroup::SetOwner($arUserID[0], $arGroup["ID"], $arGroup))
+			{
+				echo CUtil::PhpToJsObject(Array('ERROR' => 'USER_ACTION_FAILED: '.(($e = $APPLICATION->GetException()) ? $e->GetString() : "")));
+				die();
+			}
+		}
+		elseif ($action == 'ADDMODERATOR')
+		{
+			$error = false;
+			$arUserPerms = CSocNetUserToGroup::initUserPerms($USER->getId(), $arGroup, CSocNetUser::IsCurrentUserModuleAdmin());
+			if (!$arUserPerms["UserCanModifyGroup"])
+			{
+				$error = true;
+				$APPLICATION->throwException(CSocNetUserToGroup::getMessage("SONET_UG_ERROR_NO_PERMS"), "ERROR_NO_PERMS");
+			}
+
+			if (!$error)
+			{
+				if (UserToGroup::addModerators(array(
+					'group_id' => $arGroup["ID"],
+					'user_id' => $arUserID[0],
+				)))
+				{
+					UserToGroup::addInfoToChat(array(
+						'group_id' => $arGroup["ID"],
+						'user_id' => $arUserID[0],
+						'action' => UserToGroup::CHAT_ACTION_IN,
+						'sendMessage' => false
+					));
+				}
+				else
+				{
+					$error = true;
+				}
+			}
+
+			if ($error)
+			{
+				echo CUtil::phpToJsObject(Array('ERROR' => 'USER_ACTION_FAILED: '.(($e = $APPLICATION->getException()) ? $e->GetString() : "")));
+				die();
+			}
 		}
 		elseif ($action == 'BAN' && !CSocNetUserToGroup::BanMember($USER->GetID(), $arGroup["ID"], $arRelationID, CSocNetUser::IsCurrentUserModuleAdmin()))
 		{

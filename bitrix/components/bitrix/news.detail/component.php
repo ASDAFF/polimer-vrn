@@ -149,21 +149,22 @@ if($arParams["SHOW_WORKFLOW"] || $this->startResultCache(false, array(($arParams
 		"IBLOCK_ACTIVE" => "Y",
 		"ACTIVE" => "Y",
 		"CHECK_PERMISSIONS" => "Y",
-		"IBLOCK_TYPE" => $arParams["IBLOCK_TYPE"],
 		"SHOW_HISTORY" => $arParams["SHOW_WORKFLOW"]? "Y": "N",
 	);
 	if($arParams["CHECK_DATES"])
 		$arFilter["ACTIVE_DATE"] = "Y";
 	if(intval($arParams["IBLOCK_ID"]) > 0)
 		$arFilter["IBLOCK_ID"] = $arParams["IBLOCK_ID"];
+	else
+		$arFilter["=IBLOCK_TYPE"] = $arParams["IBLOCK_TYPE"];
 
 	//Handle case when ELEMENT_CODE used
 	if($arParams["ELEMENT_ID"] <= 0)
 		$arParams["ELEMENT_ID"] = CIBlockFindTools::GetElementID(
 			$arParams["ELEMENT_ID"],
 			$arParams["~ELEMENT_CODE"],
-			false,
-			false,
+			$arParams["STRICT_SECTION_CHECK"]? $arParams["SECTION_ID"]: false,
+			$arParams["STRICT_SECTION_CHECK"]? $arParams["~SECTION_CODE"]: false,
 			$arFilter
 		);
 

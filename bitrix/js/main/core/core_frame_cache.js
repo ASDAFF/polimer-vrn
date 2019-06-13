@@ -355,6 +355,16 @@
 			{
 				BX.ajax.processRequestData(block.CONTENT, {scriptsRunFirst: false, dataType: "HTML"});
 			}
+
+			if (BX.type.isArray(block.PROPS.BUNDLE_JS))
+			{
+				BX.setJSList(block.PROPS.BUNDLE_JS);
+			}
+
+			if (BX.type.isArray(block.PROPS.BUNDLE_CSS))
+			{
+				BX.setCSSList(block.PROPS.BUNDLE_CSS);
+			}
 		}
 	};
 
@@ -558,10 +568,8 @@
 
 				this.insertBlocks(items, true);
 			}
-			else
-			{
-				this.update(true, true);
-			}
+
+			BX.onCustomEvent(this, "onCacheInvokeAfter", [this.vars.storageBlocks, resultSet]);
 		}
 	};
 

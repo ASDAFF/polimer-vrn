@@ -147,6 +147,7 @@ Loader::registerAutoLoadClasses(
 		'CCatalogMeasureResult' => $strDBType.'/measure.php',
 		'CCatalogMeasureClassifier' => 'general/unit_classifier.php',
 		'CCatalogMeasureAdminResult' => 'general/measure_result.php',
+		'CCatalogMeasureAdminUiResult' => 'general/measure_result.php',
 		'CCatalogMeasureRatio' => $strDBType.'/measure_ratio.php',
 		'CCatalogProductSet' => $strDBType.'/product_set.php',
 		'CCatalogAdminTools' => 'general/admin_tools.php',
@@ -159,7 +160,13 @@ Loader::registerAutoLoadClasses(
 		'CCatalogIblockReindex' => 'general/step_operations.php',
 		'CCatalogProductSettings' => 'general/step_operations.php',
 		'CCatalogTools' => 'general/tools.php',
+		'CCatalogResult' => 'general/result.php',
+		'CProductQueryBuilder' => 'general/querybuilder.php',
 
+		'\Bitrix\Catalog\Compatible\EventCompatibility' => 'lib/compatible/eventcompatibility.php',
+		'\Bitrix\Catalog\Config\Configuration' => 'lib/config/state.php', // deprecated, temporary
+		'\Bitrix\Catalog\Config\Feature' => 'lib/config/feature.php',
+		'\Bitrix\Catalog\Config\State' => 'lib/config/state.php',
 		'\Bitrix\Catalog\Discount\DiscountManager' => 'lib/discount/discountmanager.php',
 		'\Bitrix\Catalog\Ebay\EbayXMLer' => 'lib/ebay/ebayxmler.php',
 		'\Bitrix\Catalog\Ebay\ExportOffer' => 'lib/ebay/exportoffer.php',
@@ -170,16 +177,24 @@ Loader::registerAutoLoadClasses(
 		'\Bitrix\Catalog\Helpers\Admin\RoundEdit' => 'lib/helpers/admin/roundedit.php',
 		'\Bitrix\Catalog\Helpers\Admin\Tools' => 'lib/helpers/admin/tools.php',
 		'\Bitrix\Catalog\Helpers\Tools' => 'lib/helpers/tools.php',
+		'\Bitrix\Catalog\Model\Entity' => 'lib/model/entity.php',
+		'\Bitrix\Catalog\Model\Event' => 'lib/model/event.php',
+		'\Bitrix\Catalog\Model\EventResult' => 'lib/model/eventresult.php',
+		'\Bitrix\Catalog\Model\Price' => 'lib/model/price.php',
+		'\Bitrix\Catalog\Model\Product' => 'lib/model/product.php',
 		'\Bitrix\Catalog\Product\Price\Calculation' => 'lib/product/price/calculation.php',
 		'\Bitrix\Catalog\Product\Basket' =>  'lib/product/basket.php',
 		'\Bitrix\Catalog\Product\CatalogProvider' =>  'lib/product/catalogprovider.php',
 		'\Bitrix\Catalog\Product\CatalogProviderCompatibility' =>  'lib/product/catalogprovidercompatibility.php',
 		'\Bitrix\Catalog\Product\Price' => 'lib/product/price.php',
+		'\Bitrix\Catalog\Product\PropertyCatalogFeature' => 'lib/product/propertycatalogfeature.php',
 		'\Bitrix\Catalog\Product\QuantityControl' =>  'lib/product/quantitycontrol.php',
 		'\Bitrix\Catalog\Product\Search' => 'lib/product/search.php',
 		'\Bitrix\Catalog\Product\Sku' => 'lib/product/sku.php',
 		'\Bitrix\Catalog\Product\SubscribeManager' => 'lib/product/subscribemanager.php',
 		'\Bitrix\Catalog\Product\Viewed' => 'lib/product/viewed.php',
+		'\Bitrix\Catalog\Update\AdminFilterOption' => 'lib/update/adminfilteroption.php',
+		'\Bitrix\Catalog\Update\AdminGridOption' => 'lib/update/admingridoption.php',
 		'\Bitrix\Catalog\CatalogIblockTable' => 'lib/catalogiblock.php',
 		'\Bitrix\Catalog\CatalogViewedProductTable' => 'lib/catalogviewedproduct.php',
 		'\Bitrix\Catalog\DiscountTable' => 'lib/discount.php',
@@ -419,7 +434,8 @@ function CatalogBasketCallback($productID, $quantity = 0, $renewal = "N", $intUs
 		'RENEWAL' => $renewal,
 		'USER_ID' => $intUserID,
 		'SITE_ID' => $strSiteID,
-		'CHECK_QUANTITY' => 'Y'
+		'CHECK_QUANTITY' => 'Y',
+		'AVAILABLE_QUANTITY' => 'Y'
 	);
 
 	return CCatalogProductProvider::GetProductData($arParams);
@@ -1505,6 +1521,8 @@ function Add2BasketByProductID($productId, $quantity = 1, $rewriteFields = array
 {
 	global $APPLICATION;
 
+	$result = false;
+
 	/* for old use */
 	if ($productParams === false)
 	{
@@ -1527,15 +1545,70 @@ function Add2BasketByProductID($productId, $quantity = 1, $rewriteFields = array
 	if (!empty($productParams))
 		$product['PROPS'] = $productParams;
 
-	$result = false;
 	$basketResult = Catalog\Product\Basket::addProduct($product, ($rewrite ? $rewriteFields : array()));
-	unset($product);
-
 	if ($basketResult->isSuccess())
 	{
 		$data = $basketResult->getData();
 		$result = $data['ID'];
 		unset($data);
+
+		if (!empty($rewriteFields['ORDER_ID']) && intval($rewriteFields['ORDER_ID']) > 0)
+		{
+			trigger_error("Wrong API usage of adding a product in order", E_USER_WARNING);
+
+			$productId = (int)$productId;
+			if ($productId <= 0)
+			{
+				$APPLICATION->ThrowException(
+					Main\Localization\Loc::getMessage('BX_CATALOG_PRODUCT_BASKET_ERR_NO_PRODUCT')
+				);
+				return $result;
+			}
+
+			$module = 'catalog';
+			if (array_key_exists('MODULE', $rewriteFields))
+			{
+				$module = $rewriteFields['MODULE'];
+			}
+
+			$siteId = SITE_ID;
+			if (!empty($rewriteFields['LID']))
+			{
+				$siteId = $rewriteFields['LID'];
+			}
+
+			$basket = \Bitrix\Sale\Basket::loadItemsForFUser(\Bitrix\Sale\Fuser::getId(), $siteId);
+
+			$propertyList = array();
+			if (!empty($product['PROPS']) && is_array($product['PROPS']))
+			{
+				$propertyList = $product['PROPS'];
+			}
+
+			$basketItem = $basket->getExistsItem($module, $productId, $propertyList);
+			if ($basketItem)
+			{
+				$basketItem->setFieldNoDemand('ORDER_ID', intval($rewriteFields['ORDER_ID']));
+				$r = $basket->save();
+
+				$orderId = intval($rewriteFields['ORDER_ID']);
+				$order = \Bitrix\Sale\Order::load($orderId);
+				if ($order)
+				{
+					$basket = $order->getBasket();
+					$basket->refresh();
+					$r = $order->save();
+					if (!$r->isSuccess())
+					{
+						$APPLICATION->ThrowException(
+							implode('; ', $r->getErrorMessages())
+						);
+					}
+				}
+
+			}
+		}
+
 	}
 	else
 	{
@@ -1543,6 +1616,7 @@ function Add2BasketByProductID($productId, $quantity = 1, $rewriteFields = array
 			implode('; ', $basketResult->getErrorMessages())
 		);
 	}
+	unset($product);
 	unset($basketResult);
 
 	return $result;
@@ -1577,9 +1651,9 @@ function SubscribeProduct($intProductID, $arRewriteFields = array(), $arProductP
 		return false;
 	}
 
-	if (Loader::includeModule("statistic") && isset($_SESSION['SESS_SEARCHER_ID']) && (int)$_SESSION["SESS_SEARCHER_ID"] > 0)
+	if (!Catalog\Product\Basket::isNotCrawler())
 	{
-		$APPLICATION->ThrowException(Loc::getMessage('CATALOG_ERR_SESS_SEARCHER'), "SESS_SEARCHER");
+		$APPLICATION->ThrowException(Loc::getMessage('CATALOG_ERR_SESS_SEARCHER'));
 		return false;
 	}
 
@@ -1943,7 +2017,7 @@ function CatalogGetPriceTableEx($ID, $filterQauntity = 0, $arFilterType = array(
 		$arPrice['VAT_RATE'] = $fVatRate;
 
 		CCatalogDiscountSave::Disable();
-		$arDiscounts = CCatalogDiscount::GetDiscount($ID, $arProduct["IBLOCK_ID"], $arPrice["CATALOG_GROUP_ID"], $arUserGroups, "N", SITE_ID, array());
+		$arDiscounts = CCatalogDiscount::GetDiscount($ID, $arProduct["IBLOCK_ID"], array($arPrice["CATALOG_GROUP_ID"]), $arUserGroups, "N", SITE_ID, array());
 		CCatalogDiscountSave::Enable();
 
 		$discountPrice = CCatalogProduct::CountPriceWithDiscount($arPrice["PRICE"], $arPrice["CURRENCY"], $arDiscounts);
@@ -2078,7 +2152,7 @@ function CatalogGetPriceTable($ID)
 	while ($arPrice = $dbPrice->Fetch())
 	{
 		CCatalogDiscountSave::Disable();
-		$arDiscounts = CCatalogDiscount::GetDiscount($ID, $arPrice["ELEMENT_IBLOCK_ID"], $arPrice["CATALOG_GROUP_ID"], $USER->GetUserGroupArray(), "N", SITE_ID, array());
+		$arDiscounts = CCatalogDiscount::GetDiscount($ID, $arPrice["ELEMENT_IBLOCK_ID"], array($arPrice["CATALOG_GROUP_ID"]), $USER->GetUserGroupArray(), "N", SITE_ID, array());
 		CCatalogDiscountSave::Enable();
 
 		$discountPrice = CCatalogProduct::CountPriceWithDiscount($arPrice["PRICE"], $arPrice["CURRENCY"], $arDiscounts);

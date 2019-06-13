@@ -144,8 +144,6 @@ class calendar extends CModule
 			return false;
 		}
 
-		CAgent::AddAgent("CCalendarSync::doSync();", "calendar", "N", 120);
-
 		if (!$DB->Query("SELECT 'x' FROM b_calendar_access ", true))
 			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/'.$this->MODULE_ID.'/install/db/'.strtolower($DB->type).'/install.sql');
 		$this->InstallTasks();
@@ -180,6 +178,10 @@ class calendar extends CModule
 		$eventManager->registerEventHandler("dav", "OnExchandeCalendarDataSync", "calendar", "CCalendar", "OnExchangeCalendarSync");
 		$eventManager->registerEventHandler('socialnetwork', 'onLogIndexGetContent', 'calendar', '\Bitrix\Calendar\Integration\Socialnetwork\Log', 'onIndexGetContent');
 
+		$eventManager->registerEventHandler('main', 'OnBeforeUserTypeAdd', 'calendar', '\Bitrix\Calendar\UserField\ResourceBooking', 'onBeforeUserTypeAdd');
+
+		$eventManager->registerEventHandlerCompatible("main", "OnUserTypeBuildList", "calendar", "\\Bitrix\\Calendar\\UserField\\ResourceBooking", "getUserTypeDescription", 154);
+
 		if($DB->type === "MYSQL"
 			&& $DB->Query("CREATE fulltext index IXF_B_CALENDAR_EVENT_SEARCHABLE_CONTENT on b_calendar_event (SEARCHABLE_CONTENT)", true))
 		{
@@ -193,6 +195,7 @@ class calendar extends CModule
 			\CAgent::AddAgent("\\Bitrix\\Calendar\\Sync\\GoogleApiPush::processPush();", "calendar", "N", 180);
 			\CAgent::AddAgent("\\Bitrix\\Calendar\\Sync\\GoogleApiPush::renewWatchChannels();", "calendar", "N", 14400);
 		}
+		CAgent::AddAgent("CCalendarSync::doSync();", "calendar", "N", 120);
 
 		return true;
 	}
@@ -203,7 +206,7 @@ class calendar extends CModule
 		CAgent::RemoveModuleAgents('calendar');
 		$errors = null;
 
-		CAgent::RemoveAgent("CCalendarSync::DoSync();", "calendar");
+		CAgent::RemoveAgent("CCalendarSync::doSync();", "calendar");
 
 		if ((true == array_key_exists("savedata", $arParams)) && ($arParams["savedata"] != 'Y'))
 		{
@@ -238,6 +241,7 @@ class calendar extends CModule
 		$eventManager->unRegisterEventHandler("dav", "OnDavCalendarProperties", "calendar", "CCalendar", "OnDavCalendarSync");
 		$eventManager->unRegisterEventHandler("dav", "OnExchandeCalendarDataSync", "calendar", "CCalendar", "OnExchangeCalendarSync");
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onLogIndexGetContent', 'calendar', '\Bitrix\Calendar\Integration\Socialnetwork\Log', 'onIndexGetContent');
+		$eventManager->unRegisterEventHandler('main', 'OnBeforeUserTypeAdd', 'calendar', '\Bitrix\Calendar\UserField\ResourceBooking', 'onBeforeUserTypeAdd');
 
 		UnRegisterModule("calendar");
 
@@ -455,12 +459,16 @@ class calendar extends CModule
 				true, true
 			);
 
-			CUrlRewriter::Add(array(
-				"CONDITION" => "#^/stssync/calendar/#",
-				"RULE" => "",
-				"ID" => "bitrix:stssync.server",
-				"PATH" => "/bitrix/services/stssync/calendar/index.php",
-			));
+			$siteId = \CSite::GetDefSite();
+			if ($siteId)
+			{
+				\Bitrix\Main\UrlRewriter::add($siteId, array(
+					"CONDITION" => "#^/stssync/calendar/#",
+					"RULE" => "",
+					"ID" => "bitrix:stssync.server",
+					"PATH" => "/bitrix/services/stssync/calendar/index.php",
+				));
+			}
 		}
 
 		return true;

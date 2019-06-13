@@ -98,7 +98,7 @@ if(!defined("BX_COMP_MANAGED_CACHE") && COption::GetOptionString("main", "compon
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/filter_tools.php");
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/ajax_tools.php");
 
-/*ZDUyZmZN2UyMDgwZDMzNTE0NzYwZTM1MjBhODU1MmI2OTlmNGM=*/$GLOBALS['____1235836716']= array(base64_decode('ZGVmaW5l'));if(!function_exists(__NAMESPACE__.'\\___1464632438')){function ___1464632438($_1967520431){static $_1570789706= false; if($_1570789706 == false) $_1570789706=array('RU'.'5DT0R'.'F','WQ'.'==');return base64_decode($_1570789706[$_1967520431]);}};class CBXFeatures{ public static function IsFeatureEnabled($_117812504){ return true;} public static function IsFeatureEditable($_117812504){ return true;} public static function SetFeatureEnabled($_117812504, $_1188537684= true){} public static function SaveFeaturesSettings($_82002203, $_147673513){} public static function GetFeaturesList(){ return array();} public static function InitiateEditionsSettings($_1461685293){} public static function ModifyFeaturesSettings($_1461685293, $_848110573){} public static function IsFeatureInstalled($_117812504){ return true;}} $GLOBALS['____1235836716'][0](___1464632438(0), ___1464632438(1));/**/			//Do not remove this
+/*ZDUyZmZZWY1NmY1N2RkOTk2YzRjMDZmODM4Y2IxZmRlMjM0OWI=*/$GLOBALS['____1353983012']= array(base64_decode('ZGVmaW5l'));if(!function_exists(__NAMESPACE__.'\\___660424107')){function ___660424107($_549111097){static $_859112355= false; if($_859112355 == false) $_859112355=array('R'.'U5DT0'.'RF','W'.'Q==');return base64_decode($_859112355[$_549111097]);}};class CBXFeatures{ public static function IsFeatureEnabled($_2031502981){ return true;} public static function IsFeatureEditable($_2031502981){ return true;} public static function SetFeatureEnabled($_2031502981, $_402424903= true){} public static function SaveFeaturesSettings($_391812633, $_1352120181){} public static function GetFeaturesList(){ return array();} public static function InitiateEditionsSettings($_1882416611){} public static function ModifyFeaturesSettings($_1882416611, $_1006426656){} public static function IsFeatureInstalled($_2031502981){ return true;}} $GLOBALS['____1353983012'][0](___660424107(0), ___660424107(1));/**/			//Do not remove this
 
 //component 2.0 template engines
 $GLOBALS["arCustomTemplateEngines"] = array();
@@ -194,6 +194,8 @@ require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/classes/general/ur
 		"CAdminCalendar" => "interface/admin_calendar.php",
 		"CAdminViewTabControl" => "interface/admin_viewtabcontrol.php",
 		"CAdminTabEngine" => "interface/admin_tabengine.php",
+		"CCaptcha" => "classes/general/captcha.php",
+		"CMpNotifications" => "classes/general/mp_notifications.php",
 
 		//deprecated
 		"CHTMLPagesCache" => "lib/composite/helper.php",
@@ -268,8 +270,10 @@ if(COption::GetOptionString("main", "check_agents", "Y")=="Y")
 //session initialization
 ini_set("session.cookie_httponly", "1");
 
-if($domain = $GLOBALS["APPLICATION"]->GetCookieDomain())
+if(($domain = \Bitrix\Main\Web\Cookie::getCookieDomain()) <> '')
+{
 	ini_set("session.cookie_domain", $domain);
+}
 
 if(COption::GetOptionString("security", "session", "N") === "Y"	&& CModule::IncludeModule("security"))
 	CSecuritySession::Init();
@@ -423,7 +427,7 @@ if(!defined("NOT_CHECK_PERMISSIONS") || NOT_CHECK_PERMISSIONS!==true)
 		if($bRsaError == false)
 		{
 			if(!defined("ADMIN_SECTION") || ADMIN_SECTION !== true)
-				$USER_LID = LANG;
+				$USER_LID = SITE_ID;
 			else
 				$USER_LID = false;
 
@@ -437,15 +441,15 @@ if(!defined("NOT_CHECK_PERMISSIONS") || NOT_CHECK_PERMISSIONS!==true)
 			}
 			elseif($_REQUEST["TYPE"] == "SEND_PWD")
 			{
-				$arAuthResult = CUser::SendPassword($_REQUEST["USER_LOGIN"], $_REQUEST["USER_EMAIL"], $USER_LID, $_REQUEST["captcha_word"], $_REQUEST["captcha_sid"]);
+				$arAuthResult = CUser::SendPassword($_REQUEST["USER_LOGIN"], $_REQUEST["USER_EMAIL"], $USER_LID, $_REQUEST["captcha_word"], $_REQUEST["captcha_sid"], $_REQUEST["USER_PHONE_NUMBER"]);
 			}
 			elseif($_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST["TYPE"] == "CHANGE_PWD")
 			{
-				$arAuthResult = $GLOBALS["USER"]->ChangePassword($_REQUEST["USER_LOGIN"], $_REQUEST["USER_CHECKWORD"], $_REQUEST["USER_PASSWORD"], $_REQUEST["USER_CONFIRM_PASSWORD"], $USER_LID, $_REQUEST["captcha_word"], $_REQUEST["captcha_sid"]);
+				$arAuthResult = $GLOBALS["USER"]->ChangePassword($_REQUEST["USER_LOGIN"], $_REQUEST["USER_CHECKWORD"], $_REQUEST["USER_PASSWORD"], $_REQUEST["USER_CONFIRM_PASSWORD"], $USER_LID, $_REQUEST["captcha_word"], $_REQUEST["captcha_sid"], true, $_REQUEST["USER_PHONE_NUMBER"]);
 			}
 			elseif(COption::GetOptionString("main", "new_user_registration", "N") == "Y" && $_SERVER['REQUEST_METHOD'] == 'POST' && $_REQUEST["TYPE"] == "REGISTRATION" && (!defined("ADMIN_SECTION") || ADMIN_SECTION!==true))
 			{
-				$arAuthResult = $GLOBALS["USER"]->Register($_REQUEST["USER_LOGIN"], $_REQUEST["USER_NAME"], $_REQUEST["USER_LAST_NAME"], $_REQUEST["USER_PASSWORD"], $_REQUEST["USER_CONFIRM_PASSWORD"], $_REQUEST["USER_EMAIL"], $USER_LID, $_REQUEST["captcha_word"], $_REQUEST["captcha_sid"]);
+				$arAuthResult = $GLOBALS["USER"]->Register($_REQUEST["USER_LOGIN"], $_REQUEST["USER_NAME"], $_REQUEST["USER_LAST_NAME"], $_REQUEST["USER_PASSWORD"], $_REQUEST["USER_CONFIRM_PASSWORD"], $_REQUEST["USER_EMAIL"], $USER_LID, $_REQUEST["captcha_word"], $_REQUEST["captcha_sid"], false, $_REQUEST["USER_PHONE_NUMBER"]);
 			}
 
 			if($_REQUEST["TYPE"] == "AUTH" || $_REQUEST["TYPE"] == "OTP")
@@ -456,7 +460,11 @@ if(!defined("NOT_CHECK_PERMISSIONS") || NOT_CHECK_PERMISSIONS!==true)
 					//store cookies for next hit (see CMain::GetSpreadCookieHTML())
 					$GLOBALS["APPLICATION"]->StoreCookies();
 					$_SESSION['BX_ADMIN_LOAD_AUTH'] = true;
-					echo '<script type="text/javascript">window.onload=function(){top.BX.AUTHAGENT.setAuthResult(false);};</script>';
+
+					//logout or re-authorize the user if something importand has changed
+					$GLOBALS["USER"]->CheckAuthActions();
+
+					CMain::FinalActions('<script type="text/javascript">window.onload=function(){top.BX.AUTHAGENT.setAuthResult(false);};</script>');
 					die();
 				}
 			}
@@ -472,6 +480,13 @@ if(!defined("NOT_CHECK_PERMISSIONS") || NOT_CHECK_PERMISSIONS!==true)
 
 //logout or re-authorize the user if something importand has changed
 $GLOBALS["USER"]->CheckAuthActions();
+
+//magic short URI
+if(defined("BX_CHECK_SHORT_URI") && BX_CHECK_SHORT_URI && CBXShortUri::CheckUri())
+{
+	//local redirect inside
+	die();
+}
 
 //application password scope control
 if(($applicationID = $GLOBALS["USER"]->GetParam("APPLICATION_ID")) !== null)
@@ -552,13 +567,6 @@ if($GLOBALS["USER"]->IsAuthorized())
 
 //magic cache
 \Bitrix\Main\Composite\Engine::shouldBeEnabled();
-
-//magic short URI
-if(defined("BX_CHECK_SHORT_URI") && BX_CHECK_SHORT_URI && CBXShortUri::CheckUri())
-{
-	//local redirect inside
-	die();
-}
 
 foreach(GetModuleEvents("main", "OnBeforeProlog", true) as $arEvent)
 	ExecuteModuleEventEx($arEvent);

@@ -61,4 +61,15 @@ $MESS["SGB_PARAMS_PLACE_GIFT"] = "Висновок блоку \"Подарунк
 $MESS["SGB_PARAMS_PLACE_GIFT_TOP"] = "над кошиком";
 $MESS["SGB_PARAMS_PLACE_GIFT_BOTTOM"] = "під кошиком";
 $MESS["SBB_ANALYTICS_SETTINGS"] = "Налаштування аналітики";
+$MESS["SBB_PREVIEW_PICTURE"] = "Зображення";
+$MESS["SBB_DETAIL_PICTURE"] = "Детальне зображення";
+$MESS["SBB_PREVIEW_TEXT"] = "Короткий опис";
+$MESS["SBB_COMPATIBLE_MODE"] = "Включити режим сумісності";
+$MESS["SBB_IMAGE_SETTINGS"] = "Налаштування зображень";
+$MESS["SBB_ADDITIONAL_IMAGE"] = "Додаткове зображення";
+$MESS["SBB_BASKET_IMAGES_SCALING"] = "Режим відображення зображень товарів";
+$MESS["SBB_ADAPTIVE"] = "Адаптивний";
+$MESS["SBB_STANDARD"] = "Стандартний";
+$MESS["SBB_NO_SCALE"] = "Без стискування";
+$MESS["SBB_DEFAULT"] = "За замовчуванням";
 ?>

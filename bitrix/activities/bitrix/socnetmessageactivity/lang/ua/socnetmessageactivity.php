@@ -5,5 +5,5 @@ $MESS["BPSNMA_EMPTY_MESSAGE"] = "Властивість 'Текст повідо
 $MESS["BPSNMA_MESSAGE"] = "Текст повідомлення";
 $MESS["BPSNMA_TO"] = "Одержувач повідомлення";
 $MESS["BPSNMA_FROM"] = "Відправник повідомлення";
-$MESS["BPSNMA_FORMAT_ROBOT"] = "Повідомлення Робот";
+$MESS["BPSNMA_FORMAT_ROBOT"] = "Сповіщення Робот";
 ?>

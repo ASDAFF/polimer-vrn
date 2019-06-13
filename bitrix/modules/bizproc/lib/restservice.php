@@ -39,41 +39,50 @@ class RestService extends \IRestService
 		if (\CBPRuntime::isFeatureEnabled())
 		{
 			$map = array(
+
+				//activity
 				'bizproc.activity.add' => array(__CLASS__, 'addActivity'),
 				'bizproc.activity.delete' => array(__CLASS__, 'deleteActivity'),
 				'bizproc.activity.log' => array(__CLASS__, 'writeActivityLog'),
 				'bizproc.activity.list' => array(__CLASS__, 'getActivityList'),
 
+				//event
 				'bizproc.event.send' => array(__CLASS__, 'sendEvent'),
 
+				//task
 				'bizproc.task.list' =>  array(__CLASS__, 'getTaskList'),
 				'bizproc.task.complete' =>  array(__CLASS__, 'completeTask'),
 
+				//workflow
+				'bizproc.workflow.terminate' => array(__CLASS__, 'terminateWorkflow'),
+				'bizproc.workflow.start' => array(__CLASS__, 'startWorkflow'),
+				//workflow.instance
+				'bizproc.workflow.instance.list' => array(__CLASS__, 'getWorkflowInstances'),
+				//workflow.template
+				'bizproc.workflow.template.list' => array(__CLASS__, 'getWorkflowTemplates'),
+
+				//aliases
 				'bizproc.workflow.instances' => array(__CLASS__, 'getWorkflowInstances'),
-
-				'bizproc.robot.add' => array(__CLASS__, 'addRobot'),
-				'bizproc.robot.delete' => array(__CLASS__, 'deleteRobot'),
-				'bizproc.robot.list' => array(__CLASS__, 'getRobotList'),
-
-				'bizproc.provider.add' => array(__CLASS__, 'addProvider'),
-				'bizproc.provider.delete' => array(__CLASS__, 'deleteProvider'),
-				'bizproc.provider.list' => array(__CLASS__, 'getProviderList'),
 			);
 		}
-		elseif (
-			\CBPRuntime::isFeatureEnabled('crm_automation_lead')
+
+		if (\CBPRuntime::isFeatureEnabled()
+			|| \CBPRuntime::isFeatureEnabled('crm_automation_lead')
 			|| \CBPRuntime::isFeatureEnabled('crm_automation_deal')
 		)
 		{
-			$map = array(
+			$map = array_merge($map, array(
+
+				//robot
 				'bizproc.robot.add' => array(__CLASS__, 'addRobot'),
 				'bizproc.robot.delete' => array(__CLASS__, 'deleteRobot'),
 				'bizproc.robot.list' => array(__CLASS__, 'getRobotList'),
 
+				//provider
 				'bizproc.provider.add' => array(__CLASS__, 'addProvider'),
 				'bizproc.provider.delete' => array(__CLASS__, 'deleteProvider'),
 				'bizproc.provider.list' => array(__CLASS__, 'getProviderList'),
-			);
+			));
 		}
 
 		return $map ? array(static::SCOPE => $map) : false;
@@ -195,12 +204,18 @@ class RestService extends \IRestService
 		$params['IS_ROBOT'] = $isRobot ? 'Y' : 'N';
 
 		if ($isRobot)
+		{
 			$params['USE_SUBSCRIPTION'] = 'N';
+		}
+
+		$params['USE_PLACEMENT'] = ($params['USE_PLACEMENT'] === 'Y') ? 'Y' : 'N';
 
 		$result = RestActivityTable::add($params);
 
 		if ($result->getErrors())
+		{
 			throw new RestException('Activity save error!', self::ERROR_ACTIVITY_ADD_FAILURE);
+		}
 
 		return true;
 	}
@@ -388,6 +403,7 @@ class RestService extends \IRestService
 	 * @return array
 	 * @throws AccessException
 	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getWorkflowInstances($params, $n, $server)
 	{
@@ -398,12 +414,12 @@ class RestService extends \IRestService
 			'ID' => 'ID',
 			'MODIFIED' => 'MODIFIED',
 			'OWNED_UNTIL' => 'OWNED_UNTIL',
-			'MODULE_ID' => 'STATE.MODULE_ID',
-			'ENTITY' => 'STATE.ENTITY',
-			'DOCUMENT_ID' => 'STATE.DOCUMENT_ID',
-			'STARTED' => 'STATE.STARTED',
-			'STARTED_BY' => 'STATE.STARTED_BY',
-			'TEMPLATE_ID' => 'STATE.WORKFLOW_TEMPLATE_ID',
+			'MODULE_ID' => 'MODULE_ID',
+			'ENTITY' => 'ENTITY',
+			'DOCUMENT_ID' => 'DOCUMENT_ID',
+			'STARTED' => 'STARTED',
+			'STARTED_BY' => 'STARTED_BY',
+			'TEMPLATE_ID' => 'WORKFLOW_TEMPLATE_ID',
 		);
 
 		$select = static::getSelect($params['SELECT'], $fields, array('ID', 'MODIFIED', 'OWNED_UNTIL'));
@@ -415,7 +431,8 @@ class RestService extends \IRestService
 			'filter' => $filter,
 			'order' => $order,
 			'limit' => static::LIST_LIMIT,
-			'offset' => (int) $n
+			'offset' => (int) $n,
+			'count_total' => true,
 		));
 
 		$result = array();
@@ -423,12 +440,147 @@ class RestService extends \IRestService
 		{
 			if (isset($row['MODIFIED']))
 				$row['MODIFIED'] = \CRestUtil::convertDateTime($row['MODIFIED']);
+			if (isset($row['STARTED']))
+				$row['STARTED'] = \CRestUtil::convertDateTime($row['STARTED']);
 			if (isset($row['OWNED_UNTIL']))
 				$row['OWNED_UNTIL'] = \CRestUtil::convertDateTime($row['OWNED_UNTIL']);
 			$result[] = $row;
 		}
 
-		return $result;
+		return static::setNavData($result, ['count' => $iterator->getCount(), 'offset' => $n]);
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return bool True on success.
+	 * @throws AccessException
+	 * @throws RestException
+	 */
+	public static function terminateWorkflow($params, $n, $server)
+	{
+		self::checkAdminPermissions();
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		if (empty($params['ID']))
+		{
+			throw new RestException('Empty workflow instance ID', self::ERROR_WRONG_WORKFLOW_ID);
+		}
+
+		$id = $params['ID'];
+		$status = isset($params['STATUS']) ? (string)$params['STATUS'] : '';
+		$errors = [];
+
+		if (!\CBPDocument::terminateWorkflow($id, [], $errors, $status))
+		{
+			throw new RestException($errors[0]['message']);
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return string Workflow ID.
+	 * @throws AccessException
+	 * @throws RestException
+	 */
+	public static function startWorkflow($params, $n, $server)
+	{
+		self::checkAdminPermissions();
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		if (empty($params['TEMPLATE_ID']))
+		{
+			throw new RestException('Empty TEMPLATE_ID', self::ERROR_WRONG_WORKFLOW_ID);
+		}
+
+		$documentId = self::validateDocumentId($params['DOCUMENT_ID']);
+
+		$templateId = (int)$params['TEMPLATE_ID'];
+		$workflowParameters = isset($params['PARAMETERS']) && is_array($params['PARAMETERS']) ? $params['PARAMETERS'] : [];
+
+		$workflowParameters[\CBPDocument::PARAM_TAGRET_USER] = self::getCurrentUserId();
+
+		$errors = [];
+		$workflowId = \CBPDocument::startWorkflow($templateId, $documentId, $workflowParameters, $errors);
+
+		if (!$workflowId)
+		{
+			throw new RestException($errors[0]['message']);
+		}
+
+		return $workflowId;
+	}
+
+	/**
+	 * @param array $params Input params.
+	 * @param int $n Offset.
+	 * @param \CRestServer $server Rest server instance.
+	 * @return mixed Templates collection.
+	 * @throws AccessException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function getWorkflowTemplates($params, $n, $server)
+	{
+		self::checkAdminPermissions();
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		$fields = array(
+			'ID' => 'ID',
+			'MODULE_ID' => 'MODULE_ID',
+			'ENTITY' => 'ENTITY',
+			'DOCUMENT_TYPE' => 'DOCUMENT_TYPE',
+			'AUTO_EXECUTE' => 'AUTO_EXECUTE',
+			'NAME' => 'NAME',
+			'DESCRIPTION' => 'DESCRIPTION',
+			'TEMPLATE' => 'TEMPLATE',
+			'PARAMETERS' => 'PARAMETERS',
+			'VARIABLES' => 'VARIABLES',
+			'CONSTANTS' => 'CONSTANTS',
+			'MODIFIED' => 'MODIFIED',
+			'IS_MODIFIED' => 'IS_MODIFIED',
+			'USER_ID' => 'USER_ID',
+			'SYSTEM_CODE' => 'SYSTEM_CODE',
+		);
+
+		$select = static::getSelect($params['SELECT'], $fields, array('ID'));
+		$filter = static::getFilter($params['FILTER'], $fields, array('MODIFIED'));
+		$filter['!AUTO_EXECUTE'] = \CBPDocumentEventType::Automation;
+
+		$order = static::getOrder($params['ORDER'], $fields, array('ID' => 'ASC'));
+
+		$iterator = WorkflowTemplateTable::getList(array(
+			'select' => $select,
+			'filter' => $filter,
+			'order' => $order,
+			'limit' => static::LIST_LIMIT,
+			'offset' => (int) $n,
+			'count_total' => true,
+		));
+
+		$countTotal = $iterator->getCount();
+
+		$iterator = new \CBPWorkflowTemplateResult($iterator, \CBPWorkflowTemplateLoader::useGZipCompression());
+
+		$result = array();
+		while ($row = $iterator->fetch())
+		{
+			if (isset($row['MODIFIED']))
+				$row['MODIFIED'] = \CRestUtil::convertDateTime($row['MODIFIED']);
+			if (isset($row['STARTED']))
+				$row['STARTED'] = \CRestUtil::convertDateTime($row['STARTED']);
+			if (isset($row['OWNED_UNTIL']))
+				$row['OWNED_UNTIL'] = \CRestUtil::convertDateTime($row['OWNED_UNTIL']);
+			$result[] = $row;
+		}
+
+		return static::setNavData($result, ['count' => $countTotal, 'offset' => $n]);
 	}
 
 	/**
@@ -440,12 +592,12 @@ class RestService extends \IRestService
 	 */
 	public static function getTaskList($params, $n, $server)
 	{
-		global $USER;
 		$params = array_change_key_case($params, CASE_UPPER);
 
 		$fields = array(
 			'ID' => 'ID',
 			'ACTIVITY' => 'ACTIVITY',
+			'ACTIVITY_NAME' => 'ACTIVITY_NAME',
 			'WORKFLOW_ID' => 'WORKFLOW_ID',
 			'DOCUMENT_NAME' => 'DOCUMENT_NAME',
 			'DESCRIPTION' => 'DESCRIPTION',
@@ -471,7 +623,7 @@ class RestService extends \IRestService
 		$filter = static::getFilter($params['FILTER'], $fields, array('MODIFIED', 'WORKFLOW_STARTED', 'OVERDUE_DATE'));
 		$order = static::getOrder($params['ORDER'], $fields, array('ID' => 'DESC'));
 
-		$currentUserId = (int)$USER->getId();
+		$currentUserId = self::getCurrentUserId();
 		$isAdmin = static::isAdmin();
 
 		if (!$isAdmin && !isset($filter['USER_ID']))
@@ -514,7 +666,7 @@ class RestService extends \IRestService
 			$result[] = $row;
 		}
 
-		return $result;
+		return static::setNavData($result, $iterator);
 	}
 
 	private static function filterTaskParameters(array $parameters)
@@ -556,11 +708,10 @@ class RestService extends \IRestService
 	 */
 	public static function completeTask($params, $n, $server)
 	{
-		global $USER;
 		$params = array_change_key_case($params, CASE_UPPER);
 		self::validateTaskParameters($params);
 
-		$userId = (int)$USER->getId();
+		$userId = self::getCurrentUserId();
 		$task = static::getTask($params['TASK_ID'], $userId);
 
 		if ($task['ACTIVITY'] !== 'ReviewActivity' && $task['ACTIVITY'] !== 'ApproveActivity')
@@ -830,6 +981,12 @@ class RestService extends \IRestService
 		);
 	}
 
+	private static function getCurrentUserId()
+	{
+		global $USER;
+		return (isset($USER) && is_object($USER)) ? (int)$USER->getID() : 0;
+	}
+
 	private static function generateInternalCode($data)
 	{
 		return md5($data['APP_ID'].'@'.$data['CODE']);
@@ -1045,6 +1202,31 @@ class RestService extends \IRestService
 		{
 			throw new RestException('Wrong activity DOCUMENT_TYPE!', self::ERROR_ACTIVITY_VALIDATION_FAILURE);
 		}
+	}
+
+	private static function validateDocumentId($documentId)
+	{
+		$type = null;
+		if ($documentId && is_array($documentId))
+		{
+			try
+			{
+				$runtime = \CBPRuntime::getRuntime();
+				$runtime->startRuntime();
+				/** @var \CBPDocumentService $documentService */
+				$documentService = $runtime->getService('DocumentService');
+				$documentId = $documentService->normalizeDocumentId($documentId);
+				$type = $documentService->getDocumentType($documentId);
+			}
+			catch (\CBPArgumentNullException $e) {}
+		}
+
+		if (!$type)
+		{
+			throw new RestException('Wrong DOCUMENT_ID!');
+		}
+
+		return $documentId;
 	}
 
 	private static function extractEventToken($token)

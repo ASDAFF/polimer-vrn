@@ -1,5 +1,11 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
-<?
+<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+/** @var CBitrixComponentTemplate $this */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CDatabase $DB */
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
+
 if(strlen($arResult["FatalError"])>0)
 {
 	?><span class='errortext'><?=$arResult["FatalError"]?></span><br /><br /><?
@@ -11,7 +17,6 @@ else
 		?><span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br /><?
 	}
 
-	?><?
 	$APPLICATION->IncludeComponent(
 		"bitrix:socialnetwork.group.iframe.popup",
 		".default",
@@ -26,18 +31,16 @@ else
 		null,
 		array("HIDE_ICONS" => "Y")
 	);
-	?><?
 
-	if (CModule::IncludeModule('extranet') && CExtranet::IsExtranetSite())
-		$sSiteID = "_extranet";
-	else
-		$sSiteID = "_".SITE_ID;
+	$sSiteID = "_".(CModule::IncludeModule('extranet') && CExtranet::IsExtranetSite() ? "extranet" : SITE_ID);
 
-	$bCanEdit = false;		
-	if ($arParams['CAN_OWNER_EDIT_DESKTOP']	!= "N" || $GLOBALS["USER"]->IsAdmin() || CSocNetUser::IsCurrentUserModuleAdmin())
-		$bCanEdit = true;
+	$bCanEdit = (
+		$arParams['CAN_OWNER_EDIT_DESKTOP']	!= "N"
+		|| $USER->isAdmin()
+		|| CSocNetUser::isCurrentUserModuleAdmin()
+	);
 	
-	$arDesktopParams = Array(
+	$arDesktopParams = array(
 			"MODE" => "SG",	
 			"ID" => "sonet_group".$sSiteID."_".$arResult["Group"]["ID"],
 			"DEFAULT_ID" => "sonet_group".$sSiteID,

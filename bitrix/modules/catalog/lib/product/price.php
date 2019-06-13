@@ -132,7 +132,6 @@ class Price
 	 *
 	 * @param int $priceType		Price type id.
 	 * @return array
-	 * @throws Main\ArgumentException
 	 */
 	public static function getRoundRules($priceType)
 	{
@@ -274,7 +273,7 @@ class Price
 				break;
 			case Catalog\RoundingTable::ROUND_MATH:
 			default:
-				if (($quotient - $quotientFloor) >= .5)
+				if (($quotient - $quotientFloor + self::VALUE_EPS) >= .5)
 					$quotientFloor += 1;
 				break;
 		}

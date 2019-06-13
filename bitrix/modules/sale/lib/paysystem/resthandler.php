@@ -4,6 +4,7 @@ namespace Bitrix\Sale\PaySystem;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Request;
+use Bitrix\Main\Type;
 use Bitrix\Sale\Internals\PaySystemRestHandlersTable;
 use Bitrix\Sale\PaySystem;
 use Bitrix\Sale\Payment;
@@ -58,6 +59,7 @@ class RestHandler extends PaySystem\ServiceHandler
 		{
 			$template .= '<input type="hidden" name="'.htmlspecialcharsbx($key).'" value="'.htmlspecialcharsbx($params[$value]).'">';
 		}
+		$template .= '<input type="hidden" name="BX_PAYSYSTEM_ID" value="'.$this->service->getField('ID').'">';
 		$template .= '<input name="button" value="'.Loc::getMessage('SALE_HANDLERS_REST_HANDLER_BUTTON_PAID').'" type="submit">';
 		$template .= '</form>';
 
@@ -82,7 +84,7 @@ class RestHandler extends PaySystem\ServiceHandler
 
 		return array(
 			'NAME' => $settings['NAME'],
-			'CODES' => $settings['CODES']
+			'CODES' => $settings['CODES'] ?: []
 		);
 	}
 
@@ -109,12 +111,16 @@ class RestHandler extends PaySystem\ServiceHandler
 	 * @param Payment $payment
 	 * @param Request $request
 	 * @return ServiceResult
+	 * @throws \Bitrix\Main\ObjectException
 	 */
 	public function processRequest(Payment $payment, Request $request)
 	{
 		$result = new ServiceResult();
 
-		$result->setPsData(array('PS_STATUS_CODE' => 'Y'));
+		$result->setPsData([
+			'PS_STATUS_CODE' => 'Y',
+			'PAY_VOUCHER_DATE' => new Type\Date()
+		]);
 		$result->setOperationType(ServiceResult::MONEY_COMING);
 
 		return $result;

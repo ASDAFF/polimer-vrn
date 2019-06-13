@@ -116,6 +116,7 @@ class CSearch extends CAllSearch
 		$this->arResult = $temp_arrray;
 	}
 	*/
+
 	function MakeSQL($query, $strSqlWhere, $strSort, $bIncSites, $bStem)
 	{
 		global $USER;
@@ -128,7 +129,6 @@ class CSearch extends CAllSearch
 			"ITEM_ID" => "sc.ITEM_ID",
 			"TITLE" => "sc.TITLE",
 			"TAGS" => "sc.TAGS",
-			"BODY" => "sc.BODY",
 			"PARAM1" => "sc.PARAM1",
 			"PARAM2" => "sc.PARAM2",
 			"UPD" => "sc.UPD",
@@ -197,9 +197,9 @@ class CSearch extends CAllSearch
 				$strSqlWhere = preg_replace('#AND\\(st.TF >= [0-9\.,]+\\)#i', "", $strSqlWhere);
 
 				if (count($this->Query->m_stemmed_words) > 1)
-					$arSelect["RANK"] = "stt.RANK as RANK";
+					$arSelect["RANK"] = "stt.RANK as `RANK`";
 				else
-					$arSelect["RANK"] = "stt.TF as RANK";
+					$arSelect["RANK"] = "stt.TF as `RANK`";
 
 				$strSql = "
 				FROM b_search_content sc
@@ -207,7 +207,7 @@ class CSearch extends CAllSearch
 					INNER JOIN b_search_content_site scsite ON sc.ID=scsite.SEARCH_CONTENT_ID
 					".(count($this->Query->m_stemmed_words) > 1?
 						"INNER JOIN  (
-							select search_content_id, max(st.TF) TF, ".($bWordPos? "if(STDDEV(st.PS)-".$this->normdev(count($this->Query->m_stemmed_words))." between -0.000001 and 1, 1/STDDEV(st.PS), 0) + ": "")."sum(st.TF/sf.FREQ) as RANK
+							select search_content_id, max(st.TF) TF, ".($bWordPos? "if(STDDEV(st.PS)-".$this->normdev(count($this->Query->m_stemmed_words))." between -0.000001 and 1, 1/STDDEV(st.PS), 0) + ": "")."sum(st.TF/sf.FREQ) as `RANK`
 							from b_search_content_stem st, b_search_content_freq sf
 							where st.language_id = '".$this->Query->m_lang."'
 							and st.stem = sf.stem
@@ -234,13 +234,13 @@ class CSearch extends CAllSearch
 				if (count($this->Query->m_stemmed_words) > 1)
 				{
 					if ($bWordPos)
-						$arSelect["RANK"] = "if(STDDEV(st.PS)-".$this->normdev(count($this->Query->m_stemmed_words))." between -0.000001 and 1, 1/STDDEV(st.PS), 0) + sum(st.TF/sf.FREQ) as RANK";
+						$arSelect["RANK"] = "if(STDDEV(st.PS)-".$this->normdev(count($this->Query->m_stemmed_words))." between -0.000001 and 1, 1/STDDEV(st.PS), 0) + sum(st.TF/sf.FREQ) as `RANK`";
 					else
-						$arSelect["RANK"] = "sum(st.TF/sf.FREQ) as RANK";
+						$arSelect["RANK"] = "sum(st.TF/sf.FREQ) as `RANK`";
 				}
 				else
 				{
-					$arSelect["RANK"] = "st.TF as RANK";
+					$arSelect["RANK"] = "st.TF as `RANK`";
 				}
 
 				$strSql = "
@@ -279,7 +279,7 @@ class CSearch extends CAllSearch
 
 			$arSelect["SITE_URL"] = "scsite.URL as SITE_URL";
 			$arSelect["SITE_ID"] = "scsite.SITE_ID";
-			$arSelect["RANK"] = "1 as RANK";
+			$arSelect["RANK"] = "1 as `RANK`";
 
 			if ($this->Query->bTagsSearch)
 			{
@@ -327,13 +327,13 @@ class CSearch extends CAllSearch
 			if (count($this->Query->m_stemmed_words) > 1)
 			{
 				if ($bWordPos)
-					$arSelect["RANK"] = "if(STDDEV(st.PS)-".$this->normdev(count($this->Query->m_stemmed_words))." between -0.000001 and 1, 1/STDDEV(st.PS), 0) + sum(st.TF/sf.FREQ) as RANK";
+					$arSelect["RANK"] = "if(STDDEV(st.PS)-".$this->normdev(count($this->Query->m_stemmed_words))." between -0.000001 and 1, 1/STDDEV(st.PS), 0) + sum(st.TF/sf.FREQ) as `RANK`";
 				else
-					$arSelect["RANK"] = "sum(st.TF/sf.FREQ) as RANK";
+					$arSelect["RANK"] = "sum(st.TF/sf.FREQ) as `RANK`";
 			}
 			else
 			{
-				$arSelect["RANK"] = "st.TF as RANK";
+				$arSelect["RANK"] = "st.TF as `RANK`";
 			}
 
 			$strSql = "
@@ -369,7 +369,7 @@ class CSearch extends CAllSearch
 
 			if (BX_SEARCH_VERSION <= 1)
 				$arSelect["SITE_ID"] = "sc.LID as SITE_ID";
-			$arSelect["RANK"] = "1 as RANK";
+			$arSelect["RANK"] = "1 as `RANK`";
 
 			$strSql = "
 			FROM b_search_content sc
@@ -430,7 +430,8 @@ class CSearch extends CAllSearch
 				);
 				foreach ($arSelectOuterFields as $outerField)
 				{
-					$arSelectOuter[$outerField] = $arSelect[$outerField];
+					if (isset($arSelect[$outerField]))
+						$arSelectOuter[$outerField] = $arSelect[$outerField];
 					unset($arSelect[$outerField]);
 				}
 
@@ -438,7 +439,7 @@ class CSearch extends CAllSearch
 				$strSelectInner = "SELECT ".($bDistinct? "DISTINCT": "")."\n".implode("\n,", $arSelect);
 
 				return "
-					".$strSelectOuter.", sc0.RANK +
+					".$strSelectOuter.", sc0.`RANK` +
 						if(rv.TOTAL_VALUE > 0, ".($RATING_MAX > 0? "rv.TOTAL_VALUE/".$RATING_MAX: "0").",
 						if(rv.TOTAL_VALUE < 0, ".($RATING_MIN < 0? "rv.TOTAL_VALUE/".abs($RATING_MIN): "0").",
 						0
@@ -457,7 +458,7 @@ class CSearch extends CAllSearch
 					INNER JOIN b_search_content sc ON sc.ID = sc0.ID
 					LEFT JOIN b_rating_voting rv ON rv.ENTITY_TYPE_ID = sc.ENTITY_TYPE_ID AND rv.ENTITY_ID = sc.ENTITY_ID
 					LEFT JOIN b_rating_vote rvv ON rvv.ENTITY_TYPE_ID = sc.ENTITY_TYPE_ID AND rvv.ENTITY_ID = sc.ENTITY_ID AND rvv.USER_ID = ".intval($USER->GetId())."
-				".str_replace(" RANK", " SRANK", $strSort);
+				".str_replace(" `RANK`", " SRANK", $strSort);
 			}
 		}
 
@@ -536,10 +537,9 @@ class CSearch extends CAllSearch
 			//Copy first exists into inner join in hopeless try to defeat MySQL optimizer
 			$strSqlJoin2 = "";
 			$match = array();
-			if ($strSqlWhere && preg_match('#\\s*EXISTS (\\(SELECT \\* FROM b_search_content_param WHERE SEARCH_CONTENT_ID = sc\\.ID AND PARAM_NAME = \'[^\']+\' AND PARAM_VALUE(\\s*= \'[^\']+\'|\\s+in \\(\'[^\']+\'\\))\\))#', $strSqlWhere, $match))
+			if ($strSqlWhere && preg_match('#\\s*EXISTS \\(SELECT \\* FROM b_search_content_param WHERE (SEARCH_CONTENT_ID = sc\\.ID AND PARAM_NAME = \'[^\']+\' AND PARAM_VALUE(\\s*= \'[^\']+\'|\\s+in \\(\'[^\']+\'\\)))\\)#', $strSqlWhere, $match))
 			{
-				$subTable = str_replace("SEARCH_CONTENT_ID = sc.ID AND", "", $match[1]);
-				$strSqlJoin2 = "INNER JOIN ".$subTable." p1 ON p1.SEARCH_CONTENT_ID = sc.ID";
+				$strSqlJoin2 = "INNER JOIN b_search_content_param scp ON scp.$match[1]";
 			}
 
 			if ($query == "1=1")
@@ -780,7 +780,7 @@ class CSearch extends CAllSearch
 
 	public static function RegisterStem($stem)
 	{
-		global $DB;
+		$DB = CDatabase::GetModuleConnection('search');
 		static $cache = array();
 
 		if (is_array($stem)) //This is batch check of the already exist stems

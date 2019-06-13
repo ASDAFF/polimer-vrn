@@ -288,6 +288,9 @@ BizProcActivity = function()
 
 		for(var i in oActivity.Children)
 		{
+			if (!oActivity.Children.hasOwnProperty(i))
+				continue;
+
 			activity = CreateActivity(oActivity.Children[i]);
 			activity.parentActivity = this;
 			this.childActivities[this.childActivities.length] = activity;
@@ -652,8 +655,13 @@ function _DragNDrop()
 			window.getSelection().removeAllRanges();
 
 		for(var i in ob.Handlers['ondragging'])
-			if(ob.Handlers['ondragging'][i])
+		{
+			if (!ob.Handlers['ondragging'].hasOwnProperty(i))
+				continue;
+
+			if (ob.Handlers['ondragging'][i])
 				ob.Handlers['ondragging'][i](e, X, Y);
+		}
 	}
 
 	ob._UnS = function ()
@@ -676,9 +684,12 @@ function _DragNDrop()
 		var Y = e.clientY + scrollPos.scrollTop + 1 +'px';
 
 		for(var i in ob.Handlers['ondrop'])
-			if(ob.Handlers['ondrop'][i])
+		{
+			if (!ob.Handlers['ondrop'].hasOwnProperty(i))
+				continue;
+			if (ob.Handlers['ondrop'][i])
 				ob.Handlers['ondrop'][i](X, Y, e);
-
+		}
 		ob.dragging = false;
 
 		ob.drdrop.style.display = 'none';

@@ -1,21 +1,298 @@
 ;(function(window) {
+	function ViewSwitcher(params)
+	{
+		this.calendar = params.calendar;
+		this.wrap = params.wrap;
+		this.popupId = this.calendar.id + '_view_switcher';
+		if (params.dropDownMode)
+		{
+			this.createDropDown();
+		}
+		else
+		{
+			this.createSelector();
+		}
+
+		BX.addCustomEvent(this.calendar, "afterSetView", BX.proxy(this.onAfterSetView, this));
+	}
+
+	ViewSwitcher.prototype = {
+		createSelector:function ()
+		{
+			var
+				wrap = this.wrap.appendChild(BX.create('DIV', {
+					props: {className: 'calendar-view-switcher-list'},
+					events: {
+						click: BX.delegate(function(e)
+						{
+							var target = e.target || e.srcElement;
+							if (target && target.getAttribute)
+							{
+								var viewName = target.getAttribute('data-bx-calendar-view');
+								this.calendar.setView(viewName, {animation: true});
+							}
+						}, this)
+					}
+				}));
+
+			this.calendar.views.forEach(function(view)
+			{
+				view.switchNode = wrap.appendChild(
+					BX.create('SPAN', {
+						props: {className: 'calendar-view-switcher-list-item' + (this.calendar.currentViewName === view.name ? ' calendar-view-switcher-list-item-active' : '')},
+						attrs: {'data-bx-calendar-view': view.name},
+						text: view.title || view.name
+					})
+				);
+			}, this);
+		},
+
+		createDropDown: function ()
+		{
+			this.selectorText = BX.create("div", {props: {className:"calendar-view-switcher-text"}});
+			this.selectorTextInner = this.selectorText.appendChild(BX.create("div", {props: {className: "calendar-view-switcher-text-inner"}}));
+
+			BX.adjust(this.wrap, {
+				children: [
+					this.selectorText,
+					BX.create("div", {props: {className:"calendar-view-switcher-dropdown"}})
+				],
+				events: {click: BX.proxy(this.showPopup, this)}
+			});
+
+			if (BX.type.isArray(this.calendar.util.config.additionalViewModes))
+			{
+				this.viewModeTextInner = this.selectorText.appendChild(BX.create("div", {props: {className: "calendar-view-switcher-text-mode-inner"}}));
+			}
+
+			this.getMenuItems();
+		},
+
+		getMenuItems: function()
+		{
+			this.menuItems = [];
+			this.calendar.views.forEach(function(view)
+			{
+				this.menuItems.push({
+					text: view.title || view.name,
+					className: this.calendar.currentViewName === view.name ? 'menu-popup-item-accept' : ' ',
+					onclick: BX.delegate(function(){
+						this.calendar.setView(view.name, {animation: true});
+						this.menuPopup.close();
+					}, this)
+				});
+
+				if (this.calendar.currentViewName === view.name)
+				{
+					this.selectorTextInner.innerHTML = view.title || view.name;
+				}
+			}, this);
+
+			if (BX.type.isArray(this.calendar.util.config.additionalViewModes))
+			{
+				var i, mode;
+
+				this.menuItems.push({
+					text: '<span>' + BX.message('EC_VIEW_MODE_SHOW_BY') + '</span>',
+					className: 'main-buttons-submenu-separator main-buttons-submenu-item main-buttons-hidden-label'
+				});
+
+				for (i = 0; i < this.calendar.util.config.additionalViewModes.length; i++)
+				{
+					mode = this.calendar.util.config.additionalViewModes[i];
+					this.menuItems.push({
+						dataset: mode,
+						text: BX.util.htmlspecialchars(mode.label),
+						className: mode.selected ? 'menu-popup-item-accept' : ' ',
+						onclick: BX.delegate(function(e, item){
+							this.calendar.triggerEvent('changeViewMode', item.dataset);
+							this.viewModeTextInner.innerHTML = '(' + BX.util.htmlspecialchars(item.dataset.label) + ')';
+							for (j = 0; j < this.calendar.util.config.additionalViewModes.length; j++)
+							{
+								this.calendar.util.config.additionalViewModes[j].selected = item.dataset.id == this.calendar.util.config.additionalViewModes[j].id;
+							}
+							this.menuPopup.close();
+						}, this)
+					});
+
+					if (mode.selected)
+					{
+						this.viewModeTextInner.innerHTML = '(' + BX.util.htmlspecialchars(mode.label) + ')';
+					}
+				}
+			}
+			this.calendar.triggerEvent('beforeViewModePopupOpened', this.menuItems);
+
+			return this.menuItems;
+		},
+
+		showPopup: function ()
+		{
+			if (this.menuPopup && this.menuPopup.popupWindow && this.menuPopup.popupWindow.isShown())
+			{
+				return this.menuPopup.close();
+			}
+
+			this.getMenuItems();
+
+			this.menuPopup = BX.PopupMenu.create(
+				this.popupId,
+				this.selectorText,
+				this.menuItems,
+				{
+					closeByEsc : true,
+					autoHide : true,
+					zIndex: this.zIndex,
+					offsetTop: -3,
+					offsetLeft: this.selectorText.offsetWidth - 6,
+					angle: true
+				}
+			);
+
+			this.menuPopup.show();
+
+			BX.addCustomEvent(this.menuPopup.popupWindow, 'onPopupClose', BX.delegate(function()
+			{
+				BX.PopupMenu.destroy(this.popupId);
+				this.menuPopup = null;
+			}, this));
+		},
+
+		onAfterSetView: function()
+		{
+			var
+				newView = this.calendar.getView(),
+				i, nodes = this.wrap.querySelectorAll('.calendar-view-switcher-list-item-active');
+
+			for (i = 0; i < nodes.length; i++)
+			{
+				BX.removeClass(nodes[i], 'calendar-view-switcher-list-item-active');
+			}
+
+			if (newView)
+			{
+				if (newView.switchNode)
+				{
+					BX.addClass(this.calendar.getView().switchNode, 'calendar-view-switcher-list-item-active');
+				}
+
+				if (this.selectorTextInner)
+				{
+					this.selectorTextInner.innerHTML = newView.title || newView.name;
+				}
+			}
+		}
+	};
+
+	function SettingsMenu(params)
+	{
+		this.calendar = params.calendar;
+		this.wrap = params.wrap;
+		this.showMarketPlace = params.showMarketPlace;
+		this.id = this.calendar.id + '_settings_button';
+		this.zIndex = params.zIndex || 3200;
+		this.create();
+	}
+
+	SettingsMenu.prototype = {
+		create: function ()
+		{
+			this.menuItems = [
+				{
+					text: BX.message('EC_SET_SLIDER_SETTINGS_TITLE'),
+					onclick: BX.proxy(this.openSettingsSlider, this)
+				}
+			];
+
+			if (this.showMarketPlace)
+			{
+				this.menuItems.push({
+					text: BX.message('EC_ADD_APPLICATION'),
+					onclick: BX.proxy(this.openApplicationSlider, this)
+				});
+			}
+
+			this.button = this.wrap.appendChild(BX.create("button", {
+				props: {
+					className: "ui-btn ui-btn-icon-setting ui-btn-light-border ui-btn-themes",
+					type: "button"
+				}
+			}));
+
+			if (this.menuItems.length > 1)
+			{
+				BX.bind(this.button, 'click', BX.proxy(this.showPopup, this));
+			}
+			else
+			{
+				BX.bind(this.button, 'click', BX.proxy(this.openSettingsSlider, this));
+			}
+		},
+
+		showPopup: function ()
+		{
+			if (this.menuPopup && this.menuPopup.popupWindow && this.menuPopup.popupWindow.isShown())
+			{
+				return this.menuPopup.close();
+			}
+
+			this.menuPopup = BX.PopupMenu.create(
+				this.id,
+				this.button,
+				this.menuItems,
+				{
+					closeByEsc : true,
+					autoHide : true,
+					zIndex: this.zIndex
+				}
+			);
+
+			this.menuPopup.show();
+
+			BX.addCustomEvent(this.menuPopup.popupWindow, 'onPopupClose', BX.delegate(function()
+			{
+				BX.PopupMenu.destroy(this.addButtonMorePopupId);
+				BX.PopupMenu.destroy(this.id);
+				this.menuPopup = null;
+				this.addBtnMenu = null;
+			}, this));
+		},
+
+		openSettingsSlider: function()
+		{
+			if (this.menuPopup && this.menuPopup.popupWindow && this.menuPopup.popupWindow.isShown())
+			{
+				this.menuPopup.close();
+			}
+
+			if (!this.calendar.settingsSlider)
+			{
+				this.calendar.settingsSlider = new window.BXEventCalendar.SettingsSlider({calendar: this.calendar});
+			}
+			this.calendar.settingsSlider.show();
+		},
+
+		openApplicationSlider: function()
+		{
+			if (this.menuPopup && this.menuPopup.popupWindow && this.menuPopup.popupWindow.isShown())
+			{
+				this.menuPopup.close();
+			}
+		}
+	};
 
 	function AddButton(params)
 	{
 		this.calendar = params.calendar;
 		this.wrap = params.wrap;
 		this.id = this.calendar.id + '_top_add_button';
+		this.zIndex = params.zIndex || 3200;
 		this.create();
 	}
 
 	AddButton.prototype = {
 		create: function ()
 		{
-			this.button = this.wrap.appendChild(BX.create("SPAN", {
-				props: {className: "webform-small-button webform-small-button-blue"},
-				html: BX.message('EC_ADD'),
-				events: {click: BX.proxy(this.addEntry, this)}
-			}));
 
 			this.menuItems = [
 				{
@@ -34,10 +311,30 @@
 
 			if (this.menuItems.length > 1)
 			{
-				BX.addClass(this.wrap, 'webform-small-button-separate-wrap');
-				this.addButtonMore = this.wrap.appendChild(BX.create("SPAN", {
-					props: {className: "webform-small-button-right-part"},
+				this.addButtonMore = BX.create("span", {
+					props: {className: "ui-btn-double ui-btn-primary"},
+					children: [
+						BX.create("button", {
+							props: {className: "ui-btn-main", type: "button"},
+							html: BX.message('EC_ADD'),
+							events: {click: BX.proxy(this.addEntry, this)}
+						})
+					]
+				});
+				this.wrap.appendChild(this.addButtonMore);
+
+				this.addButtonExtra = BX.create("span", {
+					props: {className: "ui-btn-extra"},
 					events: {click: BX.proxy(this.showPopup, this)}
+				});
+				this.addButtonMore.appendChild(this.addButtonExtra)
+			}
+			else
+			{
+				this.button = this.wrap.appendChild(BX.create("button", {
+					props: {className: "ui-btn ui-btn-primary", type: "button"},
+					html: BX.message('EC_ADD'),
+					events: {click: BX.proxy(this.addEntry, this)}
 				}));
 			}
 		},
@@ -51,7 +348,7 @@
 
 			this.menuPopup = BX.PopupMenu.create(
 				this.id,
-				this.addButtonMore,
+				this.addButtonExtra,
 				this.menuItems,
 				{
 					closeByEsc : true,
@@ -68,6 +365,9 @@
 			BX.addCustomEvent(this.menuPopup.popupWindow, 'onPopupClose', BX.delegate(function()
 			{
 				BX.PopupMenu.destroy(this.addButtonMorePopupId);
+				BX.PopupMenu.destroy(this.id);
+				this.menuPopup = null;
+				this.addBtnMenu = null;
 			}, this));
 		},
 
@@ -202,6 +502,7 @@
 			{
 				BX.PopupMenu.destroy(_this.id);
 				_this.shown = false;
+				_this.popupMenu = null;
 			});
 
 			this.input.select();
@@ -212,6 +513,7 @@
 		closePopup: function()
 		{
 			BX.PopupMenu.destroy(this.id);
+			this.popupMenu = null;
 			this.shown = false;
 		},
 
@@ -251,8 +553,10 @@
 		{
 			var val = this.input.value;
 			BX.onCustomEvent(this, 'onSelectInputChanged', [this, val]);
-			if (this.onChangeCallback && typeof this.onChangeCallback == 'function')
+			if (BX.type.isFunction(this.onChangeCallback))
+			{
 				this.onChangeCallback({value: val});
+			}
 		},
 
 		destroy: function()
@@ -271,6 +575,7 @@
 			if (this.popupMenu)
 				this.popupMenu.close();
 			BX.PopupMenu.destroy(this.id);
+			this.popupMenu = null;
 			this.shown = false;
 		}
 	};
@@ -347,34 +652,72 @@
 				if (_this.hidePopupCallBack)
 					_this.hidePopupCallBack();
 				BX.PopupMenu.destroy(_this.id);
+				_this.reminderMenu = null;
 			});
 		},
 
 		addValue: function(value)
 		{
 			var i, item, closeIcon, _this = this;
-			for (i = 0; i < this.values.length; i++)
+			if (value >= 0 && !BX.util.in_array(value, this.selectedValues))
 			{
-				if (this.values[i].value == value && value >= 0 && !BX.util.in_array(value, this.selectedValues))
+				for (i = 0; i < this.values.length; i++)
+				{
+					if (this.values[i].value == value)
+					{
+						if (!this.selectedValues.length)
+							BX.cleanNode(this.valuesWrap);
+
+						item = this.valuesWrap.appendChild(BX.create('SPAN', {props: {className: 'calendar-reminder-item'}, text: this.values[i].shortLabel || this.values[i].label}));
+						closeIcon = item.appendChild(BX.create('SPAN', {props: {className: 'calendar-reminder-clear-icon'}, events: {click: function(){_this.removeValue(value);}}}));
+						this.selectedValues.push(value);
+						this.controlList[value] = item;
+						break;
+					}
+				}
+
+				if (item === undefined)
 				{
 					if (!this.selectedValues.length)
 						BX.cleanNode(this.valuesWrap);
 
-					item = this.valuesWrap.appendChild(BX.create('SPAN', {props: {className: 'calendar-reminder-item'}, text: this.values[i].shortLabel || this.values[i].label}));
+					item = this.valuesWrap.appendChild(BX.create('SPAN', {props: {className: 'calendar-reminder-item'}, text: this.getText(value)}));
 					closeIcon = item.appendChild(BX.create('SPAN', {props: {className: 'calendar-reminder-clear-icon'}, events: {click: function(){_this.removeValue(value);}}}));
 					this.selectedValues.push(value);
 					this.controlList[value] = item;
-					break;
 				}
 			}
 
-			if (this.selectedValues.length == this.values.length)
+			if (this.selectedValues.length === this.values.length)
 			{
 				this.addButton.style.display = 'none';
 			}
 
 			if (this.changeCallack)
 				this.changeCallack(this.selectedValues);
+		},
+
+		getText: function(value)
+		{
+			var tempValue = value,
+				dividers = [60, 24], //list of time dividers
+				messageCodes = ['EC_REMIND1_MIN_COUNT', 'EC_REMIND1_HOUR_COUNT', 'EC_REMIND1_DAY_COUNT'],
+				result = '';
+			for (var i = 0; i < messageCodes.length; i++)
+			{
+				if (tempValue < dividers[i] || i === dividers.length)
+				{
+					result = BX.message(messageCodes[i]).toString();
+					result = result.replace('\#COUNT\#', tempValue.toString());
+					break;
+				}
+				else
+				{
+					tempValue = Math.ceil(tempValue / dividers[i]);
+				}
+			}
+
+			return result;
 		},
 
 		removeValue: function(value)
@@ -392,7 +735,7 @@
 
 			if (!this.selectedValues.length)
 			{
-				this.valuesWrap.appendChild(BX.create('SPAN', {props: {className: ''}, text: ' ' + BX.message('EC_REMIND_NO')}));
+				this.valuesWrap.appendChild(BX.create('SPAN', {props: {className: ''}, text: ' ' + BX.message('EC_REMIND1_NO')}));
 			}
 			if (this.changeCallack)
 				this.changeCallack(this.selectedValues);
@@ -439,7 +782,7 @@
 					click : function(e)
 					{
 						var targ = e.target || e.srcElement;
-						if (targ.className == 'feed-event-del-but') // Delete button
+						if (targ.className === 'feed-event-del-but') // Delete button
 						{
 							BX.SocNetLogDestination.deleteItem(targ.getAttribute('data-item-id'), targ.getAttribute('data-item-type'), id);
 							e.preventDefault();
@@ -449,13 +792,13 @@
 					mouseover: function(e)
 					{
 						var targ = e.target || e.srcElement;
-						if (targ.className == 'feed-event-del-but') // Delete button
+						if (targ.className === 'feed-event-del-but') // Delete button
 							BX.addClass(targ.parentNode, 'event-grid-dest-hover');
 					},
 					mouseout: function(e)
 					{
 						var targ = e.target || e.srcElement;
-						if (targ.className == 'feed-event-del-but') // Delete button
+						if (targ.className === 'feed-event-del-but') // Delete button
 							BX.removeClass(targ.parentNode, 'event-grid-dest-hover');
 					}
 				}
@@ -579,7 +922,7 @@
 			{
 				if (selected.hasOwnProperty(code))
 				{
-					if (selected[code] == 'users' && !items.users[code])
+					if (selected[code] === 'users' && !items.users[code])
 					{
 						codes.push(code);
 					}
@@ -605,8 +948,10 @@
 						this.params.items = this.calendar.util.getSocnetDestinationConfig('items');
 						this.params.itemsLast = this.calendar.util.getSocnetDestinationConfig('itemsLast');
 
-						if (callback && typeof callback == 'function')
+						if (BX.type.isFunction(callback))
+						{
 							callback();
+						}
 					}, this)
 				});
 				return false;
@@ -630,20 +975,20 @@
 				type1 = type,
 				prefix = 'S';
 
-			if (type == 'sonetgroups')
+			if (type === 'sonetgroups')
 			{
 				prefix = 'SG';
 			}
-			else if (type == 'groups')
+			else if (type === 'groups')
 			{
 				prefix = 'UA';
 				type1 = 'all-users';
 			}
-			else if (type == 'users')
+			else if (type === 'users')
 			{
 				prefix = 'U';
 			}
-			else if (type == 'department')
+			else if (type === 'department')
 			{
 				prefix = 'DR';
 			}
@@ -713,7 +1058,7 @@
 
 				BX.bind(window, 'keydown', BX.SocNetLogDestination.backspaceDisable = function(e)
 				{
-					if (e.keyCode == 8)
+					if (e.keyCode === 8)
 					{
 						e.preventDefault();
 						return false;
@@ -760,24 +1105,27 @@
 		{
 			var attendeesCodes = {};
 
-			values.forEach(function(code){
-				if (code.substr(0, 2) == 'DR')
-				{
-					attendeesCodes[code] = "department";
-				}
-				else if (code.substr(0, 2) == 'UA')
-				{
-					attendeesCodes[code] = "groups";
-				}
-				else if (code.substr(0, 2) == 'SG')
-				{
-					attendeesCodes[code] = "sonetgroups";
-				}
-				else if (code.substr(0, 1) == 'U')
-				{
-					attendeesCodes[code] = "users";
-				}
-			});
+			if (BX.type.isArray(values))
+			{
+				values.forEach(function(code){
+					if (code.substr(0, 2) === 'DR')
+					{
+						attendeesCodes[code] = "department";
+					}
+					else if (code.substr(0, 2) === 'UA')
+					{
+						attendeesCodes[code] = "groups";
+					}
+					else if (code.substr(0, 2) === 'SG')
+					{
+						attendeesCodes[code] = "sonetgroups";
+					}
+					else if (code.substr(0, 1) === 'U')
+					{
+						attendeesCodes[code] = "users";
+					}
+				});
+			}
 
 			return attendeesCodes;
 		},
@@ -848,7 +1196,8 @@
 				attrs: {
 					name: this.params.inputName || '',
 					placeholder: BX.message('EC_LOCATION_LABEL'),
-					type: 'text'
+					type: 'text',
+					autocomplete: this.disabled ? 'on' : 'off'
 				},
 				props: {
 					className: 'calendar-field calendar-field-select'
@@ -884,13 +1233,14 @@
 					});
 
 
-					if (this.value.type == 'mr' && this.value.value == meetingRooms[i].ID)
+					if (this.value.type === 'mr' && parseInt(this.value.value) === parseint(meetingRooms[i].ID))
 					{
 						selectedIndex = menuItemList.length - 1;
 					}
 				}
 				menuItemList.push({delimiter: true});
 			}
+
 
 			if (!locationList || !locationList.length)
 			{
@@ -911,7 +1261,7 @@
 						value: parseInt(locationList[i].ID),
 						type: 'calendar'
 					});
-					if (this.value.type == 'calendar' && this.value.value == locationList[i].ID)
+					if (this.value.type === 'calendar' && this.value.value == locationList[i].ID)
 					{
 						selectedIndex = menuItemList.length - 1;
 					}
@@ -927,7 +1277,7 @@
 			if (this.value)
 			{
 				this.DOM.input.value = this.value.str || '';
-				if (this.value.type && this.value.str == this.calendar.util.getTextLocation(this.value))
+				if (this.value.type && this.value.str === this.calendar.util.getTextLocation(this.value))
 				{
 					this.DOM.input.value = BX.message('EC_LOCATION_404');
 				}
@@ -950,7 +1300,7 @@
 					this.value = {text: value};
 					for (i = 0; i < menuItemList.length; i++)
 					{
-						if (menuItemList[i].label === value)
+						if (menuItemList[i].labelRaw === value)
 						{
 							this.value.type = menuItemList[i].type;
 							this.value.value = menuItemList[i].value;
@@ -958,7 +1308,7 @@
 						}
 					}
 
-					if (this.params.onChangeCallback && typeof this.params.onChangeCallback == 'function')
+					if (BX.type.isFunction(this.params.onChangeCallback))
 					{
 						this.params.onChangeCallback();
 					}
@@ -1217,14 +1567,16 @@
 		getTextValue: function(value)
 		{
 			if (!value)
+			{
 				value = this.value;
+			}
 
-			var res = value.text || '';
-			if (value && value.type == 'mr')
+			var res = value.str || value.text || '';
+			if (value && value.type === 'mr')
 			{
 				res = 'ECMR_' + value.value;
 			}
-			else if (value && value.type == 'calendar')
+			else if (value && value.type === 'calendar')
 			{
 				res = 'calendar_' + value.value;
 			}
@@ -1365,7 +1717,7 @@
 
 			dayNode.onbxdestdragfinish = BX.delegate(function(currentNode)
 			{
-				if (currentNode.getAttribute('data-bx-entry-resizer') == 'Y' && this.resizedState)
+				if (currentNode.getAttribute('data-bx-entry-resizer') === 'Y' && this.resizedState)
 				{
 					this.calendar.entryController.moveEventToNewDate(this.resizedState.entry, this.resizedState.entry.from, this.resizedState.entry.to);
 					return true;
@@ -1469,7 +1821,7 @@
 				BX.removeClass(this.draggedNode, 'calendar-event-line-start-yesterday');
 				BX.removeClass(this.draggedNode, 'calendar-event-line-finish-tomorrow');
 
-				if (this.calendar.currentViewName == 'week' || this.calendar.currentViewName == 'day')
+				if (this.calendar.currentViewName === 'week' || this.calendar.currentViewName === 'day')
 				{
 					this.draggedNode.style.left = (BX.pos(node).left + 2) + 'px';
 					this.draggedNode.style.width = (this.calendar.getView().getDayWidth() - 5) + 'px';
@@ -1534,7 +1886,7 @@
 			{
 				if (this.draggedNode)
 				{
-					if (this.calendar.currentViewName == 'week' || this.calendar.currentViewName == 'day')
+					if (this.calendar.currentViewName === 'week' || this.calendar.currentViewName === 'day')
 					{
 						var
 							timeFrom,timeNode,
@@ -1661,8 +2013,13 @@
 		}
 	};
 
+
+
+
 	if (window.BXEventCalendar)
 	{
+		window.BXEventCalendar.ViewSwitcher = ViewSwitcher;
+		window.BXEventCalendar.SettingsMenu = SettingsMenu;
 		window.BXEventCalendar.AddButton = AddButton;
 		window.BXEventCalendar.SelectInput = SelectInput;
 		window.BXEventCalendar.ReminderSelector = Reminder;
@@ -1675,6 +2032,8 @@
 	{
 		BX.addCustomEvent(window, "onBXEventCalendarInit", function()
 		{
+			window.BXEventCalendar.ViewSwitcher = ViewSwitcher;
+			window.BXEventCalendar.SettingsMenu = SettingsMenu;
 			window.BXEventCalendar.AddButton = AddButton;
 			window.BXEventCalendar.SelectInput = SelectInput;
 			window.BXEventCalendar.ReminderSelector = Reminder;

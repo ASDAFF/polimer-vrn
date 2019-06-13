@@ -169,8 +169,6 @@ ParallelActivity = function()
 			ob.childActivities[0].parentActivity = ob;
 			ob.childActivities[1].parentActivity = ob;
 		}
-		//div.className = 'seqactivitycontainer';
-		//debugger;
 		ob.container = container.appendChild(document.createElement('DIV'));
 		if(!jsUtils.IsIE())
 			ob.container.className = 'parallelcontainer';
@@ -253,6 +251,8 @@ ParallelActivity = function()
 
 		for(var i in this.childActivities)
 		{
+			if (!this.childActivities.hasOwnProperty(i))
+				continue;
 			ob.DrawVLine(i);
 			ob.childActivities[i].Draw(ob.childsContainer.rows[2].cells[i]);
 		}

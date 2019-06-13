@@ -47,11 +47,15 @@ if (strlen($arParams["PATH_TO_GROUP_EDIT"]) <= 0)
 
 $arParams["ITEMS_COUNT"] = IntVal($arParams["ITEMS_COUNT"]);
 if ($arParams["ITEMS_COUNT"] <= 0)
+{
 	$arParams["ITEMS_COUNT"] = 10;
+}
 
 $arParams["THUMBNAIL_LIST_SIZE"] = IntVal($arParams["THUMBNAIL_LIST_SIZE"]);
 if ($arParams["THUMBNAIL_LIST_SIZE"] <= 0)
+{
 	$arParams["THUMBNAIL_LIST_SIZE"] = 30;
+}
 
 $arParams["NAME_TEMPLATE"] = $arParams["NAME_TEMPLATE"] ? $arParams["NAME_TEMPLATE"] : CSite::GetNameFormat();
 $arParams["NAME_TEMPLATE_WO_NOBR"] = str_replace(
@@ -63,8 +67,13 @@ $bUseLogin = $arParams["SHOW_LOGIN"] != "N" ? true : false;
 
 $arParams["PATH_TO_SMILE"] = Trim($arParams["PATH_TO_SMILE"]);
 
+$arResult["IS_IFRAME"] = $_REQUEST["IFRAME"] == "Y";
+$arResult["MODE"] = (isset($arParams["MODE"]) && in_array($arParams["MODE"], array("IN", "OUT")) ? $arParams["MODE"] : "ALL");
+
 if (!$USER->IsAuthorized())
+{
 	$arResult["NEED_AUTH"] = "Y";
+}
 else
 {
 	$arGroup = CSocNetGroup::GetByID($arParams["GROUP_ID"]);
@@ -74,16 +83,22 @@ else
 		|| !is_array($arGroup) 
 		|| $arGroup["ACTIVE"] != "Y" 
 	)
+	{
 		$arResult["FatalError"] = GetMessage("SONET_GRE_NO_GROUP");
+	}
 	else
 	{
 		$arGroupSites = array();
 		$rsGroupSite = CSocNetGroup::GetSite($arGroup["ID"]);
 		while ($arGroupSite = $rsGroupSite->Fetch())
+		{
 			$arGroupSites[] = $arGroupSite["LID"];
+		}
 
 		if (!in_array(SITE_ID, $arGroupSites))
+		{
 			$arResult["FatalError"] = GetMessage("SONET_GRE_NO_GROUP");
+		}
 		else
 		{
 			$arResult["Group"] = $arGroup;
@@ -98,17 +113,35 @@ else
 				$arResult["Urls"]["Group"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP"], array("group_id" => $arResult["Group"]["ID"]));
 				$arResult["Urls"]["GroupEdit"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_EDIT"], array("group_id" => $arResult["Group"]["ID"]));
 
+				$subTitle = Loc::getMessage(
+					$arResult["MODE"]
+						? ($arResult["Group"]["PROJECT"] == "Y" ? "SONET_GRE_TITLE_".$arResult["MODE"]."_PROJECT" : "SONET_GRE_TITLE_".$arResult["MODE"])
+						: ($arResult["Group"]["PROJECT"] == "Y" ? "SONET_GRE_TITLE_PROJECT" : "SONET_GRE_TITLE")
+				);
+
 				if ($arParams["SET_TITLE"] == "Y")
-					$APPLICATION->SetTitle($arResult["Group"]["NAME"].": ".Loc::getMessage($arResult["Group"]["PROJECT"] == "Y" ? "SONET_GRE_TITLE_PROJECT" : "SONET_GRE_TITLE"));
+				{
+					if ($arResult["IS_IFRAME"])
+					{
+						$APPLICATION->SetTitle($subTitle);
+						$APPLICATION->SetPageProperty('PageSubtitle', $arResult["Group"]["NAME"]);
+					}
+					else
+					{
+						$APPLICATION->SetTitle($arResult["Group"]["NAME"].": ".$subTitle);
+					}
+				}
 
 				if ($arParams["SET_NAV_CHAIN"] != "N")
 				{
 					$APPLICATION->AddChainItem($arResult["Group"]["NAME"], $arResult["Urls"]["Group"]);
-					$APPLICATION->AddChainItem(Loc::getMessage($arResult["Group"]["PROJECT"] == "Y" ? "SONET_GRE_TITLE_PROJECT" : "SONET_GRE_TITLE"));
+					$APPLICATION->AddChainItem($subTitle);
 				}
 
 				if (!$arResult["CurrentUserPerms"]["UserCanInitiate"])
+				{
 					$arResult["FatalError"] = GetMessage("SONET_GRE_CANT_INVITE").". ";
+				}
 				else
 				{
 					if (
@@ -178,8 +211,25 @@ else
 							}
 						}
 
-						if (strlen($errorMessage) > 0)
-							$arResult["ErrorMessage"] = $errorMessage;
+						if ($_REQUEST["ajax_request"] == "Y")
+						{
+							$APPLICATION->RestartBuffer();
+							echo CUtil::PhpToJsObject(array(
+								'MESSAGE' => (strlen($errorMessage) > 0 ? 'ERROR' : 'SUCCESS'),
+								'ERROR_MESSAGE' => (strlen($errorMessage) > 0 ? $errorMessage : ''),
+								'URL' => (strlen($errorMessage) > 0 ? '' : $arResult["Urls"]["Group"])
+							));
+							require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
+							die();
+						}
+						else
+						{
+							if (strlen($errorMessage) > 0)
+							{
+								$arResult["ErrorMessage"] = $errorMessage;
+							}
+						}
+
 					}
 					elseif (
 						CModule::IncludeModule('extranet') 
@@ -208,27 +258,30 @@ else
 					$arNavParams = array("nPageSize" => $arParams["ITEMS_COUNT"], "bDescPageNumbering" => false);
 					$parser = new CSocNetTextParser(LANGUAGE_ID, $arParams["PATH_TO_SMILE"]);
 
-					$arResult["Requests"] = false;
-					$dbRequests = CSocNetUserToGroup::GetList(
-						array("DATE_CREATE" => "ASC"),
-						array(
-							"GROUP_ID" => $arResult["Group"]["ID"],
-							"ROLE" => SONET_ROLES_REQUEST,
-							"INITIATED_BY_TYPE" => SONET_INITIATED_BY_USER
-						),
-						false,
-						$arNavParams,
-						array("ID", "USER_ID", "DATE_CREATE", "DATE_UPDATE", "MESSAGE", "USER_NAME", "USER_LAST_NAME", "USER_SECOND_NAME", "USER_LOGIN", "USER_PERSONAL_PHOTO", "USER_PERSONAL_GENDER")
-					);
-					if ($dbRequests)
+					$arResult["Requests"] = array();
+
+					if (in_array($arResult["MODE"], array('ALL', 'IN')))
 					{
-						$arResult["Requests"] = array();
 						$arResult["Requests"]["List"] = false;
+
+						$dbRequests = CSocNetUserToGroup::GetList(
+							array("DATE_CREATE" => "ASC"),
+							array(
+								"GROUP_ID" => $arResult["Group"]["ID"],
+								"ROLE" => SONET_ROLES_REQUEST,
+								"INITIATED_BY_TYPE" => SONET_INITIATED_BY_USER
+							),
+							false,
+							$arNavParams,
+							array("ID", "USER_ID", "DATE_CREATE", "DATE_UPDATE", "MESSAGE", "USER_NAME", "USER_LAST_NAME", "USER_SECOND_NAME", "USER_LOGIN", "USER_PERSONAL_PHOTO", "USER_PERSONAL_GENDER", "USER_WORK_POSITION")
+						);
 
 						while ($arRequests = $dbRequests->GetNext())
 						{
 							if ($arResult["Requests"]["List"] == false)
+							{
 								$arResult["Requests"]["List"] = array();
+							}
 
 							$pu = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER"], array("user_id" => $arRequests["USER_ID"]));
 							$canViewProfile = CSocNetUserPerms::CanPerformOperation($USER->GetID(), $arRequests["USER_ID"], "viewprofile", CSocNetUser::IsCurrentUserModuleAdmin());
@@ -281,6 +334,7 @@ else
 								"USER_PERSONAL_PHOTO_IMG" => $arImage,
 								"USER_PROFILE_URL" => $pu,
 								"SHOW_PROFILE_LINK" => $canViewProfile,
+								"USER_WORK_POSITION" => $arRequests["USER_WORK_POSITION"],
 								"DATE_CREATE" => $arRequests["DATE_CREATE"],
 								"MESSAGE" => $parser->convert(
 									$arRequests["~MESSAGE"],
@@ -305,27 +359,39 @@ else
 						$arResult["Requests"]["NAV_STRING"] = $dbRequests->GetPageNavStringEx($navComponentObject, GetMessage("SONET_GRE_NAV"), "", false);
 					}
 
-					$arResult["RequestsOut"] = false;
-					$dbRequests = CSocNetUserToGroup::GetList(
-						array("DATE_CREATE" => "ASC"),
-						array(
+					$arResult["RequestsOut"] = array();
+					if (in_array($arResult["MODE"], array('ALL', 'OUT')))
+					{
+						$arResult["RequestsOut"]["List"] = false;
+
+						$requestsFilter = array(
 							"GROUP_ID" => $arResult["Group"]["ID"],
 							"ROLE" => SONET_ROLES_REQUEST,
 							"INITIATED_BY_TYPE" => SONET_INITIATED_BY_GROUP
-						),
-						false,
-						$arNavParams,
-						array("ID", "USER_ID", "DATE_CREATE", "DATE_UPDATE", "MESSAGE", "USER_NAME", "USER_LAST_NAME", "USER_SECOND_NAME", "USER_LOGIN", "USER_PERSONAL_PHOTO", "USER_PERSONAL_GENDER")
-					);
-					if ($dbRequests)
-					{
-						$arResult["RequestsOut"] = array();
-						$arResult["RequestsOut"]["List"] = false;
+						);
+
+						if (
+							!$arResult['CurrentUserPerms']['UserCanProcessRequestsIn']
+							&& !\CSocNetUser::isCurrentUserModuleAdmin()
+						)
+						{
+							$requestsFilter['INITIATED_BY_USER_ID'] = $USER->getID();
+						}
+
+						$dbRequests = CSocNetUserToGroup::GetList(
+							array("DATE_CREATE" => "ASC"),
+							$requestsFilter,
+							false,
+							$arNavParams,
+							array("ID", "USER_ID", "DATE_CREATE", "DATE_UPDATE", "MESSAGE", "USER_NAME", "USER_LAST_NAME", "USER_SECOND_NAME", "USER_LOGIN", "USER_PERSONAL_PHOTO", "USER_PERSONAL_GENDER", "USER_WORK_POSITION")
+						);
 
 						while ($arRequests = $dbRequests->GetNext())
 						{
 							if ($arResult["RequestsOut"]["List"] == false)
+							{
 								$arResult["RequestsOut"]["List"] = array();
+							}
 
 							$pu = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER"], array("user_id" => $arRequests["USER_ID"]));
 							$canViewProfile = CSocNetUserPerms::CanPerformOperation($USER->GetID(), $arRequests["USER_ID"], "viewprofile", CSocNetUser::IsCurrentUserModuleAdmin());
@@ -378,6 +444,7 @@ else
 								"USER_PERSONAL_PHOTO_IMG" => $arImage,
 								"USER_PROFILE_URL" => $pu,
 								"SHOW_PROFILE_LINK" => $canViewProfile,
+								"USER_WORK_POSITION" => $arRequests["USER_WORK_POSITION"],
 								"DATE_CREATE" => $arRequests["DATE_CREATE"],
 								"MESSAGE" => $parser->convert(
 									$arRequests["~MESSAGE"],
@@ -400,7 +467,7 @@ else
 							);
 						}
 						$arResult["RequestsOut"]["NAV_STRING"] = $dbRequests->GetPageNavStringEx($navComponentObject, GetMessage("SONET_GRE_NAV"), "", false);
-					}				
+					}
 				}
 			}
 		}

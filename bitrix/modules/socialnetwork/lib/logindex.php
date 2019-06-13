@@ -85,7 +85,6 @@ class LogIndexTable extends Entity\DataManager
 		);
 
 		$updateFields = array(
-			"LOG_ID" => $logId,
 			"CONTENT" => $helper->forSql($content)
 		);
 
@@ -135,9 +134,13 @@ class LogIndexTable extends Entity\DataManager
 		$connection = Application::getConnection();
 		$helper = $connection->getSqlHelper();
 
-		if (!$value)
+		$now = $connection->getSqlHelper()->getCurrentDateTimeFunction();
+		if (
+			!$value
+			|| strtolower($value) == strtolower($now)
+		)
 		{
-			$value = new SqlExpression($connection->getSqlHelper()->getCurrentDateTimeFunction());
+			$value = new SqlExpression($now);
 		}
 
 		$updateFields = array(

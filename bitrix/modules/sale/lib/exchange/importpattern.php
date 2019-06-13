@@ -2,7 +2,6 @@
 namespace Bitrix\Sale\Exchange;
 
 use Bitrix\Sale\Result;
-use Bitrix\Sale\Exchange;
 
 abstract class ImportPattern
 {

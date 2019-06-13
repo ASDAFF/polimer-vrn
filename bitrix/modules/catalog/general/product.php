@@ -26,6 +26,7 @@ class CAllCatalogProduct
 	const TIME_PERIOD_YEAR = Catalog\ProductTable::PAYMENT_PERIOD_YEAR;
 	const TIME_PERIOD_DOUBLE_YEAR = Catalog\ProductTable::PAYMENT_PERIOD_DOUBLE_YEAR;
 
+	/** @deprecated deprecated since catalog 17.6.3 */
 	protected static $arProductCache = array();
 
 	/** @deprecated deprecated since catalog 17.0.11 */
@@ -122,9 +123,15 @@ class CAllCatalogProduct
 		return Catalog\Product\Price\Calculation::isAllowedUseDiscounts();
 	}
 
+	/**
+	 * @deprecated deprecated since catalog 17.6.3
+	 *
+	 * @return void
+	 */
 	public static function ClearCache()
 	{
-		self::$arProductCache = array();
+		self::$arProductCache = [];
+		self::$vatCache = [];
 	}
 
 	/**
@@ -205,7 +212,7 @@ class CAllCatalogProduct
 			if (!array_key_exists('SUBSCRIBE', $arFields))
 				$arFields['SUBSCRIBE'] = '';
 			if (!isset($arFields['TYPE']))
-				$arFields['TYPE'] = self::TYPE_PRODUCT;
+				$arFields['TYPE'] = Catalog\ProductTable::TYPE_PRODUCT;
 			$arFields['BUNDLE'] = Catalog\ProductTable::STATUS_NO;
 		}
 
@@ -457,6 +464,92 @@ class CAllCatalogProduct
 		return $boolResult;
 	}
 
+	/**
+	 * @deprecated deprecated since catalog 17.6.0
+	 * @see \Bitrix\Catalog\Model\Product::add
+	 *
+	 * @param array $fields
+	 * @param bool $checkExist
+	 * @return bool
+	 */
+	public static function Add($fields, $checkExist = true)
+	{
+		$existProduct = false;
+		$checkExist = ($checkExist !== false);
+
+		if (empty($fields['ID']))
+			return false;
+		$fields['ID'] = (int)$fields['ID'];
+		if ($fields['ID'] <= 0)
+			return false;
+
+		if ($checkExist)
+		{
+			$data = Catalog\Model\Product::getCacheItem($fields['ID'], true);
+			if (!empty($data))
+				$existProduct = !empty($data['ID']);
+			unset($data);
+		}
+
+		self::normalizeFields($fields);
+
+		if ($existProduct)
+			$result = Catalog\Model\Product::update($fields['ID'], $fields);
+		else
+			$result = Catalog\Model\Product::add($fields);
+		$success = $result->isSuccess();
+		if (!$success)
+			self::convertErrors($result);
+		unset($result);
+
+		return $success;
+	}
+
+	/**
+	 * @deprecated deprecated since catalog 17.6.0
+	 * @see \Bitrix\Catalog\Model\Product::update
+	 *
+	 * @param int $id
+	 * @param array $fields
+	 * @return bool
+	 */
+	public static function Update($id, $fields)
+	{
+		$id = (int)$id;
+		if ($id <= 0)
+			return false;
+		if (!is_array($fields))
+			return false;
+
+		self::normalizeFields($fields);
+
+		$result = Catalog\Model\Product::update($id, $fields);
+		$success = $result->isSuccess();
+		if (!$success)
+			self::convertErrors($result);
+		unset($result);
+
+		return $success;
+	}
+
+	/**
+	 * @deprecated deprecated since catalog 17.6.0
+	 * @see \Bitrix\Catalog\Model\Product::delete
+	 *
+	 * @param int $id
+	 * @return bool
+	 */
+	public static function Delete($id)
+	{
+		$id = (int)$id;
+		if ($id <= 0)
+			return false;
+
+		$result = Catalog\Model\Product::delete($id);
+
+		return $result->isSuccess();
+	}
+
 	public static function ParseQueryBuildField($field)
 	{
 		$field = (string)$field;
@@ -481,47 +574,48 @@ class CAllCatalogProduct
 		);
 	}
 
+	/**
+	 * @deprecated deprecated since catalog 17.6.2
+	 * @see Catalog\Model\Product::getList
+	 *
+	 * @param int $ID
+	 * @return array|false
+	 */
 	public static function GetByID($ID)
 	{
 		$ID = (int)$ID;
 		if ($ID <= 0)
 			return false;
 
-		if (isset(self::$arProductCache[$ID]))
+		$iterator = Catalog\Model\Product::getList([
+			'select' => [
+				'ID', 'QUANTITY', 'QUANTITY_RESERVED', 'QUANTITY_TRACE', 'QUANTITY_TRACE_ORIG', 'WEIGHT', 'WIDTH', 'LENGTH', 'HEIGHT', 'MEASURE',
+				'VAT_ID', 'VAT_INCLUDED', 'CAN_BUY_ZERO', 'CAN_BUY_ZERO_ORIG', 'NEGATIVE_AMOUNT_TRACE', 'NEGATIVE_AMOUNT_TRACE_ORIG',
+				'PRICE_TYPE', 'RECUR_SCHEME_TYPE', 'RECUR_SCHEME_LENGTH', 'TRIAL_PRICE_ID', 'WITHOUT_ORDER', 'SELECT_BEST_PRICE',
+				'TMP_ID', 'PURCHASING_PRICE', 'PURCHASING_CURRENCY', 'BARCODE_MULTI', 'SUBSCRIBE', 'SUBSCRIBE_ORIG',
+				'TYPE', 'BUNDLE', 'AVAILABLE', 'TIMESTAMP_X'
+			],
+			'filter' => ['=ID' => $ID]
+		]);
+		$result = $iterator->fetch();
+		unset($iterator);
+		if (empty($result))
+			return false;
+		if ($result['TIMESTAMP_X'] !== null and $result['TIMESTAMP_X'] instanceof Main\Type\DateTime)
 		{
-			return self::$arProductCache[$ID];
+			/** @noinspection PhpUndefinedMethodInspection */
+			$result['TIMESTAMP_X'] = $result['TIMESTAMP_X']->toString();
 		}
-		else
-		{
-			$rsProducts = CCatalogProduct::GetList(
-				array(),
-				array('ID' => $ID),
-				false,
-				false,
-				array(
-					'ID', 'QUANTITY', 'QUANTITY_RESERVED', 'QUANTITY_TRACE', 'QUANTITY_TRACE_ORIG', 'WEIGHT', 'WIDTH', 'LENGTH', 'HEIGHT', 'MEASURE',
-					'VAT_ID', 'VAT_INCLUDED', 'CAN_BUY_ZERO', 'CAN_BUY_ZERO_ORIG', 'NEGATIVE_AMOUNT_TRACE', 'NEGATIVE_AMOUNT_TRACE_ORIG',
-					'PRICE_TYPE', 'RECUR_SCHEME_TYPE', 'RECUR_SCHEME_LENGTH', 'TRIAL_PRICE_ID', 'WITHOUT_ORDER', 'SELECT_BEST_PRICE',
-					'TMP_ID', 'PURCHASING_PRICE', 'PURCHASING_CURRENCY', 'BARCODE_MULTI', 'TIMESTAMP_X', 'SUBSCRIBE', 'SUBSCRIBE_ORIG',
-					'TYPE', 'BUNDLE', 'AVAILABLE'
-				)
-			);
-			if ($arProduct = $rsProducts->Fetch())
-			{
-				$arProduct['ID'] = (int)$arProduct['ID'];
-				self::$arProductCache[$ID] = $arProduct;
-				if (defined('CATALOG_GLOBAL_VARS') && CATALOG_GLOBAL_VARS == 'Y')
-				{
-					/** @var array $CATALOG_PRODUCT_CACHE */
-					global $CATALOG_PRODUCT_CACHE;
-					$CATALOG_PRODUCT_CACHE = self::$arProductCache;
-				}
-				return $arProduct;
-			}
-		}
-		return false;
+		return $result;
 	}
 
+	/**
+	 * @deprecated deprecated since catalog 17.6.0
+	 *
+	 * @param $ID
+	 * @param bool $boolAllValues
+	 * @return array|bool
+	 */
 	public static function GetByIDEx($ID, $boolAllValues = false)
 	{
 		$boolAllValues = ($boolAllValues === true);
@@ -560,6 +654,19 @@ class CAllCatalogProduct
 							$arProp["VALUE"] = htmlspecialcharsbx($arProp["VALUE"]);
 						}
 
+						if (is_array($arProp["DEFAULT_VALUE"]))
+						{
+							foreach ($arProp["DEFAULT_VALUE"] as $index => $value)
+							{
+								if (is_string($value))
+									$arProp["DEFAULT_VALUE"][$index] = htmlspecialcharsbx($value);
+							}
+						}
+						else
+						{
+							$arProp["DEFAULT_VALUE"] = htmlspecialcharsbx($arProp["DEFAULT_VALUE"]);
+						}
+
 						if ($boolAllValues && 'Y' == $arProp['MULTIPLE'])
 						{
 							if (!isset($arAllProps[$strID]))
@@ -569,7 +676,7 @@ class CAllCatalogProduct
 									"VALUE" => array($arProp["VALUE"]),
 									"VALUE_ENUM" => array(htmlspecialcharsbx($arProp["VALUE_ENUM"])),
 									"VALUE_XML_ID" => array(htmlspecialcharsbx($arProp["VALUE_XML_ID"])),
-									"DEFAULT_VALUE" => htmlspecialcharsbx($arProp["DEFAULT_VALUE"]),
+									"DEFAULT_VALUE" => $arProp["DEFAULT_VALUE"],
 									"SORT" => htmlspecialcharsbx($arProp["SORT"]),
 									"MULTIPLE" => $arProp['MULTIPLE'],
 								);
@@ -588,7 +695,7 @@ class CAllCatalogProduct
 								"VALUE" => $arProp["VALUE"],
 								"VALUE_ENUM" => htmlspecialcharsbx($arProp["VALUE_ENUM"]),
 								"VALUE_XML_ID" => htmlspecialcharsbx($arProp["VALUE_XML_ID"]),
-								"DEFAULT_VALUE" => htmlspecialcharsbx($arProp["DEFAULT_VALUE"]),
+								"DEFAULT_VALUE" => $arProp["DEFAULT_VALUE"],
 								"SORT" => htmlspecialcharsbx($arProp["SORT"]),
 								"MULTIPLE" => $arProp['MULTIPLE'],
 							);
@@ -626,6 +733,14 @@ class CAllCatalogProduct
 		return false;
 	}
 
+	/**
+	 * @deprecated deprecated since catalog 15.0.0
+	 * @see \CCatalogProductProvider
+	 *
+	 * @param int $ProductID
+	 * @param int|float $DeltaQuantity
+	 * @return bool
+	 */
 	public static function QuantityTracer($ProductID, $DeltaQuantity)
 	{
 		$boolClearCache = false;
@@ -705,7 +820,14 @@ class CAllCatalogProduct
 			foreach (GetModuleEvents('catalog', 'OnGetNearestQuantityPrice', true) as $arEvent)
 			{
 				$eventOnGetExists = true;
-				$mxResult = ExecuteModuleEventEx($arEvent, array($productID, $quantity, $arUserGroups));
+				$mxResult = ExecuteModuleEventEx(
+					$arEvent,
+					array(
+						$productID,
+						$quantity,
+						$arUserGroups
+					)
+				);
 				if ($mxResult !== true)
 					return $mxResult;
 			}
@@ -834,9 +956,10 @@ class CAllCatalogProduct
 				);
 				if ($mxResult !== true)
 				{
-					self::updateUserHandlerOptimalPrice($mxResult);
-					if (!empty($mxResult) && is_array($mxResult))
-						$mxResult['PRODUCT_ID'] = $intProductID;
+					self::updateUserHandlerOptimalPrice(
+						$mxResult,
+						['PRODUCT_ID' => $intProductID]
+					);
 					return $mxResult;
 				}
 			}
@@ -917,7 +1040,8 @@ class CAllCatalogProduct
 						'>=QUANTITY_TO' => $quantity,
 						'=QUANTITY_TO' => null
 					)
-				)
+				),
+				'order' => array('CATALOG_GROUP_ID' => 'ASC')
 			));
 			while ($row = $iterator->fetch())
 			{
@@ -937,8 +1061,7 @@ class CAllCatalogProduct
 		if (empty($priceList))
 			return false;
 
-		$iterator = CCatalogProduct::GetVATInfo($intProductID);
-		$vat = $iterator->Fetch();
+		$vat = CCatalogProduct::GetVATDataByID($intProductID);
 		if (!empty($vat))
 		{
 			$vat['RATE'] = (float)$vat['RATE'] * 0.01;
@@ -992,7 +1115,6 @@ class CAllCatalogProduct
 				'PRICE' => $currentPrice,
 				'CURRENCY' => $resultCurrency,
 				'DISCOUNT_LIST' => array(),
-				'USE_ROUND' => self::$useSaleDiscount !== true,
 				'RAW_PRICE' => $priceData
 			);
 			if ($isNeedDiscounts)
@@ -1000,7 +1122,7 @@ class CAllCatalogProduct
 				$arDiscounts = CCatalogDiscount::GetDiscount(
 					$intProductID,
 					$intIBlockID,
-					$priceData['CATALOG_GROUP_ID'],
+					array($priceData['CATALOG_GROUP_ID']),
 					$arUserGroups,
 					$renewal,
 					$siteID,
@@ -1014,7 +1136,6 @@ class CAllCatalogProduct
 				$result['PRICE'] = $discountResult['PRICE'];
 				$result['COMPARE_PRICE'] = $discountResult['PRICE'];
 				$result['DISCOUNT_LIST'] = $discountResult['DISCOUNT_LIST'];
-				$result['USE_ROUND'] = true;
 				unset($discountResult);
 			}
 			elseif($isNeedleToMinimizeCatalogGroup)
@@ -1027,12 +1148,12 @@ class CAllCatalogProduct
 					$calculateData,
 					$quantity,
 					$siteID,
-					$arUserGroups
+					$arUserGroups,
+					$arDiscountCoupons
 				);
 				unset($calculateData);
 				if ($possibleSalePrice === null)
 					return false;
-				$result['USE_ROUND'] = false;
 				$result['COMPARE_PRICE'] = $possibleSalePrice;
 				unset($possibleSalePrice);
 			}
@@ -1058,33 +1179,26 @@ class CAllCatalogProduct
 
 			$result['UNROUND_PRICE'] = $result['PRICE'];
 			$result['UNROUND_BASE_PRICE'] = $result['BASE_PRICE'];
-			$result['ROUND_RULE'] = array();
-
-			if ($result['USE_ROUND'])
+			if (Catalog\Product\Price\Calculation::isComponentResultMode())
 			{
-				$result['ROUND_RULE'] = Catalog\Product\Price::searchRoundRule(
+				$result['BASE_PRICE'] = Catalog\Product\Price::roundPrice(
+					$priceData['CATALOG_GROUP_ID'],
+					$result['BASE_PRICE'],
+					$resultCurrency
+				);
+				$result['PRICE'] = Catalog\Product\Price::roundPrice(
 					$priceData['CATALOG_GROUP_ID'],
 					$result['PRICE'],
 					$resultCurrency
 				);
-				if (!empty($result['ROUND_RULE']))
+				if (
+					empty($result['DISCOUNT_LIST'])
+					|| Catalog\Product\Price\Calculation::compare($result['BASE_PRICE'], $result['PRICE'], '<=')
+				)
 				{
-					$result['PRICE'] = Catalog\Product\Price::roundValue(
-						$result['PRICE'],
-						$result['ROUND_RULE']['ROUND_PRECISION'],
-						$result['ROUND_RULE']['ROUND_TYPE']
-					);
-
-					$result['COMPARE_PRICE'] = $result['PRICE'];
+					$result['BASE_PRICE'] = $result['PRICE'];
 				}
-			}
-
-			if (
-				empty($result['DISCOUNT_LIST'])
-				|| Catalog\Product\Price\Calculation::compare($result['BASE_PRICE'], $result['PRICE'], '<=')
-			)
-			{
-				$result['BASE_PRICE'] = $result['PRICE'];
+				$result['COMPARE_PRICE'] = $result['PRICE'];
 			}
 
 			if (empty($minimalPrice) || $minimalPrice['COMPARE_PRICE'] > $result['COMPARE_PRICE'])
@@ -1097,7 +1211,7 @@ class CAllCatalogProduct
 		unset($priceData);
 		unset($vat);
 
-		$discountValue = ($minimalPrice['BASE_PRICE'] > $minimalPrice['PRICE'] ? $minimalPrice['BASE_PRICE'] - $minimalPrice['PRICE'] : 0);
+		$discountValue = ($minimalPrice['BASE_PRICE'] - $minimalPrice['PRICE']);
 
 		$arResult = array(
 			'PRICE' => $minimalPrice['RAW_PRICE'],
@@ -1109,14 +1223,13 @@ class CAllCatalogProduct
 				'DISCOUNT' => $discountValue,
 				'PERCENT' => (
 					$minimalPrice['BASE_PRICE'] > 0 && $discountValue > 0
-					? roundEx((100*$discountValue)/$minimalPrice['BASE_PRICE'], CATALOG_VALUE_PRECISION)
+					? round((100*$discountValue)/$minimalPrice['BASE_PRICE'], 0)
 					: 0
 				),
 				'VAT_RATE' => $minimalPrice['RAW_PRICE']['VAT_RATE'],
 				'VAT_INCLUDED' => ($resultWithVat ? 'Y' : 'N'),
 				'UNROUND_BASE_PRICE' => $minimalPrice['UNROUND_BASE_PRICE'],
-				'UNROUND_DISCOUNT_PRICE' => $minimalPrice['UNROUND_PRICE'],
-				'ROUND_RULE' => $minimalPrice['ROUND_RULE']
+				'UNROUND_DISCOUNT_PRICE' => $minimalPrice['UNROUND_PRICE']
 			),
 			'DISCOUNT_PRICE' => $minimalPrice['PRICE'],
 			'DISCOUNT' => array(),
@@ -1175,6 +1288,9 @@ class CAllCatalogProduct
 				{
 					foreach ($productData['QUANTITY_LIST'] as $basketCode => $quantity)
 					{
+						//TODO: remove this hack after refactoring new provider
+						if ($quantity <= 0)
+							continue;
 						$mxResult = ExecuteModuleEventEx(
 							$arEvent,
 							array(
@@ -1189,12 +1305,10 @@ class CAllCatalogProduct
 						);
 						if ($mxResult !== true)
 						{
-							self::updateUserHandlerOptimalPrice($mxResult);
-							if (!empty($mxResult) && is_array($mxResult))
-							{
-								$mxResult['PRODUCT_ID'] = $productId;
-							}
-
+							self::updateUserHandlerOptimalPrice(
+								$mxResult,
+								['PRODUCT_ID' => $productId]
+							);
 							$resultList[$productId][$productData['BASKET_CODE']] = $mxResult;
 							$ignoreList[$productId."|".$quantity] = true;
 							continue 3;
@@ -1346,7 +1460,7 @@ class CAllCatalogProduct
 			return false;
 		}
 
-		\Bitrix\Main\Type\Collection::sortByColumn($priceList, 'BASKET_CODE');
+		Main\Type\Collection::sortByColumn($priceList, ['BASKET_CODE' => SORT_ASC, 'CATALOG_GROUP_ID' => SORT_ASC]);
 
 		$vatList = CCatalogProduct::GetVATDataByIDList(array_keys($products));
 		if (!empty($vatList))
@@ -1467,7 +1581,6 @@ class CAllCatalogProduct
 				'PRICE' => $currentPrice,
 				'CURRENCY' => $resultCurrency,
 				'DISCOUNT_LIST' => array(),
-				'USE_ROUND' => self::$useSaleDiscount !== true,
 				'RAW_PRICE' => $priceData
 			);
 
@@ -1476,7 +1589,7 @@ class CAllCatalogProduct
 				$discountList[$priceData['PRODUCT_ID']] = \CCatalogDiscount::GetDiscount(
 					$productId,
 					$iblockListId[$priceData['PRODUCT_ID']],
-					$priceData['CATALOG_GROUP_ID'],
+					array($priceData['CATALOG_GROUP_ID']),
 					$arUserGroups,
 					$renewal,
 					$siteID,
@@ -1494,7 +1607,6 @@ class CAllCatalogProduct
 				$result['PRICE'] = $discountResult['PRICE'];
 				$result['COMPARE_PRICE'] = $discountResult['PRICE'];
 				$result['DISCOUNT_LIST'] = $discountResult['DISCOUNT_LIST'];
-				$result['USE_ROUND'] = true;
 				unset($discountResult);
 			}
 			elseif($isNeedleToMinimizeCatalogGroup)
@@ -1510,12 +1622,12 @@ class CAllCatalogProduct
 					$calculateData,
 					$products[$productId]['QUANTITY_LIST'][$basketCode],
 					$siteID,
-					$arUserGroups
+					$arUserGroups,
+					($needCoupons ? false: [])
 				);
 				unset($calculateData);
 				if ($possibleSalePrice === null)
 					continue;
-				$result['USE_ROUND'] = false;
 				$result['COMPARE_PRICE'] = $possibleSalePrice;
 				unset($possibleSalePrice);
 			}
@@ -1541,31 +1653,26 @@ class CAllCatalogProduct
 
 			$result['UNROUND_PRICE'] = $result['PRICE'];
 			$result['UNROUND_BASE_PRICE'] = $result['BASE_PRICE'];
-			$result['ROUND_RULE'] = array();
-			if ($result['USE_ROUND'])
+			if (Catalog\Product\Price\Calculation::isComponentResultMode())
 			{
-				$result['ROUND_RULE'] = Catalog\Product\Price::searchRoundRule(
+				$result['BASE_PRICE'] = Catalog\Product\Price::roundPrice(
+					$priceData['CATALOG_GROUP_ID'],
+					$result['BASE_PRICE'],
+					$resultCurrency
+				);
+				$result['PRICE'] = Catalog\Product\Price::roundPrice(
 					$priceData['CATALOG_GROUP_ID'],
 					$result['PRICE'],
 					$resultCurrency
 				);
-				if (!empty($result['ROUND_RULE']))
+				if (
+					empty($result['DISCOUNT_LIST'])
+					|| Catalog\Product\Price\Calculation::compare($result['BASE_PRICE'], $result['PRICE'], '<=')
+				)
 				{
-					$result['PRICE'] = Catalog\Product\Price::roundValue(
-						$result['PRICE'],
-						$result['ROUND_RULE']['ROUND_PRECISION'],
-						$result['ROUND_RULE']['ROUND_TYPE']
-					);
-					$result['COMPARE_PRICE'] = $result['PRICE'];
+					$result['BASE_PRICE'] = $result['PRICE'];
 				}
-			}
-
-			if (
-				empty($result['DISCOUNT_LIST'])
-				|| Catalog\Product\Price\Calculation::compare($result['BASE_PRICE'], $result['PRICE'], '<=')
-			)
-			{
-				$result['BASE_PRICE'] = $result['PRICE'];
+				$result['COMPARE_PRICE'] = $result['PRICE'];
 			}
 
 			if (
@@ -1578,10 +1685,7 @@ class CAllCatalogProduct
 
 			unset($currentPrice, $result);
 
-			$discountValue = ($minimalPrice[$basketCode]['BASE_PRICE'] > $minimalPrice[$basketCode]['PRICE']
-				? $minimalPrice[$basketCode]['BASE_PRICE'] - $minimalPrice[$basketCode]['PRICE']
-				: 0
-			);
+			$discountValue = ($minimalPrice[$basketCode]['BASE_PRICE'] - $minimalPrice[$basketCode]['PRICE']);
 
 			$productResult = array(
 				'PRICE' => $minimalPrice[$basketCode]['RAW_PRICE'],
@@ -1593,14 +1697,13 @@ class CAllCatalogProduct
 					'DISCOUNT' => $discountValue,
 					'PERCENT' => (
 						$minimalPrice[$basketCode]['BASE_PRICE'] > 0 && $discountValue > 0
-						? roundEx((100 * $discountValue)/$minimalPrice[$basketCode]['BASE_PRICE'], CATALOG_VALUE_PRECISION)
+						? round((100 * $discountValue)/$minimalPrice[$basketCode]['BASE_PRICE'], 0)
 						: 0
 					),
 					'VAT_RATE' => $minimalPrice[$basketCode]['RAW_PRICE']['VAT_RATE'],
 					'VAT_INCLUDED' => ($resultWithVat ? 'Y' : 'N'),
 					'UNROUND_BASE_PRICE' => $minimalPrice[$basketCode]['UNROUND_BASE_PRICE'],
-					'UNROUND_DISCOUNT_PRICE' => $minimalPrice[$basketCode]['UNROUND_PRICE'],
-					'ROUND_RULE' => $minimalPrice[$basketCode]['ROUND_RULE']
+					'UNROUND_DISCOUNT_PRICE' => $minimalPrice[$basketCode]['UNROUND_PRICE']
 				),
 				'DISCOUNT_PRICE' => $minimalPrice[$basketCode]['PRICE'],
 				'DISCOUNT' => array(),
@@ -1817,18 +1920,17 @@ class CAllCatalogProduct
 
 	public static function OnIBlockElementDelete($ProductID)
 	{
-		return CCatalogProduct::Delete($ProductID);
+		$result = Catalog\Model\Product::delete($ProductID);
+
+		return $result->isSuccess();
 	}
 
-	public static function OnAfterIBlockElementUpdate($arFields)
-	{
-		if (isset($arFields["IBLOCK_SECTION"]))
-		{
-			/** @global CStackCacheManager $stackCacheManager */
-			global $stackCacheManager;
-			$stackCacheManager->Clear("catalog_element_groups");
-		}
-	}
+	/**
+	 * @deprecated deprecated since catalog 17.6.3
+	 *
+	 * @param array $arFields
+	 */
+	public static function OnAfterIBlockElementUpdate($arFields) {}
 
 	public static function CheckProducts($arItemIDs)
 	{
@@ -1866,6 +1968,49 @@ class CAllCatalogProduct
 	}
 
 	/**
+	 * @deprecated deprecated since catalog 18.7.0
+	 * @see \CProductQueryBuilder::makeQuery()
+	 *
+	 * @param array $order
+	 * @param array $filter
+	 * @param array $select
+	 * @return array
+	 */
+	public static function GetQueryBuildArrays($order, $filter, $select)
+	{
+		$result = [
+			'SELECT' => '',
+			'FROM' => '',
+			'WHERE' => '',
+			'ORDER' => []
+		];
+
+		$getListParameters = [];
+		if (!empty($select) && is_array($select))
+			$getListParameters['select'] = $select;
+		if (!empty($filter) && is_array($filter))
+			$getListParameters['filter'] = $filter;
+		if (!empty($order) && is_array($order))
+			$getListParameters['order'] = $order;
+
+		$query = \CProductQueryBuilder::makeQuery($getListParameters);
+		if (!empty($query))
+		{
+			if (!empty($query['select']))
+				$result['SELECT'] = ', '.implode(', ', $query['select']).' ';
+			if (!empty($query['join']))
+				$result['FROM'] = ' '.implode(' ', $query['join']).' ';
+			if (!empty($query['filter']))
+				$result['WHERE'] = ' and '.implode(' and ', $query['filter']);
+			if (!empty($query['order']))
+				$result['ORDER'] = $query['order'];
+		}
+		unset($query);
+
+		return $result;
+	}
+
+	/**
 	 * Return payment period list.
 	 *
 	 * @deprecated deprected since catalog 17.0.0
@@ -1883,57 +2028,80 @@ class CAllCatalogProduct
 	 * Update result user handlers for event OnGetOptimalPrice.
 	 *
 	 * @param array &$userResult		Optimal price array.
+	 * @param array $params             GetOptimalPrice parameters.
 	 * @return void
 	 */
-	public static function updateUserHandlerOptimalPrice(&$userResult)
+	private static function updateUserHandlerOptimalPrice(&$userResult, array $params)
 	{
 		global $APPLICATION;
+
 		if (empty($userResult) || !is_array($userResult))
 		{
 			$userResult = false;
 			return;
 		}
-		if (empty($userResult['PRICE']) || !is_array($userResult['PRICE']))
+		if (
+			(empty($userResult['PRICE']) || !is_array($userResult['PRICE']))
+			&& ((empty($userResult['RESULT_PRICE']) || !is_array($userResult['RESULT_PRICE'])))
+		)
 		{
 			$userResult = false;
 			return;
 		}
+
+		$resultCurrency = Catalog\Product\Price\Calculation::getCurrency();
+		if (empty($resultCurrency))
+		{
+			$APPLICATION->ThrowException(Loc::getMessage("BT_MOD_CATALOG_PROD_ERR_NO_RESULT_CURRENCY"));
+			$userResult = false;
+			return;
+		}
+
+		if (!isset($userResult['PRODUCT_ID']))
+			$userResult['PRODUCT_ID'] = $params['PRODUCT_ID'];
+
+		$oldDiscountExist = !empty($userResult['DISCOUNT']) && is_array($userResult['DISCOUNT']);
+		if ($oldDiscountExist)
+		{
+			if (empty($userResult['DISCOUNT']['MODULE_ID']))
+				$userResult['DISCOUNT']['MODULE_ID'] = 'catalog';
+			if ($userResult['DISCOUNT']['CURRENCY'] != $resultCurrency)
+				Catalog\DiscountTable::convertCurrency($userResult['DISCOUNT'], $resultCurrency);
+		}
+
+		if (!isset($userResult['DISCOUNT_LIST']) || !is_array($userResult['DISCOUNT_LIST']))
+		{
+			$userResult['DISCOUNT_LIST'] = [];
+			if ($oldDiscountExist)
+				$userResult['DISCOUNT_LIST'][] = $userResult['DISCOUNT'];
+		}
+		unset($oldDiscountExist);
+
+		foreach ($userResult['DISCOUNT_LIST'] as &$discount)
+		{
+			if (empty($discount['MODULE_ID']))
+				$discount['MODULE_ID'] = 'catalog';
+			if ($discount['CURRENCY'] != $resultCurrency)
+				Catalog\DiscountTable::convertCurrency($discount, $resultCurrency);
+		}
+		unset($discount);
+
+		if (isset($userResult['PRICE']) && is_array($userResult['PRICE']))
+		{
+			if (!isset($userResult['PRICE']['VAT_RATE']))
+			{
+				$vat = CCatalogProduct::GetVATDataByID($userResult['PRODUCT_ID']);
+				if (!empty($vat))
+					$vat['RATE'] = (float)$vat['RATE'] * 0.01;
+				else
+					$vat = ['RATE' => 0.0, 'VAT_INCLUDED' => 'Y'];
+				$userResult['PRICE']['VAT_RATE'] = $vat['RATE'];
+				$userResult['PRICE']['VAT_INCLUDED'] = $vat['VAT_INCLUDED'];
+				unset($vat);
+			}
+		}
 		if (empty($userResult['RESULT_PRICE']) || !is_array($userResult['RESULT_PRICE']))
 		{
-			$resultCurrency = Catalog\Product\Price\Calculation::getCurrency();
-			if (empty($resultCurrency))
-			{
-				$APPLICATION->ThrowException(Loc::getMessage("BT_MOD_CATALOG_PROD_ERR_NO_RESULT_CURRENCY"));
-				$userResult = false;
-
-				return;
-			}
-
-			$oldDiscountExist = !empty($userResult['DISCOUNT']) && is_array($userResult['DISCOUNT']);
-			if ($oldDiscountExist)
-			{
-				if (empty($userResult['DISCOUNT']['MODULE_ID']))
-					$userResult['DISCOUNT']['MODULE_ID'] = 'catalog';
-				if ($userResult['DISCOUNT']['CURRENCY'] != $resultCurrency)
-					Catalog\DiscountTable::convertCurrency($userResult['DISCOUNT'], $resultCurrency);
-			}
-			if (!isset($userResult['DISCOUNT_LIST']) || !is_array($userResult['DISCOUNT_LIST']))
-			{
-				$userResult['DISCOUNT_LIST'] = array();
-				if ($oldDiscountExist)
-					$userResult['DISCOUNT_LIST'][] = $userResult['DISCOUNT'];
-			}
-			if (isset($userResult['DISCOUNT_LIST']))
-			{
-				foreach ($userResult['DISCOUNT_LIST'] as &$discount)
-				{
-					if (empty($discount['MODULE_ID']))
-						$discount['MODULE_ID'] = 'catalog';
-					if ($discount['CURRENCY'] != $resultCurrency)
-						Catalog\DiscountTable::convertCurrency($discount, $resultCurrency);
-				}
-				unset($discount);
-			}
 			$userResult['RESULT_PRICE'] = CCatalogDiscount::calculateDiscountList(
 				$userResult['PRICE'],
 				$resultCurrency,
@@ -1941,40 +2109,88 @@ class CAllCatalogProduct
 				Catalog\Product\Price\Calculation::isIncludingVat()
 			);
 		}
-		else
-		{
-			if (!isset($userResult['RESULT_PRICE']['PRICE_TYPE_ID']))
-				$userResult['RESULT_PRICE']['PRICE_TYPE_ID'] = $userResult['PRICE']['CATALOG_GROUP_ID'];
 
-			if (!isset($userResult['RESULT_PRICE']['UNROUND_DISCOUNT_PRICE']))
+		if (!isset($userResult['RESULT_PRICE']['CURRENCY']))
+			$userResult['RESULT_PRICE']['CURRENCY'] = $resultCurrency;
+
+		if (!isset($userResult['RESULT_PRICE']['PRICE_TYPE_ID']))
+		{
+			if (isset($userResult['PRICE']['CATALOG_GROUP_ID']))
+				$userResult['RESULT_PRICE']['PRICE_TYPE_ID'] = $userResult['PRICE']['CATALOG_GROUP_ID'];
+		}
+
+		$componentResultMode = Catalog\Product\Price\Calculation::isComponentResultMode();
+
+		if (!isset($userResult['RESULT_PRICE']['UNROUND_DISCOUNT_PRICE']))
+		{
+			$userResult['RESULT_PRICE']['UNROUND_DISCOUNT_PRICE'] = $userResult['RESULT_PRICE']['DISCOUNT_PRICE'];
+			if ($componentResultMode)
 			{
-				$userResult['RESULT_PRICE']['UNROUND_DISCOUNT_PRICE'] = $userResult['RESULT_PRICE']['DISCOUNT_PRICE'];
 				$userResult['RESULT_PRICE']['DISCOUNT_PRICE'] = Catalog\Product\Price::roundPrice(
-					$userResult['PRICE']['CATALOG_GROUP_ID'],
+					$userResult['RESULT_PRICE']['PRICE_TYPE_ID'],
 					$userResult['RESULT_PRICE']['DISCOUNT_PRICE'],
 					$userResult['RESULT_PRICE']['CURRENCY']
 				);
 			}
+		}
 
-			if ((roundEx($userResult['RESULT_PRICE']['BASE_PRICE'], 2) - roundEx($userResult['RESULT_PRICE']['UNROUND_DISCOUNT_PRICE'], 2)) < 0.01)
+		if (!isset($userResult['RESULT_PRICE']['UNROUND_BASE_PRICE']))
+		{
+			$userResult['RESULT_PRICE']['UNROUND_BASE_PRICE'] = $userResult['RESULT_PRICE']['BASE_PRICE'];
+			if ($componentResultMode)
+			{
+				$userResult['RESULT_PRICE']['BASE_PRICE'] = Catalog\Product\Price::roundPrice(
+					$userResult['RESULT_PRICE']['PRICE_TYPE_ID'],
+					$userResult['RESULT_PRICE']['BASE_PRICE'],
+					$userResult['RESULT_PRICE']['CURRENCY']
+				);
+			}
+		}
+
+		if ($componentResultMode)
+		{
+			if (
+				empty($userResult['DISCOUNT_LIST'])
+				|| Catalog\Product\Price\Calculation::compare(
+					$userResult['RESULT_PRICE']['BASE_PRICE'],
+					$userResult['RESULT_PRICE']['DISCOUNT_PRICE'],
+					'<='
+				))
 			{
 				$userResult['RESULT_PRICE']['BASE_PRICE'] = $userResult['RESULT_PRICE']['DISCOUNT_PRICE'];
 			}
-
-			$userResult['DISCOUNT_PRICE'] = $userResult['RESULT_PRICE']['DISCOUNT_PRICE'];
-			$discountValue = (
-				$userResult['RESULT_PRICE']['BASE_PRICE'] > $userResult['RESULT_PRICE']['DISCOUNT_PRICE']
-				? $userResult['RESULT_PRICE']['BASE_PRICE'] - $userResult['RESULT_PRICE']['DISCOUNT_PRICE']
-				: 0
-			);
-			$userResult['RESULT_PRICE']['DISCOUNT'] = $discountValue;
-			$userResult['RESULT_PRICE']['PERCENT'] = (
-				$userResult['RESULT_PRICE']['BASE_PRICE'] > 0 && $discountValue > 0
-				? roundEx((100*$discountValue)/$userResult['RESULT_PRICE']['BASE_PRICE'], CATALOG_VALUE_PRECISION)
-				: 0
-			);
-			$userResult['RESULT_PRICE']['VAT_RATE'] = $userResult['PRICE']['VAT_RATE'];
 		}
+
+		$discountValue = $userResult['RESULT_PRICE']['BASE_PRICE'] - $userResult['RESULT_PRICE']['DISCOUNT_PRICE'];
+		$userResult['RESULT_PRICE']['DISCOUNT'] = $discountValue;
+		$userResult['RESULT_PRICE']['PERCENT'] = (
+		$userResult['RESULT_PRICE']['BASE_PRICE'] > 0 && $discountValue > 0
+			? round((100*$discountValue)/$userResult['RESULT_PRICE']['BASE_PRICE'], 0)
+			: 0
+		);
+		unset($discountValue);
+
+		if (!isset($userResult['RESULT_PRICE']['VAT_RATE']))
+		{
+			if (isset($userResult['PRICE']['VAT_RATE']))
+			{
+				$userResult['RESULT_PRICE']['VAT_RATE'] = $userResult['PRICE']['VAT_RATE'];
+				$userResult['RESULT_PRICE']['VAT_INCLUDED'] = $userResult['PRICE']['VAT_INCLUDED'];
+			}
+			else
+			{
+				$vat = CCatalogProduct::GetVATDataByID($userResult['PRODUCT_ID']);
+				if (!empty($vat))
+					$vat['RATE'] = (float)$vat['RATE'] * 0.01;
+				else
+					$vat = ['RATE' => 0.0, 'VAT_INCLUDED' => 'Y'];
+				$userResult['RESULT_PRICE']['VAT_RATE'] = $vat['RATE'];
+				$userResult['RESULT_PRICE']['VAT_INCLUDED'] = $vat['VAT_INCLUDED'];
+				unset($vat);
+			}
+		}
+
+		$userResult['DISCOUNT_PRICE'] = $userResult['RESULT_PRICE']['DISCOUNT_PRICE'];
 	}
 
 	/**
@@ -2011,7 +2227,7 @@ class CAllCatalogProduct
 						$dblDiscountValue = (
 							!$changeData
 							? $arOneDiscount['VALUE']
-							: roundEx(
+							: round(
 								CCurrencyRates::ConvertCurrency($arOneDiscount['VALUE'], $arOneDiscount['CURRENCY'], $arParams['CURRENCY']),
 								CATALOG_VALUE_PRECISION
 							)
@@ -2027,7 +2243,7 @@ class CAllCatalogProduct
 						$dblDiscountValue = (
 							!$changeData
 							? $arOneDiscount['VALUE']
-							: roundEx(
+							: round(
 								CCurrencyRates::ConvertCurrency($arOneDiscount['VALUE'], $arOneDiscount['CURRENCY'], $arParams['CURRENCY']),
 								CATALOG_VALUE_PRECISION
 							)
@@ -2047,7 +2263,7 @@ class CAllCatalogProduct
 							$dblDiscountValue = (
 								!$changeData
 								? $arOneDiscount['MAX_DISCOUNT']
-								: roundEx(
+								: round(
 									CCurrencyRates::ConvertCurrency($arOneDiscount['MAX_DISCOUNT'], $arOneDiscount['CURRENCY'], $arParams['CURRENCY']),
 									CATALOG_VALUE_PRECISION
 								)
@@ -2108,7 +2324,7 @@ class CAllCatalogProduct
 						switch($arOneDiscount['VALUE_TYPE'])
 						{
 						case CCatalogDiscount::TYPE_PERCENT:
-							$dblTempo = roundEx((
+							$dblTempo = round((
 								CCatalogDiscount::getUseBasePrice()
 								? $arParams['BASE_PRICE']
 								: $dblCurrentPrice
@@ -2209,7 +2425,7 @@ class CAllCatalogProduct
 					switch($arOneDiscount['VALUE_TYPE'])
 					{
 					case CCatalogDiscountSave::TYPE_PERCENT:
-						$dblPriceTmp = roundEx($dblCurrentPrice*(1 - $arOneDiscount['VALUE']/100.0), CATALOG_VALUE_PRECISION);
+						$dblPriceTmp = round($dblCurrentPrice*(1 - $arOneDiscount['VALUE']/100.0), CATALOG_VALUE_PRECISION);
 						break;
 					case CCatalogDiscountSave::TYPE_FIX:
 						if ($arOneDiscount['DISCOUNT_CONVERT'] > $dblCurrentPrice)
@@ -2326,7 +2542,7 @@ class CAllCatalogProduct
 		return self::$existPriceTypeDiscounts;
 	}
 
-	private static function getPossibleSalePrice($intProductID, array $priceData, $quantity, $siteID, array $userGroups)
+	private static function getPossibleSalePrice($intProductID, array $priceData, $quantity, $siteID, array $userGroups, $coupons)
 	{
 		$possibleSalePrice = null;
 
@@ -2336,12 +2552,15 @@ class CAllCatalogProduct
 		$isCompatibilityUsed = Sale\Compatible\DiscountCompatibility::isUsed();
 		Sale\Compatible\DiscountCompatibility::stopUsageCompatible();
 
-		Sale\DiscountCouponsManager::freezeCouponStorage();
+		$freezeCoupons = (empty($coupons) && is_array($coupons));
+
+		if ($freezeCoupons)
+			Sale\DiscountCouponsManager::freezeCouponStorage();
 
 		/** @var \Bitrix\Sale\Basket $basket */
 		static $basket = null,
 			/** @var \Bitrix\Sale\BasketItem $basketItem */
-		$basketItem = null;
+			$basketItem = null;
 
 		if ($basket !== null)
 		{
@@ -2367,17 +2586,14 @@ class CAllCatalogProduct
 			'DISCOUNT_PRICE' => 0,
 			'CURRENCY' => $priceData['PRICE'],
 			'CAN_BUY' => 'Y',
-			'DELAY' => 'N'
+			'DELAY' => 'N',
+			'PRICE_TYPE_ID' => (int)$priceData['CATALOG_GROUP_ID']
 		);
 
 		/** @noinspection PhpInternalEntityUsedInspection */
 		$basketItem->setFieldsNoDemand($fields);
 
 		$discount = Sale\Discount::buildFromBasket($basket, new Sale\Discount\Context\UserGroup($userGroups));
-		$discount->setBasketItemData(
-			$basketItem->getBasketCode(),
-			array('PRICE_TYPE_ID' => (int)$priceData['CATALOG_GROUP_ID'])
-		);
 
 		$discount->setExecuteModuleFilter(array('all', 'catalog'));
 		$discount->calculate();
@@ -2389,9 +2605,10 @@ class CAllCatalogProduct
 			$possibleSalePrice = $possibleSalePrice['PRICE'];
 		}
 
-		Sale\DiscountCouponsManager::unFreezeCouponStorage();
+		if ($freezeCoupons)
+			Sale\DiscountCouponsManager::unFreezeCouponStorage();
 
-		if($isCompatibilityUsed === true)
+		if ($isCompatibilityUsed === true)
 		{
 			Sale\Compatible\DiscountCompatibility::revertUsageCompatible();
 		}
@@ -2466,5 +2683,33 @@ class CAllCatalogProduct
 		}
 
 		return $priceTypeCache[$cacheKey];
+	}
+
+	private static function convertErrors(Main\Entity\Result $result)
+	{
+		global $APPLICATION;
+
+		$oldMessages = array();
+		foreach ($result->getErrorMessages() as $errorText)
+			$oldMessages[] = array('text' => $errorText);
+		unset($errorText);
+
+		if (!empty($oldMessages))
+		{
+			$error = new CAdminException($oldMessages);
+			$APPLICATION->ThrowException($error);
+			unset($error);
+		}
+		unset($oldMessages);
+	}
+
+	private static function normalizeFields(array &$fields)
+	{
+		if (isset($fields['QUANTITY']) && is_string($fields['QUANTITY']) && $fields['QUANTITY'] === '')
+			$fields['QUANTITY'] = 0;
+		if (isset($fields['QUANTITY_RESERVED']) && is_string($fields['QUANTITY_RESERVED']) && $fields['QUANTITY_RESERVED'] === '')
+			$fields['QUANTITY_RESERVED'] = 0;
+		if (isset($fields['WEIGHT']) && is_string($fields['WEIGHT']) && $fields['WEIGHT'] === '')
+			$fields['WEIGHT'] = 0;
 	}
 }

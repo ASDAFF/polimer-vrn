@@ -778,6 +778,14 @@ class CAllBlogComment
 			}
 
 			if (
+				$authorId > 0
+				&& $userId == $authorId
+			)
+			{
+				$perms = BLOG_PERMS_READ;
+			}
+
+			if (
 				!empty($arPerms["U"][$userId])
 				|| (
 					!empty($arPerms["U"][$authorId])
@@ -908,6 +916,7 @@ class CAllBlogComment
 			$arParams["SHOW_RATING"] = ($arParams["SHOW_RATING"] == "N" ? "N" : "Y");
 
 			$arParams["PATH_TO_USER"] = (isset($arParams["PATH_TO_USER"]) ? $arParams["PATH_TO_USER"] : '');
+			$arParams["PATH_TO_POST"] = (isset($arParams["PATH_TO_POST"]) ? $arParams["PATH_TO_POST"] : '');
 			$arParams["AVATAR_SIZE_COMMENT"] = ($arParams["AVATAR_SIZE_COMMENT"] > 0 ? $arParams["AVATAR_SIZE_COMMENT"] : ($arParams["AVATAR_SIZE"] > $arParams["AVATAR_SIZE"] ? $arParams["AVATAR_SIZE"] : 100));
 			$arParams["NAME_TEMPLATE"] = isset($arParams["NAME_TEMPLATE"]) ? $arParams["NAME_TEMPLATE"] : CSite::GetNameFormat();
 			$arParams["SHOW_LOGIN"] = ($arParams["SHOW_LOGIN"] == "N" ? "N" : "Y");
@@ -1019,6 +1028,7 @@ class CAllBlogComment
 					"RECORDS" => array(
 						$commentId => array(
 							"ID" => $comment["ID"],
+							"RATING_VOTE_ID" => 'BLOG_COMMENT_'.$comment["ID"].'-'.(time()+rand(0, 1000)),
 							"NEW" => ($arParams["FOLLOW"] != "N" && $comment["NEW"] == "Y" ? "Y" : "N"),
 							"AUX" => (!empty($arParams["AUX"]) ? $arParams["AUX"] : ''),
 							"AUX_LIVE_PARAMS" => (!empty($arParams["AUX_LIVE_PARAMS"]) ? $arParams["AUX_LIVE_PARAMS"] : ''),
@@ -1032,6 +1042,7 @@ class CAllBlogComment
 								"LAST_NAME" => $arAuthor["~LAST_NAME"],
 								"SECOND_NAME" => $arAuthor["~SECOND_NAME"],
 								"LOGIN" => $arAuthor["~LOGIN"],
+								"PERSONAL_GENDER" => $arAuthor["~PERSONAL_GENDER"],
 								"AVATAR" => $arAuthor["PERSONAL_PHOTO_resized"]["src"],
 								"EXTERNAL_AUTH_ID" => (isset($arAuthor["EXTERNAL_AUTH_ID"]) ? $arAuthor["EXTERNAL_AUTH_ID"] : ''),
 								"TYPE" => $authorType
@@ -1079,7 +1090,7 @@ HTML
 							? $arParams["MODE"]
 							: "PLAIN"
 					),
-					"VIEW_URL" => "",
+					"VIEW_URL" => (!empty($arParams["PATH_TO_POST"]) ? $arParams["PATH_TO_POST"] : ""),
 					"EDIT_URL" => "",
 					"MODERATE_URL" => "",
 					"DELETE_URL" => "",
@@ -1095,7 +1106,7 @@ HTML
 					"NOTIFY_TAG" => "",
 					"NOTIFY_TEXT" => "",
 					"SHOW_MINIMIZED" => "Y",
-					"SHOW_POST_FORM" => "",
+					"SHOW_POST_FORM" => (!empty($arParams["CAN_USER_COMMENT"]) && $arParams["CAN_USER_COMMENT"] ? "Y" : "N"),
 
 					"IMAGE_SIZE" => "",
 					"mfi" => ""

@@ -33,13 +33,13 @@ else
 							"IBLOCK_ID" => $arParams["IBLOCK_ID"],
 							"SECTION_ID" => $arCurSection['ID'],
 							"FILTER_NAME" => $arParams["FILTER_NAME"],
-							"PRICE_CODE" => $arParams["PRICE_CODE"],
+							"PRICE_CODE" => $arParams["~PRICE_CODE"],
 							"CACHE_TYPE" => $arParams["CACHE_TYPE"],
 							"CACHE_TIME" => $arParams["CACHE_TIME"],
 							"CACHE_GROUPS" => $arParams["CACHE_GROUPS"],
 							"SAVE_IN_SESSION" => "N",
 							"FILTER_VIEW_MODE" => $arParams["FILTER_VIEW_MODE"],
-							"XML_EXPORT" => "Y",
+							"XML_EXPORT" => "N",
 							"SECTION_TITLE" => "NAME",
 							"SECTION_DESCRIPTION" => "DESCRIPTION",
 							'HIDE_NOT_AVAILABLE' => $arParams["HIDE_NOT_AVAILABLE"],
@@ -140,21 +140,21 @@ else
 									'MESS_BTN_DETAIL' => $arParams['~MESS_BTN_DETAIL'],
 									'MESS_BTN_SUBSCRIBE' => $arParams['~MESS_BTN_SUBSCRIBE'],
 
-									'PROPERTY_CODE' => $arParams['LIST_PROPERTY_CODE'],
+									'PROPERTY_CODE' => (isset($arParams['LIST_PROPERTY_CODE']) ? $arParams['LIST_PROPERTY_CODE'] : []),
 									'PROPERTY_CODE_MOBILE' => $arParams['LIST_PROPERTY_CODE_MOBILE'],
 									'ADD_PICT_PROP' => $arParams['ADD_PICT_PROP'],
 
 									'OFFERS_FIELD_CODE' => $arParams['LIST_OFFERS_FIELD_CODE'],
-									'OFFERS_PROPERTY_CODE' => $arParams['LIST_OFFERS_PROPERTY_CODE'],
-									'OFFER_TREE_PROPS' => $arParams['OFFER_TREE_PROPS'],
-									'OFFERS_CART_PROPERTIES' => $arParams['OFFERS_CART_PROPERTIES'],
+									'OFFERS_PROPERTY_CODE' => (isset($arParams['LIST_OFFERS_PROPERTY_CODE']) ? $arParams['LIST_OFFERS_PROPERTY_CODE'] : []),
+									'OFFER_TREE_PROPS' => (isset($arParams['OFFER_TREE_PROPS']) ? $arParams['OFFER_TREE_PROPS'] : []),
+									'OFFERS_CART_PROPERTIES' => (isset($arParams['OFFERS_CART_PROPERTIES']) ? $arParams['OFFERS_CART_PROPERTIES'] : []),
 									'OFFER_ADD_PICT_PROP' => $arParams['OFFER_ADD_PICT_PROP'],
 
 									'HIDE_NOT_AVAILABLE' => 'Y',
 									'HIDE_NOT_AVAILABLE_OFFERS' => 'Y',
 									'PRODUCT_SUBSCRIPTION' => $arParams['PRODUCT_SUBSCRIPTION'],
 									'TEMPLATE_THEME' => $arParams['TEMPLATE_THEME'],
-									'PRICE_CODE' => $arParams['PRICE_CODE'],
+									'PRICE_CODE' => $arParams['~PRICE_CODE'],
 									'SHOW_PRICE_COUNT' => $arParams['SHOW_PRICE_COUNT'],
 									'PRICE_VAT_INCLUDE' => $arParams['PRICE_VAT_INCLUDE'],
 									'CONVERT_CURRENCY' => $arParams['CONVERT_CURRENCY'],
@@ -262,7 +262,7 @@ else
 						"DISPLAY_COMPARE" => $arParams["USE_COMPARE"],
 						"PAGE_ELEMENT_COUNT" => $arParams["PAGE_ELEMENT_COUNT"],
 						"LINE_ELEMENT_COUNT" => $arParams["LINE_ELEMENT_COUNT"],
-						"PRICE_CODE" => $arParams["PRICE_CODE"],
+						"PRICE_CODE" => $arParams["~PRICE_CODE"],
 						"USE_PRICE_COUNT" => $arParams["USE_PRICE_COUNT"],
 						"SHOW_PRICE_COUNT" => $arParams["SHOW_PRICE_COUNT"],
 
@@ -270,7 +270,7 @@ else
 						"USE_PRODUCT_QUANTITY" => $arParams['USE_PRODUCT_QUANTITY'],
 						"ADD_PROPERTIES_TO_BASKET" => (isset($arParams["ADD_PROPERTIES_TO_BASKET"]) ? $arParams["ADD_PROPERTIES_TO_BASKET"] : ''),
 						"PARTIAL_PRODUCT_PROPERTIES" => (isset($arParams["PARTIAL_PRODUCT_PROPERTIES"]) ? $arParams["PARTIAL_PRODUCT_PROPERTIES"] : ''),
-						"PRODUCT_PROPERTIES" => $arParams["PRODUCT_PROPERTIES"],
+						"PRODUCT_PROPERTIES" => (isset($arParams["PRODUCT_PROPERTIES"]) ? $arParams["PRODUCT_PROPERTIES"] : []),
 
 						"DISPLAY_TOP_PAGER" => $arParams["DISPLAY_TOP_PAGER"],
 						"DISPLAY_BOTTOM_PAGER" => $arParams["DISPLAY_BOTTOM_PAGER"],
@@ -287,14 +287,14 @@ else
 						"MESS_BTN_LAZY_LOAD" => $arParams["~MESS_BTN_LAZY_LOAD"],
 						"LOAD_ON_SCROLL" => $arParams["LOAD_ON_SCROLL"],
 
-						"OFFERS_CART_PROPERTIES" => $arParams["OFFERS_CART_PROPERTIES"],
+						"OFFERS_CART_PROPERTIES" => (isset($arParams["OFFERS_CART_PROPERTIES"]) ? $arParams["OFFERS_CART_PROPERTIES"] : []),
 						"OFFERS_FIELD_CODE" => $arParams["LIST_OFFERS_FIELD_CODE"],
-						"OFFERS_PROPERTY_CODE" => $arParams["LIST_OFFERS_PROPERTY_CODE"],
+						"OFFERS_PROPERTY_CODE" => (isset($arParams["LIST_OFFERS_PROPERTY_CODE"]) ? $arParams["LIST_OFFERS_PROPERTY_CODE"] : []),
 						"OFFERS_SORT_FIELD" => $arParams["OFFERS_SORT_FIELD"],
 						"OFFERS_SORT_ORDER" => $arParams["OFFERS_SORT_ORDER"],
 						"OFFERS_SORT_FIELD2" => $arParams["OFFERS_SORT_FIELD2"],
 						"OFFERS_SORT_ORDER2" => $arParams["OFFERS_SORT_ORDER2"],
-						"OFFERS_LIMIT" => $arParams["LIST_OFFERS_LIMIT"],
+						"OFFERS_LIMIT" => (isset($arParams["LIST_OFFERS_LIMIT"]) ? $arParams["LIST_OFFERS_LIMIT"] : 0),
 
 						"SECTION_ID" => $arResult["VARIABLES"]["SECTION_ID"],
 						"SECTION_CODE" => $arResult["VARIABLES"]["SECTION_CODE"],
@@ -320,7 +320,7 @@ else
 						'SLIDER_PROGRESS' => isset($arParams['LIST_SLIDER_PROGRESS']) ? $arParams['LIST_SLIDER_PROGRESS'] : '',
 
 						'OFFER_ADD_PICT_PROP' => $arParams['OFFER_ADD_PICT_PROP'],
-						'OFFER_TREE_PROPS' => $arParams['OFFER_TREE_PROPS'],
+						'OFFER_TREE_PROPS' => (isset($arParams['OFFER_TREE_PROPS']) ? $arParams['OFFER_TREE_PROPS'] : []),
 						'PRODUCT_SUBSCRIPTION' => $arParams['PRODUCT_SUBSCRIPTION'],
 						'SHOW_DISCOUNT_PERCENT' => $arParams['SHOW_DISCOUNT_PERCENT'],
 						'DISCOUNT_PERCENT_POSITION' => $arParams['DISCOUNT_PERCENT_POSITION'],
@@ -381,7 +381,7 @@ else
 									"ELEMENT_SORT_ORDER" => $arParams["ELEMENT_SORT_ORDER"],
 									"ELEMENT_SORT_FIELD2" => $arParams["ELEMENT_SORT_FIELD2"],
 									"ELEMENT_SORT_ORDER2" => $arParams["ELEMENT_SORT_ORDER2"],
-									"PROPERTY_CODE" => $arParams["LIST_PROPERTY_CODE"],
+									"PROPERTY_CODE" => (isset($arParams["LIST_PROPERTY_CODE"]) ? $arParams["LIST_PROPERTY_CODE"] : []),
 									"PROPERTY_CODE_MOBILE" => $arParams["LIST_PROPERTY_CODE_MOBILE"],
 									"INCLUDE_SUBSECTIONS" => $arParams["INCLUDE_SUBSECTIONS"],
 									"BASKET_URL" => $arParams["BASKET_URL"],
@@ -396,7 +396,7 @@ else
 									"CACHE_GROUPS" => $arParams["CACHE_GROUPS"],
 									"DISPLAY_COMPARE" => $arParams["USE_COMPARE"],
 									"PAGE_ELEMENT_COUNT" => 0,
-									"PRICE_CODE" => $arParams["PRICE_CODE"],
+									"PRICE_CODE" => $arParams["~PRICE_CODE"],
 									"USE_PRICE_COUNT" => $arParams["USE_PRICE_COUNT"],
 									"SHOW_PRICE_COUNT" => $arParams["SHOW_PRICE_COUNT"],
 
@@ -410,16 +410,16 @@ else
 									"USE_PRODUCT_QUANTITY" => $arParams['USE_PRODUCT_QUANTITY'],
 									"ADD_PROPERTIES_TO_BASKET" => (isset($arParams["ADD_PROPERTIES_TO_BASKET"]) ? $arParams["ADD_PROPERTIES_TO_BASKET"] : ''),
 									"PARTIAL_PRODUCT_PROPERTIES" => (isset($arParams["PARTIAL_PRODUCT_PROPERTIES"]) ? $arParams["PARTIAL_PRODUCT_PROPERTIES"] : ''),
-									"PRODUCT_PROPERTIES" => $arParams["PRODUCT_PROPERTIES"],
+									"PRODUCT_PROPERTIES" => (isset($arParams["PRODUCT_PROPERTIES"]) ? $arParams["PRODUCT_PROPERTIES"] : []),
 
-									"OFFERS_CART_PROPERTIES" => $arParams["OFFERS_CART_PROPERTIES"],
+									"OFFERS_CART_PROPERTIES" => (isset($arParams["OFFERS_CART_PROPERTIES"]) ? $arParams["OFFERS_CART_PROPERTIES"] : []),
 									"OFFERS_FIELD_CODE" => $arParams["LIST_OFFERS_FIELD_CODE"],
-									"OFFERS_PROPERTY_CODE" => $arParams["LIST_OFFERS_PROPERTY_CODE"],
+									"OFFERS_PROPERTY_CODE" => (isset($arParams["LIST_OFFERS_PROPERTY_CODE"]) ? $arParams["LIST_OFFERS_PROPERTY_CODE"] : []),
 									"OFFERS_SORT_FIELD" => $arParams["OFFERS_SORT_FIELD"],
 									"OFFERS_SORT_ORDER" => $arParams["OFFERS_SORT_ORDER"],
 									"OFFERS_SORT_FIELD2" => $arParams["OFFERS_SORT_FIELD2"],
 									"OFFERS_SORT_ORDER2" => $arParams["OFFERS_SORT_ORDER2"],
-									"OFFERS_LIMIT" => $arParams["LIST_OFFERS_LIMIT"],
+									"OFFERS_LIMIT" => (isset($arParams["LIST_OFFERS_LIMIT"]) ? $arParams["LIST_OFFERS_LIMIT"] : 0),
 
 									"SECTION_ID" => $intSectionID,
 									"SECTION_CODE" => "",
@@ -452,7 +452,7 @@ else
 									"SHOW_FROM_SECTION" => 'Y',
 
 									'OFFER_ADD_PICT_PROP' => $arParams['OFFER_ADD_PICT_PROP'],
-									'OFFER_TREE_PROPS' => $arParams['OFFER_TREE_PROPS'],
+									'OFFER_TREE_PROPS' => (isset($arParams['OFFER_TREE_PROPS']) ? $arParams['OFFER_TREE_PROPS'] : []),
 									'PRODUCT_SUBSCRIPTION' => $arParams['PRODUCT_SUBSCRIPTION'],
 									'SHOW_DISCOUNT_PERCENT' => $arParams['SHOW_DISCOUNT_PERCENT'],
 									'DISCOUNT_PERCENT_POSITION' => $arParams['DISCOUNT_PERCENT_POSITION'],
@@ -512,4 +512,4 @@ else
 		);
 		?>
 	</div>
-<? endif ?>
+<? endif;

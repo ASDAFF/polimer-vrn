@@ -2,11 +2,11 @@
 $MESS["CPST_SUBSCRIBE_BUTTON_NAME"] = "Підписатися";
 $MESS["CPST_SUBSCRIBE_POPUP_TITLE"] = "Підписка на товар";
 $MESS["CPST_SUBSCRIBE_BUTTON_CLOSE"] = "Закрити";
-$MESS["CPST_SUBSCRIBE_MANY_CONTACT_NOTIFY"] = "Виберіть спосіб повідомлення:";
+$MESS["CPST_SUBSCRIBE_MANY_CONTACT_NOTIFY"] = "Виберіть спосіб сповіщення:";
 $MESS["CPST_SUBSCRIBE_LABLE_CONTACT_INPUT"] = "Вкажіть Ваш #CONTACT#: ";
 $MESS["CPST_SUBSCRIBE_VALIDATE_UNKNOW_ERROR"] = "Помилка валідації";
 $MESS["CPST_SUBSCRIBE_VALIDATE_ERROR_EMPTY_FIELD"] = "Не заповнено поле \"#FIELD#\"";
-$MESS["CPST_SUBSCRIBE_VALIDATE_ERROR"] = "Ви не вибрали спосіб повідомлення";
+$MESS["CPST_SUBSCRIBE_VALIDATE_ERROR"] = "Ви не вибрали спосіб сповіщення";
 $MESS["CPST_SUBSCRIBE_CAPTCHA_TITLE"] = "Введіть слово на картинці";
 $MESS["CPST_STATUS_SUCCESS"] = "Успішно";
 $MESS["CPST_STATUS_ERROR"] = "Виникла помилка";

@@ -34,6 +34,7 @@ class CBPReviewActivity
 			"TimeoutDuration" => 0,
 			"TimeoutDurationType" => "s",
 			"IsTimeout" => 0,
+			"TaskId" => 0,
 			"Comments" => "",
 			"CommentLabelMessage" => "",
 			"ShowComment" => "Y",
@@ -45,6 +46,7 @@ class CBPReviewActivity
 		);
 
 		$this->SetPropertiesTypes(array(
+			'TaskId' => ['Type' => 'int'],
 			'Comments' => array(
 				'Type' => 'string',
 			),
@@ -70,6 +72,7 @@ class CBPReviewActivity
 	{
 		parent::ReInitialize();
 
+		$this->TaskId = 0;
 		$this->arReviewResults = array();
 		$this->arReviewOriginalResults = array();
 		$this->ReviewedCount = 0;
@@ -153,6 +156,7 @@ class CBPReviewActivity
 				'DOCUMENT_NAME' => $documentService->GetDocumentName($documentId)
 			)
 		);
+		$this->TaskId = $this->taskId;
 		$this->taskUsers = $arUsers;
 
 		$this->TotalCount = count($arUsers);
@@ -698,4 +702,3 @@ class CBPReviewActivity
 		return true;
 	}
 }
-?>

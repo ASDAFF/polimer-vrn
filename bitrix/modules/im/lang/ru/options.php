@@ -1,6 +1,7 @@
 <?
 $MESS["IM_COLOR_ENABLE"] = "Включить цветовую схему для чатов и пользователей";
 $MESS["IM_OPEN_CHAT_ENABLE"] = "Включить открытые чаты";
+$MESS["IM_CONTACT_LIST_LOAD"] = "Включить предварительную загрузку всех пользователей портала для быстрого поиска";
 $MESS["IM_GENERAL_CHAT_MESSAGE_JOIN"] = "Включить автоматическое сообщение о новом сотруднике в общий чат";
 $MESS["IM_GENERAL_CHAT_MESSAGE_LEAVE"] = "Включить автоматическое сообщение об увольнении сотрудника в общий чат";
 $MESS["IM_VIEW_OFFLINE"] = "Скрывать отсутствующих пользователей";
@@ -40,7 +41,8 @@ $MESS["IM_OPTIONS_CONVERT_TITLE"] = "Нажмите чтобы перейти н
 $MESS["IM_OPTIONS_NAME_TEMPLATE"] = "Формат отображения имени в списке контактов";
 $MESS["IM_OPTIONS_NAME_IN_SITE_FORMAT"] = "Формат сайта";
 $MESS["IM_OPTIONS_NAME_IN_IM_FORMAT"] = "Формат по умолчанию";
-$MESS["IM_OPTIONS_TURN_SERVER_SELF"] = "Использовать свой сервер видеозвонков";
+$MESS["IM_OPTIONS_CALL_SERVER_ENABLED"] = "Использовать для видеозвонков SFU сервер Voximplant (требуется активная лицензия)";
+$MESS["IM_OPTIONS_TURN_SERVER_SELF_2"] = "Использовать свой TURN сервер для видеозвонков";
 $MESS["IM_OPTIONS_TURN_SERVER"] = "Адрес сервера";
 $MESS["IM_OPTIONS_TURN_SERVER_FIREFOX"] = "Адрес сервера для Firefox";
 $MESS["IM_OPTIONS_TURN_SERVER_LOGIN"] = "Логин";

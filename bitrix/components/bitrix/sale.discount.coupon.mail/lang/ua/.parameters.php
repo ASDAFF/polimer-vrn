@@ -1,4 +1,12 @@
 <?
+$MESS["SBP_PARAMETERS_USE_DISCOUNT_ID"] = "Використовувати існуючу знижку";
+$MESS["SBP_PARAMETERS_DISCOUNT_ID"] = "Правило роботи з кошиком";
+$MESS["SBP_PARAMETERS_COUPON_IS_LIMITED"] = "Обмежити термін дії";
+$MESS["SBP_PARAMETERS_COUPON_LIMIT_VALUE"] = "Термін дії (відлік від дати створення купона)";
+$MESS["SBP_PARAMETERS_COUPON_LIMIT_TYPE"] = "Тип терміну";
+$MESS["SBP_PARAMETERS_COUPON_DAY_LIMIT_TYPE"] = "день";
+$MESS["SBP_PARAMETERS_COUPON_WEEK_LIMIT_TYPE"] = "тиждень";
+$MESS["SBP_PARAMETERS_COUPON_MONTH_LIMIT_TYPE"] = "місяць";
 $MESS["SBP_NEED_REQUIRED_MODULES"] = "Для роботи компонента потрібні встановлені модулі магазину, інфоблоків, і каталогу.";
 $MESS["SBP_GROUPS_DISCOUNT"] = "Знижка";
 $MESS["SBP_GROUPS_COUPON"] = "Купон";

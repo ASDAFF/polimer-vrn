@@ -1,6 +1,7 @@
 <?
 define('STOP_STATISTICS', true);
 define('NO_AGENT_CHECK', true);
+define('NOT_CHECK_PERMISSIONS', true);
 
 use Bitrix\Main\Loader;
 
@@ -10,6 +11,16 @@ if (isset($_REQUEST['site_id']) && is_string($_REQUEST['site_id']))
 	if ($siteID !== '' && preg_match('/^[a-z0-9_]{2}$/i', $siteID) === 1)
 	{
 		define('SITE_ID', $siteID);
+	}
+}
+
+if (isset($_REQUEST['site_template_id']) && is_string($_REQUEST['site_template_id']))
+{
+	$siteTemplateId = trim($_REQUEST['site_template_id']);
+
+	if ($siteTemplateId !== '')
+	{
+		define('SITE_TEMPLATE_ID', $siteTemplateId);
 	}
 }
 
@@ -36,7 +47,16 @@ if ($request->get('via_ajax') === 'Y')
 	}
 	catch (\Bitrix\Main\Security\Sign\BadSignatureException $e)
 	{
-		die();
+		die('Bad signature.');
+	}
+
+	try
+	{
+		$template = $signer->unsign($request->get('template'), 'sale.basket.basket');
+	}
+	catch (Exception $e)
+	{
+		$template = '.default';
 	}
 }
 
@@ -44,6 +64,6 @@ global $APPLICATION;
 
 $APPLICATION->IncludeComponent(
 	'bitrix:sale.basket.basket',
-	'.default',
+	$template,
 	$params
 );

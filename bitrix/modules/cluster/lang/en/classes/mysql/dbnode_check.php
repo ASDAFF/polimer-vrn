@@ -1,5 +1,6 @@
 <?
-$MESS["CLU_AFTER_CONNECT_MSG"] = "The primary database and the system environment must be configured such that there is no file php_interface/after_connect.php.";
+$MESS["CLU_AFTER_CONNECT_MSG"] = "The primary database and the system environment must be configured such that there is no file php_interface/after_connect_d7.php.";
+$MESS["CLU_AFTER_CONNECT_D7_MSG"] = "The primary database and the system environment must be configured such that there is no file php_interface/after_connect.php.";
 $MESS["CLU_AFTER_CONNECT_WIZREC"] = "Configure the systems properly and make sure the web site operates correctly. Then, delete the file and run the wizard again.";
 $MESS["CLU_CHARSET_MSG"] = "The server, the database, the connection and the client must be set to use the same charset.";
 $MESS["CLU_CHARSET_WIZREC"] = "Reconfigure the MySQL parameters:<br />&nbsp;character_set_server (currently: #character_set_server#),<br />&nbsp;character_set_database (currently: #character_set_database#),<br />&nbsp;character_set_connection (currently: #character_set_connection#),<br />&nbsp;character_set_client (currently: #character_set_client#).<br />Make sure the system operates correctly and run the wizard again.";

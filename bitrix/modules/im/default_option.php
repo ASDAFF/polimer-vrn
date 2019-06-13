@@ -11,6 +11,7 @@ $im_default_option = array(
 	'turn_server_firefox' => '54.217.240.163',
 	'turn_server_login' => 'bitrix',
 	'turn_server_password' => 'bitrix',
+	'call_server_enabled' => IsModuleInstalled('bitrix24') ? true : false,
 	'open_chat_enable' => IsModuleInstalled('intranet')? true: false,
 	'color_enable' => true,
 	'correct_text' => false,
@@ -30,7 +31,7 @@ $im_default_option = array(
 	'chat_extend_show_history' => true,
 	'disk_storage_id' => 0,
 	'disk_folder_avatar_id' => 0,
-	'contact_list_one_department' => false,
+	'contact_list_load' => true,
 	'contact_list_show_all_bus' => false,
 	'path_to_user_profile' => (!IsModuleInstalled("intranet") ? '/club/user/#user_id#/' : ''),
 );

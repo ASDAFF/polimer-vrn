@@ -29,6 +29,7 @@ class CBPApproveActivity
 			"Parameters" => null,
 			"ApproveMinPercent" => 50,
 			"ApproveWaitForAll" => "N",
+			"TaskId" => 0,
 			"Comments" => "",
 			"VotedCount" => 0,
 			"TotalCount" => 0,
@@ -43,6 +44,8 @@ class CBPApproveActivity
 			"LastApproverComment" => '',
 			"Approvers" => "",
 			"Rejecters" => "",
+			"UserApprovers" => [],
+			"UserRejecters" => [],
 			"TimeoutDuration" => 0,
 			"TimeoutDurationType" => "s",
 			"IsTimeout" => 0,
@@ -56,6 +59,7 @@ class CBPApproveActivity
 		);
 
 		$this->SetPropertiesTypes(array(
+			'TaskId' => ['Type' => 'int'],
 			'Comments' => array(
 				'Type' => 'string',
 			),
@@ -91,6 +95,14 @@ class CBPApproveActivity
 			),
 			'Rejecters' => array(
 				'Type' => 'string',
+			),
+			'UserApprovers' => array(
+				'Type' => 'user',
+				'Multiple' => true
+			),
+			'UserRejecters' => array(
+				'Type' => 'user',
+				'Multiple' => true
 			),
 			'IsTimeout' => array(
 				'Type' => 'int',
@@ -180,6 +192,7 @@ class CBPApproveActivity
 				'DOCUMENT_NAME' => $documentService->GetDocumentName($documentId)
 			)
 		);
+		$this->TaskId = $this->taskId;
 		$this->taskUsers = $arUsers;
 
 		$this->TotalCount = count($arUsers);
@@ -330,6 +343,7 @@ class CBPApproveActivity
 				$this->IsTimeout = 1;
 				$this->taskStatus = CBPTaskStatus::Timeout;
 				$this->Unsubscribe($this);
+				$this->writeApproversResult();
 				$this->ExecuteOnNonApprove();
 				return;
 			}
@@ -469,16 +483,7 @@ class CBPApproveActivity
 		{
 			$this->taskStatus = $result == "Approve"? CBPTaskStatus::CompleteYes : CBPTaskStatus::CompleteNo;
 			$this->Unsubscribe($this);
-
-			if ($rejecters == "")
-				$this->Rejecters = $this->GetApproversNames(false);
-			else
-				$this->Rejecters = $rejecters;
-
-			if ($approvers == "")
-				$this->Approvers = $this->GetApproversNames(true);
-			else
-				$this->Approvers = $approvers;
+			$this->writeApproversResult();
 
 			if ($result == "Approve")
 				$this->ExecuteOnApprove();
@@ -519,6 +524,30 @@ class CBPApproveActivity
 		return $result;
 	}
 
+	private function writeApproversResult()
+	{
+		$this->Rejecters = $this->GetApproversNames(false);
+		$this->Approvers = $this->GetApproversNames(true);
+
+		$approvers = $rejecters = [];
+
+		foreach ($this->arApproveResults as $userId => $vote)
+		{
+			$user = 'user_'.$userId;
+
+			if ($vote)
+			{
+				$approvers[] = $user;
+			}
+			else
+			{
+				$rejecters[] = $user;
+			}
+		}
+		$this->UserApprovers = $approvers;
+		$this->UserRejecters = $rejecters;
+	}
+
 	protected function OnEvent(CBPActivity $sender)
 	{
 		$sender->RemoveStatusChangeHandler(self::ClosedEvent, $this);
@@ -529,6 +558,7 @@ class CBPApproveActivity
 	{
 		parent::ReInitialize();
 
+		$this->TaskId = 0;
 		$this->arApproveResults = array();
 		$this->arApproveOriginalResults = array();
 		$this->ApprovedCount = 0;
@@ -542,6 +572,8 @@ class CBPApproveActivity
 		$this->IsTimeout = 0;
 		$this->Approvers = '';
 		$this->Rejecters = '';
+		$this->UserApprovers = [];
+		$this->UserRejecters = [];
 		$this->LastApprover = null;
 		$this->LastApproverComment = '';
 	}

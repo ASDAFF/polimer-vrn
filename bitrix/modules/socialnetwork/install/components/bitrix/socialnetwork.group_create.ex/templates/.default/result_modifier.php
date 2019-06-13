@@ -57,4 +57,35 @@ $arResult["TypeRowList"] = (
 		? array("TypesProject", "TypesNonProject")
 		: array("TypesNonProject", "TypesProject")
 );
+
+$arResult['AVATAR_UPLOADER_CID'] = 'GROUP_IMAGE_ID';
+
+if (
+	$arParams["GROUP_ID"] <= 0
+	&& $arResult["intranetInstalled"]
+)
+{
+	$inactiveFeaturesList = array('forum', 'photo', 'search', 'group_lists', 'wiki');
+	foreach($inactiveFeaturesList as $feature)
+	{
+		if (isset($arResult["POST"]["FEATURES"][$feature]))
+		{
+			$arResult["POST"]["FEATURES"][$feature]["Active"] = false;
+		}
+	}
+}
+
+if ($arParams["GROUP_ID"] > 0)
+{
+	$arResult["typeCode"] = \Bitrix\Socialnetwork\Item\Workgroup::getTypeCodeByParams(array(
+		'typesList' => $arResult['Types'],
+		'fields' => array(
+			'VISIBLE' => (isset($arResult["POST"]['VISIBLE']) && $arResult["POST"]['VISIBLE'] == 'Y' ? 'Y' : 'N'),
+			'OPENED' => (isset($arResult["POST"]['OPENED']) && $arResult["POST"]['OPENED'] == 'Y' ? 'Y' : 'N'),
+			'PROJECT' => (isset($arResult["POST"]['PROJECT']) && $arResult["POST"]['PROJECT'] == 'Y' ? 'Y' : 'N'),
+			'EXTERNAL' => (isset($arResult["POST"]["IS_EXTRANET_GROUP"]) && $arResult["POST"]["IS_EXTRANET_GROUP"] == 'Y' ? 'Y' : 'N')
+		)
+	));
+}
+
 ?>

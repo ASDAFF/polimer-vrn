@@ -6,7 +6,10 @@
 	var safeEditing = true,
 		safeEditingCurrentObj = null,
 		quoteData = null,
-		repo = {commentExemplarId : {}};
+		repo = {
+			commentExemplarId : {},
+			arCommentsMoreButtonID: []
+		};
 
 	window.FCList = function (params, add) {
 		this.CID = params["CID"];
@@ -26,7 +29,7 @@
 			[
 				this.nav, "click", BX.proxy(function (e) {
 					BX.eventCancelBubble(e);
-					BX.PreventDefault(e);
+					e.preventDefault();
 					this.get();
 					return false;
 				}, this)
@@ -71,6 +74,47 @@
 				{
 					this.pullNewRecords[ENTITY_XML_ID + '-0'] = "ready";
 					this.pullNewRecords[ENTITY_XML_ID + '-' + ENTITY_ID] = "done";
+				}
+			}, this),
+			OnUCFormAfterShow : BX.delegate(function(obj/*, text, data*/) {
+				if (
+					typeof obj.id != 'undefined'
+					&& this.ENTITY_XML_ID == obj.id[0]
+				)
+				{
+					if (BX('record-' + this.ENTITY_XML_ID + '-new'))
+					{
+						var commentsBlockNode = BX.findParent(BX('record-' + this.ENTITY_XML_ID + '-new'), { className: 'feed-comments-block'});
+						if (commentsBlockNode)
+						{
+							BX.addClass(commentsBlockNode, 'feed-comments-block-editor-shown');
+
+							var outerNode = BX.findChild(commentsBlockNode, { className: 'feed-com-add-box-outer'}, true);
+							if (outerNode)
+							{
+								outerNode.style.display = (obj.id[1] == 0 ? 'block' : 'none');
+							}
+						}
+					}
+				}
+			}, this),
+			OnUCFormAfterHide : BX.delegate(function(obj) {
+				if (this.ENTITY_XML_ID == obj.id[0])
+				{
+					if (BX('record-' + this.ENTITY_XML_ID + '-new'))
+					{
+						var commentsBlockNode = BX.findParent(BX('record-' + this.ENTITY_XML_ID + '-new'), { className: 'feed-comments-block'});
+						if (commentsBlockNode)
+						{
+							BX.removeClass(commentsBlockNode, 'feed-comments-block-editor-shown');
+
+							var outerNode = BX.findChild(commentsBlockNode, { className: 'feed-com-add-box-outer'}, true);
+							if (outerNode)
+							{
+								outerNode.style.display = 'block';
+							}
+						}
+					}
 				}
 			}, this),
 			OnUCUserQuote : BX.delegate(function(ENTITY_XML_ID) {
@@ -137,7 +181,7 @@
 		if (com > 0)
 			this.checkHash(com);
 
-		if (this.params["BIND_VIEWER"] == "Y" && BX["viewElementBind"])
+		if (this.params["BIND_VIEWER"] == "Y" && BX["viewElementBind"] && BX('record-' + this.ENTITY_XML_ID + '-new'))
 		{
 			BX.viewElementBind(
 				BX('record-' + this.ENTITY_XML_ID + '-new').parentNode, {},
@@ -262,7 +306,8 @@
 					{
 						author = {
 							id : parseInt(node.getAttribute("bx-mpl-author-id")),
-							name : node.getAttribute("bx-mpl-author-name")
+							name : node.getAttribute("bx-mpl-author-name"),
+							gender : node.getAttribute("bx-mpl-author-gender")
 						};
 					}
 				}
@@ -294,7 +339,7 @@
 					autoHideTimeout : 2500,
 					events : {
 						click : BX.delegate(function(e) {
-							BX.PreventDefault(e);
+							e.preventDefault();
 							BX.eventCancelBubble(e);
 							safeEditingCurrentObj = safeEditing;
 							BX.onCustomEvent(window, "OnUCUserQuote", [this.ENTITY_XML_ID, params['author'], params['text'], safeEditingCurrentObj]);
@@ -430,7 +475,6 @@
 				}
 				BX.onCustomEvent(window, "OnUCFeedChanged", [[this.ENTITY_XML_ID, this.mid]]);
 
-
 				this.display('show', offsetHeight);
 				if (!!res)
 					res = res.firstChild;
@@ -441,7 +485,7 @@
 						attrs : {href : "#", "bx-visibility-status" : "visible"}, html : BX.message("BLOG_C_HIDE"),
 						events : { click : function(e) {
 							BX.eventCancelBubble(e);
-							BX.PreventDefault(e);
+							e.preventDefault();
 							return false;
 						}}});
 					this.status = "done";
@@ -484,7 +528,9 @@
 							container.setAttribute("bx-mpl-min", min + '');
 							container.setAttribute("bx-mpl-max", max + '');
 							container.setAttribute("bx-mpl-loaded", "Y");
+							this.recalcMoreButtonsList(container);
 							BX.onCustomEvent(this, "OnUCListWasBuilt", [this, data, container]);
+							FCList.recalcMoreButtonCommentsList();
 						}
 						else
 							BX.defer(func)();
@@ -587,7 +633,7 @@
 			}
 
 			var changeOpacity = false;
-			if (!container)
+			if (!container) // add
 			{
 				container = BX.create("DIV", {
 					attrs : {id : ("record-" + id.join('-') + '-cover'), "className" : "feed-com-block-cover"},
@@ -596,12 +642,41 @@
 				newCommentsContainer.appendChild(container);
 				changeOpacity = true;
 			}
-			else
+			else // edit
 			{
-				var containerBody = BX.create("DIV", {
-					attrs : {id : ("record-" + id.join('-') + '-cover'), "className" : "feed-com-block-cover"},
-					style : {display : "none"},
-					html : ob.HTML}), containerForRemove = container;
+				var
+					containerBody = BX.create("DIV", {
+						attrs : {
+							id : ("record-" + id.join('-') + '-cover'),
+							className : "feed-com-block-cover"
+						},
+						style : {
+							display : "none"
+						},
+						html : ob.HTML
+					}),
+					containerForRemove = container,
+
+					// get expanded status
+					commentOuterNode = BX.findChild(containerForRemove, {
+							tag: 'div',
+							className: 'feed-com-text-inner'
+						}, true),
+					expanded = (commentOuterNode && commentOuterNode.classList.contains('feed-com-text-inner-expanded'));
+
+				// set expanded status
+				if (expanded)
+				{
+					commentOuterNode = BX.findChild(containerBody, {
+						tag: 'div',
+						className: 'feed-com-text-inner'
+					}, true);
+					if (commentOuterNode)
+					{
+						commentOuterNode.classList.add('feed-com-text-inner-expanded');
+					}
+				}
+
 				container.parentNode.insertBefore(containerBody, container);
 				container.removeAttribute("id");
 				height = container.scrollHeight;
@@ -613,7 +688,10 @@
 				}, 1000);
 			}
 
-			if (animation !== "simple")
+			if (
+				animation !== "simple"
+				&& typeof BXMobileApp == 'undefined' // non-mobile
+			)
 			{
 				var curPos = BX.pos(container),
 					scroll = BX.GetWindowScrollPos(),
@@ -627,7 +705,9 @@
 						container.style.height = state.height + "px";
 						container.style.opacity = state.opacity / 100;
 						if (scroll.scrollTop > 0 && curPos.top < (scroll.scrollTop + size.innerHeight))
+						{
 							window.scrollTo(0, scroll.scrollTop + state.height);
+						}
 					},
 
 					complete : function(){
@@ -639,8 +719,8 @@
 			{
 				(new BX["easing"]({
 					duration : 500,
-					start : { height : height, opacity : (changeOpacity ? 0 : 100)},
-					finish : { height : container.scrollHeight, opacity : 100},
+					start : { opacity : (changeOpacity ? 0 : 100), height : height},
+					finish : { opacity : 100, height : container.scrollHeight},
 					transition : BX.easing.makeEaseOut(BX.easing.transitions.cubic),
 					step : function(state) {
 						container.style.height = state.height + "px";
@@ -652,8 +732,6 @@
 					}, this)
 				})).animate();
 			}
-
-
 			var cnt = 0,
 			func = function()
 			{
@@ -673,15 +751,28 @@
 								}
 							);
 						}
+						this.recalcMoreButton(this.findMoreButton(node));
 					}
 					else
+					{
 						BX.defer(func, this)();
+					}
 				}
 				BX.onCustomEvent(window, 'OnUCRecordHasDrawn', [this.ENTITY_XML_ID, id, data["messageFields"]]);
 				BX.onCustomEvent(window, "OnUCFeedChanged", [id]);
+				FCList.recalcMoreButtonCommentById(id);
 			};
 			BX.defer(func, this)();
 			return true;
+		},
+		findMoreButton: function(commentNode) {
+			return false;
+		},
+		recalcMoreButton: function(buttonNode) {
+			return false;
+		},
+		recalcMoreButtonsList: function(listNode) {
+			return false;
 		},
 		pullNewAuthor : function(authorId, authorName, authorAvatar) {
 			BX.onCustomEvent(window, 'OnUCUsersAreWriting', [this.ENTITY_XML_ID, authorId, authorName, authorAvatar]);
@@ -722,7 +813,7 @@
 							return;
 						this.add([this.ENTITY_XML_ID, parseInt(params["ID"])], data);
 						var node = BX('record-' + id.join('-') + '-cover'),
-							node1 = BX.findChild(node, {className: 'feed-com-block'}, true, false);
+							node1 = BX.findChild(node, {className: 'feed-com-main-content'}, true, false);
 						BX.addClass(node, 'comment-new-answer');
 						BX.addClass(node1, 'feed-com-block-pointer-to-new feed-com-block-new');
 						this.pullNewRecords[id.join('-')] = "done";
@@ -777,7 +868,7 @@
 					params["NEW"] = "Y";
 				this.add(id, {"messageFields" : params});
 				var node = BX('record-' + id.join('-') + '-cover'),
-					node1 = BX.findChild(node, {className: 'feed-com-block'}, true, false);
+					node1 = BX.findChild(node, {className: 'feed-com-main-content'}, true, false);
 				if (BX('record-' + id[0] + '-corner'))
 				{
 					BX.addClass(BX('record-' + id[0] + '-corner'), (params["NEW"] == "Y" ? "feed-post-block-yellow-corner" :""));
@@ -790,7 +881,7 @@
 					BX.addClass(node1, 'feed-com-block-pointer-to-new feed-com-block-new');
 				}
 				this.pullNewRecords[id.join('-')] = "done";
-				BX.onCustomEvent(window, "OnUCCommentWasPulled", [id, {"messageFields" : params}])
+				BX.onCustomEvent(window, "OnUCCommentWasPulled", [id, {"messageFields" : params}]);
 			}
 			return true;
 		},
@@ -904,7 +995,7 @@
 			{
 				var curPos = BX.pos(node);
 				window.scrollTo(0, curPos["top"]);
-				node = BX.findChild(node, {className: 'feed-com-block'}, true, false);
+				node = BX.findChild(node, {className: 'feed-com-main-content'}, true, false);
 				BX.removeClass(node, "feed-com-block-pointer-to-new feed-com-block-new");
 				BX.addClass(node, "feed-com-block-pointer");
 			}
@@ -928,47 +1019,6 @@
 		if (!repo[params["ENTITY_XML_ID"]])
 			new window.FCList(params, add);
 		return repo[params["ENTITY_XML_ID"]];
-	};
-
-
-	window["fcExpandComment"] = function(id, source) {
-		if (!BX('record-' + id + '-text')) {
-			return;
-		}
-
-		var el2 = BX('record-' + id + '-text'),
-			el = el2.parentNode,
-			fxStart = 200,
-			fxFinish = parseInt(el2.offsetHeight),
-			start1 = {height:fxStart},
-			finish1 = {height:fxFinish};
-		if (!!source)
-			BX.remove(source);
-
-		var time = (fxFinish - fxStart) / (2000 - fxStart);
-		time = (time < 0.3 ? 0.3 : (time > 0.8 ? 0.8 : time));
-
-		el.style.maxHeight = start1.height+'px';
-		el.style.overflow = 'hidden';
-
-		(new BX["easing"]({
-			duration : time*1000,
-			start : start1,
-			finish : finish1,
-			transition : BX.easing.makeEaseOut(BX.easing.transitions.quart),
-			step : function(state){
-				el.style.maxHeight = state.height + "px";
-				el.style.opacity = state.opacity / 100;
-			},
-			complete : function(){
-				el.style.cssText = '';
-				el.style.maxHeight = 'none';
-				BX.onCustomEvent(window, 'OnUCRecordWasExpanded', [el]);
-				BX.LazyLoad.showImages(true);
-			}
-		})).animate();
-
-		BX.onCustomEvent(window, "OnUCFeedChanged", [id.split('-')]);
 	};
 
 	var lastWaitElement = null;
@@ -1120,7 +1170,12 @@
 																height : pos2["height"] + 'px',
 																width : pos2["width"] + 'px'
 															},
-															events : { click : function(e){ this.select(); BX.PreventDefault(e);} }
+															events : {
+																click : function(e) {
+																	this.select();
+																	e.preventDefault();
+																}
+															}
 														}
 													)
 												]
@@ -1168,10 +1223,19 @@
 			var hidden = el.getAttribute('bx-mpl-moderate-approved') == 'hidden';
 			panels.push({
 				text : (hidden ? BX.message("BPC_MES_SHOW") : BX.message("BPC_MES_HIDE")),
-				onclick : function() { window['UC'][ENTITY_XML_ID].
-					act(el.getAttribute('bx-mpl-moderate-url').
-					replace("#action#", (hidden ? "show" : "hide")).
-					replace("#ACTION#", (hidden ? "SHOW" : "HIDE")), ID, 'MODERATE');
+				onclick : function() {
+
+					var moderateUrl = el.getAttribute('bx-mpl-moderate-url').
+						replace("#action#", (hidden ? "show" : "hide")).
+						replace("#ACTION#", (hidden ? "SHOW" : "HIDE"));
+
+					if (BX.type.isNotEmptyString(moderateUrl))
+					{
+						moderateUrl = BX.util.add_url_param(moderateUrl, {
+							b24statAction: (hidden ? "showComment" : "hideComment")
+						});
+					}
+					window['UC'][ENTITY_XML_ID].act(moderateUrl, ID, 'MODERATE');
 					this.popupWindow.close();}
 			});
 		}
@@ -1192,11 +1256,16 @@
 			&& typeof oLF != 'undefined'
 		)
 		{
+			var
+				commentEntityType = el.getAttribute('bx-mpl-comment-entity-type'),
+				postEntityType = el.getAttribute('bx-mpl-post-entity-type');
+
 			panels.push({
 				text : BX.message("BPC_MES_CREATE_TASK"),
 				onclick : function() {
 					oLF.createTask({
-						entityType: 'BLOG_COMMENT',
+						postEntityType: (BX.type.isNotEmptyString(postEntityType) ? postEntityType : 'BLOG_POST'),
+						entityType: (BX.type.isNotEmptyString(commentEntityType) ? commentEntityType : 'BLOG_COMMENT'),
 						entityId: ID
 					});
 					this.popupWindow.close(); return false;
@@ -1225,6 +1294,27 @@
 				}
 			);
 		}
+	};
+
+	window["fcCommentExpand"] = function(el) {
+		BX.UI.Animations.expand({
+			moreButtonNode: el,
+			type: 'comment',
+			classBlock: 'feed-com-block',
+			classOuter: 'feed-com-text-inner',
+			classInner: 'feed-com-text-inner-inner',
+			heightLimit: 200,
+			callback: function(el) {
+				BX.onCustomEvent(window, 'OnUCRecordWasExpanded', [el]);
+				el.classList.add('feed-com-text-inner-expanded');
+
+				var commentContentId = el.getAttribute('bx-content-view-xml-id');
+				if (BX.type.isNotEmptyString(commentContentId))
+				{
+					BX.onCustomEvent(window, "OnUCFeedChanged", [ commentContentId.split('-') ]);
+				}
+			}
+		})
 	};
 
 	/**
@@ -1368,19 +1458,29 @@
 				"SHOW_POST_FORM" : 'Y',
 				"VOTE_ID" : "",
 				"AUTHOR_TOOLTIP_PARAMS" : '',
-				"background:url('') no-repeat center;" : ""
+				"background:url('') no-repeat center;" : "",
+				"LIKE_REACT" : '',
+				"RATING_NONEMPTY_CLASS" : ''
 			};
 		if (!!res && !!data["messageFields"])
 		{
 			res["AUTHOR"] = (!!res["AUTHOR"] ? res["AUTHOR"] : {});
 			var timestamp = parseInt(res["POST_TIMESTAMP"]) + parseInt(BX.message('USER_TZ_OFFSET')) + parseInt(BX.message('SERVER_TZ_OFFSET'));
-
 			var dateFormat = [
-				['today', (params["TIME_FORMAT"].indexOf("today") < 0 ? 'today, '+params["TIME_FORMAT"] : params["TIME_FORMAT"])],
+				['today', params["TIME_FORMAT"]],
 				['yesterday', (params["TIME_FORMAT"].indexOf("yesterday") < 0 ? 'yesterday, '+params["TIME_FORMAT"] : params["TIME_FORMAT"])],
 				['', params["DATE_TIME_FORMAT"]]
 			];
-
+/*
+			var dateFormat = [
+				['s', 'sshort'],
+				['i', 'ishort'],
+				['H', 'Hshort'],
+				['d', 'dshort'],
+				['m', 'mshort'],
+				['Y', 'Yshort']
+			];
+*/
 			var authorStyle = '';
 			if (typeof res["AUTHOR"]["TYPE"] != 'undefined')
 			{
@@ -1413,7 +1513,9 @@
 				"APPROVED" : (res["APPROVED"] != "Y" ? "hidden" : "approved"),
 				"DATE" : BX.date.format(
 					dateFormat,
-					timestamp, false, true
+					timestamp,
+					parseInt(Date.now()/1000) + parseInt(BX.message('USER_TZ_OFFSET')) + parseInt(BX.message('SERVER_TZ_OFFSET')),
+					true
 				),
 				"TEXT" : commentText,
 				"CLASSNAME" : (res["CLASSNAME"] ? " " + res["CLASSNAME"] : ""),
@@ -1459,6 +1561,7 @@
 				"AUTHOR_ID" : res["AUTHOR"]["ID"],
 				"AUTHOR_AVATAR_IS" : (!!res["AUTHOR"]["AVATAR"] ? "Y" : "N"),
 				"AUTHOR_AVATAR" : (!!res["AUTHOR"]["AVATAR"] ? res["AUTHOR"]["AVATAR"] : '/bitrix/images/1.gif'),
+				"AUTHOR_AVATAR_BG" : (!!res["AUTHOR"]["AVATAR"] ? "background-image:url('" + res["AUTHOR"]["AVATAR"] + "')" : ''),
 				"AUTHOR_URL" : params["AUTHOR_URL"].
 					replace("#ID#", res["ID"]).
 					replace("#id#", res["ID"]).
@@ -1473,8 +1576,13 @@
 				"AUTHOR_NAME" : BX.formatName(res["AUTHOR"], params["NAME_TEMPLATE"], params["SHOW_LOGIN"]),
 				"AUTHOR_EXTRANET_STYLE" : authorStyle,
 				"VOTE_ID" : (res["RATING"] && res["RATING"]["VOTE_ID"] ? res["RATING"]["VOTE_ID"] : ""),
+				"AUTHOR_PERSONAL_GENDER" : (BX.type.isNotEmptyString(res["AUTHOR"]["PERSONAL_GENDER"]) ? res["AUTHOR"]["PERSONAL_GENDER"] : ''),
 				"AUTHOR_TOOLTIP_PARAMS" : (typeof res["AUTHOR_TOOLTIP_PARAMS"] != 'undefined' ? res["AUTHOR_TOOLTIP_PARAMS"] : '{}'),
-				"background:url('') no-repeat center;" : ""
+				"background:url('') no-repeat center;" : "",
+				"LIKE_REACT" : (!!res["LIKE_REACT"] ? res["LIKE_REACT"] : ''),
+				"RATING_NONEMPTY_CLASS" : (res["RATING"] && res["RATING"]["TOTAL_VOTES"] ? "comment-block-rating-nonempty" : ""),
+				"POST_ENTITY_TYPE" : (!!res["POST_CONTENT_TYPE_ID"] ? res["POST_CONTENT_TYPE_ID"] : ''),
+				"COMMENT_ENTITY_TYPE" : (!!res["COMMENT_CONTENT_TYPE_ID"] ? res["COMMENT_CONTENT_TYPE_ID"] : '')
 			};
 		}
 		else
@@ -1499,7 +1607,7 @@
 		{
 			if (replacement.hasOwnProperty(ij))
 			{
-				txt = txt.replace(new RegExp('#' + ij + '#', "g"), replacement[ij]);
+				txt = txt.replace(new RegExp('#' + ij + '#', "g"), function() { return replacement[this]; }.bind(ij) );
 			}
 		}
 		return txt.replace("background:url('') no-repeat center;", "").replace(/\001/gi, "#");
@@ -1571,7 +1679,7 @@
 							}
 						}
 
-						node1 = BX.findChild(node, {className: 'feed-com-block'}, true, false);
+						node1 = BX.findChild(node, {className: 'feed-com-main-content'}, true, false);
 						BX.removeClass(node1, 'feed-com-block-pointer-to-new feed-com-block-new');
 						BX.addClass(node1, 'feed-com-block-read');
 						commentsReadToCounter++;
@@ -1751,6 +1859,7 @@
 					{
 						author = {
 							id : parseInt(tmp.getAttribute("bx-post-author-id")),
+							gender : tmp.getAttribute("bx-post-author-gender"),
 							name : tmp.innerHTML
 						}
 					}
@@ -1795,4 +1904,131 @@
 	};
 
 	BX.onCustomEvent("main.post.list/default", ["script.js"]);
+
+	BX.addCustomEvent(window, 'OnUCMoreButtonAdd', function(params) {
+		repo.arCommentsMoreButtonID.push(params);
+	});
+	BX.addCustomEvent(window, 'OnUCMoreButtonListClear', function() {
+		repo.arCommentsMoreButtonID = [];
+	});
+	BX.addCustomEvent(window, 'OnUCMoreButtonListRecalc', function() {
+		FCList.recalcMoreButtonCommentsList();
+	});
+	BX.addCustomEvent(window, 'OnUCMoreButtonRecalc', function(params) {
+		FCList.recalcMoreButtonComment(params);
+	});
+	BX.ready(function() {
+		setTimeout(function() {
+			FCList.recalcMoreButtonCommentsList();
+		}, 1000);
+	});
+
+	window.FCList.recalcMoreButtonCommentsList = function()
+	{
+		var arPos = null;
+
+		for (var i = 0; i < repo.arCommentsMoreButtonID.length; i++)
+		{
+			arPos = BX.pos(BX(repo.arCommentsMoreButtonID[i].bodyBlockID));
+			FCList.recalcMoreButtonComment({
+				arPos: arPos,
+				bodyBlock: BX(repo.arCommentsMoreButtonID[i].bodyBlockID),
+				moreButtonBlock: (
+					typeof repo.arCommentsMoreButtonID[i].moreButtonBlockID != 'undefined'
+						? BX(repo.arCommentsMoreButtonID[i].moreButtonBlockID)
+						: null
+				)
+			});
+
+			delete repo.arCommentsMoreButtonID[i];
+		}
+		repo.arCommentsMoreButtonID = repo.arCommentsMoreButtonID.filter(function (item) {
+			return (typeof item !== 'undefined');
+		});
+
+		repo.arCommentsMoreButtonID.sort();
+	};
+
+	window.FCList.recalcMoreButtonComment = function(params)
+	{
+		var
+			ii =  null,
+			arPos = (
+				BX.type.isNotEmptyObject(params.arPos)
+					? params.arPos
+					: BX.pos(params.bodyBlock)
+			);
+
+		if (arPos.height < 200)
+		{
+			if (params.moreButtonBlock)
+			{
+				params.moreButtonBlock.style.display = "none";
+			}
+		}
+		else
+		{
+			if (
+				params.moreButtonBlock
+				&& params.moreButtonBlock.style.display == "none"
+			)
+			{
+				params.moreButtonBlock.style.display = "block";
+			}
+		}
+
+		var onLoadImageList = BX.findChildren(
+			params.bodyBlock,
+			{
+				attr: {
+					'data-bx-onload': 'Y'
+				}
+			},
+			true
+		);
+
+		if (BX.type.isArray(onLoadImageList))
+		{
+			for (ii = 0; ii < onLoadImageList.length; ii++)
+			{
+				onLoadImageList[ii].addEventListener('load', function(e) {
+					var
+						bodyBlock = null,
+						outerBlock = BX.findParent(e.currentTarget, { className: 'feed-com-text' });
+
+					if (outerBlock) // comment
+					{
+						bodyBlock = BX.findChild(outerBlock, { className: 'feed-com-text-inner-inner'}, true);
+						if (bodyBlock)
+						{
+							FCList.recalcMoreButtonComment({
+								bodyBlock: bodyBlock,
+								moreButtonBlock: BX.findChild(outerBlock, { className: 'feed-post-text-more'}, true)
+							});
+						}
+					}
+					e.currentTarget.setAttribute('data-bx-onload', 'N');
+				});
+			}
+		}
+	};
+
+	window.FCList.recalcMoreButtonCommentById = function(id)
+	{
+		setTimeout(function() {
+			var outerBlock = BX('record-' + id[0] + '-' +  + id[1]);
+			if (outerBlock)
+			{
+				bodyBlock = BX.findChild(outerBlock, { className: 'feed-com-text-inner-inner'}, true);
+				if (bodyBlock)
+				{
+					FCList.recalcMoreButtonComment({
+						bodyBlock: bodyBlock,
+						moreButtonBlock: BX.findChild(outerBlock, { className: 'feed-post-text-more'}, true)
+					});
+				}
+			}
+		}, 1000);
+	};
+
 })();

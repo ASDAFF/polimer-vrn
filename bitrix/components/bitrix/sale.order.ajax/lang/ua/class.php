@@ -54,4 +54,5 @@ $MESS["P2D_CALCULATE_ERROR"] = "При розрахунку замовлення
 $MESS["DELIVERY_CHANGE_WARNING"] = "Обрана перша доступна доставка";
 $MESS["PAY_SYSTEM_CHANGE_WARNING"] = "Обрана перша доступна платіжна система";
 $MESS["SESSID_ERROR"] = "Ваша сесія закінчилася. Будь ласка, перезавантажте сторінку.";
+$MESS["ORDER_CONSISTENCY_CHANGED"] = "Під час збереження замовлення склад замовлення був змінений.";
 ?>

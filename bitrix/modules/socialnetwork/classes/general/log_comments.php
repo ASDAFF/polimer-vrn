@@ -5,6 +5,7 @@ use Bitrix\Socialnetwork\Item\LogIndex;
 use Bitrix\Socialnetwork\LogTable;
 use Bitrix\Socialnetwork\LogCommentTable;
 use Bitrix\Socialnetwork\LogIndexTable;
+use Bitrix\Socialnetwork\LogRightTable;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Socialnetwork\LogTagTable;
 
@@ -142,6 +143,16 @@ class CAllSocNetLogComments
 
 		if (!$USER_FIELD_MANAGER->CheckFields("SONET_COMMENT", $ID, $arFields, (isset($arFields["USER_ID"]) && intval($arFields["USER_ID"]) > 0 ? intval($arFields["USER_ID"]) : false)))
 			return false;
+
+		if (!empty($arFields['TEXT_MESSAGE']))
+		{
+			$arFields["TEXT_MESSAGE"] = \Bitrix\Main\Text\Emoji::encode($arFields["TEXT_MESSAGE"]);
+		}
+
+		if (!empty($arFields['MESSAGE']))
+		{
+			$arFields["MESSAGE"] = \Bitrix\Main\Text\Emoji::encode($arFields["MESSAGE"]);
+		}
 
 		return True;
 	}
@@ -596,7 +607,7 @@ class CAllSocNetLogComments
 						if (StrLen($siteID) <= 0)
 							$siteID = $arSubscriber["USER_LID"];
 						if (StrLen($siteID) <= 0)
-							continue;
+							break;
 
 						$event = new CEvent;
 						$event->Send($mailTemplate, $siteID, $arFields, "N");
@@ -696,13 +707,6 @@ class CAllSocNetLogComments
 			}
 
 			LogTable::update($logFields["ID"], $arFields);
-			if (isset($arFields["LOG_UPDATE"]))
-			{
-				LogIndexTable::setLogUpdate(array(
-					'logId' => $logFields["ID"],
-					'value' => ($bSetDateByLastComment ? $arFields["LOG_UPDATE"] : false),
-				));
-			}
 
 			CSocNetLogFollow::DeleteByLogID($log_id, "Y", true); // not only delete but update to NULL for existing records
 		}
@@ -817,6 +821,30 @@ class CAllSocNetLogComments
 							? CSocNetLogRights::CheckForUserOnly($arCommentFields["LOG_ID"], $mentionUserID)
 							: false
 					);
+
+					if (
+						$bHaveRights
+						&& $arTitleRes["IS_CRM"] == "Y"
+					) // user has 'normal' rights to the log entry but it's crm
+					{
+						$dbLog = CSocNetLog::getList(
+							array(),
+							array(
+								"ID" => $arCommentFields["LOG_ID"],
+							),
+							false,
+							false,
+							array("ID", "MODULE_ID")
+						);
+						if (
+							!($arLog = $dbLog->fetch())
+							|| $arLog["MODULE_ID"] != "crm_shared"
+						)
+						{
+							$bHaveRights = false;
+						}
+					}
+
 					$bHaveCrmRights = false;
 
 					if (
@@ -840,7 +868,7 @@ class CAllSocNetLogComments
 								"USE_SUBSCRIBE" => "N"
 							)
 						);
-						if ($arLog = $dbLog->Fetch())
+						if ($arLog = $dbLog->fetch())
 						{
 							$bHaveCrmRights = true;
 						}

@@ -11,9 +11,8 @@ $arActivityDescription = array(
 		"ID" => "document",
 	),
 	'FILTER' => array(
-		'EXCLUDE' => array(
-			array('disk'),
+		'INCLUDE' => array(
+			['iblock']
 		)
 	)
 );
-?>

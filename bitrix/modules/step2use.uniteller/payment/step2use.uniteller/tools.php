@@ -206,7 +206,7 @@ class ps_uniteller {
 			
 			//var_dump($arItem['PRICE']);
 			
-			$price = round($arItem['PRICE'], 2);
+			$price = $arItem['PRICE'];
 			
 			//var_dump($price);
 
@@ -220,13 +220,13 @@ class ps_uniteller {
 				'vat' => $vat,
 				'taxmode' => $taxmode,
 				'name' => self::toUtf($arItem['NAME']),
-				'price' => $price,
+				'price' => round($price,2),
 				'qty' => $arItem['QUANTITY'],
-				'sum' => $price * $arItem['QUANTITY'],
+				'sum' => round($price * $arItem['QUANTITY'],2),
                 'payattr' => $payattr,
                 'lineattr' => $lineattr,
 			);
-			$total += $price * $arItem['QUANTITY'];
+			$total += round($price * $arItem['QUANTITY'], 2);
 		}
 
 		if($includeDelivery){

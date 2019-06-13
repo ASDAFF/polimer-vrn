@@ -10,4 +10,5 @@ $MESS["CC_BLL_LISTS_FOR_SONET_GROUP_DISABLED"] = "Функціонал спис�
 $MESS["CC_BLL_UNKNOWN_ERROR"] = "Невідома помилка.";
 $MESS["CC_BLL_ACCESS_DENIED"] = "Немає прав для перегляду і редагування списку.";
 $MESS["CC_BLL_COMMENTS"] = "Коментарі";
+$MESS["CC_BLL_UPPER_LEVEL"] = "Верхній рівень";
 ?>

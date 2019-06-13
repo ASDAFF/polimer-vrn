@@ -1,7 +1,9 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-use \Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\Localization\Loc,
+	\Bitrix\Sale,
+	\Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
@@ -15,7 +17,7 @@ class PersonalOrderSection extends CBitrixComponent
 		}
 		return $params;
 	}
-	
+
 	public function executeComponent()
 	{
 		$sectionsList = array();
@@ -33,6 +35,9 @@ class PersonalOrderSection extends CBitrixComponent
 			"order_detail" => "orders/#ID#",
 			"order_detail_old" => "order/detail/#ID#/",
 			"order_cancel" => "orders/order_cancel.php?ID=#ID#",
+			"password_change" => "password/change/",
+			"password_restore" => "password/restore/",
+			"login" => "login/",
 		);
 
 		if (!CBXFeatures::IsFeatureEnabled('SaleAccounts'))
@@ -59,6 +64,8 @@ class PersonalOrderSection extends CBitrixComponent
 
 		$componentVariables = array("CANCEL", "COPY_ORDER", "ID");
 		$variables = array();
+
+		$request = Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 
 		if ($this->arParams["SEF_MODE"] == "Y")
 		{
@@ -106,8 +113,6 @@ class PersonalOrderSection extends CBitrixComponent
 			$variableAliases = CComponentEngine::makeComponentVariableAliases(array(), $this->arParams["VARIABLE_ALIASES"]);
 			CComponentEngine::initComponentVariables(false, $componentVariables, $variableAliases, $variables);
 
-			$request = Bitrix\Main\Application::getInstance()->getContext()->getRequest();
-
 			$componentPage = $request->get('SECTION');
 
 			if ($componentPage === "orders"
@@ -152,6 +157,11 @@ class PersonalOrderSection extends CBitrixComponent
 
 			$sectionsList = array_merge($sectionsList, array("orders", "profile", "private"));
 
+			if ($this->arParams['USE_PRIVATE_PAGE_TO_AUTH'] === 'Y')
+			{
+				$sectionsList = array_merge($sectionsList, ['password_change', 'password_restore', 'login']);
+			}
+
 			foreach ($sectionsList as $sectionName)
 			{
 				if ($sectionName === "orders")
@@ -176,6 +186,73 @@ class PersonalOrderSection extends CBitrixComponent
 
 		if ($componentPage == "index" && $this->getTemplateName() !== "")
 			$componentPage = "template";
+
+		if ($componentPage == "order_detail")
+		{
+			Loader::includeModule('sale');
+			$id = urldecode(urldecode($variables["ID"]));
+			$registry = Sale\Registry::getInstance(Sale\Order::getRegistryType());
+			$orderClassName = $registry->getOrderClassName();
+
+			$order = $orderClassName::loadByAccountNumber($id);
+			if (!$order)
+			{
+				$order = $orderClassName::load((int)$id);
+			}
+
+			/** @var Sale\Order $order */
+			if ($order)
+			{
+				if (
+					(is_array($this->arParams["ORDER_HISTORIC_STATUSES"]) && in_array($order->getField('STATUS_ID'), $this->arParams["ORDER_HISTORIC_STATUSES"]))
+					|| $order->isCanceled()
+				)
+				{
+					$this->arResult["PATH_TO_ORDERS"] = \CHTTP::urlAddParams(
+						CComponentEngine::makePathFromTemplate($this->arResult["PATH_TO_ORDERS"]),
+						['filter_history' => 'Y']
+					);
+					if ($order->isCanceled())
+					{
+						$this->arResult["PATH_TO_ORDERS"] = \CHTTP::urlAddParams(
+							CComponentEngine::makePathFromTemplate($this->arResult["PATH_TO_ORDERS"]),
+							['show_canceled' => 'Y']
+						);
+					}
+				}
+			}
+		}
+		elseif ($componentPage === "password_restore")
+		{
+			$this->arResult['SHOW_FORGOT_PASSWORD_FORM'] = 'Y';
+			$componentPage = "private";
+		}
+		elseif ($componentPage === "password_change" )
+		{
+			$this->arResult['SHOW_CHANGE_PASSWORD_FORM'] = 'Y';
+			$componentPage = "private";
+		}
+		elseif ($componentPage === "login" )
+		{
+			$this->arResult['SHOW_LOGIN_FORM'] = 'Y';
+			$componentPage = "private";
+		}
+
+		if ($this->arParams['USE_PRIVATE_PAGE_TO_AUTH'] === 'Y')
+		{
+			$this->arResult["AUTH_SUCCESS_URL"] = $this->arResult["PATH_TO_LOGIN"];
+			$backUrl = $this->request->get('backurl');
+			if (!empty($backUrl) && strpos($backUrl, "/") === 0)
+			{
+				$this->arResult["AUTH_SUCCESS_URL"] = $backUrl;
+			}
+
+			$this->arResult["PATH_TO_AUTH_PAGE"] = \CHTTP::urlAddParams(
+				$this->arResult["PATH_TO_PRIVATE"],
+				['backurl' => urlencode($request->getRequestUri())],
+				true
+			);
+		}
 
 		$this->includeComponentTemplate($componentPage);
 	}

@@ -28,9 +28,13 @@ if (!Loader::includeModule('sale'))
 
 //get or create export ID
 if (isset($request['ID']) && $request['ID'])
+{
 	$exportId = $request['ID'];
+}
 else
-	$exportId = NULL;
+{
+	$exportId = null;
+}
 
 //	download LOG file
 if(isset($request["download_log"]) && $request["download_log"] == "Y" && $exportId)
@@ -44,9 +48,13 @@ if(isset($request["download_log"]) && $request["download_log"] == "Y" && $export
 //init VK and SETTINGS
 $vk = Vk\Vk::getInstance();
 if ($exportId)
+{
 	$vkSettings = $vk->getSettings($exportId);
+}
 else
+{
 	$vkSettings = array();
+}
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs("/bitrix/js/sale/vk_admin.js", true);
 require_once($DOCUMENT_ROOT . BX_ROOT . "/modules/main/include/prolog_admin_after.php");
@@ -56,19 +64,27 @@ $errorRequiredFields = array();
 if (isset($request["VK"]))
 {
 	if (!isset($request["VK"]["DESCRIPTION"]) || strlen($request["VK"]["DESCRIPTION"]) <= 0)
+	{
 		$errorRequiredFields[] = Loc::getMessage("SALE_VK_SETTINGS_NO_NAME");
+	}
 	
 	if (!isset($request["VK"]["VK_SETTINGS"]["APP_ID"]) || strlen($request["VK"]["VK_SETTINGS"]["APP_ID"]) <= 0)
+	{
 		$errorRequiredFields[] = Loc::getMessage("SALE_VK_SETTINGS_NO_APP_ID");
+	}
 	
 	if (!isset($request["VK"]["VK_SETTINGS"]["SECRET"]) || strlen($request["VK"]["VK_SETTINGS"]["SECRET"]) <= 0)
+	{
 		$errorRequiredFields[] = Loc::getMessage("SALE_VK_SETTINGS_NO_SECRET");
+	}
 
 //	todo: somtehing wrong...
 	if ($exportId && empty($errorRequiredFields) && isset($vkSettings["OAUTH"]["ACCESS_TOKEN"]) && !empty($vkSettings["OAUTH"]["ACCESS_TOKEN"]))
 	{
 		if (!isset($request["VK"]["VK_SETTINGS"]["GROUP_ID"]) || $request["VK"]["VK_SETTINGS"]["GROUP_ID"] <= 0)
+		{
 			$errorRequiredFields[] = Loc::getMessage("SALE_VK_SETTINGS_NO_GROUP_ID");
+		}
 		
 		if(!isset($request["VK"]["EXPORT_SETTINGS"]["CATEGORY_DEFAULT"]) || $request["VK"]["EXPORT_SETTINGS"]["CATEGORY_DEFAULT"] <= 0)
 		{
@@ -231,10 +247,14 @@ if (isset($request["VK"]) && is_array($request["VK"]) && ($_POST['save'] || $_PO
 
 //		SAVE and init exportId if we create new profile
 		if ($exportId)
+		{
 			$bSaved = $vk->saveSettings(array('SETTINGS' => $vkSettings, 'EXPORT_ID' => $exportId));
+		}
 		else
+		{
 			$exportId = $vk->saveSettings(array('SETTINGS' => $vkSettings));
-		
+		}
+
 //		change of settings may change sections lists. Drop cache to have true data
 		$sectionsList = new Vk\SectionsList($exportId);
 		$sectionsList->clearCaches();
@@ -248,9 +268,13 @@ if (isset($request["VK"]) && is_array($request["VK"]) && ($_POST['save'] || $_PO
 
 //		REDIRECT to listpage, if save (if apply - stay here)
 		if ($_POST['save'])
+		{
 			LocalRedirect('sale_vk_export_list.php?lang=' . LANGUAGE_ID);
+		}
 		else
+		{
 			LocalRedirect("sale_vk_export_edit.php?ID=" . $exportId . "&lang=" . LANGUAGE_ID);
+		}
 	}    //end if required fields
 }
 
@@ -348,19 +372,21 @@ $arrTabs = array(
 );
 //	exchange and map active tab only if active
 if ($vk->isActive() && $vk->isActiveById($exportId))
-	{
+{
 	array_unshift($arrTabs, array(
 		"DIV" => "vk_export",
 		"TAB" => Loc::getMessage("SALE_VK_TAB_EXPORT"),
 		"TITLE" => Loc::getMessage("SALE_VK_TAB_EXPORT_DESC"),
 	));
-		$arrTabs[] = array(
-			"DIV" => "vk_export_map",
-			"TAB" => Loc::getMessage("SALE_VK_TAB_MAP"),
-			"TITLE" => Loc::getMessage("SALE_VK_TAB_MAP_DESC"),
-			"ONSELECT" => "BX.Sale.VkAdmin.loadExportMap(".$exportId.")",
-		);
-	}
+	$arrTabs[] = array(
+		"DIV" => "vk_export_map",
+		"TAB" => Loc::getMessage("SALE_VK_TAB_MAP"),
+		"TITLE" => Loc::getMessage("SALE_VK_TAB_MAP_DESC"),
+	);
+	
+//	async map loading in tab
+	echo "<script>BX.Sale.VkAdmin.loadExportMap(".$exportId.");</script>";
+}
 
 $tabControl = new CAdminTabControl("tabControl", $arrTabs);
 
@@ -506,7 +532,7 @@ $tabControl->BeginNextTab();
 	<tr>
 		<td colspan="2">
 			<?php if ($exportId): ?>
-				<input type="hidden" name="ID" value="<?= $exportId ?>">
+				<input type="hidden" name="ID" value="<?= htmlspecialcharsbx($exportId) ?>">
 			<? endif; ?>
 		</td>
 	</tr>
@@ -702,23 +728,23 @@ $tabControl->BeginNextTab();
 	</tr>
 </form>
 
-	
+
+<? if ($vk->isActive() && $vk->isActiveById($exportId)): ?>
 	<?php
 //	export MAP
 	$tabControl->BeginNextTab();
 	?>
 	<tr>
 		<td id="vk_export_map_edit_table__content">
-			<?=BeginNote()?>
-			<?=Loc::getMessage("SALE_VK_TAB_MAP_LOAD")?>
-			<?=EndNote()?>
+			<?= BeginNote() ?>
+			<?= Loc::getMessage("SALE_VK_TAB_MAP_LOAD") ?>
+			<?= EndNote() ?>
 		</td>
 	</tr>
-	
+<? endif; ?>
 <?php
 $tabControl->End();
 ?>
-<!--		</table>-->
 
 
 <? require($_SERVER["DOCUMENT_ROOT"] . BX_ROOT . "/modules/main/include/epilog_admin.php");

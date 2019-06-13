@@ -100,7 +100,7 @@ class CSearchMysql extends CSearchFullText
 		}
 		else
 		{
-			$strQuery = preg_replace_callback("/&#(\\d+);/", array($this, "chr"), $strQuery);
+			$strQuery = preg_replace_callback("/&#(\\d+);/", "chr", $strQuery);
 			$bTagsSearch = false;
 		}
 		
@@ -330,7 +330,11 @@ class CSearchMysql extends CSearchFullText
 					}
 					elseif ($queryObject->bStemming)
 					{
-						$t .= "*";
+						$t = trim($t, "-")."*";
+					}
+					else
+					{
+						$t = trim($t, "-");
 					}
 
 					$p = count($qu) - 1;

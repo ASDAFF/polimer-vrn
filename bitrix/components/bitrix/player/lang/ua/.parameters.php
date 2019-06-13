@@ -83,7 +83,7 @@ $MESS["PC_PAR_PROVIDER_RTMP"] = "RTMP - потокове відео";
 $MESS["PC_PAR_PROVIDER_SOUND"] = "Звук (MP3)";
 $MESS["PC_PAR_PROVIDER_IMAGE"] = "Зображення (GIF / JPG / PNG)";
 $MESS["PC_PAR_PROVIDER_YOUTUBE"] = "Відео з YouTube.com";
-$MESS["PC_PAR_STREAMER"] = "Серверний додаток потокового відео (Стример)";
+$MESS["PC_PAR_STREAMER"] = "Серверний застосунок потокового відео (Стример)";
 $MESS["PC_PAR_REPEAT_NONE"] = "не повторювати";
 $MESS["PC_PAR_REPEAT_LIST"] = "відтворити список один раз";
 $MESS["PC_PAR_REPEAT_ALWAYS"] = "повторювати файл/список постійно";
@@ -106,4 +106,6 @@ $MESS["PC_PAR_PLAYLIST_HIDE"] = "Приховати плейлист";
 $MESS["PC_PAR_START_TIME"] = "Час початку програвання (секунди)";
 $MESS["PC_PAR_PLAYBACK_RATE"] = "Швидкість програвання";
 $MESS["PC_PAR_AUTOSTART_ON_SCROLL"] = "Автоматично починати програвати при появі плеєра на екрані";
+$MESS["PC_PAR_FILE_TYPE"] = "Mime-type файлу";
+$MESS["PC_PAR_USE_PLAYLIST_AS_SOURCES"] = "Використовувати список програвання як альтернативні версії файлу";
 ?>

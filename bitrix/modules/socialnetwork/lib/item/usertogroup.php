@@ -26,7 +26,16 @@ class UserToGroup
 	{
 		global $USER;
 
-		if (!is_object($USER))
+		if (!empty($params['CURRENT_USER_ID']))
+		{
+			$currentUserId = intval($params['CURRENT_USER_ID']);
+		}
+		elseif (is_object($USER))
+		{
+			$currentUserId = $USER->getId();
+		}
+
+		if ($currentUserId <= 0)
 		{
 			return;
 		}
@@ -55,7 +64,7 @@ class UserToGroup
 				'GROUP_ID' => $groupId,
 				'ROLE' => (isset($params['ROLE']) && in_array($params['ROLE'], UserToGroupTable::getRolesAll()) ? $params['ROLE'] : UserToGroupTable::ROLE_USER),
 				'INITIATED_BY_TYPE' => UserToGroupTable::INITIATED_BY_GROUP,
-				'INITIATED_BY_USER_ID' => $USER->getId(),
+				'INITIATED_BY_USER_ID' => $currentUserId,
 				"=DATE_CREATE" => $helper->getCurrentDateTimeFunction(),
 				"=DATE_UPDATE" => $helper->getCurrentDateTimeFunction(),
 			);
@@ -498,15 +507,28 @@ class UserToGroup
 		switch($params['action'])
 		{
 			case self::CHAT_ACTION_IN:
-				$chat->addUser($chatId, $userId, false, true, true);
-				$chatMessage = str_replace('#USER_NAME#', $userName, Loc::getMessage("SOCIALNETWORK_ITEM_USERTOGROUP_CHAT_USER_ADD".$projectSuffix.$genderSuffix));
+				if ($chat->addUser($chatId, $userId, false, true, true))
+				{
+					$chatMessage = str_replace('#USER_NAME#', $userName, Loc::getMessage("SOCIALNETWORK_ITEM_USERTOGROUP_CHAT_USER_ADD".$projectSuffix.$genderSuffix));
+				}
+				else
+				{
+					$sendMessage = false;
+				}
 				break;
 			case self::CHAT_ACTION_OUT:
-				$chat->deleteUser($chatId, $userId, false, true);
-				$chatMessage = str_replace('#USER_NAME#', $userName, Loc::getMessage("SOCIALNETWORK_ITEM_USERTOGROUP_CHAT_USER_DELETE".$projectSuffix.$genderSuffix));
+				if ($chat->deleteUser($chatId, $userId, false, true))
+				{
+					$chatMessage = str_replace('#USER_NAME#', $userName, Loc::getMessage("SOCIALNETWORK_ITEM_USERTOGROUP_CHAT_USER_DELETE".$projectSuffix.$genderSuffix));
+				}
+				else
+				{
+					$sendMessage = false;
+				}
 				break;
 			default:
 				$chatMessage = '';
+				$sendMessage = false;
 		}
 
 		if ($sendMessage)
@@ -547,4 +569,120 @@ class UserToGroup
 	{
 		return array(self::CHAT_ACTION_IN, self::CHAT_ACTION_OUT);
 	}
+
+	public static function addModerators($params = array())
+	{
+		global $USER, $DB;
+
+		$result = false;
+
+		if (
+			!array($params)
+			|| !isset($params['group_id'])
+			|| intval($params['group_id']) <= 0
+			|| !isset($params['user_id'])
+			|| empty($params['user_id'])
+		)
+		{
+			return $result;
+		}
+
+		$groupId = intval($params['group_id']);
+		$userIdList = (
+			is_array($params['user_id'])
+				? $params['user_id']
+				: array($params['user_id'])
+		);
+		$currentUserId = (
+			isset($params['current_user_id'])
+			&& intval($params['current_user_id']) > 0
+				? intval($params['current_user_id'])
+				: (
+					is_object($USER)
+					&& $USER->isAuthorized()
+						? $USER->getId()
+						: false
+				)
+		);
+
+		if (!$currentUserId)
+		{
+			return $result;
+		}
+
+		$ownerRelationIdList = $memberRelationIdList = $otherRelationIdList = array();
+
+		$resRelation = UserToGroupTable::getList(array(
+			'filter' => array(
+				'GROUP_ID' => $groupId,
+				'@USER_ID' => $userIdList
+			),
+			'select' => array('ID', 'USER_ID', 'ROLE')
+		));
+		while($relation = $resRelation->fetch())
+		{
+			if ($relation['ROLE'] == UserToGroupTable::ROLE_USER)
+			{
+				$memberRelationIdList[$relation['USER_ID']] = $relation['ID'];
+			}
+			elseif ($relation['ROLE'] == UserToGroupTable::ROLE_OWNER)
+			{
+				$ownerRelationIdList[$relation['USER_ID']] = $relation['ID'];
+			}
+			else // ban, request
+			{
+				$otherRelationIdList[$relation['USER_ID']] = $relation['ID'];
+			}
+		}
+
+		if (!empty($memberRelationIdList))
+		{
+			\CSocNetUserToGroup::transferMember2Moderator($currentUserId, $groupId, $memberRelationIdList, \CSocNetUser::isCurrentUserModuleAdmin());
+		}
+
+		foreach($userIdList as $userId)
+		{
+			if (
+				!array_key_exists($userId, $memberRelationIdList)
+				&& !array_key_exists($userId, $ownerRelationIdList)
+			)
+			{
+				if (array_key_exists($userId, $otherRelationIdList))
+				{
+					$relationId = \CSocNetUserToGroup::update($otherRelationIdList[$userId], array(
+						"ROLE" => UserToGroupTable::ROLE_MODERATOR,
+						"=DATE_UPDATE" => $DB->currentTimeFunction(),
+					));
+				}
+				else
+				{
+					$relationId = \CSocNetUserToGroup::add(array(
+						"USER_ID" => $userId,
+						"GROUP_ID" => $groupId,
+						"ROLE" => UserToGroupTable::ROLE_MODERATOR,
+						"=DATE_CREATE" => $DB->currentTimeFunction(),
+						"=DATE_UPDATE" => $DB->currentTimeFunction(),
+						"MESSAGE" => "",
+						"INITIATED_BY_TYPE" => UserToGroupTable::INITIATED_BY_GROUP,
+						"INITIATED_BY_USER_ID" => $currentUserId,
+						"SEND_MAIL" => "N"
+					));
+				}
+
+				if ($relationId)
+				{
+					\CSocNetUserToGroup::notifyModeratorAdded(array(
+						'userId' => $currentUserId,
+						'groupId' => $groupId,
+						'relationId' => $relationId
+					));
+				}
+			}
+		}
+
+		$result = true;
+
+		return $result;
+	}
+
 }

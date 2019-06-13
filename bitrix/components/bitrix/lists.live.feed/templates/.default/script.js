@@ -169,8 +169,9 @@ BX.Lists.LiveFeedClass = (function ()
 			}, this)
 		});
 		BX.unbindAll(BX('blog-submit-button-save'));
-		BX('blog-submit-button-save').setAttribute('onclick','BX.Lists["LiveFeedClass_'
-			+this.randomString+'"].submitForm();');
+		BX.bind(BX('blog-submit-button-save'), 'click', BX.proxy(function(e) {
+			this.submitForm(e);
+		}, this));
 	};
 
 	LiveFeedClass.prototype.addNewFileTableRow = function(tableID, col_count, regexp, rindex)
@@ -901,17 +902,20 @@ BX.Lists.LiveFeedClass = (function ()
 		});
 	};
 
-	LiveFeedClass.prototype.submitForm = function()
+	LiveFeedClass.prototype.submitForm = function(e)
 	{
-		if(BX('feed-add-post-content-lists').style.display == 'none')
-			BX.bind(BX('blog-submit-button-save'), 'click', submitBlogPostForm());
+		BX.unbindAll(BX('blog-submit-button-save'));
 
-		BX('blog-submit-button-save').setAttribute('onclick','');
-		BX.addClass(BX('blog-submit-button-save'), 'feed-add-button-load');
+		if (BX('feed-add-post-content-lists').style.display === 'none')
+		{
+			BX.bind(BX('blog-submit-button-save'), 'click', submitBlogPostForm());
+		}
+
+		BX.addClass(BX('blog-submit-button-save'), 'ui-btn-clock');
 		var lists = BX.findChildrenByClassName(BX('bx-lists-store-lists'), 'bx-lists-input-list');
 		for (var i = 0; i < lists.length; i++)
 		{
-			if(lists[i].value != BX('bx-lists-selected-list').value)
+			if(lists[i].value !== BX('bx-lists-selected-list').value)
 			{
 				BX.Lists.removeElement(BX('bx-lists-div-list-'+lists[i].value));
 				BX.Lists.removeElement(BX('bx-lists-input-list-'+lists[i].value));
@@ -928,30 +932,34 @@ BX.Lists.LiveFeedClass = (function ()
 
 				if(result !== null && result !== undefined)
 				{
-					if(result.status == 'success')
+					if(result.status === 'success')
 					{
 						BX.bind(BX('blog-submit-button-save'), 'click', submitBlogPostForm());
 					}
 					else
 					{
-						BX.removeClass(BX('blog-submit-button-save'), 'feed-add-button-load');
+						BX.removeClass(BX('blog-submit-button-save'), 'ui-btn-clock');
 						BX('bx-lists-block-errors').innerHTML = result.errors.pop().message;
 						BX.show(BX('bx-lists-block-errors'));
-						BX('blog-submit-button-save').setAttribute('onclick','BX.Lists["LiveFeedClass_'+
-							this.randomString+'"].submitForm();');
+						BX.bind(BX('blog-submit-button-save'), 'click', BX.proxy(function(e) {
+							this.submitForm(e);
+						}, this));
 					}
 				}
 				else
 				{
-					BX.removeClass(BX('blog-submit-button-save'), 'feed-add-button-load');
+					BX.removeClass(BX('blog-submit-button-save'), 'ui-btn-clock');
 					BX('bx-lists-block-errors').innerHTML = startResult;
 					BX.show(BX('bx-lists-block-errors'));
-					BX('blog-submit-button-save').setAttribute('onclick', 'BX.Lists["LiveFeedClass_' +
-						this.randomString + '"].submitForm();');
+					BX.bind(BX('blog-submit-button-save'), 'click', BX.proxy(function(e) {
+						this.submitForm(e);
+					}, this));
 				}
 
 			}, this)
 		});
+
+		e.preventDefault();
 	};
 
 	LiveFeedClass.prototype.errorPopup = function (message)

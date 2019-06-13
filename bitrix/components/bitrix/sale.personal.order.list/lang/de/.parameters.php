@@ -1,4 +1,5 @@
 <?
+$MESS["SPOL_DISALLOW_CANCEL"] = "Stornierung der Bestellung nicht erlauben";
 $MESS["SPOL_DESC_YES"] = "Ja";
 $MESS["SPOL_DESC_NO"] = "Nein";
 $MESS["SPOL_PATH_TO_DETAIL"] = "Bestelldetails";

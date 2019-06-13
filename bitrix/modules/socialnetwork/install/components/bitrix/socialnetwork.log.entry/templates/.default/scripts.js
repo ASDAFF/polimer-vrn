@@ -243,6 +243,7 @@ window["__logBuildRating"] = function(comm, commFormat, anchor_id) {
 			});
 		}
 	}
+
 	if (!!ratingNode)
 	{
 		ratingNode = BX.create('span', { children : [ ratingNode ] } );
@@ -271,51 +272,8 @@ var waitDiv = null;
 var	waitPopup = null;
 var waitTime = 500;
 
-
-function __logEventExpand(node)
-{
-	if (BX(node))
-	{
-		BX(node).style.display = "none";
-
-		var tmpNode = BX.findParent(BX(node), {'tag': 'div', 'className': 'feed-post-text-block'});
-		if (tmpNode)
-		{
-			var contentContrainer = BX.findChild(tmpNode, {'tag': 'div', 'className': 'feed-post-text-block-inner'}, true);
-			var contentNode = BX.findChild(tmpNode, {'tag': 'div', 'className': 'feed-post-text-block-inner-inner'}, true);
-
-			if (contentContrainer && contentNode)
-			{
-				var fxStart = 300,
-					fxFinish = parseInt(contentNode.offsetHeight),
-					start1 = {height:fxStart},
-					finish1 = {height:fxFinish};
-
-				var time = (fxFinish - fxStart) / (2000 - fxStart);
-				time = (time < 0.3 ? 0.3 : (time > 0.8 ? 0.8 : time));
-
-				(new BX["easing"]({
-					duration : time*1000,
-					start : start1,
-					finish : finish1,
-					transition : BX.easing.makeEaseOut(BX.easing.transitions.quart),
-					step : function(state){
-						contentContrainer.style.maxHeight = state.height + "px";
-						contentContrainer.style.opacity = state.opacity / 100;
-					},
-					complete : function(){
-						contentContrainer.style.maxHeight = 'none';
-						BX.LazyLoad.showImages(true);
-					}
-				})).animate();
-			}
-		}
-	}
-}
-
 function __logShowHiddenDestination(log_id, created_by_id, bindElement)
 {
-
 	var sonetLXmlHttpSet6 = new XMLHttpRequest();
 
 	sonetLXmlHttpSet6.open("POST", BX.message('sonetLESetPath'), true);
@@ -435,44 +393,52 @@ function __logShowHiddenDestination(log_id, created_by_id, bindElement)
 
 function __logSetFollow(log_id)
 {
-	var strFollowOld = (BX("log_entry_follow_" + log_id, true).getAttribute("data-follow") == "Y" ? "Y" : "N");
-	var strFollowNew = (strFollowOld == "Y" ? "N" : "Y");	
+	var
+		strFollowOld = (BX("log_entry_follow_" + log_id).getAttribute("data-follow") == "Y" ? "Y" : "N"),
+		strFollowNew = (strFollowOld == "Y" ? "N" : "Y"),
+		followNode = BX("log_entry_follow_" + log_id);
 
-	if (BX("log_entry_follow_" + log_id, true))
+	if (followNode)
 	{
-		BX.findChild(BX("log_entry_follow_" + log_id, true), { tagName: 'a' }).innerHTML = BX.message('sonetLFollow' + strFollowNew);
-		BX("log_entry_follow_" + log_id, true).setAttribute("data-follow", strFollowNew);
+		BX.findChild(followNode, { tagName: 'a' }).innerHTML = BX.message('sonetLFollow' + strFollowNew);
+		followNode.setAttribute("data-follow", strFollowNew);
 	}
-				
+
+	var actionUrl = BX.message('sonetLSetPath');
+	actionUrl = BX.util.add_url_param(actionUrl, {
+		b24statAction: (strFollowNew == 'Y' ? 'setFollow' : 'setUnfollow')
+	});
+
 	BX.ajax({
-		url: BX.message('sonetLSetPath'),
+		url: actionUrl,
 		method: 'POST',
 		dataType: 'json',
 		data: {
-			"log_id": log_id,
-			"action": "change_follow",
-			"follow": strFollowNew,
-			"sessid": BX.bitrix_sessid(),
-			"site": BX.message('sonetLSiteId')
+			log_id: log_id,
+			action: "change_follow",
+			follow: strFollowNew,
+			sessid: BX.bitrix_sessid(),
+			site: BX.message('sonetLSiteId')
 		},
 		onsuccess: function(data) {
 			if (
 				data["SUCCESS"] != "Y"
-				&& BX("log_entry_follow_" + log_id, true)
+				&& followNode
 			)
 			{
-				BX.findChild(BX("log_entry_follow_" + log_id, true), { tagName: 'a' }).innerHTML = BX.message('sonetLFollow' + strFollowOld);
-				BX("log_entry_follow_" + log_id, true).setAttribute("data-follow", strFollowOld);
+				BX.findChild(followNode, { tagName: 'a' }).innerHTML = BX.message('sonetLFollow' + strFollowOld);
+				followNode.setAttribute("data-follow", strFollowOld);
 			}
 		},
 		onfailure: function(data) {
-			if (BX("log_entry_follow_" +log_id, true))
+			if (followNode)
 			{
-				BX.findChild(BX("log_entry_follow_" + log_id, true), { tagName: 'a' }).innerHTML = BX.message('sonetLFollow' + strFollowOld);
-				BX("log_entry_follow_" + log_id, true).setAttribute("data-follow", strFollowOld);
-			}		
+				BX.findChild(followNode, { tagName: 'a' }).innerHTML = BX.message('sonetLFollow' + strFollowOld);
+				followNode.setAttribute("data-follow", strFollowOld);
+			}
 		}
 	});
+
 	return false;
 }
 

@@ -719,9 +719,22 @@ if (
 			{
 				if (empty($arItem['BASKET_ID']) && empty($arItem['ID']))
 				{
+					$module = trim($arItem['MODULE']);
+					if (strval($module) != '')
+					{
+						Loader::includeModule($module);
+					}
+					
 					foreach ($callbackList as $callbackName)
 					{
-						$arItem[$callbackName] = '';
+						$callbackFieldName = (isset($arItem[$callbackName]) ? $arItem[$callbackName] : '');
+						if ((!isset($callbackFieldName) && strval($callbackFieldName) == "")
+								|| (!class_exists($callbackFieldName) && !function_exists($callbackFieldName)))
+						{
+							$arItem[$callbackName] = '';
+						}
+
+
 					}
 				}
 			}
@@ -3750,14 +3763,14 @@ $tabControl->BeginCustomField("NEWO_COMMENTS_A", GetMessage("NEWO_COMMENTS"), tr
 <tr>
 	<td width="40%" valign="top"><?=GetMessage("SOE_COMMENT")?>:<br /><small><?=GetMessage("SOE_COMMENT_NOTE")?></small></td>
 	<td width="60%">
-		<textarea name="COMMENTS" cols="40" rows="5"><?=$str_COMMENTS?></textarea>
+		<textarea name="COMMENTS" cols="40" rows="5"><?=htmlspecialcharsbx($str_COMMENTS)?></textarea>
 	</td>
 </tr>
 <?if (strlen($str_ADDITIONAL_INFO) > 0):?>
 <tr>
 	<td width="40%" valign="top"><?=GetMessage("SOE_ADDITIONAL")?>:</td>
 	<td width="60%">
-		<?=$str_ADDITIONAL_INFO?>
+		<?=htmlspecialcharsbx($str_ADDITIONAL_INFO);?>
 	</td>
 </tr>
 <?
@@ -4361,9 +4374,9 @@ $tabControl->BeginCustomField("BASKET_CONTAINER", GetMessage("NEWO_BASKET_CONTAI
 						<input type="hidden" name="PRODUCT[<?=$val["ID"]?>][NAME]"                   id="PRODUCT[<?=$val["ID"]?>][NAME]" value="<?=$val["NAME"]?>" />
 						<input type="hidden" name="PRODUCT[<?=$val["ID"]?>][PRICE_DEFAULT]"          id="PRODUCT[<?=$val["ID"]?>][PRICE_DEFAULT]" value="<?=$val["PRICE"]; ?>" />
 						<input type="hidden" name="PRODUCT[<?=$val["ID"]?>][PRODUCT_ID]"             id="PRODUCT[<?=$val["ID"]?>][PRODUCT_ID]" value="<?=$val["PRODUCT_ID"]?>" />
-						<input type="hidden" name="PRODUCT[<?=$val["ID"]?>][BARCODE_MULTI]"          id="PRODUCT[<?=$val["ID"]?>][BARCODE_MULTI]" value="<?=($val["BARCODE_MULTI"] == Y) ? "Y" : "N"?>" />
-						<input type="hidden" name="PRODUCT[<?=$val["ID"]?>][HAS_SAVED_QUANTITY]"     id="PRODUCT[<?=$val["ID"]?>][HAS_SAVED_QUANTITY]" value="<?=($val["HAS_SAVED_QUANTITY"] == Y) ? "Y" : "N"?>" />
-						<input type="hidden" name="PRODUCT[<?=$val["ID"]?>][CUSTOM_PRICE]"           id="PRODUCT[<?=$val["ID"]?>][CUSTOM_PRICE]" value="<?=($val["CUSTOM_PRICE"] == Y) ? "Y" : "N"?>" />
+						<input type="hidden" name="PRODUCT[<?=$val["ID"]?>][BARCODE_MULTI]"          id="PRODUCT[<?=$val["ID"]?>][BARCODE_MULTI]" value="<?=($val["BARCODE_MULTI"] == 'Y') ? "Y" : "N"?>" />
+						<input type="hidden" name="PRODUCT[<?=$val["ID"]?>][HAS_SAVED_QUANTITY]"     id="PRODUCT[<?=$val["ID"]?>][HAS_SAVED_QUANTITY]" value="<?=($val["HAS_SAVED_QUANTITY"] == 'Y') ? "Y" : "N"?>" />
+						<input type="hidden" name="PRODUCT[<?=$val["ID"]?>][CUSTOM_PRICE]"           id="PRODUCT[<?=$val["ID"]?>][CUSTOM_PRICE]" value="<?=($val["CUSTOM_PRICE"] == 'Y') ? "Y" : "N"?>" />
 						<input type="hidden" name="PRODUCT[<?=$val["ID"]?>][TYPE]"                   id="PRODUCT[<?=$val["ID"]?>][TYPE]" value="<?=$val["TYPE"];?>" />
 						<input type="hidden" name="PRODUCT[<?=$val["ID"]?>][SET_PARENT_ID]"          id="PRODUCT[<?=$val["ID"]?>][SET_PARENT_ID]" value="<?=$val["SET_PARENT_ID"];?>" />
 
@@ -5704,7 +5717,7 @@ $tabControl->BeginCustomField("BASKET_CONTAINER", GetMessage("NEWO_BASKET_CONTAI
 		if (urlEdit.length > 0)
 			hiddenField += '<a href="' + urlEdit + '" target="_blank" class="name-link ' + setItemLinkClass + '" >';
 
-		hiddenField += name;
+		hiddenField += BX.util.htmlspecialchars(name);
 
 		if (urlEdit.length > 0)
 			hiddenField += "</a>";

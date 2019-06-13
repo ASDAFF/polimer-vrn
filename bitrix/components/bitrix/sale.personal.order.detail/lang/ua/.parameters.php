@@ -1,4 +1,5 @@
 <?
+$MESS["SPOD_DISALLOW_CANCEL"] = "Заборонити скасування замовлення";
 $MESS["SPOD_DESC_YES"] = "Так";
 $MESS["SPOD_DESC_NO"] = "Ні";
 $MESS["SPOD_PATH_TO_LIST"] = "Сторінка зі списком замовлень";
@@ -23,4 +24,5 @@ $MESS["SPOD_ALLOW_INNER"] = "Дозволити оплату з внутрішн
 $MESS["SPOD_ONLY_INNER_FULL"] = "Дозволити оплату з внутрішнього рахунку тільки в повному обсязі";
 $MESS["SPOD_RESTRICT_CHANGE_PAYSYSTEM"] = "Заборонити зміну платіжної системи у замовлень в статусах";
 $MESS["SPOD_NOT_CHOSEN"] = "(не обрано)";
+$MESS["SPOD_REFRESH_PRICE_AFTER_PAYSYSTEM_CHANGE"] = "Перераховувати замовлення після зміни платіжної системи";
 ?>

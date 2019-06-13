@@ -163,7 +163,6 @@ BX.ImMobile = function(params)
 		'desktopClass': this.desktop,
 		'phoneEnabled': params.webrtc && params.webrtc.phoneEnabled || false,
 		'mobileSupport': params.webrtc && params.webrtc.mobileSupport || false,
-		'phoneSipAvailable': params.webrtc && params.webrtc.phoneSipAvailable || 0,
 		'phoneDeviceActive': params.webrtc && params.webrtc.phoneDeviceActive || 'N',
 		'phoneDeviceCall': params.webrtc && params.webrtc.phoneDeviceCall || 'Y',
 		'phoneCrm': params.phoneCrm && params.phoneCrm || {},
@@ -1328,7 +1327,7 @@ BX.ImMobile.prototype.updateStateLight = function ()
 			onsuccess: BX.delegate(function (data)
 			{
 				BX.onCustomEvent('onUpdateStateDone', [true]);
-				BXMobileApp.onCustomEvent('onUpdateStateDone', true);
+				BXMobileApp.onCustomEvent('onUpdateStateDone', {result: true});
 
 				if (data.ERROR.length == 0)
 				{
@@ -1401,14 +1400,6 @@ BX.ImMobile.prototype.updateStateLight = function ()
 
 					this.sendAjaxTry = 0;
 
-					if (BX.PULL)
-					{
-						if (!BX.PULL.tryConnect())
-						{
-							BX.PULL.updateState(true);
-						}
-					}
-
 					clearTimeout(this.timeoutUpdateStateLight);
 					this.timeoutUpdateStateLight = setTimeout(BX.delegate(function ()
 					{
@@ -1445,7 +1436,7 @@ BX.ImMobile.prototype.updateStateLight = function ()
 			onfailure: BX.delegate(function (data)
 			{
 				BX.onCustomEvent('onUpdateStateDone', [false]);
-				BXMobileApp.onCustomEvent('onUpdateStateDone', false);
+				BXMobileApp.onCustomEvent('onUpdateStateDone', {result: false});
 				this.sendAjaxTry = 0;
 			}, this)
 		});
@@ -1558,7 +1549,7 @@ BX.ImMessengerMobile = function(BXIM, params)
 	this.popupMessengerSendingTimeout = {};
 
 	this.sendAjaxTry = 0;
-	this.updateStateStepDefault = this.BXIM.ppStatus? parseInt(params.updateStateInterval): 60;
+	this.updateStateStepDefault = this.BXIM.ppServerStatus? parseInt(params.updateStateInterval): 60;
 	this.updateStateStep = this.updateStateStepDefault;
 	this.updateStateTimeout = null;
 
@@ -1684,7 +1675,7 @@ BX.ImMessengerMobile = function(BXIM, params)
 	this.redrawContactListTimeout = {};
 	this.redrawRecentListTimeout = null;
 
-	this.enableGroupChat = this.BXIM.ppStatus? true: false;
+	this.enableGroupChat = this.BXIM.ppServerStatus? true: false;
 
 	this.historySearch = '';
 	this.historyOpenPage = {};
@@ -1971,24 +1962,42 @@ BX.ImMessengerMobile.prototype.drawRecentList = function()
 
 BX.ImMessengerMobile.prototype.openPhotoGallery = function(currentPhoto)
 {
-	var nodes = BX.findChildrenByClassName(this.BXIM.messenger.popupMessengerBodyWrap, "bx-messenger-file-image-text");
+	var nodes = BX.findChildrenByClassName(this.BXIM.messenger.popupMessengerBodyWrap, "bx-messenger-file-image-src");
 	var photos = [];
-	var defaultImage = '';
-	var nodeSrc = '';
+
 	for(var i = 0; i < nodes.length; i++)
 	{
-		nodeSrc = nodes[i].getAttribute('src');
-		photos.push({
-			'url': nodeSrc.replace("preview=Y&", ""),
-			'description': nodes[i].innerHTML
-		});
-		if (currentPhoto && nodeSrc.indexOf(currentPhoto) > -1)
-			defaultImage = nodeSrc.replace("preview=Y&", "");
+		var chatId = nodes[i].getAttribute('data-chatId');
+		var diskId = nodes[i].getAttribute('data-diskId');
+
+		if (
+			chatId && diskId
+			&& this.disk.files[chatId] && this.disk.files[chatId][diskId]
+		)
+		{
+			var file = this.disk.files[chatId][diskId];
+			if (file.type != 'image')
+				continue;
+
+			photos.push({
+				'url': file.urlShow,
+				'description': file.name
+			});
+		}
+		else
+		{
+			var node = BX.findChildByClassName(nodes[i], "bx-messenger-file-image-text");
+			photos.push({
+				'url': node.getAttribute('src'),
+				'description': ''
+			});
+		}
 	}
+
 	if (photos.length > 0)
 	{
 		BX.localStorage.set('impmh', true, 1);
-		BXMobileApp.UI.Photo.show({photos: photos, default_photo: defaultImage})
+		BXMobileApp.UI.Photo.show({photos: photos, default_photo: currentPhoto})
 	}
 }
 
@@ -3063,7 +3072,7 @@ BX.ImMessengerMobile.prototype.openMessageMenu = function(messageId)
 	*/
 	/*
 	sheetButtons.push({
-		title: BX.message("IM_MENU_MESS_LIKE_LIST"),
+		title: BX.message("IM_MENU_MESS_LIKE_LIST_2"),
 		callback: BX.delegate(function () {}, this)
 	});
 	*/
@@ -3297,6 +3306,7 @@ BX.ImDiskManagerMobile = function(rootObject, params)
 	this.filesProgress = {};
 	this.filesMessage = {};
 	this.filesRegister = {};
+	this.messageBlock = {};
 
 	this.fileTmpId = 1;
 
@@ -3327,6 +3337,22 @@ BX.ImDiskManagerMobile = function(rootObject, params)
 	}, this);
 }
 
+BX.ImDiskManagerMobile.prototype.getChatId = function()
+{
+	var isChat = this.BXIM.messenger.currentTab.toString().substr(0, 4) == 'chat';
+	if (isChat)
+	{
+		return this.BXIM.messenger.currentTab.toString().substr(4);
+	}
+
+	var chatId = this.BXIM.messenger.userChat[this.BXIM.messenger.currentTab];
+	if (chatId)
+	{
+		return chatId;
+	}
+
+	return 0;
+};
 
 BX.ImDiskManagerMobile.prototype.chatDialogInit = function()
 {
@@ -3357,7 +3383,7 @@ BX.ImDiskManagerMobile.prototype.chatDialogInit = function()
 BX.ImDiskManagerMobile.prototype.uploadFromMobile = function(image, text)
 {
 	var dataBlob = BX.UploaderUtils.dataURLToBlob("data:image/jpg;base64,"+image);
-	dataBlob.name = 'mobile_'+BX.date.format("Ymd_His")+'.jpg';
+	dataBlob.name = 'mobile_'+BX.Main.Date.format("Ymd_His")+'.jpg';
 	this.formAgents['imDialog'].messageText = text? text: '';
 	this.formAgents['imDialog'].onChange([dataBlob]);
 };
@@ -3618,7 +3644,6 @@ BX.ImWebRTCMobile = function(rootObject, params)
 	this.phoneHolded = false;
 	this.phoneRinging = 0;
 	this.phoneTransferEnabled = false;
-	this.phoneTransferUser = 0;
 	this.phoneConnectedInterval = null;
 	this.phoneDeviceDelayTimeout = null;
 	this.callNotify = null;
@@ -3639,7 +3664,6 @@ BX.ImWebRTCMobile = function(rootObject, params)
 	this.turnServerPassword = params.turnServerPassword;
 
 	this.phoneEnabled = params.phoneEnabled;
-	this.phoneSipAvailable = params.phoneSipAvailable;
 	this.phoneDeviceActive = params.phoneDeviceActive == 'Y';
 	this.phoneCallerID = '';
 	this.phoneLogin = "";

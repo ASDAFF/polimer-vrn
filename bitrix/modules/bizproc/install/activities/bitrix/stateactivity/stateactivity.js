@@ -157,6 +157,13 @@ StateActivity = function()
 		c.style.background = 'url(/bitrix/images/bizproc/stat_br.gif)';
 	};
 
+	ob.reDraw = function()
+	{
+		var parentNode = ob.main.parentNode;
+		parentNode.removeChild(ob.main);
+		ob.Draw(parentNode);
+	};
+
 	ob.OnRemoveClick = function ()
 	{
 		ob.parentActivity.RemoveChild(ob);
@@ -167,6 +174,10 @@ StateActivity = function()
 		var id = this.parentNode.parentNode.parentNode.parentNode.parentNode.id;
 		for(var i in ob.childActivities)
 		{
+			if (!ob.childActivities.hasOwnProperty(i))
+			{
+				continue;
+			}
 			if(ob.childActivities[i]['Name']==id)
 			{
 				ob.commandTable.deleteRow(parseInt(i)+1);
@@ -182,6 +193,10 @@ StateActivity = function()
 		var id = this.parentNode.parentNode.parentNode.parentNode.parentNode.id;
 		for(var i in ob.childActivities)
 		{
+			if (!ob.childActivities.hasOwnProperty(i))
+			{
+				continue;
+			}
 			if(ob.childActivities[i]['Name']==id)
 			{
 				if(ob.childActivities[i].Type == 'EventDrivenActivity')
@@ -198,6 +213,10 @@ StateActivity = function()
 		var id = this.parentNode.parentNode.parentNode.parentNode.parentNode.id;
 		for(var i in ob.childActivities)
 		{
+			if (!ob.childActivities.hasOwnProperty(i))
+			{
+				continue;
+			}
 			if(ob.childActivities[i]['Name']==id)
 			{
 				ob.SequentialShow(ob.childActivities[i]);
@@ -378,6 +397,11 @@ __StateActivityAdd = function (type, id)
 				case "finish":
 					act.AddFinilize();
 					break;
+			}
+
+			if (BX.type.isFunction(act.reDraw))
+			{
+				act.reDraw();
 			}
 			break;
 		}

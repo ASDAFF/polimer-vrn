@@ -12,17 +12,25 @@ BX.PopupWindowManager =
 	_popups : [],
 	_currentPopup : null,
 
-	create : function(uniquePopupId, bindElement, params)
+	create : function(popupId, bindElement, params)
 	{
-		var index = -1;
-		if ((index = this._getPopupIndex(uniquePopupId)) !== -1)
+		var id = popupId;
+		if (BX.type.isPlainObject(popupId) && !bindElement && !params)
 		{
-			return this._popups[index];
+			id = popupId.id;
+			if (!BX.type.isNotEmptyString(id))
+			{
+				throw new Error("BX.PopupWindowManager: 'id' parameter is required.")
+			}
 		}
 
-		var popupWindow = new BX.PopupWindow(uniquePopupId, bindElement, params);
-		BX.addCustomEvent(popupWindow, "onPopupShow", BX.delegate(this.onPopupShow, this));
-		BX.addCustomEvent(popupWindow, "onPopupClose", BX.delegate(this.onPopupClose, this));
+		var popupWindow = this.getPopupById(id);
+		if (popupWindow === null)
+		{
+			popupWindow = new BX.PopupWindow(popupId, bindElement, params);
+			BX.addCustomEvent(popupWindow, "onPopupShow", BX.delegate(this.onPopupShow, this));
+			BX.addCustomEvent(popupWindow, "onPopupClose", BX.delegate(this.onPopupClose, this));
+		}
 
 		return popupWindow;
 	},
@@ -67,6 +75,31 @@ BX.PopupWindowManager =
 		return this._getPopupIndex(uniquePopupId) !== -1
 	},
 
+	isAnyPopupShown : function()
+	{
+		for(var i = 0, length = this._popups.length; i < length; i++)
+		{
+			if(this._popups[i].isShown())
+			{
+				return true;
+			}
+		}
+		return false;
+	},
+
+	getPopupById: function(id)
+	{
+		for (var i = 0; i < this._popups.length; i++)
+		{
+			if (this._popups[i].getId() === id)
+			{
+				return this._popups[i];
+			}
+		}
+
+		return null;
+	},
+
 	_getPopupIndex : function(uniquePopupId)
 	{
 		var index = -1;
@@ -95,22 +128,35 @@ BX.PopupWindowManager =
 BX.addCustomEvent("onPopupWindowIsInitialized", BX.proxy(BX.PopupWindowManager.onPopupWindowIsInitialized, BX.PopupWindowManager));
 /**
  *
- * @param {string} uniquePopupId
- * @param {Element|object|null} bindElement
- * @param params
+ * @param {string|object} uniquePopupId
+ * @param {Element|object|null} [bindElement]
+ * @param [params]
  * @constructor
  */
 BX.PopupWindow = function(uniquePopupId, bindElement, params)
 {
+	this.compatibleMode = params && BX.type.isBoolean(params.compatibleMode) ? params.compatibleMode : true;
+	if (BX.type.isPlainObject(uniquePopupId) && !bindElement && !params)
+	{
+		params = uniquePopupId;
+		uniquePopupId = params.id;
+		bindElement = params.bindElement;
+		this.compatibleMode = false;
+	}
+
 	params = params || {};
 	this.params = params;
+
+	if (!BX.type.isNotEmptyString(uniquePopupId))
+	{
+		uniquePopupId = "popup-window-" + BX.util.getRandomString().toLowerCase();
+	}
 
 	BX.onCustomEvent("onPopupWindowInit", [uniquePopupId, bindElement, params]);
 
 	this.uniquePopupId = uniquePopupId;
-
-	this.params.zIndex = parseInt(params.zIndex);
-	this.params.zIndex = isNaN(params.zIndex) ? 0 : params.zIndex;
+	this.params.zIndex = BX.type.isNumber(params.zIndex) ? parseInt(params.zIndex) : 0;
+	this.params.zIndexAbsolute = BX.type.isNumber(params.zIndexAbsolute) ? parseInt(params.zIndexAbsolute) : 0;
 	this.buttons = params.buttons && BX.type.isArray(params.buttons) ? params.buttons : [];
 	this.offsetTop = BX.PopupWindow.getOption("offsetTop");
 	this.offsetLeft = BX.PopupWindow.getOption("offsetLeft");
@@ -124,37 +170,46 @@ BX.PopupWindow = function(uniquePopupId, bindElement, params)
 	this.titleBar = null;
 	this.bindOptions = typeof(params.bindOptions) === "object" ? params.bindOptions : {};
 	this.autoHide = params.autoHide === true;
+	this.autoHideHandler = BX.type.isFunction(params.autoHideHandler) ? params.autoHideHandler : null;
+	this.handleAutoHide = this.handleAutoHide.bind(this);
+	this.handleOverlayClick = this.handleOverlayClick.bind(this);
 	this.isAutoHideBinded = false;
 	this.closeByEsc = params.closeByEsc === true;
 	this.isCloseByEscBinded = false;
 
+	this.cacheable = true;
+	this.destroyed = false;
+
 	this.width = null;
 	this.height = null;
-	this.minWidth = 0;
-	this.minHeight = 0;
+	this.minWidth = null;
+	this.minHeight = null;
+	this.maxWidth = null;
+	this.maxHeight = null;
 
-	if (params.parentPopup instanceof BX.PopupWindow)
-	{
-		this.parentPopup = params.parentPopup;
-		this.appendContainer = params.parentPopup.contentContainer;
+	this.padding = null;
+	this.contentPadding = null;
+	this.background = null;
+	this.contentBackground = null;
 
-		params.offsetTop = (params.offsetTop? params.offsetTop: 0) - (BX.PopupWindow.fullscreenStatus? 0: this.parentPopup.popupContainer.offsetTop);
-		params.offsetLeft = (params.offsetLeft? params.offsetLeft: 0) - (BX.PopupWindow.fullscreenStatus? 0: this.parentPopup.popupContainer.offsetLeft);
-	}
-	else
-	{
-		this.parentPopup = null;
-		this.appendContainer = document.body;
-	}
+	this.appendContainer = document.body;
 
 	this.dragOptions = {
 		cursor: "",
 		callback: BX.DoNothing,
 		eventName: ""
 	};
+
 	this.dragged = false;
 	this.dragPageX = 0;
 	this.dragPageY = 0;
+
+	this.animationShowClassName = null;
+	this.animationCloseClassName = null;
+	this.animationCloseEventType = null;
+
+	this.handleDocumentKeyUp = this.handleDocumentKeyUp.bind(this);
+	this.handleResizeWindow = this.handleResizeWindow.bind(this);
 
 	if (params.events)
 	{
@@ -166,22 +221,9 @@ BX.PopupWindow = function(uniquePopupId, bindElement, params)
 
 	var popupClassName = "popup-window";
 
-	/*if (params.lightShadow)
-		popupClassName += " popup-window-light";*/
-
 	if (params.contentColor && BX.type.isNotEmptyString(params.contentColor))
 	{
 		popupClassName += " popup-window-content-" + params.contentColor;
-	}
-
-	if (params.contentNoPaddings)
-	{
-		popupClassName += " popup-window-content-no-paddings";
-	}
-
-	if (params.noAllPaddings)
-	{
-		popupClassName += " popup-window-no-paddings";
 	}
 
 	if (params.titleBar)
@@ -202,7 +244,7 @@ BX.PopupWindow = function(uniquePopupId, bindElement, params)
 	this.popupContainer = document.createElement("div");
 	var titleBarID = "popup-window-titlebar-" + uniquePopupId;
 
-	if(params.titleBar)
+	if (params.titleBar)
 	{
 		this.titleBar = BX.create("div", {
 			props : {
@@ -217,7 +259,7 @@ BX.PopupWindow = function(uniquePopupId, bindElement, params)
 		this.closeIcon = BX.create("span", {
 			props : { className: "popup-window-close-icon" + (params.titleBar ? " popup-window-titlebar-close-icon" : "") },
 			style : (typeof(params.closeIcon) === "object" ? params.closeIcon : {} ),
-			events : { click : BX.proxy(this._onCloseIconClick, this) }
+			events : { click : BX.proxy(this.handleCloseIconClick, this) }
 		});
 
 		if (BX.browser.IsIE())
@@ -269,13 +311,45 @@ BX.PopupWindow = function(uniquePopupId, bindElement, params)
 	this.setButtons(params.buttons);
 	this.setWidth(params.width);
 	this.setHeight(params.height);
+	this.setMinWidth(params.minWidth);
+	this.setMinHeight(params.minHeight);
+	this.setMaxWidth(params.maxWidth);
+	this.setMaxHeight(params.maxHeight);
 	this.setResizeMode(params.resizable);
+	this.setPadding(params.padding);
+	this.setContentPadding(params.contentPadding);
+	this.setBackground(params.background);
+	this.setContentBackground(params.contentBackground);
+	this.setAnimation(params.animation);
+	this.setCacheable(params.cacheable);
+
+	// Compatibility
+	if (params.contentNoPaddings)
+	{
+		this.setContentPadding(0);
+	}
+	if (params.noAllPaddings)
+	{
+		this.setPadding(0);
+		this.setContentPadding(0);
+	}
 
 	if (params.bindOnResize !== false)
 	{
-		BX.bind(window, "resize", BX.proxy(this._onResizeWindow, this));
+		BX.bind(window, "resize", this.handleResizeWindow);
 	}
+
 	BX.onCustomEvent("onPopupWindowIsInitialized", [uniquePopupId, this]);
+};
+
+BX.PopupWindow.prototype.getId = function()
+{
+	return this.uniquePopupId;
+};
+
+BX.PopupWindow.prototype.isCompatibleMode = function()
+{
+	return this.compatibleMode;
 };
 
 /**
@@ -292,8 +366,13 @@ BX.PopupWindow.prototype.setContent = function(content)
 	if (BX.type.isElementNode(content))
 	{
 		BX.cleanNode(this.contentContainer);
-		this.contentContainer.appendChild(content.parentNode ? content.parentNode.removeChild(content) : content );
-		content.style.display = "block";
+
+		var hasParent = BX.type.isDomNode(content.parentNode);
+		this.contentContainer.appendChild(content);
+		if (this.isCompatibleMode() || hasParent)
+		{
+			content.style.display = "block";
+		}
 	}
 	else if (BX.type.isString(content))
 	{
@@ -324,13 +403,16 @@ BX.PopupWindow.prototype.setButtons = function(buttons)
 		for (var i = 0; i < this.buttons.length; i++)
 		{
 			var button = this.buttons[i];
-			if (button === null || !BX.is_subclass_of(button, BX.PopupWindowButton))
+			if (button instanceof BX.PopupWindowButton)
 			{
-				continue;
+				button.popupWindow = this;
+				newButtons.push(button.render());
 			}
-
-			button.popupWindow = this;
-			newButtons.push(button.render());
+			else if (button instanceof BX.UI.Button)
+			{
+				button.setContext(this);
+				newButtons.push(button.render());
+			}
 		}
 
 		this.buttonsContainer = this.contentContainer.parentNode.appendChild(
@@ -416,8 +498,8 @@ BX.PopupWindow.prototype.getBindElementPos = function(bindElement)
 	{
 		var windowSize =  BX.GetWindowInnerSize();
 		var windowScroll = BX.GetWindowScrollPos();
-		var popupWidth = this.popupContainer.offsetWidth;
-		var popupHeight = this.popupContainer.offsetHeight;
+		var popupWidth = this.getPopupContainer().offsetWidth;
+		var popupHeight = this.getPopupContainer().offsetHeight;
 
 		this.bindOptions.forceTop = true;
 
@@ -438,7 +520,7 @@ BX.PopupWindow.prototype.getBindElementPos = function(bindElement)
 /**
  *
  * @param {Object|bool} params
- * @param {number} [params.offset = 0]
+ * @param {Number} [params.offset = 0]
  * @param {string} [params.position = "top"]
  */
 BX.PopupWindow.prototype.setAngle = function(params)
@@ -471,7 +553,7 @@ BX.PopupWindow.prototype.setAngle = function(params)
 			//Math.max(BX.type.isNumber(params.offset) ? params.offset : 0, angleMinLeft)
 		};
 
-		this.popupContainer.appendChild(this.angle.element);
+		this.getPopupContainer().appendChild(this.angle.element);
 	}
 
 	if (typeof(params) === "object" && params.position && BX.util.in_array(params.position, ["top", "right", "bottom", "left", "hide"]))
@@ -488,7 +570,7 @@ BX.PopupWindow.prototype.setAngle = function(params)
 		if (this.angle.position === "top")
 		{
 			minOffset = BX.PopupWindow.getOption("angleMinTop");
-			maxOffset = this.popupContainer.offsetWidth - BX.PopupWindow.getOption("angleMaxTop");
+			maxOffset = this.getPopupContainer().offsetWidth - BX.PopupWindow.getOption("angleMaxTop");
 			maxOffset = maxOffset < minOffset ? Math.max(minOffset, offset) : maxOffset;
 
 			this.angle.offset = Math.min(Math.max(minOffset, offset), maxOffset);
@@ -498,7 +580,7 @@ BX.PopupWindow.prototype.setAngle = function(params)
 		else if (this.angle.position === "bottom")
 		{
 			minOffset = BX.PopupWindow.getOption("angleMinBottom");
-			maxOffset = this.popupContainer.offsetWidth - BX.PopupWindow.getOption("angleMaxBottom");
+			maxOffset = this.getPopupContainer().offsetWidth - BX.PopupWindow.getOption("angleMaxBottom");
 			maxOffset = maxOffset < minOffset ? Math.max(minOffset, offset) : maxOffset;
 
 			this.angle.offset = Math.min(Math.max(minOffset, offset), maxOffset);
@@ -508,7 +590,7 @@ BX.PopupWindow.prototype.setAngle = function(params)
 		else if (this.angle.position === "right")
 		{
 			minOffset = BX.PopupWindow.getOption("angleMinRight");
-			maxOffset = this.popupContainer.offsetHeight - BX.PopupWindow.getOption("angleMaxRight");
+			maxOffset = this.getPopupContainer().offsetHeight - BX.PopupWindow.getOption("angleMaxRight");
 			maxOffset = maxOffset < minOffset ? Math.max(minOffset, offset) : maxOffset;
 
 			this.angle.offset = Math.min(Math.max(minOffset, offset), maxOffset);
@@ -517,7 +599,7 @@ BX.PopupWindow.prototype.setAngle = function(params)
 		else if (this.angle.position === "left")
 		{
 			minOffset = BX.PopupWindow.getOption("angleMinLeft");
-			maxOffset = this.popupContainer.offsetHeight - BX.PopupWindow.getOption("angleMaxLeft");
+			maxOffset = this.getPopupContainer().offsetHeight - BX.PopupWindow.getOption("angleMaxLeft");
 			maxOffset = maxOffset < minOffset ? Math.max(minOffset, offset) : maxOffset;
 
 			this.angle.offset = Math.min(Math.max(minOffset, offset), maxOffset);
@@ -528,59 +610,266 @@ BX.PopupWindow.prototype.setAngle = function(params)
 
 /**
  *
- * @param {number} width
+ * @returns {Number|null}
+ */
+BX.PopupWindow.prototype.getWidth = function()
+{
+	return this.width;
+};
+
+/**
+ *
+ * @param {Number} width
  */
 BX.PopupWindow.prototype.setWidth = function(width)
 {
-	if (BX.type.isNumber(width) && width >= 0)
-	{
-		this.width = width;
-		this.contentContainer.style.width = width + "px";
-		this.contentContainer.style.overflowX = "auto";
-		if (this.titleBar)
-		{
-			this.titleBar.style.width = width + "px";
-		}
-	}
-	else if (width === false)
-	{
-		this.width = null;
-		this.contentContainer.style.removeProperty("width");
-		this.contentContainer.style.removeProperty("overflowX");
-		if (this.titleBar)
-		{
-			this.titleBar.style.removeProperty("width");
-		}
-	}
+	this.setWidthProperty("width", width);
 };
 
 /**
  *
- * @param {number} height
+ * @returns {Number|null}
+ */
+BX.PopupWindow.prototype.getHeight = function()
+{
+	return this.height;
+};
+
+/**
+ *
+ * @param {Number} height
  */
 BX.PopupWindow.prototype.setHeight = function(height)
 {
-	if (BX.type.isNumber(height) && height >= 0)
-	{
-		this.height = height;
-		this.contentContainer.style.height = height + "px";
-		this.contentContainer.style.overflowY = "auto";
-	}
-	else if (height === false)
-	{
-		this.height = null;
-		this.contentContainer.style.removeProperty("height");
-		this.contentContainer.style.removeProperty("overflowY");
-	}
+	this.setHeightProperty("height", height);
 };
 
 /**
  *
- * @param {object} options
- * @param {number} [options.minWidth = 0]
- * @param {number} [options.minHeight = 0]
- * @param {bool} [options.restrict = true]
+ * @returns {Number|null}
+ */
+BX.PopupWindow.prototype.getMinWidth = function()
+{
+	return this.minWidth;
+};
+
+BX.PopupWindow.prototype.setMinWidth = function(width)
+{
+	this.setWidthProperty("minWidth", width);
+};
+
+/**
  *
+ * @returns {Number|null}
+ */
+BX.PopupWindow.prototype.getMinHeight = function()
+{
+	return this.minHeight;
+};
+
+BX.PopupWindow.prototype.setMinHeight = function(height)
+{
+	this.setHeightProperty("minHeight", height);
+};
+
+/**
+ *
+ * @returns {Number|null}
+ */
+BX.PopupWindow.prototype.getMaxWidth = function()
+{
+	return this.maxWidth;
+};
+
+BX.PopupWindow.prototype.setMaxWidth = function(width)
+{
+	this.setWidthProperty("maxWidth", width);
+};
+
+/**
+ *
+ * @returns {Number|null}
+ */
+BX.PopupWindow.prototype.getMaxHeight = function()
+{
+	return this.maxHeight;
+};
+
+BX.PopupWindow.prototype.setMaxHeight = function(height)
+{
+	this.setHeightProperty("maxHeight", height);
+};
+
+BX.PopupWindow.prototype.setWidthProperty = function(property, width)
+{
+	var props = ["width", "minWidth", "maxWidth"];
+	if (props.indexOf(property) === -1)
+	{
+		return;
+	}
+
+	if (BX.type.isNumber(width) && width >= 0)
+	{
+		this[property] = width;
+		this.getResizableContainer().style[property] = width + "px";
+		this.getContentContainer().style.overflowX = "auto";
+		this.getPopupContainer().classList.add("popup-window-fixed-width");
+
+		if (this.getTitleContainer() && BX.browser.IsIE11())
+		{
+			this.getTitleContainer().style[property] = width + "px";
+		}
+	}
+	else if (width === null || width === false)
+	{
+		this[property] = null;
+		this.getResizableContainer().style.removeProperty(BX.util.getCssName(property));
+
+		var hasOtherProps = props.some(function(prop) {
+			return this.getResizableContainer().style.getPropertyValue(BX.util.getCssName(prop)) !== ""
+		}, this);
+
+		if (!hasOtherProps)
+		{
+			this.getContentContainer().style.removeProperty("overflow-x");
+			this.getPopupContainer().classList.remove("popup-window-fixed-width");
+		}
+
+		if (this.getTitleContainer() && BX.browser.IsIE11())
+		{
+			this.getTitleContainer().style.removeProperty(BX.util.getCssName(property));
+		}
+	}
+};
+
+BX.PopupWindow.prototype.setHeightProperty = function(property, height)
+{
+	var props = ["height", "minHeight", "maxHeight"];
+	if (props.indexOf(property) === -1)
+	{
+		return;
+	}
+
+	if (BX.type.isNumber(height) && height >= 0)
+	{
+		this[property] = height;
+		this.getResizableContainer().style[property] = height + "px";
+		this.getContentContainer().style.overflowY = "auto";
+		this.getPopupContainer().classList.add("popup-window-fixed-height");
+	}
+	else if (height === null || height === false)
+	{
+		this[property] = null;
+		this.getResizableContainer().style.removeProperty(BX.util.getCssName(property));
+
+		var hasOtherProps = props.some(function(prop) {
+			return this.getResizableContainer().style.getPropertyValue(BX.util.getCssName(prop)) !== ""
+		}, this);
+
+		if (!hasOtherProps)
+		{
+			this.getContentContainer().style.removeProperty("overflow-y");
+			this.getPopupContainer().classList.remove("popup-window-fixed-height");
+		}
+	}
+};
+
+BX.PopupWindow.prototype.setPadding = function(padding) 
+{
+	if (BX.type.isNumber(padding) && padding >= 0)
+	{
+		this.padding = padding;
+		this.getPopupContainer().style.padding = padding + "px";
+	}
+	else if (padding === null)
+	{
+		this.padding = null;
+		this.getPopupContainer().style.removeProperty("padding");
+	}
+};
+
+BX.PopupWindow.prototype.getPadding = function()
+{
+	return this.padding;
+};
+
+BX.PopupWindow.prototype.setContentPadding = function(padding)
+{
+	if (BX.type.isNumber(padding) && padding >= 0)
+	{
+		this.contentPadding = padding;
+		this.getContentContainer().style.padding = padding + "px";
+	}
+	else if (padding === null)
+	{
+		this.contentPadding = null;
+		this.getContentContainer().style.removeProperty("padding");
+	}
+};
+
+BX.PopupWindow.prototype.getContentPadding = function()
+{
+	return this.contentPadding;
+};
+
+BX.PopupWindow.prototype.setBackground = function(background)
+{
+	if (BX.type.isNotEmptyString(background))
+	{
+		this.background = background;
+		this.getPopupContainer().style.background = background;
+	}
+	else if (background === null)
+	{
+		this.background = null;
+		this.getPopupContainer().style.removeProperty("background");
+	}
+};
+
+BX.PopupWindow.prototype.getBackground = function()
+{
+	return this.background;
+};
+
+BX.PopupWindow.prototype.setContentBackground = function(background)
+{
+	if (BX.type.isNotEmptyString(background))
+	{
+		this.contentBackground = background;
+		this.getContentContainer().style.background = background;
+	}
+	else if (background === null)
+	{
+		this.contentBackground = null;
+		this.getContentContainer().style.removeProperty("background");
+	}
+};
+
+BX.PopupWindow.prototype.getContentBackground = function()
+{
+	return this.contentBackground;
+};
+
+BX.PopupWindow.prototype.isDestroyed = function()
+{
+	return this.destroyed;
+};
+
+BX.PopupWindow.prototype.setCacheable = function(cacheable)
+{
+	this.cacheable = cacheable !== false;
+};
+
+BX.PopupWindow.prototype.isCacheable = function()
+{
+	return this.cacheable;
+};
+
+/**
+ *
+ * @param {object|boolean} options
+ * @param {Number} [options.minWidth = 0] deprecated
+ * @param {Number} [options.minHeight = 0] deprecated
  */
 BX.PopupWindow.prototype.setResizeMode = function(options)
 {
@@ -597,18 +886,12 @@ BX.PopupWindow.prototype.setResizeMode = function(options)
 				}
 			});
 
-			this.popupContainer.appendChild(this.resizeIcon);
+			this.getPopupContainer().appendChild(this.resizeIcon);
 		}
 
-		if (BX.type.isNumber(options.minWidth) && options.minWidth > 0)
-		{
-			this.minWidth = options.minWidth;
-		}
-
-		if (BX.type.isNumber(options.minHeight) && options.minHeight > 0)
-		{
-			this.minHeight = options.minHeight;
-		}
+		//Compatibility
+		this.setMinWidth(options.minWidth);
+		this.setMinHeight(options.minHeight);
 	}
 	else if (options === false && this.resizeIcon)
 	{
@@ -619,20 +902,26 @@ BX.PopupWindow.prototype.setResizeMode = function(options)
 
 /**
  *
- * @returns {number|null}
+ * @return {HTMLElement}
  */
-BX.PopupWindow.prototype.getWidth = function()
+BX.PopupWindow.prototype.getPopupContainer = function()
 {
-	return this.width;
+	return this.popupContainer;
 };
 
-/**
- *
- * @returns {number|null}
- */
-BX.PopupWindow.prototype.getHeight = function()
+BX.PopupWindow.prototype.getContentContainer = function()
 {
-	return this.height;
+	return this.contentContainer;
+};
+
+BX.PopupWindow.prototype.getResizableContainer = function()
+{
+	return BX.browser.IsIE11() ? this.getContentContainer() : this.getPopupContainer();
+};
+
+BX.PopupWindow.prototype.getTitleContainer = function()
+{
+	return this.titleBar;
 };
 
 BX.PopupWindow.prototype.onTitleMouseDown = function(event)
@@ -658,8 +947,8 @@ BX.PopupWindow.prototype.onResizeMouseDown = function(event)
 		}
 	);
 
-	this.resizeContentPos = BX.pos(this.contentContainer);
-	this.resizeContentOffset = this.resizeContentPos.left - BX.pos(this.popupContainer).left;
+	this.resizeContentPos = BX.pos(this.getResizableContainer());
+	this.resizeContentOffset = this.resizeContentPos.left - BX.pos(this.getPopupContainer()).left;
 };
 
 BX.PopupWindow.prototype._resize = function(offsetX, offsetY, pageX, pageY)
@@ -673,8 +962,21 @@ BX.PopupWindow.prototype._resize = function(offsetX, offsetY, pageX, pageY)
 		width = scrollWidth - this.resizeContentPos.left - this.resizeContentOffset;
 	}
 
-	this.setWidth(Math.max(width, this.minWidth));
-	this.setHeight(Math.max(height, this.minHeight));
+	width = Math.max(width, this.getMinWidth());
+	height = Math.max(height, this.getMinHeight());
+
+	if (this.getMaxWidth() !== null)
+	{
+		width = Math.min(width, this.getMaxWidth());
+	}
+
+	if (this.getMaxHeight() !== null)
+	{
+		height = Math.min(height, this.getMaxHeight());
+	}
+
+	this.setWidth(width);
+	this.setHeight(height);
 };
 
 BX.PopupWindow.prototype.isTopAngle = function()
@@ -700,8 +1002,8 @@ BX.PopupWindow.prototype.getAngleHeight = function()
 /**
  *
  * @param {object} params
- * @param {number} [params.offsetLeft]
- * @param {number} [params.offsetTop]
+ * @param {Number} [params.offsetLeft]
+ * @param {Number} [params.offsetTop]
  */
 BX.PopupWindow.prototype.setOffset = function(params)
 {
@@ -710,12 +1012,12 @@ BX.PopupWindow.prototype.setOffset = function(params)
 		return;
 	}
 
-	if (params.offsetLeft && BX.type.isNumber(params.offsetLeft))
+	if (BX.type.isNumber(params.offsetLeft))
 	{
 		this.offsetLeft = params.offsetLeft + BX.PopupWindow.getOption("offsetLeft");
 	}
 
-	if (params.offsetTop && BX.type.isNumber(params.offsetTop))
+	if (BX.type.isNumber(params.offsetTop))
 	{
 		this.offsetTop = params.offsetTop + BX.PopupWindow.getOption("offsetTop");
 	}
@@ -768,25 +1070,41 @@ BX.PopupWindow.prototype.setClosingByEsc = function(enable)
 	if (enable)
 	{
 		this.closeByEsc = true;
-		if (!this.isCloseByEscBinded)
-		{
-			BX.bind(document, "keyup", BX.proxy(this._onKeyUp, this));
-			this.isCloseByEscBinded = true;
-		}
+		this.bindClosingByEsc();
 	}
 	else
 	{
 		this.closeByEsc = false;
-		if (this.isCloseByEscBinded)
-		{
-			BX.unbind(document, "keyup", BX.proxy(this._onKeyUp, this));
-			this.isCloseByEscBinded = false;
-		}
+		this.unbindClosingByEsc();
 	}
 };
 
 /**
- *
+ * @private
+ */
+BX.PopupWindow.prototype.bindClosingByEsc = function()
+{
+	if (this.closeByEsc && !this.isCloseByEscBinded)
+	{
+		BX.bind(document, "keyup", this.handleDocumentKeyUp);
+		this.isCloseByEscBinded = true;
+	}
+};
+
+/**
+ * @private
+ */
+BX.PopupWindow.prototype.unbindClosingByEsc = function()
+{
+	if (this.isCloseByEscBinded)
+	{
+		BX.unbind(document, "keyup", this.handleDocumentKeyUp);
+		this.isCloseByEscBinded = false;
+	}
+};
+
+/**
+ * @public
  * @param {bool} enable
  */
 BX.PopupWindow.prototype.setAutoHide = function(enable)
@@ -795,10 +1113,7 @@ BX.PopupWindow.prototype.setAutoHide = function(enable)
 	if (enable)
 	{
 		this.autoHide = true;
-		if (this.isShown())
-		{
-			this.bindAutoHide();
-		}
+		this.bindAutoHide();
 	}
 	else
 	{
@@ -807,36 +1122,121 @@ BX.PopupWindow.prototype.setAutoHide = function(enable)
 	}
 };
 
+/**
+ * @private
+ */
 BX.PopupWindow.prototype.bindAutoHide = function()
 {
-	if (!this.isAutoHideBinded)
+	if (this.autoHide && !this.isAutoHideBinded && this.isShown())
 	{
 		this.isAutoHideBinded = true;
-		BX.bind(this.popupContainer, "click", this.cancelBubble);
-		if(this.overlay && this.overlay.element)
-			BX.bind(this.overlay.element, "click", BX.proxy(this.close, this));
+
+		if (this.isCompatibleMode())
+		{
+			BX.bind(this.getPopupContainer(), "click", this.cancelBubble);
+		}
+
+		if (this.overlay && this.overlay.element)
+		{
+			BX.bind(this.overlay.element, "click", this.handleOverlayClick);
+		}
 		else
-			BX.bind(document, "click", BX.proxy(this.close, this));
+		{
+			if (this.isCompatibleMode())
+			{
+				BX.bind(document, "click", this.handleAutoHide);
+			}
+			else
+			{
+				document.addEventListener("click", this.handleAutoHide, true);
+			}
+		}
 	}
 };
 
+/**
+ * @private
+ */
 BX.PopupWindow.prototype.unbindAutoHide = function()
 {
 	if (this.isAutoHideBinded)
 	{
 		this.isAutoHideBinded = false;
-		BX.unbind(this.popupContainer, "click", this.cancelBubble);
-		if(this.overlay && this.overlay.element)
-			BX.unbind(this.overlay.element, "click", BX.proxy(this.close, this));
+
+		if (this.isCompatibleMode())
+		{
+			BX.unbind(this.getPopupContainer(), "click", this.cancelBubble);
+		}
+
+		if (this.overlay && this.overlay.element)
+		{
+			BX.unbind(this.overlay.element, "click", this.handleOverlayClick);
+		}
 		else
-			BX.unbind(document, "click", BX.proxy(this.close, this));
+		{
+			if (this.isCompatibleMode())
+			{
+				BX.unbind(document, "click", this.handleAutoHide);
+			}
+			else
+			{
+				document.removeEventListener("click", this.handleAutoHide, true);
+			}
+		}
+	}
+};
+
+/**
+ * @private
+ * @param event
+ */
+BX.PopupWindow.prototype.handleAutoHide = function(event)
+{
+	if (this.isDestroyed())
+	{
+		return;
+	}
+
+	if (this.autoHideHandler !== null)
+	{
+		if (this.autoHideHandler(event))
+		{
+			this._tryCloseByEvent(event);
+		}
+	}
+	else if (event.target !== this.getPopupContainer() && !this.getPopupContainer().contains(event.target))
+	{
+		this._tryCloseByEvent(event);
+	}
+};
+
+BX.PopupWindow.prototype._tryCloseByEvent = function(event)
+{
+	if (this.isCompatibleMode())
+	{
+		this.tryCloseByEvent(event);
+	}
+	else
+	{
+		setTimeout(BX.proxy(this.tryCloseByEvent, this), 0, event);
 	}
 };
 
 /**
  *
+ * @param {MouseEvent} event
+ * @private
+ */
+BX.PopupWindow.prototype.handleOverlayClick = function(event)
+{
+	this.tryCloseByEvent(event);
+	event.stopPropagation();
+};
+
+/**
+ *
  * @param {object} params
- * @param {number} [params.opacity]
+ * @param {Number} [params.opacity]
  * @param {string} [params.backgroundColor]
  */
 BX.PopupWindow.prototype.setOverlay = function(params)
@@ -912,12 +1312,12 @@ BX.PopupWindow.prototype.showOverlay = function()
 	{
 		this.overlay.element.style.display = "block";
 
-		var popupHeight = this.popupContainer.offsetHeight;
+		var popupHeight = this.getPopupContainer().offsetHeight;
 		this.overlayTimeout = setInterval(function() {
-			if (popupHeight !== this.popupContainer.offsetHeight)
+			if (popupHeight !== this.getPopupContainer().offsetHeight)
 			{
 				this.resizeOverlay();
-				popupHeight = this.popupContainer.offsetHeight;
+				popupHeight = this.getPopupContainer().offsetHeight;
 			}
 
 		}.bind(this), 1000);
@@ -928,23 +1328,15 @@ BX.PopupWindow.prototype.resizeOverlay = function()
 {
 	if (this.overlay !== null && this.overlay.element !== null)
 	{
-		if (this.parentPopup)
-		{
-			this.overlay.element.style.width = this.parentPopup.popupContainer.offsetWidth + "px";
-			this.overlay.element.style.height = this.parentPopup.popupContainer.offsetHeight + "px";
-		}
-		else
-		{
-			var windowSize = BX.GetWindowScrollSize();
-			var scrollHeight = Math.max(
-				document.body.scrollHeight, document.documentElement.scrollHeight,
-				document.body.offsetHeight, document.documentElement.offsetHeight,
-				document.body.clientHeight, document.documentElement.clientHeight
-			);
+		var windowSize = BX.GetWindowScrollSize();
+		var scrollHeight = Math.max(
+			document.body.scrollHeight, document.documentElement.scrollHeight,
+			document.body.offsetHeight, document.documentElement.offsetHeight,
+			document.body.clientHeight, document.documentElement.clientHeight
+		);
 
-			this.overlay.element.style.width = windowSize.scrollWidth + "px";
-			this.overlay.element.style.height = scrollHeight + "px";
-		}
+		this.overlay.element.style.width = windowSize.scrollWidth + "px";
+		this.overlay.element.style.height = scrollHeight + "px";
 	}
 };
 
@@ -952,11 +1344,11 @@ BX.PopupWindow.prototype.getZindex = function()
 {
 	if (this.overlay !== null)
 	{
-		return BX.PopupWindow.getOption("popupOverlayZindex") + this.params.zIndex;
+		return (this.params.zIndexAbsolute > 0 ? this.params.zIndexAbsolute : BX.PopupWindow.getOption("popupOverlayZindex") + this.params.zIndex);
 	}
 	else
 	{
-		return BX.PopupWindow.getOption("popupZindex") + this.params.zIndex;
+		return (this.params.zIndexAbsolute > 0 ? this.params.zIndexAbsolute : BX.PopupWindow.getOption("popupZindex") + this.params.zIndex);
 	}
 };
 
@@ -964,50 +1356,130 @@ BX.PopupWindow.prototype.adjustOverlayZindex = function()
 {
 	if (this.overlay !== null && this.overlay.element !== null)
 	{
-		this.overlay.element.style.zIndex = parseInt(this.popupContainer.style.zIndex) - 1;
+		this.overlay.element.style.zIndex = parseInt(this.getPopupContainer().style.zIndex) - 1;
 	}
 };
 
 BX.PopupWindow.prototype.show = function()
 {
+	if (this.isShown() || this.isDestroyed())
+	{
+		return;
+	}
+
 	if (!this.firstShow)
 	{
 		BX.onCustomEvent(this, "onPopupFirstShow", [this]);
 		this.firstShow = true;
 	}
+
 	BX.onCustomEvent(this, "onPopupShow", [this]);
 
 	this.showOverlay();
-	this.popupContainer.style.display = "block";
-
+	this.getPopupContainer().style.display = "block";
 	this.adjustPosition();
 
-	BX.onCustomEvent(this, "onAfterPopupShow", [this]);
+	this.animateOpening(function() {
 
-	if (this.closeByEsc && !this.isCloseByEscBinded)
+		if (this.isDestroyed())
+		{
+			return;
+		}
+
+		BX.removeClass(this.getPopupContainer(), this.animationShowClassName);
+		BX.onCustomEvent(this, "onAfterPopupShow", [this]);
+	}.bind(this));
+
+
+	this.bindClosingByEsc();
+
+	if (this.isCompatibleMode())
 	{
-		BX.bind(document, "keyup", BX.proxy(this._onKeyUp, this));
-		this.isCloseByEscBinded = true;
+		setTimeout(function() {
+			this.bindAutoHide();
+		}.bind(this), 100);
 	}
-
-	if (this.autoHide && !this.isAutoHideBinded)
+	else
 	{
-		setTimeout(
-			BX.proxy(function() {
-				if (this.isShown())
-				{
-					this.bindAutoHide();
-				}
-			}, this), 100
-		);
+		this.bindAutoHide();
 	}
 };
 
+/**
+ * @private
+ * @param {Function} callback
+ */
+BX.PopupWindow.prototype.animateOpening = function(callback)
+{
+	BX.removeClass(this.getPopupContainer(), this.animationCloseClassName);
+
+	if (this.animationShowClassName !== null)
+	{
+		BX.addClass(this.getPopupContainer(), this.animationShowClassName);
+
+		if (this.animationCloseEventType !== null)
+		{
+			var eventName = this.animationCloseEventType + "end";
+			this.getPopupContainer().addEventListener(eventName, function handleTransitionEnd() {
+				this.removeEventListener(eventName, handleTransitionEnd);
+				callback();
+			});
+		}
+		else
+		{
+			callback();
+		}
+	}
+	else
+	{
+		callback();
+	}
+};
+
+/**
+ * @private
+ * @param {Function} callback
+ */
+BX.PopupWindow.prototype.animateClosing = function(callback)
+{
+	BX.removeClass(this.getPopupContainer(), this.animationShowClassName);
+
+	if (this.animationCloseClassName !== null)
+	{
+		BX.addClass(this.getPopupContainer(), this.animationCloseClassName);
+
+		if (this.animationCloseEventType !== null)
+		{
+			var eventName = this.animationCloseEventType + "end";
+			this.getPopupContainer().addEventListener(eventName, function handleTransitionEnd() {
+				this.removeEventListener(eventName, handleTransitionEnd);
+				callback();
+			});
+		}
+		else
+		{
+			callback();
+		}
+	}
+	else
+	{
+		callback();
+	}
+};
+
+/**
+ * @public
+ * @return {boolean}
+ */
 BX.PopupWindow.prototype.isShown = function()
 {
-   return this.popupContainer.style.display === "block";
+   return !this.isDestroyed() && this.getPopupContainer().style.display === "block";
 };
 
+/**
+ * @private
+ * @param event
+ */
 BX.PopupWindow.prototype.cancelBubble = function(event)
 {
 	event = event || window.event;
@@ -1022,48 +1494,139 @@ BX.PopupWindow.prototype.cancelBubble = function(event)
 	}
 };
 
-BX.PopupWindow.prototype.close = function(event)
+/**
+ * @
+ * @return {void}
+ */
+BX.PopupWindow.prototype.close = function()
 {
-	if (!this.isShown())
+	if (this.isDestroyed() || !this.isShown())
 	{
 		return;
 	}
 
-	if (event && !(BX.getEventButton(event) & BX.MSLEFT))
+	BX.onCustomEvent(this, "onPopupClose", [this]);
+
+	if (this.isDestroyed())
 	{
-		return true;
+		return;
 	}
 
-	BX.onCustomEvent(this, "onPopupClose", [this, event]);
+	this.animateClosing(function() {
 
-	this.hideOverlay();
-	this.popupContainer.style.display = "none";
+		if (this.isDestroyed())
+		{
+			return;
+		}
 
-	if (this.isCloseByEscBinded)
-	{
-		BX.unbind(document, "keyup", BX.proxy(this._onKeyUp, this));
-		this.isCloseByEscBinded = false;
-	}
+		this.hideOverlay();
 
-	setTimeout(BX.proxy(this._close, this), 0);
+		this.getPopupContainer().style.display = "none";
+
+		BX.removeClass(this.getPopupContainer(), this.animationCloseClassName);
+
+		this.unbindClosingByEsc();
+
+		if (this.isCompatibleMode())
+		{
+			setTimeout(function() {
+				this.unbindAutoHide();
+			}.bind(this), 0);
+		}
+		else
+		{
+			this.unbindAutoHide();
+		}
+
+		if (!this.isCacheable())
+		{
+			this.destroy();
+		}
+
+	}.bind(this));
 };
 
-BX.PopupWindow.prototype._close = function()
+BX.PopupWindow.prototype.toggle = function()
 {
-	if (this.autoHide)
+	this.isShown() ? this.close() : this.show();
+};
+
+/**
+ * @private
+ * @param {MouseEvent} event
+ */
+BX.PopupWindow.prototype.tryCloseByEvent = function(event)
+{
+	if (this.isLeftButton(event))
 	{
-		this.unbindAutoHide();
+		this.close();
 	}
 };
 
-BX.PopupWindow.prototype._onCloseIconClick = function(event)
+BX.PopupWindow.prototype.setAnimation = function(options)
 {
-	event = event || window.event;
-	this.close(event);
-	BX.PreventDefault(event);
+	if (BX.type.isPlainObject(options))
+	{
+		this.animationShowClassName = BX.type.isNotEmptyString(options.showClassName) ? options.showClassName : null;
+		this.animationCloseClassName = BX.type.isNotEmptyString(options.closeClassName) ? options.closeClassName : null;
+		this.animationCloseEventType =
+			BX.util.in_array(options.closeAnimationType, ["animation", "transition"])
+				? options.closeAnimationType
+				: null
+		;
+	}
+	else if (BX.type.isNotEmptyString(options))
+	{
+		var animationName = options;
+
+		if (animationName === "fading")
+		{
+			this.animationShowClassName = "popup-window-show-animation-opacity";
+			this.animationCloseClassName = "popup-window-close-animation-opacity";
+			this.animationCloseEventType = 'animation';
+		}
+		else if (animationName === "fading-slide")
+		{
+			this.animationShowClassName = "popup-window-show-animation-opacity-transform";
+			this.animationCloseClassName = "popup-window-close-animation-opacity";
+			this.animationCloseEventType = "animation";
+		}
+		else if (animationName === "scale")
+		{
+			this.animationShowClassName = "popup-window-show-animation-scale";
+			this.animationCloseClassName = "popup-window-close-animation-opacity";
+			this.animationCloseEventType = "animation";
+		}
+	}
+	else if (options === false || options === null)
+	{
+		this.animationShowClassName = null;
+		this.animationCloseClassName = null;
+		this.animationCloseEventType = null;
+	}
 };
 
-BX.PopupWindow.prototype._onKeyUp = function(event)
+/**
+ *
+ * @param {MouseEvent} event
+ * @private
+ */
+BX.PopupWindow.prototype.handleCloseIconClick = function(event)
+{
+	this.tryCloseByEvent(event);
+	event.stopPropagation();
+};
+
+/**
+ * @private
+ * @param {MouseEvent} event
+ */
+BX.PopupWindow.prototype.isLeftButton = function(event)
+{
+	return event.button === 0;
+};
+
+BX.PopupWindow.prototype.handleDocumentKeyUp = function(event)
 {
 	event = event || window.event;
 	if (event.keyCode === 27)
@@ -1075,14 +1638,37 @@ BX.PopupWindow.prototype._onKeyUp = function(event)
 BX.PopupWindow.prototype.destroy = function()
 {
 	BX.onCustomEvent(this, "onPopupDestroy", [this]);
+
+	this.destroyed = true;
+
+	this.unbindClosingByEsc();
+
+	if (this.isCompatibleMode())
+	{
+		setTimeout(function() {
+			this.unbindAutoHide();
+		}.bind(this), 0);
+	}
+	else
+	{
+		this.unbindAutoHide();
+	}
+
 	BX.unbindAll(this);
-	BX.unbind(document, "keyup", BX.proxy(this._onKeyUp, this));
-	BX.unbind(document, "click", BX.proxy(this.close, this));
 	BX.unbind(document, "mousemove", BX.proxy(this._moveDrag, this));
 	BX.unbind(document, "mouseup", BX.proxy(this._stopDrag, this));
-	BX.unbind(window, "resize", BX.proxy(this._onResizeWindow, this));
+	BX.unbind(window, "resize", this.handleResizeWindow);
+
 	BX.remove(this.popupContainer);
 	this.removeOverlay();
+
+	this.popupContainer = null;
+	this.contentContainer = null;
+	this.closeIcon = null;
+	this.titleBar = null;
+	this.buttonsContainer = null;
+	this.angle = null;
+	this.resizeIcon = null;
 };
 
 BX.PopupWindow.prototype.enterFullScreen = function()
@@ -1147,7 +1733,7 @@ BX.PopupWindow.prototype.eventFullScreen = function(event)
 
 /**
  *
- * @param {object} bindOptions
+ * @param {object} [bindOptions]
  * @param {bool} [bindOptions.forceBindPosition]
  * @param {bool} [bindOptions.forceLeft]
  * @param {bool} [bindOptions.forceTop]
@@ -1260,7 +1846,7 @@ BX.PopupWindow.prototype.adjustPosition = function(bindOptions)
 		}
 	}
 
-	if (!this.parentPopup && top < 0)
+	if (top < 0)
 	{
 		top = 0;
 	}
@@ -1274,7 +1860,7 @@ BX.PopupWindow.prototype.adjustPosition = function(bindOptions)
 	this.adjustOverlayZindex();
 };
 
-BX.PopupWindow.prototype._onResizeWindow = function(event)
+BX.PopupWindow.prototype.handleResizeWindow = function(event)
 {
 	if (this.isShown())
 	{
@@ -1294,7 +1880,7 @@ BX.PopupWindow.prototype.move = function(offsetX, offsetY, pageX, pageY)
 	if (typeof(this.params.draggable) === "object" && this.params.draggable.restrict)
 	{
 		//Left side
-		if (!this.parentPopup && left < 0)
+		if (left < 0)
 		{
 			left = 0;
 		}
@@ -1315,7 +1901,7 @@ BX.PopupWindow.prototype.move = function(offsetX, offsetY, pageX, pageY)
 		}
 
 		//Top side
-		if (!this.parentPopup && top < 0)
+		if (top < 0)
 		{
 			top = 0;
 		}
@@ -1614,28 +2200,49 @@ BX.extend(BX.PopupWindowCustomButton, BX.PopupWindowButton);
 
 BX.PopupMenu = {
 
-	Data : {},
-	currentItem : null,
+	Data: {},
+	currentItem: null,
 
-	show : function(id, bindElement, menuItems, params)
+	show: function(options)
 	{
 		if (this.currentItem !== null)
 		{
 			this.currentItem.popupWindow.close();
 		}
 
-		this.currentItem = this.create(id, bindElement, menuItems, params);
+		this.currentItem = this.create.apply(this, arguments);
 		this.currentItem.popupWindow.show();
 	},
 
-	create : function(id, bindElement, menuItems, params)
+	create: function(options)
 	{
-		if (!this.Data[id])
+		var menuId = null;
+
+		//Compatibility
+		var bindElement = arguments[1];
+		var menuItems = arguments[2];
+		var params = arguments[3];
+
+		if (BX.type.isPlainObject(options) && !bindElement && !menuItems && !params)
 		{
-			this.Data[id] = new BX.PopupMenuWindow(id, bindElement, menuItems, params);
-			BX.addCustomEvent(this.Data[id], 'onPopupMenuDestroy', this.onPopupDestroy.bind(this));
+			menuId = options.id;
+			if (!BX.type.isNotEmptyString(menuId))
+			{
+				throw new Error("BX.PopupMenu.create: 'id' parameter is required.")
+			}
 		}
-		return this.Data[id];
+		else
+		{
+			menuId = options;
+		}
+
+		if (!this.Data[menuId])
+		{
+			this.Data[menuId] = new BX.PopupMenuWindow(options, bindElement, menuItems, params);
+			BX.addCustomEvent(this.Data[menuId], 'onPopupMenuDestroy', this.onPopupDestroy.bind(this));
+		}
+
+		return this.Data[menuId];
 	},
 
 	getCurrentMenu : function()
@@ -1670,6 +2277,21 @@ BX.PopupMenu = {
 
 BX.PopupMenuWindow = function(id, bindElement, menuItems, params)
 {
+	if (BX.type.isPlainObject(id) && !bindElement && !menuItems && !params)
+	{
+		params = id;
+		params.compatibleMode = false;
+
+		id = params.id;
+		bindElement = params.bindElement;
+		menuItems = params.items;
+
+		if (!BX.type.isNotEmptyString(id))
+		{
+			id = "menu-popup-" + BX.util.getRandomString().toLowerCase();
+		}
+	}
+
 	this.id = id;
 	this.bindElement = bindElement;
 
@@ -1709,35 +2331,43 @@ BX.PopupMenuWindow.prototype.__createPopup = function()
 		domItems.push(itemLayout.item);
 	}
 
-	var popupWindow = new BX.PopupWindow("menu-popup-" + this.id, this.bindElement, {
-		closeByEsc: typeof(this.params.closeByEsc) !== "undefined" ? this.params.closeByEsc: false,
-		bindOptions: typeof(this.params.bindOptions) === "object" ? this.params.bindOptions : {},
-		angle: typeof(this.params.angle) !== "undefined" ? this.params.angle : false,
-		zIndex: this.params.zIndex ? this.params.zIndex : 0,
-		overlay: typeof(this.params.overlay) === "object" ? this.params.overlay : null,
-		autoHide: typeof(this.params.autoHide) !== "undefined" ? this.params.autoHide : true,
-		offsetTop: this.params.offsetTop ? this.params.offsetTop : 1,
-		offsetLeft: this.params.offsetLeft ? this.params.offsetLeft : 0,
-		className: BX.type.isNotEmptyString(this.params.className) ? this.params.className : "",
-		noAllPaddings: true,
-		content : (this.layout.menuContainer = BX.create("div", {
-			props : {
-				className : "menu-popup"
-			},
-			children: [
-				(this.layout.itemsContainer = this.itemsContainer = BX.create("div", {
-					props : {
-						className : "menu-popup-items"
-					},
-					children: domItems
-				}))
-			]
-		})),
-		events: {
-			onPopupClose: this.onMenuWindowClose.bind(this),
-			onPopupDestroy: this.onMenuWindowDestroy.bind(this)
-		}
-	});
+	var defaults = {
+		closeByEsc: false,
+		angle: false,
+		autoHide: true,
+		offsetTop: 1,
+		offsetLeft: 0,
+		animation: "fading"
+	};
+
+	var options = BX.mergeEx(defaults, this.params);
+
+	//Override user params
+	options.noAllPaddings = true;
+	options.darkMode = false;
+	options.autoHideHandler = this.handleAutoHide.bind(this);
+	options.content = (this.layout.menuContainer = BX.create("div", {
+		props : {
+			className : "menu-popup"
+		},
+		children: [
+			(this.layout.itemsContainer = this.itemsContainer = BX.create("div", {
+				props : {
+					className : "menu-popup-items"
+				},
+				children: domItems
+			}))
+		]
+	}));
+
+	//Make internal event handlers first in the queue.
+	options.events = {
+		onPopupClose: this.onMenuWindowClose.bind(this),
+		onPopupDestroy: this.onMenuWindowDestroy.bind(this)
+	};
+
+	var id = options.compatibleMode === false ? this.getId() : "menu-popup-" + this.getId();
+	var popupWindow = new BX.PopupWindow(id, this.bindElement, options);
 
 	if (this.params && this.params.events)
 	{
@@ -1764,18 +2394,37 @@ BX.PopupMenuWindow.prototype.getPopupWindow = function()
 
 BX.PopupMenuWindow.prototype.show = function()
 {
-	this.popupWindow.show();
+	BX.onCustomEvent(this, "onPopupMenuShow", [this]);
+	this.getPopupWindow().show();
 };
 
 BX.PopupMenuWindow.prototype.close = function()
 {
-	this.popupWindow.close();
+	BX.onCustomEvent(this, "onPopupMenuClose", [this]);
+	this.getPopupWindow().close();
 };
 
 BX.PopupMenuWindow.prototype.destroy = function()
 {
 	BX.onCustomEvent(this, "onPopupMenuDestroy", [this]);
-	this.popupWindow.destroy();
+	this.getPopupWindow().destroy();
+};
+
+BX.PopupMenuWindow.prototype.toggle = function()
+{
+	if (this.getPopupWindow().isShown())
+	{
+		this.close();
+	}
+	else
+	{
+		this.show();
+	}
+};
+
+BX.PopupMenuWindow.prototype.getId = function() 
+{
+	return this.id;
 };
 
 BX.PopupMenuWindow.prototype.onMenuWindowClose = function()
@@ -1797,6 +2446,36 @@ BX.PopupMenuWindow.prototype.onMenuWindowDestroy = function()
 };
 
 /**
+ * @private
+ * @param {Event} event
+ * @return {boolean}
+ */
+BX.PopupMenuWindow.prototype.handleAutoHide = function(event)
+{
+	return !this.containsTarget(event.target);
+};
+
+/**
+ *
+ * @param {Element} target
+ * @return {boolean}
+ */
+BX.PopupMenuWindow.prototype.containsTarget = function(target)
+{
+	var el = this.getPopupWindow().getPopupContainer();
+	if (this.getPopupWindow().isShown() && (target === el || el.contains(target)))
+	{
+		return true;
+	}
+
+	return this.getMenuItems().some(function(/*BX.PopupMenuItem*/item) {
+
+		return item.getSubMenu() && item.getSubMenu().containsTarget(target);
+
+	});
+};
+
+/**
  *
  * @param {BX.PopupMenuWindow} parentMenuWindow
  */
@@ -1815,6 +2494,19 @@ BX.PopupMenuWindow.prototype.setParentMenuWindow = function(parentMenuWindow)
 BX.PopupMenuWindow.prototype.getParentMenuWindow = function()
 {
 	return this.parentMenuWindow;
+};
+
+BX.PopupMenuWindow.prototype.getRootMenuWindow = function()
+{
+	var root = null;
+	var parent = this.getParentMenuWindow();
+	while (parent !== null)
+	{
+		root = parent;
+		parent = parent.getParentMenuWindow();
+	}
+
+	return root;
 };
 
 /**
@@ -1977,7 +2669,7 @@ BX.PopupMenuWindow.prototype.getMenuItems = function()
 /**
  *
  * @param itemId
- * @returns {number}
+ * @returns {Number}
  */
 BX.PopupMenuWindow.prototype.getMenuItemPosition = function(itemId)
 {
@@ -2001,12 +2693,13 @@ BX.PopupMenuWindow.prototype.getMenuItemPosition = function(itemId)
  * @param {string} [options.id]
  * @param {string} [options.text]
  * @param {string} [options.title = ""]
+ * @param {boolean} [options.disabled = false]
  * @param {string} [options.href = null]
  * @param {string} [options.target = null]
  * @param {string} [options.className = null]
  * @param {boolean} [options.delimiter = false]
- * @param {number} [options.menuShowDelay = 300]
- * @param {number} [options.subMenuOffsetX = 4]
+ * @param {Number} [options.menuShowDelay = 300]
+ * @param {Number} [options.subMenuOffsetX = 4]
  * @param {object} [options.events]
  * @param {object} [options.dataset]
  * @param {function|string} [options.onclick = null]
@@ -2029,6 +2722,8 @@ BX.PopupMenuItem = function(options)
 	this.menuShowDelay = BX.type.isNumber(options.menuShowDelay) ? options.menuShowDelay : 300;
 	this.subMenuOffsetX = BX.type.isNumber(options.subMenuOffsetX) ? options.subMenuOffsetX : 4;
 	this._items = BX.type.isArray(options.items) ? options.items : [];
+	this.disabled = options.disabled === true;
+	this.cacheable = options.cacheable === true;
 
 	/**
 	 *
@@ -2060,6 +2755,10 @@ BX.PopupMenuItem = function(options)
 	 */
 	this.subMenuWindow = null;
 
+	/**
+	 *
+	 * @type {{item: Element, text: Element}}
+	 */
 	this.layout = {
 		item: null,
 		text: null
@@ -2091,11 +2790,31 @@ BX.PopupMenuItem.prototype = {
 
 		if (this.delimiter)
 		{
-			this.layout.item = BX.create("span", {
-				props: {
-					className: "popup-window-delimiter"
-				}
-			});
+			if (BX.type.isNotEmptyString(this.text))
+			{
+				this.layout.item = BX.create("span", {
+					props: {
+						className: "popup-window-delimiter-section"
+					},
+					children: [
+						(this.layout.text = BX.create("span", {
+							props : {
+								className: "popup-window-delimiter-text"
+							},
+							html : this.text
+						}))
+					]
+				});
+
+			}
+			else
+			{
+				this.layout.item = BX.create("span", {
+					props: {
+						className: "popup-window-delimiter"
+					}
+				});
+			}
 		}
 		else
 		{
@@ -2138,11 +2857,40 @@ BX.PopupMenuItem.prototype = {
 				this.layout.item.href = this.href;
 			}
 
+			if (this.isDisabled())
+			{
+				this.disable();
+			}
+
 			BX.bind(this.layout.item, "mouseenter", this.onItemMouseEnter.bind(this));
 			BX.bind(this.layout.item, "mouseleave", this.onItemMouseLeave.bind(this));
 		}
 
 		return this.layout;
+	},
+
+	getContainer: function()
+	{
+		return this.getLayout().item;
+	},
+
+	getTextContainer: function()
+	{
+		return this.getLayout().text;
+	},
+
+	getText: function()
+	{
+		return this.text;
+	},
+
+	setText: function(text)
+	{
+		if (BX.type.isString(text))
+		{
+			this.text = text;
+			this.getTextContainer().innerHTML = text;
+		}
 	},
 
 	onItemClick: function(event)
@@ -2152,6 +2900,11 @@ BX.PopupMenuItem.prototype = {
 
 	onItemMouseEnter: function(event)
 	{
+		if (this.isDisabled())
+		{
+			return;
+		}
+
 		BX.onCustomEvent(this, "onMouseEnter");
 
 		if (this.subMenuTimeout)
@@ -2175,6 +2928,11 @@ BX.PopupMenuItem.prototype = {
 
 	onItemMouseLeave: function(event)
 	{
+		if (this.isDisabled())
+		{
+			return;
+		}
+
 		BX.onCustomEvent(this, "onMouseLeave");
 
 		if (this.subMenuTimeout)
@@ -2206,11 +2964,15 @@ BX.PopupMenuItem.prototype = {
 				popupWindow.show();
 			}
 
-
 			this.adjustSubMenu();
 		}
 	},
 
+	/**
+	 *
+	 * @param {object[]} items
+	 * @return {BX.PopupMenuWindow}
+	 */
 	addSubMenu: function(items)
 	{
 		if (this.subMenuWindow !== null || !BX.type.isArray(items) || !items.length)
@@ -2218,32 +2980,44 @@ BX.PopupMenuItem.prototype = {
 			return;
 		}
 
-		this.subMenuWindow = new BX.PopupMenuWindow(
-			"popup-submenu-" + this.id,
-			null,
-			items,
-			{
-				autoHide: false,
-				menuShowDelay: this.menuShowDelay,
-				bindOptions: {
-					forceTop: true,
-					forceLeft: true,
-					forceBindPosition: true
-				}
-			}
-		);
+		var rootMenuWindow = this.getMenuWindow().getRootMenuWindow() || this.getMenuWindow();
+		var options = rootMenuWindow.params;
 
-		this.subMenuWindow.setParentMenuWindow(this.menuWindow);
+		//Override root menu options
+		options.autoHide = false;
+		options.menuShowDelay = this.menuShowDelay;
+		options.cacheable = this.isCacheable();
+		options.zIndexAbsolute = this.getMenuWindow().getPopupWindow().getZindex() + 2;
+		options.bindOptions = {
+			forceTop: true,
+			forceLeft: true,
+			forceBindPosition: true
+		};
+
+		delete options.zIndex;
+		delete options.events;
+		delete options.angle;
+		delete options.overlay;
+
+		this.subMenuWindow = new BX.PopupMenuWindow("popup-submenu-" + this.id, this.layout.item, items, options);
+		this.subMenuWindow.setParentMenuWindow(this.getMenuWindow());
 		this.subMenuWindow.setParentMenuItem(this);
 
+		BX.addCustomEvent(this.subMenuWindow.getPopupWindow(), "onPopupDestroy", this.handleSubMenuDestroy.bind(this));
 		BX.addClass(this.layout.item, "menu-popup-item-submenu");
+
+		return this.subMenuWindow;
+	},
+
+	handleSubMenuDestroy: function()
+	{
+		this.subMenuWindow = null;
 	},
 
 	closeSubMenu: function()
 	{
 		if (this.subMenuWindow)
 		{
-
 			BX.removeClass(this.layout.item, "menu-popup-item-open");
 
 			this.closeChildren();
@@ -2252,7 +3026,6 @@ BX.PopupMenuItem.prototype = {
 			if (popupWindow.isShown())
 			{
 				BX.onCustomEvent(this, "onSubMenuClose");
-				popupWindow.close();
 			}
 
 			this.subMenuWindow.close();
@@ -2316,13 +3089,42 @@ BX.PopupMenuItem.prototype = {
 		}
 
 		var popupWindow = this.subMenuWindow.getPopupWindow();
-		var itemRect = BX.pos(this.layout.item);
+		var itemRect = this.layout.item.getBoundingClientRect();
 
 		var offsetLeft = itemRect.width + this.subMenuOffsetX;
+		var offsetTop = itemRect.height + this.getPopupPadding();
+		var angleOffset = itemRect.height / 2 - this.getPopupPadding();
 		var anglePosition = "left";
 
-		var popupWidth = popupWindow.popupContainer.offsetWidth;
+		var popupWidth = popupWindow.getPopupContainer().offsetWidth;
+		var popupHeight = popupWindow.getPopupContainer().offsetHeight;
+		var popupBottom = itemRect.top + popupHeight;
+
 		var clientWidth = document.documentElement.clientWidth;
+		var clientHeight = document.documentElement.clientHeight;
+
+		// let's try to fit a submenu to the browser viewport
+		var exceeded = popupBottom - clientHeight;
+		if (exceeded > 0)
+		{
+			var roundOffset = Math.ceil(exceeded / itemRect.height) * itemRect.height;
+			if (roundOffset > itemRect.top)
+			{
+				// it cannot be higher than the browser viewport.
+				roundOffset -= Math.ceil((roundOffset - itemRect.top) / itemRect.height) * itemRect.height;
+			}
+
+			if (itemRect.bottom > (popupBottom - roundOffset))
+			{
+				// let's sync bottom boundaries.
+				roundOffset -= itemRect.bottom - (popupBottom - roundOffset) + this.getPopupPadding();
+			}
+
+			offsetTop += roundOffset;
+			angleOffset += roundOffset;
+		}
+
+
 		if ((itemRect.left + offsetLeft + popupWidth) > clientWidth)
 		{
 			var left = itemRect.left - popupWidth - this.subMenuOffsetX;
@@ -2334,23 +3136,14 @@ BX.PopupMenuItem.prototype = {
 		}
 
 		popupWindow.setBindElement(this.layout.item);
-
-		popupWindow.setOffset({
-			offsetLeft: offsetLeft,
-			offsetTop: -(itemRect.height + this.getPopupPadding())
-		});
-
-		popupWindow.setAngle({
-			"position": anglePosition,
-			"offset": ((itemRect.height / 2) - this.getPopupPadding())
-		});
-
+		popupWindow.setOffset({ offsetLeft: offsetLeft, offsetTop: -offsetTop });
+		popupWindow.setAngle({ position: anglePosition, offset: angleOffset });
 		popupWindow.adjustPosition();
 	},
 
 	/**
 	 *
-	 * @returns {number}
+	 * @returns {Number}
 	 */
 	getPopupPadding: function() {
 		if (!BX.type.isNumber(this.popupPadding))
@@ -2404,7 +3197,40 @@ BX.PopupMenuItem.prototype = {
 	getMenuShowDelay: function()
 	{
 		return this.menuShowDelay;
+	},
+
+	enable: function()
+	{
+		this.disabled = false;
+		this.getContainer().classList.remove("menu-popup-item-disabled");
+	},
+
+	disable: function()
+	{
+		this.disabled = true;
+		this.closeSubMenu();
+		this.getContainer().classList.add("menu-popup-item-disabled");
+	},
+
+	/**
+	 *
+	 * @return {boolean}
+	 */
+	isDisabled: function()
+	{
+		return this.disabled;
+	},
+
+	setCacheable: function(cacheable)
+	{
+		this.cacheable = cacheable !== false;
+	},
+
+	isCacheable: function()
+	{
+		return this.cacheable;
 	}
+
 };
 
 // TODO: copypaste/update/enhance CSS and images from calendar to MAIN CORE

@@ -87,7 +87,7 @@ Class clouds extends CModule
 			RegisterModule("clouds");
 			CModule::IncludeModule("clouds");
 			RegisterModuleDependences("main", "OnEventLogGetAuditTypes", "clouds", "CCloudStorage", "GetAuditTypes");
-			RegisterModuleDependences("main", "OnBeforeProlog", "clouds", "CCloudStorage", "OnBeforeProlog");
+			RegisterModuleDependences("main", "OnBeforeProlog", "clouds", "CCloudStorage", "OnBeforeProlog", 90);
 			RegisterModuleDependences("main", "OnAdminListDisplay", "clouds", "CCloudStorage", "OnAdminListDisplay");
 			RegisterModuleDependences("main", "OnBuildGlobalMenu", "clouds", "CCloudStorage", "OnBuildGlobalMenu");
 			RegisterModuleDependences("main", "OnFileSave", "clouds", "CCloudStorage", "OnFileSave");
@@ -104,6 +104,8 @@ Class clouds extends CModule
 			RegisterModuleDependences("clouds", "OnGetStorageService", "clouds", "CCloudStorageService_ClodoRU", "GetObjectInstance");
 			RegisterModuleDependences("clouds", "OnGetStorageService", "clouds", "CCloudStorageService_Selectel", "GetObjectInstance");
 			RegisterModuleDependences("clouds", "OnGetStorageService", "clouds", "CCloudStorageService_HotBox", "GetObjectInstance");
+			RegisterModuleDependences("clouds", "OnGetStorageService", "clouds", "CCloudStorageService_Yandex", "GetObjectInstance");
+			RegisterModuleDependences("perfmon", "OnGetTableSchema", "clouds", "clouds", "OnGetTableSchema");
 
 			return true;
 		}
@@ -138,6 +140,8 @@ Class clouds extends CModule
 		UnRegisterModuleDependences("clouds", "OnGetStorageService", "clouds", "CCloudStorageService_ClodoRU", "GetObjectInstance");
 		UnRegisterModuleDependences("clouds", "OnGetStorageService", "clouds", "CCloudStorageService_Selectel", "GetObjectInstance");
 		UnRegisterModuleDependences("clouds", "OnGetStorageService", "clouds", "CCloudStorageService_HotBox", "GetObjectInstance");
+		UnRegisterModuleDependences("clouds", "OnGetStorageService", "clouds", "CCloudStorageService_Yandex", "GetObjectInstance");
+		UnRegisterModuleDependences("perfmon", "OnGetTableSchema", "clouds", "clouds", "OnGetTableSchema");
 
 		UnRegisterModule("clouds");
 
@@ -225,6 +229,31 @@ Class clouds extends CModule
 				$APPLICATION->IncludeAdminFile(GetMessage("CLO_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/clouds/install/unstep2.php");
 			}
 		}
+	}
+
+	function OnGetTableSchema()
+	{
+		return array(
+			"clouds" => array(
+				"b_clouds_file_bucket" => array(
+					"ID" => array(
+						"b_clouds_file_bucket" => "FAILOVER_BUCKET_ID",
+						"b_clouds_file_upload" => "BUCKET_ID",
+						"b_clouds_copy_queue" => "SOURCE_BUCKET_ID",
+						"b_clouds_copy_queue" => "TARGET_BUCKET_ID",
+						"b_clouds_delete_queue" => "BUCKET_ID",
+						"b_clouds_rename_queue" => "BUCKET_ID",
+					)
+				),
+			),
+			"main" => array(
+				"b_file" => array(
+					"ID" => array(
+						"b_clouds_file_resize" => "FILE_ID",
+					)
+				),
+			),
+		);
 	}
 }
 ?>

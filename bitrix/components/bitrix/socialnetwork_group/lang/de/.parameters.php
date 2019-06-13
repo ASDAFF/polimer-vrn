@@ -1,4 +1,5 @@
 <?
+$MESS["SONET_SHOW_SEARCH_TAGS_CLOUD"] = "Tag-Cloud auf der Seite der Gruppe anzeigen";
 $MESS["SONET_USER_VAR"] = "Variable für die Nutzer-ID";
 $MESS["SONET_GROUP_VAR"] = "Variable für die Gruppen-ID";
 $MESS["SONET_PAGE_VAR"] = "Variable für die Seite";

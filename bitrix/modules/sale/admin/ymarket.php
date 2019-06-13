@@ -55,18 +55,22 @@ if (isset($_REQUEST["https_check"]) && $_REQUEST["https_check"] == "Y" && check_
 	echo CUtil::PhpToJSObject(array("status" => $res, "text" => $text));
 	die();
 }
-else if($REQUEST_METHOD=="POST" && check_bitrix_sessid())
+else if($REQUEST_METHOD == "POST" && check_bitrix_sessid())
 {
 	$site = !empty($_POST["SITE_ID_INITIAL"]) && $SITE_ID == $_POST["SITE_ID_INITIAL"] ? $SITE_ID : $_POST["SITE_ID_INITIAL"];
 
-	if(isset($_POST["YMSETTINGS"]) && is_array($_POST["YMSETTINGS"]) &&!empty($_POST["YMSETTINGS"]))
+	if(isset($_POST["YMSETTINGS"]) && is_array($_POST["YMSETTINGS"]) && !empty($_POST["YMSETTINGS"]))
 	{
 		$settings = CSaleYMHandler::getSettings(false);
+
+		if(!is_array($settings['SETTINGS']))
+			$settings['SETTINGS'] = array();
 
 		if(!is_array($settings['SETTINGS'][$site]))
 			$settings['SETTINGS'][$site] = array();
 
 		$settings['SETTINGS'][$site] = array_merge($settings['SETTINGS'][$site], $_POST["YMSETTINGS"]);
+
 		CSaleYMHandler::saveSettings($settings['SETTINGS']);
 		$bSaved = true;
 	}
@@ -406,10 +410,6 @@ if(CSaleYMHandler::isActive())
 			<td width="60%"><?=makeSelectorFromPaySystems("YMSETTINGS[PAY_SYSTEMS][YANDEX]", $siteSetts["PAY_SYSTEMS"]["YANDEX"], $personTypeId, $SITE_ID)?></td>
 		</tr>
 		<tr>
-			<td ><?=GetMessage("SALE_YM_SHOP_PREPAID")?>:</td>
-			<td><?=makeSelectorFromPaySystems("YMSETTINGS[PAY_SYSTEMS][SHOP_PREPAID]", $siteSetts["PAY_SYSTEMS"]["SHOP_PREPAID"], $personTypeId, $SITE_ID)?></td>
-		</tr>
-		<tr>
 			<td ><?=GetMessage("SALE_YM_CASH_ON_DELIVERY")?>:</td>
 			<td><?=makeSelectorFromPaySystems("YMSETTINGS[PAY_SYSTEMS][CASH_ON_DELIVERY]", $siteSetts["PAY_SYSTEMS"]["CASH_ON_DELIVERY"], $personTypeId, $SITE_ID)?></td>
 		</tr>
@@ -584,8 +584,8 @@ function makeSelectorFromPaySystems($psTypeYandex, $psIdValue, $personTypeId, $s
 				'=SERVICE_ID' => array_keys($allPaySystems),
 				'=SERVICE_TYPE' => Restrictions\Manager::SERVICE_TYPE_PAYMENT,
 				'=CLASS_NAME' => array(
-					'\Bitrix\Sale\Services\PaySystem\Restrictions\Site',
-					'\Bitrix\Sale\Services\PaySystem\Restrictions\PersonType'
+					'\\'.Restrictions\Site::class,
+					'\\'.Restrictions\PersonType::class
 				)
 			)
 		));
@@ -599,12 +599,12 @@ function makeSelectorFromPaySystems($psTypeYandex, $psIdValue, $personTypeId, $s
 
 		foreach($allPaySystems as $psId => $psName)
 		{
-			if(!empty($rstParams[$psId]['\Bitrix\Sale\Services\PaySystem\Restrictions\Site']['SITE_ID']))
-				if(!in_array($siteId, $rstParams[$psId]['\Bitrix\Sale\Services\PaySystem\Restrictions\Site']['SITE_ID']))
+			if(!empty($rstParams[$psId]['\\'.Restrictions\Site::class]['SITE_ID']))
+				if(!in_array($siteId, $rstParams[$psId]['\\'.Restrictions\Site::class]['SITE_ID']))
 					continue;
 
-			if(!empty($rstParams[$psId]['\Bitrix\Sale\Services\PaySystem\Restrictions\PersonType']['PERSON_TYPE_ID']))
-				if(!in_array($personTypeId, $rstParams[$psId]['\Bitrix\Sale\Services\PaySystem\Restrictions\PersonType']['PERSON_TYPE_ID']))
+			if(!empty($rstParams[$psId]['\\'.Restrictions\PersonType::class]['PERSON_TYPE_ID']))
+				if(!in_array($personTypeId, $rstParams[$psId]['\\'.Restrictions\PersonType::class]['PERSON_TYPE_ID']))
 					continue;
 
 			$paySystems[$siteId][] = $psId;

@@ -38,7 +38,17 @@ if(!preg_match('/^(asc|desc|nulls)(,asc|,desc|,nulls){0,1}$/i', $arParams["SORT_
 	$arParams["SORT_ORDER1"]="DESC";
 
 if(strlen($arParams["SORT_BY2"])<=0)
-	$arParams["SORT_BY2"] = "SORT";
+{
+	if (strtoupper($arParams["SORT_BY1"]) == 'SORT')
+	{
+		$arParams["SORT_BY2"] = "ID";
+		$arParams["SORT_ORDER2"] = "DESC";
+	}
+	else
+	{
+		$arParams["SORT_BY2"] = "SORT";
+	}
+}
 if(!preg_match('/^(asc|desc|nulls)(,asc|,desc|,nulls){0,1}$/i', $arParams["SORT_ORDER2"]))
 	$arParams["SORT_ORDER2"]="ASC";
 
@@ -308,20 +318,9 @@ if($this->startResultCache(false, array(($arParams["CACHE_GROUPS"]==="N"? false:
 		else
 			$arItem["DISPLAY_ACTIVE_FROM"] = "";
 
-		$ipropValues = new Iblock\InheritedProperty\ElementValues($arItem["IBLOCK_ID"], $arItem["ID"]);
-		$arItem["IPROPERTY_VALUES"] = $ipropValues->getValues();
-
-		Iblock\Component\Tools::getFieldImageData(
-			$arItem,
-			array('PREVIEW_PICTURE', 'DETAIL_PICTURE'),
-			Iblock\Component\Tools::IPROPERTY_ENTITY_ELEMENT,
-			'IPROPERTY_VALUES'
-		);
+		Iblock\InheritedProperty\ElementValues::queue($arItem["IBLOCK_ID"], $arItem["ID"]);
 
 		$arItem["FIELDS"] = array();
-		foreach($arParams["FIELD_CODE"] as $code)
-			if(array_key_exists($code, $arItem))
-				$arItem["FIELDS"][$code] = $arItem[$code];
 
 		if($bGetProperty)
 			$arItem["PROPERTIES"] = $obElement->GetProperties();
@@ -351,6 +350,23 @@ if($this->startResultCache(false, array(($arParams["CACHE_GROUPS"]==="N"? false:
 		$arResult["ITEMS"][] = $arItem;
 		$arResult["ELEMENTS"][] = $arItem["ID"];
 	}
+
+	foreach ($arResult["ITEMS"] as &$arItem)
+	{
+		$ipropValues = new Iblock\InheritedProperty\ElementValues($arItem["IBLOCK_ID"], $arItem["ID"]);
+		$arItem["IPROPERTY_VALUES"] = $ipropValues->getValues();
+		Iblock\Component\Tools::getFieldImageData(
+			$arItem,
+			array('PREVIEW_PICTURE', 'DETAIL_PICTURE'),
+			Iblock\Component\Tools::IPROPERTY_ENTITY_ELEMENT,
+			'IPROPERTY_VALUES'
+		);
+
+		foreach($arParams["FIELD_CODE"] as $code)
+			if(array_key_exists($code, $arItem))
+				$arItem["FIELDS"][$code] = $arItem[$code];
+	}
+	unset($arItem);
 
 	$navComponentParameters = array();
 	if ($arParams["PAGER_BASE_LINK_ENABLE"] === "Y")

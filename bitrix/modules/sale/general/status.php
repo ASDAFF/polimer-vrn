@@ -140,7 +140,6 @@ class CSaleStatus
 		else
 		{
 			$result = new Compatible\CDBResult();
-			CSaleStatusAdapter::adaptResult($result, $query, $taskIdName);
 			return $query->compatibleExec($result, $arNavStartParams);
 		}
 	}
@@ -245,8 +244,11 @@ class CSaleStatus
 		if (isset($arFields['PERMS']) && is_array($arFields['PERMS']) && ! empty($arFields['PERMS']))
 			self::addTasksBy($statusId, $arFields['PERMS']);
 
-		foreach (GetModuleEvents("sale", "OnStatusAdd", true) as $arEvent)
-			ExecuteModuleEventEx($arEvent, array($statusId, $arFields));
+		if (\Bitrix\Main\Config\Option::get('sale', 'expiration_processing_events', 'N') === 'N')
+		{
+			foreach (GetModuleEvents("sale", "OnStatusAdd", true) as $arEvent)
+				ExecuteModuleEventEx($arEvent, array($statusId, $arFields));
+		}
 
 		return $statusId;
 	}
@@ -274,8 +276,11 @@ class CSaleStatus
 			self::addTasksBy($statusId, $arFields['PERMS']);
 		}
 
-		foreach (GetModuleEvents("sale", "OnStatusUpdate", true) as $arEvent)
-			ExecuteModuleEventEx($arEvent, array($statusId, $arFields));
+		if (\Bitrix\Main\Config\Option::get('sale', 'expiration_processing_events', 'N') === 'N')
+		{
+			foreach (GetModuleEvents("sale", "OnStatusUpdate", true) as $arEvent)
+				ExecuteModuleEventEx($arEvent, array($statusId, $arFields));
+		}
 
 		return $statusId;
 	}

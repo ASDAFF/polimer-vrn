@@ -403,4 +403,23 @@ class LogIndex
 	{
 		return str_rot13($str);
 	}
+
+	public static function OnAfterLogUpdate(\Bitrix\Main\Entity\Event $event)
+	{
+		$primary = $event->getParameter('primary');
+		$logId = (!empty($primary['ID']) ? intval($primary['ID']) : 0);
+		$fields = $event->getParameter('fields');
+
+		if (
+			$logId > 0
+			&& !empty($fields)
+			&& !empty($fields['LOG_UPDATE'])
+		)
+		{
+			LogIndexTable::setLogUpdate(array(
+				'logId' => $logId,
+				'value' => $fields['LOG_UPDATE']
+			));
+		}
+	}
 }

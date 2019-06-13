@@ -150,55 +150,69 @@ abstract class BaseRefreshStrategy
 	{
 		$result = new Result();
 
-		$preparedData = $this->prepareData($item, $data);
-
-		if (!$item->isCustomPrice() && isset($preparedData['DISCOUNT_PRICE']) && isset($preparedData['BASE_PRICE']))
+		if (!empty($data))
 		{
-			$preparedData['PRICE'] = $preparedData['BASE_PRICE'] - $preparedData['DISCOUNT_PRICE'];
-		}
+			$preparedData = $this->prepareData($item, $data);
 
-		if (empty($preparedData) || (isset($preparedData['QUANTITY']) && $preparedData['QUANTITY'] == 0))
-		{
-			$preparedData['CAN_BUY'] = 'N';
-			unset($preparedData['QUANTITY']);
-		}
-
-		/** @var Main\Event $event */
-		$event = new Main\Event('sale', EventActions::EVENT_ON_BASKET_ITEM_REFRESH_DATA, array(
-			'ENTITY' => $item,
-			'VALUES' => $data,
-			'PREPARED_VALUES' => $preparedData
-		));
-		$event->send();
-
-		if ($event->getResults())
-		{
-			/** @var Main\EventResult $eventResult */
-			foreach ($event->getResults() as $eventResult)
+			if (!$preparedData)
 			{
-				if ($eventResult->getType() == Main\EventResult::ERROR)
-				{
-					$errorMsg = new ResultError(
-						Main\Localization\Loc::getMessage('SALE_EVENT_ON_BASKET_ITEM_REFRESH_DATA'),
-						'SALE_EVENT_ON_BASKET_ITEM_REFRESH_DATA'
-					);
-					if ($eventResultData = $eventResult->getParameters())
-					{
-						if (isset($eventResultData) && $eventResultData instanceof ResultError)
-						{
-							/** @var ResultError $errorMsg */
-							$errorMsg = $eventResultData;
-						}
-					}
+				return $result;
+			}
 
-					$result->addError($errorMsg);
+			if (!$item->isCustomPrice() && isset($preparedData['DISCOUNT_PRICE']) && isset($preparedData['BASE_PRICE']))
+			{
+				$preparedData['PRICE'] = $preparedData['BASE_PRICE'] - $preparedData['DISCOUNT_PRICE'];
+			}
+
+			if (empty($preparedData)
+				|| (isset($preparedData['QUANTITY']) && $preparedData['QUANTITY'] == 0)
+				|| (isset($data['ACTIVE']) && $data['ACTIVE'] == 'N'))
+			{
+				$preparedData['CAN_BUY'] = 'N';
+				unset($preparedData['QUANTITY']);
+			}
+
+			/** @var Main\Event $event */
+			$event = new Main\Event('sale', EventActions::EVENT_ON_BASKET_ITEM_REFRESH_DATA, array(
+				'ENTITY' => $item,
+				'VALUES' => $data,
+				'PREPARED_VALUES' => $preparedData
+			));
+			$event->send();
+
+			if ($event->getResults())
+			{
+				/** @var Main\EventResult $eventResult */
+				foreach ($event->getResults() as $eventResult)
+				{
+					if ($eventResult->getType() == Main\EventResult::ERROR)
+					{
+						$errorMsg = new ResultError(
+							Main\Localization\Loc::getMessage('SALE_EVENT_ON_BASKET_ITEM_REFRESH_DATA'),
+							'SALE_EVENT_ON_BASKET_ITEM_REFRESH_DATA'
+						);
+						if ($eventResultData = $eventResult->getParameters())
+						{
+							if (isset($eventResultData) && $eventResultData instanceof ResultError)
+							{
+								/** @var ResultError $errorMsg */
+								$errorMsg = $eventResultData;
+							}
+						}
+
+						$result->addError($errorMsg);
+					}
 				}
 			}
-		}
 
-		if ($this->getBasketRefreshGapTime() !== 0)
+			if ($this->getBasketRefreshGapTime() !== 0)
+			{
+				$item->setFieldNoDemand(self::REFRESH_FIELD, new DateTime());
+			}
+		}
+		else
 		{
-			$item->setFieldNoDemand(self::REFRESH_FIELD, new DateTime());
+			$preparedData['CAN_BUY'] = 'N';
 		}
 
 		/** @var Result $r */
@@ -243,6 +257,10 @@ abstract class BaseRefreshStrategy
 					$data['QUANTITY'] = $data['AVAILABLE_QUANTITY'] = static::getAvailableQuantityFromPool($item, $data['QUANTITY']);
 				}
 			}
+			else
+			{
+				return false;
+			}
 		}
 
 		$settableFields = $basketItemClassName::getSettableFieldsMap();
@@ -252,9 +270,6 @@ abstract class BaseRefreshStrategy
 		{
 			if (isset($settableFields[$key]))
 			{
-				if ($key === 'NAME' && $item->getField('NAME') != '')
-					continue;
-
 				if ($key === 'PRICE' && $item->isCustomPrice())
 				{
 					$value = $item->getPrice();
@@ -316,59 +331,7 @@ abstract class BaseRefreshStrategy
 
 	protected function getProviderContext(BasketBase $basket)
 	{
-		global $USER;
-
-		$context = array();
-
-		$order = $basket->getOrder();
-		/** @var OrderBase $order */
-		if ($order)
-		{
-			$context['USER_ID'] = $order->getUserId();
-			$context['SITE_ID'] = $order->getSiteId();
-			$context['CURRENCY'] = $order->getCurrency();
-		}
-		else
-		{
-			/** @var BasketItem $basketItem */
-			$basketItem = $basket->rewind();
-			if (!$basketItem)
-			{
-				return $context;
-			}
-
-			$siteId = $basketItem->getField('LID');
-			$fuserId = $basketItem->getFUserId();
-			$currency = $basketItem->getCurrency();
-
-			$userId = Fuser::getUserIdById($fuserId);
-
-			if (empty($context['SITE_ID']))
-			{
-				$context['SITE_ID'] = $siteId;
-			}
-
-			if (empty($context['USER_ID']) && $userId > 0)
-			{
-				$context['USER_ID'] = $userId;
-			}
-
-			if (empty($context['CURRENCY']))
-			{
-				if (empty($currency))
-				{
-					$currency = SiteCurrencyTable::getSiteCurrency($siteId);
-				}
-
-				if (!empty($currency) && CurrencyManager::checkCurrencyID($currency))
-				{
-					$context['CURRENCY'] = $currency;
-				}
-
-			}
-		}
-
-		return $context;
+		return $basket->getContext();
 	}
 
 	protected function getBasketItemsToRefresh(BasketBase $basket, $quantity = 0)
@@ -407,7 +370,7 @@ abstract class BaseRefreshStrategy
 	{
 		if (!empty($itemsToRefresh))
 		{
-			$context = $basket->getContext();
+			$context = $this->getProviderContext($basket);
 			$result = Provider::getProductData($itemsToRefresh, $context);
 		}
 		else

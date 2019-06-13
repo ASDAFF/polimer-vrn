@@ -79,8 +79,14 @@ if ($_REQUEST["post_id"] > 0 && !empty($_REQUEST["name"]) && !empty($_REQUEST["v
 		$arList["items"] = array();
 		if ($db_res && ($res = $db_res->Fetch()))
 		{
-			$arList["StatusPage"] = (($db_res->NavPageNomer >= $db_res->NavPageCount ||
-				$arResult["nPageSize"] > $db_res->NavRecordCount) ? "done" : "continue");
+			$arList["StatusPage"] = (
+				(
+					$db_res->NavPageNomer >= $db_res->NavPageCount
+					|| $arResult["nPageSize"] > $db_res->NavRecordCount
+				)
+					? "done"
+					: "continue"
+			);
 			$arList["RecordCount"] = $db_res->NavRecordCount;
 			if ($_REQUEST["iNumPage"] <= $db_res->NavPageCount)
 			{
@@ -124,7 +130,6 @@ if ($_REQUEST["post_id"] > 0 && !empty($_REQUEST["name"]) && !empty($_REQUEST["v
 
 					$arList["items"][$arUser['ID']] = $arUser;
 					$arUserId[] = $arUser["ID"];
-
 				} while ($res = $db_res->Fetch());
 
 				if (

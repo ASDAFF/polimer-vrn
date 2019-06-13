@@ -1,6 +1,9 @@
 <?
 include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/bizproc/classes/general/runtimeservice.php");
 
+use Bitrix\Bizproc\WorkflowStateTable;
+use Bitrix\Main;
+
 class CBPAllStateService
 	extends CBPRuntimeService
 {
@@ -208,18 +211,18 @@ class CBPAllStateService
 		$arDocumentId = CBPHelper::ParseDocumentId($documentId);
 
 		$dbResult = $DB->Query(
-			"SELECT COUNT(WS.ID) CNT ".
-			"FROM b_bp_workflow_state WS ".
-			"	INNER JOIN b_bp_workflow_instance WI ON (WS.ID = WI.ID) ".
-			"	INNER JOIN b_bp_workflow_template WT ON (WS.WORKFLOW_TEMPLATE_ID = WT.ID) ".
-			"WHERE WS.DOCUMENT_ID = '".$DB->ForSql($arDocumentId[2])."' ".
-			"	AND WS.ENTITY = '".$DB->ForSql($arDocumentId[1])."' ".
-			"	AND WS.MODULE_ID ".((strlen($arDocumentId[0]) > 0) ? "= '".$DB->ForSql($arDocumentId[0])."'" : "IS NULL").
-			"	AND WT.AUTO_EXECUTE <> ".(int)CBPDocumentEventType::Automation
+			"SELECT COUNT(WI.ID) CNT ".
+			"FROM b_bp_workflow_instance WI ".
+			"WHERE WI.DOCUMENT_ID = '".$DB->ForSql($arDocumentId[2])."' ".
+			"	AND WI.ENTITY = '".$DB->ForSql($arDocumentId[1])."' ".
+			"	AND WI.MODULE_ID ".((strlen($arDocumentId[0]) > 0) ? "= '".$DB->ForSql($arDocumentId[0])."'" : "IS NULL").
+			"	AND WI.STARTED_EVENT_TYPE <> ".(int)CBPDocumentEventType::Automation
 		);
 
 		if ($arResult = $dbResult->Fetch())
-			return intval($arResult["CNT"]);
+		{
+			return (int) $arResult['CNT'];
+		}
 
 		return 0;
 	}
@@ -263,6 +266,21 @@ class CBPAllStateService
 			self::__ExtractState($arStates, $arResult);
 
 		return $arStates;
+	}
+
+	public static function getIdsByDocument(array $documentId)
+	{
+		$documentId = \CBPHelper::ParseDocumentId($documentId);
+		$rows = WorkflowStateTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=MODULE_ID' => $documentId[0],
+				'=ENTITY' => $documentId[1],
+				'=DOCUMENT_ID' => $documentId[2]
+			]
+		])->fetchAll();
+
+		return array_column($rows, 'ID');
 	}
 
 	public static function GetWorkflowState($workflowId)
@@ -410,6 +428,31 @@ class CBPAllStateService
 		);
 
 		self::cleanRunningCountersCache($users);
+	}
+
+	public static function deleteCompletedStates(array $documentId)
+	{
+		$connection = Main\Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		list($moduleId, $entity, $docId) = \CBPHelper::ParseDocumentId($documentId);
+
+		$connection->queryExecute(sprintf('DELETE P FROM b_bp_workflow_permissions P '
+			.'INNER JOIN b_bp_workflow_state S ON (P.WORKFLOW_ID = S.ID) '
+			.'LEFT JOIN b_bp_workflow_instance I ON (S.ID = I.ID)'
+			.'WHERE I.ID IS NULL AND S.MODULE_ID = \'%s\' AND S.ENTITY = \'%s\' AND S.DOCUMENT_ID = \'%s\'',
+			$helper->forSql($moduleId),
+			$helper->forSql($entity),
+			$helper->forSql($docId)
+		));
+
+		$connection->queryExecute(sprintf('DELETE S FROM b_bp_workflow_state S LEFT JOIN b_bp_workflow_instance I '
+			.'ON (S.ID = I.ID) '
+			.'WHERE I.ID IS NULL AND S.MODULE_ID = \'%s\' AND S.ENTITY = \'%s\' AND S.DOCUMENT_ID = \'%s\'',
+			$helper->forSql($moduleId),
+			$helper->forSql($entity),
+			$helper->forSql($docId)
+		));
 	}
 
 	public static function MergeStates($firstDocumentId, $secondDocumentId)
@@ -629,10 +672,9 @@ class CBPAllStateService
 		else
 		{
 			$query =
-				"SELECT WS.MODULE_ID AS MODULE_ID, WS.ENTITY AS ENTITY, COUNT('x') AS CNT ".
-				'FROM b_bp_workflow_state WS '.
-				'	INNER JOIN b_bp_workflow_instance WI ON (WS.ID = WI.ID) '.
-				'WHERE WS.STARTED_BY = '.(int)$userId.' '.
+				"SELECT WI.MODULE_ID AS MODULE_ID, WI.ENTITY AS ENTITY, COUNT('x') AS CNT ".
+				'FROM b_bp_workflow_instance WI '.
+				'WHERE WI.STARTED_BY = '.(int)$userId.' '.
 				'GROUP BY MODULE_ID, ENTITY';
 
 			$iterator = $DB->Query($query, true);

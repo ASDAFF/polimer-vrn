@@ -4,7 +4,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/sale/general/user.php");
 class CSaleUserAccount extends CAllSaleUserAccount
 {
 	//********** SELECT **************//
-	function GetByID($ID)
+	public static function GetByID($ID)
 	{
 		global $DB;
 
@@ -36,7 +36,7 @@ class CSaleUserAccount extends CAllSaleUserAccount
 		return false;
 	}
 
-	function GetByUserID($userID, $currency)
+	public static function GetByUserID($userID, $currency)
 	{
 		global $DB;
 
@@ -74,7 +74,7 @@ class CSaleUserAccount extends CAllSaleUserAccount
 		return false;
 	}
 
-	function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
+	public static function GetList($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
 	{
 		global $DB;
 
@@ -180,7 +180,7 @@ class CSaleUserAccount extends CAllSaleUserAccount
 		return $dbRes;
 	}
 
-	function Add($arFields)
+	public static function Add($arFields)
 	{
 		global $DB;
 
@@ -231,7 +231,7 @@ class CSaleUserAccount extends CAllSaleUserAccount
 		return $ID;
 	}
 
-	function Update($ID, $arFields)
+	public static function Update($ID, $arFields)
 	{
 		global $DB;
 
@@ -275,7 +275,7 @@ class CSaleUserAccount extends CAllSaleUserAccount
 		$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 
 		unset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_".$ID]);
-		unset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE1_".$arOldUserAccount["USER_ID"]."_".$arOldUserAccount["CURRENCY"]]);
+		unset($GLOBALS["SALE_USER_ACCOUNT"]["SALE_USER_ACCOUNT_CACHE_".$arOldUserAccount["USER_ID"]."_".$arOldUserAccount["CURRENCY"]]);
 
 		$dbEvents = GetModuleEvents("sale", "OnAfterUserAccountUpdate");
 		while ($arEvent = $dbEvents->Fetch())

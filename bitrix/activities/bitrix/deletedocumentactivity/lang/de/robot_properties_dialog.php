@@ -1,3 +1,3 @@
 <?
-$MESS["BPDDA_RPD_DESCR"] = "Element löschen, nachdem das Bot abgeschlossen wird";
+$MESS["BPDDA_RPD_DESCR"] = "Element löschen, nachdem der Bot abgeschlossen wird";
 ?>

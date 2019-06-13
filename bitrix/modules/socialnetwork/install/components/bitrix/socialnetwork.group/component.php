@@ -13,6 +13,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @global CUserTypeManager $USER_FIELD_MANAGER */
 global $CACHE_MANAGER, $USER_FIELD_MANAGER;
 
+use Bitrix\Main\Loader;
+
 if (!CModule::IncludeModule("socialnetwork"))
 {
 	ShowError(GetMessage("SONET_MODULE_NOT_INSTALL"));
@@ -41,6 +43,16 @@ if (strlen($arParams["PATH_TO_GROUP"]) <= 0)
 $arParams["PATH_TO_GROUP_EDIT"] = trim($arParams["PATH_TO_GROUP_EDIT"]);
 if (strlen($arParams["PATH_TO_GROUP_EDIT"]) <= 0)
 	$arParams["PATH_TO_GROUP_EDIT"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=group_edit&".$arParams["GROUP_VAR"]."=#group_id#");
+
+$arParams["PATH_TO_GROUP_INVITE"] = trim($arParams["PATH_TO_GROUP_INVITE"]);
+if (empty($arParams["PATH_TO_GROUP_INVITE"]))
+{
+	$parent = $this->getParent();
+	if (is_object($parent) && strlen($parent->__name) > 0)
+	{
+		$arParams["PATH_TO_GROUP_INVITE"] = $parent->arResult["PATH_TO_GROUP_INVITE"];
+	}
+}
 
 $arParams["PATH_TO_GROUP_CREATE"] = trim($arParams["PATH_TO_GROUP_CREATE"]);
 if (strlen($arParams["PATH_TO_GROUP_CREATE"]) <= 0)
@@ -197,7 +209,10 @@ if (
 }
 else
 {
-	$arResult["bExtranet"] = (CModule::IncludeModule("extranet") && CExtranet::IsExtranetSite());
+	$arResult["bExtranet"] = (
+		Loader::includeModule("extranet")
+		&& CExtranet::IsExtranetSite()
+	);
 
 	$arGroupSites = array();
 	$rsGroupSite = CSocNetGroup::GetSite($arGroup["ID"]);
@@ -231,6 +246,11 @@ else
 			$rsUsers = CUser::GetList(($by="ID"), ($order="asc"), $arFilter);
 			while($arUser = $rsUsers->Fetch())
 				$arExtranetUserID[] = $arUser["ID"];
+		}
+
+		if ($arGroup['NUMBER_OF_MODERATORS'] >= 1)
+		{
+			$arGroup['NUMBER_OF_MODERATORS']--;
 		}
 
 		$arResult["Group"] = $arGroup;
@@ -276,10 +296,13 @@ else
 			$arResult["bShowRequestSentMessage"] = ($arResult["CurrentUserPerms"]["InitiatedByType"] == SONET_INITIATED_BY_GROUP) ? "G" : "U";
 
 		if (!$arResult["CurrentUserPerms"] || !$arResult["CurrentUserPerms"]["UserCanViewGroup"])
+		{
 			$arResult["FatalError"] = GetMessage("SONET_C5_NO_PERMS").".";
+		}
 		else
 		{
 			$arResult["Urls"]["Edit"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_EDIT"], array("group_id" => $arResult["Group"]["ID"]));
+			$arResult["Urls"]["Invite"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_INVITE"], array("group_id" => $arResult["Group"]["ID"]));
 			$arResult["Urls"]["View"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP"], array("group_id" => $arResult["Group"]["ID"]));
 			$arResult["Urls"]["UserRequestGroup"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_USER_REQUEST_GROUP"], array("group_id" => $arResult["Group"]["ID"], "user_id" => $USER->GetID()));
 			$arResult["Urls"]["GroupRequestSearch"] = CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_GROUP_REQUEST_SEARCH"], array("group_id" => $arResult["Group"]["ID"]));
@@ -400,7 +423,11 @@ else
 				$arResult["Moderators"] = false;
 				$dbModerators = CSocNetUserToGroup::GetList(
 					array("ROLE" => "ASC"),
-					array("GROUP_ID" => $arResult["Group"]["ID"], "<=ROLE" => SONET_ROLES_MODERATOR, "USER_ACTIVE" => "Y"),
+					array(
+						"GROUP_ID" => $arResult["Group"]["ID"],
+						"=ROLE" => SONET_ROLES_MODERATOR,
+						"USER_ACTIVE" => "Y"
+					),
 					false,
 					array("nTopCount" => $arParams["ITEMS_COUNT"]),
 					array("ID", "USER_ID", "ROLE", "USER_NAME", "USER_LAST_NAME", "USER_SECOND_NAME", "USER_LOGIN", "USER_PERSONAL_PHOTO", "USER_PERSONAL_GENDER", "USER_WORK_POSITION")

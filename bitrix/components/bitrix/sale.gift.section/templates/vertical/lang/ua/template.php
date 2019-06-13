@@ -2,7 +2,7 @@
 $MESS["CVP_TPL_ELEMENT_DELETE_CONFIRM"] = "Буде видалена вся інформація, пов'язана з цим записом. Продовжити?";
 $MESS["CVP_TPL_MESS_BTN_BUY"] = "Купити";
 $MESS["CVP_TPL_MESS_BTN_ADD_TO_BASKET"] = "В кошик";
-$MESS["CVP_TPL_MESS_PRODUCT_NOT_AVAILABLE"] = "Товар наявності";
+$MESS["CVP_TPL_MESS_PRODUCT_NOT_AVAILABLE"] = "Товар в наявності";
 $MESS["CVP_TPL_MESS_BTN_DETAIL"] = "Детальніше";
 $MESS["CVP_TPL_MESS_BTN_SUBSCRIBE"] = "Підписатися";
 $MESS["CVP_CATALOG_SET_BUTTON_BUY"] = "Перейти до кошику";

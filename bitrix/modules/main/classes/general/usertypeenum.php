@@ -43,6 +43,7 @@ class CUserTypeEnum extends \Bitrix\Main\UserField\TypeBase
 		$height = intval($arUserField["SETTINGS"]["LIST_HEIGHT"]);
 		$disp = $arUserField["SETTINGS"]["DISPLAY"];
 		$caption_no_value = trim($arUserField["SETTINGS"]["CAPTION_NO_VALUE"]);
+		$show_no_value = $arUserField["SETTINGS"]["SHOW_NO_VALUE"] === 'N' ? 'N' : 'Y';
 
 		if($disp !== "CHECKBOX" && $disp !== "LIST" && $disp !== 'UI')
 		{
@@ -52,7 +53,8 @@ class CUserTypeEnum extends \Bitrix\Main\UserField\TypeBase
 		return array(
 			"DISPLAY" => $disp,
 			"LIST_HEIGHT" => ($height < 1? 1: $height),
-			"CAPTION_NO_VALUE" => $caption_no_value // no default value - only in output
+			"CAPTION_NO_VALUE" => $caption_no_value, // no default value - only in output
+			"SHOW_NO_VALUE" => $show_no_value, // no default value - only in output
 		);
 	}
 
@@ -101,6 +103,22 @@ class CUserTypeEnum extends \Bitrix\Main\UserField\TypeBase
 			<td>'.GetMessage("USER_TYPE_ENUM_CAPTION_NO_VALUE").':</td>
 			<td>
 				<input type="text" name="'.$arHtmlControl["NAME"].'[CAPTION_NO_VALUE]" size="10" value="'.htmlspecialcharsbx($value).'">
+			</td>
+		</tr>
+		';
+
+		if($bVarsFromForm)
+			$value = trim($GLOBALS[$arHtmlControl["NAME"]]["SHOW_NO_VALUE"]);
+		elseif(is_array($arUserField))
+			$value = trim($arUserField["SETTINGS"]["SHOW_NO_VALUE"]);
+		else
+			$value = '';
+		$result .= '
+		<tr>
+			<td>'.GetMessage("USER_TYPE_ENUM_SHOW_NO_VALUE").':</td>
+			<td>
+				<input type="hidden" name="'.$arHtmlControl["NAME"].'[SHOW_NO_VALUE]" value="N" />
+				<label><input type="checkbox" name="'.$arHtmlControl["NAME"].'[SHOW_NO_VALUE]" value="Y" '.($value === 'N' ? '' : ' checked="checked"').' /> '.GetMessage('MAIN_YES').'</label>
 			</td>
 		</tr>
 		';
@@ -655,6 +673,7 @@ EOT;
 		$enum = array();
 
 		$showNoValue = $arUserField["MANDATORY"] != "Y"
+			|| $arUserField['SETTINGS']['SHOW_NO_VALUE'] != 'N'
 			|| (isset($arParams["SHOW_NO_VALUE"]) && $arParams["SHOW_NO_VALUE"] == true);
 
 		if($showNoValue
@@ -733,6 +752,21 @@ EOT;
 		return static::getHelper()->wrapDisplayResult($html);
 	}
 
+	public static function getPublicText($userField)
+	{
+		$result = array();
+		static::getEnumList($userField);
+		$value = static::normalizeFieldValue($userField['VALUE']);
+		foreach ($value as $res)
+		{
+			if (isset($userField['USER_TYPE']['FIELDS'][$res]))
+			{
+				$result[] = $userField['USER_TYPE']['FIELDS'][$res];
+			}
+		}
+		return (!empty($result) ? implode(', ', $result) : static::getEmptyCaption($userField));
+	}
+
 	public function getPublicEdit($arUserField, $arAdditionalParameters = array())
 	{
 		static::getEnumList($arUserField, $arAdditionalParameters);
@@ -742,9 +776,12 @@ EOT;
 
 		$bWasSelect = false;
 
-		$html = '<input type="hidden" name="'.htmlspecialcharsbx($fieldName).'" value="" id="'.htmlspecialcharsbx($arUserField['FIELD_NAME']).'_default" />';
+		$html = '';
+
 		if($arUserField["SETTINGS"]["DISPLAY"] == "UI")
 		{
+			$html .= '<input type="hidden" name="'.htmlspecialcharsbx($fieldName).'" value="" id="'.htmlspecialcharsbx($arUserField['FIELD_NAME']).'_default" />';
+
 			\CJSCore::Init('ui');
 
 			$startValue = array();
@@ -777,8 +814,9 @@ EOT;
 
 			$result = '';
 
-			$controlNodeId = $arUserField['FIELD_NAME'].'_control';
-			$valueContainerId = $arUserField['FIELD_NAME'].'_value';
+			$suffix = strtolower(RandString(4));
+			$controlNodeId = $arUserField['FIELD_NAME'].'_control_'.$suffix;
+			$valueContainerId = $arUserField['FIELD_NAME'].'_value_'.$suffix;
 
 			$attrList = array(
 				'id' => $valueContainerId,
@@ -819,7 +857,7 @@ EOT;
 <script>
 function changeHandler_{$fieldNameJS}(controlObject, value)
 {
-	if(controlObject.params.fieldName === '{$fieldNameJS}')
+	if(controlObject.params.fieldName === '{$fieldNameJS}' && !!BX('{$valueContainerIdJS}'))
 	{
 		var currentValue = JSON.parse(controlObject.node.getAttribute('data-value'));
 
@@ -888,6 +926,15 @@ EOT;
 		elseif($arUserField["SETTINGS"]["DISPLAY"] == "CHECKBOX")
 		{
 			$first = true;
+			if($arUserField['MULTIPLE'] === 'Y')
+			{
+				$html .= '<input '.static::buildTagAttributes([
+						'type' => 'hidden',
+						'name' => $fieldName,
+						'value' => ''
+					]).' />';
+			}
+
 			foreach($arUserField["USER_TYPE"]["FIELDS"] as $key => $val)
 			{
 				$tag = '';
@@ -945,7 +992,7 @@ EOT;
 
 			foreach($arUserField["USER_TYPE"]["FIELDS"] as $key => $val)
 			{
-				$bSelected = in_array(strval($key), $value, true) && (
+				$bSelected = in_array($key, $value) && (
 						(!$bWasSelect) ||
 						($arUserField["MULTIPLE"] == "Y")
 					);

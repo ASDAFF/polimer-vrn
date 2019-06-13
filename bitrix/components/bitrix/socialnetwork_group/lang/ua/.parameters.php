@@ -1,4 +1,5 @@
 <?
+$MESS["SONET_SHOW_SEARCH_TAGS_CLOUD"] = "Відображати хмару тегів на сторінці групи";
 $MESS["SONET_USER_VAR"] = "Ім'я змінної для ідентифікатора користувача";
 $MESS["SONET_GROUP_VAR"] = "Ім'я змінної для ідентифікатора групи";
 $MESS["SONET_PAGE_VAR"] = "Ім'я змінної для сторінки";
@@ -29,9 +30,9 @@ $MESS["SONET_SEF_PATH_GROUP_USERS"] = "Форма членів групи";
 $MESS["SONET_USER_LEAVE_GROUP"] = "Форма виходження з членів групи";
 $MESS["SONET_SEF_PATH_GROUP_DELETE"] = "Форма видалення групи";
 $MESS["SONET_MESSAGES_INPUT"] = "Форма вхідних повідомлень";
-$MESS["SONET_MESSAGES_OUTPUT"] = "Форма змінення повідомлення";
-$MESS["SONET_MESSAGES_INPUT_USER"] = "Форма вхідних повідомлень з фільтром за користувачами";
-$MESS["SONET_MESSAGES_OUTPUT_USER"] = "Форма вихідних повідомлень з фільтром за користувачами";
+$MESS["SONET_MESSAGES_OUTPUT"] = "Форма вихідних повідомлень";
+$MESS["SONET_MESSAGES_INPUT_USER"] = "Форма вхідних повідомлень з фільтром за користувачем";
+$MESS["SONET_MESSAGES_OUTPUT_USER"] = "Форма вихідних повідомлень з фільтром за користувачем";
 $MESS["SONET_SEF_PATH_GROUP_BAN"] = "Сторінка чорного списку групи";
 $MESS["SONET_SEF_PATH_USER_BAN"] = "Сторінка чорного списку користувача";
 $MESS["SONET_SEF_USER_BLOG"] = "Сторінка блогу користувача";
@@ -305,7 +306,7 @@ $MESS["BPC_IMAGE_MAX_WIDTH"] = "Максимальна ширина зображ
 $MESS["BPC_IMAGE_MAX_HEIGHT"] = "Максимальна висота зображення";
 $MESS["BPC_COMMENT_ALLOW_VIDEO"] = "Дозволити вставку відео в коментарі";
 $MESS["BPC_ALLOW_POST_CODE"] = "Використовувати символьний код повідомлень, як ідентифікатор";
-$MESS["BPE_USE_GOOGLE_CODE"] = "Використовувати перекладач Google для коду повідомлень";
+$MESS["BPE_USE_GOOGLE_CODE"] = "Використовувати зовнішній сервіс для перекладу коду повідомлень";
 $MESS["BPC_SHOW_SPAM"] = "Показувати адміністраторам посилання на всі коментарі користувача";
 $MESS["BPC_NO_URL_IN_COMMENTS"] = "Заборонити вставку посилань у коментарях";
 $MESS["BPC_NO_URL_IN_COMMENTS_N"] = "Нікому";

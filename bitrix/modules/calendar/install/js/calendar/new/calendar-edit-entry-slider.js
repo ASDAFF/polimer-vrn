@@ -20,17 +20,21 @@
 			this.editorId = this.id + '_entry_slider_editor';
 
 			this.entry = params.entry || this.getNewEntry(params.entry || params.newEntryData);
+			this.tryLocation = params.tryLocation || false;
 
 			this.formType = params.formType || 'slider_main';
 			this.formSettings = this.getSettings();
+			this.planner = null;
 
 			BX.SidePanel.Instance.open(this.sliderId, {
-				contentCallback: BX.delegate(this.createContent, this)
+				contentCallback: BX.delegate(this.createContent, this),
+				events: {
+					onClose: BX.proxy(this.hide, this),
+					onCloseComplete: BX.proxy(this.destroy, this)
+				}
 			});
 
 			BX.bind(document, 'keydown', BX.proxy(this.keyHandler, this));
-			BX.addCustomEvent("SidePanel.Slider:onClose", BX.proxy(this.hide, this));
-			BX.addCustomEvent("SidePanel.Slider:onCloseComplete", BX.proxy(this.destroy, this));
 			BX.bind(document, "click", BX.proxy(this.calendar.util.applyHacksForPopupzIndex, this.calendar.util));
 			this.calendar.disableKeyHandler();
 			setTimeout(BX.delegate(function(){this.calendar.disableKeyHandler();}, this), 300);
@@ -116,6 +120,7 @@
 
 				this.calendar.enableKeyHandler();
 				BX.unbind(document, "click", BX.proxy(this.calendar.util.applyHacksForPopupzIndex, this.calendar.util));
+				this.planner = null;
 				this.opened = false;
 			}
 		},
@@ -137,10 +142,10 @@
 
 		checkDenyClose: function()
 		{
-			if (BX(this.id + '_time_from_div') && BX(this.id + '_time_from_div').style.display != 'none')
+			if (BX(this.id + '_time_from_div') && BX(this.id + '_time_from_div').style.display !== 'none')
 				return true;
 
-			if (BX(this.id + '_time_to_div') && BX(this.id + '_time_to_div').style.display != 'none')
+			if (BX(this.id + '_time_to_div') && BX(this.id + '_time_to_div').style.display !== 'none')
 				return true;
 
 			return this.denyClose;
@@ -169,12 +174,20 @@
 			this.initAttendeesControl();
 			this.initColorControl();
 
-			if (this.entry.accessibility)
+			if (this.calendar.util.isMeetingsEnabled() && this.entry.accessibility)
+			{
 				BX(this.id + '_accessibility').value = this.entry.accessibility;
+			}
+
 			if (this.entry.important)
+			{
 				BX(this.id + '_important').checked = this.entry.important;
-			if (this.entry.private)
+			}
+
+			if (this.calendar.util.isPrivateEventsEnabled() && this.entry.private)
+			{
 				BX(this.id + '_private').checked = this.entry.private;
+			}
 
 			this.DOM.mainBlock = BX(this.id + '_main_block_wrap');
 			this.DOM.additionalBlockWrap = BX(this.id + '_additional_block_wrap');
@@ -235,7 +248,7 @@
 			this.DOM.fromDate = BX.adjust(BX(this.id + '_date_from'), {events: {click: showCalendar, change: fromDateChanged}});
 			this.DOM.toDate = BX.adjust(BX(this.id + '_date_to'), {events: {click: showCalendar, change: toDateChanged}});
 			this.DOM.fromTime = BX.adjust(BX(this.id + '_time_from'), {events: {click: function (){_this.showClock('time_from');}, change: fromTimeChanged}});
-			this.DOM.toTime = BX.adjust(BX(this.id + '_time_to'), {events: {click: function (){_this.showClock('time_to');}}, change: toTimeChanged});
+			this.DOM.toTime = BX.adjust(BX(this.id + '_time_to'), {events: {click: function (){_this.showClock('time_to');}, change: toTimeChanged}});
 			this.DOM.fullDay = BX.adjust(BX(this.id + '_date_full_day'), {events: {click: BX.proxy(this.switchFullDay, this)}});
 			this.DOM.defTimezoneWrap = BX(this.id + '_timezone_default_wrap');
 			this.DOM.defTimezone = BX(this.id + '_timezone_default');
@@ -247,27 +260,34 @@
 			this.DOM.tzCont = BX(this.id + '_timezone_inner_wrap');
 			BX(this.id + '_timezone_hint').title = BX.message('EC_EVENT_TZ_HINT');
 			BX(this.id + '_timezone_default_hint').title = BX.message('EC_EVENT_TZ_DEF_HINT');
-			BX.bind(this.DOM.fromTz, 'change', BX.delegate(function() {
+			BX.bind(this.DOM.fromTz, 'change', BX.delegate(function()
+			{
 				if (this.linkFromToTz)
+				{
 					this.DOM.toTz.value = this.DOM.fromTz.value;
+				}
 				this.linkFromToDefaultTz = false;
 			}, this));
-			BX.bind(this.DOM.toTz, 'change', BX.delegate(function() {
+			BX.bind(this.DOM.toTz, 'change', BX.delegate(function()
+			{
 				this.linkFromToTz = false;
 				this.linkFromToDefaultTz = false;
 			}, this));
-			BX.bind(this.DOM.defTimezone, 'change', BX.delegate(function() {
+			BX.bind(this.DOM.defTimezone, 'change', BX.delegate(function()
+			{
 				this.calendar.util.setUserOption('timezoneName', this.DOM.defTimezone.value);
 				if (this.linkFromToDefaultTz)
+				{
 					this.DOM.fromTz.value = this.DOM.toTz.value = this.DOM.defTimezone.value;
+				}
 			}, this));
 
-			this.linkFromToTz = this.DOM.fromTz.value == this.DOM.toTz.value;
-			this.linkFromToDefaultTz = this.DOM.fromTz.value == this.DOM.toTz.value && this.DOM.fromTz.value == this.DOM.defTimezone.value;
+			this.linkFromToTz = this.DOM.fromTz.value === this.DOM.toTz.value;
+			this.linkFromToDefaultTz = this.DOM.fromTz.value === this.DOM.toTz.value && this.DOM.fromTz.value === this.DOM.defTimezone.value;
 
 			BX.addCustomEvent("onJCClockInit", function (config)
 			{
-				if (config.inputId == _this.id + '_time_from' || config.inputId == _this.id + '_time_to')
+				if (config.inputId === _this.id + '_time_from' || config.inputId === _this.id + '_time_to')
 				{
 					JCClock.setOptions({
 						"popupHeight": 250
@@ -322,6 +342,16 @@
 					}
 				}
 				_this._fromDateValue = from;
+
+				var rruleType = _this.DOM.rruleType.value.toLowerCase();
+				if (rruleType === 'weekly')
+				{
+					var fromDay = _this.calendar.util.getWeekDayByInd(from.getDay());
+					['SU','MO','TU','WE','TH','FR','SA'].forEach(function(day)
+					{
+						BX(this.id + '_rrule_byday_' + day).checked = day === fromDay ? 'checked' : '';
+					}, _this);
+				}
 
 				_this.refreshPlannerState();
 			}
@@ -397,17 +427,9 @@
 			this.DOM.fullDay.checked = this.entry.fullDay;
 			this.switchFullDay();
 
-			var from, to;
-			if (this.entry.id)
-			{
-				from = BX.parseDate(this.entry.data.DATE_FROM);
-				to = new Date(from.getTime() + (this.entry.data.DT_LENGTH - (this.entry.fullDay ? 1 : 0)) * 1000);
-			}
-			else
-			{
-				from = this.entry.from;
-				to = this.entry.to;
-			}
+			var
+				from = this.entry.id ? BX.parseDate(this.entry.data.DATE_FROM) : this.entry.from,
+				to = this.entry.id ? BX.parseDate(this.entry.data.DATE_TO) : this.entry.to;
 
 			this.DOM.fromDate.value = this.calendar.util.formatDate(from);
 			this.DOM.fromTime.value = this.calendar.util.formatTime(from.getHours(), from.getMinutes());
@@ -434,29 +456,8 @@
 		switchFullDay: function (value)
 		{
 			value = this.DOM.fullDay.checked;
-
-			//if (value && this.pFromDate.value !== '' && this.pFromTime.value === '' && this.pToDate.value !== '' && this.pToTime.value === '')
-			//{
-			//	var dateFrom = BX.parseDate(this.pFromDate.value), dateTo = BX.parseDate(this.pToDate.value), oneDay = dateFrom.getTime() === dateTo.getTime();
-			//
-			//	if (dateFrom)
-			//	{
-			//		dateFrom.setHours(12);
-			//		dateFrom.setMinutes(0);
-			//		this.pFromTime.value = this.oEC.FormatTime(dateFrom);
-			//	}
-			//	if (dateTo)
-			//	{
-			//		dateTo.setHours(oneDay ? 13 : 12);
-			//		dateTo.setMinutes(0);
-			//		this.pToTime.value = this.oEC.FormatTime(dateTo);
-			//	}
-			//
-			//	this.UpdateAccessibility();
-			//}
-
 			if (value && this.calendar.util.getUserOption('timezoneName')
-				&& (this.DOM.fromTz.value == '' || this.DOM.toTz.value == ''))
+				&& (!this.DOM.fromTz.value || !this.DOM.toTz.value))
 			{
 				this.DOM.fromTz.value = this.DOM.toTz.value = this.DOM.defTimezone.value = this.calendar.util.getUserOption('timezoneName');
 			}
@@ -604,6 +605,7 @@
 					}
 				);
 
+				_this.sectionMenu.popupWindow.contentContainer.style.maxHeight = "300px";
 				_this.sectionMenu.popupWindow.setWidth(_this.DOM.sectionSelect.offsetWidth - 2);
 				_this.sectionMenu.show();
 
@@ -627,6 +629,7 @@
 					//_this.popup.setAutoHide(true);
 					BX.removeClass(_this.DOM.sectionSelect, 'active');
 					BX.PopupMenu.destroy("sectionMenuSlider" + _this.calendar.id);
+					_this.sectionMenu = null;
 				});
 			}
 		},
@@ -650,7 +653,7 @@
 			{
 				BX.addCustomEvent(window["BXHtmlEditor"], 'OnEditorCreated', function (editor)
 				{
-					if (editor.id == _this.editorId)
+					if (editor.id === _this.editorId)
 					{
 						customizeHtmlEditor(editor);
 					}
@@ -678,10 +681,10 @@
 			this.locationSelector = new window.BXEventCalendar.LocationSelector(
 				this.calendar.id + '-slider-location',
 				{
-					inputName: 'location_text',
+					inputName: 'lo_cation', // don't use 'location' word here mantis:107863
 					wrapNode: BX(this.id + '_location_wrap'),
 					onChangeCallback: BX.proxy(this.checkPlannerState, this),
-					value: this.entry.location
+					value: this.tryLocation ? this.tryLocation : this.entry.location
 				}, this.calendar);
 		},
 
@@ -692,10 +695,20 @@
 			this.DOM.endsonDateRadio = BX(this.id + '_endson_date');
 
 			this.DOM.rruleType = BX.adjust(BX(this.id + '_rrule_type'), {
-				events: {change: BX.delegate(function()
-				{
-					this.DOM.rruleWrap.className = 'calendar-rrule-type-' + this.DOM.rruleType.value.toLowerCase();
-				}, this)}});
+				events: {
+					change: BX.delegate(function()
+					{
+						var rruleType = this.DOM.rruleType.value.toLowerCase();
+						this.DOM.rruleWrap.className = 'calendar-rrule-type-' + rruleType;
+						if (rruleType === 'weekly')
+						{
+							var fromDate = BX.parseDate(this.DOM.fromDate.value);
+							if (BX.type.isDate(fromDate))
+							{
+								BX(this.id + '_rrule_byday_' + this.calendar.util.getWeekDayByInd(fromDate.getDay())).checked = 'checked';
+							}
+						}
+					}, this)}});
 
 			BX.bind(this.DOM.endsonDateInput, 'click', BX.proxy(function()
 			{
@@ -727,7 +740,7 @@
 					BX(this.id + '_endson_never').checked = 'checked';
 				}
 
-				if (rrule.BYDAY && typeof rrule.BYDAY == 'object')
+				if (BX.type.isPlainObject(rrule.BYDAY))
 				{
 					for(var day in rrule.BYDAY)
 					{
@@ -742,16 +755,32 @@
 
 		initAttendeesControl: function()
 		{
+			if (!this.calendar.util.isMeetingsEnabled())
+			{
+				BX.remove(this.DOM.formWrap.querySelector('.calendar-options-item-destination'));
+				BX.remove(this.DOM.formWrap.querySelector('.calendar-options-item-planner'));
+				return;
+			}
+
+			this.DOM.attendeesWrap = BX(this.id + '_attendees_wrap');
 			this.attendees = this.entry.attendees || [this.calendar.currentUser];
 			this.attendeesIndex = {};
 			this.attendees.forEach(function(userId){this.attendeesIndex[userId] = true;}, this);
 
-			if (this.entry.getAttendeesCodes)
-				this.attendeesCodes = this.entry.getAttendeesCodes();
-			else
-				this.attendeesCodes = this.entry.attendeesCodes || false;
+			this.attendeesCodes = null;
+			if (this.entry.id)
+			{
+				this.DOM.attendeesCodesInput = BX(this.id + '_attendees_codes');
+				if (this.DOM.attendeesCodesInput && this.DOM.attendeesCodesInput.value)
+				{
+					this.attendeesCodes = this.DOM.attendeesCodesInput.value.split(',');
+				}
+			}
 
-			this.DOM.attendeesWrap = BX(this.id + '_attendees_wrap');
+			if (!this.attendeesCodes)
+			{
+				this.attendeesCodes = this.entry.getAttendeesCodes ? this.entry.getAttendeesCodes() : (this.entry.attendeesCodes || false);
+			}
 
 			this.attendeesSelector = new window.BXEventCalendar.DestinationSelector(this.calendar.id + '-slider-destination',
 			{
@@ -768,8 +797,10 @@
 			BX.addCustomEvent('OnDestinationUnselect', BX.proxy(this.checkPlannerState, this));
 			BX.addCustomEvent('OnCalendarPlannerSelectorChanged', BX.proxy(this.onCalendarPlannerSelectorChanged, this));
 			this.checkPlannerState();
+			BX.addCustomEvent('OnCalendarPlannerUpdated', BX.proxy(this.onCalendarPlannerUpdatedHandler, this));
 
 			this.DOM.moreOuterWrap = BX(this.id + '_more_outer_wrap');
+
 			//this.DOM.moreLink = BX.adjust(BX(this.id + '_more'), {events: {click: BX.delegate(function(){BX.toggleClass(this.DOM.moreWrap, 'collapse');}, this)}});
 			//this.DOM.moreWrap = BX(this.id + '_more_wrap');
 
@@ -901,35 +932,127 @@
 			}
 		},
 
+		checkLocationAccessibility: function(fromDate, toDate, timeout)
+		{
+			var locationIsFree = true;
+			timeout = timeout !== false;
+
+			if (timeout)
+			{
+				if (this.checkLocationAccessibilityTimeout)
+				{
+					this.checkLocationAccessibilityTimeout = clearTimeout(this.checkLocationAccessibilityTimeout);
+				}
+
+				this.checkLocationAccessibilityTimeout = setTimeout(BX.proxy(function(){
+					this.checkLocationAccessibility(false, false, false);
+				}, this), 500);
+				return locationIsFree;
+			}
+
+			if (!fromDate || !toDate)
+			{
+				var
+					fromTime = this.calendar.util.parseTime(this.DOM.fromTime.value),
+					toTime = this.calendar.util.parseTime(this.DOM.toTime.value);
+
+				fromDate = BX.parseDate(this.DOM.fromDate.value);
+				toDate = BX.parseDate(this.DOM.toDate.value);
+
+				if (fromDate && fromTime)
+				{
+					fromDate.setHours(fromTime.h, fromTime.m, 0);
+				}
+				if (toDate && toTime)
+				{
+					toDate.setHours(toTime.h, toTime.m, 0);
+				}
+			}
+
+			var
+				entry = false,
+				locationValue = this.locationSelector.getValue();
+
+			if (this.planner && locationValue.type === 'calendar')
+			{
+				entry = this.planner.entries.find(function(el){return el.type === 'room' && el.roomId == locationValue.value;});
+			}
+			else if (this.planner && locationValue.type === 'mr')
+			{
+				entry = this.planner.entries.find(function(el){return el.type === 'room' && el.id === 'MR_' + locationValue.value;});
+			}
+
+			if (entry && !this.planner.checkEntryTimePeriod(entry, fromDate, toDate))
+			{
+				BX.addClass(this.locationSelector.DOM.input, 'calendar-error');
+				if (this.locationErrorNode)
+				{
+					this.locationErrorNode = BX.remove(this.locationErrorNode);
+				}
+				this.locationErrorNode = this.locationSelector.DOM.wrapNode.parentNode
+					.appendChild(BX.create("div", {
+						props: {className: "calendar-content-error-text"},
+						text: BX.message('EC_LOCATION_RESERVE_ERROR')
+					}));
+
+				locationIsFree = false;
+			}
+			else
+			{
+				BX.removeClass(this.locationSelector.DOM.input, 'calendar-error');
+				if (this.locationErrorNode)
+				{
+					this.locationErrorNode = BX.remove(this.locationErrorNode);
+				}
+				locationIsFree = true;
+			}
+
+			return locationIsFree;
+		},
+
 		save: function(params)
 		{
-			if (!params)
-				params = {};
+			params = params || {};
 
 			var
 				url = this.calendar.util.getActionUrl(),
 				reqId = Math.round(Math.random() * 1000000);
 
-			url += (url.indexOf('?') == -1) ? '?' : '&';
+			if (window["BXHtmlEditor"])
+			{
+				var editor = window["BXHtmlEditor"].Get(this.editorId);
+				if (editor)
+				{
+					editor.SaveContent();
+				}
+			}
+
+			url += (url.indexOf('?') === -1) ? '?' : '&';
 			url += 'action=edit_event&bx_event_calendar_request=Y&sessid=' + BX.bitrix_sessid() + '&reqId=' + reqId;
 			url += '&markAction=' + (this.entry.id ? 'editEvent' : 'newEvent');
 			url += '&markType=' + this.calendar.util.type;
 			url += '&markRrule=' + this.DOM.rruleType.value;
 			url += '&markMeeting=' + (this.isMeeting() ? 'Y' : 'N');
 			url += '&markCrm=' + (this.isCrm() ? 'Y' : 'N');
+			url += '&markView=' + this.calendar.getCurrentViewName();
 
 			this.DOM.form.action = url;
 
 			var
+				reloadView = params.recurentEventEditMode || (this.entry.id && this.entry.isRecursive()),
 				fromTime = this.calendar.util.parseTime(this.DOM.fromTime.value),
 				toTime = this.calendar.util.parseTime(this.DOM.toTime.value),
 				fromDate = BX.parseDate(this.DOM.fromDate.value),
 				toDate = BX.parseDate(this.DOM.toDate.value);
 
 			if (fromDate && fromTime)
+			{
 				fromDate.setHours(fromTime.h, fromTime.m, 0);
+			}
 			if (toDate && toTime)
+			{
 				toDate.setHours(toTime.h, toTime.m, 0);
+			}
 
 			this.fromDate = fromDate;
 			this.toDate = toDate;
@@ -977,70 +1100,19 @@
 
 			// Location
 			BX(this.id + '_location_new').value = this.locationSelector.getTextValue();
-			if (this.locationSelector.getTextValue().substr(0, 5) == 'ECMR_' && this.DOM.rruleType.value !== 'NONE')
+			if (this.locationSelector.getTextValue().substr(0, 5) === 'ECMR_' && this.DOM.rruleType.value !== 'NONE')
 			{
 				alert(BX.message('EC_RESERVE_PERIOD_WARN'));
 				return false;
 			}
 
-			// Check Meeting rooms accessibility
-			//if (this.Loc.NEW.substr(0, 5) == 'ECMR_' && !params.bLocationChecked)
-			//{
-			//	if (toDate && this.pFullDay.checked)
-			//	{
-			//		toDate = new Date(toDate.getTime() + 86400000 /* one day*/);
-			//	}
-			//
-			//	if (fromDate && toDate)
-			//	{
-			//		this.oEC.CheckMeetingRoom(
-			//			{
-			//				id : this.oEvent.ID || 0,
-			//				from : _this.oEC.FormatDateTime(fromDate),
-			//				to : _this.oEC.FormatDateTime(toDate),
-			//				location_new : this.Loc.NEW,
-			//				location_old : this.Loc.OLD || false
-			//			},
-			//			function(check)
-			//			{
-			//				if (!check)
-			//					return alert(EC_MESS.MRReserveErr);
-			//				if (check == 'reserved')
-			//					return alert(EC_MESS.MRNotReservedErr);
-			//
-			//				params.bLocationChecked = true;
-			//				_this.SaveForm(params);
-			//			}
-			//		);
-			//		return false;
-			//	}
-			//}
+			if (BX(this.id + '_location_new').value && this.planner
+				&& !this.checkLocationAccessibility(fromDate, toDate, false))
+			{
+				return false;
+			}
 
 			BX(this.id + '_id').value = this.entry.id || 0;
-			//BX(this.id + '_month').value = month + 1;
-			//BX(this.id + '_year').value = year;
-
-			// RRULE
-			//if (this.RepeatCheck.checked)
-			//{
-			//	var FREQ = this.RepeatSelect.value;
-			//
-			//	if (this.RepeatDiapTo.value == EC_MESS.NoLimits)
-			//		this.RepeatDiapTo.value = '';
-			//
-			//	if (FREQ == 'WEEKLY')
-			//	{
-			//		var ar = [], i;
-			//		for (i = 0; i < 7; i++)
-			//			if (this.RepeatWeekDaysCh[i].checked)
-			//				ar.push(this.RepeatWeekDaysCh[i].value);
-			//
-			//		if (ar.length == 0)
-			//			this.RepeatSelect.value = 'NONE';
-			//		else
-			//			BX('event-rrule-byday' + this.id).value = ar.join(',');
-			//	}
-			//}
 
 			if (this.entry.id && this.entry.isRecursive()
 				&& !params.confirmed && this.checkForSignificantChanges())
@@ -1057,10 +1129,15 @@
 			if (section)
 			{
 				section.show();
-				if (section.color.toLowerCase() != this.activeColor.toLowerCase())
+				if (section.color.toLowerCase() !== this.activeColor.toLowerCase())
 				{
 					BX(this.id + '_color').value = this.activeColor;
 				}
+			}
+
+			if (this.entry.id && !this.entry.isRecursive() && this.DOM.rruleType.value)
+			{
+				reloadView = true;
 			}
 
 			BX.ajax.submitAjax(this.DOM.form, {
@@ -1068,17 +1145,18 @@
 				method: "POST",
 				onsuccess: BX.delegate(function (response)
 				{
-					if (params.recurentEventEditMode)
+					if (response && response.errors)
+					{
+						alert(response.errors.join(','));
+					}
+					else if (reloadView)
 					{
 						this.calendar.reload();
 					}
-					else
+					else if (response && response.entries)
 					{
-						if (response)
-						{
-							this.calendar.entryController.handleEntriesList(response.entries);
-							this.calendar.getView().displayEntries();
-						}
+						this.calendar.entryController.handleEntriesList(response.entries);
+						this.calendar.getView().displayEntries();
 					}
 				}, this)
 			});
@@ -1095,7 +1173,7 @@
 				{
 					if (this.plannerData.entries.hasOwnProperty(i) &&
 						this.plannerData.entries[i].id &&
-						this.plannerData.entries[i].status != 'h' &&
+						this.plannerData.entries[i].status !== 'h' &&
 						this.plannerData.entries[i].strictStatus &&
 						!this.plannerData.entries[i].currentStatus
 					)
@@ -1120,7 +1198,7 @@
 				res = true;
 
 			// Location
-			if (!res && this.entry.data.LOCATION !== this.DOM.form.location_text.value)
+			if (!res && this.entry.data.LOCATION !== this.DOM.form.lo_cation.value)
 				res = true;
 
 			// Date & time
@@ -1138,8 +1216,8 @@
 							res = true;
 
 				if (!res && !this.entry.isFullDay()
-					&& (this.entry.data.TZ_FROM != this.DOM.form.tz_from.value
-						|| this.entry.data.TZ_TO != this.DOM.form.tz_to.value))
+					&& (this.entry.data.TZ_FROM !== this.DOM.form.tz_from.value
+						|| this.entry.data.TZ_TO !== this.DOM.form.tz_to.value))
 				{
 					res = true;
 				}
@@ -1149,13 +1227,16 @@
 			if (!res && this.plannerData && false)
 			{
 				var i, attendeesInd = {}, count = 0;
-				if (this.oEvent.IS_MEETING && this.oEvent['~ATTENDEES'])
+				if (this.entry.isMeeting())
 				{
-					for (i in this.oEvent['~ATTENDEES'])
+					var attendeeList = this.entry.getAttendees();
+
+
+					for (i in attendeeList)
 					{
-						if (this.oEvent['~ATTENDEES'].hasOwnProperty(i) && this.oEvent['~ATTENDEES'][i]['USER_ID'])
+						if (attendeeList.hasOwnProperty(i) && attendeeList[i]['ID'])
 						{
-							attendeesInd[this.oEvent['~ATTENDEES'][i]['USER_ID']] = true;
+							attendeesInd[attendeeList[i]['ID']] = true;
 							count++
 						}
 					}
@@ -1218,37 +1299,38 @@
 
 		onCalendarPlannerSelectorChanged: function(params)
 		{
-			this.DOM.fromDate.value = this.calendar.util.formatDate(params.dateFrom);
-			this.DOM.fromTime.value = this.calendar.util.formatTime(params.dateFrom);
-			this.DOM.toDate.value = this.calendar.util.formatDate(params.dateTo);
-			this.DOM.toTime.value = this.calendar.util.formatTime(params.dateTo);
+			if (params.plannerId == this.plannerId)
+			{
+				if (!this.planner)
+				{
+					this.planner = params.planner;
+				}
+
+				this.DOM.fromDate.value = this.calendar.util.formatDate(params.dateFrom);
+				this.DOM.fromTime.value = this.calendar.util.formatTime(params.dateFrom);
+				this.DOM.toDate.value = this.calendar.util.formatDate(params.dateTo);
+				this.DOM.toTime.value = this.calendar.util.formatTime(params.dateTo);
+
+				this.checkLocationAccessibility();
+			}
 		},
 
-		//OnCalendarPlannerScaleChanged: function(params)
-		//{
-		//	this.updatePlanner({
-		//		entrieIds: params.entrieIds,
-		//		entries: params.entries,
-		//		from: params.from,
-		//		to: params.to,
-		//		location: this.Loc && this.Loc.NEW ? this.Loc.NEW : '',
-		//		roomEventId: this.Loc && this.Loc.OLD_mrevid ? parseInt(this.Loc.OLD_mrevid) : '',
-		//		focusSelector: params.focusSelector === true
-		//	});
-		//},
-
-		//DestroyDestinationControls: function()
-		//{
-		//	BX.removeCustomEvent('OnDestinationAddNewItem', BX.proxy(this.checkPlannerState, this));
-		//	BX.removeCustomEvent('OnDestinationUnselect', BX.proxy(this.checkPlannerState, this));
-		//	BX.removeCustomEvent('OnCalendarPlannerSelectorChanged', BX.proxy(this.OnCalendarPlannerSelectorChanged, this));
-		//	BX.removeCustomEvent('OnCalendarPlannerScaleChanged', BX.proxy(this.OnCalendarPlannerScaleChanged, this));
-		//	BX.removeCustomEvent('OnSetTab', BX.proxy(this.OnPlannerTabShow, this));
-		//	BX.onCustomEvent('OnCalendarPlannerDoUninstall', [{plannerId: this.plannerId}]);
-		//},
+		onCalendarPlannerUpdatedHandler: function(planner, params)
+		{
+			if (!this.planner)
+			{
+				this.planner = planner;
+				this.checkLocationAccessibility();
+			}
+		},
 
 		checkPlannerState: function()
 		{
+			if (!this.calendar.util.isMeetingsEnabled())
+			{
+				return;
+			}
+
 			var
 				_this = this,
 				from = BX.parseDate(this.DOM.fromDate.value),
@@ -1262,16 +1344,24 @@
 				};
 
 			this.attendeesCodes = this.attendeesSelector.getAttendeesCodes();
-
 			this.updatePlanner(params);
+			this.checkLocationAccessibility();
 		},
 
 		updatePlanner: function(params)
 		{
+			if (!this.calendar.util.isMeetingsEnabled())
+			{
+				return;
+			}
+
 			if (!params)
+			{
 				params = {};
+			}
 
 			var _this = this;
+			var currentEntryLocation = this.calendar.util.parseLocation(this.entry.location);
 
 			this.calendar.request({
 				data: {
@@ -1282,7 +1372,7 @@
 					date_to: params.dateTo || params.to || '',
 					timezone: this.DOM.fromTz.value ? this.DOM.fromTz.value : this.calendar.util.getUserOption('timezoneName'),
 					location: params.location || '',
-					//roomEventId: params.roomEventId || '',
+					roomEventId: currentEntryLocation ? (currentEntryLocation.room_event_id || currentEntryLocation.mrevid || false) : false,
 					entries: params.entrieIds || false,
 					add_cur_user_to_list: this.calendar.util.userIsOwner() ? 'Y' : 'N'
 				},
@@ -1383,100 +1473,91 @@
 				fromDate.getTime && toDate.getTime &&
 				fromDate.getTime() <= toDate.getTime())
 			{
-				//if (!this.plannerIsShown() && !params.data)
-				//{
-				//	this.checkPlannerState();
-				//}
-				//else
-				//{
-					//// Show planner cont
-					//if (params.show)
-					//{
-						BX.addClass(this.DOM.plannerWrap, 'calendar-edit-planner-wrap-shown');
-						//this.pMeetingParams.style.display = 'block';
-						if (!this.plannerIsShown() && params.show)
-						{
-							params.focusSelector = true;
-						}
-					//}
+				BX.addClass(this.DOM.plannerWrap, 'calendar-edit-planner-wrap-shown');
+				if (!this.plannerIsShown() && params.show)
+				{
+					params.focusSelector = true;
+				}
 
-					if (fullDay)
-					{
-						scaleFrom = new Date(fromDate.getTime());
-						scaleFrom = params.scaleFrom || new Date(scaleFrom.getTime() - this.calendar.util.dayLength * 3);
-						scaleTo = params.scaleTo || new Date(scaleFrom.getTime() + this.calendar.util.dayLength * 10);
+				if (fullDay)
+				{
+					scaleFrom = new Date(fromDate.getTime());
+					scaleFrom = params.scaleFrom || new Date(scaleFrom.getTime() - this.calendar.util.dayLength * 3);
+					scaleTo = params.scaleTo || new Date(scaleFrom.getTime() + this.calendar.util.dayLength * 10);
 
-						config.scaleType = '1day';
-						config.scaleDateFrom = scaleFrom;
-						config.scaleDateTo = scaleTo;
-						config.adjustCellWidth = false;
-					}
-					else
-					{
-						config.changeFromFullDay = {
-							scaleType: '1hour',
-							timelineCellWidth: 40
-						};
-						config.shownScaleTimeFrom = parseInt(this.calendar.util.getWorkTime().start);
-						config.shownScaleTimeTo = parseInt(this.calendar.util.getWorkTime().end);
-					}
-					config.entriesListWidth = this.DOM.attendeesTitle.offsetWidth + 16;
-					config.width = this.DOM.plannerWrap.offsetWidth;
+					config.scaleType = '1day';
+					config.scaleDateFrom = scaleFrom;
+					config.scaleDateTo = scaleTo;
+					config.adjustCellWidth = false;
+				}
+				else
+				{
+					config.changeFromFullDay = {
+						scaleType: '1hour',
+						timelineCellWidth: 40
+					};
+					config.shownScaleTimeFrom = parseInt(this.calendar.util.getWorkTime().start);
+					config.shownScaleTimeTo = parseInt(this.calendar.util.getWorkTime().end);
+				}
+				config.entriesListWidth = this.DOM.attendeesTitle.offsetWidth + 16;
+				config.width = this.DOM.plannerWrap.offsetWidth;
 
+				if (this.DOM.moreOuterWrap)
+				{
 					this.DOM.moreOuterWrap.style.paddingLeft = config.entriesListWidth + 'px';
+				}
 
-					// RRULE
-					var RRULE = false;
-					if (this.DOM.rruleType.value !== 'NONE' && false)
+				// RRULE
+				var RRULE = false;
+				if (this.DOM.rruleType.value !== 'NONE' && false)
+				{
+					RRULE = {
+						FREQ: this.RepeatSelect.value,
+						INTERVAL: this.RepeatCount.value,
+						UNTIL: this.RepeatDiapTo.value
+					};
+
+					if (RRULE.UNTIL == EC_MESS.NoLimits)
+						RRULE.UNTIL = '';
+
+					if (RRULE.FREQ == 'WEEKLY')
 					{
-						RRULE = {
-							FREQ: this.RepeatSelect.value,
-							INTERVAL: this.RepeatCount.value,
-							UNTIL: this.RepeatDiapTo.value
-						};
-
-						if (RRULE.UNTIL == EC_MESS.NoLimits)
-							RRULE.UNTIL = '';
-
-						if (RRULE.FREQ == 'WEEKLY')
+						RRULE.WEEK_DAYS = [];
+						for (i = 0; i < 7; i++)
 						{
-							RRULE.WEEK_DAYS = [];
-							for (i = 0; i < 7; i++)
+							if (this.RepeatWeekDaysCh[i].checked)
 							{
-								if (this.RepeatWeekDaysCh[i].checked)
-								{
-									RRULE.WEEK_DAYS.push(this.RepeatWeekDaysCh[i].value);
-								}
+								RRULE.WEEK_DAYS.push(this.RepeatWeekDaysCh[i].value);
 							}
+						}
 
-							if (!RRULE.WEEK_DAYS.length)
-							{
-								RRULE = false;
-							}
+						if (!RRULE.WEEK_DAYS.length)
+						{
+							RRULE = false;
 						}
 					}
+				}
 
-					BX.onCustomEvent('OnCalendarPlannerDoUpdate', [
-						{
-							plannerId: this.plannerId,
-							config: config,
-							focusSelector: params.focusSelector,
-							selector: {
-								from: fromDate,
-								to: toDate,
-								fullDay: fullDay,
-								RRULE: RRULE,
-								animation: true,
-								updateScaleLimits: true
-							},
-							data: params.data || false,
-							loadedDataFrom: params.loadedDataFrom,
-							loadedDataTo: params.loadedDataTo,
-							show: true
-							//show: !!params.show
-						}
-					]);
-				//}
+				this.checkLocationAccessibility();
+				BX.onCustomEvent('OnCalendarPlannerDoUpdate', [
+					{
+						plannerId: this.plannerId,
+						config: config,
+						focusSelector: params.focusSelector,
+						selector: {
+							from: fromDate,
+							to: toDate,
+							fullDay: fullDay,
+							RRULE: RRULE,
+							animation: true,
+							updateScaleLimits: true
+						},
+						data: params.data || false,
+						loadedDataFrom: params.loadedDataFrom,
+						loadedDataTo: params.loadedDataTo,
+						show: true
+					}
+				]);
 			}
 		},
 

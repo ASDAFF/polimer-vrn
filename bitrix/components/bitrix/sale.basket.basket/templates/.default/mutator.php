@@ -23,7 +23,7 @@ foreach ($this->basketItems as $row)
 	$rowData = array(
 		'ID' => $row['ID'],
 		'PRODUCT_ID' => $row['PRODUCT_ID'],
-		'NAME' => $row['NAME'],
+		'NAME' => isset($row['~NAME']) ? $row['~NAME'] : $row['NAME'],
 		'QUANTITY' => $row['QUANTITY'],
 		'PROPS' => $row['PROPS'],
 		'PROPS_ALL' => $row['PROPS_ALL'],
@@ -342,11 +342,15 @@ foreach ($this->basketItems as $row)
 			}
 			elseif (!empty($row[$value['id']]))
 			{
+				$rawValue = isset($row['~'.$value['id']]) ? $row['~'.$value['id']] : $row[$value['id']];
+				$isHtml = !empty($row[$value['id'].'_HTML']);
+
 				$rowData['COLUMN_LIST'][] = array(
 					'CODE' => $value['id'],
 					'NAME' => $value['name'],
-					'VALUE' => $row[$value['id']],
-					'IS_TEXT' => true,
+					'VALUE' => $rawValue,
+					'IS_TEXT' => !$isHtml,
+					'IS_HTML' => $isHtml,
 					'HIDE_MOBILE' => !isset($mobileColumns[$value['id']])
 				);
 			}

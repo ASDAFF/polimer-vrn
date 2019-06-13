@@ -1,4 +1,6 @@
 <?
+$MESS["LM_POPUP_TAB_MAIL_CONTACTS"] = "Contacts";
+$MESS["LM_POPUP_TAB_LAST_MAIL_CONTACTS"] = "Contacts";
 $MESS["LM_POPUP_TITLE"] = "Title";
 $MESS["LM_POPUP_TAB_LAST"] = "Recent";
 $MESS["LM_POPUP_TAB_SG"] = "My Groups";
@@ -31,4 +33,5 @@ $MESS["LM_INVITE_EMAIL_CRM_CREATE_CONTACT"] = "Create CRM contact";
 $MESS["LM_POPUP_SEARCH_NETWORK"] = "Search Bitrix24.Network";
 $MESS["LM_POPUP_TAB_SG_PROJECT"] = "My Projects";
 $MESS["LM_POPUP_TAB_LAST_SG_PROJECT"] = "Projects";
+$MESS["LM_POPUP_TAB_LAST_NETWORK"] = "Bitrix24.Network";
 ?>

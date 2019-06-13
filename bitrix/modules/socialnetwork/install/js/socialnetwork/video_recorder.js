@@ -19,12 +19,15 @@ BX.VideoRecorder = {
 	constraints: {audio: {}, video: {width: 1280, height: 720, facingMode: "user"}},
 	analyserNode: null,
 	activeFormID: null,
+	activeFormType: null,
 	chunks: [],
 	bindedForms: [],
 	recorderInterval: 5000,
 	transformLimit: 0,
 	transformTime: 70,
 	transformTimerShown: false,
+	errorCode: null,
+	reader: null,
 	getScreenWidth: function()
 	{
 		if(!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement)
@@ -47,18 +50,21 @@ BX.VideoRecorder = {
 	isAvailable: function(report)
 	{
 		report = report === true;
-		var error = null;
+		var error = BX.VideoRecorder.error = null;
 		if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || typeof MediaRecorder === 'undefined')
 		{
 			error = 'Not available or old browser';
+			BX.VideoRecorder.errorCode = 'BLOG_VIDEO_RECORD_REQUIREMENTS';
 		}
 		else if (BX.browser.IsChrome() && location.protocol !== 'https:')
 		{
 			error = 'In chrome works on https only';
+			BX.VideoRecorder.errorCode = 'BLOG_VIDEO_RECORD_ERROR_CHROME_HTTPS';
 		}
 		else if (BX.browser.IsIE())
 		{
 			error = 'Not available in IE';
+			BX.VideoRecorder.errorCode = 'BLOG_VIDEO_RECORD_REQUIREMENTS';
 		}
 		if(error)
 		{
@@ -172,7 +178,7 @@ BX.VideoRecorder = {
 					BX.VideoRecorder.panel = BX.create('div', {props: {className: 'bx-videomessage-panel'}, style: {display: 'none'}, children: [
 						BX.VideoRecorder.recordTimer = BX.create('span', {props: {className: 'bx-videomessage-video-timer'}, text: '00:00'}),
 						BX.VideoRecorder.buttonStop = BX.create('span', {props: {className: 'webform-button webform-button-blue webform-button-rounded'}, text: BX.message('BLOG_VIDEO_RECORD_STOP_BUTTON'), events: {
-							'click': function(e)
+							'click': function()
 							{
 								if(BX.VideoRecorder.state === 'recording')
 								{
@@ -183,6 +189,9 @@ BX.VideoRecorder = {
 									clearInterval(BX.VideoRecorder.recordInterval);
 									BX.VideoRecorder.buttonPlay.style.display = 'block';
 									BX.VideoRecorder.buttonStop.style.display = 'none';
+									BX.ajax.runAction('socialnetwork.api.videorecorder.onstoprecord', {
+										analyticsLabel: 'videoRecorder.stop'
+									});
 									return false;
 								}
 								else if(BX.VideoRecorder.state === 'playing')
@@ -204,6 +213,12 @@ BX.VideoRecorder = {
 									file.hasTobeInserted = true;
 									BX.onCustomEvent(window, 'onAddVideoMessage', [file, BX.VideoRecorder.activeFormID]);
 									BX.VideoRecorder.hideLayout();
+									if(BX.VideoRecorder.activeFormType)
+									{
+										BX.ajax.runAction('socialnetwork.api.videorecorder.onsave', {
+											analyticsLabel: 'videoRecorder.save.' + BX.VideoRecorder.activeFormType
+										});
+									}
 								}
 							}
 						}}),
@@ -319,7 +334,7 @@ BX.VideoRecorder = {
 		{
 			BX.VideoRecorder.hideTransformTimer();
 			BX.VideoRecorder.recordBlob = new Blob(BX.VideoRecorder.chunks, {'type': 'video/webm'});
-			BX.VideoRecorder.outputVideo.src = URL.createObjectURL(BX.VideoRecorder.recordBlob);
+			BX.VideoRecorder.setSourceFromBlob(BX.VideoRecorder.recordBlob);
 			BX.VideoRecorder.state = 'idle';
 			BX.VideoRecorder.buttonPlay.style.display = 'block';
 			BX.VideoRecorder.buttonSave.style.display = 'inline-block';
@@ -414,14 +429,20 @@ BX.VideoRecorder = {
 		time = time + seconds;
 		return time;
 	},
-	start: function(formId)
+	start: function(formId, type)
 	{
 		BX.VideoRecorder.transformLimit = BX.message('DISK_VIDEO_TRANSFORMATION_LIMIT') || 0;
 		BX.VideoRecorder.activeFormID = formId;
+		BX.VideoRecorder.activeFormType = type;
 		if(!BX.VideoRecorder.isAvailable(true))
 		{
+			var errorCode = 'BLOG_VIDEO_RECORD_REQUIREMENTS';
+			if(BX.VideoRecorder.errorCode)
+			{
+				errorCode = BX.VideoRecorder.errorCode;
+			}
 			BX.VideoRecorder.showMessage(
-				BX.message('BLOG_VIDEO_RECORD_REQUIREMENTS'),
+				BX.message(errorCode),
 				[],
 				BX.message('BLOG_VIDEO_RECORD_REQUIREMENTS_TITLE')
 			);
@@ -601,14 +622,7 @@ BX.VideoRecorder = {
 	},
 	setVideoSrc: function(object)
 	{
-		if (BX.VideoRecorder.outputVideo.srcObject)
-		{
-			BX.VideoRecorder.outputVideo.srcObject = object;
-		}
-		else
-		{
-			BX.VideoRecorder.outputVideo.src = URL.createObjectURL(object);
-		}
+		BX.VideoRecorder.outputVideo.srcObject = object;
 	},
 	isTimeToShowTransformationAlert: function()
 	{
@@ -671,6 +685,24 @@ BX.VideoRecorder = {
 		{
 			BX.VideoRecorder.askDevicePermission();
 		}
+	},
+	getReader: function()
+	{
+		if(!BX.VideoRecorder.reader)
+		{
+			BX.VideoRecorder.reader = new FileReader();
+			BX.VideoRecorder.reader.onload = BX.proxy(function(e)
+			{
+				BX.VideoRecorder.outputVideo.srcObject = null;
+				BX.VideoRecorder.outputVideo.src = e.target.result;
+			}, this);
+		}
+
+		return BX.VideoRecorder.reader;
+	},
+	setSourceFromBlob: function(blob)
+	{
+		BX.VideoRecorder.getReader().readAsDataURL(blob);
 	}
 };
 

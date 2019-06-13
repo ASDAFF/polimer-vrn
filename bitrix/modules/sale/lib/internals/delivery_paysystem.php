@@ -379,7 +379,7 @@ class DeliveryPaySystemTable extends \Bitrix\Main\Entity\DataManager
 		$restrictions = array();
 		$dbR = \Bitrix\Sale\Internals\ServiceRestrictionTable::getList(array(
 			'filter' => array(
-				'=CLASS_NAME' => '\Bitrix\Sale\Services\PaySystem\Restrictions\Delivery'
+				'=CLASS_NAME' => '\\'.\Bitrix\Sale\Services\PaySystem\Restrictions\Delivery::class
 			),
 			'select' => array('SERVICE_ID')
 		));
@@ -459,7 +459,7 @@ class DeliveryPaySystemTable extends \Bitrix\Main\Entity\DataManager
 			$sql = "";
 
 			foreach($needRestriction as $deliveryId)
-				$sql .= ($sql == "" ? " " : ", ")."(".$sqlHelper->forSql($deliveryId).", '".$sqlHelper->forSql('\Bitrix\Sale\Services\PaySystem\Restrictions\Delivery')."', ".Manager::SERVICE_TYPE_PAYMENT.")";
+				$sql .= ($sql == "" ? " " : ", ")."(".$sqlHelper->forSql($deliveryId).", '".$sqlHelper->forSql('\\'.\Bitrix\Sale\Services\PaySystem\Restrictions\Delivery::class)."', ".Manager::SERVICE_TYPE_PAYMENT.")";
 
 			$sql = "INSERT INTO ".\Bitrix\Sale\Internals\ServiceRestrictionTable::getTableName()."(SERVICE_ID, CLASS_NAME, SERVICE_TYPE) VALUES".$sql;
 			$con->queryExecute($sql);
@@ -470,7 +470,7 @@ class DeliveryPaySystemTable extends \Bitrix\Main\Entity\DataManager
 	{
 		$con = \Bitrix\Main\Application::getConnection();
 		$sqlHelper = $con->getSqlHelper();
-		$entityId = $sqlHelper->forSql($entityId);
+		$entityId = (int)$entityId;
 		$linkDirection = $sqlHelper->forSql($linkDirection);
 
 		$sql = "INSERT INTO ".
@@ -487,7 +487,7 @@ class DeliveryPaySystemTable extends \Bitrix\Main\Entity\DataManager
 			else
 				$first = false;
 
-			$id = $sqlHelper->forSql($id);
+			$id = (int)$id;
 
 			if($entityType == self::ENTITY_TYPE_DELIVERY)
 				$sql .= " (".$entityId.", ".$id;

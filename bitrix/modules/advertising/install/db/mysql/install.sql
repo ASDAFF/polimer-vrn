@@ -70,7 +70,7 @@ create index ix_b_adv_banner_2_country_3 on b_adv_banner_2_country (BANNER_ID);
 
 create table if not exists b_adv_banner_2_day
 (
-	DATE_STAT date not null default '0000-00-00',
+	DATE_STAT date not null,
 	BANNER_ID int(18) not null default '0',
 	SHOW_COUNT int(18) not null default '0',
 	CLICK_COUNT int(18) not null default '0',

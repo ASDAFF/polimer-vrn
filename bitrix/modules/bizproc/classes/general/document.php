@@ -1,6 +1,7 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Bizproc\WorkflowInstanceTable;
 use Bitrix\Main;
 
 /**
@@ -13,6 +14,7 @@ class CBPDocument
 	const PARAM_USE_FORCED_TRACKING = 'UseForcedTracking';
 	const PARAM_IGNORE_SIMULTANEOUS_PROCESSES_LIMIT = 'IgnoreSimultaneousProcessesLimit';
 	const PARAM_DOCUMENT_EVENT_TYPE = 'DocumentEventType';
+	const PARAM_DOCUMENT_TYPE = '__DocumentType';
 
 	public static function MigrateDocumentType($oldType, $newType)
 	{
@@ -28,6 +30,7 @@ class CBPDocument
 		{
 			CBPHistoryService::MigrateDocumentType($oldType, $newType, $templateIds);
 			CBPStateService::MigrateDocumentType($oldType, $newType, $templateIds);
+			WorkflowInstanceTable::migrateDocumentType($oldType, $newType, $templateIds);
 		}
 	}
 
@@ -128,6 +131,7 @@ class CBPDocument
 	public static function MergeDocuments($firstDocumentId, $secondDocumentId)
 	{
 		CBPStateService::MergeStates($firstDocumentId, $secondDocumentId);
+		WorkflowInstanceTable::mergeByDocument($firstDocumentId, $secondDocumentId);
 		CBPHistoryService::MergeHistory($firstDocumentId, $secondDocumentId);
 	}
 
@@ -301,37 +305,45 @@ class CBPDocument
 	 *
 	 * @param int $workflowTemplateId - Template id.
 	 * @param array $documentId - Document id array(MODULE_ID, ENTITY, DOCUMENT_ID).
-	 * @param array $arParameters - Workflow parameters.
-	 * @param array $arErrors - Errors array(array("code" => error_code, "message" => message, "file" => file_path), ...).
+	 * @param array $parameters - Workflow parameters.
+	 * @param array $errors - Errors array(array("code" => error_code, "message" => message, "file" => file_path), ...).
 	 * @param array|null $parentWorkflow - Parent workflow information.
 	 * @return string - Workflow id.
 	 */
-	public static function StartWorkflow($workflowTemplateId, $documentId, $arParameters, &$arErrors, $parentWorkflow = null)
+	public static function StartWorkflow($workflowTemplateId, $documentId, $parameters, &$errors, $parentWorkflow = null)
 	{
-		$arErrors = array();
-
+		$errors = [];
 		$runtime = CBPRuntime::GetRuntime();
 
-		if (!is_array($arParameters))
-			$arParameters = array($arParameters);
-		if (!isset($arParameters[static::PARAM_TAGRET_USER]))
-			$arParameters[static::PARAM_TAGRET_USER] = is_object($GLOBALS["USER"]) ? "user_".intval($GLOBALS["USER"]->GetID()) : null;
+		if (!is_array($parameters))
+		{
+			$parameters = [$parameters];
+		}
 
-		if (!isset($arParameters[static::PARAM_MODIFIED_DOCUMENT_FIELDS]))
-			$arParameters[static::PARAM_MODIFIED_DOCUMENT_FIELDS] = false;
+		if (!array_key_exists(static::PARAM_TAGRET_USER, $parameters))
+		{
+			$parameters[static::PARAM_TAGRET_USER] = is_object($GLOBALS["USER"]) ? "user_".intval($GLOBALS["USER"]->GetID()) : null;
+		}
 
-		if (!isset($arParameters[static::PARAM_DOCUMENT_EVENT_TYPE]))
-			$arParameters[static::PARAM_DOCUMENT_EVENT_TYPE] = CBPDocumentEventType::None;
+		if (!isset($parameters[static::PARAM_MODIFIED_DOCUMENT_FIELDS]))
+		{
+			$parameters[static::PARAM_MODIFIED_DOCUMENT_FIELDS] = false;
+		}
+
+		if (!isset($parameters[static::PARAM_DOCUMENT_EVENT_TYPE]))
+		{
+			$parameters[static::PARAM_DOCUMENT_EVENT_TYPE] = CBPDocumentEventType::None;
+		}
 
 		try
 		{
-			$wi = $runtime->CreateWorkflow($workflowTemplateId, $documentId, $arParameters, $parentWorkflow);
+			$wi = $runtime->CreateWorkflow($workflowTemplateId, $documentId, $parameters, $parentWorkflow);
 			$wi->Start();
 			return $wi->GetInstanceId();
 		}
 		catch (Exception $e)
 		{
-			$arErrors[] = array(
+			$errors[] = array(
 				"code" => $e->getCode(),
 				"message" => $e->getMessage(),
 				"file" => $e->getFile()." [".$e->getLine()."]"
@@ -444,7 +456,9 @@ class CBPDocument
 				"message" => $e->getMessage(),
 				"file" => $e->getFile()." [".$e->getLine()."]"
 			);
+			return false;
 		}
+		return true;
 	}
 
 	public static function killWorkflow($workflowId, $terminate = true, $documentId = null)
@@ -455,7 +469,7 @@ class CBPDocument
 
 		if (!$errors)
 		{
-			\Bitrix\Bizproc\WorkflowInstanceTable::delete($workflowId);
+			WorkflowInstanceTable::delete($workflowId);
 			CBPTaskService::DeleteByWorkflow($workflowId);
 			CBPTrackingService::DeleteByWorkflow($workflowId);
 			CBPStateService::DeleteWorkflow($workflowId);
@@ -467,23 +481,26 @@ class CBPDocument
 	/**
 	 * Method removes all related document data.
 	 * @param array $documentId - Document id array(MODULE_ID, ENTITY, DOCUMENT_ID).
-	 * @param array $arErrors - Errors array(array("code" => error_code, "message" => message, "file" => file_path), ...).
+	 * @param array $errors - Errors array(array("code" => error_code, "message" => message, "file" => file_path), ...).
 	 */
-	public static function OnDocumentDelete($documentId, &$arErrors)
+	public static function OnDocumentDelete($documentId, &$errors)
 	{
-		$arErrors = array();
+		$errors = [];
 
-		$arStates = CBPStateService::GetDocumentStates($documentId);
-		foreach ($arStates as $workflowId => $arState)
+		$instanceIds = WorkflowInstanceTable::getIdsByDocument($documentId);
+		foreach ($instanceIds as $instanceId)
 		{
-			$terminate = strlen($arState["ID"]) > 0 && strlen($arState["WORKFLOW_STATUS"]) > 0;
-			$errors = static::killWorkflow($workflowId, $terminate, $documentId);
-			if ($errors)
-				foreach ($errors as $e)
-					$arErrors[] = $e;
+			static::TerminateWorkflow($instanceId, $documentId, $errors);
 		}
 
-		CBPStateService::DeleteByDocument($documentId);
+		$statesIds = \CBPStateService::getIdsByDocument($documentId);
+		foreach ($statesIds as $stateId)
+		{
+			\CBPTaskService::DeleteByWorkflow($stateId);
+			\CBPTrackingService::DeleteByWorkflow($stateId);
+		}
+
+		\CBPStateService::deleteCompletedStates($documentId);
 		CBPHistoryService::DeleteByDocument($documentId);
 	}
 
@@ -849,7 +866,13 @@ class CBPDocument
 						bindTo: controlNode,
 						addCallback: function(user)
 						{
-							controlNode.value += user['name'] + ' ['+user['id']+']; ';
+							var prefix = '';
+							if (controlNode.value.length > 0 && !/;\s*$/.test(controlNode.value))
+							{
+								prefix = '; ';
+							}
+
+							controlNode.value += prefix + user['name'] + ' ['+user['id']+']; ';
 						}
 					});
 					controlNode.__userSelector.onBindClick();
@@ -1430,24 +1453,21 @@ class CBPDocument
 
 		$userId = (int) $data['USER_ID'];
 
-		$iterator = \Bitrix\Bizproc\WorkflowInstanceTable::getList(
+		$iterator = WorkflowInstanceTable::getList(
 			array(
 				'select' => array(new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(\'x\')')),
 				'filter' => array(
-					'=STATE.STARTED_BY' => $userId,
+					'=STARTED_BY' => $userId,
 					'<OWNED_UNTIL' => date($DB->DateFormatToPHP(FORMAT_DATETIME),
-						time() - \Bitrix\Bizproc\WorkflowInstanceTable::LOCKED_TIME_INTERVAL)
+						time() - WorkflowInstanceTable::LOCKED_TIME_INTERVAL)
 				),
 			)
 		);
 		$row = $iterator->fetch();
 		if (!empty($row['CNT']))
 		{
-			$path = \Bitrix\Main\Config\Option::get("bizproc", "locked_wi_path", '');
-			if (!$path)
-			{
-				$path = IsModuleInstalled('bitrix24') ? '/bizproc/bizproc/?type=is_locked' : '/services/bp/instances.php?type=is_locked';
-			}
+			$path = IsModuleInstalled('bitrix24') ? '/bizproc/bizproc/?type=is_locked'
+				: Main\Config\Option::get("bizproc", "locked_wi_path", '/services/bp/instances.php?type=is_locked');
 
 			CIMNotify::Add(array(
 				'FROM_USER_ID' => 0,
@@ -1649,4 +1669,3 @@ class CBPDocument
 		return $templates;
 	}
 }
-?>

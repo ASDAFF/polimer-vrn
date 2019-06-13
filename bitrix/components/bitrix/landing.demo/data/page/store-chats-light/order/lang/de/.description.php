@@ -1,0 +1,6 @@
+<?
+$MESS["LANDING_DEMO_STORE_CHATS_LIGHT-ORDER-DESC"] = "Eine voll funktionsfähige Check-out Seite";
+$MESS["LANDING_DEMO_STORE_CHATS_LIGHT-ORDER-NAME"] = "Check-out";
+$MESS["LANDING_DEMO_STORE_CHATS_LIGHT-ORDER-RICH_DESC"] = "Danke für Ihre Bestellung!";
+$MESS["LANDING_DEMO_STORE_CHATS_LIGHT-ORDER-RICH_NAME"] = "Ihre Bestellung";
+?>

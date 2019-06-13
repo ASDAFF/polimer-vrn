@@ -1,5 +1,6 @@
 <?
 $MESS["BLOG_BUTTON_SEND"] = "Відіслати";
+$MESS["BLOG_BUTTON_PUBLISH"] = "Опублікувати";
 $MESS["BLOG_BUTTON_CANCEL"] = "Скасувати";
 $MESS["BLOG_BUTTON_DRAFT"] = "Зберегти як чернетку";
 $MESS["BLOG_TITLE"] = "Тема повідомлення";
@@ -31,4 +32,11 @@ $MESS["BLOG_POST_EDIT_T_CREATE_TASK_SUCCESS_DESCRIPTION"] = "Ви можете �
 $MESS["BLOG_POST_EDIT_T_CREATE_TASK_BUTTON_TITLE"] = "Перейти до завдання";
 $MESS["MPF_DRAG_ATTACHMENTS2"] = "Завантажити файли?";
 $MESS["BLOG_TAB_TASK"] = "Завдання";
+$MESS["IMPORTANT_TILL_TITLE"] = "повідомлення буде важливим:";
+$MESS["IMPORTANT_FOR_ALWAYS"] = "завжди";
+$MESS["IMPORTANT_FOR_ONE_DAY"] = "один день";
+$MESS["IMPORTANT_FOR_TWO_DAYS"] = "два дні";
+$MESS["IMPORTANT_FOR_WEEK"] = "тиждень";
+$MESS["IMPORTANT_FOR_MONTH"] = "місяць";
+$MESS["IMPORTANT_FOR_CUSTOM"] = "до точної дати";
 ?>

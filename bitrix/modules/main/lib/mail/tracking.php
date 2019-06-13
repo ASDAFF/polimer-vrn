@@ -8,8 +8,8 @@
 
 namespace Bitrix\Main\Mail;
 
+use Bitrix\Main;
 use Bitrix\Main\Application;
-use Bitrix\Main\Context;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Security\Sign\BadSignatureException;
 use Bitrix\Main\Security\Sign\Signer;
@@ -22,6 +22,11 @@ use Bitrix\Main\SystemException;
 class Tracking
 {
 	const SIGN_SALT_ACTION = 'event_mail_tracking';
+
+	const onRead = 'OnMailEventMailRead';
+	const onClick = 'OnMailEventMailClick';
+	const onUnsubscribe = 'OnMailEventSubscriptionDisable';
+	const onChangeStatus = 'OnMailEventMailChangeStatus';
 
 	/**
 	 * Get tag.
@@ -70,7 +75,8 @@ class Tracking
 	 *
 	 * @param string $signedTag Signed tag.
 	 * @return array
-	 * @throws \Bitrix\Main\Security\Sign\BadSignatureException
+	 * @throws BadSignatureException
+	 * @throws Main\ArgumentTypeException
 	 */
 	public static function parseSignedTag($signedTag)
 	{
@@ -86,6 +92,7 @@ class Tracking
 	 * @param array $fields Fields.
 	 * @param string|null $urlPage Url of custom click page.
 	 * @return string
+	 * @throws SystemException
 	 */
 	public static function getLinkRead($moduleId, $fields, $urlPage = null)
 	{
@@ -103,6 +110,7 @@ class Tracking
 	 * @param array $fields Fields.
 	 * @param string|null $urlPage Url of custom click page.
 	 * @return string
+	 * @throws SystemException
 	 */
 	public static function getLinkClick($moduleId, $fields, $urlPage = null)
 	{
@@ -120,6 +128,8 @@ class Tracking
 	 * @param array $fields Fields.
 	 * @param string|null $urlPage Url of custom unsubscribe page.
 	 * @return string
+	 * @throws Main\ArgumentTypeException
+	 * @throws SystemException
 	 */
 	public static function getLinkUnsub($moduleId, $fields, $urlPage = null)
 	{
@@ -130,6 +140,13 @@ class Tracking
 		);
 	}
 
+	/**
+	 * @param $tag
+	 * @param $opCode
+	 * @param null $uri
+	 * @return null|string
+	 * @throws SystemException
+	 */
 	protected static function getTaggedLink($tag, $opCode, $uri = null)
 	{
 		if(!$uri)
@@ -149,6 +166,7 @@ class Tracking
 	 *
 	 * @param string $value Value.
 	 * @return string
+	 * @throws Main\ArgumentTypeException
 	 */
 	public static function getSign($value)
 	{
@@ -210,7 +228,7 @@ class Tracking
 
 		if(!is_array($data['FIELDS'])) return false;
 
-		$event = new \Bitrix\Main\Event("main", "OnMailEventSubscriptionList", array($data['FIELDS']), $filter);
+		$event = new Main\Event("main", "OnMailEventSubscriptionList", array($data['FIELDS']), $filter);
 		$event->send();
 		foreach ($event->getResults() as $eventResult)
 		{
@@ -245,7 +263,7 @@ class Tracking
 	{
 		if(!is_array($data['FIELDS'])) return false;
 
-		$event = new \Bitrix\Main\Event("main", "OnMailEventSubscriptionEnable", array($data['FIELDS']), array($data['MODULE_ID']));
+		$event = new Main\Event("main", "OnMailEventSubscriptionEnable", array($data['FIELDS']), array($data['MODULE_ID']));
 		$event->send();
 		foreach ($event->getResults() as $eventResult)
 		{
@@ -268,7 +286,7 @@ class Tracking
 	{
 		if(!is_array($data['FIELDS'])) return false;
 
-		$event = new \Bitrix\Main\Event("main", "OnMailEventSubscriptionDisable", array($data['FIELDS']), array($data['MODULE_ID']));
+		$event = new Main\Event("main", "OnMailEventSubscriptionDisable", array($data['FIELDS']), array($data['MODULE_ID']));
 		$event->send();
 		foreach ($event->getResults() as $eventResult)
 		{
@@ -294,7 +312,7 @@ class Tracking
 		else
 			$filter = null;
 
-		$event = new \Bitrix\Main\Event("main", "OnMailEventMailClick", array($data['FIELDS']), $filter);
+		$event = new Main\Event("main", "OnMailEventMailClick", array($data['FIELDS']), $filter);
 		$event->send();
 		foreach ($event->getResults() as $eventResult)
 		{
@@ -314,7 +332,7 @@ class Tracking
 	 */
 	public static function clickFromRequest()
 	{
-		$request = Context::getCurrent()->getRequest();
+		$request = Main\Context::getCurrent()->getRequest();
 		$url = $request->get('url');
 		$sign = $request->get('sign');
 		$tag = $request->get('tag');
@@ -346,7 +364,7 @@ class Tracking
 	 */
 	public static function readFromRequest()
 	{
-		$request = Context::getCurrent()->getRequest();
+		$request = Main\Context::getCurrent()->getRequest();
 		$tag = $request->get('tag');
 		if (!$tag)
 		{
@@ -378,7 +396,37 @@ class Tracking
 		else
 			$filter = null;
 
-		$event = new \Bitrix\Main\Event("main", "OnMailEventMailRead", array($data['FIELDS']), $filter);
+		$event = new Main\Event("main", "OnMailEventMailRead", array($data['FIELDS']), $filter);
+		$event->send();
+		foreach ($event->getResults() as $eventResult)
+		{
+			if ($eventResult->getType() == EventResult::ERROR)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Change status of sending.
+	 *
+	 * @param Callback\Result $callbackResult Callback result instance.
+	 * @return bool
+	 */
+	public static function changeStatus(Callback\Result $callbackResult)
+	{
+		if($callbackResult->getModuleId())
+		{
+			$filter = [$callbackResult->getModuleId()];
+		}
+		else
+		{
+			$filter = null;
+		}
+
+		$event = new Main\Event("main", self::onChangeStatus, [$callbackResult], $filter);
 		$event->send();
 		foreach ($event->getResults() as $eventResult)
 		{

@@ -4,7 +4,7 @@ IncludeModuleLangFile(__FILE__);
 class CBPArgumentException
 	extends Exception
 {
-    private $paramName = "";
+	private $paramName = "";
 
 	public function __construct($message, $paramName = "")
 	{
@@ -103,20 +103,3 @@ class CBPNotSupportedException
 		parent::__construct($message, 10004);
 	}
 }
-
-//class CBPStandartException
-//	extends Exception
-//{
-//	public function __construct($message, $errorLevel = 0, $errorFile = '', $errorLine = 0)
-//	{
-//		parent::__construct($message, $errorLevel);
-//		$this->file = $errorFile;
-//		$this->line = $errorLine;
-//	}
-//}
-
-//set_error_handler(
-//	create_function('$c, $m, $f, $l', 'if ($c === E_NOTICE) {echo "This is notice: ".$m;} else {throw new CBPStandartException($m, $c, $f, $l);}'),
-//	E_ALL
-//);
-?>
