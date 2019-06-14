@@ -29,7 +29,7 @@ function getUrlProd($url){
         }
 
         if(CModule::IncludeModule("iblock")) {
-            $arSelect = Array("ID", "IBLOCK_ID","DETAIL_PAGE_URL","PREVIEW_PICTURE","DETAIL_PICTURE", "NAME", "PROPERTY_*");//IBLOCK_ID и ID обязательно должны быть указаны, см. описание arSelectFields выше
+            $arSelect = Array("ID", "IBLOCK_ID","DETAIL_PAGE_URL","PREVIEW_PICTURE","DETAIL_PICTURE", "NAME", "PROPERTY_*");//IBLOCK_ID пїЅ ID пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅ. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ arSelectFields пїЅпїЅпїЅпїЅ
             $arFilter = Array("IBLOCK_ID" => 21, "CODE" => $code);
             $res = CIBlockElement::GetList(Array(), $arFilter, false, false, $arSelect);
             if($ob = $res->GetNextElement()) {
@@ -96,5 +96,37 @@ function StatusOrderChange(\Bitrix\Main\Event $event)
             "ORDER_DATE" => $date_status
         );
         CEvent::Send("ORDER_COMPLETED", "s1", $arFields);
+    }
+}
+
+function AddOrderProperty($code, $value, $order)    {
+    if (!strlen($code)) {
+        return false;
+    }
+    if (CModule::IncludeModule('sale')) {
+        if ($arProp = CSaleOrderProps::GetList(array(), array('CODE' => $code))->Fetch()) {
+
+            $db_vals = CSaleOrderPropsValue::GetList(
+                array(),
+                array(
+                    "ORDER_ID" => $order,
+                    "ORDER_PROPS_ID" => $arProp["ID"]
+                )
+            );
+            if ($arVals = $db_vals->Fetch()) {
+                CSaleOrderPropsValue::Update($arVals["ID"], array("VALUE"=>$value));
+            } else {
+                CSaleOrderPropsValue::Add(array(
+                    'NAME' => $arProp['NAME'],
+                    'CODE' => $arProp['CODE'],
+                    'ORDER_PROPS_ID' => $arProp['ID'],
+                    'ORDER_ID' => $order,
+                    'VALUE' => $value,
+                ));
+            }
+            //  С‚СѓС‚ РјРѕР¶РЅРѕ СѓРІРёРґРµС‚СЊ РѕС€РёР±РєСѓ, РµСЃР»Рё С‡С‚Рѕ
+//                global $APPLICATION;
+//                var_dump($APPLICATION->GetException());
+        }
     }
 }

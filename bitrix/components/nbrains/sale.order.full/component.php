@@ -882,6 +882,7 @@ else
 
 				}
 				*/
+
 				$arFilter = array("PERSON_TYPE_ID" => $arResult["PERSON_TYPE"], "ACTIVE" => "Y", "UTIL" => "N");
 				if(!empty($arParams["PROP_".$arResult["PERSON_TYPE"]]))
 					$arFilter["!ID"] = $arParams["PROP_".$arResult["PERSON_TYPE"]];
@@ -893,9 +894,11 @@ else
 						false,
 						array("ID", "TYPE", "NAME", "CODE", "USER_PROPS", "SORT")
 					);
+
 				while ($arOrderProperties = $dbOrderProperties->Fetch())
 				{
 					$curVal = $arResult["POST"]["~ORDER_PROP_".$arOrderProperties["ID"]];
+
 					if ($arOrderProperties["TYPE"] == "MULTISELECT")
 					{
 						$curVal = "";
@@ -922,7 +925,9 @@ else
 								"CODE" => $arOrderProperties["CODE"],
 								"VALUE" => $curVal
 							);
-						CSaleOrderPropsValue::Add($arFields);
+
+                        AddOrderProperty($arOrderProperties["CODE"],$curVal,$arResult["ORDER_ID"]);
+
 						if ( $arOrderProperties["USER_PROPS"] == "Y" && IntVal($arResult["PROFILE_ID"]) <= 0 && IntVal($arResult["USER_PROPS_ID"])<=0)
 						{
 							if (strlen($arResult["PROFILE_NAME"]) <= 0)
