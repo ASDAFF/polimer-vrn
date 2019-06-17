@@ -30,6 +30,8 @@ if (!CSaleOrder::GetByID($sOrderID)) {
 
 }
 
+
+
 // Это для частичной оплаты - пока закомментим, т.к. со стороны Uniteller не готова реализация (см. переписку по email)
 /*
 if ($GLOBALS['SALE_INPUT_PARAMS']['ORDER']['PRICE'] != $GLOBALS['SALE_INPUT_PARAMS']['PAYMENT']['SUM']) {
@@ -79,6 +81,7 @@ if ($arOrder['PAYED']=='Y'/*$aCheckData['response_code'] !== '' && $aCheckData['
 //		$signature = strtoupper(md5(ps_uniteller::$Shop_ID . $sOrderID . $sHouldPay . ps_uniteller::$Password));
 	}
 	
+	
 //	da(ps_uniteller::$Shop_ID);
 //	da($sOrderID);
 //	da($sHouldPay);
@@ -89,8 +92,7 @@ if ($arOrder['PAYED']=='Y'/*$aCheckData['response_code'] !== '' && $aCheckData['
 <form action="<?= ps_uniteller::$url_uniteller_pay ?>" method="post" target="_blank">
 	<font class="tablebodytext"><br><?= GetMessage('SUSP_ACCOUNT_NO') ?>
 	<?//var_dump($GLOBALS['SALE_INPUT_PARAMS']['ORDER']);?>
-	<?= $sOrderID . GetMessage('SUSP_ORDER_FROM') . $sDateInsert ?><br> <?= GetMessage('SUSP_ORDER_SUM') ?><b><?= SaleFormatCurrency($sHouldPay, $sCurrency) ?>
-	</b><br> <br>
+	
 		<? /* ???? ???????????? ????? ?????? ? ????????????? */ ?>
 		<?
         $useFiskal = CSalePaySystemAction::GetParamValue('USE_FISKAL') == 'Y';
@@ -121,9 +123,10 @@ if ($arOrder['PAYED']=='Y'/*$aCheckData['response_code'] !== '' && $aCheckData['
         
         $ReceiptSignature = ps_uniteller::getReceiptSignature($Receipt, $sOrderID, $sHouldPay);	
         //echo gettype($sOrderID).'</br>'.$taxmode.'</br>'.$includeDelivery.'</br>'.$deliveryPrice.'</br>'.$deliveryId;die;
-        
-        
         ?>
+		
+		<?= $sOrderID . GetMessage('SUSP_ORDER_FROM') . $sDateInsert ?><br> <?= GetMessage('SUSP_ORDER_SUM') ?><b><?= SaleFormatCurrency($sHouldPay, $sCurrency) ?>
+		</b><br> <br>
 
 		<?if($useFiskal):?>
 				<input type="hidden" name="Receipt"
